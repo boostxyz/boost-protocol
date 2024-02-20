@@ -7,12 +7,14 @@ The Boost Protocol is a permissionless, trustless, and decentralized growth engi
 
 Boosts are individual campaigns that are designed to incentivize and reward users for participation in a specific protocol or application. They are designed to be flexible and can be customized to fit the specific needs of the project. Boosts can be used to incentivize a wide range of actions, including but not limited to:
 
-- Swapping, holding, staking, lending, or borrowing assets
-- Engaging in yield farming
+- Swapping, holding, staking, lending, or borrowing various types of assets
+- Voting, delegating, or creating governance proposals
+- Minting, acquiring, burning, or listing NFTs
+- Engaging in yield farming or liquidity mining
 - Contributing to liquidity pools
-- Participating in governance
 - Promoting protocol growth and adoption
-- And much more
+- Performing protocol-specific actions
+- ... and so much more
 
 ## Overview
 
@@ -40,4 +42,4 @@ At this time, we are not accepting contributions from the community. However, we
 
 ## License
 
-TBD
+**TBD** — Boost Protocol is not yet licensed for public use. We are currently evaluating various licensing options and will update this section once a decision has been made.

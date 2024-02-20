@@ -6,7 +6,7 @@ import {Ownable} from "lib/solady/src/auth/Ownable.sol";
 import {Receiver} from "lib/solady/src/accounts/Receiver.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
-/// @title Boost Protocol Budget
+/// @title Boost Budget
 /// @notice Abstract contract for a generic Budget within the Boost protocol
 /// @dev Budget classes are expected to implement the allocation, reclamation, and disbursement of assets.
 /// @dev Note that calldata is expected to be packed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol).

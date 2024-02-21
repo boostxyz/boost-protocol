@@ -6,8 +6,6 @@ import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {Budget} from "./Budget.sol";
 
-import "lib/forge-std/src/console.sol";
-
 /// @title Simple Budget
 /// @notice A minimal budget implementation that simply holds and distributes assets.
 contract SimpleBudget is Budget {

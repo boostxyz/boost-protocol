@@ -8,7 +8,7 @@ import {AllowList} from "./AllowList.sol";
 contract SimpleAllowList is AllowList {
     error LengthMismatch();
 
-    mapping(address => bool) public allowed;
+    mapping(address => bool) private _allowed;
 
     /// @notice Check if a user is authorized
     /// @param user_ The address of the user
@@ -18,7 +18,7 @@ contract SimpleAllowList is AllowList {
         address user_,
         bytes calldata /* data_ - unused */
     ) external view override returns (bool) {
-        return allowed[user_];
+        return _allowed[user_];
     }
 
     /// @notice Set the allowed status of a user
@@ -33,7 +33,7 @@ contract SimpleAllowList is AllowList {
         }
 
         for (uint256 i = 0; i < users_.length; i++) {
-            allowed[users_[i]] = allowed_[i];
+            _allowed[users_[i]] = allowed_[i];
         }
     }
 }

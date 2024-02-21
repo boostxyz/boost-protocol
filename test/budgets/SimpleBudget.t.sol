@@ -348,4 +348,74 @@ contract SimpleBudgetTest is Test {
         vm.expectRevert();
         simpleBudget.disburse(address(this), data);
     }
+
+    function testDisburse_FailedTransfer() public {
+        // Approve the budget to transfer tokens
+        mockERC20.approve(address(simpleBudget), 100 ether);
+
+        // Allocate 100 tokens to the budget
+        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        simpleBudget.allocate(data);
+        assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
+
+        // Mock the ERC20 transfer to fail in an unexpected way
+        vm.mockCallRevert(
+            address(mockERC20),
+            abi.encodeWithSelector(
+                bytes4(keccak256("transfer(address,uint256)")),
+                address(1),
+                100 ether
+            ),
+            unicode"WeïrdÊrrör(ツ)"
+        );
+
+        // Try to disburse 100 tokens from the budget
+        data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        vm.expectRevert(SafeTransferLib.TransferFailed.selector);
+        simpleBudget.disburse(address(1), data);
+    }
+
+    function testDisburse_FailedTransferInBatch() public {
+        // Approve the budget to transfer tokens
+        mockERC20.approve(address(simpleBudget), 100 ether);
+
+        // Allocate 100 tokens to the budget
+        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        simpleBudget.allocate(data);
+        assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
+
+        // Prepare the disbursement data
+        address[] memory addrs = new address[](2);
+        bytes[] memory datas = new bytes[](2);
+
+        addrs[0] = address(1);
+        datas[0] = LibZip.cdCompress(abi.encode(mockERC20, 25 ether));
+
+        addrs[1] = address(2);
+        datas[1] = LibZip.cdCompress(abi.encode(mockERC20, 50 ether));
+
+        // Mock the second ERC20 transfer to fail in an unexpected way
+        vm.mockCallRevert(
+            address(mockERC20),
+            abi.encodeWithSelector(
+                bytes4(keccak256("transfer(address,uint256)")),
+                address(2),
+                50 ether
+            ),
+            unicode"WeïrdÊrrör(ツ)"
+        );
+
+        // Try to disburse 25 tokens to address(1) and 50 tokens to address(2)
+        vm.expectRevert(SafeTransferLib.TransferFailed.selector);
+        simpleBudget.disburseBatch(addrs, datas);
+    }
+
+    ////////////////////////////
+    // SimpleBudget.reconcile //
+    ////////////////////////////
+
+    function testReconcile() public {
+        // SimpleBudget does not implement reconcile
+        assertEq(simpleBudget.reconcile(""), 0);
+    }
 }

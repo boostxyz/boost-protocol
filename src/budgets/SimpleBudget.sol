@@ -24,9 +24,8 @@ contract SimpleBudget is Budget {
     function allocate(
         bytes calldata data_
     ) external virtual override returns (bool) {
-        bytes memory unpackedCalldata = data_.cdDecompress();
         (address asset, uint256 amount) = abi.decode(
-            unpackedCalldata,
+            data_.cdDecompress(),
             (address, uint256)
         );
 
@@ -51,9 +50,8 @@ contract SimpleBudget is Budget {
     function reclaim(
         bytes calldata data_
     ) external virtual override onlyOwner returns (bool) {
-        bytes memory unpackedCalldata = data_.cdDecompress();
         (address asset, uint256 amount, address receiver) = abi.decode(
-            unpackedCalldata,
+            data_.cdDecompress(),
             (address, uint256, address)
         );
 
@@ -86,9 +84,8 @@ contract SimpleBudget is Budget {
         address recipient_,
         bytes calldata data_
     ) public virtual override onlyOwner returns (bool) {
-        bytes memory unpackedCalldata = data_.cdDecompress();
         (address asset, uint256 amount) = abi.decode(
-            unpackedCalldata,
+            data_.cdDecompress(),
             (address, uint256)
         );
 
@@ -110,18 +107,16 @@ contract SimpleBudget is Budget {
     /// @notice Disburses assets from the budget to multiple recipients
     /// @param recipients_ The addresses of the recipients
     /// @param data_ The compressed data for the disbursements `(address assets, uint256 amounts)[]`
-    /// @return failMap A failMap of disbursements statuses (1 = success, 0 = fail), represented as a base-10 integer
+    /// @return True if all disbursements were successful
     function disburseBatch(
         address[] calldata recipients_,
         bytes[] calldata data_
-    ) external virtual override returns (uint256 failMap) {
+    ) external virtual override returns (bool) {
         for (uint256 i = 0; i < recipients_.length; i++) {
-            if (!disburse(recipients_[i], data_[i])) {
-                failMap |= (1 << i);
-            }
+            disburse(recipients_[i], data_[i]);
         }
 
-        return failMap;
+        return true;
     }
 
     /// @inheritdoc Budget

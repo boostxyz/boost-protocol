@@ -9,7 +9,8 @@ import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 /// @title Boost Budget
 /// @notice Abstract contract for a generic Budget within the Boost protocol
 /// @dev Budget classes are expected to implement the allocation, reclamation, and disbursement of assets.
-/// @dev Note that calldata is expected to be packed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol).
+/// @dev The calldata is expected to be ABI-encoded and compressed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol).
+/// @dev Note that Budgets *DO NOT* support ERC-721, ERC-1155, DN-404, or other non-fungible assets at this time.
 abstract contract Budget is Ownable, Receiver {
     using LibZip for bytes;
     using SafeTransferLib for address;
@@ -17,7 +18,7 @@ abstract contract Budget is Ownable, Receiver {
     error InvalidAllocation(address asset, uint256 amount);
     error InsufficientFunds(address asset, uint256 available, uint256 required);
 
-    // TODO: Implement the following error:
+    // TODO: Implement an error for clarity around compressed data payloads?
     // error InvalidDataPayload(bytes data, string expectedEncoding);
 
     /// @notice Initialize the budget and set the owner
@@ -25,7 +26,6 @@ abstract contract Budget is Ownable, Receiver {
     constructor() {
         _initializeOwner(msg.sender);
     }
-
 
     /// @notice Allocate assets to the budget
     /// @param data_ The compressed data for the allocation (amount, token address, token ID, etc.)
@@ -49,12 +49,11 @@ abstract contract Budget is Ownable, Receiver {
     /// @notice Disburse assets from the budget to multiple recipients
     /// @param recipients_ The addresses of the recipients
     /// @param data_ The compressed data for the disbursements (amount, token address, token ID, etc.)
-    /// @return A failMap of disbursements statuses (1 = success, 0 = fail), represented as a base-10 integer
-    /// @dev For example, if the transfer statuses are [true, false, true], the failMap value would equal 5 (which is 101 in binary)
+    /// @return True if all disbursements were successful
     function disburseBatch(
         address[] calldata recipients_,
         bytes[] calldata data_
-    ) external virtual returns (uint256);
+    ) external virtual returns (bool);
 
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset

@@ -24,6 +24,8 @@ The Boost Protocol is composed of the following components:
 
 - **Boost Core**: Boost Core is a smart contract that facilitates the creation and management of Boosts. It is responsible for managing Boost parameters, tracking user participation, and distributing rewards. It is the glue that holds the entire Boost Protocol together.
 
+- **Boost Registry**: Boost Registry is a smart contract that maintains a registry of the base implementations for Boost Actions, Boost Incentives, Boost Validators, Boost Budgets, and Boost AllowLists. This allows developers to create custom implementations and register them with the Boost Registry, making them available for use in Boosts. It also promotes code reuse and standardization across the protocol.
+
 - **Boost Actions**: Boost Actions are smart contracts that define the specific actions that users must take to complete a Boost. They are designed to be modular and can be customized to fit the specific needs of the Boost. Examples of Boost Actions include swapping tokens, staking assets, and contributing to liquidity pools.
 
 - **Boost Incentives**: Boost Incentives are smart contracts that define the specific rewards that users can earn by participating in a Boost. Examples of Boost Incentives include earning tokens, receiving NFTs, and participating in airdrops.

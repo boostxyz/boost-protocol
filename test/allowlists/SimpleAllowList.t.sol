@@ -44,18 +44,8 @@ contract SimpleAllowListTest is Test {
 
     function testIsAllowed_UnnecessaryData() public {
         // Ensure the allow list is correct
-        assertTrue(
-            allowList.isAllowed(
-                address(1),
-                unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"
-            )
-        );
-        assertFalse(
-            allowList.isAllowed(
-                address(2),
-                abi.encodePacked(uint8(42), keccak256("unexpected"), "data")
-            )
-        );
+        assertTrue(allowList.isAllowed(address(1), unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"));
+        assertFalse(allowList.isAllowed(address(2), abi.encodePacked(uint8(42), keccak256("unexpected"), "data")));
     }
 
     ////////////////////////////////
@@ -79,5 +69,25 @@ contract SimpleAllowListTest is Test {
         assertTrue(allowList.isAllowed(address(1), ""));
         assertTrue(allowList.isAllowed(address(2), ""));
         assertTrue(allowList.isAllowed(address(3), ""));
+    }
+
+    function testSetAllowed_LengthMismatch() public {
+        // Ensure the length mismatch is caught
+        vm.expectRevert(SimpleAllowList.LengthMismatch.selector);
+        allowList.setAllowed(new address[](1), new bool[](2));
+    }
+
+    ///////////////////////////////////////
+    // SimpleAllowList.supportsInterface //
+    ///////////////////////////////////////
+
+    function testSupportsInterface() public {
+        // Ensure the interface is supported
+        assertTrue(allowList.supportsInterface(type(AllowList).interfaceId));
+    }
+
+    function testSupportsInterface_Unsupported() public {
+        // Ensure the interface is not supported
+        assertFalse(allowList.supportsInterface(type(Test).interfaceId));
     }
 }

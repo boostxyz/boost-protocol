@@ -5,6 +5,7 @@ import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {Budget} from "./Budget.sol";
+import {Cloneable} from "src/Cloneable.sol";
 
 /// @title Simple Budget
 /// @notice A minimal budget implementation that simply holds and distributes assets.
@@ -14,6 +15,25 @@ contract SimpleBudget is Budget {
 
     /// @dev The total amount of each asset distributed from the budget
     mapping(address => uint256) private _distributed;
+
+    /// @notice Construct a new SimpleBudget
+    /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @inheritdoc Cloneable
+    /// @param data_ The compressed init data for the budget `(address owner)`
+    function initialize(bytes calldata data_) external virtual override initializer {
+        bytes memory data = data_.cdDecompress();
+
+        // Decompressed init data should be the size an address (padded to 32 bytes)
+        if (data.length > 32) revert InvalidInitializationData();
+
+        // Decode and initialize the owner of the budget
+        address owner_ = abi.decode(data, (address));
+        _initializeOwner(owner_);
+    }
 
     /// @inheritdoc Budget
     /// @notice Allocates assets to the budget

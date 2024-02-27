@@ -6,12 +6,14 @@ import {Ownable} from "lib/solady/src/auth/Ownable.sol";
 import {Receiver} from "lib/solady/src/accounts/Receiver.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
+import {Cloneable} from "src/Cloneable.sol";
+
 /// @title Boost Budget
 /// @notice Abstract contract for a generic Budget within the Boost protocol
 /// @dev Budget classes are expected to implement the allocation, reclamation, and disbursement of assets.
 /// @dev The calldata is expected to be ABI-encoded and compressed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol).
 /// @dev Note that Budgets *DO NOT* support ERC-721, ERC-1155, DN-404, or other non-fungible assets at this time.
-abstract contract Budget is Ownable, Receiver {
+abstract contract Budget is Ownable, Cloneable, Receiver {
     using LibZip for bytes;
     using SafeTransferLib for address;
 
@@ -68,17 +70,22 @@ abstract contract Budget is Ownable, Receiver {
     /// @notice Get the amount of assets that have been distributed from the budget
     /// @param asset_ The address of the asset
     /// @return The amount of assets distributed
-    function distributed(
-        address asset_
-    ) external view virtual returns (uint256);
+    function distributed(address asset_) external view virtual returns (uint256);
 
     /// @notice Reconcile the budget to ensure the known state matches the actual state
     /// @param data_ The compressed data for the reconciliation (amount, token address, token ID, etc.)
     /// @return The amount of assets reconciled
     function reconcile(bytes calldata data_) external virtual returns (uint256);
 
+    /// @inheritdoc Cloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
+        return interfaceId == type(Budget).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     /// @inheritdoc Receiver
-    receive() external payable virtual override {}
+    receive() external payable virtual override {
+        // Nothing to do here, but we need the function to be implemented
+    }
 
     /// @inheritdoc Receiver
     fallback() external payable virtual override {

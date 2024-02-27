@@ -14,20 +14,14 @@ contract SimpleAllowList is AllowList {
     /// @param user_ The address of the user
     /// @param - The data payload for the authorization check, not used in this implementation
     /// @return True if the user is authorized
-    function isAllowed(
-        address user_,
-        bytes calldata /* data_ - unused */
-    ) external view override returns (bool) {
+    function isAllowed(address user_, bytes calldata /* data_ - unused */ ) external view override returns (bool) {
         return _allowed[user_];
     }
 
     /// @notice Set the allowed status of a user
     /// @param users_ The list of users to update
     /// @param allowed_ The allowed status of each user
-    function setAllowed(
-        address[] calldata users_,
-        bool[] calldata allowed_
-    ) external onlyOwner {
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyOwner {
         if (users_.length != allowed_.length) {
             revert LengthMismatch();
         }

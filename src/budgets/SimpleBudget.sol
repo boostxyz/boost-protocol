@@ -41,22 +41,17 @@ contract SimpleBudget is Budget {
     /// @return True if the allocation was successful
     /// @dev The caller must have already approved the contract to transfer the asset
     /// @dev If the asset transfer fails, the allocation will revert
-    function allocate(
-        bytes calldata data_
-    ) external virtual override returns (bool) {
-        (address asset, uint256 amount) = abi.decode(
-            data_.cdDecompress(),
-            (address, uint256)
-        );
+    function allocate(bytes calldata data_) external payable virtual override returns (bool) {
+        (address asset, uint256 amount) = abi.decode(data_.cdDecompress(), (address, uint256));
 
-        // Ensure the `asset` address has some code (indicating it is a contract) and the amount is non-zero
-        // This is a simple (if not foolproof) way to ensure the compressed calldata wasn't encoded incorrectly
-        if (asset.code.length == 0 || amount == 0) {
-            revert InvalidAllocation(asset, amount);
+        if (asset == address(0)) {
+            // Ensure the value received is equal to the `amount`
+            if (msg.value != amount) revert InvalidAllocation(asset, amount);
+        } else {
+            // Transfer the asset to the budget
+            asset.safeTransferFrom(msg.sender, address(this), amount);
+            if (asset.balanceOf(address(this)) < amount) revert InvalidAllocation(asset, amount);
         }
-
-        // Transfer the asset to the budget
-        asset.safeTransferFrom(msg.sender, address(this), amount);
 
         return true;
     }
@@ -67,29 +62,18 @@ contract SimpleBudget is Budget {
     /// @return True if the reclamation was successful
     /// @dev If the amount is zero, the entire balance of the asset will be transferred to the receiver
     /// @dev If the asset transfer fails, the reclamation will revert
-    function reclaim(
-        bytes calldata data_
-    ) external virtual override onlyOwner returns (bool) {
-        (address asset, uint256 amount, address receiver) = abi.decode(
-            data_.cdDecompress(),
-            (address, uint256, address)
-        );
+    function reclaim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
+        (address asset, uint256 amount, address receiver) =
+            abi.decode(data_.cdDecompress(), (address, uint256, address));
 
         // Ensure the amount is available to reclaim
-        if (amount > asset.balanceOf(address(this))) {
-            revert InsufficientFunds(
-                asset,
-                asset.balanceOf(address(this)) - _distributed[asset],
-                amount
-            );
-        }
+        uint256 avail = available(asset);
+        if (amount > avail) revert InsufficientFunds(asset, avail, amount);
+        if (receiver == address(0)) revert SafeTransferLib.TransferFailed();
 
-        // If the amount is zero, transfer the entire balance of the asset to the receiver
-        if (amount == 0) {
-            asset.safeTransferAll(receiver);
-        } else {
-            asset.safeTransfer(receiver, amount);
-        }
+        // If the amount is zero, use the entire balance
+        if (amount == 0) amount = avail;
+        _transfer(asset, receiver, amount);
 
         return true;
     }
@@ -100,25 +84,16 @@ contract SimpleBudget is Budget {
     /// @param data_ The compressed data for the disbursement `(address asset, uint256 amount)`
     /// @return True if the disbursement was successful
     /// @dev If the asset transfer fails, the disbursement will revert
-    function disburse(
-        address recipient_,
-        bytes calldata data_
-    ) public virtual override onlyOwner returns (bool) {
-        (address asset, uint256 amount) = abi.decode(
-            data_.cdDecompress(),
-            (address, uint256)
-        );
+    function disburse(address recipient_, bytes calldata data_) public virtual override onlyOwner returns (bool) {
+        (address asset, uint256 amount) = abi.decode(data_.cdDecompress(), (address, uint256));
 
         // Ensure the amount is available for disbursement
         if (amount > available(asset)) {
             revert InsufficientFunds(asset, available(asset), amount);
         }
 
-        // Increment the total amount of the asset distributed from the budget
-        _distributed[asset] += amount;
-
         // Transfer the asset to the recipient
-        asset.safeTransfer(recipient_, amount);
+        _transfer(asset, recipient_, amount);
 
         return true;
     }
@@ -128,10 +103,14 @@ contract SimpleBudget is Budget {
     /// @param recipients_ The addresses of the recipients
     /// @param data_ The compressed data for the disbursements `(address assets, uint256 amounts)[]`
     /// @return True if all disbursements were successful
-    function disburseBatch(
-        address[] calldata recipients_,
-        bytes[] calldata data_
-    ) external virtual override returns (bool) {
+    function disburseBatch(address[] calldata recipients_, bytes[] calldata data_)
+        external
+        virtual
+        override
+        returns (bool)
+    {
+        if (recipients_.length != data_.length) revert LengthMismatch();
+
         for (uint256 i = 0; i < recipients_.length; i++) {
             disburse(recipients_[i], data_[i]);
         }
@@ -144,10 +123,8 @@ contract SimpleBudget is Budget {
     /// @param asset_ The address of the asset
     /// @return The total amount of assets
     /// @dev This is simply the sum of the current balance and the distributed amount
-    function total(
-        address asset_
-    ) external view virtual override returns (uint256) {
-        return asset_.balanceOf(address(this)) + _distributed[asset_];
+    function total(address asset_) external view virtual override returns (uint256) {
+        return available(asset_) + _distributed[asset_];
     }
 
     /// @inheritdoc Budget
@@ -156,31 +133,40 @@ contract SimpleBudget is Budget {
     /// @return The amount of assets available
     /// @dev This is simply the current balance held by the budget
     /// @dev If the zero address is passed, this function will return the native balance
-    function available(
-        address asset_
-    ) public view virtual override returns (uint256) {
-        if (asset_ == address(0)) {
-            return address(this).balance;
-        } else {
-            return asset_.balanceOf(address(this));
-        }
+    function available(address asset_) public view virtual override returns (uint256) {
+        return asset_ == address(0) ? address(this).balance : asset_.balanceOf(address(this));
     }
 
     /// @inheritdoc Budget
     /// @notice Get the amount of assets that have been distributed from the budget
     /// @param asset_ The address of the asset
     /// @return The amount of assets distributed
-    function distributed(
-        address asset_
-    ) external view virtual override returns (uint256) {
+    function distributed(address asset_) external view virtual override returns (uint256) {
         return _distributed[asset_];
     }
 
     /// @inheritdoc Budget
     /// @dev This is a no-op as there is no local balance to reconcile
-    function reconcile(
-        bytes calldata
-    ) external virtual override returns (uint256) {
+    function reconcile(bytes calldata) external virtual override returns (uint256) {
         return 0;
+    }
+
+    /// @notice Transfer assets to the recipient
+    /// @param asset_ The address of the asset
+    /// @param to_ The address of the recipient
+    /// @param amount_ The amount of the asset to transfer
+    /// @dev This function is used to transfer assets from the budget to the recipient
+    function _transfer(address asset_, address to_, uint256 amount_) internal virtual {
+        // Increment the total amount of the asset distributed from the budget
+        _distributed[asset_] += amount_;
+
+        // Transfer the asset to the recipient
+        if (asset_ == address(0)) {
+            SafeTransferLib.safeTransferETH(to_, amount_);
+        } else {
+            asset_.safeTransfer(to_, amount_);
+        }
+
+        emit Distributed(asset_, to_, amount_);
     }
 }

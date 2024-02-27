@@ -17,11 +17,20 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     using LibZip for bytes;
     using SafeTransferLib for address;
 
+    /// @notice Emitted when assets are distributed from the budget
+    event Distributed(address indexed asset, address to, uint256 amount);
+
+    /// @notice Thrown when the allocation is invalid
     error InvalidAllocation(address asset, uint256 amount);
+
+    /// @notice Thrown when there are insufficient funds for an operation
     error InsufficientFunds(address asset, uint256 available, uint256 required);
 
-    // TODO: Implement an error for clarity around compressed data payloads?
-    // error InvalidDataPayload(bytes data, string expectedEncoding);
+    /// @notice Thrown when the length of two arrays are not equal
+    error LengthMismatch();
+
+    /// @notice Thrown when a transfer fails for an unknown reason
+    error TransferFailed(address asset, address to, uint256 amount);
 
     /// @notice Initialize the budget and set the owner
     /// @dev The owner is set to the contract deployer
@@ -32,7 +41,7 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @notice Allocate assets to the budget
     /// @param data_ The compressed data for the allocation (amount, token address, token ID, etc.)
     /// @return True if the allocation was successful
-    function allocate(bytes calldata data_) external virtual returns (bool);
+    function allocate(bytes calldata data_) external payable virtual returns (bool);
 
     /// @notice Reclaim assets from the budget
     /// @param data_ The compressed data for the reclamation (amount, token address, token ID, etc.)
@@ -43,19 +52,13 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @param recipient_ The address of the recipient
     /// @param data_ The compressed data for the disbursement (amount, token address, token ID, etc.)
     /// @return True if the disbursement was successful
-    function disburse(
-        address recipient_,
-        bytes calldata data_
-    ) external virtual returns (bool);
+    function disburse(address recipient_, bytes calldata data_) external virtual returns (bool);
 
     /// @notice Disburse assets from the budget to multiple recipients
     /// @param recipients_ The addresses of the recipients
     /// @param data_ The compressed data for the disbursements (amount, token address, token ID, etc.)
     /// @return True if all disbursements were successful
-    function disburseBatch(
-        address[] calldata recipients_,
-        bytes[] calldata data_
-    ) external virtual returns (bool);
+    function disburseBatch(address[] calldata recipients_, bytes[] calldata data_) external virtual returns (bool);
 
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset

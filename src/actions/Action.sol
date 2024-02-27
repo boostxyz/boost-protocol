@@ -19,6 +19,7 @@ abstract contract Action is Cloneable {
     /// @dev The `data` field should contain implementation-specific context, if applicable.
     event ActionValidated(address indexed user, bool isValidated, bytes data);
 
+    /// @notice The validator for the action (which may be the action itself where appropriate)
     Validator public immutable VALIDATOR;
 
     /// @notice Execute the action

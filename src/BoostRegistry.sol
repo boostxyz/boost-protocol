@@ -60,7 +60,7 @@ contract BoostRegistry is ERC165 {
     /// @param name_ A name for the implementation (must be unique within the given type)
     /// @param implementation_ The address of the implementation contract
     /// @dev This function will either emit a `Registered` event or revert if the identifier has already been registered
-    /// @dev The given address must implement the given type interface (TODO: enforce this using ERC-165 `supportsInterface`)
+    /// @dev The given address must implement the given type interface (See {ERC165-supportsInterface})
     function register(RegistryType type_, string calldata name_, address implementation_)
         external
         onlyCloneables(implementation_)

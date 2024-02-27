@@ -72,7 +72,7 @@ contract SimpleBudgetTest is Test {
     function testInitialize() public {
         // Initializer can only be called on clones, not the base contract
         bytes memory data = LibZip.cdCompress(abi.encode(address(this)));
-        SimpleBudget clone = SimpleBudget(payable(LibClone.clone(address(simpleBudget), data)));
+        SimpleBudget clone = SimpleBudget(payable(LibClone.clone(address(simpleBudget))));
         clone.initialize(data);
 
         // Ensure the budget has the correct owner
@@ -665,7 +665,9 @@ contract SimpleBudgetTest is Test {
         // Note that the function itself will revert, but because we're issuing
         // a low-level call, the revert won't bubble up. Instead, we are just
         // checking that the low-level call was not successful.
-        (bool success,) = payable(simpleBudget).call{value: 1 ether}(abi.encodeWithSelector(bytes4(0xdeadbeef), LibZip.cdCompress(abi.encode(mockERC20, 100 ether))));
+        (bool success,) = payable(simpleBudget).call{value: 1 ether}(
+            abi.encodeWithSelector(bytes4(0xdeadbeef), LibZip.cdCompress(abi.encode(mockERC20, 100 ether)))
+        );
         assertFalse(success);
     }
 

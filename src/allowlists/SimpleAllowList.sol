@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {AllowList} from "./AllowList.sol";
+import {AllowList} from "src/allowlists/AllowList.sol";
+import {BoostError} from "src/shared/BoostError.sol";
 
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
 contract SimpleAllowList is AllowList {
-    error LengthMismatch();
-
+    /// @dev An internal mapping of allowed statuses
     mapping(address => bool) private _allowed;
 
     /// @notice Check if a user is authorized
@@ -21,9 +21,11 @@ contract SimpleAllowList is AllowList {
     /// @notice Set the allowed status of a user
     /// @param users_ The list of users to update
     /// @param allowed_ The allowed status of each user
+    /// @dev The length of the `users_` and `allowed_` arrays must be the same
+    /// @dev This function can only be called by the owner
     function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyOwner {
         if (users_.length != allowed_.length) {
-            revert LengthMismatch();
+            revert BoostError.LengthMismatch();
         }
 
         for (uint256 i = 0; i < users_.length; i++) {

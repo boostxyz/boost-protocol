@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
+/// @title BoostError
+/// @notice Standardized errors for the Boost protocol
+/// @dev Some of these errors are introduced by third-party libraries, rather than Boost contracts directly, and are copied here for clarity and ease of testing.
 library BoostError {
     /// @notice Thrown when there are insufficient funds for an operation
     error InsufficientFunds(address asset, uint256 available, uint256 required);
+
+    /// @notice Thrown when an invalid initialization is attempted
+    error InvalidInitialization();
 
     /// @notice Thrown when the length of two arrays are not equal
     error LengthMismatch();

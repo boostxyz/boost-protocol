@@ -22,7 +22,6 @@ library BoostLib {
         Validator validator;
         uint256 protocolFee;
         uint256 referralFee;
-        uint256 rewardAmount;
         uint256 maxParticipants;
     }
 
@@ -31,7 +30,7 @@ library BoostLib {
         bytes parameters;
     }
 
-    function initialize(Boost storage boost_, bytes calldata data_) internal {
+    function initialize(Boost storage $, bytes calldata data_) internal {
         (
             BaseWithArgs memory action_,
             BaseWithArgs memory allowList_,
@@ -46,16 +45,16 @@ library BoostLib {
             (BaseWithArgs, BaseWithArgs, BaseWithArgs, BaseWithArgs[], BaseWithArgs, uint256, uint256, uint256)
         );
 
-        boost_.action = Action(action_.base.clone(action_.parameters));
-        boost_.allowList = AllowList(allowList_.base.clone(allowList_.parameters));
-        boost_.budget = Budget(payable(budget_.base.clone(budget_.parameters)));
-        boost_.validator = Validator(validator_.base.clone(validator_.parameters));
-        boost_.protocolFee = protocolFee_;
-        boost_.referralFee = referralFee_;
-        boost_.maxParticipants = maxParticipants_;
+        $.action = Action(action_.base.clone(action_.parameters));
+        $.allowList = AllowList(allowList_.base.clone(allowList_.parameters));
+        $.budget = Budget(payable(budget_.base.clone(budget_.parameters)));
+        $.validator = Validator(validator_.base.clone(validator_.parameters));
+        $.protocolFee = protocolFee_;
+        $.referralFee = referralFee_;
+        $.maxParticipants = maxParticipants_;
 
         for (uint256 i = 0; i < incentives_.length; i++) {
-            boost_.incentives.push(Incentive(incentives_[i].base.clone(incentives_[i].parameters)));
+            $.incentives.push(Incentive(incentives_[i].base.clone(incentives_[i].parameters)));
         }
     }
 }

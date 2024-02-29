@@ -68,6 +68,9 @@ contract BoostRegistryTest is Test {
     ////////////////////////////
 
     function testRegister() public {
+        bytes32 identifier = registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget");
+        vm.expectEmit(true, true, true, true);
+        emit BoostRegistry.Registered(BoostRegistry.RegistryType.BUDGET, identifier, address(baseBudgetImpl));
         registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
         assertEq(address(registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER)), address(baseBudgetImpl));
     }
@@ -127,6 +130,22 @@ contract BoostRegistryTest is Test {
         );
 
         assertEq(registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget"), SIMPLE_BUDGET_IDENTIFIER);
+    }
+
+    //////////////////////////////////////
+    // BoostRegistry.getCloneIdentifier //
+    //////////////////////////////////////
+
+    function testGetCloneIdentifier() public {
+        bytes32 identifier = registry.getCloneIdentifier(
+            BoostRegistry.RegistryType.ALLOW_LIST, address(baseAllowListImpl), address(this), "Test AllowList"
+        );
+
+        bytes32 expected = keccak256(
+            abi.encodePacked(BoostRegistry.RegistryType.ALLOW_LIST, keccak256(abi.encodePacked(address(baseAllowListImpl), address(this), "Test AllowList")))
+        );
+
+        assertEq(identifier, expected);
     }
 
     ///////////////////////////////
@@ -306,6 +325,7 @@ contract BoostRegistryTest is Test {
 
         (bytes32 id, Cloneable clone) = _deployAllowListClone("Dos", new address[](0));
         assertEq(registry.getClones(address(this)).length, 2);
+
         assertEq(registry.getClones(address(this))[1], id);
         assertEq(registry.getClone(id).deployer, address(this));
         assertEq(address(registry.getClone(id).instance), address(clone));

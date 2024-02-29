@@ -14,6 +14,9 @@ library BoostError {
     /// @notice Thrown when the length of two arrays are not equal
     error LengthMismatch();
 
+    /// @notice Thrown when a method is not implemented
+    error NotImplemented();
+
     /// @notice Thrown when a previously used signature is replayed
     error Replayed(address signer, bytes32 hash, bytes signature);
 

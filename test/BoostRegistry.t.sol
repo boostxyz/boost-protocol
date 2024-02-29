@@ -5,45 +5,78 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
+import {ERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+
 import {AllowList} from "src/allowlists/AllowList.sol";
 import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
 
 import {Budget} from "src/budgets/Budget.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
+import {Incentive} from "src/incentives/Incentive.sol";
+
 import {BoostRegistry} from "src/BoostRegistry.sol";
 import {Cloneable} from "src/Cloneable.sol";
+
+contract NotCloneable is ERC165 {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+}
+
+contract MockAllowList is AllowList {
+    function isAllowed(address guy, bytes calldata) external view override returns (bool) {
+        return guy == owner() || guy == address(0xdeadbeef);
+    }
+}
+
+contract MockIncentive is Incentive {
+    function initialize(bytes calldata) external override {}
+
+    function claim(bytes calldata) external virtual override returns (bool) {
+        return true;
+    }
+
+    function isClaimable(bytes calldata) external view virtual override returns (bool) {
+        return true;
+    }
+}
 
 contract BoostRegistryTest is Test {
     BoostRegistry registry;
 
-    bytes32 constant SALT = bytes32(uint256(0xdeadbeef));
-
     SimpleAllowList baseAllowListImpl;
-    bytes32 constant SIMPLE_ALLOW_LIST_IDENTIFIER =
-        keccak256(abi.encodePacked(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList"));
+    bytes32 constant SIMPLE_ALLOW_LIST_IDENTIFIER = keccak256(
+        abi.encodePacked(BoostRegistry.RegistryType.ALLOW_LIST, keccak256(abi.encodePacked("SimpleAllowList")))
+    );
 
     SimpleBudget baseBudgetImpl;
     bytes32 constant SIMPLE_BUDGET_IDENTIFIER =
-        keccak256(abi.encodePacked(BoostRegistry.RegistryType.BUDGET, "SimpleBudget"));
+        keccak256(abi.encodePacked(BoostRegistry.RegistryType.BUDGET, keccak256(abi.encodePacked("SimpleBudget"))));
 
     function setUp() public {
         registry = new BoostRegistry();
         baseAllowListImpl = new SimpleAllowList();
         baseBudgetImpl = new SimpleBudget();
+
+        // The AllowList is needed for later tests, so we register it during setup
+        registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
     }
 
-    function testRegister() public {
-        registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
+    ////////////////////////////
+    // BoostRegistry.register //
+    ////////////////////////////
 
-        assertEq(registry.getBaseImplementation(SIMPLE_ALLOW_LIST_IDENTIFIER), address(baseAllowListImpl));
+    function testRegister() public {
+        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
+        assertEq(address(registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER)), address(baseBudgetImpl));
     }
 
     function testRegister_Duplicate() public {
-        registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
+        // SimpleAllowList was registered during setup
+        assertEq(address(registry.getBaseImplementation(SIMPLE_ALLOW_LIST_IDENTIFIER)), address(baseAllowListImpl));
 
-        assertEq(registry.getBaseImplementation(SIMPLE_ALLOW_LIST_IDENTIFIER), address(baseAllowListImpl));
-
+        // Registering the same implementation should revert
         vm.expectRevert(
             abi.encodeWithSelector(
                 BoostRegistry.AlreadyRegistered.selector,
@@ -55,20 +88,32 @@ contract BoostRegistryTest is Test {
         registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
     }
 
+    function testRegister_NotCloneable() public {
+        NotCloneable notCloneable = new NotCloneable();
+
+        // Attempting to register a non-Cloneable implementation should revert
+        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotCloneable.selector, address(notCloneable)));
+
+        registry.register(BoostRegistry.RegistryType.ACTION, "NotClonable", address(notCloneable));
+    }
+
     /////////////////////////////////////////
     // BoostRegistry.getBaseImplementation //
     /////////////////////////////////////////
 
     function testGetBaseImplementation() public {
-        registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
+        // SimpleAllowList was registered during setup, so ensure we can retrieve it
+        assertEq(address(registry.getBaseImplementation(SIMPLE_ALLOW_LIST_IDENTIFIER)), address(baseAllowListImpl));
 
-        assertEq(registry.getBaseImplementation(SIMPLE_ALLOW_LIST_IDENTIFIER), address(baseAllowListImpl));
+        // Ensure we can register and retrieve the SimpleBudget implementation
+        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
+        assertEq(address(registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER)), address(baseBudgetImpl));
     }
 
     function testGetBaseImplementation_NotRegistered() public {
-        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotRegistered.selector, SIMPLE_ALLOW_LIST_IDENTIFIER));
-
-        registry.getBaseImplementation(SIMPLE_ALLOW_LIST_IDENTIFIER);
+        // Ensure we can't retrieve an unregistered implementation
+        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotRegistered.selector, SIMPLE_BUDGET_IDENTIFIER));
+        registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER);
     }
 
     /////////////////////////////////
@@ -80,82 +125,215 @@ contract BoostRegistryTest is Test {
             registry.getIdentifier(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList"),
             SIMPLE_ALLOW_LIST_IDENTIFIER
         );
+
+        assertEq(registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget"), SIMPLE_BUDGET_IDENTIFIER);
     }
 
     ///////////////////////////////
     // BoostRegistry.deployClone //
     ///////////////////////////////
 
-    function testDeploy() public {
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
-
-        address baseImpl = registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER);
-
-        // Predict the address of the deployed instance
-        address predictedAddress = LibClone.predictDeterministicAddress(baseImpl, SALT, address(registry));
+    function testDeployClone() public {
+        // Predict the address of the clone using the salt and the registry address
+        bytes32 salt = keccak256(
+            abi.encodePacked(BoostRegistry.RegistryType.ALLOW_LIST, baseAllowListImpl, "Test AllowList", address(this))
+        );
+        address predictedAddress =
+            LibClone.predictDeterministicAddress(address(baseAllowListImpl), salt, address(registry));
 
         // Assert that the Deployed event is emitted with the correct parameters
         vm.expectEmit(true, true, true, true);
         emit BoostRegistry.Deployed(
-            BoostRegistry.RegistryType.BUDGET, SIMPLE_BUDGET_IDENTIFIER, baseImpl, predictedAddress
+            BoostRegistry.RegistryType.ALLOW_LIST,
+            registry.getCloneIdentifier(
+                BoostRegistry.RegistryType.ALLOW_LIST, address(baseAllowListImpl), address(this), "Test AllowList"
+            ),
+            address(baseAllowListImpl),
+            Cloneable(predictedAddress)
         );
 
         registry.deployClone(
-            BoostRegistry.RegistryType.BUDGET,
-            SIMPLE_BUDGET_IDENTIFIER,
-            SALT,
-            LibZip.cdCompress(abi.encode(address(this)))
+            BoostRegistry.RegistryType.ALLOW_LIST,
+            address(baseAllowListImpl),
+            AllowList(address(0)),
+            "Test AllowList",
+            LibZip.cdCompress(abi.encode(address(this), new address[](0), new bool[](0)))
         );
     }
 
-    function testDeploy_NotRegistered() public {
-        bytes32 identifier_ = registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget");
-        bytes32 salt_ = bytes32(uint256(0xdeadbeef));
-
-        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotRegistered.selector, identifier_));
-
-        registry.deployClone(
-            BoostRegistry.RegistryType.BUDGET, identifier_, salt_, LibZip.cdCompress(abi.encode(address(this)))
-        );
-    }
-
-    function testDeploy_Initialize() public {
+    function testDeployClone_Initialize() public {
         registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
 
-        address baseImpl = registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER);
-        address predictedAddress = LibClone.predictDeterministicAddress(baseImpl, SALT, address(registry));
+        bytes32 salt = keccak256(
+            abi.encodePacked(BoostRegistry.RegistryType.BUDGET, baseBudgetImpl, "Testing Budget", address(this))
+        );
+        address predictedAddress =
+            LibClone.predictDeterministicAddress(address(baseBudgetImpl), salt, address(registry));
 
         vm.expectEmit(true, true, true, true);
         emit BoostRegistry.Deployed(
-            BoostRegistry.RegistryType.BUDGET, SIMPLE_BUDGET_IDENTIFIER, baseImpl, predictedAddress
+            BoostRegistry.RegistryType.BUDGET,
+            registry.getCloneIdentifier(
+                BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
+            ),
+            address(baseBudgetImpl),
+            Cloneable(predictedAddress)
         );
 
-        address instance = registry.deployClone(
+        Cloneable instance = registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
-            SIMPLE_BUDGET_IDENTIFIER,
-            SALT,
+            address(baseBudgetImpl),
+            AllowList(address(0)),
+            "Testing Budget",
             LibZip.cdCompress(abi.encode(address(this)))
         );
 
-        assertEq(baseImpl, address(baseBudgetImpl));
-        assertTrue(Cloneable(instance).supportsInterface(type(Budget).interfaceId));
-        assertEq(SimpleBudget(payable(instance)).owner(), address(this));
+        assertTrue(instance.supportsInterface(type(Budget).interfaceId));
+        assertEq(SimpleBudget(payable(address(instance))).owner(), address(this));
     }
 
-    function testDeploy_Initialize_Fail() public {
+    function testDeployClone_Initialize_Fail() public {
         registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
 
         vm.expectRevert(abi.encodeWithSelector(Cloneable.InvalidInitializationData.selector));
 
         registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
-            SIMPLE_BUDGET_IDENTIFIER,
-            SALT,
+            address(baseBudgetImpl),
+            AllowList(address(0)),
+            "Testing Budget",
             LibZip.cdCompress(
                 abi.encode(
                     unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool* but not expected by the implementation... wcgw?!"
                 )
             )
+        );
+    }
+
+    function testDeployClone_CustomAllowList() public {
+        MockAllowList customAllowList = new MockAllowList();
+        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
+
+        bytes32 cloneId = registry.getCloneIdentifier(
+            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
+        );
+        registry.deployClone(
+            BoostRegistry.RegistryType.BUDGET,
+            address(baseBudgetImpl),
+            customAllowList,
+            "Testing Budget",
+            LibZip.cdCompress(abi.encode(address(this)))
+        );
+
+        BoostRegistry.Clone memory clone = registry.getClone(cloneId);
+
+        // Ensure the clone is assigned the custom AllowList
+        assertEq(address(clone.allowList), address(customAllowList));
+
+        // Ensure the allowList actually works
+        assertTrue(clone.allowList.isAllowed(address(0xdeadbeef), ""));
+        assertFalse(clone.allowList.isAllowed(address(1), ""));
+    }
+
+    function testDeployClone_DefaultAllowList() public {
+        MockIncentive mockIncentive = new MockIncentive();
+        registry.register(BoostRegistry.RegistryType.INCENTIVE, "MockIncentive", address(mockIncentive));
+
+        bytes32 cloneId = registry.getCloneIdentifier(
+            BoostRegistry.RegistryType.INCENTIVE, address(mockIncentive), address(this), "Test Incentive"
+        );
+
+        registry.deployClone(
+            BoostRegistry.RegistryType.INCENTIVE,
+            address(mockIncentive),
+            AllowList(address(0)),
+            "Test Incentive",
+            new bytes(0)
+        );
+
+        BoostRegistry.Clone memory clone = registry.getClone(cloneId);
+
+        // Ensure the clone is assigned an allowList
+        assertNotEq(address(clone.allowList), address(0));
+
+        // Ensure the default allowList is properly initialized
+        assertEq(clone.allowList.owner(), address(this));
+        assertTrue(clone.allowList.isAllowed(address(this), ""));
+        assertFalse(clone.allowList.isAllowed(address(0xdeadbeef), ""));
+    }
+
+    ////////////////////////////
+    // BoostRegistry.getClone //
+    ////////////////////////////
+
+    function testGetClone() public {
+        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
+
+        bytes32 cloneId = registry.getCloneIdentifier(
+            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
+        );
+        registry.deployClone(
+            BoostRegistry.RegistryType.BUDGET,
+            address(baseBudgetImpl),
+            AllowList(address(0)),
+            "Testing Budget",
+            LibZip.cdCompress(abi.encode(address(this)))
+        );
+
+        BoostRegistry.Clone memory clone = registry.getClone(cloneId);
+
+        assertTrue(clone.baseType == BoostRegistry.RegistryType.BUDGET);
+        assertEq(address(clone.deployer), address(this));
+        assertEq(clone.name, "Testing Budget");
+    }
+
+    function testGetClone_NotRegistered() public {
+        bytes32 cloneId = registry.getCloneIdentifier(
+            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotRegistered.selector, cloneId));
+        registry.getClone(cloneId);
+    }
+
+    /////////////////////////////
+    // BoostRegistry.getClones //
+    /////////////////////////////
+
+    function testGetClones() public {
+        _deployAllowListClone("Uno", new address[](0));
+        assertEq(registry.getClones(address(this)).length, 1);
+
+        (bytes32 id, Cloneable clone) = _deployAllowListClone("Dos", new address[](0));
+        assertEq(registry.getClones(address(this)).length, 2);
+        assertEq(registry.getClones(address(this))[1], id);
+        assertEq(registry.getClone(id).deployer, address(this));
+        assertEq(address(registry.getClone(id).instance), address(clone));
+    }
+
+    ///////////////////////////
+    // Test Helper Functions //
+    ///////////////////////////
+
+    function _deployAllowListClone(string memory name, address[] memory signers)
+        internal
+        returns (bytes32 cloneId, Cloneable clone)
+    {
+        bool[] memory authorized = new bool[](signers.length);
+        for (uint256 i = 0; i < signers.length; i++) {
+            authorized[i] = true;
+        }
+
+        cloneId = registry.getCloneIdentifier(
+            BoostRegistry.RegistryType.ALLOW_LIST, address(baseAllowListImpl), address(this), name
+        );
+
+        clone = registry.deployClone(
+            BoostRegistry.RegistryType.ALLOW_LIST,
+            address(baseAllowListImpl),
+            AllowList(address(0)),
+            name,
+            LibZip.cdCompress(abi.encode(address(this), signers, authorized))
         );
     }
 }

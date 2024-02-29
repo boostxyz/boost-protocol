@@ -22,6 +22,7 @@ library BoostLib {
         Validator validator;
         uint256 protocolFee;
         uint256 referralFee;
+        uint256 rewardAmount;
         uint256 maxParticipants;
     }
 

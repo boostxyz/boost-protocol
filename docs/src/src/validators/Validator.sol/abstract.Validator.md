@@ -1,5 +1,5 @@
 # Validator
-[Git Source](https://github.com/rabbitholegg/boost-protocol/blob/f2d086cc13d3f2fcf119a54e6ed3b32a354cf098/src/validators/Validator.sol)
+[Git Source](https://github.com/rabbitholegg/boost-protocol/blob/6f67dc154ec78da76411fffa12a71fdb419e4e3c/src/validators/Validator.sol)
 
 **Inherits:**
 Ownable, [Cloneable](/src/Cloneable.sol/abstract.Cloneable.md)

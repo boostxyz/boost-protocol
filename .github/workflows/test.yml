@@ -34,3 +34,12 @@ jobs:
         run: |
           forge test -vvv
         id: test
+
+      - name: Build Documentation (mdBook)
+        run: forge doc --build
+
+      - name: Publish Documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/book

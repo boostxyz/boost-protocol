@@ -1,5 +1,5 @@
 # ERC721MintAction
-[Git Source](https://github.com/rabbitholegg/boost-protocol/blob/f2d086cc13d3f2fcf119a54e6ed3b32a354cf098/src/actions/ERC721MintAction.sol)
+[Git Source](https://github.com/rabbitholegg/boost-protocol/blob/6f67dc154ec78da76411fffa12a71fdb419e4e3c/src/actions/ERC721MintAction.sol)
 
 **Inherits:**
 [Action](/src/actions/Action.sol/abstract.Action.md), [Validator](/src/validators/Validator.sol/abstract.Validator.md)

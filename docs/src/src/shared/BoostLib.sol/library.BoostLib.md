@@ -1,5 +1,5 @@
 # BoostLib
-[Git Source](https://github.com/rabbitholegg/boost-protocol/blob/f2d086cc13d3f2fcf119a54e6ed3b32a354cf098/src/shared/BoostLib.sol)
+[Git Source](https://github.com/rabbitholegg/boost-protocol/blob/6f67dc154ec78da76411fffa12a71fdb419e4e3c/src/shared/BoostLib.sol)
 
 
 ## Functions

@@ -5,6 +5,9 @@ out/
 # Editor files
 .vscode/
 
+# Docs
+docs/
+
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/

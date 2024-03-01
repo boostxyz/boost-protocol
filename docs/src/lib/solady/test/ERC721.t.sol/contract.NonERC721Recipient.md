@@ -1,2 +1,0 @@
-# NonERC721Recipient
-

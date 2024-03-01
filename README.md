@@ -1,5 +1,7 @@
 # Boost Protocol
 
+[![Documentation](https://img.shields.io/badge/documentation-gh--pages-blue)](https://rabbitholegg.github.io/boost-protocol/index.html)
+
 > [!WARNING]
 > Boost Protocol is currently under active development and is not ready for production use. The code and documentation are subject to change. We recommend against building on top of the protocol prior to the first official release.
 

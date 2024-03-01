@@ -142,7 +142,10 @@ contract BoostRegistryTest is Test {
         );
 
         bytes32 expected = keccak256(
-            abi.encodePacked(BoostRegistry.RegistryType.ALLOW_LIST, keccak256(abi.encodePacked(address(baseAllowListImpl), address(this), "Test AllowList")))
+            abi.encodePacked(
+                BoostRegistry.RegistryType.ALLOW_LIST,
+                keccak256(abi.encodePacked(address(baseAllowListImpl), address(this), "Test AllowList"))
+            )
         );
 
         assertEq(identifier, expected);

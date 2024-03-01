@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {console} from "lib/forge-std/src/console.sol";
-
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 

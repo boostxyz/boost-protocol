@@ -1,0 +1,2 @@
+# NonERC1155Recipient
+

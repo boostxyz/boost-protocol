@@ -232,7 +232,7 @@ Boost Protocol is currently under active development and is not ready for produc
 <li><a href="src/actions/ERC721MintAction.sol/contract.ERC721MintAction.html">ERC721MintAction</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="action"><a class="header" href="#action">Action</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/actions/Action.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/actions/Action.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/actions/Action.sol//src/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
 <p>Abstract contract for a generic Action within the Boost protocol</p>
@@ -318,7 +318,7 @@ Boost Protocol is currently under active development and is not ready for produc
 <pre><code class="language-solidity">error ExecuteNotImplemented();
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="erc721mintaction"><a class="header" href="#erc721mintaction">ERC721MintAction</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/actions/ERC721MintAction.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/actions/ERC721MintAction.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/actions/ERC721MintAction.sol//src/actions/Action.sol/abstract.Action.html">Action</a>, <a href="src/actions/ERC721MintAction.sol//src/validators/Validator.sol/abstract.Validator.html">Validator</a></p>
 <p>A primitive action to mint and/or validate that an ERC721 token has been minted</p>
@@ -425,7 +425,7 @@ Boost Protocol is currently under active development and is not ready for produc
 <li><a href="src/allowlists/SimpleAllowList.sol/contract.SimpleAllowList.html">SimpleAllowList</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="allowlist"><a class="header" href="#allowlist">AllowList</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/allowlists/AllowList.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/allowlists/AllowList.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="src/allowlists/AllowList.sol//src/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
 <p>Abstract contract for a generic Allow List within the Boost protocol</p>
@@ -464,7 +464,7 @@ Ownable, <a href="src/allowlists/AllowList.sol//src/Cloneable.sol/abstract.Clone
 <tr><td><code>&lt;none&gt;</code></td><td><code>bool</code></td><td>True if the contract supports the interface</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="simpleallowlist"><a class="header" href="#simpleallowlist">SimpleAllowList</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/allowlists/SimpleAllowList.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/allowlists/SimpleAllowList.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/allowlists/SimpleAllowList.sol//src/allowlists/AllowList.sol/abstract.AllowList.html">AllowList</a></p>
 <p>A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses</p>
@@ -520,7 +520,7 @@ Ownable, <a href="src/allowlists/AllowList.sol//src/Cloneable.sol/abstract.Clone
 <li><a href="src/budgets/SimpleBudget.sol/contract.SimpleBudget.html">SimpleBudget</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="budget"><a class="header" href="#budget">Budget</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/budgets/Budget.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/budgets/Budget.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="src/budgets/Budget.sol//src/Cloneable.sol/abstract.Cloneable.html">Cloneable</a>, Receiver</p>
 <p>Abstract contract for a generic Budget within the Boost protocol</p>
@@ -662,11 +662,9 @@ Ownable, <a href="src/budgets/Budget.sol//src/Cloneable.sol/abstract.Cloneable.h
 </tbody></table>
 </div>
 <h3 id="receive"><a class="header" href="#receive">receive</a></h3>
-<p><em>For receiving ETH.</em></p>
 <pre><code class="language-solidity">receive() external payable virtual override;
 </code></pre>
 <h3 id="fallback"><a class="header" href="#fallback">fallback</a></h3>
-<p><em>Fallback function with the <code>receiverFallback</code> modifier.</em></p>
 <pre><code class="language-solidity">fallback() external payable virtual override;
 </code></pre>
 <h2 id="events-1"><a class="header" href="#events-1">Events</a></h2>
@@ -692,7 +690,7 @@ Ownable, <a href="src/budgets/Budget.sol//src/Cloneable.sol/abstract.Cloneable.h
 <pre><code class="language-solidity">error TransferFailed(address asset, address to, uint256 amount);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="simplebudget"><a class="header" href="#simplebudget">SimpleBudget</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/budgets/SimpleBudget.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/budgets/SimpleBudget.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/budgets/SimpleBudget.sol//src/budgets/Budget.sol/abstract.Budget.html">Budget</a></p>
 <p>A minimal budget implementation that simply holds and distributes assets.</p>
@@ -861,7 +859,7 @@ Ownable, <a href="src/budgets/Budget.sol//src/Cloneable.sol/abstract.Cloneable.h
 <li><a href="src/incentives/Incentive.sol/abstract.Incentive.html">Incentive</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="erc20incentive"><a class="header" href="#erc20incentive">ERC20Incentive</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/incentives/ERC20Incentive.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/incentives/ERC20Incentive.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/incentives/ERC20Incentive.sol//src/incentives/Incentive.sol/abstract.Incentive.html">Incentive</a></p>
 <p>A simple ERC20 incentive implementation that allows claiming of tokens</p>
@@ -972,7 +970,7 @@ Ownable, <a href="src/budgets/Budget.sol//src/Cloneable.sol/abstract.Cloneable.h
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="incentive"><a class="header" href="#incentive">Incentive</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/incentives/Incentive.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/incentives/Incentive.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="src/incentives/Incentive.sol//src/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
 <p>Abstract contract for a generic Incentive within the Boost protocol</p>
@@ -1046,7 +1044,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/Cloneable.sol/abstract.Clone
 <li><a href="src/shared/BoostLib.sol/library.BoostLib.html">BoostLib</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="boosterror"><a class="header" href="#boosterror">BoostError</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/shared/BoostError.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/shared/BoostError.sol">Git Source</a></p>
 <p>Standardized errors for the Boost protocol</p>
 <p><em>Some of these errors are introduced by third-party libraries, rather than Boost contracts directly, and are copied here for clarity and ease of testing.</em></p>
 <h2 id="errors-3"><a class="header" href="#errors-3">Errors</a></h2>
@@ -1079,7 +1077,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/Cloneable.sol/abstract.Clone
 <pre><code class="language-solidity">error Unauthorized();
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="boostlib"><a class="header" href="#boostlib">BoostLib</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/shared/BoostLib.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/shared/BoostLib.sol">Git Source</a></p>
 <h2 id="functions-8"><a class="header" href="#functions-8">Functions</a></h2>
 <h3 id="initialize-4"><a class="header" href="#initialize-4">initialize</a></h3>
 <pre><code class="language-solidity">function initialize(Boost storage $, bytes calldata data_) internal;
@@ -1109,7 +1107,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/Cloneable.sol/abstract.Clone
 <li><a href="src/validators/Validator.sol/abstract.Validator.html">Validator</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="signervalidator"><a class="header" href="#signervalidator">SignerValidator</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/validators/SignerValidator.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/validators/SignerValidator.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/validators/SignerValidator.sol//src/validators/Validator.sol/abstract.Validator.html">Validator</a></p>
 <p>A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers</p>
@@ -1164,7 +1162,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/Cloneable.sol/abstract.Clone
 <tr><td><code>authorized_</code></td><td><code>bool[]</code></td><td>The authorized status of each signer</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="validator-1"><a class="header" href="#validator-1">Validator</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/validators/Validator.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/validators/Validator.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="src/validators/Validator.sol//src/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
 <p>Abstract contract for a generic Validator within the Boost protocol</p>
@@ -1203,7 +1201,7 @@ Ownable, <a href="src/validators/Validator.sol//src/Cloneable.sol/abstract.Clone
 <tr><td><code>&lt;none&gt;</code></td><td><code>bool</code></td><td>True if the contract supports the interface</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="boostregistry"><a class="header" href="#boostregistry">BoostRegistry</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/BoostRegistry.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/BoostRegistry.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC165</p>
 <p>A registry for base implementations and cloned instances</p>
@@ -1472,14 +1470,14 @@ ERC165</p>
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cloneable"><a class="header" href="#cloneable">Cloneable</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/ba9c6e54527677de53ab276976ee9c54a6488783/src/Cloneable.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/4978f0d3b8f6b42effc4478b43b6586bc01553dd/src/Cloneable.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Initializable, ERC165</p>
 <p>A contract that can be cloned and initialized only once</p>
 <h2 id="functions-12"><a class="header" href="#functions-12">Functions</a></h2>
 <h3 id="initialize-6"><a class="header" href="#initialize-6">initialize</a></h3>
 <p>Initialize the clone with the given arbitrary data</p>
-<p><em>The data is expected to be ABI encoded bytes compressed using <a href="src/Cloneable.sol//lib/solady/src/utils/LibZip.sol/library.LibZip.html#cdcompress">LibZip-cdCompress</a></em></p>
+<p><em>The data is expected to be ABI encoded bytes compressed using {LibZip-cdCompress}</em></p>
 <p><em>All implementations must override this function to initialize the contract</em></p>
 <pre><code class="language-solidity">function initialize(bytes calldata) external virtual initializer;
 </code></pre>
@@ -1490,7 +1488,6 @@ Initializable, ERC165</p>
 </div>
 <h3 id="supportsinterface-6"><a class="header" href="#supportsinterface-6">supportsInterface</a></h3>
 <p>Check if the contract supports the given interface</p>
-<p><em>See {IERC165-supportsInterface}.</em></p>
 <pre><code class="language-solidity">function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool);
 </code></pre>
 <p><strong>Parameters</strong></p>

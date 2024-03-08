@@ -2,32 +2,17 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
+import {MockERC20} from "src/shared/Mocks.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
-
-import {ERC20} from "lib/solady/src/tokens/ERC20.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
 import {Incentive} from "src/incentives/Incentive.sol";
 import {ERC20Incentive} from "src/incentives/ERC20Incentive.sol";
 
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
-
-contract MockERC20 is ERC20 {
-    function name() public pure override returns (string memory) {
-        return "MockERC20";
-    }
-
-    function symbol() public pure override returns (string memory) {
-        return "MOCK";
-    }
-
-    function mint(address to, uint256 amount) public {
-        _mint(to, amount);
-    }
-}
 
 contract ERC20IncentiveTest is Test {
     using LibZip for bytes;

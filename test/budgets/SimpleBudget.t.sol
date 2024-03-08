@@ -2,7 +2,8 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20} from "lib/solady/test/utils/mocks/MockERC20.sol";
+import {MockERC20} from "src/shared/Mocks.sol";
+
 import {Initializable} from "lib/solady/src/utils/Initializable.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
@@ -19,7 +20,7 @@ contract SimpleBudgetTest is Test {
 
     function setUp() public {
         // Deploy a new MockERC20 contract and mint some tokens
-        mockERC20 = new MockERC20("MockERC20", "M20", 18);
+        mockERC20 = new MockERC20();
         mockERC20.mint(address(this), 100 ether);
 
         // Deploy a new SimpleBudget contract

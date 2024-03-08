@@ -68,16 +68,20 @@ contract ERC721MintAction is Action, Validator {
     /// @return The encoded payload to be sent with the call
     /// @dev Note that the mint value is NOT included in the prepared payload but must be sent with the call
     function prepare(bytes calldata data_) public view override returns (bytes memory) {
-        (address recipient) = abi.decode(data_, (address));
+        (address recipient) = abi.decode(data_.cdDecompress(), (address));
         return abi.encodeWithSelector(selector, recipient);
     }
 
     /// @inheritdoc Validator
     /// @notice Validate that the action has been completed successfully
-    /// @param data_ The data payload for the action `(address holder, uint256 tokenId)`
+    /// @param data_ The data payload for the action `(address holder, (uint256 tokenId))`
     /// @return success True if the action has been validated for the user
+    /// @dev The first 20 bytes of the payload must be the holder address and the remaining bytes must be an encoded token ID (uint256)
+    /// @dev Example: `abi.encode(address(holder), abi.encode(uint256(tokenId)))`
     function validate(bytes calldata data_) external virtual override(Action, Validator) returns (bool success) {
-        (address holder, uint256 tokenId) = abi.decode(data_.cdDecompress(), (address, uint256));
+        (address holder, bytes memory payload) = abi.decode(data_.cdDecompress(), (address, bytes));
+        uint256 tokenId = uint256(bytes32(payload));
+
         if (ERC721(target).ownerOf(tokenId) == holder && !validated[tokenId]) {
             validated[tokenId] = true;
             return true;

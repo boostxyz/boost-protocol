@@ -11,29 +11,7 @@ import {Action} from "src/actions/Action.sol";
 import {ERC721MintAction} from "src/actions/ERC721MintAction.sol";
 import {Validator} from "src/validators/Validator.sol";
 
-contract MockERC721 is ERC721 {
-    uint256 public totalSupply;
-    uint256 public mintPrice = 0.1 ether;
-
-    function name() public pure override returns (string memory) {
-        return "MockERC721";
-    }
-
-    function symbol() public pure override returns (string memory) {
-        return "MOCK";
-    }
-
-    function mint(address to) public payable {
-        require(msg.value >= mintPrice, "MockERC721: gimme more money!");
-        console.log("Minting token for", to, "with", msg.value);
-        // pre-increment so IDs start at 1
-        _mint(to, ++totalSupply);
-    }
-
-    function tokenURI(uint256 id) public view virtual override returns (string memory) {
-        return string(abi.encodePacked("https://example.com/token/", id));
-    }
-}
+import {MockERC721} from "src/shared/Mocks.sol";
 
 contract ERC721MintActionTest is Test {
     using LibZip for bytes;
@@ -81,7 +59,7 @@ contract ERC721MintActionTest is Test {
         _initialize(address(mockAsset), MockERC721.mint.selector, mockAsset.mintPrice());
 
         // Prepare the action
-        bytes memory payload = action.prepare(abi.encode(address(1)));
+        bytes memory payload = action.prepare(LibZip.cdCompress(abi.encode(address(1))));
         assertEq(payload, abi.encodeWithSelector(MockERC721.mint.selector, address(1)));
     }
 
@@ -90,7 +68,7 @@ contract ERC721MintActionTest is Test {
         _initialize(address(mockAsset), MockERC721.mint.selector, mockAsset.mintPrice());
 
         // Prepare the action
-        bytes memory payload = action.prepare(abi.encode(address(0xdeadbeef)));
+        bytes memory payload = action.prepare(LibZip.cdCompress(abi.encode(address(0xdeadbeef))));
         (bool success, bytes memory returnData) = address(mockAsset).call{value: mockAsset.mintPrice()}(payload);
         assertTrue(success);
         assertEq(returnData.length, 0);
@@ -111,7 +89,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), 1))));
+        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
     }
 
     function testValidate_WrongHolder() public {
@@ -123,7 +101,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action with an invalid holder
-        assertFalse(action.validate(LibZip.cdCompress(abi.encode(address(0xdeadbeef), 1))));
+        assertFalse(action.validate(LibZip.cdCompress(abi.encode(address(0xdeadbeef), abi.encode(1)))));
     }
 
     function testValidate_AlreadyValidated() public {
@@ -135,10 +113,10 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), 1))));
+        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
 
         // Validate the action again => false
-        assertFalse(action.validate(LibZip.cdCompress(abi.encode(address(this), 1))));
+        assertFalse(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
     }
 
     function testValidate_NonExistentToken() public {
@@ -147,7 +125,7 @@ contract ERC721MintActionTest is Test {
 
         // Validate the action with a non-existent token
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        action.validate(LibZip.cdCompress(abi.encode(address(this), 1)));
+        action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1))));
     }
 
     ////////////////////////////////
@@ -163,7 +141,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), 1))));
+        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
 
         // Check the validation status of the token
         assertTrue(action.validated(1));

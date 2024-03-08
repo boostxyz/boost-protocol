@@ -189,6 +189,9 @@ contract BoostRegistryTest is Test {
     function testDeployClone_Initialize() public {
         registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
 
+        address[] memory authorized = new address[](1);
+        authorized[0] = address(this);
+
         bytes32 salt = keccak256(
             abi.encodePacked(BoostRegistry.RegistryType.BUDGET, baseBudgetImpl, "Testing Budget", address(this))
         );
@@ -209,7 +212,7 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing Budget",
-            LibZip.cdCompress(abi.encode(address(this)))
+            LibZip.cdCompress(abi.encode(address(this), authorized))
         );
 
         assertTrue(instance.supportsInterface(type(Budget).interfaceId));
@@ -245,9 +248,8 @@ contract BoostRegistryTest is Test {
         registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
-            AllowList(address(0)),
             "Testing Budget",
-            LibZip.cdCompress(abi.encode(address(this)))
+            LibZip.cdCompress(abi.encode(address(this), new address[](0)))
         );
 
         BoostRegistry.Clone memory clone = registry.getClone(cloneId);

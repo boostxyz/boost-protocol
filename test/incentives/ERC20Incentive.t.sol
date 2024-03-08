@@ -150,7 +150,7 @@ contract ERC20IncentiveTest is Test {
     function testPreflight() public {
         // Check the preflight data
         bytes memory data = incentive.preflight(LibZip.cdCompress(abi.encode(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5)));
-        (address asset, uint256 amount) = abi.decode(data, (address, uint256));
+        (address asset, uint256 amount) = abi.decode(data.cdDecompress(), (address, uint256));
 
         assertEq(asset, address(mockAsset));
         assertEq(amount, 5 ether);
@@ -159,12 +159,12 @@ contract ERC20IncentiveTest is Test {
     function testPreflight_WeirdRewards() public {
         // Preflight with no reward amount
         bytes memory noRewards = incentive.preflight(LibZip.cdCompress(abi.encode(address(mockAsset), ERC20Incentive.Strategy.POOL, 0 ether, 5)));
-        (, uint256 shouldBeZero) = abi.decode(noRewards, (address, uint256));
+        (, uint256 shouldBeZero) = abi.decode(noRewards.cdDecompress(), (address, uint256));
         assertEq(shouldBeZero, 0);
 
         // Preflight with zero max claims
         bytes memory noClaims = incentive.preflight(LibZip.cdCompress(abi.encode(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 0)));
-        (, uint256 shouldAlsoBeZero) = abi.decode(noClaims, (address, uint256));
+        (, uint256 shouldAlsoBeZero) = abi.decode(noClaims.cdDecompress(), (address, uint256));
         assertEq(shouldAlsoBeZero, 0);
     }
 

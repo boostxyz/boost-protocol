@@ -16,7 +16,7 @@ import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 import {Incentive} from "src/incentives/Incentive.sol";
 
 import {BoostRegistry} from "src/BoostRegistry.sol";
-import {Cloneable} from "src/Cloneable.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 
 contract NotCloneable is ERC165 {
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {

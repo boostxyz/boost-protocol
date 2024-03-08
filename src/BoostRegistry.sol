@@ -4,16 +4,18 @@ pragma solidity ^0.8.24;
 import {ERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
+import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
-import {Cloneable} from "src/Cloneable.sol";
+import {BoostLib} from "src/shared/BoostLib.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 import {AllowList} from "src/allowlists/AllowList.sol";
 import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
 
 /// @title Boost Registry
 /// @notice A registry for base implementations and cloned instances
 /// @dev This contract is used to register base implementations and deploy new instances of those implementations for use within the Boost protocol
-contract BoostRegistry is ERC165 {
-    using LibClone for address;
+contract BoostRegistry is ERC165, ReentrancyGuard {
+    using BoostLib for address;
 
     /// @notice The types of bases that can be registered
     enum RegistryType {
@@ -111,14 +113,15 @@ contract BoostRegistry is ERC165 {
         AllowList allowList_,
         string calldata name_,
         bytes calldata data_
-    ) external returns (Cloneable instance) {
+    ) external nonReentrant returns (Cloneable instance) {
         // Deploy a new {SimpleAllowList} for the clone if it's a {Budget} or {Incentive} type and none was provided
         if (address(allowList_) == address(0) && (type_ == RegistryType.BUDGET || type_ == RegistryType.INCENTIVE)) {
             allowList_ = _deployAllowList(msg.sender);
         }
 
         // Deploy and initialize the clone
-        instance = _deployAndInitialize(base_, keccak256(abi.encodePacked(type_, base_, name_, msg.sender)), data_);
+        instance =
+            Cloneable(base_.cloneAndInitialize(keccak256(abi.encodePacked(type_, base_, name_, msg.sender)), data_));
 
         // Ensure the clone's identifier is unique
         bytes32 identifier = getCloneIdentifier(type_, base_, msg.sender, name_);
@@ -193,20 +196,7 @@ contract BoostRegistry is ERC165 {
 
         bytes memory allowListData = LibZip.cdCompress(abi.encode(msg.sender, allowList_, allowed_));
         address allowListBase_ = address(getBaseImplementation(_getIdentifier(RegistryType.ALLOW_LIST, allowListName)));
-        return SimpleAllowList(address(_deployAndInitialize(allowListBase_, keccak256(allowListData), allowListData)));
-    }
-
-    /// @notice Deploy a new clone of a given implementation with a deterministic salt and initialization payload
-    /// @param base_ The address of the base implementation to clone
-    /// @param salt_ The salt to use for deterministic deployment
-    /// @param data_ The data payload for the cloned instance's initializer
-    /// @return instance The address of the deployed instance
-    function _deployAndInitialize(address base_, bytes32 salt_, bytes memory data_)
-        internal
-        returns (Cloneable instance)
-    {
-        instance = Cloneable(base_.cloneDeterministic(salt_));
-        instance.initialize(data_);
+        return SimpleAllowList(address(allowListBase_.cloneAndInitialize(keccak256(allowListData), allowListData)));
     }
 
     /// @notice Build a unique identifier for a given type and hash

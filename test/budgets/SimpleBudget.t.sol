@@ -9,7 +9,7 @@ import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {Budget} from "src/budgets/Budget.sol";
-import {Cloneable} from "src/Cloneable.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
 contract SimpleBudgetTest is Test {

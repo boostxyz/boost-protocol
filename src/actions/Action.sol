@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Cloneable} from "src/Cloneable.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 import {Validator} from "src/validators/Validator.sol";
 
 /// @title Boost Action

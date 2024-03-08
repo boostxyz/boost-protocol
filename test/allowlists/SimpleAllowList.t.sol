@@ -7,7 +7,7 @@ import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
-import {Cloneable} from "src/Cloneable.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 import {AllowList} from "src/allowlists/AllowList.sol";
 import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
 

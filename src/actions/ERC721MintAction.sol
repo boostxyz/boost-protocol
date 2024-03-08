@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 
-import {Cloneable} from "src/Cloneable.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 import {Action} from "src/actions/Action.sol";
 import {Validator} from "src/validators/Validator.sol";
 

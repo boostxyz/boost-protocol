@@ -5,7 +5,7 @@ import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {Budget} from "./Budget.sol";
-import {Cloneable} from "src/Cloneable.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 
 /// @title Simple Budget
 /// @notice A minimal budget implementation that simply holds and distributes assets.

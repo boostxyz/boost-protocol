@@ -12,7 +12,7 @@ import {MockERC1271Wallet} from "lib/solady/test/utils/mocks/MockERC1271Wallet.s
 import {MockERC1271Malicious} from "lib/solady/test/utils/mocks/MockERC1271Malicious.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
-import {Cloneable} from "src/Cloneable.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
 import {Validator} from "src/validators/Validator.sol";
 import {SignerValidator} from "src/validators/SignerValidator.sol";
 

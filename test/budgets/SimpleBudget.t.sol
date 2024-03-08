@@ -9,6 +9,7 @@ import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
+import {BoostError} from "src/shared/BoostError.sol";
 import {Budget} from "src/budgets/Budget.sol";
 import {Cloneable} from "src/shared/Cloneable.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
@@ -72,17 +73,18 @@ contract SimpleBudgetTest is Test {
 
     function testInitialize() public {
         // Initializer can only be called on clones, not the base contract
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this)));
+        bytes memory data = LibZip.cdCompress(abi.encode(address(this), new address[](0)));
         SimpleBudget clone = SimpleBudget(payable(LibClone.clone(address(simpleBudget))));
         clone.initialize(data);
 
-        // Ensure the budget has the correct owner
+        // Ensure the budget has the correct authorities
         assertEq(clone.owner(), address(this));
+        assertEq(clone.isAuthorized(address(this)), true);
     }
 
     function testInitialize_BaseContract() public {
         // Initializer can only be called on clones, not the base contract
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this)));
+        bytes memory data = LibZip.cdCompress(abi.encode(address(this), new address[](0)));
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         simpleBudget.initialize(data);
     }
@@ -91,17 +93,17 @@ contract SimpleBudgetTest is Test {
         bytes memory data;
 
         // with uncompressed but properly encoded data
-        data = abi.encode(address(this));
+        data = abi.encode(address(this), new address[](0));
         vm.expectRevert();
         simpleBudget.initialize(data);
 
         // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(address(this)));
+        data = LibZip.cdCompress(abi.encodePacked(address(this), new address[](0)));
         vm.expectRevert();
         simpleBudget.initialize(data);
 
         // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(address(this))));
+        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(address(this), new address[](0))));
         vm.expectRevert();
         simpleBudget.initialize(data);
     }
@@ -615,6 +617,61 @@ contract SimpleBudgetTest is Test {
     function testReconcile() public {
         // SimpleBudget does not implement reconcile
         assertEq(simpleBudget.reconcile(""), 0);
+    }
+
+    ////////////////////////////////
+    // SimpleBudget.setAuthorized //
+    ////////////////////////////////
+
+    function testSetAuthorized() public {
+        // Ensure the budget authorizes an account
+        address[] memory accounts = new address[](1);
+        bool[] memory authorized = new bool[](1);
+        accounts[0] = address(0xc0ffee);
+        authorized[0] = true;
+        simpleBudget.setAuthorized(accounts, authorized);
+        assertTrue(simpleBudget.isAuthorized(address(0xc0ffee)));
+        assertFalse(simpleBudget.isAuthorized(address(0xdeadbeef)));
+    }
+
+    function testSetAuthorized_NotOwner() public {
+        // Ensure the budget does not authorize an account if not called by the owner
+        vm.prank(address(0xdeadbeef));
+
+        address[] memory accounts = new address[](1);
+        bool[] memory authorized = new bool[](1);
+        accounts[0] = address(0xc0ffee);
+        authorized[0] = true;
+
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        simpleBudget.setAuthorized(accounts, authorized);
+    }
+
+    function testSetAuthorized_LengthMismatch() public {
+        address[] memory accounts = new address[](1);
+        bool[] memory authorized = new bool[](2);
+
+        vm.expectRevert(Budget.LengthMismatch.selector);
+        simpleBudget.setAuthorized(accounts, authorized);
+    }
+
+    ///////////////////////////////
+    // SimpleBudget.isAuthorized //
+    ///////////////////////////////
+
+    function testIsAuthorized() public {
+        address[] memory accounts = new address[](1);
+        bool[] memory authorized = new bool[](1);
+        accounts[0] = address(0xc0ffee);
+        authorized[0] = true;
+        simpleBudget.setAuthorized(accounts, authorized);
+
+        assertTrue(simpleBudget.isAuthorized(address(0xc0ffee)));
+        assertFalse(simpleBudget.isAuthorized(address(0xdeadbeef)));
+    }
+
+    function testIsAuthorized_Owner() public {
+        assertTrue(simpleBudget.isAuthorized(address(this)));
     }
 
     ////////////////////////////////////

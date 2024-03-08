@@ -6,6 +6,7 @@ import {Ownable} from "lib/solady/src/auth/Ownable.sol";
 import {Receiver} from "lib/solady/src/accounts/Receiver.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
+import {BoostError} from "src/shared/BoostError.sol";
 import {Cloneable} from "src/shared/Cloneable.sol";
 
 /// @title Boost Budget
@@ -16,6 +17,9 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 abstract contract Budget is Ownable, Cloneable, Receiver {
     using LibZip for bytes;
     using SafeTransferLib for address;
+
+    /// @notice Emitted when an address's authorization status changes
+    event Authorized(address indexed account, bool isAuthorized);
 
     /// @notice Emitted when assets are distributed from the budget
     event Distributed(address indexed asset, address to, uint256 amount);
@@ -84,6 +88,18 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Budget).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    /// @notice Set the authorized status of the given accounts
+    /// @param accounts_ The accounts to authorize or deauthorize
+    /// @param isAuthorized_ The authorization status for the given accounts
+    /// @dev The mechanism for managing authorization is left to the implementing contract
+    function setAuthorized(address[] calldata accounts_, bool[] calldata isAuthorized_) external virtual;
+
+    /// @notice Check if the given account is authorized to use the budget
+    /// @param account_ The account to check
+    /// @return True if the account is authorized
+    /// @dev The mechanism for checking authorization is left to the implementing contract
+    function isAuthorized(address account_) external view virtual returns (bool);
 
     /// @inheritdoc Receiver
     receive() external payable virtual override {

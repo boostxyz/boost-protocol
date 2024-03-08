@@ -9,7 +9,6 @@ import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 import {BoostLib} from "src/shared/BoostLib.sol";
 import {Cloneable} from "src/shared/Cloneable.sol";
 import {AllowList} from "src/allowlists/AllowList.sol";
-import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
 
 /// @title Boost Registry
 /// @notice A registry for base implementations and cloned instances
@@ -31,12 +30,8 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @param name The display name for the clone
     /// @param instance The address of the clone
     /// @param deployer The address of the deployer
-    /// @param allowList The allowList for the clone (optional for {Action}, {AllowList} and {Validator} types, required for all {Budget} and {Incentive} types)
-    /// @dev The `allowList` is used to restrict access to the clone (i.e. only the allowed addresses can leverage the clone). If it is set to `address(0)`, usage of the clone is unrestricted.
-    /// @dev The `deployer` is the initial owner of the allowList and can modify it at any time, with the caveat that any in-flight Boosts using the clone will NOT be affected.
     struct Clone {
         RegistryType baseType;
-        AllowList allowList;
         Cloneable instance;
         address deployer;
         string name;
@@ -101,24 +96,16 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @notice Deploy a new instance of a registered base implementation
     /// @param type_ The type of base implementation to be cloned
     /// @param base_ The address of the base implementation to clone
-    /// @param allowList_ The allowList for the clone (optional for {Action}, {AllowList} and {Validator} types, required for all {Budget} and {Incentive} types)
     /// @param name_ The display name for the clone
     /// @param data_ The data payload for the cloned instance's initializer
     /// @return instance The address of the deployed instance
-    /// @dev This function will deploy a new {SimpleAllowList} for the clone if it's a {Budget} or {Incentive} type and none was provided
     /// @dev This function will either emit a `Deployed` event and return the clone or revert
     function deployClone(
         RegistryType type_,
         address base_,
-        AllowList allowList_,
         string calldata name_,
         bytes calldata data_
     ) external nonReentrant returns (Cloneable instance) {
-        // Deploy a new {SimpleAllowList} for the clone if it's a {Budget} or {Incentive} type and none was provided
-        if (address(allowList_) == address(0) && (type_ == RegistryType.BUDGET || type_ == RegistryType.INCENTIVE)) {
-            allowList_ = _deployAllowList(msg.sender);
-        }
-
         // Deploy and initialize the clone
         instance =
             Cloneable(base_.cloneAndInitialize(keccak256(abi.encodePacked(type_, base_, name_, msg.sender)), data_));
@@ -130,7 +117,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
         // Register and report the newly deployed clone
         _deployedClones[msg.sender].push(identifier);
         _clones[identifier] =
-            Clone({baseType: type_, allowList: allowList_, instance: instance, deployer: msg.sender, name: name_});
+            Clone({baseType: type_, instance: instance, deployer: msg.sender, name: name_});
 
         emit Deployed(type_, identifier, base_, instance);
     }
@@ -180,20 +167,6 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @return identifier The unique identifier for the implementation
     function getIdentifier(RegistryType type_, string calldata name_) public pure returns (bytes32 identifier) {
         return _getIdentifier(type_, keccak256(abi.encodePacked(name_)));
-    }
-
-    /// @notice Deploy a new {SimpleAllowList} clone and initialize it with the given owner
-    /// @param owner_ The address of the owner for the allowList
-    /// @return allowList The address of the deployed allowList
-    function _deployAllowList(address owner_) internal returns (SimpleAllowList allowList) {
-        string memory allowListName = "SimpleAllowList";
-
-        address[] memory allowList_ = new address[](1);
-        allowList_[0] = owner_;
-
-        bytes memory allowListData = LibZip.cdCompress(abi.encode(msg.sender, allowList_));
-        address allowListBase_ = address(getBaseImplementation(_getIdentifier(RegistryType.ALLOW_LIST, allowListName)));
-        return SimpleAllowList(address(allowListBase_.cloneAndInitialize(keccak256(allowListData), allowListData)));
     }
 
     /// @notice Build a unique identifier for a given type and hash

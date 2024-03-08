@@ -177,7 +177,6 @@ contract BoostRegistryTest is Test {
         registry.deployClone(
             BoostRegistry.RegistryType.ALLOW_LIST,
             address(baseAllowListImpl),
-            AllowList(address(0)),
             "Test AllowList",
             LibZip.cdCompress(abi.encode(address(this), new address[](0), new bool[](0)))
         );
@@ -205,7 +204,6 @@ contract BoostRegistryTest is Test {
         Cloneable instance = registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
-            AllowList(address(0)),
             "Testing Budget",
             LibZip.cdCompress(abi.encode(address(this)))
         );
@@ -217,71 +215,17 @@ contract BoostRegistryTest is Test {
     function testDeployClone_Initialize_Fail() public {
         registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
 
-        vm.expectRevert(abi.encodeWithSelector(Cloneable.InvalidInitializationData.selector));
-
+        vm.expectRevert(); // Totally invalid initialization data => EVM panic
         registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
-            AllowList(address(0)),
             "Testing Budget",
             LibZip.cdCompress(
                 abi.encode(
-                    unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool* but not expected by the implementation... wcgw?!"
+                    unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool* but not valid here... panic at the EVM disco!"
                 )
             )
         );
-    }
-
-    function testDeployClone_CustomAllowList() public {
-        MockAllowList customAllowList = new MockAllowList();
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
-
-        bytes32 cloneId = registry.getCloneIdentifier(
-            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
-        );
-        registry.deployClone(
-            BoostRegistry.RegistryType.BUDGET,
-            address(baseBudgetImpl),
-            customAllowList,
-            "Testing Budget",
-            LibZip.cdCompress(abi.encode(address(this)))
-        );
-
-        BoostRegistry.Clone memory clone = registry.getClone(cloneId);
-
-        // Ensure the clone is assigned the custom AllowList
-        assertEq(address(clone.allowList), address(customAllowList));
-
-        // Ensure the allowList actually works
-        assertTrue(clone.allowList.isAllowed(address(0xdeadbeef), ""));
-        assertFalse(clone.allowList.isAllowed(address(1), ""));
-    }
-
-    function testDeployClone_DefaultAllowList() public {
-        MockIncentive mockIncentive = new MockIncentive();
-        registry.register(BoostRegistry.RegistryType.INCENTIVE, "MockIncentive", address(mockIncentive));
-
-        bytes32 cloneId = registry.getCloneIdentifier(
-            BoostRegistry.RegistryType.INCENTIVE, address(mockIncentive), address(this), "Test Incentive"
-        );
-
-        registry.deployClone(
-            BoostRegistry.RegistryType.INCENTIVE,
-            address(mockIncentive),
-            AllowList(address(0)),
-            "Test Incentive",
-            new bytes(0)
-        );
-
-        BoostRegistry.Clone memory clone = registry.getClone(cloneId);
-
-        // Ensure the clone is assigned an allowList
-        assertNotEq(address(clone.allowList), address(0));
-
-        // Ensure the default allowList is properly initialized
-        assertEq(clone.allowList.owner(), address(this));
-        assertTrue(clone.allowList.isAllowed(address(this), ""));
-        assertFalse(clone.allowList.isAllowed(address(0xdeadbeef), ""));
     }
 
     ////////////////////////////
@@ -354,7 +298,6 @@ contract BoostRegistryTest is Test {
         clone = registry.deployClone(
             BoostRegistry.RegistryType.ALLOW_LIST,
             address(baseAllowListImpl),
-            AllowList(address(0)),
             name,
             LibZip.cdCompress(abi.encode(address(this), signers, authorized))
         );

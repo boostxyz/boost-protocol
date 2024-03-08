@@ -20,17 +20,15 @@ contract SimpleAllowList is AllowList {
         _disableInitializers();
     }
 
-    /// @notice Initialize the contract with the list of authorized signers
-    /// @param data_ The compressed initialization data `(address owner, address[] allowList, bool[] allowed)`
+    /// @notice Initialize the contract with the list of allowed addresses
+    /// @param data_ The compressed initialization data `(address owner, address[] allowList)`
     function initialize(bytes calldata data_) external virtual override initializer {
-        (address owner_, address[] memory allowList_, bool[] memory allowed_) =
-            abi.decode(data_.cdDecompress(), (address, address[], bool[]));
+        (address owner_, address[] memory allowList_) =
+            abi.decode(data_.cdDecompress(), (address, address[]));
 
         _initializeOwner(owner_);
-
-        if (allowList_.length != allowed_.length) revert BoostError.LengthMismatch();
         for (uint256 i = 0; i < allowList_.length; i++) {
-            _allowed[allowList_[i]] = allowed_[i];
+            _allowed[allowList_[i]] = true;
         }
     }
 

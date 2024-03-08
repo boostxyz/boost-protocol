@@ -18,23 +18,14 @@ contract SimpleAllowListTest is Test {
     function setUp() public {
         allowList = SimpleAllowList(LibClone.clone(address(baseAllowList)));
 
-        address[] memory users = new address[](3);
-        bool[] memory allowed = new bool[](3);
+        address[] memory users = new address[](2);
 
-        // address(1) is allowed
+        // address(1) and address(3) are allowed
         users[0] = address(1);
-        allowed[0] = true;
-
-        // address(2) is not allowed
-        users[1] = address(2);
-        allowed[1] = false;
-
-        // address(3) is allowed
-        users[2] = address(3);
-        allowed[2] = true;
+        users[1] = address(3);
 
         // Set the allow list
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this), users, allowed));
+        bytes memory data = LibZip.cdCompress(abi.encode(address(this), users));
         allowList.initialize(data);
     }
 
@@ -45,16 +36,14 @@ contract SimpleAllowListTest is Test {
     function testInitialize() public {
         SimpleAllowList freshClone = SimpleAllowList(LibClone.clone(address(baseAllowList)));
         address[] memory users = new address[](1);
-        bool[] memory allowed = new bool[](1);
         users[0] = address(1);
-        allowed[0] = true;
 
         // Ensure the fresh clone is not initialized (no owner or allowlist set)
         assertEq(freshClone.owner(), address(0));
         assertFalse(freshClone.isAllowed(address(1), ""));
 
         // Initialize the fresh clone
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this), users, allowed));
+        bytes memory data = LibZip.cdCompress(abi.encode(address(this), users));
         freshClone.initialize(data);
 
         // Ensure the fresh clone is initialized
@@ -76,18 +65,9 @@ contract SimpleAllowListTest is Test {
         assertNotEq(version, 0, "Version should not be 0");
     }
 
-    function testInitialize_LengthMismatch() public {
-        SimpleAllowList freshClone = SimpleAllowList(LibClone.clone(address(baseAllowList)));
-        address[] memory users = new address[](1);
-        bool[] memory allowed = new bool[](2);
-
-        vm.expectRevert(BoostError.LengthMismatch.selector);
-        freshClone.initialize(LibZip.cdCompress(abi.encode(address(this), users, allowed)));
-    }
-
     function testInitializer_AlreadyInitialized() public {
         vm.expectRevert(BoostError.InvalidInitialization.selector);
-        allowList.initialize(LibZip.cdCompress(abi.encode(address(this), new address[](0), new bool[](0))));
+        allowList.initialize(LibZip.cdCompress(abi.encode(address(this), new address[](0))));
     }
 
     ///////////////////////////////
@@ -98,13 +78,12 @@ contract SimpleAllowListTest is Test {
         assertTrue(allowList.isAllowed(address(1), ""));
         assertFalse(allowList.isAllowed(address(2), ""));
         assertTrue(allowList.isAllowed(address(3), ""));
-        assertFalse(allowList.isAllowed(address(42), ""));
     }
 
     function testIsAllowed_UnnecessaryData() public {
         // Extra data should have no effect on the result because it is ignored in this implementation
         assertTrue(allowList.isAllowed(address(1), unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"));
-        assertFalse(allowList.isAllowed(address(2), abi.encodePacked(uint8(42), keccak256("unexpected"), "data")));
+        assertFalse(allowList.isAllowed(address(2), abi.encodePacked(uint8(42), keccak256("unexpected"), "data!!1!one1!")));
     }
 
     ////////////////////////////////

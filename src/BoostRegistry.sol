@@ -191,10 +191,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
         address[] memory allowList_ = new address[](1);
         allowList_[0] = owner_;
 
-        bool[] memory allowed_ = new bool[](1);
-        allowed_[0] = true;
-
-        bytes memory allowListData = LibZip.cdCompress(abi.encode(msg.sender, allowList_, allowed_));
+        bytes memory allowListData = LibZip.cdCompress(abi.encode(msg.sender, allowList_));
         address allowListBase_ = address(getBaseImplementation(_getIdentifier(RegistryType.ALLOW_LIST, allowListName)));
         return SimpleAllowList(address(allowListBase_.cloneAndInitialize(keccak256(allowListData), allowListData)));
     }

@@ -1,17 +1,19 @@
-name: test
+name: Run Tests and Update Docs
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
 
 env:
   FOUNDRY_PROFILE: ci
 
 jobs:
   check:
-    strategy:
-      fail-fast: true
-
     name: Build and Test
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,6 +38,7 @@ jobs:
         id: test
 
   docs:
+    needs: check
     name: Deploy Docs
     runs-on: ubuntu-latest
 

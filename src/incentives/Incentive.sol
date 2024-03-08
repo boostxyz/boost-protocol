@@ -35,6 +35,12 @@ abstract contract Incentive is Ownable, Cloneable {
     /// @return True if the incentive is claimable based on the data payload
     function isClaimable(bytes calldata data_) external view virtual returns (bool);
 
+    /// @notice Get the required allowance for the incentive
+    /// @param data_ The initialization payload for the incentive
+    /// @return The data payload to be passed to the {Budget} for interpretation
+    /// @dev This function is called by {BoostCore} before the incentive is initialized to determine the required allowance for the incentive. If the incentive does not require any budget allowance, this function should return `(address(0), 0, bytes(""))`.
+    function preflight(bytes calldata data_) external view virtual returns (bytes memory);
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Incentive).interfaceId || super.supportsInterface(interfaceId);

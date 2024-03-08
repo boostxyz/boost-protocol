@@ -50,8 +50,7 @@ contract ERC20Incentive is Incentive {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed incentive parameters `(address asset, Strategy strategy, uint256 reward, uint256 maxClaims)`
     function initialize(bytes calldata data_) external override initializer {
-        (address asset_, Strategy strategy_, uint256 reward_, uint256 maxClaims_) =
-            abi.decode(data_.cdDecompress(), (address, Strategy, uint256, uint256));
+        (address asset_, Strategy strategy_, uint256 reward_, uint256 maxClaims_) = _unpackInitializationData(data_);
 
         // Ensure the strategy is valid (MINT is not yet supported)
         if (strategy_ == Strategy.MINT) revert BoostError.NotImplemented();
@@ -92,6 +91,15 @@ contract ERC20Incentive is Incentive {
         return false;
     }
 
+    /// @inheritdoc Incentive
+    /// @notice Get the required allowance for the incentive
+    /// @param data_ The initialization payload for the incentive
+    /// @return budgetData The data payload to be passed to the Budget for interpretation
+    function preflight(bytes calldata data_) external pure override returns (bytes memory budgetData) {
+        (address asset_,, uint256 reward_, uint256 maxClaims_) = _unpackInitializationData(data_);
+        return LibZip.cdCompress(abi.encode(asset_, reward_ * maxClaims_));
+    }
+
     /// @notice Check if an incentive is claimable
     /// @param data_ The data payload for the claim check `(address recipient, bytes data)`
     /// @return True if the incentive is claimable based on the data payload
@@ -117,5 +125,20 @@ contract ERC20Incentive is Incentive {
         returns (address recipient, bytes memory data)
     {
         return abi.decode(data_.cdDecompress(), (address, bytes));
+    }
+
+    /// @notice Unpack the data payload for the initialization operation
+    /// @param data_ The compressed data needed for initialization `(address asset, Strategy strategy, uint256 reward, uint256 maxClaims)`
+    /// @return _asset The address of the ERC20-like token
+    /// @return _strategy The strategy for the incentive
+    /// @return _reward The reward amount issued for each claim
+    /// @return _maxClaims The maximum number of claims that can be made
+    function _unpackInitializationData(bytes calldata data_)
+        internal
+        pure
+        returns (address _asset, Strategy _strategy, uint256 _reward, uint256 _maxClaims)
+    {
+        (_asset, _strategy, _reward, _maxClaims) =
+            abi.decode(data_.cdDecompress(), (address, Strategy, uint256, uint256));
     }
 }

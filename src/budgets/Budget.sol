@@ -135,7 +135,7 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
 
     /// @inheritdoc Receiver
     receive() external payable virtual override {
-        // Nothing to do here, but we need the function to be implemented
+        return;
     }
 
     /// @inheritdoc Receiver

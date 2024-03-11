@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {LibString} from "lib/solady/src/utils/LibString.sol";
 import {ERC20} from "lib/solady/src/tokens/ERC20.sol";
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
+import {ERC1155} from "lib/solady/src/tokens/ERC1155.sol";
 
 /**
  * 🚨 WARNING: The mocks in this file are for testing purposes only. DO NOT use
@@ -12,7 +13,8 @@ import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
  * associated with someone who makes such poor life choices.
  */
 
-/// @notice A mock ERC721 token
+/// @title MockERC721
+/// @notice A mock ERC721 token (FOR TESTING PURPOSES ONLY)
 contract MockERC721 is ERC721 {
     uint256 public totalSupply;
     uint256 public mintPrice = 0.1 ether;
@@ -36,6 +38,8 @@ contract MockERC721 is ERC721 {
     }
 }
 
+/// @title MockERC20
+/// @notice A mock ERC20 token (FOR TESTING PURPOSES ONLY)
 contract MockERC20 is ERC20 {
     function name() public pure override returns (string memory) {
         return "Mock ERC20";
@@ -47,5 +51,21 @@ contract MockERC20 is ERC20 {
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
+    }
+}
+
+/// @title MockERC1155
+/// @notice A mock ERC1155 token (FOR TESTING PURPOSES ONLY)
+contract MockERC1155 is ERC1155 {
+    function uri(uint256 id) public view virtual override returns (string memory) {
+        return string(abi.encodePacked("https://example.com/token/", LibString.toString(id)));
+    }
+
+    function mint(address to, uint256 id, uint256 amount) public {
+        _mint(to, id, amount, "");
+    }
+
+    function burn(address from, uint256 id, uint256 amount) public {
+        _burn(from, id, amount);
     }
 }

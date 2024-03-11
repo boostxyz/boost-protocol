@@ -2,32 +2,43 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20} from "src/shared/Mocks.sol";
 
+import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {Initializable} from "lib/solady/src/utils/Initializable.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
+import {MockERC20, MockERC1155} from "src/shared/Mocks.sol";
 import {BoostError} from "src/shared/BoostError.sol";
 import {Budget} from "src/budgets/Budget.sol";
 import {Cloneable} from "src/shared/Cloneable.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
-contract SimpleBudgetTest is Test {
+contract SimpleBudgetTest is Test, IERC1155Receiver {
     using LibZip for bytes;
 
     MockERC20 mockERC20;
     MockERC20 otherMockERC20;
+    MockERC1155 mockERC1155;
     SimpleBudget simpleBudget;
 
     function setUp() public {
-        // Deploy a new MockERC20 contract and mint some tokens
+        // Deploy a new ERC20 contract and mint 100 tokens
         mockERC20 = new MockERC20();
         mockERC20.mint(address(this), 100 ether);
 
+        // Deploy a new ERC1155 contract and mint 100 of token ID 42
+        mockERC1155 = new MockERC1155();
+        mockERC1155.mint(address(this), 42, 100);
+
         // Deploy a new SimpleBudget contract
-        simpleBudget = new SimpleBudget();
+        simpleBudget = SimpleBudget(payable(LibClone.clone(address(new SimpleBudget()))));
+        simpleBudget.initialize(
+            LibZip.cdCompress(
+                abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
+            )
+        );
     }
 
     ////////////////////////////////
@@ -44,14 +55,29 @@ contract SimpleBudgetTest is Test {
         assertEq(simpleBudget.total(address(mockERC20)), 0);
     }
 
+    function test_InitialDistributed1155() public {
+        // Ensure the budget has 0 of our 1155 tokens distributed
+        assertEq(simpleBudget.total(address(mockERC1155), 42), 0);
+    }
+
     function test_InitialTotal() public {
         // Ensure the budget has 0 tokens allocated
         assertEq(simpleBudget.total(address(mockERC20)), 0);
     }
 
+    function test_InitialTotal1155() public {
+        // Ensure the budget has 0 of our 1155 tokens allocated
+        assertEq(simpleBudget.total(address(mockERC1155), 42), 0);
+    }
+
     function test_InitialAvailable() public {
         // Ensure the budget has 0 tokens available
         assertEq(simpleBudget.available(address(mockERC20)), 0);
+    }
+
+    function test_InitialAvailable1155() public {
+        // Ensure the budget has 0 of our 1155 tokens available
+        assertEq(simpleBudget.available(address(mockERC1155), 42), 0);
     }
 
     function test_InitializerDisabled() public {
@@ -84,15 +110,6 @@ contract SimpleBudgetTest is Test {
         // Ensure the budget has the correct authorities
         assertEq(clone.owner(), address(this));
         assertEq(clone.isAuthorized(address(this)), true);
-    }
-
-    function testInitialize_BaseContract() public {
-        // Initializer can only be called on clones, not the base contract
-        bytes memory data = LibZip.cdCompress(
-            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
-        );
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
-        simpleBudget.initialize(data);
     }
 
     function testInitialize_ImproperData() public {
@@ -137,6 +154,25 @@ contract SimpleBudgetTest is Test {
 
         // Ensure the budget has 100 tokens
         assertEq(simpleBudget.available(address(0)), 100 ether);
+    }
+
+    function testAllocate_ERC1155() public {
+        // Approve the budget to transfer tokens
+        mockERC1155.setApprovalForAll(address(simpleBudget), true);
+
+        // Allocate 100 of token ID 42 to the budget
+        bytes memory data = LibZip.cdCompress(
+            abi.encode(Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            }))
+        );
+        assertTrue(simpleBudget.allocate(data));
+
+        // Ensure the budget has 100 of token ID 42
+        assertEq(simpleBudget.available(address(mockERC1155), 42), 100);
     }
 
     function testAllocate_NativeBalanceValueMismatch() public {
@@ -212,6 +248,51 @@ contract SimpleBudgetTest is Test {
 
         // Ensure the budget has 1 token left
         assertEq(simpleBudget.available(address(mockERC20)), 1 ether);
+    }
+
+    function testReclaim_NativeBalance() public {
+        // Allocate 100 ETH to the budget
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        simpleBudget.allocate{value: 100 ether}(data);
+        assertEq(simpleBudget.available(address(0)), 100 ether);
+
+        // Reclaim 99 ETH from the budget
+        data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 99 ether);
+        assertTrue(simpleBudget.reclaim(data));
+
+        // Ensure the budget has 1 ETH left
+        assertEq(simpleBudget.available(address(0)), 1 ether);
+    }
+
+    function testReclaim_ERC1155() public {
+        // Approve the budget to transfer tokens
+        mockERC1155.setApprovalForAll(address(simpleBudget), true);
+
+        // Allocate 100 of token ID 42 to the budget
+        bytes memory data = LibZip.cdCompress(
+            abi.encode(Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            }))
+        );
+        simpleBudget.allocate(data);
+        assertEq(simpleBudget.available(address(mockERC1155), 42), 100);
+
+        // Reclaim 99 of token ID 42 from the budget
+        data = LibZip.cdCompress(
+            abi.encode(Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
+            }))
+        );
+        assertTrue(simpleBudget.reclaim(data));
+
+        // Ensure the budget has 1 of token ID 42 left
+        assertEq(simpleBudget.available(address(mockERC1155), 42), 1);
     }
 
     function testReclaim_ZeroAmount() public {
@@ -341,36 +422,90 @@ contract SimpleBudgetTest is Test {
         assertEq(simpleBudget.distributed(address(mockERC20)), 100 ether);
     }
 
+    function testDisburse_NativeBalance() public {
+        // Allocate 100 ETH to the budget
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        simpleBudget.allocate{value: 100 ether}(data);
+
+        // Disburse 100 ETH from the budget to the recipient
+        data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 100 ether);
+        assertTrue(simpleBudget.disburse(data));
+        assertEq(address(1).balance, 100 ether);
+
+        // Ensure the budget was drained
+        assertEq(simpleBudget.available(address(0)), 0);
+        assertEq(simpleBudget.distributed(address(0)), 100 ether);
+    }
+
+    function testDisburse_ERC1155() public {
+        // Approve the budget to transfer tokens
+        mockERC1155.setApprovalForAll(address(simpleBudget), true);
+
+        // Allocate 100 of token ID 42 to the budget
+        bytes memory data = LibZip.cdCompress(
+            abi.encode(Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            }))
+        );
+        simpleBudget.allocate(data);
+        assertEq(simpleBudget.total(address(mockERC1155), 42), 100);
+
+        // Disburse 100 of token ID 42 from the budget to the recipient
+        data = LibZip.cdCompress(
+            abi.encode(Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(1),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            }))
+        );
+        assertTrue(simpleBudget.disburse(data));
+        assertEq(mockERC1155.balanceOf(address(1), 42), 100);
+
+        // Ensure the budget was drained
+        assertEq(simpleBudget.available(address(mockERC1155), 42), 0);
+        assertEq(simpleBudget.distributed(address(mockERC1155), 42), 100);
+    }
+
     function testDisburseBatch() public {
         // Approve the budget to transfer tokens
-        mockERC20.approve(address(simpleBudget), 100 ether);
+        mockERC20.approve(address(simpleBudget), 50 ether);
+        mockERC1155.setApprovalForAll(address(simpleBudget), true);
 
-        // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
-        simpleBudget.allocate(data);
-        assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
+        // Allocate the assets to the budget
+        simpleBudget.allocate(_makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether));
+        simpleBudget.allocate{value: 25 ether}(_makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 25 ether));
+        simpleBudget.allocate(_makeERC1155Transfer(address(mockERC1155), address(this), 42, 50, bytes("")));
+        assertEq(simpleBudget.total(address(mockERC20)), 50 ether);
+        assertEq(simpleBudget.total(address(0)), 25 ether);
+        assertEq(simpleBudget.total(address(mockERC1155), 42), 50);
 
-        // Prepare the disbursement data
-        bytes[] memory requests = new bytes[](2);
+        // Prepare the disbursement requests
+        bytes[] memory requests = new bytes[](3);
         requests[0] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
-        requests[1] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(2), 50 ether);
+        requests[1] = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(2), 25 ether);
+        requests[2] = _makeERC1155Transfer(address(mockERC1155), address(3), 42, 10, bytes(""));
 
         // Disburse:
         // 25 tokens to address(1); and
-        // 50 tokens to address(2)
+        // 25 ETH to address(2); and
+        // 50 of token ID 42 to address(3)
         assertTrue(simpleBudget.disburseBatch(requests));
 
-        // Ensure the budget has 25 tokens left
+        // Ensure the budget sent 25 tokens to address(1) and has 25 left
         assertEq(simpleBudget.available(address(mockERC20)), 25 ether);
-
-        // Ensure the budget has 75 tokens distributed
-        assertEq(simpleBudget.distributed(address(mockERC20)), 75 ether);
-
-        // Ensure the budget sent 25 tokens to address(1)
+        assertEq(simpleBudget.distributed(address(mockERC20)), 25 ether);
         assertEq(mockERC20.balanceOf(address(1)), 25 ether);
 
-        // Ensure the budget sent 50 tokens to address(2)
-        assertEq(mockERC20.balanceOf(address(2)), 50 ether);
+        // Ensure the budget sent 25 ETH to address(2) and has 0 left
+        assertEq(address(2).balance, 25 ether);
+        assertEq(simpleBudget.available(address(0)), 0 ether);
+
+        // Ensure the budget sent 10 of token ID 42 to address(3) and has 40 left
+        assertEq(simpleBudget.available(address(mockERC1155), 42), 40);
     }
 
     function testDisburse_InsufficientFunds() public {
@@ -743,8 +878,10 @@ contract SimpleBudgetTest is Test {
     ///////////////////////////
 
     function testReceive() public {
-        // Ensure the receive function is payable
-        assertTrue(payable(simpleBudget).send(1 ether));
+        // Ensure the receive function catches non-fallback ETH transfers
+        (bool success,) = payable(simpleBudget).call{value: 1 ether}("");
+        assertTrue(success);
+        assertEq(simpleBudget.available(address(0)), 1 ether);
     }
 
     ///////////////////////////
@@ -768,5 +905,41 @@ contract SimpleBudgetTest is Test {
         }
 
         return LibZip.cdCompress(abi.encode(transfer));
+    }
+
+    function _makeERC1155Transfer(address asset, address target, uint256 tokenId, uint256 value, bytes memory data)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        Budget.Transfer memory transfer;
+        transfer.assetType = Budget.AssetType.ERC1155;
+        transfer.asset = asset;
+        transfer.target = target;
+        transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: value, data: data}));
+
+        return LibZip.cdCompress(abi.encode(transfer));
+    }
+
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return IERC1155Receiver.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return IERC1155Receiver.onERC1155BatchReceived.selector;
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId;
     }
 }

@@ -100,6 +100,22 @@ contract ERC20Incentive is Incentive {
     }
 
     /// @inheritdoc Incentive
+    function reclaim(bytes calldata data_) external override onlyOwner returns (bool) {
+        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        (uint256 amount) = abi.decode(claim_.data, (uint256));
+
+        // Ensure the amount is a multiple of the reward and reduce the max claims accordingly
+        if (amount % reward != 0) revert BoostError.ClaimFailed(msg.sender, abi.encodePacked(claim_.target, amount));
+        maxClaims -= amount / reward;
+
+        // Transfer the tokens back to the intended recipient
+        asset.safeTransfer(claim_.target, amount);
+        emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, amount));
+
+        return true;
+    }
+
+    /// @inheritdoc Incentive
     /// @notice Preflight the incentive to determine the required budget action
     /// @param data_ The {InitPayload} for the incentive
     /// @return budgetData The {Transfer} payload to be passed to the {Budget} for interpretation

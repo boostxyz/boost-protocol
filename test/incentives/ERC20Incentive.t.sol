@@ -110,6 +110,41 @@ contract ERC20IncentiveTest is Test {
         incentive.claim(claimPayload);
     }
 
+    ////////////////////////////
+    // ERC20Incentive.reclaim //
+    ////////////////////////////
+
+    function testReclaim() public {
+        // Initialize the ERC20Incentive
+        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 100);
+        assertEq(incentive.maxClaims(), 100);
+
+        // Reclaim 50x the reward amount
+        bytes memory reclaimPayload =
+            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50 ether)})));
+        incentive.reclaim(reclaimPayload);
+        assertEq(mockAsset.balanceOf(address(1)), 50 ether);
+
+        // Check that enough assets remain to cover 50 more claims
+        assertEq(mockAsset.balanceOf(address(incentive)), 50 ether);
+        assertEq(incentive.maxClaims(), 50);
+    }
+
+    function testReclaim_InvalidAmount() public {
+        // Initialize the ERC20Incentive
+        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 100);
+
+        // Reclaim 50.1x => not an integer multiple of the reward amount => revert
+        bytes memory reclaimPayload =
+            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50.1 ether)})));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BoostError.ClaimFailed.selector, address(this), abi.encodePacked(address(1), uint256(50.1 ether))
+            )
+        );
+        incentive.reclaim(reclaimPayload);
+    }
+
     ////////////////////////////////
     // ERC20Incentive.isClaimable //
     ////////////////////////////////

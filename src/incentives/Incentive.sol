@@ -38,6 +38,11 @@ abstract contract Incentive is Ownable, Cloneable {
     /// @return True if the incentive was successfully claimed
     function claim(bytes calldata data_) external virtual returns (bool);
 
+    /// @notice Reclaim assets from the incentive
+    /// @param data_ The data payload for the reclaim
+    /// @return True if the assets were successfully reclaimed
+    function reclaim(bytes calldata data_) external virtual returns (bool);
+
     /// @notice Check if an incentive is claimable
     /// @param data_ The data payload for the claim check (data, signature, etc.)
     /// @return True if the incentive is claimable based on the data payload

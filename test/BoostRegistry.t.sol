@@ -44,6 +44,10 @@ contract MockIncentive is Incentive {
     function preflight(bytes calldata) external view virtual override returns (bytes memory) {
         return new bytes(0);
     }
+
+    function reclaim(bytes calldata) external virtual override returns (bool) {
+        return true;
+    }
 }
 
 contract BoostRegistryTest is Test {

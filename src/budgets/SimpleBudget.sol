@@ -108,14 +108,17 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
         if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
-            uint256 amount = payload.amount == 0 ? available(request.asset) : payload.amount;
-            _transferFungible(request.asset, request.target, amount);
+            _transferFungible(
+                request.asset, request.target, payload.amount == 0 ? available(request.asset) : payload.amount
+            );
         } else if (request.assetType == AssetType.ERC1155) {
             ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
-            uint256 amount =
-                payload.amount == 0 ? IERC1155(request.asset).balanceOf(address(this), payload.tokenId) : payload.amount;
-            IERC1155(request.asset).safeTransferFrom(
-                address(this), request.target, payload.tokenId, amount, payload.data
+            _transferERC1155(
+                request.asset,
+                request.target,
+                payload.tokenId,
+                payload.amount == 0 ? IERC1155(request.asset).balanceOf(address(this), payload.tokenId) : payload.amount,
+                payload.data
             );
         } else {
             return false;

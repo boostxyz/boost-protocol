@@ -162,12 +162,14 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 of token ID 42 to the budget
         bytes memory data = LibZip.cdCompress(
-            abi.encode(Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
-                asset: address(mockERC1155),
-                target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-            }))
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC1155,
+                    asset: address(mockERC1155),
+                    target: address(this),
+                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                })
+            )
         );
         assertTrue(simpleBudget.allocate(data));
 
@@ -270,24 +272,28 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 of token ID 42 to the budget
         bytes memory data = LibZip.cdCompress(
-            abi.encode(Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
-                asset: address(mockERC1155),
-                target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-            }))
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC1155,
+                    asset: address(mockERC1155),
+                    target: address(this),
+                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                })
+            )
         );
         simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC1155), 42), 100);
 
         // Reclaim 99 of token ID 42 from the budget
         data = LibZip.cdCompress(
-            abi.encode(Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
-                asset: address(mockERC1155),
-                target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
-            }))
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC1155,
+                    asset: address(mockERC1155),
+                    target: address(this),
+                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
+                })
+            )
         );
         assertTrue(simpleBudget.reclaim(data));
 
@@ -443,24 +449,28 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 of token ID 42 to the budget
         bytes memory data = LibZip.cdCompress(
-            abi.encode(Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
-                asset: address(mockERC1155),
-                target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-            }))
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC1155,
+                    asset: address(mockERC1155),
+                    target: address(this),
+                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                })
+            )
         );
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC1155), 42), 100);
 
         // Disburse 100 of token ID 42 from the budget to the recipient
         data = LibZip.cdCompress(
-            abi.encode(Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
-                asset: address(mockERC1155),
-                target: address(1),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-            }))
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC1155,
+                    asset: address(mockERC1155),
+                    target: address(1),
+                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                })
+            )
         );
         assertTrue(simpleBudget.disburse(data));
         assertEq(mockERC1155.balanceOf(address(1), 42), 100);
@@ -476,8 +486,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC1155.setApprovalForAll(address(simpleBudget), true);
 
         // Allocate the assets to the budget
-        simpleBudget.allocate(_makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether));
-        simpleBudget.allocate{value: 25 ether}(_makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 25 ether));
+        simpleBudget.allocate(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+        );
+        simpleBudget.allocate{value: 25 ether}(
+            _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 25 ether)
+        );
         simpleBudget.allocate(_makeERC1155Transfer(address(mockERC1155), address(this), 42, 50, bytes("")));
         assertEq(simpleBudget.total(address(mockERC20)), 50 ether);
         assertEq(simpleBudget.total(address(0)), 25 ether);

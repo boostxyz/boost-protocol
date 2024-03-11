@@ -14,12 +14,17 @@ contract SimpleBudget is Budget {
     using LibZip for bytes;
     using SafeTransferLib for address;
 
-    /// @dev The total amount of each asset distributed from the budget
+    /// @notice The payload for initializing a SimpleBudget
+    struct InitPayload {
+        address owner;
+        address[] authorized;
+    }
+
+    /// @dev The total amount of each fungible asset distributed from the budget
     mapping(address => uint256) private _distributed;
 
     /// @dev The mapping of authorized addresses
     mapping(address => bool) private _isAuthorized;
-
 
     /// @notice A modifier that allows only authorized addresses to call the function
     modifier onlyAuthorized() {
@@ -36,29 +41,37 @@ contract SimpleBudget is Budget {
     /// @inheritdoc Cloneable
     /// @param data_ The compressed init data for the budget `(address owner, address[] authorized)`
     function initialize(bytes calldata data_) external virtual override initializer {
-        (address owner_, address[] memory authorized_) = abi.decode(data_.cdDecompress(), (address, address[]));
-        _initializeOwner(owner_);
-        for (uint256 i = 0; i < authorized_.length; i++) {
-            _isAuthorized[authorized_[i]] = true;
+        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        _initializeOwner(init_.owner);
+        for (uint256 i = 0; i < init_.authorized.length; i++) {
+            _isAuthorized[init_.authorized[i]] = true;
         }
     }
 
     /// @inheritdoc Budget
     /// @notice Allocates assets to the budget
-    /// @param data_ The compressed data for the allocation `(address asset, uint256 amount)`
+    /// @param data_ The compressed data for the {Transfer} request
     /// @return True if the allocation was successful
     /// @dev The caller must have already approved the contract to transfer the asset
     /// @dev If the asset transfer fails, the allocation will revert
     function allocate(bytes calldata data_) external payable virtual override returns (bool) {
-        (address asset, uint256 amount) = abi.decode(data_.cdDecompress(), (address, uint256));
+        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        if (request.assetType == AssetType.ETH) {
+            FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
 
-        if (asset == address(0)) {
-            // Ensure the value received is equal to the `amount`
-            if (msg.value != amount) revert InvalidAllocation(asset, amount);
+            // Ensure the value received is equal to the `payload.amount`
+            if (msg.value != payload.amount) revert InvalidAllocation(request.asset, payload.amount);
+        } else if (request.assetType == AssetType.ERC20) {
+            FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
+
+            // Transfer `payload.amount` of the token to this contract
+            request.asset.safeTransferFrom(request.target, address(this), payload.amount);
+            if (request.asset.balanceOf(address(this)) < payload.amount) {
+                revert InvalidAllocation(request.asset, payload.amount);
+            }
         } else {
-            // Transfer the asset to the budget
-            asset.safeTransferFrom(msg.sender, address(this), amount);
-            if (asset.balanceOf(address(this)) < amount) revert InvalidAllocation(asset, amount);
+            // Unsupported asset type
+            return false;
         }
 
         return true;
@@ -72,69 +85,56 @@ contract SimpleBudget is Budget {
     /// @dev If the amount is zero, the entire balance of the asset will be transferred to the receiver
     /// @dev If the asset transfer fails, the reclamation will revert
     function reclaim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        (address asset, uint256 amount, address receiver) =
-            abi.decode(data_.cdDecompress(), (address, uint256, address));
-
-        // Ensure the amount is available to reclaim
-        uint256 avail = available(asset);
-        if (amount > avail) revert InsufficientFunds(asset, avail, amount);
-        if (receiver == address(0)) revert SafeTransferLib.TransferFailed();
-
-        // If the amount is zero, use the entire balance
-        if (amount == 0) amount = avail;
-        _transfer(asset, receiver, amount);
+        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
+            FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
+            uint256 amount = payload.amount == 0 ? available(request.asset) : payload.amount;
+            _transfer(request.asset, request.target, amount);
+        } else {
+            return false;
+        }
 
         return true;
     }
 
     /// @inheritdoc Budget
     /// @notice Disburses assets from the budget to a single recipient
-    /// @param recipient_ The address of the recipient
-    /// @param data_ The compressed data for the disbursement `(address asset, uint256 amount)`
+    /// @param data_ The compressed {Transfer} request
     /// @return True if the disbursement was successful
     /// @dev If the asset transfer fails, the disbursement will revert
-    function disburse(address recipient_, bytes calldata data_)
-        public
-        virtual
-        override
-        onlyAuthorized
-        returns (bool)
-    {
-        (address asset, uint256 amount) = abi.decode(data_.cdDecompress(), (address, uint256));
-
-        // Ensure the amount is available for disbursement
-        if (amount > available(asset)) {
-            revert InsufficientFunds(asset, available(asset), amount);
+    function disburse(bytes calldata data_) public virtual override onlyAuthorized returns (bool) {
+        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        if (request.assetType == AssetType.ERC20 || request.assetType == AssetType.ETH) {
+            FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
+            uint256 avail = available(request.asset);
+            if (payload.amount > avail) revert InsufficientFunds(request.asset, avail, payload.amount);
+            _transfer(request.asset, request.target, payload.amount);
+        } else {
+            return false;
         }
-
-        // Transfer the asset to the recipient
-        _transfer(asset, recipient_, amount);
 
         return true;
     }
 
     /// @inheritdoc Budget
     /// @notice Disburses assets from the budget to multiple recipients
-    /// @param recipients_ The addresses of the recipients
-    /// @param data_ The compressed data for the disbursements `(address assets, uint256 amounts)[]`
+    /// @param data_ The compressed array of {Transfer} requests
     /// @return True if all disbursements were successful
-    function disburseBatch(address[] calldata recipients_, bytes[] calldata data_)
-        external
-        virtual
-        override
-        returns (bool)
-    {
-        if (recipients_.length != data_.length) revert LengthMismatch();
-
-        for (uint256 i = 0; i < recipients_.length; i++) {
-            if (!disburse(recipients_[i], data_[i])) return false;
+    function disburseBatch(bytes[] calldata data_) external virtual override returns (bool) {
+        for (uint256 i = 0; i < data_.length; i++) {
+            if (!disburse(data_[i])) return false;
         }
 
         return true;
     }
 
     /// @inheritdoc Budget
-    function setAuthorized(address[] calldata account_, bool[] calldata authorized_) external virtual override onlyOwner {
+    function setAuthorized(address[] calldata account_, bool[] calldata authorized_)
+        external
+        virtual
+        override
+        onlyOwner
+    {
         if (account_.length != authorized_.length) revert LengthMismatch();
         for (uint256 i = 0; i < account_.length; i++) {
             _isAuthorized[account_[i]] = authorized_[i];
@@ -183,9 +183,13 @@ contract SimpleBudget is Budget {
     /// @param asset_ The address of the asset
     /// @param to_ The address of the recipient
     /// @param amount_ The amount of the asset to transfer
-    /// @dev This function is used to transfer assets from the budget to the recipient
+    /// @dev This function is used to transfer assets from the budget to a given recipient (typically an incentive contract)
+    /// @dev If the destination address is the zero address, or the transfer fails for any reason, this function will revert
     function _transfer(address asset_, address to_, uint256 amount_) internal virtual {
         // Increment the total amount of the asset distributed from the budget
+        if (to_ == address(0)) revert TransferFailed(asset_, to_, amount_);
+        if (amount_ > available(asset_)) revert InsufficientFunds(asset_, available(asset_), amount_);
+
         _distributed[asset_] += amount_;
 
         // Transfer the asset to the recipient

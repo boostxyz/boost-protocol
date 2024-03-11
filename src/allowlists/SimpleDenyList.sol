@@ -23,8 +23,7 @@ contract SimpleDenyList is AllowList {
     /// @notice Initialize the contract with the initial list of denied addresses
     /// @param data_ The compressed initialization data `(address owner, address[] denyList)`
     function initialize(bytes calldata data_) external virtual override initializer {
-        (address owner_, address[] memory denyList_) =
-            abi.decode(data_.cdDecompress(), (address, address[]));
+        (address owner_, address[] memory denyList_) = abi.decode(data_.cdDecompress(), (address, address[]));
 
         _initializeOwner(owner_);
         for (uint256 i = 0; i < denyList_.length; i++) {

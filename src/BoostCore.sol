@@ -114,7 +114,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
         if (!boost.action.validate(data_)) revert BoostError.Unauthorized();
-        if (!boost.incentives[incentiveId_].claim(data_)) revert BoostError.ClaimFailed(msg.sender, data_);
+        if (
+            !boost.incentives[incentiveId_].claim(
+                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: msg.sender, data: data_})))
+            )
+        ) revert BoostError.ClaimFailed(msg.sender, data_);
     }
 
     /// @notice Get a Boost by index
@@ -177,7 +181,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             incentives[i] = Incentive(_makeTarget(type(Incentive).interfaceId, targets_[i], false));
 
             // wake-disable-next-line reentrancy (false positive, single entrypoint is nonReentrant)
-            assert(budget_.disburse(address(incentives[i]), incentives[i].preflight(targets_[i].parameters)));
+            assert(budget_.disburse(incentives[i].preflight(targets_[i].parameters)));
 
             // wake-disable-next-line reentrancy (false positive, single entrypoint is nonReentrant)
             incentives[i].initialize(targets_[i].parameters);

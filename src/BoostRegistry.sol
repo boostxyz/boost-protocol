@@ -100,12 +100,11 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @param data_ The data payload for the cloned instance's initializer
     /// @return instance The address of the deployed instance
     /// @dev This function will either emit a `Deployed` event and return the clone or revert
-    function deployClone(
-        RegistryType type_,
-        address base_,
-        string calldata name_,
-        bytes calldata data_
-    ) external nonReentrant returns (Cloneable instance) {
+    function deployClone(RegistryType type_, address base_, string calldata name_, bytes calldata data_)
+        external
+        nonReentrant
+        returns (Cloneable instance)
+    {
         // Deploy and initialize the clone
         instance =
             Cloneable(base_.cloneAndInitialize(keccak256(abi.encodePacked(type_, base_, name_, msg.sender)), data_));
@@ -116,8 +115,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
 
         // Register and report the newly deployed clone
         _deployedClones[msg.sender].push(identifier);
-        _clones[identifier] =
-            Clone({baseType: type_, instance: instance, deployer: msg.sender, name: name_});
+        _clones[identifier] = Clone({baseType: type_, instance: instance, deployer: msg.sender, name: name_});
 
         emit Deployed(type_, identifier, base_, instance);
     }

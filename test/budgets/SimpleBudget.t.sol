@@ -15,6 +15,8 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
 contract SimpleBudgetTest is Test {
+    using LibZip for bytes;
+
     MockERC20 mockERC20;
     MockERC20 otherMockERC20;
     SimpleBudget simpleBudget;
@@ -73,7 +75,9 @@ contract SimpleBudgetTest is Test {
 
     function testInitialize() public {
         // Initializer can only be called on clones, not the base contract
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this), new address[](0)));
+        bytes memory data = LibZip.cdCompress(
+            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
+        );
         SimpleBudget clone = SimpleBudget(payable(LibClone.clone(address(simpleBudget))));
         clone.initialize(data);
 
@@ -84,7 +88,9 @@ contract SimpleBudgetTest is Test {
 
     function testInitialize_BaseContract() public {
         // Initializer can only be called on clones, not the base contract
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this), new address[](0)));
+        bytes memory data = LibZip.cdCompress(
+            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
+        );
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         simpleBudget.initialize(data);
     }
@@ -117,8 +123,8 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = abi.encode(mockERC20, 100 ether);
-        assertTrue(simpleBudget.allocate(LibZip.cdCompress(data)));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        assertTrue(simpleBudget.allocate(data));
 
         // Ensure the budget has 100 tokens
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
@@ -126,7 +132,7 @@ contract SimpleBudgetTest is Test {
 
     function testAllocate_NativeBalance() public {
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(address(0), 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
 
         // Ensure the budget has 100 tokens
@@ -135,7 +141,7 @@ contract SimpleBudgetTest is Test {
 
     function testAllocate_NativeBalanceValueMismatch() public {
         // Encode an allocation of 100 ETH
-        bytes memory data = LibZip.cdCompress(abi.encode(address(0), 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
 
         // Expect a revert due to a value mismatch (too much ETH)
         vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(0), uint256(100 ether)));
@@ -148,9 +154,9 @@ contract SimpleBudgetTest is Test {
 
     function testAllocate_NoApproval() public {
         // Allocate 100 tokens to the budget without approval
-        bytes memory data = abi.encode(mockERC20, 100 ether);
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
-        simpleBudget.allocate(LibZip.cdCompress(data));
+        simpleBudget.allocate(data);
     }
 
     function testAllocate_InsufficientFunds() public {
@@ -158,9 +164,9 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 101 tokens to the budget
-        bytes memory data = abi.encode(mockERC20, 101 ether);
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
         vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
-        simpleBudget.allocate(LibZip.cdCompress(data));
+        simpleBudget.allocate(data);
     }
 
     function testAllocate_ImproperData() public {
@@ -170,26 +176,19 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // with uncompressed but properly encoded data
-        data = abi.encode(mockERC20, 100 ether);
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         vm.expectRevert();
-        simpleBudget.allocate(data);
+        simpleBudget.allocate(data.cdDecompress());
 
         // with compressed but improperly encoded data
         data = LibZip.cdCompress(abi.encodePacked(mockERC20, uint256(100 ether)));
         vm.expectRevert();
         simpleBudget.allocate(data);
 
-        // with compressed and properly encoded but out of order data
-        data = LibZip.cdCompress(abi.encode(100 ether, mockERC20));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Budget.InvalidAllocation.selector, address(100 ether), uint256(uint160(address(mockERC20)))
-            )
-        );
-        simpleBudget.allocate(data);
-
         // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        data = LibZip.cdCompress(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+        );
         vm.expectRevert();
         simpleBudget.allocate(data);
     }
@@ -203,16 +202,16 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = abi.encode(mockERC20, 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(data));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
 
-        // Reclaim 100 tokens from the budget
-        data = abi.encode(mockERC20, 100 ether, address(this));
-        assertTrue(simpleBudget.reclaim(LibZip.cdCompress(data)));
+        // Reclaim 99 tokens from the budget
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 99 ether);
+        assertTrue(simpleBudget.reclaim(data));
 
-        // Ensure the budget has 0 tokens
-        assertEq(simpleBudget.available(address(mockERC20)), 0);
+        // Ensure the budget has 1 token left
+        assertEq(simpleBudget.available(address(mockERC20)), 1 ether);
     }
 
     function testReclaim_ZeroAmount() public {
@@ -220,15 +219,15 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = abi.encode(mockERC20, 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(data));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
 
         // Reclaim all tokens from the budget
-        data = abi.encode(mockERC20, 0, address(this));
-        assertTrue(simpleBudget.reclaim(LibZip.cdCompress(data)));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 0);
+        assertTrue(simpleBudget.reclaim(data));
 
-        // Ensure the budget has 100 tokens
+        // Ensure the budget has no tokens left
         assertEq(simpleBudget.available(address(mockERC20)), 0 ether);
     }
 
@@ -237,14 +236,16 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = abi.encode(mockERC20, 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(data));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
 
         // Reclaim 100 tokens from the budget to address(0)
-        data = abi.encode(mockERC20, 100 ether, address(0));
-        vm.expectRevert(SafeTransferLib.TransferFailed.selector);
-        simpleBudget.reclaim(LibZip.cdCompress(data));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0), 100 ether);
+        vm.expectRevert(
+            abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC20), address(0), uint256(100 ether))
+        );
+        simpleBudget.reclaim(data);
 
         // Ensure the budget has 100 tokens
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
@@ -255,18 +256,18 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = abi.encode(mockERC20, 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(data));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Reclaim 101 tokens from the budget
-        data = abi.encode(mockERC20, 101 ether, address(this));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
         vm.expectRevert(
             abi.encodeWithSelector(
                 Budget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
             )
         );
-        simpleBudget.reclaim(LibZip.cdCompress(data));
+        simpleBudget.reclaim(data);
     }
 
     function testReclaim_ImproperData() public {
@@ -276,14 +277,14 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        data = abi.encode(mockERC20, 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(data));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // with uncompressed but properly encoded data
-        data = abi.encode(mockERC20, 100 ether, address(this));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         vm.expectRevert();
-        simpleBudget.reclaim(data);
+        simpleBudget.reclaim(data.cdDecompress());
 
         // with compressed but improperly encoded data
         data = LibZip.cdCompress(abi.encodePacked(mockERC20, uint256(100 ether), address(this)));
@@ -291,9 +292,8 @@ contract SimpleBudgetTest is Test {
         simpleBudget.reclaim(data);
 
         // with compressed and properly encoded but out of order data
-        data = LibZip.cdCompress(abi.encode(100 ether, mockERC20, address(this)));
+        data = LibZip.cdCompress(abi.encode(Budget.AssetType.ERC20, 100 ether, mockERC20, address(this)));
         vm.expectRevert();
-        // abi.encodeWithSelector(Budget.InsufficientFunds.selector, address(mockERC20), uint(100 ether), uint(0))
         simpleBudget.reclaim(data);
 
         // with double-compressed, properly encoded data
@@ -307,12 +307,12 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Try to reclaim 100 tokens from the budget as a non-owner
-        data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether, address(this)));
+        // We can reuse the data from above because the target is `address(this)` in both cases
         vm.prank(address(1));
         vm.expectRevert();
         simpleBudget.reclaim(data);
@@ -327,18 +327,17 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Disburse 100 tokens from the budget to the recipient
-        data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
-        assertTrue(simpleBudget.disburse(address(this), data));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
+        assertTrue(simpleBudget.disburse(data));
+        assertEq(mockERC20.balanceOf(address(1)), 100 ether);
 
-        // Ensure the budget has 0 tokens available
+        // Ensure the budget was drained
         assertEq(simpleBudget.available(address(mockERC20)), 0);
-
-        // Ensure the budget has 100 tokens distributed
         assertEq(simpleBudget.distributed(address(mockERC20)), 100 ether);
     }
 
@@ -347,24 +346,19 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Prepare the disbursement data
-        address[] memory addrs = new address[](2);
-        bytes[] memory datas = new bytes[](2);
-
-        addrs[0] = address(1);
-        datas[0] = LibZip.cdCompress(abi.encode(mockERC20, 25 ether));
-
-        addrs[1] = address(2);
-        datas[1] = LibZip.cdCompress(abi.encode(mockERC20, 50 ether));
+        bytes[] memory requests = new bytes[](2);
+        requests[0] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
+        requests[1] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(2), 50 ether);
 
         // Disburse:
         // 25 tokens to address(1); and
         // 50 tokens to address(2)
-        assertTrue(simpleBudget.disburseBatch(addrs, datas));
+        assertTrue(simpleBudget.disburseBatch(requests));
 
         // Ensure the budget has 25 tokens left
         assertEq(simpleBudget.available(address(mockERC20)), 25 ether);
@@ -379,37 +373,23 @@ contract SimpleBudgetTest is Test {
         assertEq(mockERC20.balanceOf(address(2)), 50 ether);
     }
 
-    function testDisburseBatch_LengthMismatch() public {
-        // Prepare the disbursement data
-        address[] memory addrs = new address[](1);
-        bytes[] memory datas = new bytes[](2);
-
-        addrs[0] = address(1);
-        datas[0] = LibZip.cdCompress(abi.encode(mockERC20, 25 ether));
-        datas[1] = LibZip.cdCompress(abi.encode(mockERC20, 50 ether));
-
-        // Expect a revert due to a length mismatch
-        vm.expectRevert(Budget.LengthMismatch.selector);
-        simpleBudget.disburseBatch(addrs, datas);
-    }
-
     function testDisburse_InsufficientFunds() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Disburse 101 tokens from the budget to the recipient
-        data = LibZip.cdCompress(abi.encode(mockERC20, 101 ether));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 101 ether);
         vm.expectRevert(
             abi.encodeWithSelector(
                 Budget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
             )
         );
-        simpleBudget.disburse(address(this), data);
+        simpleBudget.disburse(data);
     }
 
     function testDisburse_ImproperData() public {
@@ -419,30 +399,31 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // with uncompressed but properly encoded data
-        data = abi.encode(mockERC20, 100 ether);
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         vm.expectRevert();
-        simpleBudget.disburse(address(this), data);
+        simpleBudget.disburse(data.cdDecompress());
 
         // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(mockERC20, uint256(100 ether)));
+        data = LibZip.cdCompress(abi.encode(1, mockERC20, uint256(100 ether)));
         vm.expectRevert();
-        simpleBudget.disburse(address(this), data);
+        simpleBudget.disburse(data);
 
         // with compressed and properly encoded but out of order data
-        data = LibZip.cdCompress(abi.encode(100 ether, mockERC20));
+        data = LibZip.cdCompress(abi.encode(1, 100 ether, mockERC20));
         vm.expectRevert();
-        // abi.encodeWithSelector(Budget.InsufficientFunds.selector, address(mockERC20), uint(100 ether), uint(0))
-        simpleBudget.disburse(address(this), data);
+        simpleBudget.disburse(data);
 
         // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        data = LibZip.cdCompress(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+        );
         vm.expectRevert();
-        simpleBudget.disburse(address(this), data);
+        simpleBudget.disburse(data);
     }
 
     function testDisburse_NotOwner() public {
@@ -450,15 +431,15 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Try to disburse 100 tokens from the budget as a non-owner
-        data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
-        vm.prank(address(1));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0xdeadbeef), 100 ether);
+        vm.prank(address(0xc0ffee));
         vm.expectRevert();
-        simpleBudget.disburse(address(this), data);
+        simpleBudget.disburse(data);
     }
 
     function testDisburse_FailedTransfer() public {
@@ -466,7 +447,7 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
@@ -478,9 +459,9 @@ contract SimpleBudgetTest is Test {
         );
 
         // Try to disburse 100 tokens from the budget
-        data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
         vm.expectRevert(SafeTransferLib.TransferFailed.selector);
-        simpleBudget.disburse(address(1), data);
+        simpleBudget.disburse(data);
     }
 
     function testDisburse_FailedTransferInBatch() public {
@@ -488,19 +469,15 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(mockERC20, 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Prepare the disbursement data
-        address[] memory addrs = new address[](2);
-        bytes[] memory datas = new bytes[](2);
-
-        addrs[0] = address(1);
-        datas[0] = LibZip.cdCompress(abi.encode(mockERC20, 25 ether));
-
-        addrs[1] = address(2);
-        datas[1] = LibZip.cdCompress(abi.encode(mockERC20, 50 ether));
+        bytes[] memory requests = new bytes[](3);
+        requests[0] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
+        requests[1] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(2), 50 ether);
+        requests[2] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(3), 10 ether);
 
         // Mock the second ERC20 transfer to fail in an unexpected way
         vm.mockCallRevert(
@@ -511,7 +488,7 @@ contract SimpleBudgetTest is Test {
 
         // Try to disburse 25 tokens to address(1) and 50 tokens to address(2)
         vm.expectRevert(SafeTransferLib.TransferFailed.selector);
-        simpleBudget.disburseBatch(addrs, datas);
+        simpleBudget.disburseBatch(requests);
     }
 
     ////////////////////////
@@ -524,7 +501,9 @@ contract SimpleBudgetTest is Test {
 
         // Allocate 100 tokens to the budget
         mockERC20.approve(address(simpleBudget), 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        simpleBudget.allocate(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+        );
 
         // Ensure the budget has 100 tokens
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
@@ -535,7 +514,7 @@ contract SimpleBudgetTest is Test {
         assertEq(simpleBudget.total(address(0)), 0);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(address(0), 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
 
         // Ensure the budget has 100 tokens
@@ -543,19 +522,30 @@ contract SimpleBudgetTest is Test {
     }
 
     function testTotal_SumOfAvailAndDistributed() public {
-        // Allocate 100 tokens to the budget
+        // We'll send two allocations of 100 tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
 
-        // Disburse 100 tokens from the budget to the recipient
-        simpleBudget.disburse(address(this), LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        // Allocate 50 tokens to the budget
+        simpleBudget.allocate(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+        );
 
-        // Allocate another 100 tokens to the budget
-        mockERC20.approve(address(simpleBudget), 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        // Disburse 25 tokens from the budget to the recipient
+        simpleBudget.disburse(_makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether));
 
-        // Ensure the budget total is 200 tokens (100 + 100)
-        assertEq(simpleBudget.total(address(mockERC20)), 200 ether);
+        // Allocate another 50 tokens to the budget
+        simpleBudget.allocate(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+        );
+
+        // Ensure the budget has 50 - 25 + 50 = 75 tokens
+        assertEq(simpleBudget.available(address(mockERC20)), 75 ether);
+
+        // Ensure the budget has 25 tokens distributed
+        assertEq(simpleBudget.distributed(address(mockERC20)), 25 ether);
+
+        // Ensure the total is 75 available + 25 distributed = 100 tokens
+        assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
     }
 
     ////////////////////////////
@@ -568,7 +558,9 @@ contract SimpleBudgetTest is Test {
 
         // Allocate 100 tokens to the budget
         mockERC20.approve(address(simpleBudget), 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        simpleBudget.allocate(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+        );
 
         // Ensure the budget has 100 tokens available
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
@@ -579,7 +571,7 @@ contract SimpleBudgetTest is Test {
         assertEq(simpleBudget.available(address(0)), 0);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = LibZip.cdCompress(abi.encode(address(0), 100 ether));
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
 
         // Ensure the budget has 100 tokens available
@@ -601,13 +593,25 @@ contract SimpleBudgetTest is Test {
 
         // Allocate 100 tokens to the budget
         mockERC20.approve(address(simpleBudget), 100 ether);
-        simpleBudget.allocate(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        simpleBudget.allocate(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+        );
 
-        // Disburse 100 tokens from the budget to the recipient
-        simpleBudget.disburse(address(this), LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        // Disburse 50 tokens from the budget to the recipient
+        simpleBudget.disburse(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+        );
 
-        // Ensure the budget has 100 tokens distributed
-        assertEq(simpleBudget.distributed(address(mockERC20)), 100 ether);
+        // Ensure the budget has 50 tokens distributed
+        assertEq(simpleBudget.distributed(address(mockERC20)), 50 ether);
+
+        // Disburse 25 more tokens from the budget to the recipient
+        simpleBudget.disburse(
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
+        );
+
+        // Ensure the budget has 75 tokens distributed
+        assertEq(simpleBudget.distributed(address(mockERC20)), 75 ether);
     }
 
     ////////////////////////////
@@ -703,10 +707,12 @@ contract SimpleBudgetTest is Test {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data =
-            abi.encodeWithSelector(SimpleBudget.allocate.selector, LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        bytes memory data = abi.encodeWithSelector(
+            SimpleBudget.allocate.selector,
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+        );
 
-        (bool success,) = payable(simpleBudget).call(LibZip.cdCompress(data));
+        (bool success,) = payable(simpleBudget).call(data);
         assertTrue(success, "Fallback function failed");
 
         // Ensure the budget has 100 tokens
@@ -724,7 +730,10 @@ contract SimpleBudgetTest is Test {
         // a low-level call, the revert won't bubble up. Instead, we are just
         // checking that the low-level call was not successful.
         (bool success,) = payable(simpleBudget).call{value: 1 ether}(
-            abi.encodeWithSelector(bytes4(0xdeadbeef), LibZip.cdCompress(abi.encode(mockERC20, 100 ether)))
+            abi.encodeWithSelector(
+                bytes4(0xdeadbeef),
+                _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+            )
         );
         assertFalse(success);
     }
@@ -736,5 +745,28 @@ contract SimpleBudgetTest is Test {
     function testReceive() public {
         // Ensure the receive function is payable
         assertTrue(payable(simpleBudget).send(1 ether));
+    }
+
+    ///////////////////////////
+    // Test Helper Functions //
+    ///////////////////////////
+
+    function _makeFungibleTransfer(Budget.AssetType assetType, address asset, address target, uint256 value)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        Budget.Transfer memory transfer;
+        transfer.assetType = assetType;
+        transfer.asset = asset;
+        transfer.target = target;
+        if (assetType == Budget.AssetType.ETH || assetType == Budget.AssetType.ERC20) {
+            transfer.data = abi.encode(Budget.FungiblePayload({amount: value}));
+        } else if (assetType == Budget.AssetType.ERC1155) {
+            // we're not actually handling this case yet, so hardcoded token ID of 1 is fine
+            transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
+        }
+
+        return LibZip.cdCompress(abi.encode(transfer));
     }
 }

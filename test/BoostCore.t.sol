@@ -64,7 +64,18 @@ contract BoostCoreTest is Test {
     function setUp() public {
         mockERC20.mint(address(this), 100 ether);
         mockERC20.approve(address(budget), 100 ether);
-        budget.allocate(LibZip.cdCompress(abi.encode(mockERC20, 100 ether)));
+        budget.allocate(
+            LibZip.cdCompress(
+                abi.encode(
+                    Budget.Transfer({
+                        assetType: Budget.AssetType.ERC20,
+                        asset: address(mockERC20),
+                        target: address(this),
+                        data: abi.encode(Budget.FungiblePayload({amount: 100 ether}))
+                    })
+                )
+            )
+        );
     }
 
     /////////////////////////////
@@ -249,8 +260,9 @@ contract BoostCoreTest is Test {
 
     function _makeBudget(address owner_, address[] memory authorized_) internal returns (Budget _budget) {
         _budget = Budget(payable(address(new SimpleBudget()).clone()));
-        _budget.initialize(LibZip.cdCompress(abi.encode(owner_, authorized_)));
-        return _budget;
+        _budget.initialize(
+            LibZip.cdCompress(abi.encode(SimpleBudget.InitPayload({owner: owner_, authorized: authorized_})))
+        );
     }
 
     function _makeIncentives(uint256 count) internal returns (BoostLib.Target[] memory) {
@@ -259,7 +271,16 @@ contract BoostCoreTest is Test {
             incentives[i] = BoostLib.Target({
                 isBase: true,
                 instance: address(new ERC20Incentive()),
-                parameters: LibZip.cdCompress(abi.encode(mockERC20, ERC20Incentive.Strategy.POOL, 1 ether, 100))
+                parameters: LibZip.cdCompress(
+                    abi.encode(
+                        ERC20Incentive.InitPayload({
+                            asset: address(mockERC20),
+                            strategy: ERC20Incentive.Strategy.POOL,
+                            reward: 1 ether,
+                            maxClaims: 100
+                        })
+                    )
+                    )
             });
         }
         return incentives;

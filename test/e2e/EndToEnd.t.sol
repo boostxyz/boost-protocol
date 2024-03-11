@@ -184,7 +184,9 @@ contract EndToEnd is Test {
                             )
                         ),
                         "My Simple Budget",
-                        LibZip.cdCompress(abi.encode(address(this), authorized))
+                        LibZip.cdCompress(
+                            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
+                        )
                     )
                 )
             )
@@ -197,7 +199,18 @@ contract EndToEnd is Test {
         // "When I allocate assets to my budget"
         // "And the asset is an ERC20 token"
         erc20.approve(address(budget), 500 ether);
-        budget.allocate(LibZip.cdCompress(abi.encode(address(erc20), 500 ether)));
+        budget.allocate(
+            LibZip.cdCompress(
+                abi.encode(
+                    Budget.Transfer({
+                        assetType: Budget.AssetType.ERC20,
+                        asset: address(erc20),
+                        target: address(this),
+                        data: abi.encode(Budget.FungiblePayload({amount: 500 ether}))
+                    })
+                )
+            )
+        );
 
         // "Then my budget's balance should reflect the transferred amount"
         assertEq(erc20.balanceOf(address(budget)), 500 ether);
@@ -205,7 +218,18 @@ contract EndToEnd is Test {
 
         // "When I allocate assets to my budget"
         // "And the asset is ETH"
-        budget.allocate{value: 10.5 ether}(LibZip.cdCompress(abi.encode(address(0), 10.5 ether)));
+        budget.allocate{value: 10.5 ether}(
+            LibZip.cdCompress(
+                abi.encode(
+                    Budget.Transfer({
+                        assetType: Budget.AssetType.ETH,
+                        asset: address(0),
+                        target: address(this),
+                        data: abi.encode(Budget.FungiblePayload({amount: 10.5 ether}))
+                    })
+                )
+            )
+        );
 
         // "Then my budget's balance should reflect the transferred amount"
         assertEq(address(budget).balance, 10.5 ether);

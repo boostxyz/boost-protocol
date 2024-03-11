@@ -19,6 +19,14 @@ abstract contract Incentive is Ownable, Cloneable {
     /// @notice Thrown when the incentive is not claimable
     error NotClaimable();
 
+    /// @notice A struct representing the payload for an incentive claim
+    /// @param target The address of the recipient
+    /// @param data The implementation-specific data for the claim, if needed
+    struct ClaimPayload {
+        address target;
+        bytes data;
+    }
+
     /// @notice Initialize the contract and set the owner
     /// @dev The owner is set to the contract deployer
     constructor() {
@@ -38,7 +46,7 @@ abstract contract Incentive is Ownable, Cloneable {
     /// @notice Get the required allowance for the incentive
     /// @param data_ The initialization payload for the incentive
     /// @return The data payload to be passed to the {Budget} for interpretation
-    /// @dev This function is called by {BoostCore} before the incentive is initialized to determine the required allowance for the incentive. If the incentive does not require any budget allowance, this function should return `(address(0), 0, bytes(""))`.
+    /// @dev This function is to be called by {BoostCore} before the incentive is initialized to determine the required budget allowance. It returns a compressed, ABI-encoded payload that can be passed directly to the {Budget} contract for interpretation.
     function preflight(bytes calldata data_) external view virtual returns (bytes memory);
 
     /// @inheritdoc Cloneable

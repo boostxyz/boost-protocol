@@ -23,6 +23,14 @@ contract ERC20Incentive is Incentive {
         MINT
     }
 
+    /// @notice The payload for initializing an ERC20Incentive
+    struct InitPayload {
+        address asset;
+        Strategy strategy;
+        uint256 reward;
+        uint256 maxClaims;
+    }
+
     /// @notice The address of the ERC20-like token
     address public asset;
 
@@ -50,23 +58,23 @@ contract ERC20Incentive is Incentive {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed incentive parameters `(address asset, Strategy strategy, uint256 reward, uint256 maxClaims)`
     function initialize(bytes calldata data_) external override initializer {
-        (address asset_, Strategy strategy_, uint256 reward_, uint256 maxClaims_) = _unpackInitializationData(data_);
+        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
 
         // Ensure the strategy is valid (MINT is not yet supported)
-        if (strategy_ == Strategy.MINT) revert BoostError.NotImplemented();
-        if (reward_ == 0 || maxClaims_ == 0) revert BoostError.InvalidInitialization();
+        if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
+        if (init_.reward == 0 || init_.maxClaims == 0) revert BoostError.InvalidInitialization();
 
         // Ensure the maximum reward amount has been allocated
-        uint256 maxTotalReward = reward_ * maxClaims_;
-        uint256 available = asset_.balanceOf(address(this));
+        uint256 maxTotalReward = init_.reward * init_.maxClaims;
+        uint256 available = init_.asset.balanceOf(address(this));
         if (available < maxTotalReward) {
-            revert BoostError.InsufficientFunds(asset_, available, maxTotalReward);
+            revert BoostError.InsufficientFunds(init_.asset, available, maxTotalReward);
         }
 
-        asset = asset_;
-        strategy = strategy_;
-        reward = reward_;
-        maxClaims = maxClaims_;
+        asset = init_.asset;
+        strategy = init_.strategy;
+        reward = init_.reward;
+        maxClaims = init_.maxClaims;
         _initializeOwner(msg.sender);
     }
 
@@ -76,14 +84,14 @@ contract ERC20Incentive is Incentive {
     function claim(bytes calldata data_) external override onlyOwner returns (bool) {
         // Disburse the incentive based on the strategy (POOL only for now)
         if (strategy == Strategy.POOL) {
-            (address recipient_,) = _unpackDisbursementData(data_);
-            if (!_isClaimable(recipient_)) revert NotClaimable();
+            ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+            if (!_isClaimable(claim_.target)) revert NotClaimable();
 
             claims++;
-            claimed[recipient_] = true;
+            claimed[claim_.target] = true;
 
-            asset.safeTransfer(recipient_, reward);
-            emit Claimed(recipient_, abi.encodePacked(asset, recipient_, reward));
+            asset.safeTransfer(claim_.target, reward);
+            emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, reward));
 
             return true;
         }
@@ -92,12 +100,21 @@ contract ERC20Incentive is Incentive {
     }
 
     /// @inheritdoc Incentive
-    /// @notice Get the required allowance for the incentive
-    /// @param data_ The initialization payload for the incentive
-    /// @return budgetData The data payload to be passed to the Budget for interpretation
-    function preflight(bytes calldata data_) external pure override returns (bytes memory budgetData) {
-        (address asset_,, uint256 reward_, uint256 maxClaims_) = _unpackInitializationData(data_);
-        return LibZip.cdCompress(abi.encode(asset_, reward_ * maxClaims_));
+    /// @notice Preflight the incentive to determine the required budget action
+    /// @param data_ The {InitPayload} for the incentive
+    /// @return budgetData The {Transfer} payload to be passed to the {Budget} for interpretation
+    function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
+        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        return LibZip.cdCompress(
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC20,
+                    asset: init_.asset,
+                    target: address(this),
+                    data: abi.encode(Budget.FungiblePayload({amount: init_.reward * init_.maxClaims}))
+                })
+            )
+        );
     }
 
     /// @notice Check if an incentive is claimable
@@ -106,8 +123,8 @@ contract ERC20Incentive is Incentive {
     /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
     /// @dev The recipient must not have already claimed the incentive
     function isClaimable(bytes calldata data_) public view override returns (bool) {
-        (address recipient_,) = _unpackDisbursementData(data_);
-        return _isClaimable(recipient_);
+        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        return _isClaimable(claim_.target);
     }
 
     /// @notice Check if an incentive is claimable for a specific recipient
@@ -115,30 +132,5 @@ contract ERC20Incentive is Incentive {
     /// @return True if the incentive is claimable for the recipient
     function _isClaimable(address recipient_) internal view returns (bool) {
         return !claimed[recipient_] && claims < maxClaims;
-    }
-
-    /// @notice Unpack the data payload for a disbursement operation
-    /// @param data_ The compressed data needed for disbursement `(address recipient, bytes data)`
-    function _unpackDisbursementData(bytes calldata data_)
-        internal
-        pure
-        returns (address recipient, bytes memory data)
-    {
-        return abi.decode(data_.cdDecompress(), (address, bytes));
-    }
-
-    /// @notice Unpack the data payload for the initialization operation
-    /// @param data_ The compressed data needed for initialization `(address asset, Strategy strategy, uint256 reward, uint256 maxClaims)`
-    /// @return _asset The address of the ERC20-like token
-    /// @return _strategy The strategy for the incentive
-    /// @return _reward The reward amount issued for each claim
-    /// @return _maxClaims The maximum number of claims that can be made
-    function _unpackInitializationData(bytes calldata data_)
-        internal
-        pure
-        returns (address _asset, Strategy _strategy, uint256 _reward, uint256 _maxClaims)
-    {
-        (_asset, _strategy, _reward, _maxClaims) =
-            abi.decode(data_.cdDecompress(), (address, Strategy, uint256, uint256));
     }
 }

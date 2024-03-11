@@ -18,6 +18,40 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     using LibZip for bytes;
     using SafeTransferLib for address;
 
+    enum AssetType {
+        ETH,
+        ERC20,
+        ERC1155
+    }
+
+    /// @notice A struct representing the inputs for an allocation
+    /// @param assetType The type of asset to allocate
+    /// @param asset The address of the asset to allocate
+    /// @param target The address of the payee or payer (from or to, depending on the operation)
+    /// @param data The implementation-specific data for the allocation (amount, token ID, etc.)
+    struct Transfer {
+        AssetType assetType;
+        address asset;
+        address target;
+        bytes data;
+    }
+
+    /// @notice The payload for an ETH or ERC20 transfer
+    /// @param amount The amount of the asset to transfer
+    struct FungiblePayload {
+        uint256 amount;
+    }
+
+    /// @notice The payload for an ERC1155 transfer
+    /// @param tokenId The ID of the token to transfer
+    /// @param amount The amount of the token to transfer
+    /// @param data Any additional data to forward to the ERC1155 contract
+    struct ERC1155Payload {
+        uint256 tokenId;
+        uint256 amount;
+        bytes data;
+    }
+
     /// @notice Emitted when an address's authorization status changes
     event Authorized(address indexed account, bool isAuthorized);
 
@@ -53,16 +87,14 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     function reclaim(bytes calldata data_) external virtual returns (bool);
 
     /// @notice Disburse assets from the budget to a single recipient
-    /// @param recipient_ The address of the recipient
-    /// @param data_ The compressed data for the disbursement (amount, token address, token ID, etc.)
+    /// @param data_ The compressed {Transfer} request
     /// @return True if the disbursement was successful
-    function disburse(address recipient_, bytes calldata data_) external virtual returns (bool);
+    function disburse(bytes calldata data_) external virtual returns (bool);
 
     /// @notice Disburse assets from the budget to multiple recipients
-    /// @param recipients_ The addresses of the recipients
-    /// @param data_ The compressed data for the disbursements (amount, token address, token ID, etc.)
+    /// @param data_ The array of compressed {Transfer} requests
     /// @return True if all disbursements were successful
-    function disburseBatch(address[] calldata recipients_, bytes[] calldata data_) external virtual returns (bool);
+    function disburseBatch(bytes[] calldata data_) external virtual returns (bool);
 
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset

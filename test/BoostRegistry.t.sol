@@ -212,7 +212,7 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing Budget",
-            LibZip.cdCompress(abi.encode(address(this), authorized))
+            LibZip.cdCompress(abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized})))
         );
 
         assertTrue(instance.supportsInterface(type(Budget).interfaceId));
@@ -249,7 +249,9 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing Budget",
-            LibZip.cdCompress(abi.encode(address(this), new address[](0)))
+            LibZip.cdCompress(
+                abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
+            )
         );
 
         BoostRegistry.Clone memory clone = registry.getClone(cloneId);

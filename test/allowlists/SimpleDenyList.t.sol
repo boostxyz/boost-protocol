@@ -83,7 +83,9 @@ contract SimpleDenyListTest is Test {
     function testIsAllowed_UnnecessaryData() public {
         // Extra data should have no effect on the result because it is ignored in this implementation
         assertFalse(denyList.isAllowed(address(1), unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"));
-        assertTrue(denyList.isAllowed(address(2), abi.encodePacked(uint8(42), keccak256("unexpected"), "data!!1!one1!")));
+        assertTrue(
+            denyList.isAllowed(address(2), abi.encodePacked(uint8(42), keccak256("unexpected"), "data!!1!one1!"))
+        );
     }
 
     //////////////////////////////

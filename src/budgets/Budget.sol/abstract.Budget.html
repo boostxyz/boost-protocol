@@ -178,7 +178,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="budget"><a class="header" href="#budget">Budget</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/3ed33cc31e717bf4701f9f4baa0597159de9a385/src/budgets/Budget.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/483f2323c580db1e8a991ec9abfab23ef7030376/src/budgets/Budget.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="/src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</a>, Receiver</p>
 <p>Abstract contract for a generic Budget within the Boost protocol</p>
@@ -221,12 +221,11 @@ Ownable, <a href="/src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</
 </div>
 <h3 id="disburse"><a class="header" href="#disburse">disburse</a></h3>
 <p>Disburse assets from the budget to a single recipient</p>
-<pre><code class="language-solidity">function disburse(address recipient_, bytes calldata data_) external virtual returns (bool);
+<pre><code class="language-solidity">function disburse(bytes calldata data_) external virtual returns (bool);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>recipient_</code></td><td><code>address</code></td><td>The address of the recipient</td></tr>
-<tr><td><code>data_</code></td><td><code>bytes</code></td><td>The compressed data for the disbursement (amount, token address, token ID, etc.)</td></tr>
+<tr><td><code>data_</code></td><td><code>bytes</code></td><td>The compressed <a href="/src/budgets/Budget.sol/abstract.Budget.html#transfer">Transfer</a> request</td></tr>
 </tbody></table>
 </div>
 <p><strong>Returns</strong></p>
@@ -236,12 +235,11 @@ Ownable, <a href="/src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</
 </div>
 <h3 id="disbursebatch"><a class="header" href="#disbursebatch">disburseBatch</a></h3>
 <p>Disburse assets from the budget to multiple recipients</p>
-<pre><code class="language-solidity">function disburseBatch(address[] calldata recipients_, bytes[] calldata data_) external virtual returns (bool);
+<pre><code class="language-solidity">function disburseBatch(bytes[] calldata data_) external virtual returns (bool);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>recipients_</code></td><td><code>address[]</code></td><td>The addresses of the recipients</td></tr>
-<tr><td><code>data_</code></td><td><code>bytes[]</code></td><td>The compressed data for the disbursements (amount, token address, token ID, etc.)</td></tr>
+<tr><td><code>data_</code></td><td><code>bytes[]</code></td><td>The array of compressed <a href="/src/budgets/Budget.sol/abstract.Budget.html#transfer">Transfer</a> requests</td></tr>
 </tbody></table>
 </div>
 <p><strong>Returns</strong></p>
@@ -378,6 +376,58 @@ Ownable, <a href="/src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</
 <h3 id="transferfailed"><a class="header" href="#transferfailed">TransferFailed</a></h3>
 <p>Thrown when a transfer fails for an unknown reason</p>
 <pre><code class="language-solidity">error TransferFailed(address asset, address to, uint256 amount);
+</code></pre>
+<h2 id="structs"><a class="header" href="#structs">Structs</a></h2>
+<h3 id="transfer"><a class="header" href="#transfer">Transfer</a></h3>
+<p>A struct representing the inputs for an allocation</p>
+<pre><code class="language-solidity">struct Transfer {
+    AssetType assetType;
+    address asset;
+    address target;
+    bytes data;
+}
+</code></pre>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>assetType</code></td><td><code>AssetType</code></td><td>The type of asset to allocate</td></tr>
+<tr><td><code>asset</code></td><td><code>address</code></td><td>The address of the asset to allocate</td></tr>
+<tr><td><code>target</code></td><td><code>address</code></td><td>The address of the payee or payer (from or to, depending on the operation)</td></tr>
+<tr><td><code>data</code></td><td><code>bytes</code></td><td>The implementation-specific data for the allocation (amount, token ID, etc.)</td></tr>
+</tbody></table>
+</div>
+<h3 id="fungiblepayload"><a class="header" href="#fungiblepayload">FungiblePayload</a></h3>
+<p>The payload for an ETH or ERC20 transfer</p>
+<pre><code class="language-solidity">struct FungiblePayload {
+    uint256 amount;
+}
+</code></pre>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>amount</code></td><td><code>uint256</code></td><td>The amount of the asset to transfer</td></tr>
+</tbody></table>
+</div>
+<h3 id="erc1155payload"><a class="header" href="#erc1155payload">ERC1155Payload</a></h3>
+<p>The payload for an ERC1155 transfer</p>
+<pre><code class="language-solidity">struct ERC1155Payload {
+    uint256 tokenId;
+    uint256 amount;
+    bytes data;
+}
+</code></pre>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>tokenId</code></td><td><code>uint256</code></td><td>The ID of the token to transfer</td></tr>
+<tr><td><code>amount</code></td><td><code>uint256</code></td><td>The amount of the token to transfer</td></tr>
+<tr><td><code>data</code></td><td><code>bytes</code></td><td>Any additional data to forward to the ERC1155 contract</td></tr>
+</tbody></table>
+</div>
+<h2 id="enums"><a class="header" href="#enums">Enums</a></h2>
+<h3 id="assettype"><a class="header" href="#assettype">AssetType</a></h3>
+<pre><code class="language-solidity">enum AssetType {
+    ETH,
+    ERC20,
+    ERC1155
+}
 </code></pre>
 
                     </main>

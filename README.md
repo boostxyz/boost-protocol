@@ -25,26 +25,44 @@ The Boost Protocol is built on top of the Ethereum Virtual Machine and leverages
 
 The Boost Protocol is composed of the following components:
 
-- **Boost Core**: Boost Core is a smart contract that facilitates the creation and management of Boosts. It is responsible for managing Boost parameters, tracking user participation, and distributing rewards. It is the glue that holds the entire Boost Protocol together.
+- **Boost Core** is a smart contract that facilitates the creation and management of Boosts. It is responsible for managing Boost parameters, tracking user participation, and distributing rewards. It is the glue that holds the entire Boost Protocol together.
 
-- **Boost Registry**: Boost Registry is a smart contract that maintains a registry of the base implementations for Boost Actions, Boost Incentives, Boost Validators, Boost Budgets, and Boost AllowLists. This allows developers to create custom implementations and register them with the Boost Registry, making them available for use in Boosts. It also promotes code reuse and standardization across the protocol.
+- **Boost Registry** is a smart contract that maintains a registry of the base implementations for Boost Actions, Boost Incentives, Boost Validators, Boost Budgets, and Boost AllowLists. This allows developers to create custom implementations and register them with the Boost Registry, making them available for use in Boosts. It also promotes code reuse and standardization across the protocol.
 
-- **Boost Actions**: Boost Actions are smart contracts that define the specific actions that users must take to complete a Boost. They are designed to be modular and can be customized to fit the specific needs of the Boost. Examples of Boost Actions include swapping tokens, staking assets, and contributing to liquidity pools.
+- **Boost Actions** are smart contracts that define the specific actions that users must take to complete a Boost. They are designed to be modular and can be customized to fit the specific needs of the Boost. Examples of Boost Actions include swapping tokens, staking assets, and contributing to liquidity pools.
 
-- **Boost Incentives**: Boost Incentives are smart contracts that define the specific rewards that users can earn by participating in a Boost. Examples of Boost Incentives include earning tokens, receiving NFTs, and participating in airdrops.
+- **Boost Incentives** are smart contracts that define the specific rewards that users can earn by participating in a Boost. Examples of Boost Incentives include earning tokens, receiving NFTs, and participating in airdrops.
 
-- **Boost Validators**: Boost Validators are smart contracts that validate user participation in a Boost and unlock access to its incentives. They are responsible for verifying that users have completed the required actions and are eligible to receive rewards. Examples of Boost Validator logic includes signature verifications, on-chain data validation, and validation of merkle and ZK proofs.
+- **Boost Validators** are smart contracts that validate user participation in a Boost and unlock access to its incentives. They are responsible for verifying that users have completed the required actions and are eligible to receive rewards. Examples of Boost Validator logic includes signature verifications, on-chain data validation, and validation of merkle and ZK proofs.
 
-- **Boost Budgets**: Boost Budgets are smart contracts that control the allocation of incentives for a Boost. Examples of Boost Budgets include simple fixed allocations, dynamic allocations based on user participation, and allocations based on vesting schedules.
+- **Boost Budgets** are smart contracts that control the allocation of incentives for a Boost. Examples of Boost Budgets include simple fixed allocations, dynamic allocations based on user participation, and allocations based on vesting schedules.
 
-- **Boost AllowLists**: Boost AllowLists are smart contracts that control access to a Boost. They are responsible for defining the eligibility criteria for participation in a Boost. Examples of Boost AllowList criteria include whitelists, blacklists, asset holdings, and prior participation in other Boosts.
+- **Boost AllowLists** are smart contracts that control access to a Boost. They are responsible for defining the eligibility criteria for participation in a Boost. Examples of Boost AllowList criteria include whitelists, blacklists, asset holdings, and prior participation in other Boosts.
 
-## Contributing
+## How It Works
 
-Boost Protocol is being developed with [Foundry](https://getfoundry.sh), a suite of tools for building, deploying, and managing decentralized applications. Foundry provides a set of tools and libraries that make it easy to build and deploy smart contracts, front-end applications, and infrastructure for decentralized applications.
+The Boost Protocol is designed to be flexible and customizable, allowing developers to create custom Boosts that fit the specific needs of their project. The process of creating and participating in a Boost typically involves the following steps:
 
-At this time, we are not accepting contributions from the community. However, we are actively seeking feedback and suggestions for the protocol. If you have any ideas or suggestions, please feel free to open an issue or reach out to us on [Discord](https://discord.gg/boost-protocol).
+### Boost Creation
 
-## License
+1. **Create a Budget**: Before a Boost can be created, the creator needs a budget from which incentives can be allocated. [Budgets](https://rabbitholegg.github.io/boost-protocol/src/budgets/index.html) can be fixed, dynamic, or based on a vesting schedule, and they control the allocation of incentives for Boosts. They can hold native tokens, ERC20s and ERC1155s, and they're reusable across multiple Boosts.
 
-**TBD** — Boost Protocol is not yet licensed for public use. We are currently evaluating various licensing options and will update this section once a decision has been made.
+2. **Create a Boost**: A Boost is a targeted campaign to incentivize a certain type of engagement by offering rewards to participating users. Boosts are created using the Boost Core smart contract and can be customized to fit the needs of nearly any use case. Boost creators can choose from a variety of pre-built [*Actions*](https://rabbitholegg.github.io/boost-protocol/src/actions/index.html), [*Validators*](https://rabbitholegg.github.io/boost-protocol/src/validators/index.html), [*Incentives*](https://rabbitholegg.github.io/boost-protocol/src/incentives/index.html), and [*AllowLists*](https://rabbitholegg.github.io/boost-protocol/src/allowlists/index.html) available through the [*Boost Registry*](https://rabbitholegg.github.io/boost-protocol/src/BoostRegistry.sol/contract.BoostRegistry.html) or create their own custom implementations, optionally adding them to the Boost Registry for the community to use in their own Boosts.
+
+    - **Choose an Action**: An Action is a specific, observable on-chain activity that users must take in order to complete a Boost. Actions can be as simple as swapping tokens or as complex as bridging from one chain and then maintaining a position of a particular size in a certain liquidity pool over time on another. Actions are reusable across multiple Boosts and can be created using the Boost Registry.
+
+    - **Select a Validator**: The Validator defines the specific logic that will be used to attest to the fact of a user's completion of the Boost's Action. Some Actions are self-validating, while others might not be observable directly by the validator contract and thus require a user to submit proof of completion. Validators are extremely flexible and can be customized to fit the nearly any use case, including on-chain data validation, axiom-type signature attestations, and validation of merkle and ZK proofs.
+
+    - **Create Incentives**: Incentives are the specific rewards that users will earn by participating in a Boost, and every Boost must offer at least one. Incentives can be simple, one-off token rewards, or they can be more complex, such as a whitelist slot, an NFT, ERC20s streamed over time, protocol-specific rewards, or access to other Boosts. There are a variety of pre-built generic Incentives available through the Registry, like `ERC20Incentive`, `ERC1155Incentive`, `AllowListIncentive`, and `PointsIncentive`, which can be used as-is or extended to fit the specific needs of the Boost creator. Incentives cannot be reused across multiple Boosts for accounting and integrity reasons, i.e., once an Incentive is deployed, it is locked to the Boost it was created for.
+
+    - **Build an AllowLists**: An AllowList is used to control access to a Boost. It defines the eligibility criteria for participation in the Boost and can be as simple as a whitelist (or blacklist), or they can be more complex, such as requiring the caller to hold a certain amount of a particular asset, have a minimum or maximum portfolio value, have staked, voted, or delegated to a specific address, or to have participated in a previous Boost. You can reuse AllowLists across multiple Boosts, or use them in combination with the `AllowListIncentive` to create a series of Boosts that build on each other and reward users for ongoing, more meaningful engagement.
+
+### Boost Participation
+
+1. **Discover a Boost**: Users can discover Boosts through a variety of channels, including the Boost Inbox, RabbitHole, and other platforms that integrate with the Boost Protocol. Boosts can be targeted at specific user segments, such as holders of a particular token, users of a specific protocol, or members of a particular community. Once a user identifies a Boost they would like to participate in, they can review the Boost details, including the required actions, incentives, and eligibility criteria. *(The following steps assume the user has chosen to participate in a Boost and has met the eligibility criteria.)*
+
+2. **Complete the Actions**: The user must complete the required actions to participate in the Boost. Actions can be as simple as swapping tokens or as complex as contributing to a liquidity pool. The user must complete the actions in accordance with the rules defined by the Boost creator.
+
+3. **Submit Proof of Completion**: If the Boost's Action can't be immediately validated on-chain from the Validator contract, the user must submit proof of completion to the Validator. The proof can take many forms, including signatures, merkle proofs, and ZK proofs. The Validator will verify the proof and attest to the user's completion of the Boost.
+
+4. **Claim Incentives**: Once the Validator has confirmed the user has completed the Boost's Action, the user can claim the Incentives. The Incentives can be claimed immediately or over time, depending on the rules defined by the Boost creator. Once claimed, the Incentives are transferred to the user's wallet.

@@ -56,11 +56,12 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
       - name: Build Documentation (mdBook)
         run: forge doc --build
 
       - name: Publish Documentation
-        uses: peaceiris/actions-gh-pages@v3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/book
+          folder: ./docs/book
+          token: ${{ secrets.GITHUB_TOKEN }}

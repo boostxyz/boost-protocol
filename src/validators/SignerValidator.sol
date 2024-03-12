@@ -13,7 +13,6 @@ import {Validator} from "src/validators/Validator.sol";
 contract SignerValidator is Validator {
     using LibZip for bytes;
     using SignatureCheckerLib for address;
-    using SignatureCheckerLib for bytes32;
 
     /// @dev The set of authorized signers
     mapping(address => bool) public signers;
@@ -54,7 +53,7 @@ contract SignerValidator is Validator {
         _used[hash_] = true;
 
         // Return the result of the signature check
-        return signer_.isValidSignatureNow(hash_.toEthSignedMessageHash(), signature_);
+        return signer_.isValidSignatureNow(SignatureCheckerLib.toEthSignedMessageHash(hash_), signature_);
     }
 
     /// @notice Set the authorized status of a signer

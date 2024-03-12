@@ -202,39 +202,74 @@ Boost Protocol is currently under active development and is not ready for produc
 <p>The Boost Protocol is composed of the following components:</p>
 <ul>
 <li>
-<p><strong>Boost Core</strong>: Boost Core is a smart contract that facilitates the creation and management of Boosts. It is responsible for managing Boost parameters, tracking user participation, and distributing rewards. It is the glue that holds the entire Boost Protocol together.</p>
+<p><strong>Boost Core</strong> is a smart contract that facilitates the creation and management of Boosts. It is responsible for managing Boost parameters, tracking user participation, and distributing rewards. It is the glue that holds the entire Boost Protocol together.</p>
 </li>
 <li>
-<p><strong>Boost Registry</strong>: Boost Registry is a smart contract that maintains a registry of the base implementations for Boost Actions, Boost Incentives, Boost Validators, Boost Budgets, and Boost AllowLists. This allows developers to create custom implementations and register them with the Boost Registry, making them available for use in Boosts. It also promotes code reuse and standardization across the protocol.</p>
+<p><strong>Boost Registry</strong> is a smart contract that maintains a registry of the base implementations for Boost Actions, Boost Incentives, Boost Validators, Boost Budgets, and Boost AllowLists. This allows developers to create custom implementations and register them with the Boost Registry, making them available for use in Boosts. It also promotes code reuse and standardization across the protocol.</p>
 </li>
 <li>
-<p><strong>Boost Actions</strong>: Boost Actions are smart contracts that define the specific actions that users must take to complete a Boost. They are designed to be modular and can be customized to fit the specific needs of the Boost. Examples of Boost Actions include swapping tokens, staking assets, and contributing to liquidity pools.</p>
+<p><strong>Boost Actions</strong> are smart contracts that define the specific actions that users must take to complete a Boost. They are designed to be modular and can be customized to fit the specific needs of the Boost. Examples of Boost Actions include swapping tokens, staking assets, and contributing to liquidity pools.</p>
 </li>
 <li>
-<p><strong>Boost Incentives</strong>: Boost Incentives are smart contracts that define the specific rewards that users can earn by participating in a Boost. Examples of Boost Incentives include earning tokens, receiving NFTs, and participating in airdrops.</p>
+<p><strong>Boost Incentives</strong> are smart contracts that define the specific rewards that users can earn by participating in a Boost. Examples of Boost Incentives include earning tokens, receiving NFTs, and participating in airdrops.</p>
 </li>
 <li>
-<p><strong>Boost Validators</strong>: Boost Validators are smart contracts that validate user participation in a Boost and unlock access to its incentives. They are responsible for verifying that users have completed the required actions and are eligible to receive rewards. Examples of Boost Validator logic includes signature verifications, on-chain data validation, and validation of merkle and ZK proofs.</p>
+<p><strong>Boost Validators</strong> are smart contracts that validate user participation in a Boost and unlock access to its incentives. They are responsible for verifying that users have completed the required actions and are eligible to receive rewards. Examples of Boost Validator logic includes signature verifications, on-chain data validation, and validation of merkle and ZK proofs.</p>
 </li>
 <li>
-<p><strong>Boost Budgets</strong>: Boost Budgets are smart contracts that control the allocation of incentives for a Boost. Examples of Boost Budgets include simple fixed allocations, dynamic allocations based on user participation, and allocations based on vesting schedules.</p>
+<p><strong>Boost Budgets</strong> are smart contracts that control the allocation of incentives for a Boost. Examples of Boost Budgets include simple fixed allocations, dynamic allocations based on user participation, and allocations based on vesting schedules.</p>
 </li>
 <li>
-<p><strong>Boost AllowLists</strong>: Boost AllowLists are smart contracts that control access to a Boost. They are responsible for defining the eligibility criteria for participation in a Boost. Examples of Boost AllowList criteria include whitelists, blacklists, asset holdings, and prior participation in other Boosts.</p>
+<p><strong>Boost AllowLists</strong> are smart contracts that control access to a Boost. They are responsible for defining the eligibility criteria for participation in a Boost. Examples of Boost AllowList criteria include whitelists, blacklists, asset holdings, and prior participation in other Boosts.</p>
 </li>
 </ul>
-<h2 id="contributing"><a class="header" href="#contributing">Contributing</a></h2>
-<p>Boost Protocol is being developed with <a href="https://getfoundry.sh">Foundry</a>, a suite of tools for building, deploying, and managing decentralized applications. Foundry provides a set of tools and libraries that make it easy to build and deploy smart contracts, front-end applications, and infrastructure for decentralized applications.</p>
-<p>At this time, we are not accepting contributions from the community. However, we are actively seeking feedback and suggestions for the protocol. If you have any ideas or suggestions, please feel free to open an issue or reach out to us on <a href="https://discord.gg/boost-protocol">Discord</a>.</p>
-<h2 id="license"><a class="header" href="#license">License</a></h2>
-<p><strong>TBD</strong> — Boost Protocol is not yet licensed for public use. We are currently evaluating various licensing options and will update this section once a decision has been made.</p>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<p>The Boost Protocol is designed to be flexible and customizable, allowing developers to create custom Boosts that fit the specific needs of their project. The process of creating and participating in a Boost typically involves the following steps:</p>
+<h3 id="boost-creation"><a class="header" href="#boost-creation">Boost Creation</a></h3>
+<ol>
+<li>
+<p><strong>Create a Budget</strong>: Before a Boost can be created, the creator needs a budget from which incentives can be allocated. <a href="https://rabbitholegg.github.io/boost-protocol/src/budgets/index.html">Budgets</a> can be fixed, dynamic, or based on a vesting schedule, and they control the allocation of incentives for Boosts. They can hold native tokens, ERC20s and ERC1155s, and they're reusable across multiple Boosts.</p>
+</li>
+<li>
+<p><strong>Create a Boost</strong>: A Boost is a targeted campaign to incentivize a certain type of engagement by offering rewards to participating users. Boosts are created using the Boost Core smart contract and can be customized to fit the needs of nearly any use case. Boost creators can choose from a variety of pre-built <a href="https://rabbitholegg.github.io/boost-protocol/src/actions/index.html"><em>Actions</em></a>, <a href="https://rabbitholegg.github.io/boost-protocol/src/validators/index.html"><em>Validators</em></a>, <a href="https://rabbitholegg.github.io/boost-protocol/src/incentives/index.html"><em>Incentives</em></a>, and <a href="https://rabbitholegg.github.io/boost-protocol/src/allowlists/index.html"><em>AllowLists</em></a> available through the <a href="https://rabbitholegg.github.io/boost-protocol/src/BoostRegistry.sol/contract.BoostRegistry.html"><em>Boost Registry</em></a> or create their own custom implementations, optionally adding them to the Boost Registry for the community to use in their own Boosts.</p>
+<ul>
+<li>
+<p><strong>Choose an Action</strong>: An Action is a specific, observable on-chain activity that users must take in order to complete a Boost. Actions can be as simple as swapping tokens or as complex as bridging from one chain and then maintaining a position of a particular size in a certain liquidity pool over time on another. Actions are reusable across multiple Boosts and can be created using the Boost Registry.</p>
+</li>
+<li>
+<p><strong>Select a Validator</strong>: The Validator defines the specific logic that will be used to attest to the fact of a user's completion of the Boost's Action. Some Actions are self-validating, while others might not be observable directly by the validator contract and thus require a user to submit proof of completion. Validators are extremely flexible and can be customized to fit the nearly any use case, including on-chain data validation, axiom-type signature attestations, and validation of merkle and ZK proofs.</p>
+</li>
+<li>
+<p><strong>Create Incentives</strong>: Incentives are the specific rewards that users will earn by participating in a Boost, and every Boost must offer at least one. Incentives can be simple, one-off token rewards, or they can be more complex, such as a whitelist slot, an NFT, ERC20s streamed over time, protocol-specific rewards, or access to other Boosts. There are a variety of pre-built generic Incentives available through the Registry, like <code>ERC20Incentive</code>, <code>ERC1155Incentive</code>, <code>AllowListIncentive</code>, and <code>PointsIncentive</code>, which can be used as-is or extended to fit the specific needs of the Boost creator. Incentives cannot be reused across multiple Boosts for accounting and integrity reasons, i.e., once an Incentive is deployed, it is locked to the Boost it was created for.</p>
+</li>
+<li>
+<p><strong>Build an AllowLists</strong>: An AllowList is used to control access to a Boost. It defines the eligibility criteria for participation in the Boost and can be as simple as a whitelist (or blacklist), or they can be more complex, such as requiring the caller to hold a certain amount of a particular asset, have a minimum or maximum portfolio value, have staked, voted, or delegated to a specific address, or to have participated in a previous Boost. You can reuse AllowLists across multiple Boosts, or use them in combination with the <code>AllowListIncentive</code> to create a series of Boosts that build on each other and reward users for ongoing, more meaningful engagement.</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="boost-participation"><a class="header" href="#boost-participation">Boost Participation</a></h3>
+<ol>
+<li>
+<p><strong>Discover a Boost</strong>: Users can discover Boosts through a variety of channels, including the Boost Inbox, RabbitHole, and other platforms that integrate with the Boost Protocol. Boosts can be targeted at specific user segments, such as holders of a particular token, users of a specific protocol, or members of a particular community. Once a user identifies a Boost they would like to participate in, they can review the Boost details, including the required actions, incentives, and eligibility criteria. <em>(The following steps assume the user has chosen to participate in a Boost and has met the eligibility criteria.)</em></p>
+</li>
+<li>
+<p><strong>Complete the Actions</strong>: The user must complete the required actions to participate in the Boost. Actions can be as simple as swapping tokens or as complex as contributing to a liquidity pool. The user must complete the actions in accordance with the rules defined by the Boost creator.</p>
+</li>
+<li>
+<p><strong>Submit Proof of Completion</strong>: If the Boost's Action can't be immediately validated on-chain from the Validator contract, the user must submit proof of completion to the Validator. The proof can take many forms, including signatures, merkle proofs, and ZK proofs. The Validator will verify the proof and attest to the user's completion of the Boost.</p>
+</li>
+<li>
+<p><strong>Claim Incentives</strong>: Once the Validator has confirmed the user has completed the Boost's Action, the user can claim the Incentives. The Incentives can be claimed immediately or over time, depending on the rules defined by the Boost creator. Once claimed, the Incentives are transferred to the user's wallet.</p>
+</li>
+</ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="contents"><a class="header" href="#contents">Contents</a></h1>
 <ul>
 <li><a href="src/actions/Action.sol/abstract.Action.html">Action</a></li>
 <li><a href="src/actions/ERC721MintAction.sol/contract.ERC721MintAction.html">ERC721MintAction</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="action"><a class="header" href="#action">Action</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/actions/Action.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/actions/Action.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/actions/Action.sol//src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
 <p>Abstract contract for a generic Action within the Boost protocol</p>
@@ -320,7 +355,7 @@ Boost Protocol is currently under active development and is not ready for produc
 <pre><code class="language-solidity">error ExecuteNotImplemented();
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="erc721mintaction"><a class="header" href="#erc721mintaction">ERC721MintAction</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/actions/ERC721MintAction.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/actions/ERC721MintAction.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/actions/ERC721MintAction.sol//src/actions/Action.sol/abstract.Action.html">Action</a>, <a href="src/actions/ERC721MintAction.sol//src/validators/Validator.sol/abstract.Validator.html">Validator</a></p>
 <p>A primitive action to mint and/or validate that an ERC721 token has been minted</p>
@@ -430,7 +465,7 @@ Boost Protocol is currently under active development and is not ready for produc
 <li><a href="src/allowlists/SimpleDenyList.sol/contract.SimpleDenyList.html">SimpleDenyList</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="allowlist"><a class="header" href="#allowlist">AllowList</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/allowlists/AllowList.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/allowlists/AllowList.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="src/allowlists/AllowList.sol//src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
 <p>Abstract contract for a generic Allow List within the Boost protocol</p>
@@ -469,7 +504,7 @@ Ownable, <a href="src/allowlists/AllowList.sol//src/shared/Cloneable.sol/abstrac
 <tr><td><code>&lt;none&gt;</code></td><td><code>bool</code></td><td>True if the contract supports the interface</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="simpleallowlist"><a class="header" href="#simpleallowlist">SimpleAllowList</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/allowlists/SimpleAllowList.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/allowlists/SimpleAllowList.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/allowlists/SimpleAllowList.sol//src/allowlists/AllowList.sol/abstract.AllowList.html">AllowList</a></p>
 <p>A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses</p>
@@ -520,7 +555,7 @@ Ownable, <a href="src/allowlists/AllowList.sol//src/shared/Cloneable.sol/abstrac
 <tr><td><code>allowed_</code></td><td><code>bool[]</code></td><td>The allowed status of each user</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="simpledenylist"><a class="header" href="#simpledenylist">SimpleDenyList</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/allowlists/SimpleDenyList.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/allowlists/SimpleDenyList.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/allowlists/SimpleDenyList.sol//src/allowlists/AllowList.sol/abstract.AllowList.html">AllowList</a></p>
 <p>A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list</p>
@@ -576,7 +611,7 @@ Ownable, <a href="src/allowlists/AllowList.sol//src/shared/Cloneable.sol/abstrac
 <li><a href="src/budgets/SimpleBudget.sol/contract.SimpleBudget.html">SimpleBudget</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="budget"><a class="header" href="#budget">Budget</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/budgets/Budget.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/budgets/Budget.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="src/budgets/Budget.sol//src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</a>, Receiver</p>
 <p>Abstract contract for a generic Budget within the Boost protocol</p>
@@ -828,7 +863,7 @@ Ownable, <a href="src/budgets/Budget.sol//src/shared/Cloneable.sol/abstract.Clon
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="simplebudget"><a class="header" href="#simplebudget">SimpleBudget</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/budgets/SimpleBudget.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/budgets/SimpleBudget.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/budgets/SimpleBudget.sol//src/budgets/Budget.sol/abstract.Budget.html">Budget</a>, IERC1155Receiver, ReentrancyGuard</p>
 <p>A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)</p>
@@ -1151,7 +1186,7 @@ Ownable, <a href="src/budgets/Budget.sol//src/shared/Cloneable.sol/abstract.Clon
 <li><a href="src/incentives/Incentive.sol/abstract.Incentive.html">Incentive</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="erc1155incentive"><a class="header" href="#erc1155incentive">ERC1155Incentive</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/incentives/ERC1155Incentive.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/incentives/ERC1155Incentive.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/incentives/ERC1155Incentive.sol//src/incentives/Incentive.sol/abstract.Incentive.html">Incentive</a>, IERC1155Receiver</p>
 <p>A simple ERC1155 incentive implementation that allows claiming of tokens</p>
@@ -1175,14 +1210,6 @@ Ownable, <a href="src/budgets/Budget.sol//src/shared/Cloneable.sol/abstract.Clon
 <h3 id="extradata"><a class="header" href="#extradata">extraData</a></h3>
 <p>Extra data to be passed to the ERC1155 contract</p>
 <pre><code class="language-solidity">bytes public extraData;
-</code></pre>
-<h3 id="claims"><a class="header" href="#claims">claims</a></h3>
-<p>The number of claims that have been made</p>
-<pre><code class="language-solidity">uint256 public claims;
-</code></pre>
-<h3 id="claimed"><a class="header" href="#claimed">claimed</a></h3>
-<p>A mapping of address to claim status</p>
-<pre><code class="language-solidity">mapping(address =&gt; bool) public claimed;
 </code></pre>
 <h2 id="functions-7"><a class="header" href="#functions-7">Functions</a></h2>
 <h3 id="constructor-6"><a class="header" href="#constructor-6">constructor</a></h3>
@@ -1344,7 +1371,7 @@ Ownable, <a href="src/budgets/Budget.sol//src/shared/Cloneable.sol/abstract.Clon
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="erc20incentive"><a class="header" href="#erc20incentive">ERC20Incentive</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/incentives/ERC20Incentive.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/incentives/ERC20Incentive.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/incentives/ERC20Incentive.sol//src/incentives/Incentive.sol/abstract.Incentive.html">Incentive</a></p>
 <p>A simple ERC20 incentive implementation that allows claiming of tokens</p>
@@ -1364,14 +1391,6 @@ Ownable, <a href="src/budgets/Budget.sol//src/shared/Cloneable.sol/abstract.Clon
 <h3 id="maxclaims-1"><a class="header" href="#maxclaims-1">maxClaims</a></h3>
 <p>The maximum number of claims that can be made (one per address)</p>
 <pre><code class="language-solidity">uint256 public maxClaims;
-</code></pre>
-<h3 id="claims-1"><a class="header" href="#claims-1">claims</a></h3>
-<p>The number of claims that have been made</p>
-<pre><code class="language-solidity">uint256 public claims;
-</code></pre>
-<h3 id="claimed-1"><a class="header" href="#claimed-1">claimed</a></h3>
-<p>A mapping of address to claim status</p>
-<pre><code class="language-solidity">mapping(address =&gt; bool) public claimed;
 </code></pre>
 <h2 id="functions-8"><a class="header" href="#functions-8">Functions</a></h2>
 <h3 id="constructor-7"><a class="header" href="#constructor-7">constructor</a></h3>
@@ -1485,11 +1504,20 @@ Ownable, <a href="src/budgets/Budget.sol//src/shared/Cloneable.sol/abstract.Clon
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="incentive"><a class="header" href="#incentive">Incentive</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/incentives/Incentive.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/incentives/Incentive.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
-Ownable, <a href="src/incentives/Incentive.sol//src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
+Ownable, <a href="src/incentives/Incentive.sol//src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</a>, ReentrancyGuard</p>
 <p>Abstract contract for a generic Incentive within the Boost protocol</p>
 <p><em>Incentive classes are expected to decode the calldata for implementation-specific handling. If no data is required, calldata should be empty.</em></p>
+<h2 id="state-variables-7"><a class="header" href="#state-variables-7">State Variables</a></h2>
+<h3 id="claims"><a class="header" href="#claims">claims</a></h3>
+<p>The number of claims that have been made</p>
+<pre><code class="language-solidity">uint256 public claims;
+</code></pre>
+<h3 id="claimed"><a class="header" href="#claimed">claimed</a></h3>
+<p>A mapping of address to claim status</p>
+<pre><code class="language-solidity">mapping(address =&gt; bool) public claimed;
+</code></pre>
 <h2 id="functions-9"><a class="header" href="#functions-9">Functions</a></h2>
 <h3 id="constructor-8"><a class="header" href="#constructor-8">constructor</a></h3>
 <p>Initialize the contract and set the owner</p>
@@ -1568,7 +1596,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/shared/Cloneable.sol/abstrac
 </tbody></table>
 </div>
 <h2 id="events-2"><a class="header" href="#events-2">Events</a></h2>
-<h3 id="claimed-2"><a class="header" href="#claimed-2">Claimed</a></h3>
+<h3 id="claimed-1"><a class="header" href="#claimed-1">Claimed</a></h3>
 <p>Emitted when an incentive is claimed</p>
 <p><em>The <code>data</code> field contains implementation-specific context. See the implementation's <code>claim</code> function for details.</em></p>
 <pre><code class="language-solidity">event Claimed(address indexed recipient, bytes data);
@@ -1605,7 +1633,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/shared/Cloneable.sol/abstrac
 <li><a href="src/shared/Mocks.sol/contract.MockERC1155.html">MockERC1155</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="boosterror"><a class="header" href="#boosterror">BoostError</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/shared/BoostError.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/shared/BoostError.sol">Git Source</a></p>
 <p>Standardized errors for the Boost protocol</p>
 <p><em>Some of these errors are introduced by third-party libraries, rather than Boost contracts directly, and are copied here for clarity and ease of testing.</em></p>
 <h2 id="errors-3"><a class="header" href="#errors-3">Errors</a></h2>
@@ -1646,7 +1674,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/shared/Cloneable.sol/abstrac
 <pre><code class="language-solidity">error Unauthorized();
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="boostlib"><a class="header" href="#boostlib">BoostLib</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/shared/BoostLib.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/shared/BoostLib.sol">Git Source</a></p>
 <h2 id="functions-10"><a class="header" href="#functions-10">Functions</a></h2>
 <h3 id="cloneandinitialize"><a class="header" href="#cloneandinitialize">cloneAndInitialize</a></h3>
 <p>Clone and initialize a contract with a deterministic salt</p>
@@ -1689,7 +1717,7 @@ Ownable, <a href="src/incentives/Incentive.sol//src/shared/Cloneable.sol/abstrac
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cloneable"><a class="header" href="#cloneable">Cloneable</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/shared/Cloneable.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/shared/Cloneable.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Initializable, ERC165</p>
 <p>A contract that can be cloned and initialized only once</p>
@@ -1740,7 +1768,7 @@ Initializable, ERC165</p>
 <pre><code class="language-solidity">error CloneAlreadyInitialized();
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mockerc721"><a class="header" href="#mockerc721">MockERC721</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/shared/Mocks.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/shared/Mocks.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC721</p>
 <p>🚨 WARNING: The mocks in this file are for testing purposes only. DO NOT use
@@ -1748,7 +1776,7 @@ ANY of this code in production, ever, or you will lose all of your money,
 friends, and credibility. Also, your cat might run away for fear of being
 associated with someone who makes such poor life choices.</p>
 <p>A mock ERC721 token (FOR TESTING PURPOSES ONLY)</p>
-<h2 id="state-variables-7"><a class="header" href="#state-variables-7">State Variables</a></h2>
+<h2 id="state-variables-8"><a class="header" href="#state-variables-8">State Variables</a></h2>
 <h3 id="totalsupply"><a class="header" href="#totalsupply">totalSupply</a></h3>
 <pre><code class="language-solidity">uint256 public totalSupply;
 </code></pre>
@@ -1769,7 +1797,7 @@ associated with someone who makes such poor life choices.</p>
 <pre><code class="language-solidity">function tokenURI(uint256 id) public view virtual override returns (string memory);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mockerc20"><a class="header" href="#mockerc20">MockERC20</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/shared/Mocks.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/shared/Mocks.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC20</p>
 <p>A mock ERC20 token (FOR TESTING PURPOSES ONLY)</p>
@@ -1784,7 +1812,7 @@ ERC20</p>
 <pre><code class="language-solidity">function mint(address to, uint256 amount) public;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mockerc1155"><a class="header" href="#mockerc1155">MockERC1155</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/shared/Mocks.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/shared/Mocks.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC1155</p>
 <p>A mock ERC1155 token (FOR TESTING PURPOSES ONLY)</p>
@@ -1804,11 +1832,11 @@ ERC1155</p>
 <li><a href="src/validators/Validator.sol/abstract.Validator.html">Validator</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="signervalidator"><a class="header" href="#signervalidator">SignerValidator</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/validators/SignerValidator.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/validators/SignerValidator.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/validators/SignerValidator.sol//src/validators/Validator.sol/abstract.Validator.html">Validator</a></p>
 <p>A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers</p>
-<h2 id="state-variables-8"><a class="header" href="#state-variables-8">State Variables</a></h2>
+<h2 id="state-variables-9"><a class="header" href="#state-variables-9">State Variables</a></h2>
 <h3 id="signers"><a class="header" href="#signers">signers</a></h3>
 <p><em>The set of authorized signers</em></p>
 <pre><code class="language-solidity">mapping(address =&gt; bool) public signers;
@@ -1859,7 +1887,7 @@ ERC1155</p>
 <tr><td><code>authorized_</code></td><td><code>bool[]</code></td><td>The authorized status of each signer</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="validator-1"><a class="header" href="#validator-1">Validator</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/validators/Validator.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/validators/Validator.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, <a href="src/validators/Validator.sol//src/shared/Cloneable.sol/abstract.Cloneable.html">Cloneable</a></p>
 <p>Abstract contract for a generic Validator within the Boost protocol</p>
@@ -1900,12 +1928,12 @@ Ownable, <a href="src/validators/Validator.sol//src/shared/Cloneable.sol/abstrac
 <tr><td><code>&lt;none&gt;</code></td><td><code>bool</code></td><td>True if the contract supports the interface</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="boostcore"><a class="header" href="#boostcore">BoostCore</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/BoostCore.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/BoostCore.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 Ownable, ReentrancyGuard</p>
 <p>The core contract for the Boost protocol</p>
 <p><em>This contract is currently <code>Ownable</code> for simplicity, but this will be replaced with a decentralized governance mechanism prior to GA</em></p>
-<h2 id="state-variables-9"><a class="header" href="#state-variables-9">State Variables</a></h2>
+<h2 id="state-variables-10"><a class="header" href="#state-variables-10">State Variables</a></h2>
 <h3 id="_boosts"><a class="header" href="#_boosts">_boosts</a></h3>
 <p>The list of boosts</p>
 <pre><code class="language-solidity">BoostLib.Boost[] private _boosts;
@@ -2042,12 +2070,12 @@ Ownable, ReentrancyGuard</p>
 <pre><code class="language-solidity">function _maybeClone(BoostLib.Target memory target_, bool shouldInitialize_) internal returns (address instance);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="boostregistry"><a class="header" href="#boostregistry">BoostRegistry</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/BoostRegistry.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/22aabd1f4ca79a922b1d2d3a7993b8939f748460/src/BoostRegistry.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC165, ReentrancyGuard</p>
 <p>A registry for base implementations and cloned instances</p>
 <p><em>This contract is used to register base implementations and deploy new instances of those implementations for use within the Boost protocol</em></p>
-<h2 id="state-variables-10"><a class="header" href="#state-variables-10">State Variables</a></h2>
+<h2 id="state-variables-11"><a class="header" href="#state-variables-11">State Variables</a></h2>
 <h3 id="_bases"><a class="header" href="#_bases">_bases</a></h3>
 <p>The registry of base implementations</p>
 <pre><code class="language-solidity">mapping(bytes32 =&gt; Cloneable) private _bases;
@@ -2073,7 +2101,7 @@ ERC165, ReentrancyGuard</p>
 <h3 id="register"><a class="header" href="#register">register</a></h3>
 <p>Register a new base implementation of a given type</p>
 <p><em>This function will either emit a <code>Registered</code> event or revert if the identifier has already been registered</em></p>
-<p><em>The given address must implement the given type interface (See <a href="src/BoostRegistry.sol//src/actions/ERC721MintAction.sol/contract.ERC721MintAction.html#supportsinterface">ERC165-supportsInterface</a>)</em></p>
+<p><em>The given address must implement the given type interface (See <a href="src/BoostRegistry.sol//src/shared/Cloneable.sol/abstract.Cloneable.html#supportsinterface">ERC165-supportsInterface</a>)</em></p>
 <pre><code class="language-solidity">function register(RegistryType type_, string calldata name_, address implementation_)
     external
     onlyCloneables(implementation_);

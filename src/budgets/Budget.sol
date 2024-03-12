@@ -13,7 +13,7 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 /// @notice Abstract contract for a generic Budget within the Boost protocol
 /// @dev Budget classes are expected to implement the allocation, reclamation, and disbursement of assets.
 /// @dev The calldata is expected to be ABI-encoded and compressed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol).
-/// @dev Note that Budgets *DO NOT* support ERC-721, ERC-1155, DN-404, or other non-fungible assets at this time.
+/// @dev WARNING: Budgets currently support only ETH, ERC20, and ERC1155 assets. Other asset types may be added in the future.
 abstract contract Budget is Ownable, Cloneable, Receiver {
     using LibZip for bytes;
     using SafeTransferLib for address;

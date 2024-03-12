@@ -14,7 +14,7 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 
 /// @title Simple Budget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
-/// @dev This type of budget does NOT support NFTs (ERC-721, ERC-1155, etc.)
+/// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
 contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     using LibZip for bytes;
     using SafeTransferLib for address;

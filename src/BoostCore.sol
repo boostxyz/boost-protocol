@@ -177,13 +177,16 @@ contract BoostCore is Ownable, ReentrancyGuard {
     {
         incentives = new Incentive[](targets_.length);
         for (uint256 i = 0; i < targets_.length; i++) {
-            // Deploy the Incentive but don't initialize until it is preflighted
+            // Deploy the clone, but don't initialize until it we've preflighted
             incentives[i] = Incentive(_makeTarget(type(Incentive).interfaceId, targets_[i], false));
 
-            // wake-disable-next-line reentrancy (false positive, single entrypoint is nonReentrant)
-            assert(budget_.disburse(incentives[i].preflight(targets_[i].parameters)));
+            bytes memory preflight = incentives[i].preflight(targets_[i].parameters);
+            if (preflight.length != 0) {
+                // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
+                assert(budget_.disburse(preflight));
+            }
 
-            // wake-disable-next-line reentrancy (false positive, single entrypoint is nonReentrant)
+            // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
             incentives[i].initialize(targets_[i].parameters);
         }
     }

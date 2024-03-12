@@ -2,13 +2,14 @@
 pragma solidity ^0.8.24;
 
 import {Ownable} from "lib/solady/src/auth/Ownable.sol";
+import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
 import {Cloneable} from "src/shared/Cloneable.sol";
 
 /// @title Boost Incentive
 /// @notice Abstract contract for a generic Incentive within the Boost protocol
 /// @dev Incentive classes are expected to decode the calldata for implementation-specific handling. If no data is required, calldata should be empty.
-abstract contract Incentive is Ownable, Cloneable {
+abstract contract Incentive is Ownable, Cloneable, ReentrancyGuard {
     /// @notice Emitted when an incentive is claimed
     /// @dev The `data` field contains implementation-specific context. See the implementation's `claim` function for details.
     event Claimed(address indexed recipient, bytes data);
@@ -26,6 +27,12 @@ abstract contract Incentive is Ownable, Cloneable {
         address target;
         bytes data;
     }
+
+    /// @notice The number of claims that have been made
+    uint256 public claims;
+
+    /// @notice A mapping of address to claim status
+    mapping(address => bool) public claimed;
 
     /// @notice Initialize the contract and set the owner
     /// @dev The owner is set to the contract deployer

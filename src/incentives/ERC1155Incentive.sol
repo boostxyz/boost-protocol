@@ -48,12 +48,6 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     /// @notice Extra data to be passed to the ERC1155 contract
     bytes public extraData;
 
-    /// @notice The number of claims that have been made
-    uint256 public claims;
-
-    /// @notice A mapping of address to claim status
-    mapping(address => bool) public claimed;
-
     /// @notice Construct a new ERC1155Incentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

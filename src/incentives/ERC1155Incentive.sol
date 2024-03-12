@@ -1,47 +1,52 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
+import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC1155} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
+import {IERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
 import {Budget} from "src/budgets/Budget.sol";
-import {Incentive} from "./Incentive.sol";
+import {Incentive} from "src/incentives/Incentive.sol";
 
-/// @title ERC20 Incentive
-/// @notice A simple ERC20 incentive implementation that allows claiming of tokens
-contract ERC20Incentive is Incentive {
+/// @title ERC1155Incentive
+/// @notice A simple ERC1155 incentive implementation that allows claiming of tokens
+contract ERC1155Incentive is Incentive, IERC1155Receiver {
     using LibZip for bytes;
-    using SafeTransferLib for address;
 
     /// @notice The strategy for the incentive
     /// @dev The strategy determines how the incentive is disbursed:
-    ///     - POOL: Transfer tokens from the budget to the recipient
+    ///     - POOL: Transfer tokens from the pool to the recipient
     ///     - MINT: Mint tokens to the recipient directly (not yet implemented)
     enum Strategy {
         POOL,
         MINT
     }
 
-    /// @notice The payload for initializing an ERC20Incentive
+    /// @notice The payload for initializing an ERC1155Incentive
     struct InitPayload {
-        address asset;
+        IERC1155 asset;
         Strategy strategy;
-        uint256 reward;
+        uint256 tokenId;
         uint256 maxClaims;
+        bytes extraData;
     }
 
-    /// @notice The address of the ERC20-like token
-    address public asset;
+    /// @notice The address of the ERC1155-compliant contract
+    IERC1155 public asset;
 
     /// @notice The strategy for the incentive (MINT or POOL)
     Strategy public strategy;
 
-    /// @notice The reward amount issued for each claim
-    uint256 public reward;
-
     /// @notice The maximum number of claims that can be made (one per address)
     uint256 public maxClaims;
+
+    /// @notice The ERC1155 token ID for the incentive
+    uint256 public tokenId;
+
+    /// @notice Extra data to be passed to the ERC1155 contract
+    bytes public extraData;
 
     /// @notice The number of claims that have been made
     uint256 public claims;
@@ -49,32 +54,32 @@ contract ERC20Incentive is Incentive {
     /// @notice A mapping of address to claim status
     mapping(address => bool) public claimed;
 
-    /// @notice Construct a new ERC20Incentive
+    /// @notice Construct a new ERC1155Incentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
         _disableInitializers();
     }
 
     /// @notice Initialize the contract with the incentive parameters
-    /// @param data_ The compressed incentive parameters `(address asset, Strategy strategy, uint256 reward, uint256 maxClaims)`
+    /// @param data_ The compressed initialization payload
     function initialize(bytes calldata data_) external override initializer {
         InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
 
         // Ensure the strategy is valid (MINT is not yet supported)
         if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
-        if (init_.reward == 0 || init_.maxClaims == 0) revert BoostError.InvalidInitialization();
+        if (init_.maxClaims == 0) revert BoostError.InvalidInitialization();
 
         // Ensure the maximum reward amount has been allocated
-        uint256 maxTotalReward = init_.reward * init_.maxClaims;
-        uint256 available = init_.asset.balanceOf(address(this));
-        if (available < maxTotalReward) {
-            revert BoostError.InsufficientFunds(init_.asset, available, maxTotalReward);
+        uint256 available = init_.asset.balanceOf(address(this), init_.tokenId);
+        if (available < init_.maxClaims) {
+            revert BoostError.InsufficientFunds(address(init_.asset), available, init_.maxClaims);
         }
 
         asset = init_.asset;
         strategy = init_.strategy;
-        reward = init_.reward;
+        tokenId = init_.tokenId;
         maxClaims = init_.maxClaims;
+        extraData = init_.extraData;
         _initializeOwner(msg.sender);
     }
 
@@ -90,8 +95,9 @@ contract ERC20Incentive is Incentive {
             claims++;
             claimed[claim_.target] = true;
 
-            asset.safeTransfer(claim_.target, reward);
-            emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, reward));
+            // wake-disable-next-line reentrancy (not a risk here)
+            asset.safeTransferFrom(address(this), claim_.target, tokenId, 1, claim_.data);
+            emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, tokenId, uint256(1), claim_.data));
 
             return true;
         }
@@ -104,30 +110,33 @@ contract ERC20Incentive is Incentive {
         ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
-        // Ensure the amount is a multiple of the reward and reduce the max claims accordingly
-        if (amount % reward != 0) revert BoostError.ClaimFailed(msg.sender, abi.encode(claim_));
-        maxClaims -= amount / reward;
+        // Ensure the amount is valid and reduce the max claims accordingly
+        if (amount > maxClaims) revert BoostError.ClaimFailed(msg.sender, abi.encode(claim_));
+        maxClaims -= amount;
 
-        // Transfer the tokens back to the intended recipient
-        asset.safeTransfer(claim_.target, amount);
-        emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, amount));
+        // Reclaim the incentive to the intended recipient
+        // wake-disable-next-line reentrancy (not a risk here)
+        asset.safeTransferFrom(address(this), claim_.target, tokenId, amount, claim_.data);
+        emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, tokenId, amount, claim_.data));
 
         return true;
     }
 
     /// @inheritdoc Incentive
-    /// @notice Preflight the incentive to determine the required budget action
-    /// @param data_ The {InitPayload} for the incentive
-    /// @return budgetData The {Transfer} payload to be passed to the {Budget} for interpretation
+    /// @notice Get the required allowance for the incentive
+    /// @param data_ The initialization payload for the incentive
+    /// @return budgetData The data payload to be passed to the Budget for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
         InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
         return LibZip.cdCompress(
             abi.encode(
                 Budget.Transfer({
-                    assetType: Budget.AssetType.ERC20,
-                    asset: init_.asset,
+                    assetType: Budget.AssetType.ERC1155,
+                    asset: address(init_.asset),
                     target: address(this),
-                    data: abi.encode(Budget.FungiblePayload({amount: init_.reward * init_.maxClaims}))
+                    data: abi.encode(
+                        Budget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.maxClaims, data: init_.extraData})
+                        )
                 })
             )
         );
@@ -143,10 +152,37 @@ contract ERC20Incentive is Incentive {
         return _isClaimable(claim_.target);
     }
 
+    /// @inheritdoc Incentive
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Incentive) returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     /// @notice Check if an incentive is claimable for a specific recipient
     /// @param recipient_ The address of the recipient
     /// @return True if the incentive is claimable for the recipient
     function _isClaimable(address recipient_) internal view returns (bool) {
         return !claimed[recipient_] && claims < maxClaims;
+    }
+
+    /// @inheritdoc IERC1155Receiver
+    /// @dev This contract does not check the token ID and will accept all tokens
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return this.onERC1155Received.selector;
+    }
+
+    /// @inheritdoc IERC1155Receiver
+    /// @dev This contract does not check the token ID and will accept all batches
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return this.onERC1155BatchReceived.selector;
     }
 }

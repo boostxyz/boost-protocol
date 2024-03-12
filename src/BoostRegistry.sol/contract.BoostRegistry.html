@@ -178,7 +178,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="boostregistry"><a class="header" href="#boostregistry">BoostRegistry</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/a4dce7ebfa202c42d8a7215dc49a048a2d2c9143/src/BoostRegistry.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/e8410b37ee24c90e55de8f3af75c3116831af83b/src/BoostRegistry.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC165, ReentrancyGuard</p>
 <p>A registry for base implementations and cloned instances</p>
@@ -209,7 +209,7 @@ ERC165, ReentrancyGuard</p>
 <h3 id="register"><a class="header" href="#register">register</a></h3>
 <p>Register a new base implementation of a given type</p>
 <p><em>This function will either emit a <code>Registered</code> event or revert if the identifier has already been registered</em></p>
-<p><em>The given address must implement the given type interface (See <a href="/src/shared/Cloneable.sol/abstract.Cloneable.html#supportsinterface">ERC165-supportsInterface</a>)</em></p>
+<p><em>The given address must implement the given type interface (See <a href="/src/actions/ERC721MintAction.sol/contract.ERC721MintAction.html#supportsinterface">ERC165-supportsInterface</a>)</em></p>
 <pre><code class="language-solidity">function register(RegistryType type_, string calldata name_, address implementation_)
     external
     onlyCloneables(implementation_);

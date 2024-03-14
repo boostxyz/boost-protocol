@@ -28,7 +28,7 @@ abstract contract Cloneable is Initializable, ERC165 {
     /// @param - The compressed initialization data (if required)
     /// @dev The data is expected to be ABI encoded bytes compressed using {LibZip-cdCompress}
     /// @dev All implementations must override this function to initialize the contract
-    function initialize(bytes calldata) external virtual initializer {
+    function initialize(bytes calldata) public virtual initializer {
         revert InitializerNotImplemented();
     }
 

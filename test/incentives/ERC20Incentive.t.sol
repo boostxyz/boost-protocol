@@ -138,9 +138,7 @@ contract ERC20IncentiveTest is Test {
         bytes memory reclaimPayload =
             LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50.1 ether)})));
         vm.expectRevert(
-            abi.encodeWithSelector(
-                BoostError.ClaimFailed.selector, address(this), reclaimPayload.cdDecompress()
-            )
+            abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload.cdDecompress())
         );
         incentive.reclaim(reclaimPayload);
     }

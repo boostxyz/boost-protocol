@@ -31,7 +31,7 @@ contract MockAllowList is AllowList {
 }
 
 contract MockIncentive is Incentive {
-    function initialize(bytes calldata) external override {}
+    function initialize(bytes calldata) public override initializer {}
 
     function claim(bytes calldata) external virtual override returns (bool) {
         return true;

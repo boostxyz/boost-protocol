@@ -51,7 +51,7 @@ contract ERC20Incentive is Incentive {
 
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed incentive parameters `(address asset, Strategy strategy, uint256 reward, uint256 maxClaims)`
-    function initialize(bytes calldata data_) external override initializer {
+    function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
 
         // Ensure the strategy is valid (MINT is not yet supported)

@@ -48,7 +48,7 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Cloneable
     /// @param data_ The compressed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) external virtual override initializer {
+    function initialize(bytes calldata data_) public virtual override initializer {
         InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
         _initializeOwner(init_.owner);
         for (uint256 i = 0; i < init_.authorized.length; i++) {

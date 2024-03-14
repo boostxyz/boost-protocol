@@ -29,7 +29,7 @@ contract SignerValidator is Validator {
     /// @notice Initialize the contract with the list of authorized signers
     /// @param data_ The compressed list of authorized signers
     /// @dev The first address in the list will be the initial owner of the contract
-    function initialize(bytes calldata data_) external virtual override initializer {
+    function initialize(bytes calldata data_) public virtual override initializer {
         (address[] memory signers_) = abi.decode(data_.cdDecompress(), (address[]));
         _initializeOwner(signers_[0]);
         for (uint256 i = 0; i < signers_.length; i++) {

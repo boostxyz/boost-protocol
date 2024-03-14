@@ -16,8 +16,9 @@ import {MockERC721} from "src/shared/Mocks.sol";
 contract ERC721MintActionTest is Test {
     using LibZip for bytes;
 
-    ERC721MintAction public action;
     MockERC721 public mockAsset = new MockERC721();
+    ERC721MintAction public baseAction = new ERC721MintAction();
+    ERC721MintAction public action;
 
     function setUp() public {
         action = _newActionClone();
@@ -59,7 +60,7 @@ contract ERC721MintActionTest is Test {
         _initialize(address(mockAsset), MockERC721.mint.selector, mockAsset.mintPrice());
 
         // Prepare the action
-        bytes memory payload = action.prepare(LibZip.cdCompress(abi.encode(address(1))));
+        bytes memory payload = action.prepare(abi.encode(address(1)));
         assertEq(payload, abi.encodeWithSelector(MockERC721.mint.selector, address(1)));
     }
 
@@ -68,7 +69,7 @@ contract ERC721MintActionTest is Test {
         _initialize(address(mockAsset), MockERC721.mint.selector, mockAsset.mintPrice());
 
         // Prepare the action
-        bytes memory payload = action.prepare(LibZip.cdCompress(abi.encode(address(0xdeadbeef))));
+        bytes memory payload = action.prepare(abi.encode(address(0xdeadbeef)));
         (bool success, bytes memory returnData) = address(mockAsset).call{value: mockAsset.mintPrice()}(payload);
         assertTrue(success);
         assertEq(returnData.length, 0);
@@ -181,10 +182,10 @@ contract ERC721MintActionTest is Test {
     ///////////////////////////
 
     function _newActionClone() internal returns (ERC721MintAction) {
-        return ERC721MintAction(address(LibClone.clone(address(new ERC721MintAction()))));
+        return ERC721MintAction(LibClone.clone(address(baseAction)));
     }
 
     function _initialize(address target_, bytes4 selector_, uint256 value_) internal {
-        action.initialize(LibZip.cdCompress(abi.encode(target_, selector_, value_)));
+        action.initialize(LibZip.cdCompress(abi.encode(block.chainid, target_, selector_, value_)));
     }
 }

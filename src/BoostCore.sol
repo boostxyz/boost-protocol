@@ -113,7 +113,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         BoostLib.Boost storage boost = _boosts[boostId_];
 
         // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
-        if (!boost.action.validate(data_)) revert BoostError.Unauthorized();
+        if (!boost.validator.validate(data_)) revert BoostError.Unauthorized();
         if (
             !boost.incentives[incentiveId_].claim(
                 LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: msg.sender, data: data_})))

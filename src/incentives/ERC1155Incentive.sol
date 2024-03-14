@@ -56,7 +56,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
 
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed initialization payload
-    function initialize(bytes calldata data_) external override initializer {
+    function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
 
         // Ensure the strategy is valid (MINT is not yet supported)

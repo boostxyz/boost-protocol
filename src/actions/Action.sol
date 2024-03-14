@@ -32,12 +32,6 @@ abstract contract Action is Cloneable {
     /// @return The prepared payload
     function prepare(bytes calldata data_) external virtual returns (bytes memory);
 
-    /// @notice Validate that the action has been completed successfully
-    /// @param data_ The data payload for the action
-    /// @return True if the action has been validated for the user
-    /// @dev It is the responsibility of the validator to unpack the data and perform the validation
-    function validate(bytes calldata data_) external virtual returns (bool);
-
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Action).interfaceId || super.supportsInterface(interfaceId);

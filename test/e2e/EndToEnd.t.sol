@@ -22,6 +22,7 @@ import {Budget} from "src/budgets/Budget.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
 import {Action} from "src/actions/Action.sol";
+import {ContractAction} from "src/actions/ContractAction.sol";
 import {ERC721MintAction} from "src/actions/ERC721MintAction.sol";
 
 import {Incentive} from "src/incentives/Incentive.sol";
@@ -151,7 +152,7 @@ contract EndToEnd is Test {
         // NOTE: We're emulating an EOA here by fetching the mint fee, then fetching the payload, then making the call
         // (all but the actual "send" would be handled by the UI)
         uint256 mintFee = ERC721MintAction(address(boost.action)).value();
-        bytes memory mintPayload = boost.action.prepare(LibZip.cdCompress(abi.encode(address(this))));
+        bytes memory mintPayload = boost.action.prepare(abi.encode(address(this)));
         (bool success,) = ERC721MintAction(address(boost.action)).target().call{value: mintFee}(mintPayload);
         assertTrue(success);
 
@@ -284,7 +285,12 @@ contract EndToEnd is Test {
                                 registry.getIdentifier(BoostRegistry.RegistryType.ACTION, "ERC721MintAction")
                             )
                             ),
-                        parameters: LibZip.cdCompress(abi.encode(erc721, MockERC721.mint.selector, erc721.mintPrice()))
+                        parameters: LibZip.cdCompress(abi.encode(ContractAction.InitPayload({
+                            chainId: block.chainid,
+                            target: address(erc721),
+                            selector: MockERC721.mint.selector,
+                            value: erc721.mintPrice()
+                        })))
                     }),
                     BoostLib.Target({
                         // "... and I don't have to specify a validator"

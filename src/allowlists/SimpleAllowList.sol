@@ -22,7 +22,7 @@ contract SimpleAllowList is AllowList {
 
     /// @notice Initialize the contract with the list of allowed addresses
     /// @param data_ The compressed initialization data `(address owner, address[] allowList)`
-    function initialize(bytes calldata data_) external virtual override initializer {
+    function initialize(bytes calldata data_) public virtual override initializer {
         (address owner_, address[] memory allowList_) = abi.decode(data_.cdDecompress(), (address, address[]));
 
         _initializeOwner(owner_);

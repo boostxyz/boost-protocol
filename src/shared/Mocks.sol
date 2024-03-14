@@ -52,6 +52,11 @@ contract MockERC20 is ERC20 {
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
     }
+
+    function mintPayable(address to, uint256 amount) public payable {
+        require(msg.value >= amount / 100, "MockERC20: gimme more money!");
+        _mint(to, amount);
+    }
 }
 
 /// @title MockERC1155

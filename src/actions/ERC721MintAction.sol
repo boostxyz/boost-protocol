@@ -4,8 +4,9 @@ pragma solidity ^0.8.24;
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 
-import {Cloneable} from "src/shared/Cloneable.sol";
 import {Action} from "src/actions/Action.sol";
+import {Cloneable} from "src/shared/Cloneable.sol";
+import {ContractAction} from "src/actions/ContractAction.sol";
 import {Validator} from "src/validators/Validator.sol";
 
 /// @title ERC721 Mint Action
@@ -13,20 +14,8 @@ import {Validator} from "src/validators/Validator.sol";
 /// @dev The action is expected to be prepared with the data payload for the minting of the token
 /// @dev This a minimal generic implementation that should be extended if additional functionality or customizations are required
 /// @dev It is expected that the target contract has an externally accessible mint function whose selector
-contract ERC721MintAction is Action, Validator {
+contract ERC721MintAction is ContractAction, Validator {
     using LibZip for bytes;
-
-    /// @notice The target ERC721 contract
-    /// @dev This is the contract against which the mint action should be executed
-    address public target;
-
-    /// @notice The selector for the mint function
-    /// @dev This is expected to be the actual selector (e.g. `bytes4(keccak256("myMintFunction(address,uint256)"))`)
-    bytes4 public selector;
-
-    /// @notice The native token value to send with the mint function
-    /// @dev This value is expected to be the value required for the mint function on the target contract
-    uint256 public value;
 
     /// @notice The set of validated tokens
     /// @dev This is intended to prevent multiple validations against the same token ID
@@ -41,13 +30,8 @@ contract ERC721MintAction is Action, Validator {
     /// @inheritdoc Cloneable
     /// @notice Initialize the contract with the owner and the required mint data
     /// @param data_ The data payload for the mint action `(address target, bytes4 selector, uint256 value)`
-    function initialize(bytes calldata data_) external override initializer {
-        (address target_, bytes4 selector_, uint256 value_) =
-            abi.decode(data_.cdDecompress(), (address, bytes4, uint256));
-        target = target_;
-        selector = selector_;
-        value = value_;
-        _initializeOwner(msg.sender);
+    function initialize(bytes calldata data_) public virtual override(Cloneable, ContractAction) initializer {
+        _initialize(abi.decode(data_.cdDecompress(), (InitPayload)));
     }
 
     /// @notice Execute the action (not yet implemented)
@@ -64,12 +48,11 @@ contract ERC721MintAction is Action, Validator {
     }
 
     /// @notice Prepare the action for execution and return the expected payload
-    /// @param data_ The ABI-encoded payload for the action `(address recipient)`
-    /// @return The encoded payload to be sent with the call
+    /// @param data_ The ABI-encoded payload for the target contract call
+    /// @return The encoded payload to be sent to the target contract
     /// @dev Note that the mint value is NOT included in the prepared payload but must be sent with the call
     function prepare(bytes calldata data_) public view override returns (bytes memory) {
-        (address recipient) = abi.decode(data_.cdDecompress(), (address));
-        return abi.encodeWithSelector(selector, recipient);
+        return super.prepare(data_);
     }
 
     /// @inheritdoc Validator
@@ -78,7 +61,7 @@ contract ERC721MintAction is Action, Validator {
     /// @return success True if the action has been validated for the user
     /// @dev The first 20 bytes of the payload must be the holder address and the remaining bytes must be an encoded token ID (uint256)
     /// @dev Example: `abi.encode(address(holder), abi.encode(uint256(tokenId)))`
-    function validate(bytes calldata data_) external virtual override(Action, Validator) returns (bool success) {
+    function validate(bytes calldata data_) external virtual override returns (bool success) {
         (address holder, bytes memory payload) = abi.decode(data_.cdDecompress(), (address, bytes));
         uint256 tokenId = uint256(bytes32(payload));
 
@@ -93,5 +76,10 @@ contract ERC721MintAction is Action, Validator {
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Action, Validator) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _initialize(InitPayload memory init_) internal override onlyInitializing {
+        super._initialize(init_);
+        _initializeOwner(msg.sender);
     }
 }

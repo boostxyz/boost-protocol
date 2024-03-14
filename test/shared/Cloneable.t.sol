@@ -9,7 +9,7 @@ contract CloneableImpl is Cloneable {}
 contract CloneableImpl2 is Cloneable {
     uint256 private something;
 
-    function initialize(bytes calldata data_) external override {
+    function initialize(bytes calldata data_) public override initializer {
         (something) = abi.decode(data_, (uint256));
     }
 

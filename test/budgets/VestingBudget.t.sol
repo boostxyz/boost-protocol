@@ -30,13 +30,15 @@ contract VestingBudgetTest is Test {
         vestingBudget = VestingBudget(payable(LibClone.clone(address(new VestingBudget()))));
         vestingBudget.initialize(
             LibZip.cdCompress(
-                abi.encode(VestingBudget.InitPayload({
-                    owner: address(this),
-                    authorized: new address[](0),
-                    start: uint64(block.timestamp),
-                    duration: uint64(1 days),
-                    cliff: 0
-                }))
+                abi.encode(
+                    VestingBudget.InitPayload({
+                        owner: address(this),
+                        authorized: new address[](0),
+                        start: uint64(block.timestamp),
+                        duration: uint64(1 days),
+                        cliff: 0
+                    })
+                )
             )
         );
     }
@@ -87,7 +89,15 @@ contract VestingBudgetTest is Test {
     function testInitialize() public {
         // Initializer can only be called on clones, not the base contract
         bytes memory data = LibZip.cdCompress(
-            abi.encode(VestingBudget.InitPayload({owner: address(this), authorized: new address[](0), start: 0, duration: 0, cliff: 0}))
+            abi.encode(
+                VestingBudget.InitPayload({
+                    owner: address(this),
+                    authorized: new address[](0),
+                    start: 0,
+                    duration: 0,
+                    cliff: 0
+                })
+            )
         );
         VestingBudget clone = VestingBudget(payable(LibClone.clone(address(vestingBudget))));
         clone.initialize(data);
@@ -208,9 +218,11 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Reclaim 99 tokens from the budget
-        assertTrue(vestingBudget.reclaim(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 99 ether)
-        ));
+        assertTrue(
+            vestingBudget.reclaim(
+                _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 99 ether)
+            )
+        );
 
         // Ensure the budget total is still 100
         assertEq(vestingBudget.total(address(mockERC20)), 100 ether);
@@ -438,7 +450,8 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Try to disburse 100 tokens from the budget as a non-owner
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0xdeadbeef), 100 ether);
+        bytes memory data =
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0xdeadbeef), 100 ether);
         vm.prank(address(0xc0ffee));
         vm.expectRevert();
         vestingBudget.disburse(data);
@@ -571,9 +584,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(0)), 100 ether);
 
         // Disburse 25 ETH from the budget and ensure the budget has 75 ETH available
-        vestingBudget.disburse(
-            _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(0xdeadbeef), 25 ether)
-        );
+        vestingBudget.disburse(_makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(0xdeadbeef), 25 ether));
         assertEq(vestingBudget.available(address(0)), 75 ether);
     }
 
@@ -752,7 +763,9 @@ contract VestingBudgetTest is Test {
 
     function _allocate(address asset, uint256 value) internal returns (bool) {
         if (asset == address(0)) {
-            return vestingBudget.allocate{value: value}(_makeFungibleTransfer(Budget.AssetType.ETH, asset, address(this), value));
+            return vestingBudget.allocate{value: value}(
+                _makeFungibleTransfer(Budget.AssetType.ETH, asset, address(this), value)
+            );
         } else {
             mockERC20.approve(address(vestingBudget), value);
             return vestingBudget.allocate(_makeFungibleTransfer(Budget.AssetType.ERC20, asset, address(this), value));

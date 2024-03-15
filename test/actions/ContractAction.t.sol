@@ -95,6 +95,9 @@ contract ContractActionTest is Test {
     ////////////////////////////
 
     function testPrepare() public {
-        assertEq(action.prepare(abi.encode(address(0xdeadbeef), 100 ether)), abi.encodeWithSelector(target.mintPayable.selector, address(0xdeadbeef), 100 ether));
+        assertEq(
+            action.prepare(abi.encode(address(0xdeadbeef), 100 ether)),
+            abi.encodeWithSelector(target.mintPayable.selector, address(0xdeadbeef), 100 ether)
+        );
     }
 }

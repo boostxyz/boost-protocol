@@ -52,7 +52,7 @@ contract ContractAction is Action {
         return (success, returnData);
     }
 
-    function prepare(bytes calldata data_) public virtual view override returns (bytes memory bytes_) {
+    function prepare(bytes calldata data_) public view virtual override returns (bytes memory bytes_) {
         return _buildPayload(selector, data_);
     }
 

@@ -178,6 +178,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
         incentives = new Incentive[](targets_.length);
         for (uint256 i = 0; i < targets_.length; i++) {
             // Deploy the clone, but don't initialize until it we've preflighted
+            _checkTarget(type(Incentive).interfaceId, targets_[i].instance);
+
+            // Ensure the target is a base implementation (incentive clones are not reusable)
+            if (!targets_[i].isBase) {
+                revert BoostError.InvalidInstance(type(Incentive).interfaceId, targets_[i].instance);
+            }
+
             incentives[i] = Incentive(_makeTarget(type(Incentive).interfaceId, targets_[i], false));
 
             bytes memory preflight = incentives[i].preflight(targets_[i].parameters);

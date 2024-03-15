@@ -285,12 +285,16 @@ contract EndToEnd is Test {
                                 registry.getIdentifier(BoostRegistry.RegistryType.ACTION, "ERC721MintAction")
                             )
                             ),
-                        parameters: LibZip.cdCompress(abi.encode(ContractAction.InitPayload({
-                            chainId: block.chainid,
-                            target: address(erc721),
-                            selector: MockERC721.mint.selector,
-                            value: erc721.mintPrice()
-                        })))
+                        parameters: LibZip.cdCompress(
+                            abi.encode(
+                                ContractAction.InitPayload({
+                                    chainId: block.chainid,
+                                    target: address(erc721),
+                                    selector: MockERC721.mint.selector,
+                                    value: erc721.mintPrice()
+                                })
+                            )
+                            )
                     }),
                     BoostLib.Target({
                         // "... and I don't have to specify a validator"

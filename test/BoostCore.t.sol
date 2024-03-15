@@ -245,7 +245,11 @@ contract BoostCoreTest is Test {
         return BoostLib.Target({
             isBase: true,
             instance: address(new ERC721MintAction()),
-            parameters: LibZip.cdCompress(abi.encode(ContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})))
+            parameters: LibZip.cdCompress(
+                abi.encode(
+                    ContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
+                )
+                )
         });
     }
 

@@ -2,14 +2,18 @@
 pragma solidity ^0.8.24;
 
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
+import {OwnableRoles} from "lib/solady/src/auth/OwnableRoles.sol";
 
 import {AllowList} from "src/allowlists/AllowList.sol";
 import {BoostError} from "src/shared/BoostError.sol";
 
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
-contract SimpleAllowList is AllowList {
+contract SimpleAllowList is AllowList, OwnableRoles {
     using LibZip for bytes;
+
+    /// @notice The role for managing the allow list
+    uint256 public constant LIST_MANAGER_ROLE = 1 << 1;
 
     /// @dev An internal mapping of allowed statuses
     mapping(address => bool) private _allowed;
@@ -24,8 +28,8 @@ contract SimpleAllowList is AllowList {
     /// @param data_ The compressed initialization data `(address owner, address[] allowList)`
     function initialize(bytes calldata data_) public virtual override initializer {
         (address owner_, address[] memory allowList_) = abi.decode(data_.cdDecompress(), (address, address[]));
-
         _initializeOwner(owner_);
+        _grantRoles(owner_, LIST_MANAGER_ROLE);
         for (uint256 i = 0; i < allowList_.length; i++) {
             _allowed[allowList_[i]] = true;
         }
@@ -44,7 +48,7 @@ contract SimpleAllowList is AllowList {
     /// @param allowed_ The allowed status of each user
     /// @dev The length of the `users_` and `allowed_` arrays must be the same
     /// @dev This function can only be called by the owner
-    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyOwner {
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyRoles(LIST_MANAGER_ROLE) {
         if (users_.length != allowed_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {

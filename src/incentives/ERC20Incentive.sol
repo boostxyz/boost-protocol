@@ -21,9 +21,9 @@ contract ERC20Incentive is Incentive {
 
     /// @notice The strategy for the incentive
     /// @dev The strategy determines how the incentive is disbursed:
-    ///     - POOL: Transfer tokens from the budget to the recipient
-    ///     - MINT: Mint tokens to the recipient directly (not yet implemented)
-    ///     - RAFFLE: Add the recipient to a raffle for a chance to win the entire reward amount
+    ///     - POOL: Users claim from a pool of rewards until the limit is reached, with each claim receiving an equal share of the total;
+    ///     - MINT: New tokens are minted and distributed to the recipient, with each claim receiving an equal amount of newly issued tokens;
+    ///     - RAFFLE: Users claim a slot in a raffle, and a single winner is randomly drawn to receive the entire reward amount;
     enum Strategy {
         POOL,
         MINT,

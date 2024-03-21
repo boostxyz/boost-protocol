@@ -496,9 +496,9 @@ contract VestingBudgetTest is Test {
         vestingBudget.disburseBatch(requests);
     }
 
-    ////////////////////////
+    /////////////////////////
     // VestingBudget.total //
-    ////////////////////////
+    /////////////////////////
 
     function testTotal() public {
         // Ensure the budget has 0 tokens
@@ -542,9 +542,9 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.total(address(mockERC20)), 100 ether);
     }
 
-    ////////////////////////////
+    /////////////////////////////
     // VestingBudget.available //
-    ////////////////////////////
+    /////////////////////////////
 
     function testAvailable() public {
         // Allocate 100 tokens to the budget
@@ -593,9 +593,9 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(otherMockERC20)), 0);
     }
 
-    //////////////////////////////
+    ///////////////////////////////
     // VestingBudget.distributed //
-    //////////////////////////////
+    ///////////////////////////////
 
     function testDistributed() public {
         // Ensure the budget has 0 tokens distributed
@@ -622,18 +622,18 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.distributed(address(mockERC20)), 50 ether);
     }
 
-    ////////////////////////////
+    /////////////////////////////
     // VestingBudget.reconcile //
-    ////////////////////////////
+    /////////////////////////////
 
     function testReconcile() public {
         // VestingBudget does not implement reconcile
         assertEq(vestingBudget.reconcile(""), 0);
     }
 
-    ////////////////////////////////
+    /////////////////////////////////
     // VestingBudget.setAuthorized //
-    ////////////////////////////////
+    /////////////////////////////////
 
     function testSetAuthorized() public {
         // Ensure the budget authorizes an account
@@ -667,9 +667,9 @@ contract VestingBudgetTest is Test {
         vestingBudget.setAuthorized(accounts, authorized);
     }
 
-    ///////////////////////////////
+    ////////////////////////////////
     // VestingBudget.isAuthorized //
-    ///////////////////////////////
+    ////////////////////////////////
 
     function testIsAuthorized() public {
         address[] memory accounts = new address[](1);
@@ -686,9 +686,9 @@ contract VestingBudgetTest is Test {
         assertTrue(vestingBudget.isAuthorized(address(this)));
     }
 
-    ////////////////////////////////////
+    /////////////////////////////////////
     // VestingBudget.supportsInterface //
-    ////////////////////////////////////
+    /////////////////////////////////////
 
     function testSupportsInterface() public {
         // Ensure the contract supports the Budget interface
@@ -700,9 +700,9 @@ contract VestingBudgetTest is Test {
         assertFalse(vestingBudget.supportsInterface(type(Test).interfaceId));
     }
 
-    ////////////////////////////
+    /////////////////////////////
     // VestingBudget.fallback  //
-    ////////////////////////////
+    /////////////////////////////
 
     function testFallback() public {
         // Ensure the fallback is payable
@@ -747,7 +747,7 @@ contract VestingBudgetTest is Test {
     }
 
     ///////////////////////////
-    // VestingBudget.receive  //
+    // VestingBudget.receive //
     ///////////////////////////
 
     function testReceive() public {

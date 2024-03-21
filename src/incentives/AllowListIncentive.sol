@@ -20,14 +20,14 @@ contract AllowListIncentive is Incentive {
     /// @notice The payload for initializing an AllowListIncentive
     struct InitPayload {
         SimpleAllowList allowList;
-        uint256 maxClaims;
+        uint256 limit;
     }
 
     /// @notice The SimpleAllowList contract
     SimpleAllowList public allowList;
 
     /// @notice The maximum number of claims that can be made (one per address)
-    uint256 public maxClaims;
+    uint256 public limit;
 
     /// @notice Construct a new AllowListIncentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
@@ -36,12 +36,12 @@ contract AllowListIncentive is Incentive {
     }
 
     /// @notice Initialize the contract with the incentive parameters
-    /// @param data_ The compressed initialization data `(SimpleAllowList allowList, uint256 maxClaims)`
+    /// @param data_ The compressed initialization data `(SimpleAllowList allowList, uint256 limit)`
     function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
         _initializeOwner(msg.sender);
         allowList = init_.allowList;
-        maxClaims = init_.maxClaims;
+        limit = init_.limit;
     }
 
     /// @inheritdoc Incentive
@@ -49,7 +49,7 @@ contract AllowListIncentive is Incentive {
     /// @param data_ The claim data
     function claim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
         ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
-        if (claims++ >= maxClaims || claimed[claim_.target]) revert NotClaimable();
+        if (claims++ >= limit || claimed[claim_.target]) revert NotClaimable();
         claimed[claim_.target] = true;
 
         (address[] memory users, bool[] memory allowed) = _makeAllowListPayload(claim_.target);
@@ -67,7 +67,7 @@ contract AllowListIncentive is Incentive {
     /// @inheritdoc Incentive
     function isClaimable(bytes calldata data_) external view virtual override returns (bool) {
         ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
-        return claims < maxClaims && !claimed[claim_.target] && !allowList.isAllowed(claim_.target, "");
+        return claims < limit && !claimed[claim_.target] && !allowList.isAllowed(claim_.target, "");
     }
 
     /// @inheritdoc Incentive

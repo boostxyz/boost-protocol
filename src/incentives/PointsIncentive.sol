@@ -23,7 +23,7 @@ contract PointsIncentive is Incentive {
         address venue;
         bytes4 selector;
         uint256 quantity;
-        uint256 maxClaims;
+        uint256 limit;
     }
 
     /// @notice The address of the points contract
@@ -33,7 +33,7 @@ contract PointsIncentive is Incentive {
     uint256 public quantity;
 
     /// @notice The maximum number of claims that can be made (one per address)
-    uint256 public maxClaims;
+    uint256 public limit;
 
     /// @notice The selector for the issuance function on the points contract
     bytes4 public selector;
@@ -45,15 +45,15 @@ contract PointsIncentive is Incentive {
     }
 
     /// @notice Initialize the contract with the incentive parameters
-    /// @param data_ The compressed incentive parameters `(address points, uint256 quantity, uint256 maxClaims)`
+    /// @param data_ The compressed incentive parameters `(address points, uint256 quantity, uint256 limit)`
     function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
-        if (init_.quantity == 0 || init_.maxClaims == 0) revert BoostError.InvalidInitialization();
+        if (init_.quantity == 0 || init_.limit == 0) revert BoostError.InvalidInitialization();
 
         venue = init_.venue;
         selector = init_.selector;
         quantity = init_.quantity;
-        maxClaims = init_.maxClaims;
+        limit = init_.limit;
         _initializeOwner(msg.sender);
     }
 
@@ -101,6 +101,6 @@ contract PointsIncentive is Incentive {
     /// @param recipient_ The address of the recipient
     /// @return True if the incentive is claimable for the recipient
     function _isClaimable(address recipient_) internal view returns (bool) {
-        return !claimed[recipient_] && claims < maxClaims;
+        return !claimed[recipient_] && claims < limit;
     }
 }

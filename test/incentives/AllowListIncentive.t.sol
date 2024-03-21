@@ -20,7 +20,7 @@ contract AllowListIncentiveTest is Test {
 
         incentive = AllowListIncentive(LibClone.clone(address(new AllowListIncentive())));
         incentive.initialize(
-            LibZip.cdCompress(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, maxClaims: 10})))
+            LibZip.cdCompress(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, limit: 10})))
         );
 
         allowList.grantRoles(address(incentive), 1 << 1);
@@ -32,14 +32,14 @@ contract AllowListIncentiveTest is Test {
 
     function test_initialize() public {
         assertEq(address(incentive.allowList()), address(allowList));
-        assertEq(incentive.maxClaims(), 10);
+        assertEq(incentive.limit(), 10);
         assertEq(incentive.owner(), address(this));
     }
 
     function test_initialize_twice() public {
         vm.expectRevert(bytes4(keccak256("InvalidInitialization()")));
         incentive.initialize(
-            LibZip.cdCompress(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, maxClaims: 10})))
+            LibZip.cdCompress(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, limit: 10})))
         );
     }
 

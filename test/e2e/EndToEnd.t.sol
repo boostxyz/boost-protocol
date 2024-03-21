@@ -131,7 +131,7 @@ contract EndToEnd is Test {
         // - Incentive[0] == ERC20Incentive
         assertEq(ERC20Incentive(address(boost.incentives[0])).asset(), address(erc20));
         assertEq(ERC20Incentive(address(boost.incentives[0])).reward(), 100 ether);
-        assertEq(ERC20Incentive(address(boost.incentives[0])).maxClaims(), 5);
+        assertEq(ERC20Incentive(address(boost.incentives[0])).limit(), 5);
 
         // - Protocol Fee == 1,000 bps (custom fee) + 1,000 bps (base fee) = 2,000 bps = 20%
         assertEq(boost.protocolFee, 2_000);

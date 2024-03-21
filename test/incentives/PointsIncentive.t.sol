@@ -26,7 +26,7 @@ contract PointsIncentiveTest is Test {
                         venue: address(points),
                         selector: bytes4(keccak256("issue(address,uint256)")),
                         quantity: 100,
-                        maxClaims: 10
+                        limit: 10
                     })
                 )
             )
@@ -41,7 +41,7 @@ contract PointsIncentiveTest is Test {
         assertEq(address(incentive.venue()), address(points));
         assertEq(incentive.selector(), bytes4(keccak256("issue(address,uint256)")));
         assertEq(incentive.quantity(), 100);
-        assertEq(incentive.maxClaims(), 10);
+        assertEq(incentive.limit(), 10);
         assertEq(incentive.owner(), address(this));
     }
 
@@ -54,7 +54,7 @@ contract PointsIncentiveTest is Test {
                         venue: address(points),
                         selector: bytes4(keccak256("mint(address,uint256)")),
                         quantity: 100,
-                        maxClaims: 10
+                        limit: 10
                     })
                 )
             )

@@ -135,7 +135,7 @@ contract BoostCoreTest is Test {
         assertTrue(_incentive.strategy() == ERC20Incentive.Strategy.POOL);
         assertEq(_incentive.asset(), address(mockERC20));
         assertEq(_incentive.reward(), 1 ether);
-        assertEq(_incentive.maxClaims(), 100);
+        assertEq(_incentive.limit(), 100);
         assertEq(_incentive.claims(), 0);
 
         // Check the Validator (which should be the Action)
@@ -282,7 +282,7 @@ contract BoostCoreTest is Test {
                             asset: address(mockERC20),
                             strategy: ERC20Incentive.Strategy.POOL,
                             reward: 1 ether,
-                            maxClaims: 100
+                            limit: 100
                         })
                     )
                     )

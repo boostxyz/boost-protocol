@@ -51,7 +51,7 @@ contract ERC20IncentiveTest is Test {
         assertTrue(incentive.strategy() == ERC20Incentive.Strategy.POOL);
         assertEq(incentive.asset(), address(mockAsset));
         assertEq(incentive.reward(), 1 ether);
-        assertEq(incentive.maxClaims(), 5);
+        assertEq(incentive.limit(), 5);
     }
 
     function testInitialize_InsufficientAllocation() public {
@@ -110,6 +110,21 @@ contract ERC20IncentiveTest is Test {
         incentive.claim(claimPayload);
     }
 
+    function testClaim_RaffleStrategy() public {
+        // Initialize the ERC20Incentive raffling 100 eth to 1 of 5 entrants
+        _initialize(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
+
+        // Claim the incentive, which means adding the address to the entries list
+        bytes memory claimPayload =
+            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        incentive.claim(claimPayload);
+
+        // Check that the entry was added and no tokens were transferred
+        assertTrue(incentive.claimed(address(1)));
+        assertEq(incentive.entries(0), address(1));
+        assertEq(mockAsset.balanceOf(address(incentive)), 100 ether);
+    }
+
     ////////////////////////////
     // ERC20Incentive.reclaim //
     ////////////////////////////
@@ -117,7 +132,7 @@ contract ERC20IncentiveTest is Test {
     function testReclaim() public {
         // Initialize the ERC20Incentive
         _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 100);
-        assertEq(incentive.maxClaims(), 100);
+        assertEq(incentive.limit(), 100);
 
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload =
@@ -127,7 +142,7 @@ contract ERC20IncentiveTest is Test {
 
         // Check that enough assets remain to cover 50 more claims
         assertEq(mockAsset.balanceOf(address(incentive)), 50 ether);
-        assertEq(incentive.maxClaims(), 50);
+        assertEq(incentive.limit(), 50);
     }
 
     function testReclaim_InvalidAmount() public {
@@ -141,6 +156,29 @@ contract ERC20IncentiveTest is Test {
             abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload.cdDecompress())
         );
         incentive.reclaim(reclaimPayload);
+    }
+
+    function testReclaim_RaffleStrategy() public {
+        // Initialize the ERC20Incentive raffling 100 eth to 1 of 5 entrants
+        _initialize(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
+
+        // Claim the incentive for 1 address, adding it to the raffle entries
+        // and locking in the reward since there's at least 1 potential winner
+        bytes memory claimPayload =
+            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        incentive.claim(claimPayload);
+        assertEq(incentive.entries(0), address(1));
+        assertEq(incentive.limit(), 5);
+
+        // Attempt to reclaim the reward => revert (because the reward is now locked)
+        bytes memory reclaimPayload =
+            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(100 ether)})));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload.cdDecompress())
+        );
+        incentive.reclaim(reclaimPayload);
+        assertEq(incentive.limit(), 5);
     }
 
     ////////////////////////////////
@@ -223,6 +261,48 @@ contract ERC20IncentiveTest is Test {
         assertEq(payload2.amount, 0);
     }
 
+    function testPreflight_RaffleStrategy() public {
+        // Check the preflight data for a raffle
+        bytes memory data =
+            incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 1 ether, 5));
+        Budget.Transfer memory budgetRequest = abi.decode(data.cdDecompress(), (Budget.Transfer));
+
+        assertEq(budgetRequest.asset, address(mockAsset));
+
+        Budget.FungiblePayload memory payload = abi.decode(budgetRequest.data, (Budget.FungiblePayload));
+        assertEq(payload.amount, 1 ether);
+    }
+
+    /////////////////////////////////
+    // ERC20Incentive.drawRaffle   //
+    /////////////////////////////////
+
+    function testDrawRaffle() public {
+        // Initialize the ERC20Incentive raffling 100 eth to 1 of 5 entrants
+        _initialize(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
+
+        // Claim the incentive for 5 different addresses
+        address[] memory recipients = _randomAccounts(5);
+        for (uint256 i = 0; i < 5; i++) {
+            bytes memory claimPayload =
+                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: recipients[i], data: bytes("")})));
+            incentive.claim(claimPayload);
+        }
+
+        // Mock the environment so our PRNG is easily predictable
+        vm.prevrandao(bytes32(uint256(42)));
+        vm.warp(100);
+
+        // Draw the raffle, the winner should be the address at index 3 because the
+        // PRNG is seeded with `142` which means the first random value will be:
+        // 64619794903595674682953496420467953339178421197965090540722661986171627552023
+        // and we apply modulo 5 to get 3, which is the index of the winner.
+        incentive.drawRaffle();
+
+        // Check that the winner was selected and rewarded
+        assertEq(mockAsset.balanceOf(address(recipients[3])), 100 ether);
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////
@@ -231,19 +311,17 @@ contract ERC20IncentiveTest is Test {
         return ERC20Incentive(LibClone.clone(address(new ERC20Incentive())));
     }
 
-    function _initialize(address asset, ERC20Incentive.Strategy strategy, uint256 reward, uint256 maxClaims) internal {
-        incentive.initialize(_initPayload(asset, strategy, reward, maxClaims));
+    function _initialize(address asset, ERC20Incentive.Strategy strategy, uint256 reward, uint256 limit) internal {
+        incentive.initialize(_initPayload(asset, strategy, reward, limit));
     }
 
-    function _initPayload(address asset, ERC20Incentive.Strategy strategy, uint256 reward, uint256 maxClaims)
+    function _initPayload(address asset, ERC20Incentive.Strategy strategy, uint256 reward, uint256 limit)
         internal
         pure
         returns (bytes memory)
     {
         return LibZip.cdCompress(
-            abi.encode(
-                ERC20Incentive.InitPayload({asset: asset, strategy: strategy, reward: reward, maxClaims: maxClaims})
-            )
+            abi.encode(ERC20Incentive.InitPayload({asset: asset, strategy: strategy, reward: reward, limit: limit}))
         );
     }
 

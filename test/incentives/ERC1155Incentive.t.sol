@@ -51,7 +51,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         assertTrue(incentive.strategy() == ERC1155Incentive.Strategy.POOL);
         assertEq(address(incentive.asset()), address(mockAsset));
         assertEq(incentive.tokenId(), 42);
-        assertEq(incentive.maxClaims(), 5);
+        assertEq(incentive.limit(), 5);
     }
 
     function testInitialize_InsufficientAllocation() public {
@@ -119,7 +119,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     function testReclaim() public {
         // Initialize the ERC1155Incentive
         _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 100);
-        assertEq(incentive.maxClaims(), 100);
+        assertEq(incentive.limit(), 100);
 
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload =
@@ -129,7 +129,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
         // Check that enough assets remain to cover 50 more claims
         assertEq(mockAsset.balanceOf(address(incentive), 42), 50);
-        assertEq(incentive.maxClaims(), 50);
+        assertEq(incentive.limit(), 50);
     }
 
     function testReclaim_InvalidAmount() public {
@@ -226,13 +226,13 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         return ERC1155Incentive(LibClone.clone(address(new ERC1155Incentive())));
     }
 
-    function _initialize(MockERC1155 asset, ERC1155Incentive.Strategy strategy, uint256 tokenId, uint256 maxClaims)
+    function _initialize(MockERC1155 asset, ERC1155Incentive.Strategy strategy, uint256 tokenId, uint256 limit)
         internal
     {
-        incentive.initialize(_initPayload(asset, strategy, tokenId, maxClaims));
+        incentive.initialize(_initPayload(asset, strategy, tokenId, limit));
     }
 
-    function _initPayload(MockERC1155 asset, ERC1155Incentive.Strategy strategy, uint256 tokenId, uint256 maxClaims)
+    function _initPayload(MockERC1155 asset, ERC1155Incentive.Strategy strategy, uint256 tokenId, uint256 limit)
         internal
         pure
         returns (bytes memory)
@@ -243,7 +243,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
                     asset: IERC1155(address(asset)),
                     strategy: strategy,
                     tokenId: tokenId,
-                    maxClaims: maxClaims,
+                    limit: limit,
                     extraData: ""
                 })
             )

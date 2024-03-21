@@ -29,7 +29,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
         IERC1155 asset;
         Strategy strategy;
         uint256 tokenId;
-        uint256 maxClaims;
+        uint256 limit;
         bytes extraData;
     }
 
@@ -40,7 +40,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     Strategy public strategy;
 
     /// @notice The maximum number of claims that can be made (one per address)
-    uint256 public maxClaims;
+    uint256 public limit;
 
     /// @notice The ERC1155 token ID for the incentive
     uint256 public tokenId;
@@ -61,18 +61,18 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
 
         // Ensure the strategy is valid (MINT is not yet supported)
         if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
-        if (init_.maxClaims == 0) revert BoostError.InvalidInitialization();
+        if (init_.limit == 0) revert BoostError.InvalidInitialization();
 
         // Ensure the maximum reward amount has been allocated
         uint256 available = init_.asset.balanceOf(address(this), init_.tokenId);
-        if (available < init_.maxClaims) {
-            revert BoostError.InsufficientFunds(address(init_.asset), available, init_.maxClaims);
+        if (available < init_.limit) {
+            revert BoostError.InsufficientFunds(address(init_.asset), available, init_.limit);
         }
 
         asset = init_.asset;
         strategy = init_.strategy;
         tokenId = init_.tokenId;
-        maxClaims = init_.maxClaims;
+        limit = init_.limit;
         extraData = init_.extraData;
         _initializeOwner(msg.sender);
     }
@@ -105,8 +105,8 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
         // Ensure the amount is valid and reduce the max claims accordingly
-        if (amount > maxClaims) revert BoostError.ClaimFailed(msg.sender, abi.encode(claim_));
-        maxClaims -= amount;
+        if (amount > limit) revert BoostError.ClaimFailed(msg.sender, abi.encode(claim_));
+        limit -= amount;
 
         // Reclaim the incentive to the intended recipient
         // wake-disable-next-line reentrancy (not a risk here)
@@ -129,7 +129,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
                     asset: address(init_.asset),
                     target: address(this),
                     data: abi.encode(
-                        Budget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.maxClaims, data: init_.extraData})
+                        Budget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.limit, data: init_.extraData})
                         )
                 })
             )
@@ -155,7 +155,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     /// @param recipient_ The address of the recipient
     /// @return True if the incentive is claimable for the recipient
     function _isClaimable(address recipient_) internal view returns (bool) {
-        return !claimed[recipient_] && claims < maxClaims;
+        return !claimed[recipient_] && claims < limit;
     }
 
     /// @inheritdoc IERC1155Receiver

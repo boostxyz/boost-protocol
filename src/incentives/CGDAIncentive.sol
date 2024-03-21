@@ -15,12 +15,31 @@ contract CGDAIncentive is Incentive {
     using LibZip for bytes;
     using SafeTransferLib for address;
 
+    /// @notice The ERC20-like token used for the incentive
     address public asset;
 
-    // Incentive parameters
+    /// @notice The payload for initializing a CGDAIncentive
+    /// @param asset The address of the ERC20-like token
+    /// @param initialReward The initial reward amount
+    /// @param rewardDecay The amount to subtract from the current reward after each claim
+    /// @param rewardBoost The amount by which the reward increases for each hour without a claim (continuous linear increase)
+    /// @param totalBudget The total budget for the incentive
+    struct InitPayload {
+        address asset;
+        uint256 initialReward;
+        uint256 rewardDecay;
+        uint256 rewardBoost;
+        uint256 totalBudget;
+    }
+
+    /// @notice The configuration parameters for the CGDAIncentive
+    /// @param rewardDecay The amount to subtract from the current reward after each claim
+    /// @param rewardBoost The amount by which the reward increases for each hour without a claim (continuous linear increase)
+    /// @param lastClaimTime The timestamp of the last claim
+    /// @param currentReward The current reward amount
     struct CGDAParameters {
-        uint256 rewardDecay; // Reward reduction per claim
-        uint256 rewardBoost; // Reward increase per hour without claims
+        uint256 rewardDecay;
+        uint256 rewardBoost;
         uint256 lastClaimTime;
         uint256 currentReward;
     }
@@ -28,16 +47,10 @@ contract CGDAIncentive is Incentive {
     CGDAParameters public cgdaParams;
     uint256 public totalBudget;
 
+    /// @notice Construct a new CGDAIncentive
+    /// @dev Because this contract is a base implementation, it should not be initialized through the constructor.
     constructor() {
         _disableInitializers();
-    }
-
-    struct InitPayload {
-        address asset;
-        uint256 initialReward;
-        uint256 rewardDecay;
-        uint256 rewardBoost;
-        uint256 totalBudget;
     }
 
     /// @notice Initialize the CGDA Incentive

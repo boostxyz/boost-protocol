@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
 import {Budget} from "src/budgets/Budget.sol";
@@ -16,7 +15,6 @@ import {Incentive} from "./Incentive.sol";
 ///     - This contract must be authorized to operate the points contract's issuance function
 contract PointsIncentive is Incentive {
     using LibZip for bytes;
-    using SafeTransferLib for address;
 
     /// @notice The payload for initializing a PointsIncentive
     struct InitPayload {

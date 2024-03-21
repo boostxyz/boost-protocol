@@ -303,6 +303,15 @@ contract ERC20IncentiveTest is Test {
         assertEq(mockAsset.balanceOf(address(recipients[3])), 100 ether);
     }
 
+    function testDrawRaffle_NotRaffleStrategy() public {
+        // Initialize the ERC20Incentive with a POOL strategy
+        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+
+        // Attempt to draw the raffle => revert
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        incentive.drawRaffle();
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

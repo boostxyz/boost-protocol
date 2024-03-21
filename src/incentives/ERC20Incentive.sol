@@ -168,6 +168,8 @@ contract ERC20Incentive is Incentive {
         return !claimed[recipient_] && claims < limit;
     }
 
+    /// @notice Draw a winner from the raffle
+    /// @dev Only valid when the strategy is set to `Strategy.RAFFLE`
     function drawRaffle() external onlyOwner {
         if (strategy != Strategy.RAFFLE) revert BoostError.Unauthorized();
 

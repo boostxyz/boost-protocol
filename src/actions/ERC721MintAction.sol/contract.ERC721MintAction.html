@@ -178,7 +178,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="erc721mintaction"><a class="header" href="#erc721mintaction">ERC721MintAction</a></h1>
-<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/2f9513b45f0c279b34ae8267ab5d5090a4a6eeba/src/actions/ERC721MintAction.sol">Git Source</a></p>
+<p><a href="https://github.com/rabbitholegg/boost-protocol/blob/6aedfed20bdf40fa8a48a0df6d73641c17044396/src/actions/ERC721MintAction.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="/src/actions/ContractAction.sol/contract.ContractAction.html">ContractAction</a>, <a href="/src/validators/Validator.sol/abstract.Validator.html">Validator</a></p>
 <p>A primitive action to mint and/or validate that an ERC721 token has been minted</p>
@@ -209,11 +209,11 @@
 </div>
 <h3 id="execute"><a class="header" href="#execute">execute</a></h3>
 <p>Execute the action (not yet implemented)</p>
-<pre><code class="language-solidity">function execute(bytes calldata) external payable override returns (bool success, bytes memory returnData);
+<pre><code class="language-solidity">function execute(bytes calldata data_) external payable override returns (bool success, bytes memory returnData);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>&lt;none&gt;</code></td><td><code>bytes</code></td><td></td></tr>
+<tr><td><code>data_</code></td><td><code>bytes</code></td><td>The data payload for the call (not used in this implementation)</td></tr>
 </tbody></table>
 </div>
 <p><strong>Returns</strong></p>

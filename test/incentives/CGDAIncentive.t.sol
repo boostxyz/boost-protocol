@@ -5,7 +5,6 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {MockERC20} from "src/shared/Mocks.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
@@ -16,7 +15,6 @@ import {Budget} from "src/budgets/Budget.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
 contract CGDAIncentiveTest is Test {
-    using LibZip for bytes;
     using SafeTransferLib for address;
 
     MockERC20 public asset = new MockERC20();
@@ -35,7 +33,7 @@ contract CGDAIncentiveTest is Test {
                     rewardBoost: 0.1 ether,
                     totalBudget: 10 ether
                 })
-            ).cdCompress()
+            )
         );
     }
 
@@ -55,7 +53,7 @@ contract CGDAIncentiveTest is Test {
                     rewardBoost: 0.1 ether,
                     totalBudget: 10 ether
                 })
-            ).cdCompress()
+            )
         );
 
         (uint256 rewardDecay, uint256 rewardBoost, uint256 lastClaimTime, uint256 currentReward) =
@@ -79,8 +77,7 @@ contract CGDAIncentiveTest is Test {
 
         address[] memory accounts = _randomAccounts(15);
         for (uint256 i = 0; i < accounts.length; i++) {
-            bytes memory claimPayload =
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")})));
+            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")}));
             incentive.claim(claimPayload);
         }
 
@@ -88,9 +85,7 @@ contract CGDAIncentiveTest is Test {
         assertEq(asset.balanceOf(address(incentive)), 0.25 ether);
 
         incentive.claim(
-            LibZip.cdCompress(
-                abi.encode(Incentive.ClaimPayload({target: makeAddr("zach zebra's zootopia"), data: bytes("")}))
-            )
+            abi.encode(Incentive.ClaimPayload({target: makeAddr("zach zebra's zootopia"), data: bytes("")}))
         );
 
         assertEq(incentive.currentReward(), 0 ether);
@@ -99,13 +94,8 @@ contract CGDAIncentiveTest is Test {
 
     function test_claim_OutOfBudget() public {
         incentive.reclaim(
-            LibZip.cdCompress(
-                abi.encode(
-                    Incentive.ClaimPayload({
-                        target: makeAddr("weird al's wonky waffle house"),
-                        data: abi.encode(10 ether)
-                    })
-                )
+            abi.encode(
+                Incentive.ClaimPayload({target: makeAddr("weird al's wonky waffle house"), data: abi.encode(10 ether)})
             )
         );
 
@@ -114,11 +104,7 @@ contract CGDAIncentiveTest is Test {
 
         vm.expectRevert(Incentive.NotClaimable.selector);
         incentive.claim(
-            LibZip.cdCompress(
-                abi.encode(
-                    Incentive.ClaimPayload({target: makeAddr("sam's soggy sandwich & soup shack"), data: bytes("")})
-                )
-            )
+            abi.encode(Incentive.ClaimPayload({target: makeAddr("sam's soggy sandwich & soup shack"), data: bytes("")}))
         );
 
         assertEq(incentive.currentReward(), 0 ether);
@@ -196,17 +182,15 @@ contract CGDAIncentiveTest is Test {
     function test_reclaim() public {
         address[] memory accounts = _randomAccounts(10);
         for (uint256 i = 0; i < accounts.length; i++) {
-            bytes memory claimPayload =
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")})));
+            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")}));
             incentive.claim(claimPayload);
         }
 
         assertEq(incentive.currentReward(), 0.5 ether);
         assertEq(asset.balanceOf(address(incentive)), 2.25 ether);
 
-        bytes memory reclaimPayload = LibZip.cdCompress(
-            abi.encode(Incentive.ClaimPayload({target: address(0xdeadbeef), data: abi.encode(2 ether)}))
-        );
+        bytes memory reclaimPayload =
+            abi.encode(Incentive.ClaimPayload({target: address(0xdeadbeef), data: abi.encode(2 ether)}));
         incentive.reclaim(reclaimPayload);
 
         assertEq(incentive.currentReward(), 0.25 ether);
@@ -220,25 +204,16 @@ contract CGDAIncentiveTest is Test {
     function test_isClaimable() public {
         address[] memory accounts = _randomAccounts(15);
         for (uint256 i = 0; i < accounts.length; i++) {
-            bytes memory claimPayload =
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")})));
+            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")}));
             incentive.claim(claimPayload);
         }
 
-        assertEq(
-            incentive.isClaimable(
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})))
-            ),
-            true
-        );
+        assertEq(incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}))), true);
 
-        incentive.claim(LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}))));
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
 
         assertEq(
-            incentive.isClaimable(
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(2), data: bytes("")})))
-            ),
-            false
+            incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(2), data: bytes("")}))), false
         );
     }
 
@@ -248,19 +223,17 @@ contract CGDAIncentiveTest is Test {
 
     function test_preflight() public {
         bytes memory preflightPayload = incentive.preflight(
-            LibZip.cdCompress(
-                abi.encode(
-                    CGDAIncentive.InitPayload({
-                        asset: address(asset),
-                        initialReward: 1 ether,
-                        rewardDecay: 0.05 ether,
-                        rewardBoost: 0.1 ether,
-                        totalBudget: 10 ether
-                    })
-                )
+            abi.encode(
+                CGDAIncentive.InitPayload({
+                    asset: address(asset),
+                    initialReward: 1 ether,
+                    rewardDecay: 0.05 ether,
+                    rewardBoost: 0.1 ether,
+                    totalBudget: 10 ether
+                })
             )
         );
-        Budget.Transfer memory transfer = abi.decode(preflightPayload.cdDecompress(), (Budget.Transfer));
+        Budget.Transfer memory transfer = abi.decode(preflightPayload, (Budget.Transfer));
 
         assertTrue(transfer.assetType == Budget.AssetType.ERC20);
         assertEq(transfer.asset, address(asset));
@@ -273,8 +246,7 @@ contract CGDAIncentiveTest is Test {
     ///////////////////////////
 
     function _makeClaim(address target_) internal {
-        bytes memory claimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: target_, data: bytes("")})));
+        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: target_, data: bytes("")}));
         incentive.claim(claimPayload);
     }
 
@@ -290,7 +262,7 @@ contract CGDAIncentiveTest is Test {
             data: abi.encode(Budget.FungiblePayload({amount: value_}))
         });
 
-        return LibZip.cdCompress(abi.encode(transfer));
+        return abi.encode(transfer);
     }
 
     function _randomAccounts(uint256 count) internal returns (address[] memory accounts) {

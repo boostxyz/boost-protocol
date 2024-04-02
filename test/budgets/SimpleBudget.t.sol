@@ -5,7 +5,6 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {Initializable} from "lib/solady/src/utils/Initializable.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
@@ -16,8 +15,6 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
 contract SimpleBudgetTest is Test, IERC1155Receiver {
-    using LibZip for bytes;
-
     MockERC20 mockERC20;
     MockERC20 otherMockERC20;
     MockERC1155 mockERC1155;
@@ -35,9 +32,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // Deploy a new SimpleBudget contract
         simpleBudget = SimpleBudget(payable(LibClone.clone(address(new SimpleBudget()))));
         simpleBudget.initialize(
-            LibZip.cdCompress(
-                abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
-            )
+            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
         );
     }
 
@@ -101,9 +96,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
     function testInitialize() public {
         // Initializer can only be called on clones, not the base contract
-        bytes memory data = LibZip.cdCompress(
-            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
-        );
+        bytes memory data = abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}));
         SimpleBudget clone = SimpleBudget(payable(LibClone.clone(address(simpleBudget))));
         clone.initialize(data);
 
@@ -113,20 +106,8 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     }
 
     function testInitialize_ImproperData() public {
-        bytes memory data;
-
-        // with uncompressed but properly encoded data
-        data = abi.encode(address(this), new address[](0));
-        vm.expectRevert();
-        simpleBudget.initialize(data);
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(address(this), new address[](0)));
-        vm.expectRevert();
-        simpleBudget.initialize(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(address(this), new address[](0))));
+        // with improperly encoded data
+        bytes memory data = abi.encodePacked(new address[](0), address(this));
         vm.expectRevert();
         simpleBudget.initialize(data);
     }
@@ -161,15 +142,13 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC1155.setApprovalForAll(address(simpleBudget), true);
 
         // Allocate 100 of token ID 42 to the budget
-        bytes memory data = LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC1155,
-                    asset: address(mockERC1155),
-                    target: address(this),
-                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-                })
-            )
+        bytes memory data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            })
         );
         assertTrue(simpleBudget.allocate(data));
 
@@ -213,20 +192,8 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
 
-        // with uncompressed but properly encoded data
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
-        vm.expectRevert();
-        simpleBudget.allocate(data.cdDecompress());
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(mockERC20, uint256(100 ether)));
-        vm.expectRevert();
-        simpleBudget.allocate(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
-        );
+        // with improperly encoded data
+        data = abi.encodePacked(mockERC20, uint256(100 ether));
         vm.expectRevert();
         simpleBudget.allocate(data);
     }
@@ -271,29 +238,25 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC1155.setApprovalForAll(address(simpleBudget), true);
 
         // Allocate 100 of token ID 42 to the budget
-        bytes memory data = LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC1155,
-                    asset: address(mockERC1155),
-                    target: address(this),
-                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-                })
-            )
+        bytes memory data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            })
         );
         simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC1155), 42), 100);
 
         // Reclaim 99 of token ID 42 from the budget
-        data = LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC1155,
-                    asset: address(mockERC1155),
-                    target: address(this),
-                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
-                })
-            )
+        data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
+            })
         );
         assertTrue(simpleBudget.reclaim(data));
 
@@ -368,23 +331,8 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
-        // with uncompressed but properly encoded data
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
-        vm.expectRevert();
-        simpleBudget.reclaim(data.cdDecompress());
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(mockERC20, uint256(100 ether), address(this)));
-        vm.expectRevert();
-        simpleBudget.reclaim(data);
-
-        // with compressed and properly encoded but out of order data
-        data = LibZip.cdCompress(abi.encode(Budget.AssetType.ERC20, 100 ether, mockERC20, address(this)));
-        vm.expectRevert();
-        simpleBudget.reclaim(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(mockERC20, 100 ether, address(this))));
+        // with improperly encoded data
+        data = abi.encodePacked(mockERC20, uint256(100 ether));
         vm.expectRevert();
         simpleBudget.reclaim(data);
     }
@@ -448,29 +396,25 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC1155.setApprovalForAll(address(simpleBudget), true);
 
         // Allocate 100 of token ID 42 to the budget
-        bytes memory data = LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC1155,
-                    asset: address(mockERC1155),
-                    target: address(this),
-                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-                })
-            )
+        bytes memory data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            })
         );
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC1155), 42), 100);
 
         // Disburse 100 of token ID 42 from the budget to the recipient
-        data = LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC1155,
-                    asset: address(mockERC1155),
-                    target: address(1),
-                    data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
-                })
-            )
+        data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(1),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            })
         );
         assertTrue(simpleBudget.disburse(data));
         assertEq(mockERC1155.balanceOf(address(1), 42), 100);
@@ -552,25 +496,8 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
-        // with uncompressed but properly encoded data
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
-        vm.expectRevert();
-        simpleBudget.disburse(data.cdDecompress());
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encode(1, mockERC20, uint256(100 ether)));
-        vm.expectRevert();
-        simpleBudget.disburse(data);
-
-        // with compressed and properly encoded but out of order data
-        data = LibZip.cdCompress(abi.encode(1, 100 ether, mockERC20));
-        vm.expectRevert();
-        simpleBudget.disburse(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
-        );
+        // with improperly encoded data
+        data = abi.encode(1, mockERC20, uint256(100 ether));
         vm.expectRevert();
         simpleBudget.disburse(data);
     }
@@ -918,7 +845,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
             transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
         }
 
-        return LibZip.cdCompress(abi.encode(transfer));
+        return abi.encode(transfer);
     }
 
     function _makeERC1155Transfer(address asset, address target, uint256 tokenId, uint256 value, bytes memory data)
@@ -932,7 +859,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         transfer.target = target;
         transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: value, data: data}));
 
-        return LibZip.cdCompress(abi.encode(transfer));
+        return abi.encode(transfer);
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata)

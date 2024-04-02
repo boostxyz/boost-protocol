@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {LibPRNG} from "lib/solady/src/utils/LibPRNG.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
@@ -13,7 +12,6 @@ import {Incentive} from "./Incentive.sol";
 /// @notice A simple ERC20 incentive implementation that allows claiming of tokens
 contract ERC20Incentive is Incentive {
     using LibPRNG for LibPRNG.PRNG;
-    using LibZip for bytes;
     using SafeTransferLib for address;
 
     /// @notice Emitted when an entry is added to the raffle
@@ -62,7 +60,7 @@ contract ERC20Incentive is Incentive {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed incentive parameters `(address asset, Strategy strategy, uint256 reward, uint256 limit)`
     function initialize(bytes calldata data_) public override initializer {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         // Ensure the strategy is valid (MINT is not yet supported)
         if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
@@ -86,7 +84,7 @@ contract ERC20Incentive is Incentive {
     /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
     /// @return True if the incentive was successfully claimed
     function claim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         if (!_isClaimable(claim_.target)) revert NotClaimable();
 
         if (strategy == Strategy.POOL) {
@@ -111,7 +109,7 @@ contract ERC20Incentive is Incentive {
 
     /// @inheritdoc Incentive
     function reclaim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
         if (strategy == Strategy.RAFFLE) {
@@ -136,18 +134,16 @@ contract ERC20Incentive is Incentive {
     /// @param data_ The {InitPayload} for the incentive
     /// @return budgetData The {Transfer} payload to be passed to the {Budget} for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
         uint256 amount = init_.strategy != Strategy.RAFFLE ? init_.reward * init_.limit : init_.reward;
 
-        return LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC20,
-                    asset: init_.asset,
-                    target: address(this),
-                    data: abi.encode(Budget.FungiblePayload({amount: amount}))
-                })
-            )
+        return abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC20,
+                asset: init_.asset,
+                target: address(this),
+                data: abi.encode(Budget.FungiblePayload({amount: amount}))
+            })
         );
     }
 
@@ -157,7 +153,7 @@ contract ERC20Incentive is Incentive {
     /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
     /// @dev The recipient must not have already claimed the incentive
     function isClaimable(bytes calldata data_) public view override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         return _isClaimable(claim_.target);
     }
 

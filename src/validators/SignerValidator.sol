@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SignatureCheckerLib} from "lib/solady/src/utils/SignatureCheckerLib.sol";
 import {IERC1271} from "lib/openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
 
@@ -11,7 +10,6 @@ import {Validator} from "src/validators/Validator.sol";
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
 contract SignerValidator is Validator {
-    using LibZip for bytes;
     using SignatureCheckerLib for address;
 
     /// @dev The set of authorized signers
@@ -30,7 +28,7 @@ contract SignerValidator is Validator {
     /// @param data_ The compressed list of authorized signers
     /// @dev The first address in the list will be the initial owner of the contract
     function initialize(bytes calldata data_) public virtual override initializer {
-        (address[] memory signers_) = abi.decode(data_.cdDecompress(), (address[]));
+        (address[] memory signers_) = abi.decode(data_, (address[]));
         _initializeOwner(signers_[0]);
         for (uint256 i = 0; i < signers_.length; i++) {
             signers[signers_[i]] = true;
@@ -43,8 +41,7 @@ contract SignerValidator is Validator {
     /// @dev The data payload is expected to be a tuple of (address signer, bytes32 hash, bytes signature)
     /// @dev The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
     function validate(bytes calldata data_) external override returns (bool) {
-        (address signer_, bytes32 hash_, bytes memory signature_) =
-            abi.decode(data_.cdDecompress(), (address, bytes32, bytes));
+        (address signer_, bytes32 hash_, bytes memory signature_) = abi.decode(data_, (address, bytes32, bytes));
 
         if (!signers[signer_]) revert BoostError.Unauthorized();
         if (_used[hash_]) revert BoostError.Replayed(signer_, hash_, signature_);

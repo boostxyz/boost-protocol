@@ -50,15 +50,17 @@ contract BoostCoreTest is Test {
 
     bytes validCreateCalldata = LibZip.cdCompress(
         abi.encode(
-            budget,
-            action,
-            BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
-            allowList,
-            _makeIncentives(1),
-            0.01 ether,
-            0.001 ether,
-            10_000,
-            address(this)
+            BoostCore.InitPayload({
+                budget: budget,
+                action: action,
+                validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
+                allowList: allowList,
+                incentives: _makeIncentives(1),
+                protocolFee: 0.01 ether,
+                referralFee: 0.001 ether,
+                maxParticipants: 10_000,
+                owner: address(this)
+            })
         )
     );
 
@@ -66,15 +68,13 @@ contract BoostCoreTest is Test {
         mockERC20.mint(address(this), 100 ether);
         mockERC20.approve(address(budget), 100 ether);
         budget.allocate(
-            LibZip.cdCompress(
-                abi.encode(
-                    Budget.Transfer({
-                        assetType: Budget.AssetType.ERC20,
-                        asset: address(mockERC20),
-                        target: address(this),
-                        data: abi.encode(Budget.FungiblePayload({amount: 100 ether}))
-                    })
-                )
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC20,
+                    asset: address(mockERC20),
+                    target: address(this),
+                    data: abi.encode(Budget.FungiblePayload({amount: 100 ether}))
+                })
             )
         );
     }
@@ -193,15 +193,17 @@ contract BoostCoreTest is Test {
         // Try to create a Boost with an address that doesn't support the Budget interface (should fail)
         bytes memory calldata_ = LibZip.cdCompress(
             abi.encode(
-                action.instance,
-                action,
-                BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
-                allowList,
-                _makeIncentives(1),
-                0.01 ether,
-                0.001 ether,
-                10_000,
-                address(this)
+                BoostCore.InitPayload(
+                    Budget(payable(action.instance)),
+                    action,
+                    BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
+                    allowList,
+                    _makeIncentives(1),
+                    0.01 ether,
+                    0.001 ether,
+                    10_000,
+                    address(this)
+                )
             )
         );
 
@@ -219,15 +221,17 @@ contract BoostCoreTest is Test {
         // Try to create a Boost with an invalid Action (should fail)
         bytes memory invalidActionCalldata = LibZip.cdCompress(
             abi.encode(
-                budget,
-                BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
-                action,
-                allowList,
-                _makeIncentives(1),
-                0.01 ether,
-                0.001 ether,
-                10_000,
-                address(this)
+                BoostCore.InitPayload(
+                    budget,
+                    BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
+                    action,
+                    allowList,
+                    _makeIncentives(1),
+                    0.01 ether,
+                    0.001 ether,
+                    10_000,
+                    address(this)
+                )
             )
         );
 
@@ -245,10 +249,8 @@ contract BoostCoreTest is Test {
         return BoostLib.Target({
             isBase: true,
             instance: address(new ERC721MintAction()),
-            parameters: LibZip.cdCompress(
-                abi.encode(
-                    ContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
-                )
+            parameters: abi.encode(
+                ContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
                 )
         });
     }
@@ -259,15 +261,13 @@ contract BoostCoreTest is Test {
         return BoostLib.Target({
             isBase: true,
             instance: address(new SimpleAllowList()),
-            parameters: LibZip.cdCompress(abi.encode(address(this), list))
+            parameters: abi.encode(address(this), list)
         });
     }
 
     function _makeBudget(address owner_, address[] memory authorized_) internal returns (Budget _budget) {
         _budget = Budget(payable(address(new SimpleBudget()).clone()));
-        _budget.initialize(
-            LibZip.cdCompress(abi.encode(SimpleBudget.InitPayload({owner: owner_, authorized: authorized_})))
-        );
+        _budget.initialize(abi.encode(SimpleBudget.InitPayload({owner: owner_, authorized: authorized_})));
     }
 
     function _makeIncentives(uint256 count) internal returns (BoostLib.Target[] memory) {
@@ -276,15 +276,13 @@ contract BoostCoreTest is Test {
             incentives[i] = BoostLib.Target({
                 isBase: true,
                 instance: address(new ERC20Incentive()),
-                parameters: LibZip.cdCompress(
-                    abi.encode(
-                        ERC20Incentive.InitPayload({
-                            asset: address(mockERC20),
-                            strategy: ERC20Incentive.Strategy.POOL,
-                            reward: 1 ether,
-                            limit: 100
-                        })
-                    )
+                parameters: abi.encode(
+                    ERC20Incentive.InitPayload({
+                        asset: address(mockERC20),
+                        strategy: ERC20Incentive.Strategy.POOL,
+                        reward: 1 ether,
+                        limit: 100
+                    })
                     )
             });
         }

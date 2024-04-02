@@ -5,7 +5,6 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {ECDSA} from "lib/solady/src/utils/ECDSA.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SignatureCheckerLib} from "lib/solady/src/utils/SignatureCheckerLib.sol";
 
 import {MockERC1271Wallet} from "lib/solady/test/utils/mocks/MockERC1271Wallet.sol";
@@ -33,13 +32,12 @@ contract SignerValidatorTest is Test {
     bytes TRUSTED_EOA_SIGNATURE = _signHash(MESSAGE_HASH, testSignerKey);
     bytes UNTRUSTED_EOA_SIGNATURE = _signHash(MESSAGE_HASH, fakeSignerKey);
 
-    bytes PACKED_EOA_SIGNATURE = LibZip.cdCompress(abi.encode(testSigner, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE));
-    bytes PACKED_1271_SIGNATURE = LibZip.cdCompress(abi.encode(smartSignerMock, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE));
+    bytes PACKED_EOA_SIGNATURE = abi.encode(testSigner, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE);
+    bytes PACKED_1271_SIGNATURE = abi.encode(smartSignerMock, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE);
 
-    bytes PACKED_MALICIOUS_SIGNATURE =
-        LibZip.cdCompress(abi.encode(maliciousSignerMock, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE));
-    bytes PACKED_WRONG_SIGNATURE = LibZip.cdCompress(abi.encode(testSigner, MESSAGE_HASH, UNTRUSTED_EOA_SIGNATURE));
-    bytes PACKED_UNTRUSTED_SIGNATURE = LibZip.cdCompress(abi.encode(fakeSigner, MESSAGE_HASH, UNTRUSTED_EOA_SIGNATURE));
+    bytes PACKED_MALICIOUS_SIGNATURE = abi.encode(maliciousSignerMock, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE);
+    bytes PACKED_WRONG_SIGNATURE = abi.encode(testSigner, MESSAGE_HASH, UNTRUSTED_EOA_SIGNATURE);
+    bytes PACKED_UNTRUSTED_SIGNATURE = abi.encode(fakeSigner, MESSAGE_HASH, UNTRUSTED_EOA_SIGNATURE);
 
     function setUp() public {
         address[] memory signers = new address[](3);
@@ -47,7 +45,7 @@ contract SignerValidatorTest is Test {
         signers[1] = testSigner;
         signers[2] = address(smartSignerMock);
 
-        bytes memory data = LibZip.cdCompress(abi.encode(signers));
+        bytes memory data = abi.encode(signers);
         validator = SignerValidator(LibClone.clone(address(baseValidator)));
         validator.initialize(data);
     }
@@ -109,7 +107,7 @@ contract SignerValidatorTest is Test {
     function testValidate_UnauthorizedSigner() public {
         bytes32 hash = keccak256(abi.encodePacked("test"));
         bytes memory signature = _signHash(hash, fakeSignerKey);
-        bytes memory data = LibZip.cdCompress(abi.encode(fakeSigner, hash, signature));
+        bytes memory data = abi.encode(fakeSigner, hash, signature);
         vm.expectRevert(BoostError.Unauthorized.selector);
         validator.validate(data);
     }

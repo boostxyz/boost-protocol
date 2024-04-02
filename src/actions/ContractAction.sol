@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 
 import {Cloneable} from "src/shared/Cloneable.sol";
 import {Action} from "src/actions/Action.sol";
 
 contract ContractAction is Action {
-    using LibZip for bytes;
-
     /// @notice Thrown when execution on a given chain is not supported
     error TargetChainUnsupported(uint256 targetChainId);
 
@@ -43,7 +40,7 @@ contract ContractAction is Action {
     /// @inheritdoc Cloneable
     /// @notice Initialize the contract with the owner and the required data
     function initialize(bytes calldata data_) public virtual override initializer {
-        _initialize(abi.decode(data_.cdDecompress(), (InitPayload)));
+        _initialize(abi.decode(data_, (InitPayload)));
     }
 
     function execute(bytes calldata data_) external payable virtual override returns (bool, bytes memory) {
@@ -63,25 +60,17 @@ contract ContractAction is Action {
         value = init_.value;
     }
 
-    function _buildPayload(bytes4 selector_, bytes calldata calldata_) internal pure returns (bytes memory) {
-        bytes memory payload;
+    function _buildPayload(bytes4 selector_, bytes calldata calldata_) internal pure returns (bytes memory payload) {
         assembly {
-            // The payload is the size of the selector (4 bytes) + the size of the calldata
-            let payloadSize := add(4, calldata_.length)
-
-            // Allocate memory for the payload
+            // Allocate space for the payload
+            let size := add(4, calldata_.length)
             payload := mload(0x40)
-            mstore(payload, payloadSize)
+            mstore(payload, size)
+            mstore(0x40, add(payload, add(size, 0x20)))
 
-            // Push the selector into the payload
+            // Place the selector and calldata in the payload buffer
             mstore(add(payload, 0x20), selector_)
-
-            // Copy the calldata into the payload
             calldatacopy(add(payload, 0x24), calldata_.offset, calldata_.length)
-
-            // Mark the memory space taken for the payload as allocated
-            mstore(0x40, add(payload, add(payloadSize, 0x20)))
         }
-        return payload;
     }
 }

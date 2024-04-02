@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
 import {AllowListIncentive} from "src/incentives/AllowListIncentive.sol";
@@ -16,12 +15,10 @@ contract AllowListIncentiveTest is Test {
 
     function setUp() public {
         allowList = SimpleAllowList(LibClone.clone(address(new SimpleAllowList())));
-        allowList.initialize(LibZip.cdCompress(abi.encode(address(this), new address[](0))));
+        allowList.initialize(abi.encode(address(this), new address[](0)));
 
         incentive = AllowListIncentive(LibClone.clone(address(new AllowListIncentive())));
-        incentive.initialize(
-            LibZip.cdCompress(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, limit: 10})))
-        );
+        incentive.initialize(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, limit: 10})));
 
         allowList.grantRoles(address(incentive), 1 << 1);
     }
@@ -38,9 +35,7 @@ contract AllowListIncentiveTest is Test {
 
     function test_initialize_twice() public {
         vm.expectRevert(bytes4(keccak256("InvalidInitialization()")));
-        incentive.initialize(
-            LibZip.cdCompress(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, limit: 10})))
-        );
+        incentive.initialize(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, limit: 10})));
     }
 
     //////////////////////////////
@@ -48,42 +43,35 @@ contract AllowListIncentiveTest is Test {
     //////////////////////////////
 
     function test_claim() public {
-        incentive.claim(LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))));
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
         assertEq(allowList.isAllowed(address(1), new bytes(0)), true);
     }
 
     function test_claim_twice() public {
-        incentive.claim(LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))));
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
 
         vm.expectRevert(bytes4(keccak256("NotClaimable()")));
-        incentive.claim(LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))));
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
     }
 
     function test_claim_notOwner() public {
         vm.prank(address(0xdeadbeef));
         vm.expectRevert(bytes4(keccak256("Unauthorized()")));
-        incentive.claim(LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))));
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
     }
 
     function test_claim_maxClaims() public {
         for (uint8 i = 0; i < 10; i++) {
             incentive.claim(
-                LibZip.cdCompress(
-                    abi.encode(
-                        Incentive.ClaimPayload({
-                            target: makeAddr(string(abi.encodePacked("rando", i))),
-                            data: new bytes(0)
-                        })
-                    )
+                abi.encode(
+                    Incentive.ClaimPayload({target: makeAddr(string(abi.encodePacked("rando", i))), data: new bytes(0)})
                 )
             );
         }
         assertEq(incentive.claims(), 10);
 
         vm.expectRevert(bytes4(keccak256("NotClaimable()")));
-        incentive.claim(
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(11), data: new bytes(0)})))
-        );
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(11), data: new bytes(0)})));
     }
 
     ////////////////////////////////////
@@ -92,21 +80,15 @@ contract AllowListIncentiveTest is Test {
 
     function test_isClaimable() public {
         assertEq(
-            incentive.isClaimable(
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})))
-            ),
-            true
+            incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))), true
         );
     }
 
     function test_isClaimable_claimed() public {
-        incentive.claim(LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))));
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
 
         assertEq(
-            incentive.isClaimable(
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})))
-            ),
-            false
+            incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))), false
         );
     }
 

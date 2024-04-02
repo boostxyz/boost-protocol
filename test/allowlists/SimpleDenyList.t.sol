@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
 import {Cloneable} from "src/shared/Cloneable.sol";
@@ -25,7 +24,7 @@ contract SimpleDenyListTest is Test {
         users[1] = address(3);
 
         // Set the deny list
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this), users));
+        bytes memory data = abi.encode(address(this), users);
         denyList.initialize(data);
     }
 
@@ -43,7 +42,7 @@ contract SimpleDenyListTest is Test {
         assertTrue(freshClone.isAllowed(address(1), ""));
 
         // Initialize the fresh clone
-        bytes memory data = LibZip.cdCompress(abi.encode(address(this), users));
+        bytes memory data = abi.encode(address(this), users);
         freshClone.initialize(data);
 
         // Ensure the fresh clone is initialized
@@ -67,7 +66,7 @@ contract SimpleDenyListTest is Test {
 
     function testInitializer_AlreadyInitialized() public {
         vm.expectRevert(BoostError.InvalidInitialization.selector);
-        denyList.initialize(LibZip.cdCompress(abi.encode(address(this), new address[](0))));
+        denyList.initialize(abi.encode(address(this), new address[](0)));
     }
 
     ///////////////////////////////

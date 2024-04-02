@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
@@ -12,7 +11,6 @@ import {Incentive} from "./Incentive.sol";
 /// @title Continuous Gradual Dutch Auction Incentive
 /// @notice An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
 contract CGDAIncentive is Incentive {
-    using LibZip for bytes;
     using SafeTransferLib for address;
 
     /// @notice The ERC20-like token used for the incentive
@@ -56,7 +54,7 @@ contract CGDAIncentive is Incentive {
     /// @notice Initialize the CGDA Incentive
     /// @param data_ Initialization parameters.
     function initialize(bytes calldata data_) public override initializer {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         uint256 available = init_.asset.balanceOf(address(this));
         if (available < init_.totalBudget) {
@@ -83,7 +81,7 @@ contract CGDAIncentive is Incentive {
     /// @inheritdoc Incentive
     /// @notice Claim the incentive
     function claim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         if (!_isClaimable(claim_.target)) revert NotClaimable();
         claims++;
 
@@ -102,7 +100,7 @@ contract CGDAIncentive is Incentive {
 
     /// @inheritdoc Incentive
     function reclaim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
         // Transfer the tokens back to the intended recipient
@@ -114,7 +112,7 @@ contract CGDAIncentive is Incentive {
 
     /// @inheritdoc Incentive
     function isClaimable(bytes calldata data_) external view virtual override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         return _isClaimable(claim_.target);
     }
 
@@ -123,17 +121,15 @@ contract CGDAIncentive is Incentive {
     /// @param data_ The compressed incentive parameters `(address asset, uint256 initialReward, uint256 rewardDecay, uint256 rewardBoost, uint256 totalBudget)`
     /// @return The amount of tokens required
     function preflight(bytes calldata data_) external view virtual override returns (bytes memory) {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
-        return LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC20,
-                    asset: init_.asset,
-                    target: address(this),
-                    data: abi.encode(Budget.FungiblePayload({amount: init_.totalBudget}))
-                })
-            )
+        return abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC20,
+                asset: init_.asset,
+                target: address(this),
+                data: abi.encode(Budget.FungiblePayload({amount: init_.totalBudget}))
+            })
         );
     }
 

@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {Initializable} from "lib/solady/src/utils/Initializable.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
@@ -15,8 +14,6 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 import {VestingBudget} from "src/budgets/VestingBudget.sol";
 
 contract VestingBudgetTest is Test {
-    using LibZip for bytes;
-
     MockERC20 mockERC20;
     MockERC20 otherMockERC20;
     VestingBudget vestingBudget;
@@ -29,16 +26,14 @@ contract VestingBudgetTest is Test {
         // Deploy a new VestingBudget contract and initialize it
         vestingBudget = VestingBudget(payable(LibClone.clone(address(new VestingBudget()))));
         vestingBudget.initialize(
-            LibZip.cdCompress(
-                abi.encode(
-                    VestingBudget.InitPayload({
-                        owner: address(this),
-                        authorized: new address[](0),
-                        start: uint64(block.timestamp),
-                        duration: uint64(1 days),
-                        cliff: 0
-                    })
-                )
+            abi.encode(
+                VestingBudget.InitPayload({
+                    owner: address(this),
+                    authorized: new address[](0),
+                    start: uint64(block.timestamp),
+                    duration: uint64(1 days),
+                    cliff: 0
+                })
             )
         );
     }
@@ -88,16 +83,14 @@ contract VestingBudgetTest is Test {
 
     function testInitialize() public {
         // Initializer can only be called on clones, not the base contract
-        bytes memory data = LibZip.cdCompress(
-            abi.encode(
-                VestingBudget.InitPayload({
-                    owner: address(this),
-                    authorized: new address[](0),
-                    start: 0,
-                    duration: 0,
-                    cliff: 0
-                })
-            )
+        bytes memory data = abi.encode(
+            VestingBudget.InitPayload({
+                owner: address(this),
+                authorized: new address[](0),
+                start: 0,
+                duration: 0,
+                cliff: 0
+            })
         );
         VestingBudget clone = VestingBudget(payable(LibClone.clone(address(vestingBudget))));
         clone.initialize(data);
@@ -112,20 +105,8 @@ contract VestingBudgetTest is Test {
     }
 
     function testInitialize_ImproperData() public {
-        bytes memory data;
-
-        // with uncompressed but properly encoded data
-        data = abi.encode(address(this), new address[](0));
-        vm.expectRevert();
-        vestingBudget.initialize(data);
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(address(this), new address[](0)));
-        vm.expectRevert();
-        vestingBudget.initialize(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(address(this), new address[](0))));
+        // with improperly encoded data
+        bytes memory data = abi.encode(address(this), new address[](0));
         vm.expectRevert();
         vestingBudget.initialize(data);
     }
@@ -191,20 +172,8 @@ contract VestingBudgetTest is Test {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(vestingBudget), 100 ether);
 
-        // with uncompressed but properly encoded data
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
-        vm.expectRevert();
-        vestingBudget.allocate(data.cdDecompress());
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(mockERC20, uint256(100 ether)));
-        vm.expectRevert();
-        vestingBudget.allocate(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
-        );
+        // with improperly encoded data
+        data = abi.encodePacked(mockERC20, uint256(100 ether));
         vm.expectRevert();
         vestingBudget.allocate(data);
     }
@@ -297,22 +266,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.total(address(mockERC20)), 100 ether);
 
         // with uncompressed but properly encoded data
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
-        vm.expectRevert();
-        vestingBudget.reclaim(data.cdDecompress());
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encodePacked(mockERC20, uint256(100 ether), address(this)));
-        vm.expectRevert();
-        vestingBudget.reclaim(data);
-
-        // with compressed and properly encoded but out of order data
-        data = LibZip.cdCompress(abi.encode(Budget.AssetType.ERC20, 100 ether, mockERC20, address(this)));
-        vm.expectRevert();
-        vestingBudget.reclaim(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(LibZip.cdCompress(abi.encode(mockERC20, 100 ether, address(this))));
+        data = abi.encodePacked(mockERC20, uint256(100 ether), address(this));
         vm.expectRevert();
         vestingBudget.reclaim(data);
     }
@@ -420,27 +374,8 @@ contract VestingBudgetTest is Test {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
-        bytes memory data;
-
-        // with uncompressed but properly encoded data
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
-        vm.expectRevert();
-        vestingBudget.disburse(data.cdDecompress());
-
-        // with compressed but improperly encoded data
-        data = LibZip.cdCompress(abi.encode(1, mockERC20, uint256(100 ether)));
-        vm.expectRevert();
-        vestingBudget.disburse(data);
-
-        // with compressed and properly encoded but out of order data
-        data = LibZip.cdCompress(abi.encode(1, 100 ether, mockERC20));
-        vm.expectRevert();
-        vestingBudget.disburse(data);
-
-        // with double-compressed, properly encoded data
-        data = LibZip.cdCompress(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
-        );
+        // with improperly encoded data
+        bytes memory data = abi.encode(1, mockERC20, uint256(100 ether));
         vm.expectRevert();
         vestingBudget.disburse(data);
     }
@@ -700,52 +635,6 @@ contract VestingBudgetTest is Test {
         assertFalse(vestingBudget.supportsInterface(type(Test).interfaceId));
     }
 
-    /////////////////////////////
-    // VestingBudget.fallback  //
-    /////////////////////////////
-
-    function testFallback() public {
-        // Ensure the fallback is payable
-        (bool success,) = payable(vestingBudget).call{value: 1 ether}("");
-        assertTrue(success);
-    }
-
-    function testFallback_CompressedFunctionCall() public {
-        // Approve the budget to transfer tokens
-        mockERC20.approve(address(vestingBudget), 100 ether);
-
-        // Allocate 100 tokens to the budget
-        bytes memory data = abi.encodeWithSelector(
-            VestingBudget.allocate.selector,
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
-        );
-
-        (bool success,) = payable(vestingBudget).call(data);
-        assertTrue(success, "Fallback function failed");
-
-        // Ensure the budget has 100 tokens
-        assertEq(vestingBudget.total(address(mockERC20)), 100 ether);
-    }
-
-    function testFallback_NoSuchFunction() public {
-        // This test is weirdly slow and burns the entire block gas limit, so
-        // I'm skipping it for now to avoid slowing down the test suite. Maybe
-        // we can revisit this later... or maybe the case is irrelevant.
-        vm.skip(true);
-
-        // Ensure the call is not successful due to a non-existent function
-        // Note that the function itself will revert, but because we're issuing
-        // a low-level call, the revert won't bubble up. Instead, we are just
-        // checking that the low-level call was not successful.
-        (bool success,) = payable(vestingBudget).call{value: 1 ether}(
-            abi.encodeWithSelector(
-                bytes4(0xdeadbeef),
-                _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
-            )
-        );
-        assertFalse(success);
-    }
-
     ///////////////////////////
     // VestingBudget.receive //
     ///////////////////////////
@@ -793,6 +682,6 @@ contract VestingBudgetTest is Test {
             transfer.data = abi.encode(Budget.FungiblePayload({amount: value}));
         }
 
-        return LibZip.cdCompress(abi.encode(transfer));
+        return abi.encode(transfer);
     }
 }

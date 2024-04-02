@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC1155} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {IERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
 import {Budget} from "src/budgets/Budget.sol";
@@ -13,8 +12,6 @@ import {Incentive} from "src/incentives/Incentive.sol";
 /// @title ERC1155Incentive
 /// @notice A simple ERC1155 incentive implementation that allows claiming of tokens
 contract ERC1155Incentive is Incentive, IERC1155Receiver {
-    using LibZip for bytes;
-
     /// @notice The strategy for the incentive
     /// @dev The strategy determines how the incentive is disbursed:
     ///     - POOL: Transfer tokens from the pool to the recipient
@@ -57,7 +54,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed initialization payload
     function initialize(bytes calldata data_) public override initializer {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         // Ensure the strategy is valid (MINT is not yet supported)
         if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
@@ -83,7 +80,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     function claim(bytes calldata data_) external override onlyOwner returns (bool) {
         // Disburse the incentive based on the strategy (POOL only for now)
         if (strategy == Strategy.POOL) {
-            ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+            ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
             if (!_isClaimable(claim_.target)) revert NotClaimable();
 
             claims++;
@@ -101,7 +98,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
 
     /// @inheritdoc Incentive
     function reclaim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
         // Ensure the amount is valid and reduce the max claims accordingly
@@ -121,18 +118,16 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     /// @param data_ The initialization payload for the incentive
     /// @return budgetData The data payload to be passed to the Budget for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
-        return LibZip.cdCompress(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC1155,
-                    asset: address(init_.asset),
-                    target: address(this),
-                    data: abi.encode(
-                        Budget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.limit, data: init_.extraData})
-                        )
-                })
-            )
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
+        return abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(init_.asset),
+                target: address(this),
+                data: abi.encode(
+                    Budget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.limit, data: init_.extraData})
+                    )
+            })
         );
     }
 
@@ -142,7 +137,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
     /// @dev The recipient must not have already claimed the incentive
     function isClaimable(bytes calldata data_) public view override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         return _isClaimable(claim_.target);
     }
 

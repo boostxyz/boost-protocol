@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 
 import {Action} from "src/actions/Action.sol";
@@ -15,8 +14,6 @@ import {Validator} from "src/validators/Validator.sol";
 /// @dev This a minimal generic implementation that should be extended if additional functionality or customizations are required
 /// @dev It is expected that the target contract has an externally accessible mint function whose selector
 contract ERC721MintAction is ContractAction, Validator {
-    using LibZip for bytes;
-
     /// @notice The set of validated tokens
     /// @dev This is intended to prevent multiple validations against the same token ID
     mapping(uint256 => bool) public validated;
@@ -31,19 +28,15 @@ contract ERC721MintAction is ContractAction, Validator {
     /// @notice Initialize the contract with the owner and the required mint data
     /// @param data_ The data payload for the mint action `(address target, bytes4 selector, uint256 value)`
     function initialize(bytes calldata data_) public virtual override(Cloneable, ContractAction) initializer {
-        _initialize(abi.decode(data_.cdDecompress(), (InitPayload)));
+        _initialize(abi.decode(data_, (InitPayload)));
     }
 
     /// @notice Execute the action (not yet implemented)
-    /// @param - The data payload for the call (not used in this implementation)
+    /// @param data_ The data payload for the call (not used in this implementation)
     /// @return success The success status of the call
     /// @return returnData The return data from the call
-    function execute(bytes calldata /* data_ */ )
-        external
-        payable
-        override
-        returns (bool success, bytes memory returnData)
-    {
+    function execute(bytes calldata data_) external payable override returns (bool success, bytes memory returnData) {
+        (data_, success, returnData);
         revert ExecuteNotImplemented();
     }
 
@@ -62,7 +55,7 @@ contract ERC721MintAction is ContractAction, Validator {
     /// @dev The first 20 bytes of the payload must be the holder address and the remaining bytes must be an encoded token ID (uint256)
     /// @dev Example: `abi.encode(address(holder), abi.encode(uint256(tokenId)))`
     function validate(bytes calldata data_) external virtual override returns (bool success) {
-        (address holder, bytes memory payload) = abi.decode(data_.cdDecompress(), (address, bytes));
+        (address holder, bytes memory payload) = abi.decode(data_, (address, bytes));
         uint256 tokenId = uint256(bytes32(payload));
 
         if (ERC721(target).ownerOf(tokenId) == holder && !validated[tokenId]) {

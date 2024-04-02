@@ -5,7 +5,6 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {MockERC20} from "src/shared/Mocks.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
 import {BoostError} from "src/shared/BoostError.sol";
@@ -16,7 +15,6 @@ import {Budget} from "src/budgets/Budget.sol";
 import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
 
 contract ERC20IncentiveTest is Test {
-    using LibZip for bytes;
     using SafeTransferLib for address;
 
     ERC20Incentive public incentive;
@@ -88,8 +86,7 @@ contract ERC20IncentiveTest is Test {
         emit Incentive.Claimed(address(1), abi.encodePacked(address(mockAsset), address(1), uint256(1 ether)));
 
         // Claim the incentive
-        bytes memory claimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
         incentive.claim(claimPayload);
 
         // Check the claim status
@@ -101,8 +98,7 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Claim the incentive on behalf of address(1)
-        bytes memory claimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
         incentive.claim(claimPayload);
 
         // Attempt to claim for address(1) again => revert
@@ -115,8 +111,7 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
 
         // Claim the incentive, which means adding the address to the entries list
-        bytes memory claimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
         incentive.claim(claimPayload);
 
         // Check that the entry was added and no tokens were transferred
@@ -136,7 +131,7 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50 ether)})));
+            abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50 ether)}));
         incentive.reclaim(reclaimPayload);
         assertEq(mockAsset.balanceOf(address(1)), 50 ether);
 
@@ -151,10 +146,8 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim 50.1x => not an integer multiple of the reward amount => revert
         bytes memory reclaimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50.1 ether)})));
-        vm.expectRevert(
-            abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload.cdDecompress())
-        );
+            abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50.1 ether)}));
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.reclaim(reclaimPayload);
     }
 
@@ -164,19 +157,16 @@ contract ERC20IncentiveTest is Test {
 
         // Claim the incentive for 1 address, adding it to the raffle entries
         // and locking in the reward since there's at least 1 potential winner
-        bytes memory claimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
         incentive.claim(claimPayload);
         assertEq(incentive.entries(0), address(1));
         assertEq(incentive.limit(), 5);
 
         // Attempt to reclaim the reward => revert (because the reward is now locked)
         bytes memory reclaimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(100 ether)})));
+            abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(100 ether)}));
 
-        vm.expectRevert(
-            abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload.cdDecompress())
-        );
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.reclaim(reclaimPayload);
         assertEq(incentive.limit(), 5);
     }
@@ -190,8 +180,7 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Check if the incentive is claimable
-        bytes memory claimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
         assertTrue(incentive.isClaimable(claimPayload));
     }
 
@@ -200,8 +189,7 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Claim the incentive on behalf of address(1)
-        bytes memory claimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
         incentive.claim(claimPayload);
 
         // Check if the incentive is still claimable for address(1) => false
@@ -215,8 +203,7 @@ contract ERC20IncentiveTest is Test {
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(6);
         for (uint256 i = 0; i < 5; i++) {
-            bytes memory claimPayload =
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: recipients[i], data: bytes("")})));
+            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: recipients[i], data: bytes("")}));
             incentive.claim(claimPayload);
         }
 
@@ -224,8 +211,7 @@ contract ERC20IncentiveTest is Test {
         assertEq(incentive.claims(), 5);
 
         // Check if the incentive is claimable for the 6th address => false
-        bytes memory nextClaimPayload =
-            LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: recipients[5], data: bytes("")})));
+        bytes memory nextClaimPayload = abi.encode(Incentive.ClaimPayload({target: recipients[5], data: bytes("")}));
         assertFalse(incentive.isClaimable(nextClaimPayload));
     }
 
@@ -237,7 +223,7 @@ contract ERC20IncentiveTest is Test {
         // Check the preflight data
         bytes memory data =
             incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5));
-        Budget.Transfer memory budgetRequest = abi.decode(data.cdDecompress(), (Budget.Transfer));
+        Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
 
@@ -249,14 +235,14 @@ contract ERC20IncentiveTest is Test {
         // Preflight with no reward amount
         bytes memory noRewards =
             incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.POOL, 0 ether, 5));
-        Budget.Transfer memory request = abi.decode(noRewards.cdDecompress(), (Budget.Transfer));
+        Budget.Transfer memory request = abi.decode(noRewards, (Budget.Transfer));
         Budget.FungiblePayload memory payload = abi.decode(request.data, (Budget.FungiblePayload));
         assertEq(payload.amount, 0);
 
         // Preflight with zero max claims
         bytes memory noClaims =
             incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 0));
-        Budget.Transfer memory request2 = abi.decode(noClaims.cdDecompress(), (Budget.Transfer));
+        Budget.Transfer memory request2 = abi.decode(noClaims, (Budget.Transfer));
         Budget.FungiblePayload memory payload2 = abi.decode(request2.data, (Budget.FungiblePayload));
         assertEq(payload2.amount, 0);
     }
@@ -265,7 +251,7 @@ contract ERC20IncentiveTest is Test {
         // Check the preflight data for a raffle
         bytes memory data =
             incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 1 ether, 5));
-        Budget.Transfer memory budgetRequest = abi.decode(data.cdDecompress(), (Budget.Transfer));
+        Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
 
@@ -284,8 +270,7 @@ contract ERC20IncentiveTest is Test {
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(5);
         for (uint256 i = 0; i < 5; i++) {
-            bytes memory claimPayload =
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: recipients[i], data: bytes("")})));
+            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: recipients[i], data: bytes("")}));
             incentive.claim(claimPayload);
         }
 
@@ -329,9 +314,7 @@ contract ERC20IncentiveTest is Test {
         pure
         returns (bytes memory)
     {
-        return LibZip.cdCompress(
-            abi.encode(ERC20Incentive.InitPayload({asset: asset, strategy: strategy, reward: reward, limit: limit}))
-        );
+        return abi.encode(ERC20Incentive.InitPayload({asset: asset, strategy: strategy, reward: reward, limit: limit}));
     }
 
     function _makeFungibleTransfer(Budget.AssetType assetType, address asset, address target, uint256 value)
@@ -350,7 +333,7 @@ contract ERC20IncentiveTest is Test {
             transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
         }
 
-        return LibZip.cdCompress(abi.encode(transfer));
+        return abi.encode(transfer);
     }
 
     function _randomAccounts(uint256 count) internal returns (address[] memory accounts) {

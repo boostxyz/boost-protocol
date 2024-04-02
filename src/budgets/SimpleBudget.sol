@@ -5,7 +5,6 @@ import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC11
 import {IERC1155} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import {IERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
@@ -16,7 +15,6 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
 contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
-    using LibZip for bytes;
     using SafeTransferLib for address;
 
     /// @notice The payload for initializing a SimpleBudget
@@ -47,9 +45,9 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     }
 
     /// @inheritdoc Cloneable
-    /// @param data_ The compressed init data for the budget `(address owner, address[] authorized)`
+    /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
     function initialize(bytes calldata data_) public virtual override initializer {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
         _initializeOwner(init_.owner);
         for (uint256 i = 0; i < init_.authorized.length; i++) {
             _isAuthorized[init_.authorized[i]] = true;
@@ -58,12 +56,12 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Allocates assets to the budget
-    /// @param data_ The compressed data for the {Transfer} request
+    /// @param data_ The packed data for the {Transfer} request
     /// @return True if the allocation was successful
     /// @dev The caller must have already approved the contract to transfer the asset
     /// @dev If the asset transfer fails, the allocation will revert
     function allocate(bytes calldata data_) external payable virtual override returns (bool) {
-        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ETH) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
 
@@ -99,13 +97,13 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Reclaims assets from the budget
-    /// @param data_ The compressed {Transfer} request
+    /// @param data_ The packed {Transfer} request
     /// @return True if the request was successful
     /// @dev Only the owner can directly reclaim assets from the budget
     /// @dev If the amount is zero, the entire balance of the asset will be transferred to the receiver
     /// @dev If the asset transfer fails, the reclamation will revert
     function reclaim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
             _transferFungible(
@@ -129,11 +127,11 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Disburses assets from the budget to a single recipient
-    /// @param data_ The compressed {Transfer} request
+    /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
     /// @dev If the asset transfer fails, the disbursement will revert
     function disburse(bytes calldata data_) public virtual override onlyAuthorized returns (bool) {
-        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ERC20 || request.assetType == AssetType.ETH) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
 
@@ -161,7 +159,7 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Disburses assets from the budget to multiple recipients
-    /// @param data_ The compressed array of {Transfer} requests
+    /// @param data_ The packed array of {Transfer} requests
     /// @return True if all disbursements were successful
     function disburseBatch(bytes[] calldata data_) external virtual override returns (bool) {
         for (uint256 i = 0; i < data_.length; i++) {

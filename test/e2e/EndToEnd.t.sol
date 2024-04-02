@@ -160,7 +160,7 @@ contract EndToEnd is Test {
         uint256 boostId = 0; // This is the only Boost we've created = 0
         uint256 incentiveId = 0; // This is the only Incentive in that Boost = 0
         uint256 tokenId = 1; // This is the tokenId we just minted = 1
-        core.claimReward(boostId, incentiveId, LibZip.cdCompress(abi.encode(address(this), abi.encode(tokenId))));
+        core.claimIncentive(boostId, incentiveId, abi.encode(address(this), abi.encode(tokenId)));
     }
 
     //////////////////
@@ -185,9 +185,7 @@ contract EndToEnd is Test {
                             )
                         ),
                         "My Simple Budget",
-                        LibZip.cdCompress(
-                            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
-                        )
+                        abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
                     )
                 )
             )
@@ -201,15 +199,13 @@ contract EndToEnd is Test {
         // "And the asset is an ERC20 token"
         erc20.approve(address(budget), 500 ether);
         budget.allocate(
-            LibZip.cdCompress(
-                abi.encode(
-                    Budget.Transfer({
-                        assetType: Budget.AssetType.ERC20,
-                        asset: address(erc20),
-                        target: address(this),
-                        data: abi.encode(Budget.FungiblePayload({amount: 500 ether}))
-                    })
-                )
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ERC20,
+                    asset: address(erc20),
+                    target: address(this),
+                    data: abi.encode(Budget.FungiblePayload({amount: 500 ether}))
+                })
             )
         );
 
@@ -220,15 +216,13 @@ contract EndToEnd is Test {
         // "When I allocate assets to my budget"
         // "And the asset is ETH"
         budget.allocate{value: 10.5 ether}(
-            LibZip.cdCompress(
-                abi.encode(
-                    Budget.Transfer({
-                        assetType: Budget.AssetType.ETH,
-                        asset: address(0),
-                        target: address(this),
-                        data: abi.encode(Budget.FungiblePayload({amount: 10.5 ether}))
-                    })
-                )
+            abi.encode(
+                Budget.Transfer({
+                    assetType: Budget.AssetType.ETH,
+                    asset: address(0),
+                    target: address(this),
+                    data: abi.encode(Budget.FungiblePayload({amount: 10.5 ether}))
+                })
             )
         );
 
@@ -266,57 +260,57 @@ contract EndToEnd is Test {
                 )
                 ),
             // "... of '100 ERC20' with a max of 5 participants"
-            parameters: LibZip.cdCompress(abi.encode(erc20, ERC20Incentive.Strategy.POOL, 100 ether, 5))
+            parameters: abi.encode(erc20, ERC20Incentive.Strategy.POOL, 100 ether, 5)
         });
 
         return core.createBoost(
             LibZip.cdCompress(
                 abi.encode(
-                    // "... with my budget"
-                    budget,
-                    BoostLib.Target({
-                        // "I can specify the action of 'Mint an NFT'"
-                        // "... and I can specify the address of my ERC721"
-                        // "... and I can specify the selector of the mint function"
-                        // "... and I can specify the mint price"
-                        isBase: true,
-                        instance: address(
-                            registry.getBaseImplementation(
-                                registry.getIdentifier(BoostRegistry.RegistryType.ACTION, "ERC721MintAction")
-                            )
-                            ),
-                        parameters: LibZip.cdCompress(
-                            abi.encode(
+                    BoostCore.InitPayload(
+                        // "... with my budget"
+                        budget,
+                        BoostLib.Target({
+                            // "I can specify the action of 'Mint an NFT'"
+                            // "... and I can specify the address of my ERC721"
+                            // "... and I can specify the selector of the mint function"
+                            // "... and I can specify the mint price"
+                            isBase: true,
+                            instance: address(
+                                registry.getBaseImplementation(
+                                    registry.getIdentifier(BoostRegistry.RegistryType.ACTION, "ERC721MintAction")
+                                )
+                                ),
+                            parameters: abi.encode(
                                 ContractAction.InitPayload({
                                     chainId: block.chainid,
                                     target: address(erc721),
                                     selector: MockERC721.mint.selector,
                                     value: erc721.mintPrice()
                                 })
-                            )
-                            )
-                    }),
-                    BoostLib.Target({
-                        // "... and I don't have to specify a validator"
-                        isBase: false,
-                        instance: address(0),
-                        parameters: bytes("")
-                    }),
-                    BoostLib.Target({
-                        // "I can specify a list of allowed addresses"
-                        isBase: true,
-                        instance: address(
-                            registry.getBaseImplementation(
-                                registry.getIdentifier(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList")
-                            )
-                            ),
-                        parameters: LibZip.cdCompress(abi.encode(address(this), allowList))
-                    }),
-                    incentives,
-                    1_000, // "I can specify an additional protocol fee" => 1,000 bps == 10%
-                    500, // "I can specify an additional referral fee" => 500 bps == 5%
-                    5, // "I can specify a maximum number of participants" => 5
-                    address(this) // "I can specify the owner of the Boost" => this contract
+                                )
+                        }),
+                        BoostLib.Target({
+                            // "... and I don't have to specify a validator"
+                            isBase: false,
+                            instance: address(0),
+                            parameters: bytes("")
+                        }),
+                        BoostLib.Target({
+                            // "I can specify a list of allowed addresses"
+                            isBase: true,
+                            instance: address(
+                                registry.getBaseImplementation(
+                                    registry.getIdentifier(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList")
+                                )
+                                ),
+                            parameters: abi.encode(address(this), allowList)
+                        }),
+                        incentives, // "I can specify the incentive..."
+                        1_000, // "I can specify an additional protocol fee" => 1,000 bps == 10%
+                        500, // "I can specify an additional referral fee" => 500 bps == 5%
+                        5, // "I can specify a maximum number of participants" => 5
+                        address(this) // "I can specify the owner of the Boost" => this contract
+                    )
                 )
             )
         );

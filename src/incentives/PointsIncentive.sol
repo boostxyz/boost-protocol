@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
-
 import {BoostError} from "src/shared/BoostError.sol";
 import {Budget} from "src/budgets/Budget.sol";
 import {Incentive} from "./Incentive.sol";
@@ -14,8 +12,6 @@ import {Incentive} from "./Incentive.sol";
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to operate the points contract's issuance function
 contract PointsIncentive is Incentive {
-    using LibZip for bytes;
-
     /// @notice The payload for initializing a PointsIncentive
     struct InitPayload {
         address venue;
@@ -45,7 +41,7 @@ contract PointsIncentive is Incentive {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed incentive parameters `(address points, uint256 quantity, uint256 limit)`
     function initialize(bytes calldata data_) public override initializer {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
         if (init_.quantity == 0 || init_.limit == 0) revert BoostError.InvalidInitialization();
 
         venue = init_.venue;
@@ -58,9 +54,8 @@ contract PointsIncentive is Incentive {
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
     /// @return True if the incentive was successfully claimed
-    /// @dev I
     function claim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         if (!_isClaimable(claim_.target)) revert NotClaimable();
 
         claims++;
@@ -91,7 +86,7 @@ contract PointsIncentive is Incentive {
     /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
     /// @dev The recipient must not have already claimed the incentive
     function isClaimable(bytes calldata data_) public view override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         return _isClaimable(claim_.target);
     }
 

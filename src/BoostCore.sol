@@ -24,6 +24,18 @@ contract BoostCore is Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
 
+    struct InitPayload {
+        Budget budget;
+        BoostLib.Target action;
+        BoostLib.Target validator;
+        BoostLib.Target allowList;
+        BoostLib.Target[] incentives;
+        uint64 protocolFee;
+        uint64 referralFee;
+        uint256 maxParticipants;
+        address owner;
+    }
+
     /// @notice The list of boosts
     BoostLib.Boost[] private _boosts;
 
@@ -60,64 +72,43 @@ contract BoostCore is Ownable, ReentrancyGuard {
     ///         - `uint256` for the maxParticipants
     ///         - `address` for the owner of the Boost
     function createBoost(bytes calldata data_) external onlyOwner nonReentrant returns (BoostLib.Boost memory) {
-        (
-            Budget budget_,
-            BoostLib.Target memory action_,
-            BoostLib.Target memory validator_,
-            BoostLib.Target memory allowList_,
-            BoostLib.Target[] memory incentives_,
-            uint64 protocolFee_,
-            uint64 referralFee_,
-            uint256 maxParticipants_,
-            address owner_
-        ) = abi.decode(
-            data_.cdDecompress(),
-            (
-                Budget,
-                BoostLib.Target,
-                BoostLib.Target,
-                BoostLib.Target,
-                BoostLib.Target[],
-                uint64,
-                uint64,
-                uint256,
-                address
-            )
-        );
+        InitPayload memory payload_ = abi.decode(data_.cdDecompress(), (InitPayload));
 
         // Validate the Budget
-        _checkBudget(budget_);
+        _checkBudget(payload_.budget);
 
         // Initialize the Boost
         BoostLib.Boost storage boost = _boosts.push();
-        boost.owner = owner_;
-        boost.budget = budget_;
-        boost.protocolFee = protocolFee + protocolFee_;
-        boost.referralFee = referralFee + referralFee_;
-        boost.maxParticipants = maxParticipants_;
+        boost.owner = payload_.owner;
+        boost.budget = payload_.budget;
+        boost.protocolFee = protocolFee + payload_.protocolFee;
+        boost.referralFee = referralFee + payload_.referralFee;
+        boost.maxParticipants = payload_.maxParticipants;
 
         // Setup the Boost components
-        boost.action = Action(_makeTarget(type(Action).interfaceId, action_, true));
-        boost.allowList = AllowList(_makeTarget(type(AllowList).interfaceId, allowList_, true));
-        boost.incentives = _makeIncentives(incentives_, budget_);
+        boost.action = Action(_makeTarget(type(Action).interfaceId, payload_.action, true));
+        boost.allowList = AllowList(_makeTarget(type(AllowList).interfaceId, payload_.allowList, true));
+        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget);
         boost.validator = Validator(
-            validator_.instance == address(0)
+            payload_.validator.instance == address(0)
                 ? boost.action.supportsInterface(type(Validator).interfaceId) ? address(boost.action) : address(0)
-                : _makeTarget(type(Validator).interfaceId, validator_, true)
+                : _makeTarget(type(Validator).interfaceId, payload_.validator, true)
         );
 
         return boost;
     }
 
-    function claimReward(uint256 boostId_, uint256 incentiveId_, bytes calldata data_) external nonReentrant {
+    /// @notice Claim an incentive for a Boost
+    /// @param boostId_ The ID of the Boost
+    /// @param incentiveId_ The ID of the Incentive
+    /// @param data_ The data for the claim
+    function claimIncentive(uint256 boostId_, uint256 incentiveId_, bytes calldata data_) external nonReentrant {
         BoostLib.Boost storage boost = _boosts[boostId_];
 
         // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
         if (!boost.validator.validate(data_)) revert BoostError.Unauthorized();
         if (
-            !boost.incentives[incentiveId_].claim(
-                LibZip.cdCompress(abi.encode(Incentive.ClaimPayload({target: msg.sender, data: data_})))
-            )
+            !boost.incentives[incentiveId_].claim(abi.encode(Incentive.ClaimPayload({target: msg.sender, data: data_})))
         ) revert BoostError.ClaimFailed(msg.sender, data_);
     }
 

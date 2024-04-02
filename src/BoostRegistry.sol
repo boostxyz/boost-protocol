@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {ERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
 import {BoostLib} from "src/shared/BoostLib.sol";
@@ -173,13 +172,5 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @return identifier The unique identifier for the implementation
     function _getIdentifier(RegistryType type_, bytes32 hash_) internal pure returns (bytes32 identifier) {
         return keccak256(abi.encodePacked(type_, hash_));
-    }
-
-    /// @notice Build a unique identifier for a given type and name
-    /// @param type_ The base type for the implementation
-    /// @param name_ The name of the implementation
-    /// @return identifier The unique identifier for the implementation
-    function _getIdentifier(RegistryType type_, string memory name_) internal pure returns (bytes32 identifier) {
-        return _getIdentifier(type_, keccak256(abi.encodePacked(name_)));
     }
 }

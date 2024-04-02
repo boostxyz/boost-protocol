@@ -58,7 +58,7 @@ abstract contract Incentive is Ownable, Cloneable, ReentrancyGuard {
     /// @notice Get the required allowance for the incentive
     /// @param data_ The initialization payload for the incentive
     /// @return The data payload to be passed to the {Budget} for interpretation
-    /// @dev This function is to be called by {BoostCore} before the incentive is initialized to determine the required budget allowance. It returns a compressed, ABI-encoded payload that can be passed directly to the {Budget} contract for interpretation.
+    /// @dev This function is to be called by {BoostCore} before the incentive is initialized to determine the required budget allowance. It returns an ABI-encoded payload that can be passed directly to the {Budget} contract for interpretation.
     function preflight(bytes calldata data_) external view virtual returns (bytes memory);
 
     /// @inheritdoc Cloneable

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {OwnableRoles} from "lib/solady/src/auth/OwnableRoles.sol";
 
 import {AllowList} from "src/allowlists/AllowList.sol";
@@ -10,8 +9,6 @@ import {BoostError} from "src/shared/BoostError.sol";
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
 contract SimpleAllowList is AllowList, OwnableRoles {
-    using LibZip for bytes;
-
     /// @notice The role for managing the allow list
     uint256 public constant LIST_MANAGER_ROLE = 1 << 1;
 
@@ -27,7 +24,7 @@ contract SimpleAllowList is AllowList, OwnableRoles {
     /// @notice Initialize the contract with the list of allowed addresses
     /// @param data_ The compressed initialization data `(address owner, address[] allowList)`
     function initialize(bytes calldata data_) public virtual override initializer {
-        (address owner_, address[] memory allowList_) = abi.decode(data_.cdDecompress(), (address, address[]));
+        (address owner_, address[] memory allowList_) = abi.decode(data_, (address, address[]));
         _initializeOwner(owner_);
         _grantRoles(owner_, LIST_MANAGER_ROLE);
         for (uint256 i = 0; i < allowList_.length; i++) {

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
@@ -16,7 +15,6 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 ///     - A vesting budget can also act as a time-lock, unlocking all assets at a specified point in time. To release assets at a specific time rather than vesting them over time, set the `start` to the desired time and the `duration` to zero.
 ///     - This contract is {Ownable} to enable the owner to allocate to the budget, reclaim and disburse assets from the budget, and to set authorized addresses. Additionally, the owner can transfer ownership of the budget to another address. Doing so has no effect on the vesting schedule.
 contract VestingBudget is Budget, ReentrancyGuard {
-    using LibZip for bytes;
     using SafeTransferLib for address;
 
     /// @notice The payload for initializing a VestingBudget
@@ -56,9 +54,9 @@ contract VestingBudget is Budget, ReentrancyGuard {
     }
 
     /// @inheritdoc Cloneable
-    /// @param data_ The compressed init data for the budget (see {InitPayload})
+    /// @param data_ The packed init data for the budget (see {InitPayload})
     function initialize(bytes calldata data_) public virtual override initializer {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         start = init_.start;
         duration = init_.duration;
@@ -72,12 +70,12 @@ contract VestingBudget is Budget, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Allocates assets to the budget
-    /// @param data_ The compressed data for the {Transfer} request
+    /// @param data_ The packed data for the {Transfer} request
     /// @return True if the allocation was successful
     /// @dev The caller must have already approved the contract to transfer the asset
     /// @dev If the asset transfer fails, the allocation will revert
     function allocate(bytes calldata data_) external payable virtual override returns (bool) {
-        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ETH) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
 
@@ -103,13 +101,13 @@ contract VestingBudget is Budget, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Reclaims assets from the budget
-    /// @param data_ The compressed {Transfer} request
+    /// @param data_ The packed {Transfer} request
     /// @return True if the request was successful
     /// @dev Only the owner can directly reclaim assets from the budget, and this action is not subject to the vesting schedule
     /// @dev If the amount is zero, the entire available balance of the asset will be transferred to the receiver
     /// @dev If the asset transfer fails for any reason, the function will revert
     function reclaim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
             _transferFungible(
@@ -124,11 +122,11 @@ contract VestingBudget is Budget, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Disburses assets from the budget to a single recipient
-    /// @param data_ The compressed {Transfer} request
+    /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
     /// @dev The maximum amount that can be disbursed is the {available} amount
     function disburse(bytes calldata data_) public virtual override onlyAuthorized returns (bool) {
-        Transfer memory request = abi.decode(data_.cdDecompress(), (Transfer));
+        Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ERC20 || request.assetType == AssetType.ETH) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
             _transferFungible(request.asset, request.target, payload.amount);
@@ -141,7 +139,7 @@ contract VestingBudget is Budget, ReentrancyGuard {
 
     /// @inheritdoc Budget
     /// @notice Disburses assets from the budget to multiple recipients
-    /// @param data_ The compressed array of {Transfer} requests
+    /// @param data_ The packed array of {Transfer} requests
     /// @return True if all disbursements were successful
     function disburseBatch(bytes[] calldata data_) external virtual override returns (bool) {
         for (uint256 i = 0; i < data_.length; i++) {

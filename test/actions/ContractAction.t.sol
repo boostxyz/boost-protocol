@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 import {MockERC20} from "src/shared/Mocks.sol";
 import {ContractAction} from "src/actions/ContractAction.sol";
@@ -34,7 +33,7 @@ contract ContractActionTest is Test {
             selector: target.mintPayable.selector,
             value: 0.1 ether
         });
-        action.initialize(LibZip.cdCompress(abi.encode(payload)));
+        action.initialize(abi.encode(payload));
 
         nonPayableTargetAction = ContractAction(LibClone.clone(address(baseAction)));
         ContractAction.InitPayload memory nonPayablePayload = ContractAction.InitPayload({
@@ -43,7 +42,7 @@ contract ContractActionTest is Test {
             selector: target.mint.selector,
             value: 0
         });
-        nonPayableTargetAction.initialize(LibZip.cdCompress(abi.encode(nonPayablePayload)));
+        nonPayableTargetAction.initialize(abi.encode(nonPayablePayload));
 
         otherChainAction = ContractAction(LibClone.clone(address(baseAction)));
         ContractAction.InitPayload memory otherChainPayload = ContractAction.InitPayload({
@@ -52,7 +51,7 @@ contract ContractActionTest is Test {
             selector: target.mintPayable.selector,
             value: 0.1 ether
         });
-        otherChainAction.initialize(LibZip.cdCompress(abi.encode(otherChainPayload)));
+        otherChainAction.initialize(abi.encode(otherChainPayload));
     }
 
     ///////////////////////////////

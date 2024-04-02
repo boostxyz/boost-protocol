@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 import {ERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 
@@ -186,7 +185,7 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.ALLOW_LIST,
             address(baseAllowListImpl),
             "Test AllowList",
-            LibZip.cdCompress(abi.encode(address(this), new address[](0), new bool[](0)))
+            abi.encode(address(this), new address[](0), new bool[](0))
         );
     }
 
@@ -216,7 +215,7 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing Budget",
-            LibZip.cdCompress(abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized})))
+            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
         );
 
         assertTrue(instance.supportsInterface(type(Budget).interfaceId));
@@ -231,10 +230,8 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing Budget",
-            LibZip.cdCompress(
-                abi.encode(
-                    unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool* but not valid here... panic at the EVM disco!"
-                )
+            abi.encode(
+                unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool* but not valid here... panic at the EVM disco!"
             )
         );
     }
@@ -253,9 +250,7 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing Budget",
-            LibZip.cdCompress(
-                abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
-            )
+            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
         );
 
         BoostRegistry.Clone memory clone = registry.getClone(cloneId);
@@ -311,7 +306,7 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.ALLOW_LIST,
             address(baseAllowListImpl),
             name,
-            LibZip.cdCompress(abi.encode(address(this), signers, authorized))
+            abi.encode(address(this), signers, authorized)
         );
     }
 }

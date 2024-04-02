@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
-
 import {BoostError} from "src/shared/BoostError.sol";
 
 import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
@@ -15,8 +13,6 @@ import {Incentive} from "src/incentives/Incentive.sol";
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to modify the allow list
 contract AllowListIncentive is Incentive {
-    using LibZip for bytes;
-
     /// @notice The payload for initializing an AllowListIncentive
     struct InitPayload {
         SimpleAllowList allowList;
@@ -36,9 +32,9 @@ contract AllowListIncentive is Incentive {
     }
 
     /// @notice Initialize the contract with the incentive parameters
-    /// @param data_ The compressed initialization data `(SimpleAllowList allowList, uint256 limit)`
+    /// @param data_ The packed initialization data `(SimpleAllowList allowList, uint256 limit)`
     function initialize(bytes calldata data_) public override initializer {
-        InitPayload memory init_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        InitPayload memory init_ = abi.decode(data_, (InitPayload));
         _initializeOwner(msg.sender);
         allowList = init_.allowList;
         limit = init_.limit;
@@ -48,7 +44,7 @@ contract AllowListIncentive is Incentive {
     /// @notice Claim a slot on the {SimpleAllowList}
     /// @param data_ The claim data
     function claim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         if (claims++ >= limit || claimed[claim_.target]) revert NotClaimable();
         claimed[claim_.target] = true;
 
@@ -66,7 +62,7 @@ contract AllowListIncentive is Incentive {
 
     /// @inheritdoc Incentive
     function isClaimable(bytes calldata data_) external view virtual override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_.cdDecompress(), (ClaimPayload));
+        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         return claims < limit && !claimed[claim_.target] && !allowList.isAllowed(claim_.target, "");
     }
 

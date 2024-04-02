@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
-
 import {AllowList} from "src/allowlists/AllowList.sol";
 import {BoostError} from "src/shared/BoostError.sol";
 
 /// @title SimpleDenyList
 /// @notice A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list
 contract SimpleDenyList is AllowList {
-    using LibZip for bytes;
-
     /// @dev An internal mapping of denied statuses
     mapping(address => bool) private _denied;
 
@@ -23,7 +19,7 @@ contract SimpleDenyList is AllowList {
     /// @notice Initialize the contract with the initial list of denied addresses
     /// @param data_ The compressed initialization data `(address owner, address[] denyList)`
     function initialize(bytes calldata data_) public virtual override initializer {
-        (address owner_, address[] memory denyList_) = abi.decode(data_.cdDecompress(), (address, address[]));
+        (address owner_, address[] memory denyList_) = abi.decode(data_, (address, address[]));
 
         _initializeOwner(owner_);
         for (uint256 i = 0; i < denyList_.length; i++) {

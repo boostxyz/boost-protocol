@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {Ownable} from "lib/solady/src/auth/Ownable.sol";
 import {Receiver} from "lib/solady/src/accounts/Receiver.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
@@ -12,10 +11,8 @@ import {Cloneable} from "src/shared/Cloneable.sol";
 /// @title Boost Budget
 /// @notice Abstract contract for a generic Budget within the Boost protocol
 /// @dev Budget classes are expected to implement the allocation, reclamation, and disbursement of assets.
-/// @dev The calldata is expected to be ABI-encoded and compressed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol).
 /// @dev WARNING: Budgets currently support only ETH, ERC20, and ERC1155 assets. Other asset types may be added in the future.
 abstract contract Budget is Ownable, Cloneable, Receiver {
-    using LibZip for bytes;
     using SafeTransferLib for address;
 
     enum AssetType {
@@ -140,6 +137,6 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
 
     /// @inheritdoc Receiver
     fallback() external payable virtual override {
-        LibZip.cdFallback();
+        return;
     }
 }

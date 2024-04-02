@@ -5,7 +5,6 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 import {Action} from "src/actions/Action.sol";
 import {ERC721MintAction} from "src/actions/ERC721MintAction.sol";
@@ -14,8 +13,6 @@ import {Validator} from "src/validators/Validator.sol";
 import {MockERC721} from "src/shared/Mocks.sol";
 
 contract ERC721MintActionTest is Test {
-    using LibZip for bytes;
-
     MockERC721 public mockAsset = new MockERC721();
     ERC721MintAction public baseAction = new ERC721MintAction();
     ERC721MintAction public action;
@@ -90,7 +87,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
+        assertTrue(action.validate(abi.encode(address(this), abi.encode(1))));
     }
 
     function testValidate_WrongHolder() public {
@@ -102,7 +99,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action with an invalid holder
-        assertFalse(action.validate(LibZip.cdCompress(abi.encode(address(0xdeadbeef), abi.encode(1)))));
+        assertFalse(action.validate(abi.encode(address(0xdeadbeef), abi.encode(1))));
     }
 
     function testValidate_AlreadyValidated() public {
@@ -114,10 +111,10 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
+        assertTrue(action.validate(abi.encode(address(this), abi.encode(1))));
 
         // Validate the action again => false
-        assertFalse(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
+        assertFalse(action.validate(abi.encode(address(this), abi.encode(1))));
     }
 
     function testValidate_NonExistentToken() public {
@@ -126,7 +123,7 @@ contract ERC721MintActionTest is Test {
 
         // Validate the action with a non-existent token
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1))));
+        action.validate(abi.encode(address(this), abi.encode(1)));
     }
 
     ////////////////////////////////
@@ -142,7 +139,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(LibZip.cdCompress(abi.encode(address(this), abi.encode(1)))));
+        assertTrue(action.validate(abi.encode(address(this), abi.encode(1))));
 
         // Check the validation status of the token
         assertTrue(action.validated(1));
@@ -186,6 +183,6 @@ contract ERC721MintActionTest is Test {
     }
 
     function _initialize(address target_, bytes4 selector_, uint256 value_) internal {
-        action.initialize(LibZip.cdCompress(abi.encode(block.chainid, target_, selector_, value_)));
+        action.initialize(abi.encode(block.chainid, target_, selector_, value_));
     }
 }

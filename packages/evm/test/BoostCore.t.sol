@@ -2,38 +2,38 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20, MockERC721} from "src/shared/Mocks.sol";
+import {MockERC20, MockERC721} from "@boost/shared/Mocks.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 
 // Actions
-import {Action} from "src/actions/Action.sol";
-import {ContractAction} from "src/actions/ContractAction.sol";
-import {ERC721MintAction} from "src/actions/ERC721MintAction.sol";
+import {Action} from "@boost/actions/Action.sol";
+import {ContractAction} from "@boost/actions/ContractAction.sol";
+import {ERC721MintAction} from "@boost/actions/ERC721MintAction.sol";
 
 // Allowlists
-import {AllowList} from "src/allowlists/AllowList.sol";
-import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
+import {AllowList} from "@boost/allowlists/AllowList.sol";
+import {SimpleAllowList} from "@boost/allowlists/SimpleAllowList.sol";
 
 // Budgets
-import {Budget} from "src/budgets/Budget.sol";
-import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
+import {Budget} from "@boost/budgets/Budget.sol";
+import {SimpleBudget} from "@boost/budgets/SimpleBudget.sol";
 
 // Incentives
-import {Incentive} from "src/incentives/Incentive.sol";
-import {ERC20Incentive} from "src/incentives/ERC20Incentive.sol";
+import {Incentive} from "@boost/incentives/Incentive.sol";
+import {ERC20Incentive} from "@boost/incentives/ERC20Incentive.sol";
 
 // Validators
-import {Validator} from "src/validators/Validator.sol";
-import {SignerValidator} from "src/validators/SignerValidator.sol";
+import {Validator} from "@boost/validators/Validator.sol";
+import {SignerValidator} from "@boost/validators/SignerValidator.sol";
 
 // Core and Shared
-import {BoostCore} from "src/BoostCore.sol";
-import {BoostRegistry} from "src/BoostRegistry.sol";
-import {BoostError} from "src/shared/BoostError.sol";
-import {BoostLib} from "src/shared/BoostLib.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
+import {BoostCore} from "@boost/BoostCore.sol";
+import {BoostRegistry} from "@boost/BoostRegistry.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {BoostLib} from "@boost/shared/BoostLib.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
 
 contract BoostCoreTest is Test {
     using LibClone for address;

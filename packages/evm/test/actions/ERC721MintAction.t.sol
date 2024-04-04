@@ -6,11 +6,11 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 
-import {Action} from "src/actions/Action.sol";
-import {ERC721MintAction} from "src/actions/ERC721MintAction.sol";
-import {Validator} from "src/validators/Validator.sol";
+import {Action} from "@boost/actions/Action.sol";
+import {ERC721MintAction} from "@boost/actions/ERC721MintAction.sol";
+import {Validator} from "@boost/validators/Validator.sol";
 
-import {MockERC721} from "src/shared/Mocks.sol";
+import {MockERC721} from "@boost/shared/Mocks.sol";
 
 contract ERC721MintActionTest is Test {
     MockERC721 public mockAsset = new MockERC721();

@@ -5,9 +5,9 @@ import {ERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/E
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
-import {BoostLib} from "src/shared/BoostLib.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
-import {AllowList} from "src/allowlists/AllowList.sol";
+import {BoostLib} from "@boost/shared/BoostLib.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {AllowList} from "@boost/allowlists/AllowList.sol";
 
 /// @title Boost Registry
 /// @notice A registry for base implementations and cloned instances

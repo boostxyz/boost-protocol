@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
 
 contract CloneableImpl is Cloneable {}
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {Ownable} from "lib/solady/src/auth/Ownable.sol";
 import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
-import {Cloneable} from "src/shared/Cloneable.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
 
 /// @title Boost Incentive
 /// @notice Abstract contract for a generic Incentive within the Boost protocol

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {BoostError} from "src/shared/BoostError.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
 
-import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
-import {Incentive} from "src/incentives/Incentive.sol";
+import {SimpleAllowList} from "@boost/allowlists/SimpleAllowList.sol";
+import {Incentive} from "@boost/incentives/Incentive.sol";
 
 /// @title SimpleAllowList Incentive
 /// @notice An incentive implementation that grants the claimer a slot on an {SimpleAllowList}

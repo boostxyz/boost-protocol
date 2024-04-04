@@ -6,16 +6,16 @@ import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {LibZip} from "lib/solady/src/utils/LibZip.sol";
 import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
-import {BoostError} from "src/shared/BoostError.sol";
-import {BoostLib} from "src/shared/BoostLib.sol";
-import {BoostRegistry} from "src/BoostRegistry.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {BoostLib} from "@boost/shared/BoostLib.sol";
+import {BoostRegistry} from "@boost/BoostRegistry.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
 
-import {Action} from "src/actions/Action.sol";
-import {AllowList} from "src/allowlists/AllowList.sol";
-import {Budget} from "src/budgets/Budget.sol";
-import {Incentive} from "src/incentives/Incentive.sol";
-import {Validator} from "src/validators/Validator.sol";
+import {Action} from "@boost/actions/Action.sol";
+import {AllowList} from "@boost/allowlists/AllowList.sol";
+import {Budget} from "@boost/budgets/Budget.sol";
+import {Incentive} from "@boost/incentives/Incentive.sol";
+import {Validator} from "@boost/validators/Validator.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol

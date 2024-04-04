@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {SignatureCheckerLib} from "lib/solady/src/utils/SignatureCheckerLib.sol";
 import {IERC1271} from "lib/openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
 
-import {BoostError} from "src/shared/BoostError.sol";
-import {Validator} from "src/validators/Validator.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {Validator} from "@boost/validators/Validator.sol";
 
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers

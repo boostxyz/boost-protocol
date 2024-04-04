@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {LibPRNG} from "lib/solady/src/utils/LibPRNG.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
-import {BoostError} from "src/shared/BoostError.sol";
-import {Budget} from "src/budgets/Budget.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {Budget} from "@boost/budgets/Budget.sol";
 import {Incentive} from "./Incentive.sol";
 
 /// @title ERC20 Incentive

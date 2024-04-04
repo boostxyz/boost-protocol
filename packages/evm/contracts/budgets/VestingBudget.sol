@@ -1,36 +1,45 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {IERC1155} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
-import {IERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
-
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
 
-import {Budget} from "src/budgets/Budget.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
+import {Budget} from "@boost/budgets/Budget.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
 
-/// @title Simple Budget
-/// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
-/// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
-contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
+/// @title Vesting Budget
+/// @notice A vesting-based budget implementation that allows for the distribution of assets over time
+/// @dev Take note of the following when making use of this budget type:
+///     - The budget is designed to manage native and ERC20 token balances only. Using rebasing tokens or other non-standard token types may result in unexpected behavior.
+///     - Any assets allocated to this type of budget will follow the vesting schedule as if they were locked from the beginning, which is to say that, if the vesting has already started, some portion of the assets will be immediately available for distribution.
+///     - A vesting budget can also act as a time-lock, unlocking all assets at a specified point in time. To release assets at a specific time rather than vesting them over time, set the `start` to the desired time and the `duration` to zero.
+///     - This contract is {Ownable} to enable the owner to allocate to the budget, reclaim and disburse assets from the budget, and to set authorized addresses. Additionally, the owner can transfer ownership of the budget to another address. Doing so has no effect on the vesting schedule.
+contract VestingBudget is Budget, ReentrancyGuard {
     using SafeTransferLib for address;
 
-    /// @notice The payload for initializing a SimpleBudget
+    /// @notice The payload for initializing a VestingBudget
     struct InitPayload {
         address owner;
         address[] authorized;
+        uint64 start;
+        uint64 duration;
+        uint64 cliff;
     }
 
     /// @dev The total amount of each fungible asset distributed from the budget
     mapping(address => uint256) private _distributedFungible;
 
-    /// @dev The total amount of each ERC1155 asset and token ID distributed from the budget
-    mapping(address => mapping(uint256 => uint256)) private _distributedERC1155;
-
     /// @dev The mapping of authorized addresses
     mapping(address => bool) private _isAuthorized;
+
+    /// @notice The timestamp at which the vesting schedule begins
+    uint64 public start;
+
+    /// @notice The duration of the vesting schedule (in seconds)
+    uint64 public duration;
+
+    /// @notice The duration of the cliff period (in seconds)
+    uint64 public cliff;
 
     /// @notice A modifier that allows only authorized addresses to call the function
     modifier onlyAuthorized() {
@@ -38,16 +47,21 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         _;
     }
 
-    /// @notice Construct a new SimpleBudget
+    /// @notice Construct a new VestingBudget
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
         _disableInitializers();
     }
 
     /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
+    /// @param data_ The packed init data for the budget (see {InitPayload})
     function initialize(bytes calldata data_) public virtual override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
+
+        start = init_.start;
+        duration = init_.duration;
+        cliff = init_.cliff;
+
         _initializeOwner(init_.owner);
         for (uint256 i = 0; i < init_.authorized.length; i++) {
             _isAuthorized[init_.authorized[i]] = true;
@@ -77,16 +91,6 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
             if (request.asset.balanceOf(address(this)) < payload.amount) {
                 revert InvalidAllocation(request.asset, payload.amount);
             }
-        } else if (request.assetType == AssetType.ERC1155) {
-            ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
-
-            // Transfer `payload.amount` of `payload.tokenId` to this contract
-            IERC1155(request.asset).safeTransferFrom(
-                request.target, address(this), payload.tokenId, payload.amount, payload.data
-            );
-            if (IERC1155(request.asset).balanceOf(address(this), payload.tokenId) < payload.amount) {
-                revert InvalidAllocation(request.asset, payload.amount);
-            }
         } else {
             // Unsupported asset type
             return false;
@@ -99,24 +103,15 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     /// @notice Reclaims assets from the budget
     /// @param data_ The packed {Transfer} request
     /// @return True if the request was successful
-    /// @dev Only the owner can directly reclaim assets from the budget
-    /// @dev If the amount is zero, the entire balance of the asset will be transferred to the receiver
-    /// @dev If the asset transfer fails, the reclamation will revert
+    /// @dev Only the owner can directly reclaim assets from the budget, and this action is not subject to the vesting schedule
+    /// @dev If the amount is zero, the entire available balance of the asset will be transferred to the receiver
+    /// @dev If the asset transfer fails for any reason, the function will revert
     function reclaim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
         Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
             _transferFungible(
                 request.asset, request.target, payload.amount == 0 ? available(request.asset) : payload.amount
-            );
-        } else if (request.assetType == AssetType.ERC1155) {
-            ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
-            _transferERC1155(
-                request.asset,
-                request.target,
-                payload.tokenId,
-                payload.amount == 0 ? IERC1155(request.asset).balanceOf(address(this), payload.tokenId) : payload.amount,
-                payload.data
             );
         } else {
             return false;
@@ -129,27 +124,12 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     /// @notice Disburses assets from the budget to a single recipient
     /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
-    /// @dev If the asset transfer fails, the disbursement will revert
+    /// @dev The maximum amount that can be disbursed is the {available} amount
     function disburse(bytes calldata data_) public virtual override onlyAuthorized returns (bool) {
         Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ERC20 || request.assetType == AssetType.ETH) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
-
-            uint256 avail = available(request.asset);
-            if (payload.amount > avail) {
-                revert InsufficientFunds(request.asset, avail, payload.amount);
-            }
-
             _transferFungible(request.asset, request.target, payload.amount);
-        } else if (request.assetType == AssetType.ERC1155) {
-            ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
-
-            uint256 avail = IERC1155(request.asset).balanceOf(address(this), payload.tokenId);
-            if (payload.amount > avail) {
-                revert InsufficientFunds(request.asset, avail, payload.amount);
-            }
-
-            _transferERC1155(request.asset, request.target, payload.tokenId, payload.amount, payload.data);
         } else {
             return false;
         }
@@ -187,39 +167,29 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return _isAuthorized[account_] || account_ == owner();
     }
 
+    /// @notice Get the end time of the vesting schedule
+    /// @return The end time of the vesting schedule
+    function end() external view virtual returns (uint256) {
+        return start + duration;
+    }
+
     /// @inheritdoc Budget
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset
     /// @return The total amount of assets
-    /// @dev This is simply the sum of the current balance and the distributed amount
+    /// @dev This is equal to the sum of the total current balance and the total distributed amount
     function total(address asset_) external view virtual override returns (uint256) {
-        return available(asset_) + _distributedFungible[asset_];
-    }
-
-    /// @notice Get the total amount of ERC1155 assets allocated to the budget, including any that have been distributed
-    /// @param asset_ The address of the asset
-    /// @param tokenId_ The ID of the token
-    /// @return The total amount of assets
-    function total(address asset_, uint256 tokenId_) external view virtual returns (uint256) {
-        return IERC1155(asset_).balanceOf(address(this), tokenId_) + _distributedERC1155[asset_][tokenId_];
+        uint256 balance = asset_ == address(0) ? address(this).balance : asset_.balanceOf(address(this));
+        return _distributedFungible[asset_] + balance;
     }
 
     /// @inheritdoc Budget
-    /// @notice Get the amount of assets available for distribution from the budget
+    /// @notice Get the amount of assets available for distribution from the budget as of the current block timestamp
     /// @param asset_ The address of the asset (or the zero address for native assets)
-    /// @return The amount of assets available
-    /// @dev This is simply the current balance held by the budget
-    /// @dev If the zero address is passed, this function will return the native balance
+    /// @return The amount of assets currently available for distribution
+    /// @dev This is equal to the total vested amount minus any already distributed
     function available(address asset_) public view virtual override returns (uint256) {
-        return asset_ == address(0) ? address(this).balance : asset_.balanceOf(address(this));
-    }
-
-    /// @notice Get the amount of ERC1155 assets available for distribution from the budget
-    /// @param asset_ The address of the asset
-    /// @param tokenId_ The ID of the token
-    /// @return The amount of assets available
-    function available(address asset_, uint256 tokenId_) public view virtual returns (uint256) {
-        return IERC1155(asset_).balanceOf(address(this), tokenId_);
+        return _vestedAllocation(asset_, uint64(block.timestamp)) - _distributedFungible[asset_];
     }
 
     /// @inheritdoc Budget
@@ -228,14 +198,6 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     /// @return The amount of assets distributed
     function distributed(address asset_) external view virtual override returns (uint256) {
         return _distributedFungible[asset_];
-    }
-
-    /// @notice Get the amount of ERC1155 assets that have been distributed from the budget
-    /// @param asset_ The address of the asset
-    /// @param tokenId_ The ID of the token
-    /// @return The amount of assets distributed
-    function distributed(address asset_, uint256 tokenId_) external view virtual returns (uint256) {
-        return _distributedERC1155[asset_][tokenId_];
     }
 
     /// @inheritdoc Budget
@@ -269,52 +231,26 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         emit Distributed(asset_, to_, amount_);
     }
 
-    function _transferERC1155(address asset_, address to_, uint256 tokenId_, uint256 amount_, bytes memory data_)
-        internal
-        virtual
-        nonReentrant
-    {
-        // Increment the total amount of the asset distributed from the budget
-        if (to_ == address(0)) revert TransferFailed(asset_, to_, amount_);
-        if (amount_ > available(asset_, tokenId_)) {
-            revert InsufficientFunds(asset_, available(asset_, tokenId_), amount_);
+    /// @notice Calculate the portion of allocated assets vested at a given timestamp
+    /// @param asset_ The address of the asset
+    /// @param timestamp_ The timestamp used to calculate the vested amount
+    /// @return The amount of assets vested at that point in time
+    function _vestedAllocation(address asset_, uint64 timestamp_) internal view virtual returns (uint256) {
+        uint256 balance = asset_ == address(0) ? address(this).balance : asset_.balanceOf(address(this));
+        return _linearVestedAmount(balance + _distributedFungible[asset_], timestamp_);
+    }
+
+    /// @notice Calculate the amount of assets vested at a given timestamp using a linear vesting schedule
+    /// @param totalAllocation The total amount of the asset allocated to the budget (including prior distributions)
+    /// @param timestamp The timestamp used to calculate the vested amount
+    /// @return The amount of assets vested at that point in time
+    function _linearVestedAmount(uint256 totalAllocation, uint64 timestamp) internal view virtual returns (uint256) {
+        if (timestamp < start + cliff) {
+            return 0;
+        } else if (timestamp >= start + duration) {
+            return totalAllocation;
+        } else {
+            return totalAllocation * (timestamp - start) / duration;
         }
-
-        _distributedERC1155[asset_][tokenId_] += amount_;
-
-        // Transfer the asset to the recipient
-        // wake-disable-next-line reentrancy (`nonReentrant` modifier is applied to the function)
-        IERC1155(asset_).safeTransferFrom(address(this), to_, tokenId_, amount_, data_);
-
-        emit Distributed(asset_, to_, amount_);
-    }
-
-    /// @inheritdoc IERC1155Receiver
-    /// @dev This contract does not care about the specifics of the inbound token, so we simply return the magic value (i.e. the selector for `onERC1155Received`)
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
-        external
-        pure
-        override
-        returns (bytes4)
-    {
-        // We don't need to do anything here
-        return IERC1155Receiver.onERC1155Received.selector;
-    }
-
-    /// @inheritdoc IERC1155Receiver
-    /// @dev This contract does not care about the specifics of the inbound token, so we simply return the magic value (i.e. the selector for `onERC1155Received`)
-    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
-        external
-        pure
-        override
-        returns (bytes4)
-    {
-        // We don't need to do anything here
-        return IERC1155Receiver.onERC1155BatchReceived.selector;
-    }
-
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Budget, IERC165) returns (bool) {
-        return interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
 }

@@ -8,11 +8,11 @@ import {Initializable} from "lib/solady/src/utils/Initializable.sol";
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
-import {MockERC20, MockERC1155} from "src/shared/Mocks.sol";
-import {BoostError} from "src/shared/BoostError.sol";
-import {Budget} from "src/budgets/Budget.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
-import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
+import {MockERC20, MockERC1155} from "@boost/shared/Mocks.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {Budget} from "@boost/budgets/Budget.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {SimpleBudget} from "@boost/budgets/SimpleBudget.sol";
 
 contract SimpleBudgetTest is Test, IERC1155Receiver {
     MockERC20 mockERC20;

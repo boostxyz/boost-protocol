@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import {OwnableRoles} from "lib/solady/src/auth/OwnableRoles.sol";
 
-import {AllowList} from "src/allowlists/AllowList.sol";
-import {BoostError} from "src/shared/BoostError.sol";
+import {AllowList} from "@boost/allowlists/AllowList.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
 
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses

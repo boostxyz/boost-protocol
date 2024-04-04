@@ -2,17 +2,17 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20} from "src/shared/Mocks.sol";
+import {MockERC20} from "@boost/shared/Mocks.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
-import {BoostError} from "src/shared/BoostError.sol";
-import {Incentive} from "src/incentives/Incentive.sol";
-import {ERC20Incentive} from "src/incentives/ERC20Incentive.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {Incentive} from "@boost/incentives/Incentive.sol";
+import {ERC20Incentive} from "@boost/incentives/ERC20Incentive.sol";
 
-import {Budget} from "src/budgets/Budget.sol";
-import {SimpleBudget} from "src/budgets/SimpleBudget.sol";
+import {Budget} from "@boost/budgets/Budget.sol";
+import {SimpleBudget} from "@boost/budgets/SimpleBudget.sol";
 
 contract ERC20IncentiveTest is Test {
     using SafeTransferLib for address;

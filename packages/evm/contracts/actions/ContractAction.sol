@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 
-import {Cloneable} from "src/shared/Cloneable.sol";
-import {Action} from "src/actions/Action.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {Action} from "@boost/actions/Action.sol";
 
 contract ContractAction is Action {
     /// @notice Thrown when execution on a given chain is not supported

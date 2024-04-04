@@ -1,0 +1,25 @@
+{
+  "name": "@boost/evm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "README.md",
+  "scripts": {
+    "test": "forge test -vvv"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.1.1",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/chai": "4",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.24",
+    "chai": "4",
+    "hardhat": "^2.22.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

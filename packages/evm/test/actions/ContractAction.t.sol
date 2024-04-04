@@ -5,8 +5,8 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 
-import {MockERC20} from "src/shared/Mocks.sol";
-import {ContractAction} from "src/actions/ContractAction.sol";
+import {MockERC20} from "@boost/shared/Mocks.sol";
+import {ContractAction} from "@boost/actions/ContractAction.sol";
 
 // contract TargetContract {
 //     event Called(address indexed sender, bytes message, uint256 count);

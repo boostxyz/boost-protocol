@@ -3,10 +3,10 @@ pragma solidity ^0.8.24;
 
 import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
 
-import {Action} from "src/actions/Action.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
-import {ContractAction} from "src/actions/ContractAction.sol";
-import {Validator} from "src/validators/Validator.sol";
+import {Action} from "@boost/actions/Action.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {ContractAction} from "@boost/actions/ContractAction.sol";
+import {Validator} from "@boost/validators/Validator.sol";
 
 /// @title ERC721 Mint Action
 /// @notice A primitive action to mint and/or validate that an ERC721 token has been minted

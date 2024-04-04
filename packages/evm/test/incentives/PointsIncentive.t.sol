@@ -5,9 +5,9 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 
-import {Incentive} from "src/incentives/Incentive.sol";
-import {PointsIncentive} from "src/incentives/PointsIncentive.sol";
-import {Points} from "src/tokens/Points.sol";
+import {Incentive} from "@boost/incentives/Incentive.sol";
+import {PointsIncentive} from "@boost/incentives/PointsIncentive.sol";
+import {Points} from "@boost/tokens/Points.sol";
 
 contract PointsIncentiveTest is Test {
     PointsIncentive public incentive;

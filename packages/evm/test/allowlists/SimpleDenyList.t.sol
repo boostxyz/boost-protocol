@@ -5,10 +5,10 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 
-import {BoostError} from "src/shared/BoostError.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
-import {AllowList} from "src/allowlists/AllowList.sol";
-import {SimpleDenyList} from "src/allowlists/SimpleDenyList.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {AllowList} from "@boost/allowlists/AllowList.sol";
+import {SimpleDenyList} from "@boost/allowlists/SimpleDenyList.sol";
 
 contract SimpleDenyListTest is Test {
     SimpleDenyList baseDenyList = new SimpleDenyList();

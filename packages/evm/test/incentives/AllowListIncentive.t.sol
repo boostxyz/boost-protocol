@@ -5,9 +5,9 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "lib/solady/src/utils/LibClone.sol";
 
-import {SimpleAllowList} from "src/allowlists/SimpleAllowList.sol";
-import {AllowListIncentive} from "src/incentives/AllowListIncentive.sol";
-import {Incentive} from "src/incentives/Incentive.sol";
+import {SimpleAllowList} from "@boost/allowlists/SimpleAllowList.sol";
+import {AllowListIncentive} from "@boost/incentives/AllowListIncentive.sol";
+import {Incentive} from "@boost/incentives/Incentive.sol";
 
 contract AllowListIncentiveTest is Test {
     SimpleAllowList public allowList;

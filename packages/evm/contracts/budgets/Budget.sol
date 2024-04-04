@@ -5,8 +5,8 @@ import {Ownable} from "lib/solady/src/auth/Ownable.sol";
 import {Receiver} from "lib/solady/src/accounts/Receiver.sol";
 import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
 
-import {BoostError} from "src/shared/BoostError.sol";
-import {Cloneable} from "src/shared/Cloneable.sol";
+import {BoostError} from "@boost/shared/BoostError.sol";
+import {Cloneable} from "@boost/shared/Cloneable.sol";
 
 /// @title Boost Budget
 /// @notice Abstract contract for a generic Budget within the Boost protocol

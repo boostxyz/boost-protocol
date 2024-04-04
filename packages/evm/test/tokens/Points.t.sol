@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {Points} from "src/tokens/Points.sol";
+import {Points} from "@boost/tokens/Points.sol";
 
 contract PointsTest is Test {
     Points public points;

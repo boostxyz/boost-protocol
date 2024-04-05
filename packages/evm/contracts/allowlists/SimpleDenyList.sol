@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {BoostError} from "@boost/shared/BoostError.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
 
 /// @title SimpleDenyList
 /// @notice A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list

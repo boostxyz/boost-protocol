@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {OwnableRoles} from "lib/solady/src/auth/OwnableRoles.sol";
+import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {BoostError} from "@boost/shared/BoostError.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
 
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses

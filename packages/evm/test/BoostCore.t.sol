@@ -2,38 +2,38 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20, MockERC721} from "@boost/shared/Mocks.sol";
+import {MockERC20, MockERC721} from "contracts/shared/Mocks.sol";
 
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
+import {LibZip} from "@solady/utils/LibZip.sol";
 
 // Actions
-import {Action} from "@boost/actions/Action.sol";
-import {ContractAction} from "@boost/actions/ContractAction.sol";
-import {ERC721MintAction} from "@boost/actions/ERC721MintAction.sol";
+import {Action} from "contracts/actions/Action.sol";
+import {ContractAction} from "contracts/actions/ContractAction.sol";
+import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
 // Allowlists
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {SimpleAllowList} from "@boost/allowlists/SimpleAllowList.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
 // Budgets
-import {Budget} from "@boost/budgets/Budget.sol";
-import {SimpleBudget} from "@boost/budgets/SimpleBudget.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
 // Incentives
-import {Incentive} from "@boost/incentives/Incentive.sol";
-import {ERC20Incentive} from "@boost/incentives/ERC20Incentive.sol";
+import {Incentive} from "contracts/incentives/Incentive.sol";
+import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 
 // Validators
-import {Validator} from "@boost/validators/Validator.sol";
-import {SignerValidator} from "@boost/validators/SignerValidator.sol";
+import {Validator} from "contracts/validators/Validator.sol";
+import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 
 // Core and Shared
-import {BoostCore} from "@boost/BoostCore.sol";
-import {BoostRegistry} from "@boost/BoostRegistry.sol";
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {BoostLib} from "@boost/shared/BoostLib.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {BoostCore} from "contracts/BoostCore.sol";
+import {BoostRegistry} from "contracts/BoostRegistry.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {BoostLib} from "contracts/shared/BoostLib.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 contract BoostCoreTest is Test {
     using LibClone for address;
@@ -41,7 +41,7 @@ contract BoostCoreTest is Test {
     MockERC20 mockERC20 = new MockERC20();
     MockERC721 mockERC721 = new MockERC721();
 
-    BoostCore boostCore = new BoostCore(new BoostRegistry());
+    BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1));
     BoostLib.Target action = _makeAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
     BoostLib.Target allowList = _makeAllowList(address(this));
 
@@ -56,10 +56,10 @@ contract BoostCoreTest is Test {
                 validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                 allowList: allowList,
                 incentives: _makeIncentives(1),
-                protocolFee: 0.01 ether,
-                referralFee: 0.001 ether,
+                protocolFee: 500,  // 5%
+                referralFee: 1000, // 10%
                 maxParticipants: 10_000,
-                owner: address(this)
+                owner: address(1)
             })
         )
     );
@@ -105,9 +105,9 @@ contract BoostCoreTest is Test {
         BoostLib.Boost memory boost = boostCore.createBoost(validCreateCalldata);
 
         // Check the basics
-        assertEq(boost.owner, address(this));
-        assertEq(boost.protocolFee, boostCore.protocolFee() + 0.01 ether);
-        assertEq(boost.referralFee, boostCore.referralFee() + 0.001 ether);
+        assertEq(boost.owner, address(1));
+        assertEq(boost.protocolFee, boostCore.protocolFee() + 500);
+        assertEq(boost.referralFee, boostCore.referralFee() + 1000);
         assertEq(boost.maxParticipants, 10_000);
 
         // Check the Budget

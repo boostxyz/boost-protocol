@@ -3,14 +3,14 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
+import {ERC721} from "@solady/tokens/ERC721.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 
-import {Action} from "@boost/actions/Action.sol";
-import {ERC721MintAction} from "@boost/actions/ERC721MintAction.sol";
-import {Validator} from "@boost/validators/Validator.sol";
+import {Action} from "contracts/actions/Action.sol";
+import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
+import {Validator} from "contracts/validators/Validator.sol";
 
-import {MockERC721} from "@boost/shared/Mocks.sol";
+import {MockERC721} from "contracts/shared/Mocks.sol";
 
 contract ERC721MintActionTest is Test {
     MockERC721 public mockAsset = new MockERC721();

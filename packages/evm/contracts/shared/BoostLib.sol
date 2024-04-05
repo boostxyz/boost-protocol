@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
+import {LibZip} from "@solady/utils/LibZip.sol";
 
-import {Action} from "@boost/actions/Action.sol";
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {Budget} from "@boost/budgets/Budget.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {Incentive} from "@boost/incentives/Incentive.sol";
-import {Validator} from "@boost/validators/Validator.sol";
+import {Action} from "contracts/actions/Action.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {Incentive} from "contracts/incentives/Incentive.sol";
+import {Validator} from "contracts/validators/Validator.sol";
 
 library BoostLib {
     using LibClone for address;

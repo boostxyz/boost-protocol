@@ -3,15 +3,15 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {Initializable} from "lib/solady/src/utils/Initializable.sol";
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {MockERC20} from "@boost/shared/Mocks.sol";
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {Budget} from "@boost/budgets/Budget.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {VestingBudget} from "@boost/budgets/VestingBudget.sol";
+import {MockERC20} from "contracts/shared/Mocks.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {VestingBudget} from "contracts/budgets/VestingBudget.sol";
 
 contract VestingBudgetTest is Test {
     MockERC20 mockERC20;

@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable} from "lib/solady/src/auth/Ownable.sol";
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
-import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
+import {Ownable} from "@solady/auth/Ownable.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
+import {LibZip} from "@solady/utils/LibZip.sol";
+import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {BoostLib} from "@boost/shared/BoostLib.sol";
-import {BoostRegistry} from "@boost/BoostRegistry.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {BoostLib} from "contracts/shared/BoostLib.sol";
+import {BoostRegistry} from "contracts/BoostRegistry.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
-import {Action} from "@boost/actions/Action.sol";
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {Budget} from "@boost/budgets/Budget.sol";
-import {Incentive} from "@boost/incentives/Incentive.sol";
-import {Validator} from "@boost/validators/Validator.sol";
+import {Action} from "contracts/actions/Action.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {Incentive} from "contracts/incentives/Incentive.sol";
+import {Validator} from "contracts/validators/Validator.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
@@ -23,6 +24,7 @@ import {Validator} from "@boost/validators/Validator.sol";
 contract BoostCore is Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
+    using SafeTransferLib for address;
 
     struct InitPayload {
         Budget budget;
@@ -42,16 +44,26 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice The BoostRegistry contract
     BoostRegistry public registry;
 
+    /// @notice The protocol fee receiver
+    address public protocolFeeReceiver;
+
+    /// @notice The claim fee (in wei)
+    uint256 public claimFee = 0.000075 ether;
+
     /// @notice The base protocol fee (in bps)
     uint64 public protocolFee = 1_000; // 10%
 
     /// @notice The base referral fee (in bps)
-    uint64 public referralFee = 500; // 5%
+    uint64 public referralFee = 1_000; // 10%
+
+    /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
+    uint64 constant FEE_DENOMINATOR = 10_000;
 
     /// @notice Constructor to initialize the owner
-    constructor(BoostRegistry registry_) {
+    constructor(BoostRegistry registry_, address protocolFeeReceiver_) {
         _initializeOwner(msg.sender);
         registry = registry_;
+        protocolFeeReceiver = protocolFeeReceiver_;
     }
 
     /// @notice Create a new Boost
@@ -101,9 +113,16 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Claim an incentive for a Boost
     /// @param boostId_ The ID of the Boost
     /// @param incentiveId_ The ID of the Incentive
+    /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
-    function claimIncentive(uint256 boostId_, uint256 incentiveId_, bytes calldata data_) external nonReentrant {
+    function claimIncentive(uint256 boostId_, uint256 incentiveId_, address referrer_, bytes calldata data_)
+        external
+        payable
+        nonReentrant
+    {
         BoostLib.Boost storage boost = _boosts[boostId_];
+        if (msg.value < claimFee) revert BoostError.InsufficientFunds(address(0), msg.value, claimFee);
+        _routeClaimFee(boost, referrer_);
 
         // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
         if (!boost.validator.validate(data_)) revert BoostError.Unauthorized();
@@ -123,6 +142,20 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @return The number of Boosts
     function getBoostCount() external view returns (uint256) {
         return _boosts.length;
+    }
+
+    /// @notice Set the protocol fee receiver address
+    /// @param protocolFeeReceiver_ The new protocol fee receiver address
+    /// @dev This function is only callable by the owner
+    function setProtocolFeeReceiver(address protocolFeeReceiver_) external onlyOwner {
+        protocolFeeReceiver = protocolFeeReceiver_;
+    }
+
+    /// @notice Set the claim fee
+    /// @param claimFee_ The new claim fee (in wei)
+    /// @dev This function is only callable by the owner
+    function setClaimFee(uint256 claimFee_) external onlyOwner {
+        claimFee = claimFee_;
     }
 
     /// @notice Check that the provided Budget is valid and that the caller is authorized to use it
@@ -196,5 +229,24 @@ contract BoostCore is Ownable, ReentrancyGuard {
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
             Cloneable(instance).initialize(target_.parameters);
         }
+    }
+
+    /// @notice Route the claim fee to the creator, referrer, and protocol fee receiver
+    /// @param boost The Boost for which to route the claim fee
+    /// @param referrer_ The address of the referrer (if any)
+    function _routeClaimFee(BoostLib.Boost storage boost, address referrer_) internal {
+        if (claimFee == 0) return;
+        uint256 netFee = claimFee;
+
+        // If a referrer is provided, transfer the revshare and reduce the net fee
+        if (referrer_ != address(0)) {
+            uint256 referralShare = claimFee * boost.referralFee / FEE_DENOMINATOR;
+            netFee -= referralShare;
+            referrer_.safeTransferETH(referralShare);
+        }
+
+        // The remaining fee is split between the owner and the protocol
+        boost.owner.safeTransferETH(netFee / 2);
+        protocolFeeReceiver.safeTransferETH(address(this).balance);
     }
 }

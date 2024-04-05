@@ -3,10 +3,10 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 
-import {MockERC20} from "@boost/shared/Mocks.sol";
-import {ContractAction} from "@boost/actions/ContractAction.sol";
+import {MockERC20} from "contracts/shared/Mocks.sol";
+import {ContractAction} from "contracts/actions/ContractAction.sol";
 
 // contract TargetContract {
 //     event Called(address indexed sender, bytes message, uint256 count);

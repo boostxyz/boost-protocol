@@ -1,0 +1,22 @@
+{
+  "solidity.compileUsingRemoteVersion": "v0.8.24+commit.e11b9ed9",
+  "slither.solcPath": "",
+  "slither.hiddenDetectors": [],
+  "wake.compiler.solc.remappings": [
+    "lib/=packages/evm/lib/",
+    "@openzeppelin/contracts/=packages/evm/lib/openzeppelin-contracts/contracts/",
+    "ds-test/=packages/evm/lib/forge-std/lib/ds-test/src/",
+    "erc4626-tests/=packages/evm/lib/openzeppelin-contracts/lib/erc4626-tests/",
+    "forge-std/=packages/evm/lib/forge-std/src/",
+    "openzeppelin-contracts/=packages/evm/lib/openzeppelin-contracts/",
+    "@solady/=packages/evm/lib/solady/src/",
+    "contracts/=packages/evm/contracts/",
+    "@alchemy/light-account/=packages/evm/lib/modular-account/lib/light-account/",
+    "@eth-infinitism/account-abstraction/=packages/evm/lib/modular-account/lib/account-abstraction/contracts/",
+    "account-abstraction/=packages/evm/lib/modular-account/lib/account-abstraction/contracts/",
+    "hardhat/=node_modules/hardhat/",
+    "light-account/=packages/evm/lib/modular-account/lib/light-account/",
+    "modular-account/=packages/evm/lib/modular-account/",
+    "openzeppelin/=packages/evm/lib/modular-account/lib/openzeppelin-contracts/contracts/"
+  ]
+}

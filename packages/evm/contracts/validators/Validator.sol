@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable} from "lib/solady/src/auth/Ownable.sol";
+import {Ownable} from "@solady/auth/Ownable.sol";
 
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 /// @title Boost Validator
 /// @notice Abstract contract for a generic Validator within the Boost protocol

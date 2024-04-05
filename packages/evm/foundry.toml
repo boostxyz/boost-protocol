@@ -9,6 +9,14 @@ test = 'test'
 cache_path  = 'cache_forge'
 libs = ['node_modules', 'lib']
 
+remappings=[
+  '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
+  'ds-test/=lib/forge-std/lib/ds-test/src/',
+  'forge-std/=lib/forge-std/src/',
+  '@solady/=lib/solady/src/',
+  '@boost/contracts/=contracts/'
+]
+
 [doc]
 title = "Boost Protocol Docs"
 repository = "https://github.com/rabbitholegg/boost-protocol"

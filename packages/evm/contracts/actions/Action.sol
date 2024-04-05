@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {Validator} from "@boost/validators/Validator.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {Validator} from "contracts/validators/Validator.sol";
 
 /// @title Boost Action
 /// @notice Abstract contract for a generic Action within the Boost protocol

@@ -3,17 +3,17 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {ECDSA} from "lib/solady/src/utils/ECDSA.sol";
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {SignatureCheckerLib} from "lib/solady/src/utils/SignatureCheckerLib.sol";
+import {ECDSA} from "@solady/utils/ECDSA.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
+import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 
 import {MockERC1271Wallet} from "lib/solady/test/utils/mocks/MockERC1271Wallet.sol";
 import {MockERC1271Malicious} from "lib/solady/test/utils/mocks/MockERC1271Malicious.sol";
 
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {Validator} from "@boost/validators/Validator.sol";
-import {SignerValidator} from "@boost/validators/SignerValidator.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {Validator} from "contracts/validators/Validator.sol";
+import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 
 contract SignerValidatorTest is Test {
     SignerValidator baseValidator = new SignerValidator();

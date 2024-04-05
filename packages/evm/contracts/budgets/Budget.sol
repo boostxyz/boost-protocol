@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable} from "lib/solady/src/auth/Ownable.sol";
-import {Receiver} from "lib/solady/src/accounts/Receiver.sol";
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
+import {Ownable} from "@solady/auth/Ownable.sol";
+import {Receiver} from "@solady/accounts/Receiver.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 /// @title Boost Budget
 /// @notice Abstract contract for a generic Budget within the Boost protocol

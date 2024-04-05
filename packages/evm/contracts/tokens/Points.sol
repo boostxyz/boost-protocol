@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC20} from "lib/solady/src/tokens/ERC20.sol";
-import {Initializable} from "lib/solady/src/utils/Initializable.sol";
-import {OwnableRoles} from "lib/solady/src/auth/OwnableRoles.sol";
+import {ERC20} from "@solady/tokens/ERC20.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
+import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
 /// @title Points
 /// @notice A soulbound token that can be used to track points on-chain. Points are permanently assigned to an address and cannot be transferred.

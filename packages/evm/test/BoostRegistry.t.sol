@@ -2,20 +2,20 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 
-import {ERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {SimpleAllowList} from "@boost/allowlists/SimpleAllowList.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
-import {Budget} from "@boost/budgets/Budget.sol";
-import {SimpleBudget} from "@boost/budgets/SimpleBudget.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
-import {Incentive} from "@boost/incentives/Incentive.sol";
+import {Incentive} from "contracts/incentives/Incentive.sol";
 
-import {BoostRegistry} from "@boost/BoostRegistry.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {BoostRegistry} from "contracts/BoostRegistry.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 contract NotCloneable is ERC165 {
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {

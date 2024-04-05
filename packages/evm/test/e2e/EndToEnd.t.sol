@@ -3,32 +3,32 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {LibZip} from "lib/solady/src/utils/LibZip.sol";
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
+import {LibZip} from "@solady/utils/LibZip.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {MockERC20, MockERC721} from "@boost/shared/Mocks.sol";
+import {MockERC20, MockERC721} from "contracts/shared/Mocks.sol";
 
-import {BoostCore} from "@boost/BoostCore.sol";
-import {BoostRegistry} from "@boost/BoostRegistry.sol";
+import {BoostCore} from "contracts/BoostCore.sol";
+import {BoostRegistry} from "contracts/BoostRegistry.sol";
 
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {BoostLib} from "@boost/shared/BoostLib.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {BoostLib} from "contracts/shared/BoostLib.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {SimpleAllowList} from "@boost/allowlists/SimpleAllowList.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
-import {Budget} from "@boost/budgets/Budget.sol";
-import {SimpleBudget} from "@boost/budgets/SimpleBudget.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
-import {Action} from "@boost/actions/Action.sol";
-import {ContractAction} from "@boost/actions/ContractAction.sol";
-import {ERC721MintAction} from "@boost/actions/ERC721MintAction.sol";
+import {Action} from "contracts/actions/Action.sol";
+import {ContractAction} from "contracts/actions/ContractAction.sol";
+import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
-import {Incentive} from "@boost/incentives/Incentive.sol";
-import {ERC20Incentive} from "@boost/incentives/ERC20Incentive.sol";
+import {Incentive} from "contracts/incentives/Incentive.sol";
+import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 
-import {Validator} from "@boost/validators/Validator.sol";
+import {Validator} from "contracts/validators/Validator.sol";
 
 /**
  * @title EndToEnd
@@ -66,7 +66,7 @@ import {Validator} from "@boost/validators/Validator.sol";
  */
 contract EndToEnd is Test {
     BoostRegistry public registry = new BoostRegistry();
-    BoostCore public core = new BoostCore(registry);
+    BoostCore public core = new BoostCore(registry, address(1));
 
     MockERC20 public erc20 = new MockERC20();
     MockERC721 public erc721 = new MockERC721();
@@ -104,7 +104,7 @@ contract EndToEnd is Test {
         assertEq(erc20.balanceOf(address(budget)), 0);
 
         // "Then the Boost should be live"
-        assertEq(boost.owner, address(this));
+        assertEq(boost.owner, address(1));
 
         // Let's spot check the Boost we just created
         // - Budget == SimpleBudget
@@ -136,8 +136,8 @@ contract EndToEnd is Test {
         // - Protocol Fee == 1,000 bps (custom fee) + 1,000 bps (base fee) = 2,000 bps = 20%
         assertEq(boost.protocolFee, 2_000);
 
-        // - Referral Fee == 500 bps (custom fee) + 500 bps (base fee) = 1,000 bps = 10%
-        assertEq(boost.referralFee, 1_000);
+        // - Referral Fee == 500 bps (custom fee) + 1,000 bps (base fee) = 1,500 bps = 15%
+        assertEq(boost.referralFee, 1_500);
 
         // - Max Participants == 5
         assertEq(boost.maxParticipants, 5);
@@ -160,7 +160,9 @@ contract EndToEnd is Test {
         uint256 boostId = 0; // This is the only Boost we've created = 0
         uint256 incentiveId = 0; // This is the only Incentive in that Boost = 0
         uint256 tokenId = 1; // This is the tokenId we just minted = 1
-        core.claimIncentive(boostId, incentiveId, abi.encode(address(this), abi.encode(tokenId)));
+        core.claimIncentive{value: core.claimFee()}(
+            boostId, incentiveId, address(0), abi.encode(address(this), abi.encode(tokenId))
+        );
     }
 
     //////////////////
@@ -198,14 +200,16 @@ contract EndToEnd is Test {
         // "When I allocate assets to my budget"
         // "And the asset is an ERC20 token"
         erc20.approve(address(budget), 500 ether);
-        budget.allocate(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC20,
-                    asset: address(erc20),
-                    target: address(this),
-                    data: abi.encode(Budget.FungiblePayload({amount: 500 ether}))
-                })
+        assertTrue(
+            budget.allocate(
+                abi.encode(
+                    Budget.Transfer({
+                        assetType: Budget.AssetType.ERC20,
+                        asset: address(erc20),
+                        target: address(this),
+                        data: abi.encode(Budget.FungiblePayload({amount: 500 ether}))
+                    })
+                )
             )
         );
 
@@ -215,14 +219,16 @@ contract EndToEnd is Test {
 
         // "When I allocate assets to my budget"
         // "And the asset is ETH"
-        budget.allocate{value: 10.5 ether}(
-            abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ETH,
-                    asset: address(0),
-                    target: address(this),
-                    data: abi.encode(Budget.FungiblePayload({amount: 10.5 ether}))
-                })
+        assertTrue(
+            budget.allocate{value: 10.5 ether}(
+                abi.encode(
+                    Budget.Transfer({
+                        assetType: Budget.AssetType.ETH,
+                        asset: address(0),
+                        target: address(this),
+                        data: abi.encode(Budget.FungiblePayload({amount: 10.5 ether}))
+                    })
+                )
             )
         );
 
@@ -309,7 +315,7 @@ contract EndToEnd is Test {
                         1_000, // "I can specify an additional protocol fee" => 1,000 bps == 10%
                         500, // "I can specify an additional referral fee" => 500 bps == 5%
                         5, // "I can specify a maximum number of participants" => 5
-                        address(this) // "I can specify the owner of the Boost" => this contract
+                        address(1) // "I can specify the owner of the Boost" => address(1)
                     )
                 )
             )

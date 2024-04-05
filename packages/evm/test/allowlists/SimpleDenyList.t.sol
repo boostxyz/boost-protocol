@@ -3,12 +3,12 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {AllowList} from "@boost/allowlists/AllowList.sol";
-import {SimpleDenyList} from "@boost/allowlists/SimpleDenyList.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 contract SimpleDenyListTest is Test {
     SimpleDenyList baseDenyList = new SimpleDenyList();

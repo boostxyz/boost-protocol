@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {Budget} from "@boost/budgets/Budget.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "./Incentive.sol";
 
 /// @title Points Incentive

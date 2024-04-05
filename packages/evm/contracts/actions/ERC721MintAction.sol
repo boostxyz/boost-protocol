@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
+import {ERC721} from "@solady/tokens/ERC721.sol";
 
-import {Action} from "@boost/actions/Action.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {ContractAction} from "@boost/actions/ContractAction.sol";
-import {Validator} from "@boost/validators/Validator.sol";
+import {Action} from "contracts/actions/Action.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ContractAction} from "contracts/actions/ContractAction.sol";
+import {Validator} from "contracts/validators/Validator.sol";
 
 /// @title ERC721 Mint Action
 /// @notice A primitive action to mint and/or validate that an ERC721 token has been minted

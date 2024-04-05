@@ -3,16 +3,16 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {Initializable} from "lib/solady/src/utils/Initializable.sol";
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {MockERC20, MockERC1155} from "@boost/shared/Mocks.sol";
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {Budget} from "@boost/budgets/Budget.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {SimpleBudget} from "@boost/budgets/SimpleBudget.sol";
+import {MockERC20, MockERC1155} from "contracts/shared/Mocks.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
 contract SimpleBudgetTest is Test, IERC1155Receiver {
     MockERC20 mockERC20;

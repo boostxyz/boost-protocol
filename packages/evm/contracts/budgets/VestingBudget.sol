@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
-import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
+import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
-import {Budget} from "@boost/budgets/Budget.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 /// @title Vesting Budget
 /// @notice A vesting-based budget implementation that allows for the distribution of assets over time

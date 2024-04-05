@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
+import {ERC721} from "@solady/tokens/ERC721.sol";
 
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {Action} from "@boost/actions/Action.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {Action} from "contracts/actions/Action.sol";
 
 contract ContractAction is Action {
     /// @notice Thrown when execution on a given chain is not supported

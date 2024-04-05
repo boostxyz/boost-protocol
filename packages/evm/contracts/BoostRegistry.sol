@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {ERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
-import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
+import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
-import {BoostLib} from "@boost/shared/BoostLib.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
-import {AllowList} from "@boost/allowlists/AllowList.sol";
+import {BoostLib} from "contracts/shared/BoostLib.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {AllowList} from "contracts/allowlists/AllowList.sol";
 
 /// @title Boost Registry
 /// @notice A registry for base implementations and cloned instances

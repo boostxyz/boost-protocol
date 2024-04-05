@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {SignatureCheckerLib} from "lib/solady/src/utils/SignatureCheckerLib.sol";
-import {IERC1271} from "lib/openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
+import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
-import {BoostError} from "@boost/shared/BoostError.sol";
-import {Validator} from "@boost/validators/Validator.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
+import {Validator} from "contracts/validators/Validator.sol";
 
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers

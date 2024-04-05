@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {IERC1155Receiver} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {IERC1155} from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
-import {IERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {SafeTransferLib} from "lib/solady/src/utils/SafeTransferLib.sol";
-import {ReentrancyGuard} from "lib/solady/src/utils/ReentrancyGuard.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
+import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
-import {Budget} from "@boost/budgets/Budget.sol";
-import {Cloneable} from "@boost/shared/Cloneable.sol";
+import {Budget} from "contracts/budgets/Budget.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 /// @title Simple Budget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20, MockERC721} from "@boost/shared/Mocks.sol";
+import {MockERC20, MockERC721} from "contracts/shared/Mocks.sol";
 
 contract MocksTest is Test {
     MockERC20 mockERC20;

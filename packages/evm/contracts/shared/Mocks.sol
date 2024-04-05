@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibString} from "lib/solady/src/utils/LibString.sol";
-import {ERC20} from "lib/solady/src/tokens/ERC20.sol";
-import {ERC721} from "lib/solady/src/tokens/ERC721.sol";
-import {ERC1155} from "lib/solady/src/tokens/ERC1155.sol";
+import {LibString} from "@solady/utils/LibString.sol";
+import {ERC20} from "@solady/tokens/ERC20.sol";
+import {ERC721} from "@solady/tokens/ERC721.sol";
+import {ERC1155} from "@solady/tokens/ERC1155.sol";
 
 /**
  * 🚨 WARNING: The mocks in this file are for testing purposes only. DO NOT use

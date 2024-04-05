@@ -3,11 +3,11 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
-import {LibClone} from "lib/solady/src/utils/LibClone.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 
-import {SimpleAllowList} from "@boost/allowlists/SimpleAllowList.sol";
-import {AllowListIncentive} from "@boost/incentives/AllowListIncentive.sol";
-import {Incentive} from "@boost/incentives/Incentive.sol";
+import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
+import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
+import {Incentive} from "contracts/incentives/Incentive.sol";
 
 contract AllowListIncentiveTest is Test {
     SimpleAllowList public allowList;

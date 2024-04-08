@@ -18,5 +18,8 @@
     "light-account/=packages/evm/lib/modular-account/lib/light-account/",
     "modular-account/=packages/evm/lib/modular-account/",
     "openzeppelin/=packages/evm/lib/modular-account/lib/openzeppelin-contracts/contracts/"
+  ],
+  "cSpell.words": [
+    "viem"
   ]
 }

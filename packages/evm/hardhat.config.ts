@@ -1,6 +1,7 @@
-import "@nomicfoundation/hardhat-viem";
-import "@nomicfoundation/hardhat-toolbox-viem";
 import "@nomicfoundation/hardhat-foundry";
+import "@nomicfoundation/hardhat-viem";
+import "@nomicfoundation/hardhat-ignition-viem";
+import "@nomicfoundation/hardhat-toolbox-viem";
 
 export default {
   solidity: "0.8.24",

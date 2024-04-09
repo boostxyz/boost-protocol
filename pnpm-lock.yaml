@@ -169,12 +169,18 @@ importers:
       '@wagmi/cli':
         specifier: ^2.1.4
         version: 2.1.4(typescript@5.3.3)
+      abitype:
+        specifier: ^1.0.2
+        version: 1.0.2(typescript@5.3.3)
       chai:
         specifier: '4'
         version: 4.4.1
       hardhat:
         specifier: ^2.22.2
         version: 2.22.2(ts-node@10.9.2)(typescript@5.3.3)
+      solady:
+        specifier: ^0.0.181
+        version: 0.0.181
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.11.24)(typescript@5.3.3)
@@ -4226,6 +4232,20 @@ packages:
     dependencies:
       typescript: 5.4.4
       zod: 3.22.4
+
+  /abitype@1.0.2(typescript@5.3.3):
+    resolution: {integrity: sha512-aFt4k2H+eiAKy/zxtnORa9iIb10BMBeWL18l8v4+QuwYEBXPxxjSB1bFZCzQmKPoj8m7j68K705l3uY+E2gAjg==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+      zod: ^3 >=3.22.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      zod:
+        optional: true
+    dependencies:
+      typescript: 5.3.3
+    dev: true
 
   /abitype@1.0.2(typescript@5.4.4)(zod@3.22.4):
     resolution: {integrity: sha512-aFt4k2H+eiAKy/zxtnORa9iIb10BMBeWL18l8v4+QuwYEBXPxxjSB1bFZCzQmKPoj8m7j68K705l3uY+E2gAjg==}
@@ -12030,7 +12050,6 @@ packages:
 
   /solady@0.0.181:
     resolution: {integrity: sha512-uxMny+zHi9xrsKaoZoLliBkKBz00i7bWLHt2YMYjgsh7zKcQHWcONzY0zQB7qaGDzvxf4m/jFv8XiWpcP+0Pig==}
-    dev: false
 
   /solc@0.7.3(debug@4.3.4):
     resolution: {integrity: sha512-GAsWNAjGzIDg7VxzP6mPjdurby3IkGCjQcM8GFYZT6RyaoUZKmMU6Y7YwG+tFGhv7dwZ8rmR4iwFDrrD99JwqA==}

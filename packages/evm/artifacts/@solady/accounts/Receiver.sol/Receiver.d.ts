@@ -8,41 +8,41 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface Receiver$Type {
-  "_format": "hh-sol-artifact-1",
-  "contractName": "Receiver",
-  "sourceName": "@solady/accounts/Receiver.sol",
-  "abi": [
+  _format: "hh-sol-artifact-1";
+  contractName: "Receiver";
+  sourceName: "@solady/accounts/Receiver.sol";
+  abi: [
     {
-      "stateMutability": "payable",
-      "type": "fallback"
+      stateMutability: "payable";
+      type: "fallback";
     },
     {
-      "stateMutability": "payable",
-      "type": "receive"
-    }
-  ],
-  "bytecode": "0x",
-  "deployedBytecode": "0x",
-  "linkReferences": {},
-  "deployedLinkReferences": {}
+      stateMutability: "payable";
+      type: "receive";
+    },
+  ];
+  bytecode: "0x";
+  deployedBytecode: "0x";
+  linkReferences: {};
+  deployedLinkReferences: {};
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "Receiver",
     constructorArgs?: [],
-    config?: DeployContractConfig
+    config?: DeployContractConfig,
   ): Promise<GetContractReturnType<Receiver$Type["abi"]>>;
   export function deployContract(
     contractName: "@solady/accounts/Receiver.sol:Receiver",
     constructorArgs?: [],
-    config?: DeployContractConfig
+    config?: DeployContractConfig,
   ): Promise<GetContractReturnType<Receiver$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "Receiver",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig
+    config?: SendDeploymentTransactionConfig,
   ): Promise<{
     contract: GetContractReturnType<Receiver$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -50,7 +50,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@solady/accounts/Receiver.sol:Receiver",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig
+    config?: SendDeploymentTransactionConfig,
   ): Promise<{
     contract: GetContractReturnType<Receiver$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -59,11 +59,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "Receiver",
     address: Address,
-    config?: GetContractAtConfig
+    config?: GetContractAtConfig,
   ): Promise<GetContractReturnType<Receiver$Type["abi"]>>;
   export function getContractAt(
     contractName: "@solady/accounts/Receiver.sol:Receiver",
     address: Address,
-    config?: GetContractAtConfig
+    config?: GetContractAtConfig,
   ): Promise<GetContractReturnType<Receiver$Type["abi"]>>;
 }

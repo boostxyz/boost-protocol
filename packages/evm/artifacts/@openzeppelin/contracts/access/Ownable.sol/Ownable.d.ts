@@ -8,102 +8,102 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface Ownable$Type {
-  "_format": "hh-sol-artifact-1",
-  "contractName": "Ownable",
-  "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
-  "abi": [
+  _format: "hh-sol-artifact-1";
+  contractName: "Ownable";
+  sourceName: "@openzeppelin/contracts/access/Ownable.sol";
+  abi: [
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnableInvalidOwner",
-      "type": "error"
+          internalType: "address";
+          name: "owner";
+          type: "address";
+        },
+      ];
+      name: "OwnableInvalidOwner";
+      type: "error";
     },
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
-        }
-      ],
-      "name": "OwnableUnauthorizedAccount",
-      "type": "error"
+          internalType: "address";
+          name: "account";
+          type: "address";
+        },
+      ];
+      name: "OwnableUnauthorizedAccount";
+      type: "error";
     },
     {
-      "anonymous": false,
-      "inputs": [
+      anonymous: false;
+      inputs: [
         {
-          "indexed": true,
-          "internalType": "address",
-          "name": "previousOwner",
-          "type": "address"
+          indexed: true;
+          internalType: "address";
+          name: "previousOwner";
+          type: "address";
         },
         {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnershipTransferred",
-      "type": "event"
+          indexed: true;
+          internalType: "address";
+          name: "newOwner";
+          type: "address";
+        },
+      ];
+      name: "OwnershipTransferred";
+      type: "event";
     },
     {
-      "inputs": [],
-      "name": "owner",
-      "outputs": [
+      inputs: [];
+      name: "owner";
+      outputs: [
         {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
+          internalType: "address";
+          name: "";
+          type: "address";
+        },
+      ];
+      stateMutability: "view";
+      type: "function";
     },
     {
-      "inputs": [],
-      "name": "renounceOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      inputs: [];
+      name: "renounceOwnership";
+      outputs: [];
+      stateMutability: "nonpayable";
+      type: "function";
     },
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "transferOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ],
-  "bytecode": "0x",
-  "deployedBytecode": "0x",
-  "linkReferences": {},
-  "deployedLinkReferences": {}
+          internalType: "address";
+          name: "newOwner";
+          type: "address";
+        },
+      ];
+      name: "transferOwnership";
+      outputs: [];
+      stateMutability: "nonpayable";
+      type: "function";
+    },
+  ];
+  bytecode: "0x";
+  deployedBytecode: "0x";
+  linkReferences: {};
+  deployedLinkReferences: {};
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "@openzeppelin/contracts/access/Ownable.sol:Ownable",
     constructorArgs?: [],
-    config?: DeployContractConfig
+    config?: DeployContractConfig,
   ): Promise<GetContractReturnType<Ownable$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "@openzeppelin/contracts/access/Ownable.sol:Ownable",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig
+    config?: SendDeploymentTransactionConfig,
   ): Promise<{
     contract: GetContractReturnType<Ownable$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -112,6 +112,6 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "@openzeppelin/contracts/access/Ownable.sol:Ownable",
     address: Address,
-    config?: GetContractAtConfig
+    config?: GetContractAtConfig,
   ): Promise<GetContractReturnType<Ownable$Type["abi"]>>;
 }

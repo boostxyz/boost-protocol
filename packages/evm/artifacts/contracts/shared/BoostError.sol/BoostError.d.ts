@@ -8,148 +8,148 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface BoostError$Type {
-  "_format": "hh-sol-artifact-1",
-  "contractName": "BoostError",
-  "sourceName": "contracts/shared/BoostError.sol",
-  "abi": [
+  _format: "hh-sol-artifact-1";
+  contractName: "BoostError";
+  sourceName: "contracts/shared/BoostError.sol";
+  abi: [
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "address",
-          "name": "caller",
-          "type": "address"
+          internalType: "address";
+          name: "caller";
+          type: "address";
         },
         {
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
-        }
-      ],
-      "name": "ClaimFailed",
-      "type": "error"
+          internalType: "bytes";
+          name: "data";
+          type: "bytes";
+        },
+      ];
+      name: "ClaimFailed";
+      type: "error";
     },
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "address",
-          "name": "asset",
-          "type": "address"
+          internalType: "address";
+          name: "asset";
+          type: "address";
         },
         {
-          "internalType": "uint256",
-          "name": "available",
-          "type": "uint256"
+          internalType: "uint256";
+          name: "available";
+          type: "uint256";
         },
         {
-          "internalType": "uint256",
-          "name": "required",
-          "type": "uint256"
-        }
-      ],
-      "name": "InsufficientFunds",
-      "type": "error"
+          internalType: "uint256";
+          name: "required";
+          type: "uint256";
+        },
+      ];
+      name: "InsufficientFunds";
+      type: "error";
     },
     {
-      "inputs": [],
-      "name": "InvalidInitialization",
-      "type": "error"
+      inputs: [];
+      name: "InvalidInitialization";
+      type: "error";
     },
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "bytes4",
-          "name": "expectedInterface",
-          "type": "bytes4"
+          internalType: "bytes4";
+          name: "expectedInterface";
+          type: "bytes4";
         },
         {
-          "internalType": "address",
-          "name": "instance",
-          "type": "address"
-        }
-      ],
-      "name": "InvalidInstance",
-      "type": "error"
+          internalType: "address";
+          name: "instance";
+          type: "address";
+        },
+      ];
+      name: "InvalidInstance";
+      type: "error";
     },
     {
-      "inputs": [],
-      "name": "LengthMismatch",
-      "type": "error"
+      inputs: [];
+      name: "LengthMismatch";
+      type: "error";
     },
     {
-      "inputs": [],
-      "name": "NotImplemented",
-      "type": "error"
+      inputs: [];
+      name: "NotImplemented";
+      type: "error";
     },
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "address",
-          "name": "signer",
-          "type": "address"
+          internalType: "address";
+          name: "signer";
+          type: "address";
         },
         {
-          "internalType": "bytes32",
-          "name": "hash",
-          "type": "bytes32"
+          internalType: "bytes32";
+          name: "hash";
+          type: "bytes32";
         },
         {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
-        }
-      ],
-      "name": "Replayed",
-      "type": "error"
+          internalType: "bytes";
+          name: "signature";
+          type: "bytes";
+        },
+      ];
+      name: "Replayed";
+      type: "error";
     },
     {
-      "inputs": [
+      inputs: [
         {
-          "internalType": "address",
-          "name": "asset",
-          "type": "address"
+          internalType: "address";
+          name: "asset";
+          type: "address";
         },
         {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
+          internalType: "address";
+          name: "to";
+          type: "address";
         },
         {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "TransferFailed",
-      "type": "error"
+          internalType: "uint256";
+          name: "amount";
+          type: "uint256";
+        },
+      ];
+      name: "TransferFailed";
+      type: "error";
     },
     {
-      "inputs": [],
-      "name": "Unauthorized",
-      "type": "error"
-    }
-  ],
-  "bytecode": "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220796116ac839f71afe859fb5d1c9516ecbafa95b106b36ae35c8fcbdd12799d2564736f6c63430008180033",
-  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220796116ac839f71afe859fb5d1c9516ecbafa95b106b36ae35c8fcbdd12799d2564736f6c63430008180033",
-  "linkReferences": {},
-  "deployedLinkReferences": {}
+      inputs: [];
+      name: "Unauthorized";
+      type: "error";
+    },
+  ];
+  bytecode: "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220796116ac839f71afe859fb5d1c9516ecbafa95b106b36ae35c8fcbdd12799d2564736f6c63430008180033";
+  deployedBytecode: "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220796116ac839f71afe859fb5d1c9516ecbafa95b106b36ae35c8fcbdd12799d2564736f6c63430008180033";
+  linkReferences: {};
+  deployedLinkReferences: {};
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "BoostError",
     constructorArgs?: [],
-    config?: DeployContractConfig
+    config?: DeployContractConfig,
   ): Promise<GetContractReturnType<BoostError$Type["abi"]>>;
   export function deployContract(
     contractName: "contracts/shared/BoostError.sol:BoostError",
     constructorArgs?: [],
-    config?: DeployContractConfig
+    config?: DeployContractConfig,
   ): Promise<GetContractReturnType<BoostError$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "BoostError",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig
+    config?: SendDeploymentTransactionConfig,
   ): Promise<{
     contract: GetContractReturnType<BoostError$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -157,7 +157,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "contracts/shared/BoostError.sol:BoostError",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig
+    config?: SendDeploymentTransactionConfig,
   ): Promise<{
     contract: GetContractReturnType<BoostError$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -166,11 +166,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "BoostError",
     address: Address,
-    config?: GetContractAtConfig
+    config?: GetContractAtConfig,
   ): Promise<GetContractReturnType<BoostError$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/shared/BoostError.sol:BoostError",
     address: Address,
-    config?: GetContractAtConfig
+    config?: GetContractAtConfig,
   ): Promise<GetContractReturnType<BoostError$Type["abi"]>>;
 }

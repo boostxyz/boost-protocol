@@ -8,5 +8,6 @@ import "hardhat/types/artifacts";
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     Ownable: never;
+    ERC1155: never;
   }
 }

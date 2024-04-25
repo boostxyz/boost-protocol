@@ -9,6 +9,6 @@ export default {
     optimizer: {
       enabled: true,
       runs: 10_000,
-    }
-  }
+    },
+  },
 };

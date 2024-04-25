@@ -8,32 +8,32 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface LibZip$Type {
-  "_format": "hh-sol-artifact-1",
-  "contractName": "LibZip",
-  "sourceName": "@solady/utils/LibZip.sol",
-  "abi": [],
-  "bytecode": "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212207b2e4b2b7aac5ed7e3008cf34ebb6a731fb2a5e349ee8ee637a7e704fb5ac19264736f6c63430008180033",
-  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212207b2e4b2b7aac5ed7e3008cf34ebb6a731fb2a5e349ee8ee637a7e704fb5ac19264736f6c63430008180033",
-  "linkReferences": {},
-  "deployedLinkReferences": {}
+  _format: "hh-sol-artifact-1";
+  contractName: "LibZip";
+  sourceName: "@solady/utils/LibZip.sol";
+  abi: [];
+  bytecode: "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212207b2e4b2b7aac5ed7e3008cf34ebb6a731fb2a5e349ee8ee637a7e704fb5ac19264736f6c63430008180033";
+  deployedBytecode: "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212207b2e4b2b7aac5ed7e3008cf34ebb6a731fb2a5e349ee8ee637a7e704fb5ac19264736f6c63430008180033";
+  linkReferences: {};
+  deployedLinkReferences: {};
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "LibZip",
     constructorArgs?: [],
-    config?: DeployContractConfig
+    config?: DeployContractConfig,
   ): Promise<GetContractReturnType<LibZip$Type["abi"]>>;
   export function deployContract(
     contractName: "@solady/utils/LibZip.sol:LibZip",
     constructorArgs?: [],
-    config?: DeployContractConfig
+    config?: DeployContractConfig,
   ): Promise<GetContractReturnType<LibZip$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "LibZip",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig
+    config?: SendDeploymentTransactionConfig,
   ): Promise<{
     contract: GetContractReturnType<LibZip$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -41,7 +41,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@solady/utils/LibZip.sol:LibZip",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig
+    config?: SendDeploymentTransactionConfig,
   ): Promise<{
     contract: GetContractReturnType<LibZip$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -50,11 +50,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "LibZip",
     address: Address,
-    config?: GetContractAtConfig
+    config?: GetContractAtConfig,
   ): Promise<GetContractReturnType<LibZip$Type["abi"]>>;
   export function getContractAt(
     contractName: "@solady/utils/LibZip.sol:LibZip",
     address: Address,
-    config?: GetContractAtConfig
+    config?: GetContractAtConfig,
   ): Promise<GetContractReturnType<LibZip$Type["abi"]>>;
 }

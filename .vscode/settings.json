@@ -1,18 +1,20 @@
 {
-  "solidity.compileUsingRemoteVersion": "v0.8.24+commit.e11b9ed9",
   "slither.solcPath": "",
   "slither.hiddenDetectors": [],
   "wake.compiler.solc.remappings": [
     "lib/=packages/evm/lib/",
+    "contracts/=packages/evm/contracts/",
+    "@boost/=packages/evm/",
     "@openzeppelin/contracts/=packages/evm/lib/openzeppelin-contracts/contracts/",
     "ds-test/=packages/evm/lib/forge-std/lib/ds-test/src/",
     "erc4626-tests/=packages/evm/lib/openzeppelin-contracts/lib/erc4626-tests/",
     "forge-std/=packages/evm/lib/forge-std/src/",
     "openzeppelin-contracts/=packages/evm/lib/openzeppelin-contracts/",
     "@solady/=packages/evm/lib/solady/src/",
-    "contracts/=packages/evm/contracts/",
     "@alchemy/light-account/=packages/evm/lib/modular-account/lib/light-account/",
     "@eth-infinitism/account-abstraction/=packages/evm/lib/modular-account/lib/account-abstraction/contracts/",
+    "@eigenlayer/contracts/=packages/evm/lib/eigenlayer-middleware/lib/eigenlayer-contracts/src/contracts/",
+    "@eigenlayer-middleware/=packages/evm/lib/eigenlayer-middleware/src/",
     "account-abstraction/=packages/evm/lib/modular-account/lib/account-abstraction/contracts/",
     "hardhat/=node_modules/hardhat/",
     "light-account/=packages/evm/lib/modular-account/lib/light-account/",
@@ -21,6 +23,35 @@
   ],
   "cSpell.words": [
     "CGDA",
-    "viem"
-  ]
+    "IERC",
+    "viem",
+    "wagmi"
+  ],
+  "wake.lsp.compilation_delay": 3,
+  "wake.lsp.detectors.enable": true,
+  "wake.detectors.exclude_paths": [
+    "node_modules",
+    "lib",
+    "packages/evm/lib"
+  ],
+  "wake.compiler.solc.exclude_paths": [
+    "node_modules",
+    "venv",
+    "lib",
+    "script",
+    "test",
+    "packages/evm/lib",
+    "packages/evm/script",
+    "packages/evm/test",
+    "packages/evm/node_modules",
+    "packages/sdk"
+  ],
+  "wake.compiler.solc.include_paths": [
+    "packages/evm/node_modules",
+    "packages/evm/lib",
+    "packages/evm",
+    "node_modules",
+    "lib"
+  ],
+  "solidity.compileUsingRemoteVersion": "v0.8.25+commit.b61c2a91"
 }

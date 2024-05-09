@@ -4,11 +4,16 @@ import { viem } from "hardhat";
 import {
   Address,
   encodeAbiParameters,
+  GetContractReturnType,
+  Hex,
   parseAbiParameters,
   parseEther,
   zeroAddress,
   zeroHash,
 } from "viem";
+import { SimpleBudget$Type } from "../../artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget";
+import { MockERC20$Type } from "../../artifacts/contracts/shared/Mocks.sol/MockERC20";
+import { MockERC1155$Type } from "../../artifacts/contracts/shared/Mocks.sol/MockERC1155";
 
 export enum RegistryType {
   ACTION = 0,
@@ -30,18 +35,10 @@ export const freshBudget = async () => {
     RegistryType.BUDGET,
     base,
     "My Simple Budget",
-    encodeAbiParameters(
-      parseAbiParameters([
-        "InitPayload payload",
-        "struct InitPayload { address owner; address[] authorized; }",
-      ]),
-      [
-        {
-          owner: ownerClient!.account.address,
-          authorized: [ownerClient!.account.address],
-        },
-      ]
-    ),
+    prepareSimpleBudgetPayload({
+      owner: ownerClient!.account.address,
+      authorized: [ownerClient!.account.address],
+    }),
   ]);
 
   const [log] = await registry.getEvents.Deployed({
@@ -51,14 +48,22 @@ export const freshBudget = async () => {
   return viem.getContractAt("SimpleBudget", log!.args.deployedInstance!);
 };
 
-const fundedBudget = async () => {
+export const fundedBudget = async (): Promise<{
+  budget: GetContractReturnType<SimpleBudget$Type["abi"]>;
+  erc20: GetContractReturnType<MockERC20$Type["abi"]>;
+  erc1155: GetContractReturnType<MockERC1155$Type["abi"]>;
+}> => {
+  const [ownerClient] = await viem.getWalletClients();
   const budget = await loadFixture(freshBudget);
+  const erc20 = await loadFixture(mockERC20);
+  const erc1155 = await loadFixture(mockERC1155);
+
   await budget.write.allocate(
     [
       prepareFungibleTransfer({
         amount: parseEther("1.0"),
         asset: zeroAddress,
-        target: budget.address,
+        target: ownerClient!.account.address,
       }),
     ],
     {
@@ -66,7 +71,93 @@ const fundedBudget = async () => {
     }
   );
 
-  return budget;
+  await erc20.write.approve([budget.address, parseEther("100")]);
+  await budget.write.allocate([
+    prepareFungibleTransfer({
+      amount: parseEther("100"),
+      asset: erc20.address,
+      target: ownerClient!.account.address,
+    }),
+  ]);
+
+  await erc1155.write.setApprovalForAll([budget.address, true]);
+  await budget.write.allocate([
+    prepareERC1155Transfer({
+      tokenId: 1n,
+      amount: 100n,
+      asset: erc1155.address,
+      target: ownerClient!.account.address,
+    }),
+  ]);
+
+  return { budget, erc20, erc1155 };
+};
+
+export const prepareERC20IncentivePayload = ({
+  asset,
+  strategy,
+  reward,
+  limit,
+}: {
+  asset: Address;
+  strategy: number;
+  reward: bigint;
+  limit: bigint;
+}) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      "ERC20IncentivePayload payload",
+      "struct ERC20IncentivePayload { address asset; uint8 strategy; uint256 reward; uint256 limit; }",
+    ]),
+    [{ asset, strategy, reward, limit }]
+  );
+};
+
+export interface ContractActionPayload {
+  chainId: bigint;
+  target: Address;
+  selector: Hex;
+  value: bigint;
+}
+
+export const prepareSimpleBudgetPayload = ({
+  owner,
+  authorized,
+}: {
+  owner: Address;
+  authorized: Address[];
+}) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      "SimpleBudgetPayload payload",
+      "struct SimpleBudgetPayload { address owner; address[] authorized; }",
+    ]),
+    [{ owner, authorized }]
+  );
+};
+
+export const prepareContractActionPayload = ({
+  chainId,
+  target,
+  selector,
+  value,
+}: ContractActionPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      "ContractActionPayload payload",
+      "struct ContractActionPayload { uint256 chainId; address target; bytes4 selector; uint256 value; }",
+    ]),
+    [{ chainId, target, selector, value }]
+  );
+};
+
+export const prepareERC721MintActionPayload = ({
+  chainId,
+  target,
+  selector,
+  value,
+}: ContractActionPayload) => {
+  return prepareContractActionPayload({ chainId, target, selector, value });
 };
 
 export const mockERC20 = async (
@@ -84,15 +175,14 @@ export const mockERC20 = async (
   return token;
 };
 
-export const mockERC1155 = async (
-  tokenId = 1n,
-  amount = 100n
-) => {
+export const mockERC1155 = async (tokenId = 1n, amount = 100n) => {
   const [ownerClient] = await viem.getWalletClients();
   const token = await viem.deployContract("MockERC1155");
 
   await token.write.mint([ownerClient!.account.address, tokenId, amount]);
-  expect(await token.read.balanceOf([ownerClient!.account.address, tokenId])).to.equal(amount);
+  expect(
+    await token.read.balanceOf([ownerClient!.account.address, tokenId])
+  ).to.equal(amount);
 
   return token;
 };

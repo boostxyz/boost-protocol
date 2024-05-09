@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {LibString} from "@solady/utils/LibString.sol";
 import {ERC20} from "@solady/tokens/ERC20.sol";
 import {ERC721} from "@solady/tokens/ERC721.sol";
-import {ERC1155} from "@solady/tokens/ERC1155.sol";
+import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 /**
  * 🚨 WARNING: The mocks in this file are for testing purposes only. DO NOT use
@@ -62,9 +62,7 @@ contract MockERC20 is ERC20 {
 /// @title MockERC1155
 /// @notice A mock ERC1155 token (FOR TESTING PURPOSES ONLY)
 contract MockERC1155 is ERC1155 {
-    function uri(uint256 id) public view virtual override returns (string memory) {
-        return string(abi.encodePacked("https://example.com/token/", LibString.toString(id)));
-    }
+    constructor() ERC1155("https://example.com/token/{id}") {}
 
     function mint(address to, uint256 id, uint256 amount) public {
         _mint(to, id, amount, "");

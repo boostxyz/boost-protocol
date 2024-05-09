@@ -56,7 +56,7 @@ contract BoostCoreTest is Test {
                 validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                 allowList: allowList,
                 incentives: _makeIncentives(1),
-                protocolFee: 500,  // 5%
+                protocolFee: 500, // 5%
                 referralFee: 1000, // 10%
                 maxParticipants: 10_000,
                 owner: address(1)

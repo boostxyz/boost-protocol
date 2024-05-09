@@ -57,7 +57,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     uint64 public referralFee = 1_000; // 10%
 
     /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
-    uint64 constant FEE_DENOMINATOR = 10_000;
+    uint64 public constant FEE_DENOMINATOR = 10_000;
 
     /// @notice Constructor to initialize the owner
     constructor(BoostRegistry registry_, address protocolFeeReceiver_) {

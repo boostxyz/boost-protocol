@@ -8,87 +8,87 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface SafeCast$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "SafeCast";
-  sourceName: "@openzeppelin/contracts/utils/math/SafeCast.sol";
-  abi: [
+  "_format": "hh-sol-artifact-1",
+  "contractName": "SafeCast",
+  "sourceName": "@openzeppelin/contracts/utils/math/SafeCast.sol",
+  "abi": [
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "uint8";
-          name: "bits";
-          type: "uint8";
+          "internalType": "uint8",
+          "name": "bits",
+          "type": "uint8"
         },
         {
-          internalType: "int256";
-          name: "value";
-          type: "int256";
-        },
-      ];
-      name: "SafeCastOverflowedIntDowncast";
-      type: "error";
+          "internalType": "int256",
+          "name": "value",
+          "type": "int256"
+        }
+      ],
+      "name": "SafeCastOverflowedIntDowncast",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "int256";
-          name: "value";
-          type: "int256";
-        },
-      ];
-      name: "SafeCastOverflowedIntToUint";
-      type: "error";
+          "internalType": "int256",
+          "name": "value",
+          "type": "int256"
+        }
+      ],
+      "name": "SafeCastOverflowedIntToUint",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "uint8";
-          name: "bits";
-          type: "uint8";
+          "internalType": "uint8",
+          "name": "bits",
+          "type": "uint8"
         },
         {
-          internalType: "uint256";
-          name: "value";
-          type: "uint256";
-        },
-      ];
-      name: "SafeCastOverflowedUintDowncast";
-      type: "error";
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "SafeCastOverflowedUintDowncast",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "uint256";
-          name: "value";
-          type: "uint256";
-        },
-      ];
-      name: "SafeCastOverflowedUintToInt";
-      type: "error";
-    },
-  ];
-  bytecode: "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212204aa01bbfe4fd9ff71fc7003b03f12164ec5faad22c9e3c0281ba85c1b3225b7864736f6c63430008180033";
-  deployedBytecode: "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212204aa01bbfe4fd9ff71fc7003b03f12164ec5faad22c9e3c0281ba85c1b3225b7864736f6c63430008180033";
-  linkReferences: {};
-  deployedLinkReferences: {};
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "SafeCastOverflowedUintToInt",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x6055604b600b8282823980515f1a607314603f577f4e487b71000000000000000000000000000000000000000000000000000000005f525f60045260245ffd5b305f52607381538281f3fe730000000000000000000000000000000000000000301460806040525f80fdfea264697066735822122050627ed4b307661db26597bbe7b75192e3cbc572449944c319e64ff5a34f75b864736f6c63430008190033",
+  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040525f80fdfea264697066735822122050627ed4b307661db26597bbe7b75192e3cbc572449944c319e64ff5a34f75b864736f6c63430008190033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "SafeCast",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<SafeCast$Type["abi"]>>;
   export function deployContract(
     contractName: "@openzeppelin/contracts/utils/math/SafeCast.sol:SafeCast",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<SafeCast$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "SafeCast",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<SafeCast$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -96,7 +96,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@openzeppelin/contracts/utils/math/SafeCast.sol:SafeCast",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<SafeCast$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -105,11 +105,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "SafeCast",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<SafeCast$Type["abi"]>>;
   export function getContractAt(
     contractName: "@openzeppelin/contracts/utils/math/SafeCast.sol:SafeCast",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<SafeCast$Type["abi"]>>;
 }

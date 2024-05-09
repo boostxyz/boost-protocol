@@ -19,6 +19,11 @@ export interface ERC4337$Type {
     },
     {
       "inputs": [],
+      "name": "FnSelectorNotRecognized",
+      "type": "error"
+    },
+    {
+      "inputs": [],
       "name": "NewOwnerIsZeroAddress",
       "type": "error"
     },
@@ -478,14 +483,9 @@ export interface ERC4337$Type {
               "type": "bytes"
             },
             {
-              "internalType": "uint256",
-              "name": "callGasLimit",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "verificationGasLimit",
-              "type": "uint256"
+              "internalType": "bytes32",
+              "name": "accountGasLimits",
+              "type": "bytes32"
             },
             {
               "internalType": "uint256",
@@ -493,14 +493,9 @@ export interface ERC4337$Type {
               "type": "uint256"
             },
             {
-              "internalType": "uint256",
-              "name": "maxFeePerGas",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "maxPriorityFeePerGas",
-              "type": "uint256"
+              "internalType": "bytes32",
+              "name": "gasFees",
+              "type": "bytes32"
             },
             {
               "internalType": "bytes",
@@ -513,7 +508,7 @@ export interface ERC4337$Type {
               "type": "bytes"
             }
           ],
-          "internalType": "struct ERC4337.UserOperation",
+          "internalType": "struct ERC4337.PackedUserOperation",
           "name": "userOp",
           "type": "tuple"
         },

@@ -8,136 +8,136 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface IERC721Errors$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "IERC721Errors";
-  sourceName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-  abi: [
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IERC721Errors",
+  "sourceName": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol",
+  "abi": [
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "sender";
-          type: "address";
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
         },
         {
-          internalType: "uint256";
-          name: "tokenId";
-          type: "uint256";
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
         },
         {
-          internalType: "address";
-          name: "owner";
-          type: "address";
-        },
-      ];
-      name: "ERC721IncorrectOwner";
-      type: "error";
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "ERC721IncorrectOwner",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "operator";
-          type: "address";
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
         },
         {
-          internalType: "uint256";
-          name: "tokenId";
-          type: "uint256";
-        },
-      ];
-      name: "ERC721InsufficientApproval";
-      type: "error";
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ERC721InsufficientApproval",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "approver";
-          type: "address";
-        },
-      ];
-      name: "ERC721InvalidApprover";
-      type: "error";
+          "internalType": "address",
+          "name": "approver",
+          "type": "address"
+        }
+      ],
+      "name": "ERC721InvalidApprover",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "operator";
-          type: "address";
-        },
-      ];
-      name: "ERC721InvalidOperator";
-      type: "error";
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "ERC721InvalidOperator",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "owner";
-          type: "address";
-        },
-      ];
-      name: "ERC721InvalidOwner";
-      type: "error";
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "ERC721InvalidOwner",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "receiver";
-          type: "address";
-        },
-      ];
-      name: "ERC721InvalidReceiver";
-      type: "error";
+          "internalType": "address",
+          "name": "receiver",
+          "type": "address"
+        }
+      ],
+      "name": "ERC721InvalidReceiver",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "sender";
-          type: "address";
-        },
-      ];
-      name: "ERC721InvalidSender";
-      type: "error";
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "ERC721InvalidSender",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "uint256";
-          name: "tokenId";
-          type: "uint256";
-        },
-      ];
-      name: "ERC721NonexistentToken";
-      type: "error";
-    },
-  ];
-  bytecode: "0x";
-  deployedBytecode: "0x";
-  linkReferences: {};
-  deployedLinkReferences: {};
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ERC721NonexistentToken",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "IERC721Errors",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<IERC721Errors$Type["abi"]>>;
   export function deployContract(
     contractName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC721Errors",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<IERC721Errors$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "IERC721Errors",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<IERC721Errors$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -145,7 +145,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC721Errors",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<IERC721Errors$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -154,11 +154,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "IERC721Errors",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<IERC721Errors$Type["abi"]>>;
   export function getContractAt(
     contractName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC721Errors",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<IERC721Errors$Type["abi"]>>;
 }

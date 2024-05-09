@@ -8,32 +8,32 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface Panic$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "Panic";
-  sourceName: "@openzeppelin/contracts/utils/Panic.sol";
-  abi: [];
-  bytecode: "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220dbd72a467b4fede11cc1d90f08a0fb865d03156532d588aff9d5f6029ad2514664736f6c63430008180033";
-  deployedBytecode: "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220dbd72a467b4fede11cc1d90f08a0fb865d03156532d588aff9d5f6029ad2514664736f6c63430008180033";
-  linkReferences: {};
-  deployedLinkReferences: {};
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Panic",
+  "sourceName": "@openzeppelin/contracts/utils/Panic.sol",
+  "abi": [],
+  "bytecode": "0x6055604b600b8282823980515f1a607314603f577f4e487b71000000000000000000000000000000000000000000000000000000005f525f60045260245ffd5b305f52607381538281f3fe730000000000000000000000000000000000000000301460806040525f80fdfea2646970667358221220efc88f0b773929379419265516c9690496731683cfc9621e01347973290dc13d64736f6c63430008190033",
+  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040525f80fdfea2646970667358221220efc88f0b773929379419265516c9690496731683cfc9621e01347973290dc13d64736f6c63430008190033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "Panic",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<Panic$Type["abi"]>>;
   export function deployContract(
     contractName: "@openzeppelin/contracts/utils/Panic.sol:Panic",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<Panic$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "Panic",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<Panic$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -41,7 +41,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@openzeppelin/contracts/utils/Panic.sol:Panic",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<Panic$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -50,11 +50,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "Panic",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<Panic$Type["abi"]>>;
   export function getContractAt(
     contractName: "@openzeppelin/contracts/utils/Panic.sol:Panic",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<Panic$Type["abi"]>>;
 }

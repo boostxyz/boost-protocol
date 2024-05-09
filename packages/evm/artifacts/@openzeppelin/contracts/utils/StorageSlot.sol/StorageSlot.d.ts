@@ -8,32 +8,32 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface StorageSlot$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "StorageSlot";
-  sourceName: "@openzeppelin/contracts/utils/StorageSlot.sol";
-  abi: [];
-  bytecode: "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220e5e7284f546c280fe61322d1383cfd7c3e8e72b5be411239e111a532dd465a2964736f6c63430008180033";
-  deployedBytecode: "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220e5e7284f546c280fe61322d1383cfd7c3e8e72b5be411239e111a532dd465a2964736f6c63430008180033";
-  linkReferences: {};
-  deployedLinkReferences: {};
+  "_format": "hh-sol-artifact-1",
+  "contractName": "StorageSlot",
+  "sourceName": "@openzeppelin/contracts/utils/StorageSlot.sol",
+  "abi": [],
+  "bytecode": "0x6055604b600b8282823980515f1a607314603f577f4e487b71000000000000000000000000000000000000000000000000000000005f525f60045260245ffd5b305f52607381538281f3fe730000000000000000000000000000000000000000301460806040525f80fdfea2646970667358221220e248e04ea1e66cb6fa4a0e8cfe5a4c3bf010324de4a7bb08f89e9c4c75050d8e64736f6c63430008190033",
+  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040525f80fdfea2646970667358221220e248e04ea1e66cb6fa4a0e8cfe5a4c3bf010324de4a7bb08f89e9c4c75050d8e64736f6c63430008190033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "StorageSlot",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<StorageSlot$Type["abi"]>>;
   export function deployContract(
     contractName: "@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<StorageSlot$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "StorageSlot",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<StorageSlot$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -41,7 +41,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<StorageSlot$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -50,11 +50,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "StorageSlot",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<StorageSlot$Type["abi"]>>;
   export function getContractAt(
     contractName: "@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<StorageSlot$Type["abi"]>>;
 }

@@ -8,32 +8,63 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface LibPRNG$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "LibPRNG";
-  sourceName: "@solady/utils/LibPRNG.sol";
-  abi: [];
-  bytecode: "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122057e75867b9eab68aac6063ad4d21861c0e1edef0e1665a47a2fd7c312907d24464736f6c63430008180033";
-  deployedBytecode: "0x73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122057e75867b9eab68aac6063ad4d21861c0e1edef0e1665a47a2fd7c312907d24464736f6c63430008180033";
-  linkReferences: {};
-  deployedLinkReferences: {};
+  "_format": "hh-sol-artifact-1",
+  "contractName": "LibPRNG",
+  "sourceName": "@solady/utils/LibPRNG.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "InvalidInitialLazyShufflerLength",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidNewLazyShufflerLength",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "LazyShuffleFinished",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "LazyShufflerAlreadyInitialized",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "LazyShufflerGetOutOfBounds",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "LazyShufflerNotInitialized",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x6055604b600b8282823980515f1a607314603f577f4e487b71000000000000000000000000000000000000000000000000000000005f525f60045260245ffd5b305f52607381538281f3fe730000000000000000000000000000000000000000301460806040525f80fdfea264697066735822122025689cdfb2362bb9b4248ff2c8718f3a732c2e622000d424b613544fe274a71d64736f6c63430008190033",
+  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040525f80fdfea264697066735822122025689cdfb2362bb9b4248ff2c8718f3a732c2e622000d424b613544fe274a71d64736f6c63430008190033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "LibPRNG",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<LibPRNG$Type["abi"]>>;
   export function deployContract(
     contractName: "@solady/utils/LibPRNG.sol:LibPRNG",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<LibPRNG$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "LibPRNG",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<LibPRNG$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -41,7 +72,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@solady/utils/LibPRNG.sol:LibPRNG",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<LibPRNG$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -50,11 +81,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "LibPRNG",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<LibPRNG$Type["abi"]>>;
   export function getContractAt(
     contractName: "@solady/utils/LibPRNG.sol:LibPRNG",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<LibPRNG$Type["abi"]>>;
 }

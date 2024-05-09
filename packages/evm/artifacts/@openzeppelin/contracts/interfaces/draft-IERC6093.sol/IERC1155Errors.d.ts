@@ -8,135 +8,135 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface IERC1155Errors$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "IERC1155Errors";
-  sourceName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-  abi: [
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IERC1155Errors",
+  "sourceName": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol",
+  "abi": [
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "sender";
-          type: "address";
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
         },
         {
-          internalType: "uint256";
-          name: "balance";
-          type: "uint256";
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
         },
         {
-          internalType: "uint256";
-          name: "needed";
-          type: "uint256";
+          "internalType": "uint256",
+          "name": "needed",
+          "type": "uint256"
         },
         {
-          internalType: "uint256";
-          name: "tokenId";
-          type: "uint256";
-        },
-      ];
-      name: "ERC1155InsufficientBalance";
-      type: "error";
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ERC1155InsufficientBalance",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "approver";
-          type: "address";
-        },
-      ];
-      name: "ERC1155InvalidApprover";
-      type: "error";
+          "internalType": "address",
+          "name": "approver",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1155InvalidApprover",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "uint256";
-          name: "idsLength";
-          type: "uint256";
+          "internalType": "uint256",
+          "name": "idsLength",
+          "type": "uint256"
         },
         {
-          internalType: "uint256";
-          name: "valuesLength";
-          type: "uint256";
-        },
-      ];
-      name: "ERC1155InvalidArrayLength";
-      type: "error";
+          "internalType": "uint256",
+          "name": "valuesLength",
+          "type": "uint256"
+        }
+      ],
+      "name": "ERC1155InvalidArrayLength",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "operator";
-          type: "address";
-        },
-      ];
-      name: "ERC1155InvalidOperator";
-      type: "error";
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1155InvalidOperator",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "receiver";
-          type: "address";
-        },
-      ];
-      name: "ERC1155InvalidReceiver";
-      type: "error";
+          "internalType": "address",
+          "name": "receiver",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1155InvalidReceiver",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "sender";
-          type: "address";
-        },
-      ];
-      name: "ERC1155InvalidSender";
-      type: "error";
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1155InvalidSender",
+      "type": "error"
     },
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "operator";
-          type: "address";
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
         },
         {
-          internalType: "address";
-          name: "owner";
-          type: "address";
-        },
-      ];
-      name: "ERC1155MissingApprovalForAll";
-      type: "error";
-    },
-  ];
-  bytecode: "0x";
-  deployedBytecode: "0x";
-  linkReferences: {};
-  deployedLinkReferences: {};
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1155MissingApprovalForAll",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "IERC1155Errors",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<IERC1155Errors$Type["abi"]>>;
   export function deployContract(
     contractName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC1155Errors",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<IERC1155Errors$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "IERC1155Errors",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<IERC1155Errors$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -144,7 +144,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC1155Errors",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<IERC1155Errors$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -153,11 +153,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "IERC1155Errors",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<IERC1155Errors$Type["abi"]>>;
   export function getContractAt(
     contractName: "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC1155Errors",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<IERC1155Errors$Type["abi"]>>;
 }

@@ -8,38 +8,38 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface ReentrancyGuard$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "ReentrancyGuard";
-  sourceName: "@solady/utils/ReentrancyGuard.sol";
-  abi: [
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ReentrancyGuard",
+  "sourceName": "@solady/utils/ReentrancyGuard.sol",
+  "abi": [
     {
-      inputs: [];
-      name: "Reentrancy";
-      type: "error";
-    },
-  ];
-  bytecode: "0x";
-  deployedBytecode: "0x";
-  linkReferences: {};
-  deployedLinkReferences: {};
+      "inputs": [],
+      "name": "Reentrancy",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "ReentrancyGuard",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<ReentrancyGuard$Type["abi"]>>;
   export function deployContract(
     contractName: "@solady/utils/ReentrancyGuard.sol:ReentrancyGuard",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<ReentrancyGuard$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "ReentrancyGuard",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<ReentrancyGuard$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -47,7 +47,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "@solady/utils/ReentrancyGuard.sol:ReentrancyGuard",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<ReentrancyGuard$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -56,11 +56,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "ReentrancyGuard",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<ReentrancyGuard$Type["abi"]>>;
   export function getContractAt(
     contractName: "@solady/utils/ReentrancyGuard.sol:ReentrancyGuard",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<ReentrancyGuard$Type["abi"]>>;
 }

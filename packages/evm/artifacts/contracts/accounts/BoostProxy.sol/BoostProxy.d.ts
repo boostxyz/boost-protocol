@@ -8,52 +8,52 @@ import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types"
 import "@nomicfoundation/hardhat-viem/types";
 
 export interface BoostProxy$Type {
-  _format: "hh-sol-artifact-1";
-  contractName: "BoostProxy";
-  sourceName: "contracts/accounts/BoostProxy.sol";
-  abi: [
+  "_format": "hh-sol-artifact-1",
+  "contractName": "BoostProxy",
+  "sourceName": "contracts/accounts/BoostProxy.sol",
+  "abi": [
     {
-      inputs: [
+      "inputs": [
         {
-          internalType: "address";
-          name: "owner_";
-          type: "address";
-        },
-      ];
-      name: "createProxy";
-      outputs: [
+          "internalType": "address",
+          "name": "owner_",
+          "type": "address"
+        }
+      ],
+      "name": "createProxy",
+      "outputs": [
         {
-          internalType: "address";
-          name: "";
-          type: "address";
-        },
-      ];
-      stateMutability: "nonpayable";
-      type: "function";
-    },
-  ];
-  bytecode: "0x";
-  deployedBytecode: "0x";
-  linkReferences: {};
-  deployedLinkReferences: {};
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
 }
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
     contractName: "BoostProxy",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<BoostProxy$Type["abi"]>>;
   export function deployContract(
     contractName: "contracts/accounts/BoostProxy.sol:BoostProxy",
     constructorArgs?: [],
-    config?: DeployContractConfig,
+    config?: DeployContractConfig
   ): Promise<GetContractReturnType<BoostProxy$Type["abi"]>>;
 
   export function sendDeploymentTransaction(
     contractName: "BoostProxy",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<BoostProxy$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -61,7 +61,7 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function sendDeploymentTransaction(
     contractName: "contracts/accounts/BoostProxy.sol:BoostProxy",
     constructorArgs?: [],
-    config?: SendDeploymentTransactionConfig,
+    config?: SendDeploymentTransactionConfig
   ): Promise<{
     contract: GetContractReturnType<BoostProxy$Type["abi"]>;
     deploymentTransaction: GetTransactionReturnType;
@@ -70,11 +70,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
   export function getContractAt(
     contractName: "BoostProxy",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<BoostProxy$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/accounts/BoostProxy.sol:BoostProxy",
     address: Address,
-    config?: GetContractAtConfig,
+    config?: GetContractAtConfig
   ): Promise<GetContractReturnType<BoostProxy$Type["abi"]>>;
 }

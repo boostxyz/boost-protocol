@@ -4,7 +4,12 @@ import "@nomicfoundation/hardhat-ignition-viem";
 import "@nomicfoundation/hardhat-toolbox-viem";
 
 export default {
-  solidity: "0.8.24",
+  solidity: {
+    settings: {
+      evmVersion: "cancun",
+    },
+    version: "0.8.25",
+  },
   compilerOptions: {
     optimizer: {
       enabled: true,

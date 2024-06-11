@@ -1,19 +1,32 @@
 {
   "name": "boost-protocol",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo build",
+    "changeset": "changeset",
+    "changeset:release": "turbo run build && changeset publish",
+    "changeset:version": "changeset version && pnpm install --lockfile-only",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "prepare": "lefthook install",
+    "postinstall": "git submodule update --init",
     "format": "prettier --write \"**/*.{ts,tsx,md}\" && forge fmt packages/evm"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.8.1",
     "@boost/eslint-config": "workspace:*",
     "@boost/typescript-config": "workspace:*",
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.27.5",
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "lefthook": "^1.6.15",
     "prettier": "^3.2.5",
-    "turbo": "latest"
+    "turbo": "^2.0.0",
+    "vite": "^5.2.13"
   },
-  "packageManager": "pnpm@8.9.0",
+  "packageManager": "pnpm@8.15.8",
   "engines": {
     "node": ">=18"
   }

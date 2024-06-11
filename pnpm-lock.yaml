@@ -32,6 +32,9 @@ importers:
       turbo:
         specifier: ^2.0.0
         version: 2.0.3
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
       vite:
         specifier: ^5.2.13
         version: 5.2.13(@types/node@20.12.11)
@@ -89,6 +92,8 @@ importers:
       viem:
         specifier: ^2.9.9
         version: 2.9.9(typescript@5.3.3)(zod@3.22.4)
+
+  packages/sdk: {}
 
 packages:
 

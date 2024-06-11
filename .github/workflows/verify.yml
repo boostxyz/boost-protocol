@@ -1,0 +1,57 @@
+name: Verify
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        run: pnpm build
+
+  # test:
+  #   name: Test
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       shard: [1, 2, 3]
+  #       total-shards: [3]
+  #       transport-mode: ["http", "webSocket"]
+  #       include:
+  #         - batch-multicall: "false"
+  #         - batch-multicall: "true"
+  #           transport-mode: "http"
+
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Install dependencies
+  #       uses: ./.github/actions/install-dependencies
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Run tests
+  #       uses: nick-fields/retry@v3
+  #       with:
+  #         timeout_minutes: 20
+  #         max_attempts: 3
+  #         command: pnpm test:ci -- --shard=${{ matrix.shard }}/${{ matrix.total-shards }}
+
+  #     - name: Upload coverage reports to Codecov
+  #       uses: codecov/codecov-action@v4.3.0
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}

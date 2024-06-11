@@ -1,8 +1,9 @@
 {
-  "name": "@boost/evm",
-  "version": "1.0.0",
+  "name": "@boostxyz/evm",
+  "version": "0.0.0-alpha.0",
   "description": "",
   "main": "README.md",
+  "private": true,
   "scripts": {
     "test": "forge test -vvv && hardhat test"
   },

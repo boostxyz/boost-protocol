@@ -11,7 +11,7 @@
     "lint": "turbo lint",
     "prepare": "lefthook install",
     "postinstall": "git submodule update --init",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\" && forge fmt packages/evm"
+    "format": "forge fmt packages/evm"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.1",
@@ -22,6 +22,7 @@
     "lefthook": "^1.6.15",
     "prettier": "^3.2.5",
     "turbo": "^2.0.0",
+    "typescript": "^5.3.3",
     "vite": "^5.2.13"
   },
   "packageManager": "pnpm@8.15.8",

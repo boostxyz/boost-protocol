@@ -10,8 +10,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@boost/eslint-config": "workspace:*",
-    "@boost/typescript-config": "workspace:*",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomicfoundation/hardhat-ignition": "^0.15.0",
     "@nomicfoundation/hardhat-ignition-viem": "^0.15.0",

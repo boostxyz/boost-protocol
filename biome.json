@@ -12,7 +12,7 @@
   },
   "organizeImports": { "enabled": true },
   "files": {
-    "ignore": ["**/dist"]
+    "ignore": ["packages/evm/lib/**/*", "**/dist"]
   },
   "linter": {
     "enabled": true,
@@ -44,7 +44,7 @@
         "useNamespaceKeyword": "error"
       }
     },
-    "ignore": []
+    "ignore": ["packages/evm/lib/**/*", "**/dist"]
   },
   "javascript": {
     "formatter": {

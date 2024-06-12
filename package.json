@@ -14,12 +14,13 @@
     "changeset": "changeset",
     "changeset:release": "turbo run build && changeset publish",
     "changeset:version": "changeset version && pnpm install --lockfile-only",
-    "publish-packages": "turbo run build test:ci && pnpm changeset publish",
+    "publish-packages": "pnpm changeset publish",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "prepare": "lefthook install",
     "postinstall": "git submodule update --init",
-    "format": "forge fmt packages/evm"
+    "test": "turbo run test",
+    "test:ci": "turbo run test:ci"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.1",

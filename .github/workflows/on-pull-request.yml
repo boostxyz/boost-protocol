@@ -12,7 +12,3 @@ jobs:
     name: Verify
     uses: ./.github/workflows/verify.yml
     secrets: inherit
-  forge:
-    name: Forge
-    uses: ./.github/workflows/forge.yml
-    secrets: inherit

@@ -5,8 +5,9 @@
   "main": "README.md",
   "private": true,
   "scripts": {
-    "build": "forge build",
-    "test": "forge test -vvv && hardhat test"
+    "build": "forge build --sizes",
+    "test": "forge test -vvv && hardhat test",
+    "test:ci": "forge test --summary --detailed -vvv && hardhat test"
   },
   "keywords": [],
   "author": "",

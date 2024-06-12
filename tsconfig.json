@@ -6,19 +6,23 @@
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "incremental": false,
+    "sourceMap": true,
     "isolatedModules": true,
     "lib": ["es2022", "DOM", "DOM.Iterable"],
-    "module": "NodeNext",
+    "module": "ESNext",
     "moduleDetection": "force",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Bundler",
+    "composite": true,
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
     "noImplicitOverride": true,
-    "customConditions": ["development"]
+    "customConditions": ["development"],
+    "paths": {
+      "@boostxyz/evm": ["./packages/evm/artifacts/generated.ts"]
+    }
   },
   "exclude": ["node_modules", "**/*/dist"]
 }

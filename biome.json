@@ -1,7 +1,11 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.8.0/schema.json",
   "formatter": {
-    "ignore": ["packages/evm/lib/**/*"],
+    "ignore": [
+      "packages/evm/lib/**/*",
+      "packages/evm/artifacts/**/*",
+      "**/dist"
+    ],
     "enabled": true,
     "formatWithErrors": false,
     "indentStyle": "space",
@@ -12,7 +16,11 @@
   },
   "organizeImports": { "enabled": true },
   "files": {
-    "ignore": ["packages/evm/lib/**/*", "**/dist"]
+    "ignore": [
+      "packages/evm/lib/**/*",
+      "packages/evm/artifacts/**/*",
+      "**/dist"
+    ]
   },
   "linter": {
     "enabled": true,
@@ -44,7 +52,11 @@
         "useNamespaceKeyword": "error"
       }
     },
-    "ignore": ["packages/evm/lib/**/*", "**/dist"]
+    "ignore": [
+      "packages/evm/lib/**/*",
+      "packages/evm/artifacts/**/*",
+      "**/dist"
+    ]
   },
   "javascript": {
     "formatter": {

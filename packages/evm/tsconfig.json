@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "sourceMap": true
+    "rootDir": "artifacts"
   },
-  "include": ["**/*.ts"]
+  "include": ["artifacts/**/*.ts"]
 }

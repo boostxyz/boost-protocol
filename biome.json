@@ -31,7 +31,7 @@
       "style": {
         "noInferrableTypes": "warn",
         "noNamespace": "error",
-        "noNonNullAssertion": "error",
+        "noNonNullAssertion": "warn",
         "useAsConstAssertion": "warn",
         "useBlockStatements": "off"
       },

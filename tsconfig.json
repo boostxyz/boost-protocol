@@ -17,7 +17,8 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "verbatimModuleSyntax": true,
-    "noImplicitOverride": true
-  }
+    "noImplicitOverride": true,
+    "customConditions": ["development"]
+  },
+  "exclude": ["node_modules", "**/*/dist"]
 }

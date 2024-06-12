@@ -5,6 +5,7 @@
   "main": "README.md",
   "private": true,
   "scripts": {
+    "build": "forge build",
     "test": "forge test -vvv && hardhat test"
   },
   "keywords": [],

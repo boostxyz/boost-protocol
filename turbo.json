@@ -4,10 +4,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".dist/**"]
+      "outputs": [".dist/**", "out/**"]
     },
-    "lint": {
-      "dependsOn": ["^lint"]
+    "test": {
+      "dependsOn": ["build"]
+    },
+    "test:ci": {
+      "outputs": ["coverage/**"]
     },
     "dev": {
       "cache": false,

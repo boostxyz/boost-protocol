@@ -2,11 +2,19 @@
   "name": "boost-protocol",
   "private": true,
   "type": "module",
+  "repository": "https://github.com/rabbitholegg/boost-protocol",
+  "author": "Boost Team<boost-team@boost.xyz>",
+  "workspaces": ["packages/*"],
+  "packageManager": "pnpm@8.15.8",
+  "engines": {
+    "pnpm": "8.15.8"
+  },
   "scripts": {
     "build": "turbo build",
     "changeset": "changeset",
     "changeset:release": "turbo run build && changeset publish",
     "changeset:version": "changeset version && pnpm install --lockfile-only",
+    "publish-packages": "turbo run build test:ci && pnpm changeset publish",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "prepare": "lefthook install",
@@ -19,14 +27,12 @@
     "@changesets/cli": "^2.27.5",
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
+    "@vitest/coverage-v8": "^1.6.0",
     "lefthook": "^1.6.15",
     "prettier": "^3.2.5",
     "turbo": "^2.0.0",
     "typescript": "^5.3.3",
-    "vite": "^5.2.13"
-  },
-  "packageManager": "pnpm@8.15.8",
-  "engines": {
-    "node": ">=18"
+    "vite": "^5.2.13",
+    "vitest": "^1.6.0"
   }
 }

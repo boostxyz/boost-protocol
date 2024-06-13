@@ -8,6 +8,7 @@
   - [Development](#development)
     - [Prerequisites](#prerequisites)
     - [Getting Started](#getting-started)
+    - [Changesets \& Publishing](#changesets--publishing)
 
 [![Documentation](https://img.shields.io/badge/documentation-gh--pages-blue)](https://rabbitholegg.github.io/boost-protocol/index.html)
 [![Test Status](https://github.com/rabbitholegg/boost-protocol/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/rabbitholegg/boost-protocol/actions/workflows/test.yml)
@@ -91,3 +92,9 @@ Clone the repository - `git clone https://github.com/rabbitholegg/boost-protocol
 Install dependencies - `pnpm install`. This command will also initialize all submodules required for `evm` package development.
 
 Build packages - `turbo build` or `pnpm build`
+
+### Changesets & Publishing
+
+In order to publish you need to make sure that the pull request you're submitting has a changeset. If you don't want to publish this isn't needed. In order to generate a changeset run `pnpm changeset`, select a change type [major,minor,patch], and draft a small summary of the changeset. Select version based on [semantic versioning](https://semver.org/).
+
+After this all you need to do is push and merge the pull request and the Github Action will handle the process of versioning, and publishing.

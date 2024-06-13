@@ -435,11 +435,24 @@ export interface ERC1155$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "ERC1155",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<ERC1155$Type["abi"]>>;
+  export function deployContract(
     contractName: "@openzeppelin/contracts/token/ERC1155/ERC1155.sol:ERC1155",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<ERC1155$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "ERC1155",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<ERC1155$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "@openzeppelin/contracts/token/ERC1155/ERC1155.sol:ERC1155",
     constructorArgs?: [],
@@ -449,6 +462,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "ERC1155",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<ERC1155$Type["abi"]>>;
   export function getContractAt(
     contractName: "@openzeppelin/contracts/token/ERC1155/ERC1155.sol:ERC1155",
     address: Address,

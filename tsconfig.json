@@ -19,7 +19,6 @@
     "strict": true,
     "target": "es2022",
     "noImplicitOverride": true,
-    "customConditions": ["development"],
     "paths": {
       "@boostxyz/evm": ["./packages/evm/artifacts/generated.ts"]
     }

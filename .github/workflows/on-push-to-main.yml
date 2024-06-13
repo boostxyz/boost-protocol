@@ -57,32 +57,33 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN }}
 
-  docs:
-    needs: check
-    name: Deploy Docs
-    runs-on: ubuntu-latest
+  # TODO: do we want this?
+  # docs:
+  #   needs: check
+  #   name: Deploy Docs
+  #   runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
+  #   permissions:
+  #     contents: write
+  #     pages: write
+  #     id-token: write
 
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
+  #     - name: Install Foundry
+  #       uses: foundry-rs/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
 
-      - name: Build Documentation (mdBook)
-        working-directory: ./packages/evm
-        run: forge doc --build
+  #     - name: Build Documentation (mdBook)
+  #       working-directory: ./packages/evm
+  #       run: forge doc --build
 
-      - name: Publish Documentation
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: ./packages/evm/docs/book
-          token: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Publish Documentation
+  #       uses: JamesIves/github-pages-deploy-action@v4
+  #       with:
+  #         folder: ./packages/evm/docs/book
+  #         token: ${{ secrets.GITHUB_TOKEN }}

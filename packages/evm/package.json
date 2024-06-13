@@ -12,9 +12,7 @@
       "require": "./dist/generated.cjs",
       "import": "./artifacts/generated.ts",
       "node": "./dist/generated.js",
-      "types": "./dist/generated.d.ts",
-      "production": "./dist/generated.js",
-      "development": "./artifacts/generated.ts"
+      "types": "./dist/generated.d.ts"
     }
   },
   "publishConfig": {
@@ -22,6 +20,7 @@
       ".": {
         "require": "./dist/generated.cjs",
         "import": "./dist/generated.js",
+        "node": "./dist/generated.js",
         "types": "./dist/generated.d.ts"
       }
     }

@@ -54,7 +54,7 @@
     "abitype": "^1.0.2",
     "chai": "4",
     "hardhat": "^2.22.3",
-    "solady": "^0.0.181",
+    "solady": "^0.0.208",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "viem": "^2.9.9"

@@ -49,7 +49,7 @@
     "@nomicfoundation/hardhat-viem": "^2.0.0",
     "@types/chai": "4",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.24",
+    "@types/node": "^20.14.2",
     "@wagmi/cli": "^2.1.4",
     "abitype": "^1.0.2",
     "chai": "4",

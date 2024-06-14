@@ -1,5 +1,5 @@
-import { defineConfig, Config } from '@wagmi/cli'
-import { actions, hardhat, react } from '@wagmi/cli/plugins'
+import { Config, defineConfig } from '@wagmi/cli';
+import { actions, hardhat } from '@wagmi/cli/plugins';
 
 const exclude = [
   'Ownable.sol/**',
@@ -11,13 +11,12 @@ const exclude = [
 ];
 
 export default defineConfig({
-  out: "artifacts/generated.ts",
+  out: 'artifacts/generated.ts',
   plugins: [
     hardhat({
-      project: ".",
+      project: '.',
       exclude,
     }),
-    react(),
     actions(),
   ],
 }) as Config;

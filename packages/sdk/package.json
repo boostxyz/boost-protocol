@@ -1,0 +1,42 @@
+{
+  "name": "@boostxyz/sdk",
+  "version": "0.0.0-alpha.0",
+  "private": true,
+  "type": "module",
+  "files": ["dist"],
+  "repository": "https://github.com/rabbitholegg/boost-protocol",
+  "author": "Boost Team<boost-team@boost.xyz>",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./src/index.ts",
+      "node": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "require": "./dist/index.cjs",
+        "import": "./dist/index.js",
+        "node": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
+  "scripts": {
+    "build": "vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "bench": "vitest bench",
+    "bench:ci": "CI=true vitest bench",
+    "clean": "rm -rf dist",
+    "test": "vitest dev",
+    "test:ci": "CI=true vitest --coverage"
+  },
+  "devDependencies": {
+    "@boostxyz/evm": "workspace:*"
+  }
+}

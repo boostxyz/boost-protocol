@@ -1,4 +1,19 @@
 {
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "slither.solcPath": "",
   "slither.hiddenDetectors": [],
   "wake.compiler.solc.remappings": [
@@ -21,19 +36,10 @@
     "modular-account/=packages/evm/lib/modular-account/",
     "openzeppelin/=packages/evm/lib/modular-account/lib/openzeppelin-contracts/contracts/"
   ],
-  "cSpell.words": [
-    "CGDA",
-    "IERC",
-    "viem",
-    "wagmi"
-  ],
+  "cSpell.words": ["CGDA", "IERC", "viem", "wagmi"],
   "wake.lsp.compilation_delay": 3,
   "wake.lsp.detectors.enable": true,
-  "wake.detectors.exclude_paths": [
-    "node_modules",
-    "lib",
-    "packages/evm/lib"
-  ],
+  "wake.detectors.exclude_paths": ["node_modules", "lib", "packages/evm/lib"],
   "wake.compiler.solc.exclude_paths": [
     "node_modules",
     "venv",

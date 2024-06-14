@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "trailofbits.slither-vscode",
+    "NomicFoundation.hardhat-solidity"
+  ]
+}

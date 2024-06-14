@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "dist"
+  },
+  "exclude": ["dist", "build", "node_modules"],
+  "references": [
+    {
+      "path": "../evm"
+    }
+  ]
+}

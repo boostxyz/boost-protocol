@@ -165,11 +165,24 @@ export interface Ownable$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "Ownable",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<Ownable$Type["abi"]>>;
+  export function deployContract(
     contractName: "@solady/auth/Ownable.sol:Ownable",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<Ownable$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "Ownable",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<Ownable$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "@solady/auth/Ownable.sol:Ownable",
     constructorArgs?: [],
@@ -179,6 +192,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "Ownable",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<Ownable$Type["abi"]>>;
   export function getContractAt(
     contractName: "@solady/auth/Ownable.sol:Ownable",
     address: Address,

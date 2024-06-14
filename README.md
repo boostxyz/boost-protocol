@@ -1,5 +1,15 @@
 # Boost Protocol
 
+- [Boost Protocol](#boost-protocol)
+  - [Overview](#overview)
+  - [How It Works](#how-it-works)
+    - [Boost Creation](#boost-creation)
+    - [Boost Participation](#boost-participation)
+  - [Development](#development)
+    - [Prerequisites](#prerequisites)
+    - [Getting Started](#getting-started)
+    - [Changesets \& Publishing](#changesets--publishing)
+
 [![Documentation](https://img.shields.io/badge/documentation-gh--pages-blue)](https://rabbitholegg.github.io/boost-protocol/index.html)
 [![Test Status](https://github.com/rabbitholegg/boost-protocol/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/rabbitholegg/boost-protocol/actions/workflows/test.yml)
 
@@ -66,3 +76,25 @@ The Boost Protocol is designed to be flexible and customizable, allowing develop
 3. **Submit Proof of Completion**: If the Boost's Action can't be immediately validated on-chain from the Validator contract, the user must submit proof of completion to the Validator. The proof can take many forms, including signatures, merkle proofs, and ZK proofs. The Validator will verify the proof and attest to the user's completion of the Boost.
 
 4. **Claim Incentives**: Once the Validator has confirmed the user has completed the Boost's Action, the user can claim the Incentives. The Incentives can be claimed immediately or over time, depending on the rules defined by the Boost creator. Once claimed, the Incentives are transferred to the user's wallet.
+
+## Development
+
+### Prerequisites
+
+- [Node ~20](https://github.com/nvm-sh/nvm)
+- [PNPM](https://pnpm.io/installation)
+- [Foundry](https://book.getfoundry.sh/getting-started/installation)
+
+### Getting Started
+
+Clone the repository - `git clone https://github.com/rabbitholegg/boost-protocol`
+
+Install dependencies - `pnpm install`. This command will also initialize all submodules required for `evm` package development.
+
+Build packages - `turbo build` or `pnpm build`
+
+### Changesets & Publishing
+
+In order to publish you need to make sure that the pull request you're submitting has a changeset. If you don't want to publish this isn't needed. In order to generate a changeset run `pnpm changeset`, select a change type [major,minor,patch], and draft a small summary of the changeset. Select version based on [semantic versioning](https://semver.org/).
+
+After this all you need to do is push and merge the pull request and the Github Action will handle the process of versioning, and publishing.

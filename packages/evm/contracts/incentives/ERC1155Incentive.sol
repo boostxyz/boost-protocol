@@ -126,7 +126,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
                 target: address(this),
                 data: abi.encode(
                     Budget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.limit, data: init_.extraData})
-                    )
+                )
             })
         );
     }

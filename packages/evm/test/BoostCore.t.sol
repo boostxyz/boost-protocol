@@ -251,7 +251,7 @@ contract BoostCoreTest is Test {
             instance: address(new ERC721MintAction()),
             parameters: abi.encode(
                 ContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
-                )
+            )
         });
     }
 
@@ -283,7 +283,7 @@ contract BoostCoreTest is Test {
                         reward: 1 ether,
                         limit: 100
                     })
-                    )
+                )
             });
         }
         return incentives;

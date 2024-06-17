@@ -49,10 +49,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v2.0
+        with:
+          envkey_TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
+          directory: packages/evm
+          file_name: .env
+
       - name: Run tests
         uses: nick-fields/retry@v3
-        env:
-          TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
         with:
           timeout_minutes: 20
           max_attempts: 3

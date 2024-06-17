@@ -3,9 +3,7 @@
   "version": "0.0.0-alpha.0",
   "private": true,
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
@@ -39,7 +37,9 @@
     "test:ci": "CI=true vitest --coverage"
   },
   "devDependencies": {
-    "@boostxyz/evm": "workspace:*",
+    "@boostxyz/evm": "workspace:*"
+  },
+  "peerDependencies": {
     "@wagmi/core": "^2.11.2",
     "viem": "^2.9.9"
   }

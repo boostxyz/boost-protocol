@@ -1,23 +1,36 @@
-import { simpleBudgetAbi, writeSimpleBudget } from '@boostxyz/evm';
+import {
+  PrepareSimpleBudgetPayload,
+  prepareSimpleBudgetPayload,
+} from '@boostxyz/evm';
 import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
-import { Config, deployContract } from '@wagmi/core';
-import { Hex, WalletClient } from 'viem';
+import { Config, deployContract, getAccount } from '@wagmi/core';
+import { Address, Hex } from 'viem';
 
+// TODO create an export for each kind of budget
+// TODO make budget a base class, should Deployable be a base class for everything?
 export abstract class Budget {
-  abstract deploy(config: Config): Promise<void>;
+  protected address: Address | undefined;
+  abstract deploy(config: Config): Promise<string>;
 }
 
 export class SimpleBudget implements Budget {
-  async deploy(config: Config): Promise<void> {
-    const t = await deployContract(config, {
+  protected address: Address | undefined;
+  async deploy(
+    config: Config,
+    payload: Partial<PrepareSimpleBudgetPayload> = {},
+  ): Promise<string> {
+    if (!payload.authorized) payload.authorized = [];
+    if (!payload.owner) payload.owner = getAccount(config).address;
+    const address = await deployContract(config, {
       abi: SimpleBudgetArtifact.abi,
       bytecode: SimpleBudgetArtifact.bytecode as Hex,
+      args: [
+        prepareSimpleBudgetPayload(
+          payload as Required<PrepareSimpleBudgetPayload>,
+        ),
+      ],
     });
-  }
-}
-
-export class VestingBudget implements Budget {
-  async deploy(): Promise<void> {
-    // await writeSimpleBudget;
+    this.address = address;
+    return address;
   }
 }

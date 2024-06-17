@@ -250,6 +250,7 @@ export async function mockERC1155(tokenId = 1n, amount = 100n) {
 export type Base = {
   type: RegistryType;
   name: string;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   base: GetContractReturnType<any>;
 };
 

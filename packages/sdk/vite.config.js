@@ -2,7 +2,7 @@
 export default {
   build: {
     rollupOptions: {
-      external: [],
+      external: [/wagmi/],
     },
     lib: {
       entry: ['src/index.ts'],

@@ -2,7 +2,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpe
 import { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
 import { expect } from 'chai';
 import { viem } from 'hardhat';
-import { Address, WalletClient, parseEther, zeroAddress, zeroHash } from 'viem';
+import { Address, WalletClient, parseEther } from 'viem';
 import { BoostCore$Type } from '../../../artifacts/contracts/BoostCore.sol/BoostCore';
 import { BoostRegistry$Type } from '../../../artifacts/contracts/BoostRegistry.sol/BoostRegistry';
 import { Action$Type } from '../../../artifacts/contracts/actions/Action.sol/Action';
@@ -10,19 +10,18 @@ import { SimpleBudget$Type } from '../../../artifacts/contracts/budgets/SimpleBu
 import { MockERC20$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC20';
 import { MockERC1155$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC1155';
 import {
-  Base,
   StrategyType,
-  contractAction,
-  coreAndRegistry,
   erc20Incentive,
-  existingContractAction,
-  freshAction,
-  freshBoost,
-  fundedBudget,
   prepareBoostPayload,
   prepareFungibleTransfer,
   signerValidator,
   simpleAllowList,
+} from '../../../artifacts/index';
+import {
+  Base,
+  coreAndRegistry,
+  freshBoost,
+  fundedBudget,
 } from '../../utils/helpers';
 
 describe('As a creator', function () {

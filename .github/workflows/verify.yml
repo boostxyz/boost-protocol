@@ -51,12 +51,14 @@ jobs:
 
       - name: Run tests
         uses: nick-fields/retry@v3
+        env:
+          TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
         with:
           timeout_minutes: 20
           max_attempts: 3
           command: npx turbo test:ci --cache-dir=".cache" -- --shard=${{ matrix.shard }}/${{ matrix.total-shards }}
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.3.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v4.3.0
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}

@@ -26,17 +26,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    env:
-      TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
-    strategy:
-      matrix:
-        shard: [1, 2, 3]
-        total-shards: [3]
-        transport-mode: ["http", "webSocket"]
-        include:
-          - batch-multicall: "false"
-          - batch-multicall: "true"
-            transport-mode: "http"
 
     steps:
       - name: Checkout
@@ -61,7 +50,7 @@ jobs:
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: npx turbo test:ci --cache-dir=".cache" -- --shard=${{ matrix.shard }}/${{ matrix.total-shards }}
+          command: npx turbo test:ci --cache-dir=".cache"
 
       # - name: Upload coverage reports to Codecov
       #   uses: codecov/codecov-action@v4.3.0

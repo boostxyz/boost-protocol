@@ -94,8 +94,8 @@ importers:
         specifier: ^2.22.3
         version: 2.22.3(ts-node@10.9.2)(typescript@5.3.3)
       solady:
-        specifier: ^0.0.181
-        version: 0.0.181
+        specifier: ^0.0.208
+        version: 0.0.208
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.11.24)(typescript@5.3.3)
@@ -11729,8 +11729,8 @@ packages:
       - supports-color
     dev: false
 
-  /solady@0.0.181:
-    resolution: {integrity: sha512-uxMny+zHi9xrsKaoZoLliBkKBz00i7bWLHt2YMYjgsh7zKcQHWcONzY0zQB7qaGDzvxf4m/jFv8XiWpcP+0Pig==}
+  /solady@0.0.208:
+    resolution: {integrity: sha512-JuSgLFa7yR1l6pneJjO6h37ITPYQjN/ExATLgJemWQVwd+th4fBUXFLFUX2KIAdAw/UPrhob7ksVhDETkw7MhA==}
     dev: true
 
   /solc@0.7.3(debug@4.3.4):

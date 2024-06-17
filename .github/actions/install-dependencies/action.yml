@@ -4,6 +4,11 @@ description: "Prepare repository and all dependencies"
 runs:
   using: "composite"
   steps:
+    - uses: pnpm/action-setup@v4
+      name: Install pnpm
+      with:
+        version: 8
+        run_install: false
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
@@ -11,11 +16,6 @@ runs:
         cache: "pnpm"
         registry-url: https://registry.npmjs.org/
         scope: "@boostxyz"
-    - uses: pnpm/action-setup@v4
-      name: Install pnpm
-      with:
-        version: 8
-        run_install: false
     - name: Get pnpm store directory
       shell: bash
       run: |

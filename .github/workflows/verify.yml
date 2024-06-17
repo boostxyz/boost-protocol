@@ -26,6 +26,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
     strategy:
       matrix:
         shard: [1, 2, 3]
@@ -45,8 +47,6 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:
-          # TODO set theses
-          TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests

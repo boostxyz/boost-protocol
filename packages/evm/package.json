@@ -41,7 +41,7 @@
     "wagmi": "^2.10.2"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-foundry": "^1.1.1",
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
     "@nomicfoundation/hardhat-ignition": "^0.15.0",
     "@nomicfoundation/hardhat-ignition-viem": "^0.15.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

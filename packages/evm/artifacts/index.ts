@@ -23,6 +23,12 @@ export enum StrategyType {
   RAFFLE = 2,
 }
 
+export type Target = {
+  isBase: boolean;
+  instance: Address;
+  parameters: Hex;
+};
+
 export function prepareTarget({ isBase, instance, parameters }: Target) {
   return encodeAbiParameters(
     parseAbiParameters([
@@ -32,12 +38,6 @@ export function prepareTarget({ isBase, instance, parameters }: Target) {
     [{ isBase, instance, parameters }],
   );
 }
-
-export type Target = {
-  isBase: boolean;
-  instance: Address;
-  parameters: Hex;
-};
 
 export function contractAction({
   chainId,
@@ -57,17 +57,18 @@ export function contractAction({
   };
 }
 
+export interface ERC20IncentivePayload {
+  asset: Address;
+  strategy: StrategyType;
+  reward: bigint;
+  limit: bigint;
+}
 export function erc20Incentive({
   asset,
   strategy,
   reward,
   limit,
-}: {
-  asset: Address;
-  strategy: StrategyType;
-  reward: bigint;
-  limit: bigint;
-}): Target {
+}: ERC20IncentivePayload): Target {
   return {
     isBase: true,
     instance: zeroAddress,
@@ -80,11 +81,13 @@ export function erc20Incentive({
   };
 }
 
+export interface SignerValidatorPayload {
+  signers: Address[];
+}
+
 export function signerValidator({
   signers,
-}: {
-  signers: Address[];
-}): Target {
+}: SignerValidatorPayload): Target {
   return {
     isBase: true,
     instance: zeroAddress,
@@ -95,13 +98,15 @@ export function signerValidator({
   };
 }
 
+export interface SimpleAllowListPayload {
+  owner: Address;
+  allowed: Address[];
+}
+
 export function simpleAllowList({
   owner,
   allowed,
-}: {
-  owner: Address;
-  allowed: Address[];
-}): Target {
+}: SimpleAllowListPayload): Target {
   return {
     isBase: true,
     instance: zeroAddress,
@@ -156,13 +161,15 @@ export function prepareBoostPayload({
   ) as Hex;
 }
 
+export interface PrepareERC1155Payload {
+  tokenId: bigint;
+  amount: bigint;
+}
+
 export function prepareERC1155Payload({
   tokenId,
   amount,
-}: {
-  tokenId: bigint;
-  amount: bigint;
-}) {
+}: PrepareERC1155Payload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'ERC1155Payload payload',
@@ -172,17 +179,19 @@ export function prepareERC1155Payload({
   );
 }
 
+export interface PrepareERC1155TransferPayload {
+  tokenId: bigint;
+  amount: bigint;
+  asset: Address;
+  target: Address;
+}
+
 export function prepareERC1155Transfer({
   tokenId,
   amount,
   asset,
   target,
-}: {
-  tokenId: bigint;
-  amount: bigint;
-  asset: Address;
-  target: Address;
-}) {
+}: PrepareERC1155TransferPayload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'Transfer request',
@@ -199,7 +208,9 @@ export function prepareERC1155Transfer({
   );
 }
 
-export function prepareFungiblePayload({ amount }: { amount: bigint }) {
+export interface PrepareFungiblePayload { amount: bigint }
+
+export function prepareFungiblePayload({ amount }: PrepareFungiblePayload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'FungiblePayload payload',
@@ -209,15 +220,17 @@ export function prepareFungiblePayload({ amount }: { amount: bigint }) {
   );
 }
 
+export interface PrepareFungibleTransferPayload {
+  amount: bigint;
+  asset: Address;
+  target: Address;
+}
+
 export function prepareFungibleTransfer({
   amount,
   asset,
   target,
-}: {
-  amount: bigint;
-  asset: Address;
-  target: Address;
-}) {
+}: PrepareFungibleTransferPayload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'Transfer request',
@@ -234,18 +247,19 @@ export function prepareFungibleTransfer({
   );
 }
 
+export interface PrepareERC20IncentivePayload {
+  asset: Address;
+  strategy: StrategyType;
+  reward: bigint;
+  limit: bigint;
+}
 
 export const prepareERC20IncentivePayload = ({
   asset,
   strategy,
   reward,
   limit,
-}: {
-  asset: Address;
-  strategy: StrategyType;
-  reward: bigint;
-  limit: bigint;
-}) => {
+}: PrepareERC20IncentivePayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'asset' },
@@ -264,13 +278,15 @@ export interface ContractActionPayload {
   value: bigint;
 }
 
+export interface PrepareSimpleBudgetPayload {
+  owner: Address;
+  authorized: Address[];
+}
+
 export const prepareSimpleBudgetPayload = ({
   owner,
   authorized,
-}: {
-  owner: Address;
-  authorized: Address[];
-}) => {
+}: PrepareSimpleBudgetPayload) => {
   return encodeAbiParameters(
     parseAbiParameters([
       'SimpleBudgetPayload payload',

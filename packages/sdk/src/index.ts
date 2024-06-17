@@ -24,6 +24,7 @@ export class BoostClient {
     this.config = config;
   }
 
+  // TODO don't use boost payload, instead accept nice interface with Budget, Validator instances, etc.
   public async createBoost(payload: BoostPayload) {
     const boostFactory = createWriteContract({
       abi: boostCoreAbi,

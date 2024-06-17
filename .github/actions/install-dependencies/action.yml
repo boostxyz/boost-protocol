@@ -4,11 +4,11 @@ description: "Prepare repository and all dependencies"
 runs:
   using: "composite"
   steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      name: Install pnpm
       with:
-        submodules: recursive
-        fetch-depth: 2
+        version: 8.15.8
+        run_install: false
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
@@ -16,11 +16,6 @@ runs:
         cache: "pnpm"
         registry-url: https://registry.npmjs.org/
         scope: "@boostxyz"
-    - uses: pnpm/action-setup@v4
-      name: Install pnpm
-      with:
-        version: 8
-        run_install: false
     - name: Get pnpm store directory
       shell: bash
       run: |
@@ -28,9 +23,9 @@ runs:
     - uses: actions/cache@v4
       name: Setup cache
       with:
-        path:
-          - ${{ env.STORE_PATH }}
-          - .cache
+        path: |
+          ${{ env.STORE_PATH }}
+          .cache
         key: ${{ runner.os }}-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-cache-

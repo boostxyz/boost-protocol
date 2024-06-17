@@ -8,6 +8,7 @@
   - [Development](#development)
     - [Prerequisites](#prerequisites)
     - [Getting Started](#getting-started)
+    - [Solidity Development](#solidity-development)
     - [Changesets \& Publishing](#changesets--publishing)
 
 [![Documentation](https://img.shields.io/badge/documentation-gh--pages-blue)](https://rabbitholegg.github.io/boost-protocol/index.html)
@@ -92,6 +93,18 @@ Clone the repository - `git clone https://github.com/rabbitholegg/boost-protocol
 Install dependencies - `pnpm install`. This command will also initialize all submodules required for `evm` package development.
 
 Build packages - `turbo build` or `pnpm build`
+
+### Solidity Development
+
+- [Python](https://docs.brew.sh/Homebrew-and-Python)
+- [Wake](https://pypi.org/project/eth-wake/)
+- [Slither](https://github.com/crytic/slither)
+
+If using vscode, install this repository's recommended extensions, which depend on the above dependencies.
+
+- [Wake](https://marketplace.visualstudio.com/items?itemName=AckeeBlockchain.tools-for-solidity)
+- [Hardhat Solidity](https://arc.net/l/quote/odxovcyb)
+- [Slither](https://marketplace.visualstudio.com/items?itemName=trailofbits.slither-vscode)
 
 ### Changesets & Publishing
 

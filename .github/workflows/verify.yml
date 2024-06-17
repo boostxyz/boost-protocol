@@ -10,6 +10,11 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 2
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:
@@ -21,32 +26,33 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        shard: [1, 2, 3]
-        total-shards: [3]
-        transport-mode: ["http", "webSocket"]
-        include:
-          - batch-multicall: "false"
-          - batch-multicall: "true"
-            transport-mode: "http"
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 2
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:
-          # TODO set theses
-          TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v2.0
+        with:
+          envkey_TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
+          directory: packages/evm
+          file_name: .env
 
       - name: Run tests
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: npx turbo test:ci --cache-dir=".cache" -- --shard=${{ matrix.shard }}/${{ matrix.total-shards }}
+          command: npx turbo test:ci --cache-dir=".cache"
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.3.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v4.3.0
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}

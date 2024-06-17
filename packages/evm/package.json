@@ -4,31 +4,26 @@
   "description": "",
   "private": true,
   "type": "module",
-  "files": ["dist", "artifacts", "contracts"],
+  "files": [
+    "dist",
+    "artifacts",
+    "contracts"
+  ],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
     ".": {
-      "require": "./dist/generated.cjs",
-      "import": "./artifacts/generated.ts",
-      "node": "./dist/generated.js",
-      "types": "./dist/generated.d.ts"
-    }
+      "require": "./dist/index.cjs",
+      "import": "./artifacts/index.ts",
+      "node": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./artifacts/contracts/*/*/*.json": "./artifacts/contracts/*/*/*.json"
   },
-  "publishConfig": {
-    "exports": {
-      ".": {
-        "require": "./dist/generated.cjs",
-        "import": "./dist/generated.js",
-        "node": "./dist/generated.js",
-        "types": "./dist/generated.d.ts"
-      }
-    }
-  },
-  "main": "./dist/generated.cjs",
-  "module": "./dist/generated.js",
-  "types": "./dist/generated.d.ts",
-  "typings": "./dist/generated.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
   "scripts": {
     "build": "forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
     "test": "forge test -vvv && hardhat test",

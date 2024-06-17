@@ -7,12 +7,14 @@ import { SimpleBudget$Type } from '../../../artifacts/contracts/budgets/SimpleBu
 import { MockERC20$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC20';
 import { MockERC1155$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC1155';
 import {
+  prepareERC1155Transfer,
+  prepareFungibleTransfer,
+} from '../../../artifacts/index';
+import {
   freshBudget,
   fundedBudget,
   mockERC20,
   mockERC1155,
-  prepareERC1155Transfer,
-  prepareFungibleTransfer,
 } from '../../utils/helpers';
 
 describe('As a creator', function () {

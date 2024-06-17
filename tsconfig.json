@@ -20,7 +20,8 @@
     "target": "es2022",
     "noImplicitOverride": true,
     "paths": {
-      "@boostxyz/evm": ["./packages/evm/artifacts/generated.ts"]
+      "@boostxyz/evm": ["./packages/evm/artifacts/index.ts"],
+      "@boostxyz/evm/artifacts/*": ["./packages/evm/artifacts/*"]
     }
   },
   "exclude": ["node_modules", "**/*/dist"]

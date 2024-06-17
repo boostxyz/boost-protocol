@@ -2,6 +2,7 @@
   "recommendations": [
     "biomejs.biome",
     "trailofbits.slither-vscode",
-    "NomicFoundation.hardhat-solidity"
+    "NomicFoundation.hardhat-solidity",
+    "ackeeblockchain.tools-for-solidity"
   ]
 }

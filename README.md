@@ -84,6 +84,8 @@ The Boost Protocol is designed to be flexible and customizable, allowing develop
 - [Node ~20](https://github.com/nvm-sh/nvm)
 - [PNPM](https://pnpm.io/installation)
 - [Foundry](https://book.getfoundry.sh/getting-started/installation)
+- [Python](https://docs.brew.sh/Homebrew-and-Python)
+- [Wake](https://pypi.org/project/eth-wake/)
 
 ### Getting Started
 

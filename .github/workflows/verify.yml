@@ -10,6 +10,11 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 2
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:
@@ -32,6 +37,11 @@ jobs:
             transport-mode: "http"
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 2
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:

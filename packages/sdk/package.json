@@ -7,12 +7,10 @@
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
-    ".": {
-      "require": "./dist/index.cjs",
-      "import": "./src/index.ts",
-      "node": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+    ".": "./src/index.ts",
+    "./Budgets/Budgets": "./src/Budgets/Budgets.ts",
+    "./Budgets/SimpleBudget": "./src/Budgets/SimpleBudget.ts",
+    "./Budgets/VestingBudget": "./src/Budgets/VestingBudget.ts"
   },
   "publishConfig": {
     "exports": {
@@ -21,6 +19,24 @@
         "import": "./dist/index.js",
         "node": "./dist/index.js",
         "types": "./dist/index.d.ts"
+      },
+      "./Budgets/Budgets": {
+        "require": "./dist/Budgets/Budgets.cjs",
+        "import": "./dist/Budgets/Budgets.js",
+        "node": "./dist/Budgets/Budgets.js",
+        "types": "./dist/Budgets/Budgets.d.ts"
+      },
+      "./Budgets/SimpleBudget": {
+        "require": "./dist/Budgets/SimpleBudget.cjs",
+        "import": "./dist/Budgets/SimpleBudget.js",
+        "node": "./dist/Budgets/SimpleBudget.js",
+        "types": "./dist/Budgets/SimpleBudget.d.ts"
+      },
+      "./Budgets/VestingBudget": {
+        "require": "./dist/Budgets/VestingBudget.cjs",
+        "import": "./dist/Budgets/VestingBudget.js",
+        "node": "./dist/Budgets/VestingBudget.js",
+        "types": "./dist/Budgets/VestingBudget.d.ts"
       }
     }
   },

@@ -296,6 +296,30 @@ export const prepareSimpleBudgetPayload = ({
   );
 };
 
+export interface PrepareVestingBudgetPayload {
+  owner: Address;
+  authorized: Address[];
+  start: bigint;
+  duration: bigint;
+  cliff: bigint;
+}
+
+export const prepareVestingBudgetPayload = ({
+  owner,
+  authorized,
+  start,
+  duration,
+  cliff
+}: PrepareVestingBudgetPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'VestingBudgetPayload payload',
+      'struct VestingBudgetPayload { address owner; address[] authorized; uint64 start; uint64 duration; uint64 cliff; }',
+    ]),
+    [{ owner, authorized, start, duration, cliff }],
+  );
+};
+
 export const prepareContractActionPayload = ({
   chainId,
   target,

@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src"],
+  "include": ["vite-env.d.ts", "src"],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "dist"

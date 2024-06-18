@@ -1,14 +1,14 @@
 import {
-  BoostPayload,
+  type BoostPayload,
   boostCoreAbi,
   prepareBoostPayload,
-  writeBoostCoreCreateBoost,
 } from '@boostxyz/evm';
-import { type Config, getAccount } from '@wagmi/core';
+import type { Config } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
-import { Address, Hex } from 'viem';
+import type { Address } from 'viem';
 
-export const BOOST_CORE_ADDRESS: Address = '0x';
+export const BOOST_CORE_ADDRESS: Address = import.meta.env
+  .VITE_BOOST_CORE_ADDRESS;
 
 export interface BoostClientConfig {
   address?: Address;

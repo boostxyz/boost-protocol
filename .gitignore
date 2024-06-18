@@ -5,3 +5,6 @@ coverage
 .cache
 tsconfig.tsbuildinfo
 .DS_Store
+
+.env*
+!.env.sample

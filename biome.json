@@ -41,7 +41,8 @@
         "noNamespace": "error",
         "noNonNullAssertion": "warn",
         "useAsConstAssertion": "warn",
-        "useBlockStatements": "off"
+        "useBlockStatements": "off",
+        "useImportType": "error"
       },
       "suspicious": {
         "noEmptyBlockStatements": "error",

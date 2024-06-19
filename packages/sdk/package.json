@@ -3,21 +3,19 @@
   "version": "0.0.0-alpha.0",
   "private": true,
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
     ".": "./src/index.ts",
     "./Deployable/Deployable": "./src/Deployable/Deployable.ts",
-    "./Actions/Action": "./src/AllowLists/Action.ts",
-    "./Actions/ContractAction": "./src/AllowLists/ContractAction.ts",
-    "./Actions/ERC721MintAction": "./src/AllowLists/ERC721MintAction.ts",
+    "./Actions/Action": "./src/Actions/Action.ts",
+    "./Actions/ContractAction": "./src/Actions/ContractAction.ts",
+    "./Actions/ERC721MintAction": "./src/Actions/ERC721MintAction.ts",
     "./AllowLists/AllowList": "./src/AllowLists/AllowList.ts",
     "./AllowLists/SimpleAllowList": "./src/AllowLists/SimpleAllowList.ts",
     "./AllowLists/SimpleDenyList": "./src/AllowLists/SimpleDenyList.ts",
-    "./Budgets/Budgets": "./src/Budgets/Budgets.ts",
+    "./Budgets/Budget": "./src/Budgets/Budget.ts",
     "./Budgets/SimpleBudget": "./src/Budgets/SimpleBudget.ts",
     "./Budgets/VestingBudget": "./src/Budgets/VestingBudget.ts",
     "./Incentives/AllowListIncentive": "./src/Incentives/AllowListIncentive.ts",
@@ -79,11 +77,11 @@
         "node": "./dist/AllowLists/SimpleDenyList.js",
         "types": "./dist/AllowLists/SimpleDenyList.d.ts"
       },
-      "./Budgets/Budgets": {
-        "require": "./dist/Budgets/Budgets.cjs",
-        "import": "./dist/Budgets/Budgets.js",
-        "node": "./dist/Budgets/Budgets.js",
-        "types": "./dist/Budgets/Budgets.d.ts"
+      "./Budgets/Budget": {
+        "require": "./dist/Budgets/Budget.cjs",
+        "import": "./dist/Budgets/Budget.js",
+        "node": "./dist/Budgets/Budget.js",
+        "types": "./dist/Budgets/Budget.d.ts"
       },
       "./Budgets/SimpleBudget": {
         "require": "./dist/Budgets/SimpleBudget.cjs",

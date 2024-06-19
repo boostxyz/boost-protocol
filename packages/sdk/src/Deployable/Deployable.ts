@@ -3,6 +3,7 @@ import type { Address } from 'viem';
 import { DeployableParametersUnspecifiedError } from '../errors';
 
 export type GenericDeployableParams = Parameters<typeof deployContract>[1];
+
 export class Deployable {
   protected _address: Address | undefined;
 
@@ -21,11 +22,12 @@ export class Deployable {
     return this._address;
   }
 
-  protected buildParameters(_config: Config): GenericDeployableParams {
-    throw new DeployableParametersUnspecifiedError();
+  public at(address: Address) {
+    this._address = address;
+    return this;
   }
 
-  static at(address: Address) {
-    return new Deployable(address);
+  public buildParameters(_config: Config): GenericDeployableParams {
+    throw new DeployableParametersUnspecifiedError();
   }
 }

@@ -1,65 +1,38 @@
-import {
-  type BoostPayload,
-  boostCoreAbi,
-  prepareBoostPayload,
-} from '@boostxyz/evm';
-import type { Config } from '@wagmi/core';
-import { createWriteContract } from '@wagmi/core/codegen';
-import type { Address } from 'viem';
+export * from './BoostClient';
+export * from './errors';
 
-export const BOOST_CORE_ADDRESS: Address = import.meta.env
-  .VITE_BOOST_CORE_ADDRESS;
+// Actions
 
-export interface BoostClientConfig {
-  address?: Address;
-  config: Config;
-}
+export * from './Actions/Action';
+export * from './Actions/ContractAction';
+export * from './Actions/ERC721MintAction';
 
-export class BoostClient {
-  protected address: Address = BOOST_CORE_ADDRESS;
-  protected config: Config;
+// AllowLists
 
-  constructor({ address, config }: BoostClientConfig) {
-    if (address) this.address = address;
-    this.config = config;
-  }
+export * from './AllowLists/AllowList';
+export * from './AllowLists/SimpleAllowList';
+export * from './AllowLists/SimpleDenyList';
 
-  // TODO don't use boost payload, instead accept nice interface with Budget, Validator instances, etc.
-  public async createBoost(payload: BoostPayload) {
-    const boostFactory = createWriteContract({
-      abi: boostCoreAbi,
-      functionName: 'createBoost',
-      address: this.address,
-    });
+// Budgets
 
-    // if (!payload.budget) {
-    //   // create simple budget
-    // }
+export * from './Budgets/Budget';
+export * from './Budgets/SimpleBudget';
+export * from './Budgets/VestingBudget';
 
-    // if (!payload.action) {
-    //   // idk
-    // }
+// Deployable
 
-    // if (!payload.validator) {
-    //   //
-    // }
+export * from './Deployable/Deployable';
 
-    // if (!payload.allowList) {
-    // }
+// Incentives
 
-    // if (!payload.incentives) {
-    // }
+export * from './Incentives/AllowListIncentive';
+export * from './Incentives/CGDAIncentive';
+export * from './Incentives/ERC20Incentive';
+export * from './Incentives/ERC1155Incentive';
+export * from './Incentives/Incentive';
+export * from './Incentives/PointsIncentive';
 
-    // if (!payload.owner) {
-    //   const owner = getAccount(this.config);
-    //   payload.owner = owner.address;
-    // }
+// Validators
 
-    const boost = await boostFactory(this.config, {
-      //TODO resolve this
-      args: [prepareBoostPayload(payload)],
-    });
-
-    return boost;
-  }
-}
+export * from './Validators/SignerValidator';
+export * from './Validators/Validator';

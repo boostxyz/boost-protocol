@@ -13,7 +13,7 @@ import {
 export type { PrepareSimpleBudgetPayload };
 
 export class SimpleBudget extends Deployable {
-  protected payload: Partial<PrepareSimpleBudgetPayload> = {
+  protected payload: PrepareSimpleBudgetPayload = {
     owner: zeroAddress,
     authorized: [],
   };
@@ -26,17 +26,20 @@ export class SimpleBudget extends Deployable {
     };
   }
 
-  protected override buildParameters(config: Config): GenericDeployableParams {
-    if (!this.payload.owner || this.payload.owner === zeroAddress)
-      this.payload.owner = getAccount(config).address;
+  public override buildParameters(config: Config): GenericDeployableParams {
+    if (!this.payload.owner || this.payload.owner === zeroAddress) {
+      const owner = getAccount(config).address;
+      if (owner) {
+        this.payload.owner = owner;
+      } else {
+        // throw?
+        console.warn('Unable to ascertain owner for budget');
+      }
+    }
     return {
       abi: SimpleBudgetArtifact.abi,
       bytecode: SimpleBudgetArtifact.bytecode as Hex,
-      args: [
-        prepareSimpleBudgetPayload(
-          this.payload as Required<PrepareSimpleBudgetPayload>,
-        ),
-      ],
+      args: [prepareSimpleBudgetPayload(this.payload)],
     };
   }
 }

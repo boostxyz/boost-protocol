@@ -1,8 +1,8 @@
 import {
-  type PrepareVestingBudgetPayload,
-  prepareVestingBudgetPayload,
+  type SimpleAllowListPayload,
+  prepareSimpleAllowListPayload,
 } from '@boostxyz/evm';
-import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
+import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import { type Config, getAccount } from '@wagmi/core';
 import { type Hex, zeroAddress } from 'viem';
 import {
@@ -10,18 +10,15 @@ import {
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
 
-export type { PrepareVestingBudgetPayload };
+export type { SimpleAllowListPayload };
 
-export class VestingBudget extends Deployable {
-  protected payload: PrepareVestingBudgetPayload = {
+export class SimpleAllowList extends Deployable {
+  protected payload: SimpleAllowListPayload = {
     owner: zeroAddress,
-    authorized: [],
-    start: 0n,
-    duration: 0n,
-    cliff: 0n,
+    allowed: [],
   };
 
-  constructor(config: Partial<PrepareVestingBudgetPayload> = {}) {
+  constructor(config: Partial<SimpleAllowListPayload> = {}) {
     super();
     this.payload = {
       ...this.payload,
@@ -40,9 +37,9 @@ export class VestingBudget extends Deployable {
       }
     }
     return {
-      abi: VestingBudgetArtifact.abi,
-      bytecode: VestingBudgetArtifact.bytecode as Hex,
-      args: [prepareVestingBudgetPayload(this.payload)],
+      abi: SimpleAllowListArtifact.abi,
+      bytecode: SimpleAllowListArtifact.bytecode as Hex,
+      args: [prepareSimpleAllowListPayload(this.payload)],
     };
   }
 }

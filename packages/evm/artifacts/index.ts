@@ -23,6 +23,11 @@ export enum StrategyType {
   RAFFLE = 2,
 }
 
+export enum ERC1155StrategyType {
+  POOL = 0,
+  MINT = 1,
+}
+
 export type Target = {
   isBase: boolean;
   instance: Address;
@@ -85,16 +90,24 @@ export interface SignerValidatorPayload {
   signers: Address[];
 }
 
+export const prepareSignerValidatorPayload = ({
+  signers
+  }: SignerValidatorPayload) => {
+    return encodeAbiParameters(
+      [
+        { type: 'address[]', name: 'signers' },
+      ],
+      [signers],
+    );
+  };
+
 export function signerValidator({
   signers,
 }: SignerValidatorPayload): Target {
   return {
     isBase: true,
     instance: zeroAddress,
-    parameters: encodeAbiParameters(
-      [{ type: 'address[]', name: 'signers' }],
-      [signers],
-    ),
+    parameters: prepareSignerValidatorPayload({ signers })
   };
 }
 
@@ -103,6 +116,19 @@ export interface SimpleAllowListPayload {
   allowed: Address[];
 }
 
+export const prepareSimpleAllowListPayload = ({
+owner,
+allowed
+}: SimpleAllowListPayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'owner' },
+      { type: 'address[]', name: 'allowed' },
+    ],
+    [owner, allowed],
+  );
+};
+
 export function simpleAllowList({
   owner,
   allowed,
@@ -110,13 +136,36 @@ export function simpleAllowList({
   return {
     isBase: true,
     instance: zeroAddress,
-    parameters: encodeAbiParameters(
-      [
-        { type: 'address', name: 'owner' },
-        { type: 'address[]', name: 'allowed' },
-      ],
-      [owner, allowed],
-    ),
+    parameters: prepareSimpleAllowListPayload({owner, allowed})
+  };
+}
+
+export interface SimpleDenyListPayload {
+  owner: Address;
+  allowed: Address[];
+}
+
+export const prepareSimpleDenyListPayload = ({
+owner,
+allowed
+}: SimpleDenyListPayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'owner' },
+      { type: 'address[]', name: 'allowed' },
+    ],
+    [owner, allowed],
+  );
+};
+
+export function simpleDenyList({
+  owner,
+  allowed,
+}: SimpleDenyListPayload): Target {
+  return {
+    isBase: true,
+    instance: zeroAddress,
+    parameters: prepareSimpleDenyListPayload({owner, allowed})
   };
 }
 
@@ -126,6 +175,9 @@ export interface BoostPayload {
   validator: Target;
   allowList: Target;
   incentives: Target[];
+  protocolFee?: bigint;
+  referralFee?: bigint;
+  maxParticipants?: bigint;
   owner: Address;
 }
 
@@ -135,6 +187,9 @@ export function prepareBoostPayload({
   validator,
   allowList,
   incentives,
+  protocolFee = 0n,
+  referralFee = 0n,
+  maxParticipants = 0n,
   owner,
 }: BoostPayload): Hex {
   return LibZip.cdCompress(
@@ -151,9 +206,9 @@ export function prepareBoostPayload({
           validator,
           allowList,
           incentives,
-          protocolFee: 0n,
-          referralFee: 0n,
-          maxParticipants: 0n,
+          protocolFee,
+          referralFee,
+          maxParticipants,
           owner,
         },
       ],
@@ -247,6 +302,115 @@ export function prepareFungibleTransfer({
   );
 }
 
+export interface PreparePointsIncentivePayload {
+  venue: Address;
+  selector: Hex;
+  quantity: bigint;
+  limit: bigint;
+}
+
+export const preparePointsIncentivePayload = ({
+  venue,
+  selector,
+  quantity,
+  limit,
+}: PreparePointsIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'venue' },
+      { type: 'bytes4', name: 'selector' },
+      { type: 'uint256', name: 'quantity' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [venue,
+      selector,
+      quantity,
+      limit],
+  );
+};
+
+export interface PrepareCGDAIncentivePayload {
+  asset: Address;
+  initialReward: bigint;
+  rewardDecay: bigint;
+  rewardBoost: bigint;
+  totalBudget: bigint;
+}
+
+export const prepareCGDAIncentivePayload = ({
+  asset,
+  initialReward,
+  rewardDecay,
+  rewardBoost,
+  totalBudget
+}: PrepareCGDAIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint256', name: 'initialReward' },
+      { type: 'uint256', name: 'rewardDecay' },
+      { type: 'uint256', name: 'rewardBoost' },
+      { type: 'uint256', name: 'totalBudget' },
+    ],
+    [asset,
+      initialReward,
+      rewardDecay,
+      rewardBoost,
+      totalBudget],
+  );
+};
+
+export interface PrepareERC1155IncentivePayload {
+  asset: Address;
+  strategy: ERC1155StrategyType;
+  tokenId: bigint;
+  limit: bigint;
+  extraData: Hex;
+}
+
+export const prepareERC1155IncentivePayload = ({
+  asset,
+  strategy,
+  tokenId,
+  limit,
+  extraData
+}: PrepareERC1155IncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint8', name: 'strategy' },
+      { type: 'uint256', name: 'tokenId' },
+      { type: 'uint256', name: 'limit' },
+      { type: 'bytes', name: 'extraData' },
+    ],
+    [asset,
+      strategy,
+      tokenId,
+      limit,
+      extraData],
+  );
+};
+
+export interface PrepareAllowListIncentivePayload {
+  allowList: Address
+  limit: bigint
+}
+
+export const prepareAllowListIncentivePayload = ({
+  allowList,
+  limit
+}: PrepareAllowListIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'allowList' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [allowList,
+      limit
+    ],
+  );
+};
+
 export interface PrepareERC20IncentivePayload {
   asset: Address;
   strategy: StrategyType;
@@ -277,6 +441,8 @@ export interface ContractActionPayload {
   selector: Hex;
   value: bigint;
 }
+
+export type ERC721MintActionPayload = ContractActionPayload
 
 export interface PrepareSimpleBudgetPayload {
   owner: Address;

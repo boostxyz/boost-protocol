@@ -1,14 +1,20 @@
 import {
   type SimpleAllowListPayload,
   prepareSimpleAllowListPayload,
+  readAllowListIsAllowed,
+  writeSimpleAllowListSetAllowed,
 } from '@boostxyz/evm';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import { type Config, getAccount } from '@wagmi/core';
-import { type Hex, zeroAddress } from 'viem';
+import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
+import {
+  DeployableAddressRequiredError,
+  DeployableUnknownOwnerProvided,
+} from '../errors';
 
 export type { SimpleAllowListPayload };
 
@@ -26,14 +32,33 @@ export class SimpleAllowList extends Deployable {
     };
   }
 
+  public async isAllowed(address: Address, config: Config): Promise<boolean> {
+    if (!this.address) throw new DeployableAddressRequiredError();
+    return await readAllowListIsAllowed(config, {
+      address: this.address,
+      args: [address, zeroHash],
+    });
+  }
+
+  public async setAllowed(
+    addresses: Address[],
+    allowed: boolean[],
+    config: Config,
+  ) {
+    if (!this.address) throw new DeployableAddressRequiredError();
+    return await writeSimpleAllowListSetAllowed(config, {
+      address: this.address,
+      args: [addresses, allowed],
+    });
+  }
+
   public override buildParameters(config: Config): GenericDeployableParams {
     if (!this.payload.owner || this.payload.owner === zeroAddress) {
       const owner = getAccount(config).address;
       if (owner) {
         this.payload.owner = owner;
       } else {
-        // throw?
-        console.warn('Unable to ascertain owner for budget');
+        throw new DeployableUnknownOwnerProvided();
       }
     }
     return {

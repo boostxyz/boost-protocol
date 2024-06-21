@@ -1,6 +1,9 @@
 import { type Config, deployContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
-import { DeployableParametersUnspecifiedError } from '../errors';
+import {
+  DeployableAddressRequiredError,
+  DeployableParametersUnspecifiedError,
+} from '../errors';
 
 export type GenericDeployableParams = Omit<
   Parameters<typeof deployContract>[1],

@@ -1,4 +1,4 @@
-import { Config, defineConfig } from '@wagmi/cli';
+import { type Config, defineConfig } from '@wagmi/cli';
 import { actions, hardhat } from '@wagmi/cli/plugins';
 
 const exclude = [

@@ -47,9 +47,7 @@ export class ContractAction extends Deployable<ContractActionPayload> {
     });
   }
 
-  public async readContractActionValue(
-    params: CallParams<typeof readContractActionValue> = {},
-  ) {
+  public async value(params: CallParams<typeof readContractActionValue> = {}) {
     return readContractActionValue(this._config, {
       address: this.assertValidAddress(),
       ...params,

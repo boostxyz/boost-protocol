@@ -236,7 +236,7 @@ export function prepareBoostPayload({
   ) as Hex;
 }
 
-export interface PrepareERC1155Payload {
+export interface ERC1155Payload {
   tokenId: bigint;
   amount: bigint;
 }
@@ -244,7 +244,7 @@ export interface PrepareERC1155Payload {
 export function prepareERC1155Payload({
   tokenId,
   amount,
-}: PrepareERC1155Payload) {
+}: ERC1155Payload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'ERC1155Payload payload',
@@ -254,7 +254,7 @@ export function prepareERC1155Payload({
   );
 }
 
-export interface PrepareERC1155TransferPayload {
+export interface ERC1155TransferPayload {
   tokenId: bigint;
   amount: bigint;
   asset: Address;
@@ -266,7 +266,7 @@ export function prepareERC1155Transfer({
   amount,
   asset,
   target,
-}: PrepareERC1155TransferPayload) {
+}: ERC1155TransferPayload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'Transfer request',
@@ -283,9 +283,9 @@ export function prepareERC1155Transfer({
   );
 }
 
-export interface PrepareFungiblePayload { amount: bigint }
+export interface FungiblePayload { amount: bigint }
 
-export function prepareFungiblePayload({ amount }: PrepareFungiblePayload) {
+export function prepareFungiblePayload({ amount }: FungiblePayload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'FungiblePayload payload',
@@ -295,7 +295,7 @@ export function prepareFungiblePayload({ amount }: PrepareFungiblePayload) {
   );
 }
 
-export interface PrepareFungibleTransferPayload {
+export interface FungibleTransferPayload {
   amount: bigint;
   asset: Address;
   target: Address;
@@ -305,7 +305,7 @@ export function prepareFungibleTransfer({
   amount,
   asset,
   target,
-}: PrepareFungibleTransferPayload) {
+}: FungibleTransferPayload) {
   return encodeAbiParameters(
     parseAbiParameters([
       'Transfer request',
@@ -322,7 +322,7 @@ export function prepareFungibleTransfer({
   );
 }
 
-export interface PreparePointsIncentivePayload {
+export interface PointsIncentivePayload {
   venue: Address;
   selector: Hex;
   quantity: bigint;
@@ -334,7 +334,7 @@ export const preparePointsIncentivePayload = ({
   selector,
   quantity,
   limit,
-}: PreparePointsIncentivePayload) => {
+}: PointsIncentivePayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'venue' },
@@ -356,7 +356,7 @@ export interface CGDAParameters {
   currentReward: bigint;
 }
 
-export interface PrepareCGDAIncentivePayload {
+export interface CGDAIncentivePayload {
   asset: Address;
   initialReward: bigint;
   rewardDecay: bigint;
@@ -370,7 +370,7 @@ export const prepareCGDAIncentivePayload = ({
   rewardDecay,
   rewardBoost,
   totalBudget
-}: PrepareCGDAIncentivePayload) => {
+}: CGDAIncentivePayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'asset' },
@@ -387,7 +387,7 @@ export const prepareCGDAIncentivePayload = ({
   );
 };
 
-export interface PrepareERC1155IncentivePayload {
+export interface ERC1155IncentivePayload {
   asset: Address;
   strategy: ERC1155StrategyType;
   tokenId: bigint;
@@ -401,7 +401,7 @@ export const prepareERC1155IncentivePayload = ({
   tokenId,
   limit,
   extraData
-}: PrepareERC1155IncentivePayload) => {
+}: ERC1155IncentivePayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'asset' },
@@ -418,7 +418,7 @@ export const prepareERC1155IncentivePayload = ({
   );
 };
 
-export interface PrepareAllowListIncentivePayload {
+export interface AllowListIncentivePayload {
   allowList: Address
   limit: bigint
 }
@@ -426,7 +426,7 @@ export interface PrepareAllowListIncentivePayload {
 export const prepareAllowListIncentivePayload = ({
   allowList,
   limit
-}: PrepareAllowListIncentivePayload) => {
+}: AllowListIncentivePayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'allowList' },
@@ -438,7 +438,7 @@ export const prepareAllowListIncentivePayload = ({
   );
 };
 
-export interface PrepareERC20IncentivePayload {
+export interface ERC20IncentivePayload {
   asset: Address;
   strategy: StrategyType;
   reward: bigint;
@@ -450,7 +450,7 @@ export const prepareERC20IncentivePayload = ({
   strategy,
   reward,
   limit,
-}: PrepareERC20IncentivePayload) => {
+}: ERC20IncentivePayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'asset' },
@@ -471,7 +471,7 @@ export interface ContractActionPayload {
 
 export type ERC721MintActionPayload = ContractActionPayload
 
-export interface PrepareSimpleBudgetPayload {
+export interface SimpleBudgetPayload {
   owner: Address;
   authorized: Address[];
 }
@@ -479,7 +479,7 @@ export interface PrepareSimpleBudgetPayload {
 export const prepareSimpleBudgetPayload = ({
   owner,
   authorized,
-}: PrepareSimpleBudgetPayload) => {
+}: SimpleBudgetPayload) => {
   return encodeAbiParameters(
     parseAbiParameters([
       'SimpleBudgetPayload payload',
@@ -489,7 +489,7 @@ export const prepareSimpleBudgetPayload = ({
   );
 };
 
-export interface PrepareVestingBudgetPayload {
+export interface VestingBudgetPayload {
   owner: Address;
   authorized: Address[];
   start: bigint;
@@ -503,7 +503,7 @@ export const prepareVestingBudgetPayload = ({
   start,
   duration,
   cliff
-}: PrepareVestingBudgetPayload) => {
+}: VestingBudgetPayload) => {
   return encodeAbiParameters(
     parseAbiParameters([
       'VestingBudgetPayload payload',

@@ -1,7 +1,6 @@
 import {
   type ClaimPayload,
   type ERC20IncentivePayload,
-  type PrepareERC20IncentivePayload,
   type StrategyType,
   prepareClaimPayload,
   prepareERC20IncentivePayload,
@@ -25,9 +24,9 @@ import {
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
 
-export type { PrepareERC20IncentivePayload };
+export type { ERC20IncentivePayload };
 
-export class ERC20Incentive extends Deployable<PrepareERC20IncentivePayload> {
+export class ERC20Incentive extends Deployable<ERC20IncentivePayload> {
   public async asset(params: CallParams<typeof readErc20IncentiveAsset> = {}) {
     return readErc20IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -127,7 +126,7 @@ export class ERC20Incentive extends Deployable<PrepareERC20IncentivePayload> {
   }
 
   public override buildParameters(
-    _payload?: PrepareERC20IncentivePayload,
+    _payload?: ERC20IncentivePayload,
     _config?: Config,
   ): GenericDeployableParams {
     const [payload] = this.validateDeploymentConfig(_payload, _config);

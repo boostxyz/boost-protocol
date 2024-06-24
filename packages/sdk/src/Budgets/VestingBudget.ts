@@ -1,6 +1,6 @@
 import {
-  type PrepareVestingBudgetPayload,
   type TransferPayload,
+  type VestingBudgetPayload,
   prepareTransferPayload,
   prepareVestingBudgetPayload,
   readVestingBudgetAvailable,
@@ -24,9 +24,9 @@ import {
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { CallParams } from '../utils';
 
-export type { PrepareVestingBudgetPayload };
+export type { VestingBudgetPayload };
 
-export class VestingBudget extends Deployable<PrepareVestingBudgetPayload> {
+export class VestingBudget extends Deployable<VestingBudgetPayload> {
   public allocate(
     transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetAllocate> = {},
@@ -142,7 +142,7 @@ export class VestingBudget extends Deployable<PrepareVestingBudgetPayload> {
   }
 
   public override buildParameters(
-    _payload?: PrepareVestingBudgetPayload,
+    _payload?: VestingBudgetPayload,
     _config?: Config,
   ): GenericDeployableParams {
     const [payload, config] = this.validateDeploymentConfig(_payload, _config);

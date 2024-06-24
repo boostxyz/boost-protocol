@@ -17,7 +17,7 @@ import {
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
 
-export type { SimpleAllowListPayload };
+export type { SignerValidatorPayload };
 
 export class SignerValidator extends Deployable<SignerValidatorPayload> {
   public async signers(

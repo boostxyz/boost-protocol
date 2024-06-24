@@ -20,7 +20,7 @@ export interface BoostPayload {
   owner?: Address;
 }
 
-export class Boost extends Contract {
+export class Boost {
   readonly action: Action;
   readonly validator: Validator;
   readonly allowList: AllowList;
@@ -31,8 +31,7 @@ export class Boost extends Contract {
   readonly maxParticipants: bigint;
   readonly owner: Address;
 
-  constructor(config: Config, payload: BoostPayload) {
-    super(config, payload.address);
+  constructor(payload: BoostPayload) {
     this.action = payload.action;
     this.validator = payload.validator;
     this.allowList = payload.allowList;

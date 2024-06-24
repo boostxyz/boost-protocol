@@ -1,4 +1,3 @@
-import { TransferPayload } from './index';
 export * from './generated';
 import { LibZip } from 'solady';
 import {

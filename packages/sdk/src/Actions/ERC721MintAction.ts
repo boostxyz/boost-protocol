@@ -29,7 +29,7 @@ export class ERC721MintAction extends Deployable<ERC721MintActionPayload> {
     });
   }
 
-  // TODO use data structure
+  // TODO use data structure?
   public async prepare(
     data: Hex,
     params: CallParams<typeof readErc721MintActionPrepare> = {},
@@ -41,7 +41,7 @@ export class ERC721MintAction extends Deployable<ERC721MintActionPayload> {
     });
   }
 
-  // TODO use data structure
+  // TODO use data structure?
   public async validate(
     data: Hex,
     params: CallParams<typeof writeErc721MintActionValidate> = {},

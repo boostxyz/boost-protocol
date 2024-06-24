@@ -1,3 +1,4 @@
+import { TransferPayload } from './index';
 export * from './generated';
 import { LibZip } from 'solady';
 import {
@@ -547,3 +548,29 @@ export const prepareClaimPayload = ({ target, data = zeroHash }: ClaimPayload) =
     [target, data],
   )
 }
+
+export enum AssetType {
+  ETH,
+  ERC20,
+  ERC1155
+}
+
+export interface TransferPayload {
+  assetType: AssetType
+  address: Address
+  target: Address
+  data: Hex
+}
+
+export const prepareTransferPayload =({ assetType, address, target, data }: TransferPayload)  => {
+  return encodeAbiParameters(
+    [
+      { type: 'uint8', name: 'assetType' },
+      { type: 'address', name: 'asset' },
+      { type: 'address', name: 'target' },
+      { type: 'bytes', name: 'data' },
+    ],
+    [assetType, address, target, data],
+  )
+}
+

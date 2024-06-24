@@ -1,6 +1,6 @@
 import {
+  type AllowListIncentivePayload,
   type ClaimPayload,
-  type PrepareAllowListIncentivePayload,
   prepareAllowListIncentivePayload,
   prepareClaimPayload,
   readAllowListIncentiveAllowList,
@@ -18,9 +18,9 @@ import {
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
 
-export type { PrepareAllowListIncentivePayload };
+export type { AllowListIncentivePayload };
 
-export class AllowListIncentive extends Deployable<PrepareAllowListIncentivePayload> {
+export class AllowListIncentive extends Deployable<AllowListIncentivePayload> {
   public async allowList(
     params: CallParams<typeof readAllowListIncentiveAllowList> = {},
   ): Promise<SimpleAllowList> {
@@ -65,7 +65,7 @@ export class AllowListIncentive extends Deployable<PrepareAllowListIncentivePayl
   }
 
   public override buildParameters(
-    _payload?: PrepareAllowListIncentivePayload,
+    _payload?: AllowListIncentivePayload,
     _config?: Config,
   ): GenericDeployableParams {
     const [payload] = this.validateDeploymentConfig(_payload, _config);

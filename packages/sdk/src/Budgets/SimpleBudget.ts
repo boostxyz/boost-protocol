@@ -1,5 +1,5 @@
 import {
-  type PrepareSimpleBudgetPayload,
+  type SimpleBudgetPayload,
   type TransferPayload,
   prepareSimpleBudgetPayload,
   prepareTransferPayload,
@@ -24,9 +24,9 @@ import {
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { CallParams } from '../utils';
 
-export type { PrepareSimpleBudgetPayload };
+export type { SimpleBudgetPayload };
 
-export class SimpleBudget extends Deployable<PrepareSimpleBudgetPayload> {
+export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
   public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
     return readVestingBudgetStart(this._config, {
       address: this.assertValidAddress(),
@@ -140,7 +140,7 @@ export class SimpleBudget extends Deployable<PrepareSimpleBudgetPayload> {
   }
 
   public override buildParameters(
-    _payload?: PrepareSimpleBudgetPayload,
+    _payload?: SimpleBudgetPayload,
     _config?: Config,
   ): GenericDeployableParams {
     const [payload, config] = this.validateDeploymentConfig(_payload, _config);

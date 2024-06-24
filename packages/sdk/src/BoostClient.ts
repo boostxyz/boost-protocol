@@ -7,20 +7,53 @@ import {
 import { type Config, getAccount } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
 import { type Address, zeroAddress, zeroHash } from 'viem';
-import { ContractAction } from './Actions/ContractAction';
-import { ERC721MintAction } from './Actions/ERC721MintAction';
-import { SimpleAllowList } from './AllowLists/AllowList';
-import { SimpleDenyList } from './AllowLists/SimpleDenyList';
+import {
+  ContractAction,
+  type ContractActionPayload,
+} from './Actions/ContractAction';
+import {
+  ERC721MintAction,
+  type ERC721MintActionPayload,
+} from './Actions/ERC721MintAction';
+import {
+  SimpleAllowList,
+  type SimpleAllowListPayload,
+} from './AllowLists/SimpleAllowList';
+import {
+  SimpleDenyList,
+  type SimpleDenyListPayload,
+} from './AllowLists/SimpleDenyList';
 import { Boost, type BoostPayload } from './Boost';
-import { SimpleBudget } from './Budgets/SimpleBudget';
-import { VestingBudget } from './Budgets/VestingBudget';
-import type { Deployable } from './Deployable/Deployable';
-import { AllowListIncentive } from './Incentives/AllowListIncentive';
-import { CGDAIncentive } from './Incentives/CGDAIncentive';
-import { ERC20Incentive } from './Incentives/ERC20Incentive';
-import { ERC1155Incentive } from './Incentives/ERC1155Incentive';
-import { PointsIncentive } from './Incentives/PointsIncentive';
-import { SignerValidator } from './Validators/SignerValidator';
+import { SimpleBudget, type SimpleBudgetPayload } from './Budgets/SimpleBudget';
+import {
+  VestingBudget,
+  type VestingBudgetPayload,
+} from './Budgets/VestingBudget';
+import type { Deployable, DeployableOptions } from './Deployable/Deployable';
+import {
+  AllowListIncentive,
+  type AllowListIncentivePayload,
+} from './Incentives/AllowListIncentive';
+import {
+  CGDAIncentive,
+  type CGDAIncentivePayload,
+} from './Incentives/CGDAIncentive';
+import {
+  ERC20Incentive,
+  type ERC20IncentivePayload,
+} from './Incentives/ERC20Incentive';
+import {
+  ERC1155Incentive,
+  type ERC1155IncentivePayload,
+} from './Incentives/ERC1155Incentive';
+import {
+  PointsIncentive,
+  type PointsIncentivePayload,
+} from './Incentives/PointsIncentive';
+import {
+  SignerValidator,
+  type SignerValidatorPayload,
+} from './Validators/SignerValidator';
 import { DeployableUnknownOwnerProvidedError } from './errors';
 
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
@@ -204,7 +237,7 @@ export class BoostClient {
     });
 
     // return new Boost({
-    //   // action:
+    //   action:
     // });
   }
 
@@ -330,42 +363,40 @@ export class BoostClient {
     });
   }
 
-  ContractAction(options: ConstructorParameters<typeof ContractAction>[1]) {
+  ContractAction(options: DeployableOptions<ContractActionPayload>) {
     return new ContractAction(this.config, options);
   }
-  ERC721MintAction(options: ConstructorParameters<typeof ERC721MintAction>[1]) {
+  ERC721MintAction(options: DeployableOptions<ERC721MintActionPayload>) {
     return new ERC721MintAction(this.config, options);
   }
-  SimpleAllowList(options: ConstructorParameters<typeof SimpleAllowList>[1]) {
+  SimpleAllowList(options: DeployableOptions<SimpleAllowListPayload>) {
     return new SimpleAllowList(this.config, options);
   }
-  SimpleDenyList(options: ConstructorParameters<typeof SimpleDenyList>[1]) {
+  SimpleDenyList(options: DeployableOptions<SimpleDenyListPayload>) {
     return new SimpleDenyList(this.config, options);
   }
-  SimpleBudget(options: ConstructorParameters<typeof SimpleBudget>[1]) {
+  SimpleBudget(options: DeployableOptions<SimpleBudgetPayload>) {
     return new SimpleBudget(this.config, options);
   }
-  VestingBudget(options: ConstructorParameters<typeof VestingBudget>[1]) {
+  VestingBudget(options: DeployableOptions<VestingBudgetPayload>) {
     return new VestingBudget(this.config, options);
   }
-  AllowListIncentive(
-    options: ConstructorParameters<typeof AllowListIncentive>[1],
-  ) {
+  AllowListIncentive(options: DeployableOptions<AllowListIncentivePayload>) {
     return new AllowListIncentive(this.config, options);
   }
-  CGDAIncentive(options: ConstructorParameters<typeof CGDAIncentive>[1]) {
+  CGDAIncentive(options: DeployableOptions<CGDAIncentivePayload>) {
     return new CGDAIncentive(this.config, options);
   }
-  ERC20Incentive(options: ConstructorParameters<typeof ERC20Incentive>[1]) {
+  ERC20Incentive(options: DeployableOptions<ERC20IncentivePayload>) {
     return new ERC20Incentive(this.config, options);
   }
-  ERC1155Incentive(options: ConstructorParameters<typeof ERC1155Incentive>[1]) {
+  ERC1155Incentive(options: DeployableOptions<ERC1155IncentivePayload>) {
     return new ERC1155Incentive(this.config, options);
   }
-  PointsIncentive(options: ConstructorParameters<typeof PointsIncentive>[1]) {
+  PointsIncentive(options: DeployableOptions<PointsIncentivePayload>) {
     return new PointsIncentive(this.config, options);
   }
-  SignerValidator(options: ConstructorParameters<typeof SignerValidator>[1]) {
+  SignerValidator(options: DeployableOptions<SignerValidatorPayload>) {
     return new SignerValidator(this.config, options);
   }
 }

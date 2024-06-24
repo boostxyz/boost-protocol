@@ -1,6 +1,6 @@
 import {
   type ClaimPayload,
-  type PreparePointsIncentivePayload,
+  type PointsIncentivePayload,
   prepareClaimPayload,
   preparePointsIncentivePayload,
   readPointsIncentiveIsClaimable,
@@ -19,9 +19,9 @@ import {
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
 
-export type { PreparePointsIncentivePayload };
+export type { PointsIncentivePayload };
 
-export class PointsIncentive extends Deployable<PreparePointsIncentivePayload> {
+export class PointsIncentive extends Deployable<PointsIncentivePayload> {
   public async venue(params: CallParams<typeof readPointsIncentiveVenue> = {}) {
     return readPointsIncentiveVenue(this._config, {
       address: this.assertValidAddress(),
@@ -79,7 +79,7 @@ export class PointsIncentive extends Deployable<PreparePointsIncentivePayload> {
   }
 
   public override buildParameters(
-    _payload?: PreparePointsIncentivePayload,
+    _payload?: PointsIncentivePayload,
     _config?: Config,
   ): GenericDeployableParams {
     const [payload] = this.validateDeploymentConfig(_payload, _config);

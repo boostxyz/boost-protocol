@@ -1,7 +1,7 @@
 import {
+  type CGDAIncentivePayload,
   type CGDAParameters,
   type ClaimPayload,
-  type PrepareCGDAIncentivePayload,
   prepareCGDAIncentivePayload,
   prepareClaimPayload,
   readCgdaIncentiveAsset,
@@ -21,9 +21,9 @@ import {
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
 
-export type { PrepareCGDAIncentivePayload };
+export type { CGDAIncentivePayload };
 
-export class CGDAIncentive extends Deployable<PrepareCGDAIncentivePayload> {
+export class CGDAIncentive extends Deployable<CGDAIncentivePayload> {
   public async asset(params: CallParams<typeof readCgdaIncentiveAsset> = {}) {
     return readCgdaIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -92,7 +92,7 @@ export class CGDAIncentive extends Deployable<PrepareCGDAIncentivePayload> {
   }
 
   public async preflight(
-    data: PrepareCGDAIncentivePayload,
+    data: CGDAIncentivePayload,
     params: CallParams<typeof readCgdaIncentiveIsClaimable> = {},
   ) {
     return readCgdaIncentiveIsClaimable(this._config, {
@@ -112,7 +112,7 @@ export class CGDAIncentive extends Deployable<PrepareCGDAIncentivePayload> {
   }
 
   public override buildParameters(
-    _payload?: PrepareCGDAIncentivePayload,
+    _payload?: CGDAIncentivePayload,
     _config?: Config,
   ): GenericDeployableParams {
     const [payload] = this.validateDeploymentConfig(_payload, _config);

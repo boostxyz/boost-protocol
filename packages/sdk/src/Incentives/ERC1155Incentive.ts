@@ -1,6 +1,6 @@
 import {
   type ClaimPayload,
-  type PrepareERC1155IncentivePayload,
+  type ERC1155IncentivePayload,
   type StrategyType,
   prepareClaimPayload,
   prepareERC1155IncentivePayload,
@@ -24,9 +24,9 @@ import {
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
 
-export type { PrepareERC1155IncentivePayload };
+export type { ERC1155IncentivePayload };
 
-export class ERC1155Incentive extends Deployable<PrepareERC1155IncentivePayload> {
+export class ERC1155Incentive extends Deployable<ERC1155IncentivePayload> {
   public async asset(
     params: CallParams<typeof readErc1155IncentiveAsset> = {},
   ) {
@@ -106,7 +106,7 @@ export class ERC1155Incentive extends Deployable<PrepareERC1155IncentivePayload>
   }
 
   public async preflight(
-    data: PrepareERC1155IncentivePayload,
+    data: ERC1155IncentivePayload,
     params: CallParams<typeof readErc1155IncentivePreflight> = {},
   ) {
     return readErc1155IncentivePreflight(this._config, {
@@ -128,7 +128,7 @@ export class ERC1155Incentive extends Deployable<PrepareERC1155IncentivePayload>
   }
 
   public override buildParameters(
-    _payload?: PrepareERC1155IncentivePayload,
+    _payload?: ERC1155IncentivePayload,
     _config?: Config,
   ): GenericDeployableParams {
     const [payload] = this.validateDeploymentConfig(_payload, _config);

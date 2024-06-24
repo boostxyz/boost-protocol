@@ -13,12 +13,12 @@ import {
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
+import { ContractAction } from './ContractAction';
 
 export type { ERC721MintActionPayload };
 
-export class ERC721MintAction extends Deployable<ERC721MintActionPayload> {
-  // use what? also, payable
-  public async execute(
+export class ERC721MintAction extends ContractAction {
+  public override async execute(
     data: Hex,
     params: CallParams<typeof writeErc721MintActionExecute> = {},
   ) {
@@ -29,8 +29,7 @@ export class ERC721MintAction extends Deployable<ERC721MintActionPayload> {
     });
   }
 
-  // TODO use data structure?
-  public async prepare(
+  public override async prepare(
     data: Hex,
     params: CallParams<typeof readErc721MintActionPrepare> = {},
   ) {
@@ -41,7 +40,6 @@ export class ERC721MintAction extends Deployable<ERC721MintActionPayload> {
     });
   }
 
-  // TODO use data structure?
   public async validate(
     data: Hex,
     params: CallParams<typeof writeErc721MintActionValidate> = {},

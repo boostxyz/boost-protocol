@@ -56,7 +56,6 @@ export class ContractAction extends Deployable<ContractActionPayload> {
     });
   }
 
-  // use what? also, payable
   public async execute(
     data: Hex,
     params: CallParams<typeof writeContractActionExecute> = {},
@@ -68,7 +67,6 @@ export class ContractAction extends Deployable<ContractActionPayload> {
     });
   }
 
-  // TODO use data structure
   public async prepare(
     data: Hex,
     params: CallParams<typeof readContractActionPrepare> = {},

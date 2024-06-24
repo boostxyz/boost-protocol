@@ -1,6 +1,8 @@
 import {
   type PrepareSimpleBudgetPayload,
+  type TransferPayload,
   prepareSimpleBudgetPayload,
+  prepareTransferPayload,
   readSimpleBudgetAvailable,
   readSimpleBudgetDistributed,
   readSimpleBudgetIsAuthorized,
@@ -32,41 +34,35 @@ export class SimpleBudget extends Deployable<PrepareSimpleBudgetPayload> {
     });
   }
 
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
   public allocate(
-    data: Hex,
+    transfer: TransferPayload,
     params: CallParams<typeof writeSimpleBudgetAllocate> = {},
   ) {
     return writeSimpleBudgetAllocate(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [prepareTransferPayload(transfer)],
       ...params,
     });
   }
 
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
   public reclaim(
-    data: Hex,
+    transfer: TransferPayload,
     params: CallParams<typeof writeSimpleBudgetReclaim> = {},
   ) {
     return writeSimpleBudgetReclaim(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [prepareTransferPayload(transfer)],
       ...params,
     });
   }
 
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
   public disburse(
-    data: Hex,
+    transfer: TransferPayload,
     params: CallParams<typeof writeSimpleBudgetDisburse> = {},
   ) {
     return writeSimpleBudgetDisburse(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [prepareTransferPayload(transfer)],
       ...params,
     });
   }
@@ -74,12 +70,12 @@ export class SimpleBudget extends Deployable<PrepareSimpleBudgetPayload> {
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
   public disburseBatch(
-    data: Hex[],
+    transfers: TransferPayload[],
     params: CallParams<typeof writeSimpleBudgetDisburseBatch> = {},
   ) {
     return writeSimpleBudgetDisburseBatch(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [transfers.map(prepareTransferPayload)],
       ...params,
     });
   }

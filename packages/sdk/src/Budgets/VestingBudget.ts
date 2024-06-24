@@ -1,5 +1,7 @@
 import {
   type PrepareVestingBudgetPayload,
+  type TransferPayload,
+  prepareTransferPayload,
   prepareVestingBudgetPayload,
   readVestingBudgetAvailable,
   readVestingBudgetDistributed,
@@ -25,15 +27,13 @@ import type { CallParams } from '../utils';
 export type { PrepareVestingBudgetPayload };
 
 export class VestingBudget extends Deployable<PrepareVestingBudgetPayload> {
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
   public allocate(
-    data: Hex,
+    transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetAllocate> = {},
   ) {
     return writeVestingBudgetAllocate(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [prepareTransferPayload(transfer)],
       ...params,
     });
   }
@@ -41,12 +41,12 @@ export class VestingBudget extends Deployable<PrepareVestingBudgetPayload> {
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
   public reclaim(
-    data: Hex,
+    transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetReclaim> = {},
   ) {
     return writeVestingBudgetReclaim(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [prepareTransferPayload(transfer)],
       ...params,
     });
   }
@@ -54,12 +54,12 @@ export class VestingBudget extends Deployable<PrepareVestingBudgetPayload> {
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
   public disburse(
-    data: Hex,
+    transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetDisburse> = {},
   ) {
     return writeVestingBudgetDisburse(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [prepareTransferPayload(transfer)],
       ...params,
     });
   }
@@ -67,12 +67,12 @@ export class VestingBudget extends Deployable<PrepareVestingBudgetPayload> {
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
   public disburseBatch(
-    data: Hex[],
+    transfers: TransferPayload[],
     params: CallParams<typeof writeVestingBudgetDisburseBatch> = {},
   ) {
     return writeVestingBudgetDisburseBatch(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [transfers.map(prepareTransferPayload)],
       ...params,
     });
   }

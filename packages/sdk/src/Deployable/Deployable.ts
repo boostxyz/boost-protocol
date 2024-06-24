@@ -1,9 +1,10 @@
 import { type Config, deployContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import {
-  DeployableAddressRequiredError,
+  DeployableAlreadyDeployedError,
   DeployableParametersUnspecifiedError,
 } from '../errors';
+import { Contract } from './Contract';
 
 export type GenericDeployableParams = Omit<
   Parameters<typeof deployContract>[1],
@@ -12,34 +13,29 @@ export type GenericDeployableParams = Omit<
   args: [Hex, ...Array<Hex>];
 };
 
-export class Deployable {
-  protected _address: Address | undefined;
+export type DeployableOptions<Payload = unknown> = Payload | Address;
 
-  constructor(address?: Address) {
-    this._address = address;
+export class Deployable<Payload = unknown> extends Contract {
+  protected _payload: Payload | undefined;
+
+  constructor(config: Config, options: DeployableOptions<Payload>) {
+    if (typeof options === 'string') {
+      super(config, options as Address);
+    } else {
+      super(config, undefined);
+      this._payload = options as Payload;
+    }
   }
 
-  public async deploy(config: Config): Promise<Address> {
-    if (this.address) {
-      // throw? TODO
-      console.warn(`Deployable already has address ${this.address}`);
-    }
+  public async deploy(): Promise<Address> {
+    if (this.address) throw new DeployableAlreadyDeployedError(this.address);
     return (this._address = await deployContract(
-      config,
-      this.buildParameters(config),
+      this._config,
+      this.buildParameters(this._config),
     ));
   }
 
-  public get address() {
-    return this._address;
-  }
-
-  public at(address: Address) {
-    this._address = address;
-    return this;
-  }
-
-  public buildParameters(_config: Config): GenericDeployableParams {
+  public buildParameters(payload: Payload): GenericDeployableParams {
     throw new DeployableParametersUnspecifiedError();
   }
 }

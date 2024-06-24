@@ -3,12 +3,17 @@
   "version": "0.0.0-alpha.0",
   "private": true,
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
     ".": "./src/index.ts",
+    "./Boost": "./src/Boost.ts",
+    "./BoostClient": "./src/BoostClient.ts",
     "./Deployable/Deployable": "./src/Deployable/Deployable.ts",
+    "./Deployable/Contract": "./src/Deployable/Contract.ts",
     "./Actions/Action": "./src/Actions/Action.ts",
     "./Actions/ContractAction": "./src/Actions/ContractAction.ts",
     "./Actions/ERC721MintAction": "./src/Actions/ERC721MintAction.ts",
@@ -35,11 +40,29 @@
         "node": "./dist/index.js",
         "types": "./dist/index.d.ts"
       },
+      "./Boost": {
+        "require": "./dist/Boost.cjs",
+        "import": "./dist/Boost.js",
+        "node": "./dist/Boost.js",
+        "types": "./dist/Boost.d.ts"
+      },
+      "./BoostClient": {
+        "require": "./dist/BoostClient.cjs",
+        "import": "./dist/BoostClient.js",
+        "node": "./dist/BoostClient.js",
+        "types": "./dist/BoostClient.d.ts"
+      },
       "./Deployable/Deployable": {
         "require": "./dist/Deployable/Deployable.cjs",
         "import": "./dist/Deployable/Deployable.js",
         "node": "./dist/Deployable/Deployable.js",
         "types": "./dist/Deployable/Deployable.d.ts"
+      },
+      "./Deployable/Contract": {
+        "require": "./dist/Deployable/Contract.cjs",
+        "import": "./dist/Deployable/Contract.js",
+        "node": "./dist/Deployable/Contract.js",
+        "types": "./dist/Deployable/Contract.d.ts"
       },
       "./Actions/Action": {
         "require": "./dist/Actions/Action.cjs",

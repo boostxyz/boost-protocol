@@ -536,8 +536,9 @@ export const prepareERC721MintActionPayload = ({
   return prepareContractActionPayload({ chainId, target, selector, value });
 };
 
+export interface ClaimPayload { target: Address, data?: Hex}
 
-export const prepareClaimPayload = ({ target, data = zeroHash }: { target: Address, data?: Hex}) => {
+export const prepareClaimPayload = ({ target, data = zeroHash }: ClaimPayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'target' },

@@ -1,13 +1,7 @@
-import type { Deployable } from './Deployable/Deployable';
-
-export class DeployableAddressRequiredError extends Error {
+export class ContractAddressRequiredError extends Error {
   constructor() {
     super('Attempted to call contract method without providing an address');
   }
-}
-
-export function requireAddress(deployable: Deployable) {
-  if (!deployable.address) throw new DeployableAddressRequiredError();
 }
 
 export class DeployableAlreadyDeployedError extends Error {
@@ -20,7 +14,7 @@ export class DeployableAlreadyDeployedError extends Error {
   }
 }
 
-export class DeployableParametersUnspecifiedError extends Error {
+export class DeployableBuildParametersUnspecifiedError extends Error {
   constructor() {
     super(
       'Implementing class did not properly override the `buildParameters` method',
@@ -32,6 +26,22 @@ export class DeployableUnknownOwnerProvidedError extends Error {
   constructor() {
     super(
       'Expected an an owner to be provided in configuration or an account to exist on Wagmi config.',
+    );
+  }
+}
+
+export class DeployableWagmiConfigurationRequiredError extends Error {
+  constructor() {
+    super(
+      'Expected a valid Wagmi configuration to be available either on Deployable, or as argument to deploy.',
+    );
+  }
+}
+
+export class DeployableMissingPayloadError extends Error {
+  constructor() {
+    super(
+      'Expected a valid payload to be available either on Deployable or as argument to deploy.',
     );
   }
 }

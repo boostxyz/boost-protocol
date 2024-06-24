@@ -1,7 +1,9 @@
 import {
   type CGDAParameters,
+  type ClaimPayload,
   type PrepareCGDAIncentivePayload,
   prepareCGDAIncentivePayload,
+  prepareClaimPayload,
   readCgdaIncentiveAsset,
   readCgdaIncentiveCgdaParams,
   readCgdaIncentiveCurrentReward,
@@ -12,44 +14,30 @@ import {
 } from '@boostxyz/evm';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import type { Config } from '@wagmi/core';
-import { type Hex, zeroAddress } from 'viem';
+import type { Hex } from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { PrepareCGDAIncentivePayload };
 
-export class CGDAIncentive extends Deployable {
-  protected payload: PrepareCGDAIncentivePayload = {
-    asset: zeroAddress,
-    initialReward: 0n,
-    rewardDecay: 0n,
-    rewardBoost: 0n,
-    totalBudget: 0n,
-  };
-
-  constructor(config: PrepareCGDAIncentivePayload) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public async asset(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readCgdaIncentiveAsset(config, {
-      address: this.address,
+export class CGDAIncentive extends Deployable<PrepareCGDAIncentivePayload> {
+  public async asset(params: CallParams<typeof readCgdaIncentiveAsset> = {}) {
+    return readCgdaIncentiveAsset(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public async cgdaParams(config: Config): Promise<CGDAParameters> {
-    if (!this.address) throw new DeployableAddressRequiredError();
+  public async cgdaParams(
+    params: CallParams<typeof readCgdaIncentiveCgdaParams> = {},
+  ): Promise<CGDAParameters> {
     const [rewardDecay, rewardBoost, lastClaimTime, currentReward] =
-      await readCgdaIncentiveCgdaParams(config, {
-        address: this.address,
+      await readCgdaIncentiveCgdaParams(this._config, {
+        address: this.assertValidAddress(),
+        ...params,
       });
     return {
       rewardDecay,
@@ -59,60 +47,79 @@ export class CGDAIncentive extends Deployable {
     };
   }
 
-  public async totalBudget(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readCgdaIncentiveTotalBudget(config, {
-      address: this.address,
+  public async totalBudget(
+    params: CallParams<typeof readCgdaIncentiveTotalBudget> = {},
+  ) {
+    return readCgdaIncentiveTotalBudget(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
   //prepareClaimPayload
-  public async claim(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeCgdaIncentiveClaim(config, {
-      address: this.address,
-      args: [data],
+  public async claim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeCgdaIncentiveClaim> = {},
+  ) {
+    return writeCgdaIncentiveClaim(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
   //prepareClaimPayload
-  public async reclaim(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeCgdaIncentiveReclaim(config, {
-      address: this.address,
-      args: [data],
+  public async reclaim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeCgdaIncentiveReclaim> = {},
+  ) {
+    return writeCgdaIncentiveReclaim(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
-  //prepareClaimPayload
-  public async isClaimable(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readCgdaIncentiveIsClaimable(config, {
-      address: this.address,
-      args: [data],
+  public async isClaimable(
+    payload: ClaimPayload,
+    params: CallParams<typeof readCgdaIncentiveIsClaimable> = {},
+  ) {
+    return readCgdaIncentiveIsClaimable(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
-  public async preflight(data: PrepareCGDAIncentivePayload, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readCgdaIncentiveIsClaimable(config, {
-      address: this.address,
+  public async preflight(
+    data: PrepareCGDAIncentivePayload,
+    params: CallParams<typeof readCgdaIncentiveIsClaimable> = {},
+  ) {
+    return readCgdaIncentiveIsClaimable(this._config, {
+      address: this.assertValidAddress(),
       args: [prepareCGDAIncentivePayload(data)],
+      ...params,
     });
   }
 
-  public async currentReward(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readCgdaIncentiveCurrentReward(config, {
-      address: this.address,
+  public async currentReward(
+    params: CallParams<typeof readCgdaIncentiveCurrentReward> = {},
+  ) {
+    return readCgdaIncentiveCurrentReward(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public override buildParameters(_config: Config): GenericDeployableParams {
+  public override buildParameters(
+    _payload?: PrepareCGDAIncentivePayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload] = this.validateDeploymentConfig(_payload, _config);
     return {
       abi: CGDAIncentiveArtifact.abi,
       bytecode: CGDAIncentiveArtifact.bytecode as Hex,
-      args: [prepareCGDAIncentivePayload(this.payload)],
+      args: [prepareCGDAIncentivePayload(payload)],
     };
   }
 }

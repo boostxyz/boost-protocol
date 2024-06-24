@@ -10,82 +10,85 @@ import {
 } from '@boostxyz/evm';
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import type { Config } from '@wagmi/core';
-import { type Hex, zeroAddress, zeroHash } from 'viem';
+import type { Hex } from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { ContractActionPayload };
 
-export class ContractAction extends Deployable {
-  protected payload: ContractActionPayload = {
-    chainId: 0n,
-    target: zeroAddress,
-    selector: zeroHash,
-    value: 0n,
-  };
-
-  constructor(config: Partial<ContractActionPayload> = {}) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public async chainId(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readContractActionChainId(config, {
-      address: this.address,
+export class ContractAction extends Deployable<ContractActionPayload> {
+  public async chainId(
+    params: CallParams<typeof readContractActionChainId> = {},
+  ) {
+    return readContractActionChainId(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public async target(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readContractActionTarget(config, {
-      address: this.address,
+  public async target(
+    params: CallParams<typeof readContractActionTarget> = {},
+  ) {
+    return readContractActionTarget(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public async selector(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readContractActionSelector(config, {
-      address: this.address,
+  public async selector(
+    params: CallParams<typeof readContractActionSelector> = {},
+  ) {
+    return readContractActionSelector(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public async readContractActionValue(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readContractActionValue(config, {
-      address: this.address,
+  public async readContractActionValue(
+    params: CallParams<typeof readContractActionValue> = {},
+  ) {
+    return readContractActionValue(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
   // use what? also, payable
-  public async execute(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeContractActionExecute(config, {
-      address: this.address,
+  public async execute(
+    data: Hex,
+    params: CallParams<typeof writeContractActionExecute> = {},
+  ) {
+    return writeContractActionExecute(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // TODO use data structure
-  public async prepare(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readContractActionPrepare(config, {
-      address: this.address,
+  public async prepare(
+    data: Hex,
+    params: CallParams<typeof readContractActionPrepare> = {},
+  ) {
+    return readContractActionPrepare(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
-  public override buildParameters(_config: Config): GenericDeployableParams {
+  public override buildParameters(
+    _payload?: ContractActionPayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload] = this.validateDeploymentConfig(_payload, _config);
     return {
       abi: ContractActionArtifact.abi,
       bytecode: ContractActionArtifact.bytecode as Hex,
-      args: [prepareContractActionPayload(this.payload)],
+      args: [prepareContractActionPayload(payload)],
     };
   }
 }

@@ -14,8 +14,6 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
   {},
 );
 
-// console.log(Object.values(packageJson.exports).map((p) => p.slice(2)));
-
 /** @type {import('vite').UserConfig} */
 export default {
   build: {
@@ -24,12 +22,11 @@ export default {
     },
     lib: {
       entry: Object.values(packageJson.exports),
-      emptyOutDir: false,
       name: 'BoostSDK',
       fileName: (module, name) => {
         if (name === 'index')
           return `${name}.${module === 'es' ? 'js' : 'cjs'}`;
-        return `${moduleDirectories[name] || ''}/${name}.${module === 'es' ? 'js' : 'cjs'}`;
+        return `${moduleDirectories[name] ? moduleDirectories[name] + '/' : ''}${name}.${module === 'es' ? 'js' : 'cjs'}`;
       },
     },
   },

@@ -7,64 +7,61 @@ import {
 } from '@boostxyz/evm';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import type { Config } from '@wagmi/core';
-import { type Hex, zeroAddress, zeroHash } from 'viem';
+import type { Hex } from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { ERC721MintActionPayload };
 
-export class ERC721MintAction extends Deployable {
-  protected payload: ERC721MintActionPayload = {
-    chainId: 0n,
-    target: zeroAddress,
-    selector: zeroHash,
-    value: 0n,
-  };
-
-  constructor(config: Partial<ERC721MintActionPayload> = {}) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
+export class ERC721MintAction extends Deployable<ERC721MintActionPayload> {
   // use what? also, payable
-  public async execute(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeErc721MintActionExecute(config, {
-      address: this.address,
+  public async execute(
+    data: Hex,
+    params: CallParams<typeof writeErc721MintActionExecute> = {},
+  ) {
+    return writeErc721MintActionExecute(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // TODO use data structure
-  public async prepare(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc721MintActionPrepare(config, {
-      address: this.address,
+  public async prepare(
+    data: Hex,
+    params: CallParams<typeof readErc721MintActionPrepare> = {},
+  ) {
+    return readErc721MintActionPrepare(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // TODO use data structure
-  public async validate(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeErc721MintActionValidate(config, {
-      address: this.address,
+  public async validate(
+    data: Hex,
+    params: CallParams<typeof writeErc721MintActionValidate> = {},
+  ) {
+    return writeErc721MintActionValidate(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
-  // TODO use data structure
-  public override buildParameters(_config: Config): GenericDeployableParams {
+  public override buildParameters(
+    _payload?: ERC721MintActionPayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload] = this.validateDeploymentConfig(_payload, _config);
     return {
       abi: ERC721MintActionArtifact.abi,
       bytecode: ERC721MintActionArtifact.bytecode as Hex,
-      args: [prepareERC721MintActionPayload(this.payload)],
+      args: [prepareERC721MintActionPayload(payload)],
     };
   }
 }

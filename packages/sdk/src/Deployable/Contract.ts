@@ -1,5 +1,6 @@
 import type { Config } from '@wagmi/core';
 import type { Address } from 'viem';
+import { ContractAddressRequiredError } from '../errors';
 
 export class Contract {
   protected _config: Config;
@@ -22,5 +23,11 @@ export class Contract {
   public withConfig(config: Config) {
     this._config = config;
     return this;
+  }
+
+  protected assertValidAddress() {
+    const address = this.address;
+    if (!address) throw new ContractAddressRequiredError();
+    return address;
   }
 }

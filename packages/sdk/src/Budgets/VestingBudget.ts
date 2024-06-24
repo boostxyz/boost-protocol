@@ -19,133 +19,145 @@ import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import { DeployableUnknownOwnerProvidedError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { PrepareVestingBudgetPayload };
 
-export class VestingBudget extends Deployable {
-  protected payload: PrepareVestingBudgetPayload = {
-    owner: zeroAddress,
-    authorized: [],
-    start: 0n,
-    duration: 0n,
-    cliff: 0n,
-  };
-
-  constructor(config: Partial<PrepareVestingBudgetPayload> = {}) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
+export class VestingBudget extends Deployable<PrepareVestingBudgetPayload> {
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public allocate(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeVestingBudgetAllocate(config, {
-      address: this.address,
+  public allocate(
+    data: Hex,
+    params: CallParams<typeof writeVestingBudgetAllocate> = {},
+  ) {
+    return writeVestingBudgetAllocate(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public reclaim(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeVestingBudgetReclaim(config, {
-      address: this.address,
+  public reclaim(
+    data: Hex,
+    params: CallParams<typeof writeVestingBudgetReclaim> = {},
+  ) {
+    return writeVestingBudgetReclaim(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public disburse(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeVestingBudgetDisburse(config, {
-      address: this.address,
+  public disburse(
+    data: Hex,
+    params: CallParams<typeof writeVestingBudgetDisburse> = {},
+  ) {
+    return writeVestingBudgetDisburse(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public disburseBatch(data: Hex[], config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeVestingBudgetDisburseBatch(config, {
-      address: this.address,
+  public disburseBatch(
+    data: Hex[],
+    params: CallParams<typeof writeVestingBudgetDisburseBatch> = {},
+  ) {
+    return writeVestingBudgetDisburseBatch(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    config: Config,
+    params: CallParams<typeof writeVestingBudgetSetAuthorized> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return await writeVestingBudgetSetAuthorized(config, {
-      address: this.address,
+    return await writeVestingBudgetSetAuthorized(this._config, {
+      address: this.assertValidAddress(),
       args: [addresses, allowed],
+      ...params,
     });
   }
 
-  public isAuthorized(account: Address, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readVestingBudgetIsAuthorized(config, {
-      address: this.address,
+  public isAuthorized(
+    account: Address,
+    params: CallParams<typeof readVestingBudgetIsAuthorized> = {},
+  ) {
+    return readVestingBudgetIsAuthorized(this._config, {
+      address: this.assertValidAddress(),
       args: [account],
+      ...params,
     });
   }
 
-  public end(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readVestingBudgetEnd(config, {
-      address: this.address,
+  public end(params: CallParams<typeof readVestingBudgetEnd> = {}) {
+    return readVestingBudgetEnd(this._config, {
+      address: this.assertValidAddress(),
       args: [],
+      ...params,
     });
   }
 
-  public total(asset: Address, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readVestingBudgetTotal(config, {
-      address: this.address,
+  public total(
+    asset: Address,
+    params: CallParams<typeof readVestingBudgetTotal> = {},
+  ) {
+    return readVestingBudgetTotal(this._config, {
+      address: this.assertValidAddress(),
       args: [asset],
+      ...params,
     });
   }
 
-  public available(asset: Address, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readVestingBudgetAvailable(config, {
-      address: this.address,
+  public available(
+    asset: Address,
+    params: CallParams<typeof readVestingBudgetAvailable> = {},
+  ) {
+    return readVestingBudgetAvailable(this._config, {
+      address: this.assertValidAddress(),
       args: [asset],
+      ...params,
     });
   }
 
-  public distributed(asset: Address, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readVestingBudgetDistributed(config, {
-      address: this.address,
+  public distributed(
+    asset: Address,
+    params: CallParams<typeof readVestingBudgetDistributed> = {},
+  ) {
+    return readVestingBudgetDistributed(this._config, {
+      address: this.assertValidAddress(),
       args: [asset],
+      ...params,
     });
   }
 
-  public override buildParameters(config: Config): GenericDeployableParams {
-    if (!this.payload.owner || this.payload.owner === zeroAddress) {
+  public override buildParameters(
+    _payload?: PrepareVestingBudgetPayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload, config] = this.validateDeploymentConfig(_payload, _config);
+    if (!payload.owner || payload.owner === zeroAddress) {
       const owner = getAccount(config).address;
       if (owner) {
-        this.payload.owner = owner;
+        payload.owner = owner;
       } else {
-        // throw?
-        console.warn('Unable to ascertain owner for budget');
+        throw new DeployableUnknownOwnerProvidedError();
       }
     }
     return {
       abi: VestingBudgetArtifact.abi,
       bytecode: VestingBudgetArtifact.bytecode as Hex,
-      args: [prepareVestingBudgetPayload(this.payload)],
+      args: [prepareVestingBudgetPayload(payload)],
     };
   }
 }

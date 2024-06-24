@@ -11,58 +11,52 @@ import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import { DeployableUnknownOwnerProvidedError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { SimpleDenyListPayload };
 
 export class SimpleDenyList extends Deployable<SimpleDenyListPayload> {
-  protected payload: SimpleDenyListPayload = {
-    owner: zeroAddress,
-    allowed: [],
-  };
-
-  constructor(config: Partial<SimpleDenyListPayload> = {}) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public async isAllowed(address: Address, config: Config): Promise<boolean> {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return await readSimpleDenyListIsAllowed(config, {
-      address: this.address,
+  public async isAllowed(
+    address: Address,
+    params: CallParams<typeof readSimpleDenyListIsAllowed> = {},
+  ): Promise<boolean> {
+    return await readSimpleDenyListIsAllowed(this._config, {
+      address: this.assertValidAddress(),
       args: [address, zeroHash],
+      ...params,
     });
   }
 
   public async setAllowed(
     addresses: Address[],
     allowed: boolean[],
-    config: Config,
+    params: CallParams<typeof writeSimpleDenyListSetDenied> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return await writeSimpleDenyListSetDenied(config, {
-      address: this.address,
+    return await writeSimpleDenyListSetDenied(this._config, {
+      address: this.assertValidAddress(),
       args: [addresses, allowed],
+      ...params,
     });
   }
 
-  public override buildParameters(config: Config): GenericDeployableParams {
-    if (!this.payload.owner || this.payload.owner === zeroAddress) {
+  public override buildParameters(
+    _payload?: SimpleDenyListPayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload, config] = this.validateDeploymentConfig(_payload, _config);
+    if (!payload.owner || payload.owner === zeroAddress) {
       const owner = getAccount(config).address;
       if (owner) {
-        this.payload.owner = owner;
+        payload.owner = owner;
       } else {
-        // throw?
-        console.warn('Unable to ascertain owner for budget');
+        throw new DeployableUnknownOwnerProvidedError();
       }
     }
     return {
       abi: SimpleDenyListArtifact.abi,
       bytecode: SimpleDenyListArtifact.bytecode as Hex,
-      args: [prepareSimpleDenyListPayload(this.payload)],
+      args: [prepareSimpleDenyListPayload(payload)],
     };
   }
 }

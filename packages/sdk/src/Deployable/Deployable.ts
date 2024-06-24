@@ -2,7 +2,9 @@ import { type Config, deployContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import {
   DeployableAlreadyDeployedError,
-  DeployableParametersUnspecifiedError,
+  DeployableBuildParametersUnspecifiedError,
+  DeployableMissingPayloadError,
+  DeployableWagmiConfigurationRequiredError,
 } from '../errors';
 import { Contract } from './Contract';
 
@@ -27,15 +29,37 @@ export class Deployable<Payload = unknown> extends Contract {
     }
   }
 
-  public async deploy(): Promise<Address> {
+  get payload() {
+    return this._payload;
+  }
+
+  public withPayload(payload: Payload) {
+    this._payload = payload;
+    return this;
+  }
+
+  public async deploy(_payload?: Payload, _config?: Config): Promise<Address> {
     if (this.address) throw new DeployableAlreadyDeployedError(this.address);
+    const config = _config || this._config;
+    const payload = _payload || this._payload;
     return (this._address = await deployContract(
-      this._config,
-      this.buildParameters(this._config),
+      config,
+      this.buildParameters(payload),
     ));
   }
 
-  public buildParameters(payload: Payload): GenericDeployableParams {
-    throw new DeployableParametersUnspecifiedError();
+  public buildParameters(
+    _payload?: Payload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    throw new DeployableBuildParametersUnspecifiedError();
+  }
+
+  public validateDeploymentConfig(_payload?: Payload, _config?: Config) {
+    const config = _config || this._config;
+    if (!config) throw new DeployableWagmiConfigurationRequiredError();
+    const payload = _payload || this._payload;
+    if (!payload) throw new DeployableMissingPayloadError();
+    return [payload, config] as [Payload, Config];
   }
 }

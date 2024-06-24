@@ -1,6 +1,8 @@
 import {
+  type ClaimPayload,
   type PrepareAllowListIncentivePayload,
   prepareAllowListIncentivePayload,
+  prepareClaimPayload,
   readAllowListIncentiveAllowList,
   readAllowListIncentiveIsClaimable,
   readAllowListIncentiveLimit,
@@ -8,68 +10,69 @@ import {
 } from '@boostxyz/evm';
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import type { Config } from '@wagmi/core';
-import { type Hex, zeroAddress } from 'viem';
+import type { Hex } from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { PrepareAllowListIncentivePayload };
 
-export class AllowListIncentive extends Deployable {
-  protected payload: PrepareAllowListIncentivePayload = {
-    allowList: zeroAddress,
-    limit: 0n,
-  };
-
-  constructor(config: PrepareAllowListIncentivePayload) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public async allowList(config: Config): Promise<SimpleAllowList> {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    const address = await readAllowListIncentiveAllowList(config, {
-      address: this.address,
+export class AllowListIncentive extends Deployable<PrepareAllowListIncentivePayload> {
+  public async allowList(
+    params: CallParams<typeof readAllowListIncentiveAllowList> = {},
+  ): Promise<SimpleAllowList> {
+    const address = await readAllowListIncentiveAllowList(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
-    return new SimpleAllowList().at(address);
+    return new SimpleAllowList(this._config, address);
   }
 
-  public async limit(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readAllowListIncentiveLimit(config, {
-      address: this.address,
+  public async limit(
+    params: CallParams<typeof readAllowListIncentiveLimit> = {},
+  ) {
+    return readAllowListIncentiveLimit(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
   // use prepareClaimPayload
-  public async claim(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeAllowListIncentiveClaim(config, {
-      address: this.address,
-      args: [data],
+  public async claim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeAllowListIncentiveClaim> = {},
+  ) {
+    return writeAllowListIncentiveClaim(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
   // use prepareClaimPayload?
-  public async isClaimable(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readAllowListIncentiveIsClaimable(config, {
-      address: this.address,
-      args: [data],
+  public async isClaimable(
+    payload: ClaimPayload,
+    params: CallParams<typeof readAllowListIncentiveIsClaimable> = {},
+  ) {
+    return readAllowListIncentiveIsClaimable(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
-  public override buildParameters(_config: Config): GenericDeployableParams {
+  public override buildParameters(
+    _payload?: PrepareAllowListIncentivePayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload] = this.validateDeploymentConfig(_payload, _config);
     return {
       abi: AllowListIncentiveArtifact.abi,
       bytecode: AllowListIncentiveArtifact.bytecode as Hex,
-      args: [prepareAllowListIncentivePayload(this.payload)],
+      args: [prepareAllowListIncentivePayload(payload)],
     };
   }
 }

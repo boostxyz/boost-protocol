@@ -1,7 +1,9 @@
 import {
+  type ClaimPayload,
   type ERC20IncentivePayload,
   type PrepareERC20IncentivePayload,
-  StrategyType,
+  type StrategyType,
+  prepareClaimPayload,
   prepareERC20IncentivePayload,
   readErc20IncentiveAsset,
   readErc20IncentiveEntries,
@@ -16,114 +18,123 @@ import {
 } from '@boostxyz/evm';
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import type { Config } from '@wagmi/core';
-import { type Hex, zeroAddress } from 'viem';
+import type { Hex } from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { PrepareERC20IncentivePayload };
 
-export class ERC20Incentive extends Deployable {
-  protected payload: PrepareERC20IncentivePayload = {
-    asset: zeroAddress,
-    strategy: StrategyType.POOL,
-    reward: 0n,
-    limit: 0n,
-  };
-
-  constructor(config: PrepareERC20IncentivePayload) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public async asset(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc20IncentiveAsset(config, {
-      address: this.address,
+export class ERC20Incentive extends Deployable<PrepareERC20IncentivePayload> {
+  public async asset(params: CallParams<typeof readErc20IncentiveAsset> = {}) {
+    return readErc20IncentiveAsset(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public async strategy(config: Config): Promise<StrategyType> {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc20IncentiveStrategy(config, {
-      address: this.address,
+  public async strategy(
+    params: CallParams<typeof readErc20IncentiveStrategy> = {},
+  ): Promise<StrategyType> {
+    return readErc20IncentiveStrategy(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     }) as Promise<StrategyType>;
   }
 
-  public async reward(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc20IncentiveReward(config, {
-      address: this.address,
+  public async reward(
+    params: CallParams<typeof readErc20IncentiveReward> = {},
+  ) {
+    return readErc20IncentiveReward(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public async limit(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc20IncentiveLimit(config, {
-      address: this.address,
+  public async limit(params: CallParams<typeof readErc20IncentiveLimit> = {}) {
+    return readErc20IncentiveLimit(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public async entries(i: bigint, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc20IncentiveEntries(config, {
-      address: this.address,
+  public async entries(
+    i: bigint,
+    params: CallParams<typeof readErc20IncentiveEntries> = {},
+  ) {
+    return readErc20IncentiveEntries(this._config, {
+      address: this.assertValidAddress(),
       args: [i],
+      ...params,
+    });
+  }
+
+  public async claim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeErc20IncentiveClaim> = {},
+  ) {
+    return writeErc20IncentiveClaim(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
   //prepareClaimPayload
-  public async claim(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeErc20IncentiveClaim(config, {
-      address: this.address,
-      args: [data],
+  public async reclaim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeErc20IncentiveReclaim> = {},
+  ) {
+    return writeErc20IncentiveReclaim(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
   //prepareClaimPayload
-  public async reclaim(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeErc20IncentiveReclaim(config, {
-      address: this.address,
-      args: [data],
+  public async isClaimable(
+    payload: ClaimPayload,
+    params: CallParams<typeof readErc20IncentiveIsClaimable> = {},
+  ) {
+    return readErc20IncentiveIsClaimable(this._config, {
+      address: this.assertValidAddress(),
+      args: [prepareClaimPayload(payload)],
+      ...params,
     });
   }
 
-  //prepareClaimPayload
-  public async isClaimable(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc20IncentiveIsClaimable(config, {
-      address: this.address,
-      args: [data],
-    });
-  }
-
-  public async preflight(data: ERC20IncentivePayload, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readErc20IncentivePreflight(config, {
-      address: this.address,
+  public async preflight(
+    data: ERC20IncentivePayload,
+    params: CallParams<typeof readErc20IncentivePreflight> = {},
+  ) {
+    return readErc20IncentivePreflight(this._config, {
+      address: this.assertValidAddress(),
       args: [prepareERC20IncentivePayload(data)],
+      ...params,
     });
   }
 
-  public async drawRaffle(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeErc20IncentiveDrawRaffle(config, {
-      address: this.address,
+  public async drawRaffle(
+    params: CallParams<typeof writeErc20IncentiveDrawRaffle> = {},
+  ) {
+    return writeErc20IncentiveDrawRaffle(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
-  public override buildParameters(_config: Config): GenericDeployableParams {
+  public override buildParameters(
+    _payload?: PrepareERC20IncentivePayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload] = this.validateDeploymentConfig(_payload, _config);
     return {
       abi: ERC20IncentiveArtifact.abi,
       bytecode: ERC20IncentiveArtifact.bytecode as Hex,
-      args: [prepareERC20IncentivePayload(this.payload)],
+      args: [prepareERC20IncentivePayload(payload)],
     };
   }
 }

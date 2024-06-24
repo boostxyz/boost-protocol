@@ -15,59 +15,54 @@ import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { SimpleAllowListPayload };
 
-export class SignerValidator extends Deployable {
-  protected payload: SignerValidatorPayload = {
-    signers: [],
-  };
-
-  constructor(config: Partial<SignerValidatorPayload> = {}) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public async signers(address: Address, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readSignerValidatorSigners(config, {
-      address: this.address,
+export class SignerValidator extends Deployable<SignerValidatorPayload> {
+  public async signers(
+    address: Address,
+    params: CallParams<typeof readSignerValidatorSigners> = {},
+  ) {
+    return readSignerValidatorSigners(this._config, {
+      address: this.assertValidAddress(),
       args: [address],
+      ...params,
     });
   }
 
   public async validate(
     payload: SignerValidatorValidatePayload,
-    config: Config,
+    params: CallParams<typeof writeSignerValidatorValidate> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeSignerValidatorValidate(config, {
-      address: this.address,
+    return writeSignerValidatorValidate(this._config, {
+      address: this.assertValidAddress(),
       args: [prepareSignerValidatorValidatePayload(payload)],
+      ...params,
     });
   }
 
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    config: Config,
+    params: CallParams<typeof writeSignerValidatorSetAuthorized> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return await writeSignerValidatorSetAuthorized(config, {
-      address: this.address,
+    return await writeSignerValidatorSetAuthorized(this._config, {
+      address: this.assertValidAddress(),
       args: [addresses, allowed],
+      ...params,
     });
   }
 
-  public override buildParameters(_config: Config): GenericDeployableParams {
+  public override buildParameters(
+    _payload?: SignerValidatorPayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload] = this.validateDeploymentConfig(_payload, _config);
     return {
       abi: SignerValidatorArtifact.abi,
       bytecode: SignerValidatorArtifact.bytecode as Hex,
-      args: [prepareSignerValidatorPayload(this.payload)],
+      args: [prepareSignerValidatorPayload(payload)],
     };
   }
 }

@@ -1,7 +1,5 @@
 import {
   type PrepareSimpleBudgetPayload,
-  prepareERC1155Transfer,
-  prepareFungibleTransfer,
   prepareSimpleBudgetPayload,
   readSimpleBudgetAvailable,
   readSimpleBudgetDistributed,
@@ -16,146 +14,152 @@ import {
 } from '@boostxyz/evm';
 import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import { type Config, getAccount } from '@wagmi/core';
-import {
-  type Address,
-  type Hex,
-  encodeAbiParameters,
-  zeroAddress,
-  zeroHash,
-} from 'viem';
+import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableAddressRequiredError } from '../errors';
+import { DeployableUnknownOwnerProvidedError } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { PrepareSimpleBudgetPayload };
 
-export class SimpleBudget extends Deployable {
-  protected payload: PrepareSimpleBudgetPayload = {
-    owner: zeroAddress,
-    authorized: [],
-  };
-
-  constructor(config: Partial<PrepareSimpleBudgetPayload> = {}) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public start(config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readVestingBudgetStart(config, { address: this.address });
-  }
-
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
-  public allocate(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeSimpleBudgetAllocate(config, {
-      address: this.address,
-      args: [data],
+export class SimpleBudget extends Deployable<PrepareSimpleBudgetPayload> {
+  public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
+    return readVestingBudgetStart(this._config, {
+      address: this.assertValidAddress(),
+      ...params,
     });
   }
 
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public reclaim(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeSimpleBudgetReclaim(config, {
-      address: this.address,
+  public allocate(
+    data: Hex,
+    params: CallParams<typeof writeSimpleBudgetAllocate> = {},
+  ) {
+    return writeSimpleBudgetAllocate(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public disburse(data: Hex, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeSimpleBudgetDisburse(config, {
-      address: this.address,
+  public reclaim(
+    data: Hex,
+    params: CallParams<typeof writeSimpleBudgetReclaim> = {},
+  ) {
+    return writeSimpleBudgetReclaim(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
     });
   }
 
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public disburseBatch(data: Hex[], config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return writeSimpleBudgetDisburseBatch(config, {
-      address: this.address,
+  public disburse(
+    data: Hex,
+    params: CallParams<typeof writeSimpleBudgetDisburse> = {},
+  ) {
+    return writeSimpleBudgetDisburse(this._config, {
+      address: this.assertValidAddress(),
       args: [data],
+      ...params,
+    });
+  }
+
+  // use prepareFungibleTransfer or prepareERC1155Transfer
+  // TODO use data structure
+  public disburseBatch(
+    data: Hex[],
+    params: CallParams<typeof writeSimpleBudgetDisburseBatch> = {},
+  ) {
+    return writeSimpleBudgetDisburseBatch(this._config, {
+      address: this.assertValidAddress(),
+      args: [data],
+      ...params,
     });
   }
 
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    config: Config,
+    params: CallParams<typeof writeSimpleBudgetSetAuthorized> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return await writeSimpleBudgetSetAuthorized(config, {
-      address: this.address,
+    return await writeSimpleBudgetSetAuthorized(this._config, {
+      address: this.assertValidAddress(),
       args: [addresses, allowed],
+      ...params,
     });
   }
 
-  public isAuthorized(account: Address, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readSimpleBudgetIsAuthorized(config, {
-      address: this.address,
+  public isAuthorized(
+    account: Address,
+    params: CallParams<typeof readSimpleBudgetIsAuthorized> = {},
+  ) {
+    return readSimpleBudgetIsAuthorized(this._config, {
+      address: this.assertValidAddress(),
       args: [account],
+      ...params,
     });
   }
 
-  public total(asset: Address, tokenId: bigint | undefined, config: Config) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readSimpleBudgetTotal(config, {
-      address: this.address,
+  public total(
+    asset: Address,
+    tokenId: bigint | undefined,
+    params: CallParams<typeof readSimpleBudgetTotal> = {},
+  ) {
+    return readSimpleBudgetTotal(this._config, {
+      address: this.assertValidAddress(),
       args: tokenId ? [asset, tokenId] : [asset],
+      ...params,
     });
   }
 
   public available(
     asset: Address,
     tokenId: bigint | undefined,
-    config: Config,
+    params: CallParams<typeof readSimpleBudgetAvailable> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readSimpleBudgetAvailable(config, {
-      address: this.address,
+    return readSimpleBudgetAvailable(this._config, {
+      address: this.assertValidAddress(),
       args: tokenId ? [asset, tokenId] : [asset],
+      ...params,
     });
   }
 
   public distributed(
     asset: Address,
     tokenId: bigint | undefined,
-    config: Config,
+    params: CallParams<typeof readSimpleBudgetDistributed> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return readSimpleBudgetDistributed(config, {
-      address: this.address,
+    return readSimpleBudgetDistributed(this._config, {
+      address: this.assertValidAddress(),
       args: tokenId ? [asset, tokenId] : [asset],
+      ...params,
     });
   }
 
-  public override buildParameters(config: Config): GenericDeployableParams {
-    if (!this.payload.owner || this.payload.owner === zeroAddress) {
+  public override buildParameters(
+    _payload?: PrepareSimpleBudgetPayload,
+    _config?: Config,
+  ): GenericDeployableParams {
+    const [payload, config] = this.validateDeploymentConfig(_payload, _config);
+    if (!payload.owner || payload.owner === zeroAddress) {
       const owner = getAccount(config).address;
       if (owner) {
-        this.payload.owner = owner;
+        payload.owner = owner;
       } else {
-        // throw?
-        console.warn('Unable to ascertain owner for budget');
+        throw new DeployableUnknownOwnerProvidedError();
       }
     }
     return {
       abi: SimpleBudgetArtifact.abi,
       bytecode: SimpleBudgetArtifact.bytecode as Hex,
-      args: [prepareSimpleBudgetPayload(this.payload)],
+      args: [prepareSimpleBudgetPayload(payload)],
     };
   }
 }

@@ -1,18 +1,21 @@
 import {
   type SimpleDenyListPayload,
   prepareSimpleDenyListPayload,
+  readSimpleDenyListIsAllowed,
+  writeSimpleDenyListSetDenied,
 } from '@boostxyz/evm';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import { type Config, getAccount } from '@wagmi/core';
-import { type Hex, zeroAddress } from 'viem';
+import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableAddressRequiredError } from '../errors';
 
 export type { SimpleDenyListPayload };
 
-export class SimpleDenyList extends Deployable {
+export class SimpleDenyList extends Deployable<SimpleDenyListPayload> {
   protected payload: SimpleDenyListPayload = {
     owner: zeroAddress,
     allowed: [],
@@ -24,6 +27,26 @@ export class SimpleDenyList extends Deployable {
       ...this.payload,
       ...config,
     };
+  }
+
+  public async isAllowed(address: Address, config: Config): Promise<boolean> {
+    if (!this.address) throw new DeployableAddressRequiredError();
+    return await readSimpleDenyListIsAllowed(config, {
+      address: this.address,
+      args: [address, zeroHash],
+    });
+  }
+
+  public async setAllowed(
+    addresses: Address[],
+    allowed: boolean[],
+    config: Config,
+  ) {
+    if (!this.address) throw new DeployableAddressRequiredError();
+    return await writeSimpleDenyListSetDenied(config, {
+      address: this.address,
+      args: [addresses, allowed],
+    });
   }
 
   public override buildParameters(config: Config): GenericDeployableParams {

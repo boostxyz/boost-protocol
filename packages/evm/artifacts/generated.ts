@@ -6901,7 +6901,7 @@ export const readAllowList = /*#__PURE__*/ createReadContract({
  */
 export const readAllowListIsAllowed = /*#__PURE__*/ createReadContract({
   abi: allowListAbi,
-  functionName: 'isAllowed'
+  functionName: 'isAllowed',
 })
 
 /**

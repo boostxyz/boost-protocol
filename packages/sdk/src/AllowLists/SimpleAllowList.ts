@@ -1,54 +1,55 @@
 import {
   type SimpleAllowListPayload,
   prepareSimpleAllowListPayload,
-  readAllowListIsAllowed,
+  readSimpleAllowListIsAllowed,
   writeSimpleAllowListSetAllowed,
 } from '@boostxyz/evm';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
+import {
+  type Address,
+  type CallParameters,
+  type Hex,
+  zeroAddress,
+  zeroHash,
+} from 'viem';
 import {
   Deployable,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
 import {
   DeployableAddressRequiredError,
-  DeployableUnknownOwnerProvided,
+  DeployableUnknownOwnerProvidedError,
+  requireAddress,
 } from '../errors';
+import type { CallParams } from '../utils';
 
 export type { SimpleAllowListPayload };
 
-export class SimpleAllowList extends Deployable {
-  protected payload: SimpleAllowListPayload = {
-    owner: zeroAddress,
-    allowed: [],
-  };
-
-  constructor(config: Partial<SimpleAllowListPayload> = {}) {
-    super();
-    this.payload = {
-      ...this.payload,
-      ...config,
-    };
-  }
-
-  public async isAllowed(address: Address, config: Config): Promise<boolean> {
+export class SimpleAllowList extends Deployable<SimpleAllowListPayload> {
+  public async isAllowed(
+    address: Address,
+    params: CallParams<typeof readSimpleAllowListIsAllowed> = {},
+  ): Promise<boolean> {
     if (!this.address) throw new DeployableAddressRequiredError();
-    return await readAllowListIsAllowed(config, {
+    return await readSimpleAllowListIsAllowed(this._config, {
       address: this.address,
       args: [address, zeroHash],
+      ...params,
     });
   }
 
   public async setAllowed(
     addresses: Address[],
     allowed: boolean[],
-    config: Config,
+    params: CallParams<typeof readSimpleAllowListIsAllowed> = {},
   ) {
-    if (!this.address) throw new DeployableAddressRequiredError();
-    return await writeSimpleAllowListSetAllowed(config, {
-      address: this.address,
+    // if (!this.address) throw new DeployableAddressRequiredError();
+    requireAddress(this);
+    return await writeSimpleAllowListSetAllowed(this._config, {
+      address: this.address!,
       args: [addresses, allowed],
+      ...params,
     });
   }
 
@@ -58,7 +59,7 @@ export class SimpleAllowList extends Deployable {
       if (owner) {
         this.payload.owner = owner;
       } else {
-        throw new DeployableUnknownOwnerProvided();
+        throw new DeployableUnknownOwnerProvidedError();
       }
     }
     return {

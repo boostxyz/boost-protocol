@@ -86,6 +86,25 @@ export function erc20Incentive({
   };
 }
 
+export interface SignerValidatorValidatePayload {
+  signer: Address;
+  hash: Hex;
+  signature: Hex;
+}
+
+export const prepareSignerValidatorValidatePayload = ({
+  signer, hash, signature
+  }: SignerValidatorValidatePayload) => {
+    return encodeAbiParameters(
+      [
+        { type: 'address', name: 'signer_' },
+        { type: 'bytes32', name: 'hash_' },
+        { type: 'bytes', name: 'signature_' },
+      ],
+      [signer, hash, signature],
+    );
+  };
+
 export interface SignerValidatorPayload {
   signers: Address[];
 }
@@ -329,6 +348,13 @@ export const preparePointsIncentivePayload = ({
   );
 };
 
+export interface CGDAParameters {
+  rewardDecay: bigint;
+  rewardBoost: bigint;
+  lastClaimTime: bigint;
+  currentReward: bigint;
+}
+
 export interface PrepareCGDAIncentivePayload {
   asset: Address;
   initialReward: bigint;
@@ -509,3 +535,14 @@ export const prepareERC721MintActionPayload = ({
 }: ContractActionPayload) => {
   return prepareContractActionPayload({ chainId, target, selector, value });
 };
+
+
+export const prepareClaimPayload = ({ target, data = zeroHash }: { target: Address, data?: Hex}) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'target' },
+      { type: 'bytes', name: 'data' },
+    ],
+    [target, data],
+  )
+}

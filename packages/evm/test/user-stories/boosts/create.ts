@@ -1,14 +1,14 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
+import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
 import { expect } from 'chai';
 import { viem } from 'hardhat';
-import { Address, WalletClient, parseEther } from 'viem';
-import { BoostCore$Type } from '../../../artifacts/contracts/BoostCore.sol/BoostCore';
-import { BoostRegistry$Type } from '../../../artifacts/contracts/BoostRegistry.sol/BoostRegistry';
-import { Action$Type } from '../../../artifacts/contracts/actions/Action.sol/Action';
-import { SimpleBudget$Type } from '../../../artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget';
-import { MockERC20$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC20';
-import { MockERC1155$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC1155';
+import { type Address, type WalletClient, parseEther } from 'viem';
+import type { BoostCore$Type } from '../../../artifacts/contracts/BoostCore.sol/BoostCore';
+import type { BoostRegistry$Type } from '../../../artifacts/contracts/BoostRegistry.sol/BoostRegistry';
+import type { Action$Type } from '../../../artifacts/contracts/actions/Action.sol/Action';
+import type { SimpleBudget$Type } from '../../../artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget';
+import type { MockERC20$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC20';
+import type { MockERC1155$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC1155';
 import {
   StrategyType,
   erc20Incentive,
@@ -18,7 +18,7 @@ import {
   simpleAllowList,
 } from '../../../artifacts/index';
 import {
-  Base,
+  type Base,
   coreAndRegistry,
   freshBoost,
   fundedBudget,

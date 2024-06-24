@@ -1,7 +1,12 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { expect } from 'chai';
 import { viem } from 'hardhat';
-import { Address, GetContractReturnType, parseEther, zeroAddress } from 'viem';
+import {
+  type Address,
+  type GetContractReturnType,
+  parseEther,
+  zeroAddress,
+} from 'viem';
 import {
   RegistryType,
   StrategyType,
@@ -12,8 +17,8 @@ import {
   prepareFungibleTransfer,
   prepareSimpleBudgetPayload,
 } from '../../artifacts';
-import { BoostCore$Type } from '../../artifacts/contracts/BoostCore.sol/BoostCore';
-import { BoostRegistry$Type } from '../../artifacts/contracts/BoostRegistry.sol/BoostRegistry';
+import type { BoostCore$Type } from '../../artifacts/contracts/BoostCore.sol/BoostCore';
+import type { BoostRegistry$Type } from '../../artifacts/contracts/BoostRegistry.sol/BoostRegistry';
 
 export async function freshBudget() {
   const { registry, core } = await loadFixture(coreAndRegistry);

@@ -1,4 +1,5 @@
 export * from './BoostClient';
+export * from './Boost';
 export * from './errors';
 
 // Actions

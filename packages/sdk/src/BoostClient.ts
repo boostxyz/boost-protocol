@@ -345,12 +345,11 @@ export class BoostClient {
       owner,
     };
 
-    const boostAddress = await boostFactory(this.config, {
+    const _boostAddress = await boostFactory(this.config, {
       args: [prepareBoostPayload(boostPayload)],
     });
 
-    return new Boost(this.config, {
-      address: boostAddress,
+    return new Boost({
       budget,
       action,
       validator,

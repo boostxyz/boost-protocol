@@ -1,3 +1,5 @@
+import { type Config, getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   type SimpleBudgetPayload,
   type TransferPayload,
@@ -13,10 +15,8 @@ import {
   writeSimpleBudgetDisburseBatch,
   writeSimpleBudgetReclaim,
   writeSimpleBudgetSetAuthorized,
-} from '@boostxyz/evm';
-import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress } from 'viem';
+} from '../../../evm/artifacts';
+import SimpleBudgetArtifact from '../../../evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import {
   Deployable,
   type GenericDeployableParams,

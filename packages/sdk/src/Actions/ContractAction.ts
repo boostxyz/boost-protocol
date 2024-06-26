@@ -1,3 +1,5 @@
+import type { Config } from '@wagmi/core';
+import type { Hex } from 'viem';
 import {
   type ContractActionPayload,
   prepareContractActionPayload,
@@ -7,10 +9,8 @@ import {
   readContractActionTarget,
   readContractActionValue,
   writeContractActionExecute,
-} from '@boostxyz/evm';
-import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+} from '../../../evm/artifacts';
+import ContractActionArtifact from '../../../evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import {
   Deployable,
   type GenericDeployableParams,

@@ -16,7 +16,7 @@ import PointsIncentive from '@boostxyz/evm/artifacts/contracts/incentives/Points
 import SignerValidator from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import type { Address, Hex } from 'viem';
 import { accounts } from './accounts';
-import { mockWalletClient, setupConfig } from './viem';
+import { mockWalletClient, setupConfig, testAccount } from './viem';
 
 export interface Fixtures {
   bases: { type: RegistryType; name: string; base: Address }[];
@@ -166,7 +166,8 @@ export async function deployFixtures(
 
   for (const { type, name, base } of bases) {
     await writeBoostRegistryRegister(config, {
-      address: account,
+      account: { ...testAccount, type: 'local' },
+      address: registry,
       args: [type, name, base],
     });
   }

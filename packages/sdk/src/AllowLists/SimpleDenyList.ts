@@ -1,12 +1,12 @@
+import { type Config, getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import {
   type SimpleDenyListPayload,
   prepareSimpleDenyListPayload,
   readSimpleDenyListIsAllowed,
   writeSimpleDenyListSetDenied,
-} from '@boostxyz/evm';
-import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
+} from '../../../evm/artifacts';
+import SimpleDenyListArtifact from '../../../evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import {
   Deployable,
   type GenericDeployableParams,

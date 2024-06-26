@@ -1,3 +1,5 @@
+import type { Config } from '@wagmi/core';
+import type { Hex } from 'viem';
 import {
   type ClaimPayload,
   type PointsIncentivePayload,
@@ -9,10 +11,8 @@ import {
   readPointsIncentiveSelector,
   readPointsIncentiveVenue,
   writePointsIncentiveClaim,
-} from '@boostxyz/evm';
-import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+} from '../../../evm/artifacts';
+import PointsIncentiveArtifact from '../../../evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import {
   Deployable,
   type GenericDeployableParams,

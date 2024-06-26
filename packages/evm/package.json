@@ -3,8 +3,12 @@
   "version": "0.0.0-alpha.0",
   "description": "",
   "private": true,
+  "files": [
+    "dist",
+    "artifacts",
+    "contracts"
+  ],
   "type": "module",
-  "files": ["dist", "artifacts", "contracts"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
@@ -44,7 +48,7 @@
     "@wagmi/cli": "^2.1.4",
     "abitype": "^1.0.2",
     "chai": "4",
-    "hardhat": "^2.22.3",
+    "hardhat": "^2.22.5",
     "solady": "^0.0.208",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",

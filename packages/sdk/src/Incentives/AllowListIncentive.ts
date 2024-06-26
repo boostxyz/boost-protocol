@@ -1,3 +1,5 @@
+import type { Config } from '@wagmi/core';
+import type { Hex } from 'viem';
 import {
   type AllowListIncentivePayload,
   type ClaimPayload,
@@ -7,10 +9,8 @@ import {
   readAllowListIncentiveIsClaimable,
   readAllowListIncentiveLimit,
   writeAllowListIncentiveClaim,
-} from '@boostxyz/evm';
-import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+} from '../../../evm/artifacts';
+import AllowListIncentiveArtifact from '../../../evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import {
   Deployable,

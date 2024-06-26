@@ -1,3 +1,5 @@
+import type { Config } from '@wagmi/core';
+import type { Hex } from 'viem';
 import {
   type ClaimPayload,
   type ERC1155IncentivePayload,
@@ -14,10 +16,8 @@ import {
   readErc1155SupportsInterface,
   writeErc1155IncentiveClaim,
   writeErc1155IncentiveReclaim,
-} from '@boostxyz/evm';
-import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+} from '../../../evm/artifacts';
+import ERC1155IncentiveArtifact from '../../../evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import {
   Deployable,
   type GenericDeployableParams,

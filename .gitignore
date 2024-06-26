@@ -9,3 +9,4 @@ docs
 
 .env*
 !.env.sample
+cache

@@ -1,3 +1,5 @@
+import type { Config } from '@wagmi/core';
+import type { Address, Hex } from 'viem';
 import {
   type SignerValidatorPayload,
   type SignerValidatorValidatePayload,
@@ -7,10 +9,8 @@ import {
   readSignerValidatorSigners,
   writeSignerValidatorSetAuthorized,
   writeSignerValidatorValidate,
-} from '@boostxyz/evm';
-import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
-import type { Config } from '@wagmi/core';
-import type { Address, Hex } from 'viem';
+} from '../../../evm/artifacts';
+import SignerValidatorArtifact from '../../../evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import {
   Deployable,
   type GenericDeployableParams,

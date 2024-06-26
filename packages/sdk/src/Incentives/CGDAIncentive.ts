@@ -1,3 +1,5 @@
+import type { Config } from '@wagmi/core';
+import type { Hex } from 'viem';
 import {
   type CGDAIncentivePayload,
   type CGDAParameters,
@@ -11,10 +13,8 @@ import {
   readCgdaIncentiveTotalBudget,
   writeCgdaIncentiveClaim,
   writeCgdaIncentiveReclaim,
-} from '@boostxyz/evm';
-import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+} from '../../../evm/artifacts';
+import CGDAIncentiveArtifact from '../../../evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import {
   Deployable,
   type GenericDeployableParams,

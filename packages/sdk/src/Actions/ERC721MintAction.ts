@@ -1,13 +1,13 @@
+import type { Config } from '@wagmi/core';
+import type { Hex } from 'viem';
 import {
   type ERC721MintActionPayload,
   prepareERC721MintActionPayload,
   readErc721MintActionPrepare,
   writeErc721MintActionExecute,
   writeErc721MintActionValidate,
-} from '@boostxyz/evm';
-import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+} from '../../../evm/artifacts';
+import ERC721MintActionArtifact from '../../../evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import {
   Deployable,
   type GenericDeployableParams,

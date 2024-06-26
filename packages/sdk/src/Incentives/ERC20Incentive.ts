@@ -1,3 +1,5 @@
+import type { Config } from '@wagmi/core';
+import type { Hex } from 'viem';
 import {
   type ClaimPayload,
   type ERC20IncentivePayload,
@@ -14,10 +16,8 @@ import {
   writeErc20IncentiveClaim,
   writeErc20IncentiveDrawRaffle,
   writeErc20IncentiveReclaim,
-} from '@boostxyz/evm';
-import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+} from '../../../evm/artifacts';
+import ERC20IncentiveArtifact from '../../../evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import {
   Deployable,
   type GenericDeployableParams,

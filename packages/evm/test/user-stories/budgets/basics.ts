@@ -1,11 +1,11 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
+import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
 import { expect } from 'chai';
 import { viem } from 'hardhat';
-import { Address, WalletClient, parseEther, zeroAddress } from 'viem';
-import { SimpleBudget$Type } from '../../../artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget';
-import { MockERC20$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC20';
-import { MockERC1155$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC1155';
+import { type Address, type WalletClient, parseEther, zeroAddress } from 'viem';
+import type { SimpleBudget$Type } from '../../../artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget';
+import type { MockERC20$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC20';
+import type { MockERC1155$Type } from '../../../artifacts/contracts/shared/Mocks.sol/MockERC1155';
 import {
   prepareERC1155Transfer,
   prepareFungibleTransfer,

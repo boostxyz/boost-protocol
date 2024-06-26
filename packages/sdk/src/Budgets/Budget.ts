@@ -1,4 +1,7 @@
-import { prepareERC1155Transfer, prepareFungibleTransfer } from '@boostxyz/evm';
+import {
+  prepareERC1155Transfer,
+  prepareFungibleTransfer,
+} from '../../../evm/artifacts';
 import { SimpleBudget } from './SimpleBudget';
 import { VestingBudget } from './VestingBudget';
 

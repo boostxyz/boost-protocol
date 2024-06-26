@@ -1,3 +1,5 @@
+import { type Config, getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   type TransferPayload,
   type VestingBudgetPayload,
@@ -13,10 +15,8 @@ import {
   writeVestingBudgetDisburseBatch,
   writeVestingBudgetReclaim,
   writeVestingBudgetSetAuthorized,
-} from '@boostxyz/evm';
-import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress } from 'viem';
+} from '../../../evm/artifacts';
+import VestingBudgetArtifact from '../../../evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
 import {
   Deployable,
   type GenericDeployableParams,

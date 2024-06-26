@@ -1,12 +1,12 @@
+import { type Config, getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import {
   type SimpleAllowListPayload,
   prepareSimpleAllowListPayload,
   readSimpleAllowListIsAllowed,
   writeSimpleAllowListSetAllowed,
-} from '@boostxyz/evm';
-import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
+} from '../../../evm/artifacts';
+import SimpleAllowListArtifact from '../../../evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import {
   Deployable,
   type GenericDeployableParams,

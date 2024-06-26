@@ -1,5 +1,5 @@
 import type { Config } from '@wagmi/core';
-import type { Address } from 'viem';
+import type { Account, Address } from 'viem';
 import { ContractAddressRequiredError } from '../errors';
 
 export class Contract {

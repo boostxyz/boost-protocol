@@ -50,7 +50,7 @@ export async function setup({ provide }: GlobalSetupContext) {
   }
   provide('wsPort', 3000);
 
-  return async function () {
+  return function () {
     if (process && !process.killed) {
       process.kill();
     }

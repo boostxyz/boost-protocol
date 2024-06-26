@@ -1,10 +1,12 @@
-import { mock } from '@wagmi/connectors';
 import { createConfig } from '@wagmi/core';
 import { http, createTestClient, publicActions, walletActions } from 'viem';
 import { hardhat } from 'viem/chains';
+
+import { privateKeyToAccount } from 'viem/accounts';
 import { accounts } from './accounts';
 
 const { account, key } = accounts.at(0)!;
+export const testAccount = privateKeyToAccount(key);
 
 export const mockWalletClient = createTestClient({
   transport: http(),
@@ -12,7 +14,6 @@ export const mockWalletClient = createTestClient({
   mode: 'hardhat',
   account,
   key,
-  // pollingInterval: 250,
 })
   .extend(publicActions)
   .extend(walletActions);
@@ -20,7 +21,6 @@ export const mockWalletClient = createTestClient({
 export function setupConfig(walletClient = mockWalletClient) {
   return createConfig({
     chains: [hardhat],
-    connectors: [mock({ accounts: [account] })],
     client: () => walletClient,
   });
 }

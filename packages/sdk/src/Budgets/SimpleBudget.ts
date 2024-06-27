@@ -1,5 +1,3 @@
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   type SimpleBudgetPayload,
   type TransferPayload,
@@ -15,10 +13,13 @@ import {
   writeSimpleBudgetDisburseBatch,
   writeSimpleBudgetReclaim,
   writeSimpleBudgetSetAuthorized,
-} from '../../../evm/artifacts';
-import SimpleBudgetArtifact from '../../../evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
+} from '@boostxyz/evm';
+import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
+import { getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   Deployable,
+  type DeployableOptions,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
@@ -141,11 +142,18 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
 
   public override buildParameters(
     _payload?: SimpleBudgetPayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload, config] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     if (!payload.owner || payload.owner === zeroAddress) {
-      const owner = getAccount(config).address;
+      const owner = options.account
+        ? options.account.address
+        : options.config
+          ? getAccount(options.config).address
+          : this._account?.address;
       if (owner) {
         payload.owner = owner;
       } else {
@@ -156,6 +164,7 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
       abi: SimpleBudgetArtifact.abi,
       bytecode: SimpleBudgetArtifact.bytecode as Hex,
       args: [prepareSimpleBudgetPayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

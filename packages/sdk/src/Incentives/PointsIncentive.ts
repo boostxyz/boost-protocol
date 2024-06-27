@@ -1,5 +1,3 @@
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
 import {
   type ClaimPayload,
   type PointsIncentivePayload,
@@ -11,17 +9,19 @@ import {
   readPointsIncentiveSelector,
   readPointsIncentiveVenue,
   writePointsIncentiveClaim,
-} from '../../../evm/artifacts';
-import PointsIncentiveArtifact from '../../../evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import {
-  Deployable,
-  type GenericDeployableParams,
+} from '@boostxyz/evm';
+import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
+import type { Hex } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
 export type { PointsIncentivePayload };
 
-export class PointsIncentive extends Deployable<PointsIncentivePayload> {
+export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   public async venue(params: CallParams<typeof readPointsIncentiveVenue> = {}) {
     return readPointsIncentiveVenue(this._config, {
       address: this.assertValidAddress(),
@@ -80,13 +80,17 @@ export class PointsIncentive extends Deployable<PointsIncentivePayload> {
 
   public override buildParameters(
     _payload?: PointsIncentivePayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     return {
       abi: PointsIncentiveArtifact.abi,
       bytecode: PointsIncentiveArtifact.bytecode as Hex,
       args: [preparePointsIncentivePayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

@@ -1,7 +1,7 @@
 import {
+  type Config,
   type Config as WagmiConfig,
   deployContract,
-  getClient,
 } from '@wagmi/core';
 import type { Account, Address, Hash, Hex } from 'viem';
 import {
@@ -19,9 +19,10 @@ export type GenericDeployableParams = Omit<
   args: [Hex, ...Array<Hex>];
 };
 
-export type DeployableOptions<Payload = unknown> = Payload | Address;
+export type DeployablePayloadOrAddress<Payload = unknown> = Payload | Address;
 
-export interface DeployableConfig extends WagmiConfig {
+export interface DeployableOptions {
+  config: Config;
   account?: Account;
 }
 export class Deployable<Payload = unknown> extends Contract {
@@ -29,14 +30,14 @@ export class Deployable<Payload = unknown> extends Contract {
   protected _account?: Account;
 
   constructor(
-    { account, ...config }: DeployableConfig,
-    options: DeployableOptions<Payload>,
+    { account, config }: DeployableOptions,
+    payload: DeployablePayloadOrAddress<Payload>,
   ) {
-    if (typeof options === 'string') {
-      super(config, options as Address);
+    if (typeof payload === 'string') {
+      super(config, payload as Address);
     } else {
       super(config, undefined);
-      this._payload = options as Payload;
+      this._payload = payload as Payload;
     }
     if (account) this._account = account;
   }
@@ -52,33 +53,40 @@ export class Deployable<Payload = unknown> extends Contract {
 
   public async deploy(
     _payload?: Payload,
-    _config?: DeployableConfig,
+    _options?: DeployableOptions,
   ): Promise<Hash> {
     if (this.address) throw new DeployableAlreadyDeployedError(this.address);
-    const config = _config || this._config;
     const payload = _payload || this._payload;
-    const account = _config?.account || this._account;
+    const config = _options?.config || this._config;
     return await deployContract(config, {
       ...this.buildParameters(payload),
-      ...(account ? { account } : {}),
+      ...this.optionallyAttachAccount(_options?.account),
     });
   }
 
-  public buildParameters(
+  protected optionallyAttachAccount(account?: Account) {
+    if (account) return { account };
+    return this._account ? { account: this._account } : {};
+  }
+
+  protected buildParameters(
     _payload?: Payload,
-    _config?: DeployableConfig,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
     throw new DeployableBuildParametersUnspecifiedError();
   }
 
-  public validateDeploymentConfig(
-    _payload?: Payload,
-    _config?: DeployableConfig,
+  protected validateDeploymentConfig<P = Payload>(
+    _payload?: P,
+    _options?: DeployableOptions,
   ) {
-    const config = _config || this._config;
-    if (!config) throw new DeployableWagmiConfigurationRequiredError();
+    const options = _options || {
+      config: this._config,
+      account: this._account,
+    };
+    if (!options) throw new DeployableWagmiConfigurationRequiredError();
     const payload = _payload || this._payload;
     if (!payload) throw new DeployableMissingPayloadError();
-    return [payload, config] as [Payload, WagmiConfig];
+    return [payload, options] as [P, DeployableOptions];
   }
 }

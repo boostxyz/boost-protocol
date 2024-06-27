@@ -1,4 +1,4 @@
-export * from './BoostClient';
+export * from './BoostCore';
 export * from './Boost';
 export * from './errors';
 

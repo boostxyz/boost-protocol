@@ -1,22 +1,23 @@
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import {
   type SimpleDenyListPayload,
   prepareSimpleDenyListPayload,
   readSimpleDenyListIsAllowed,
   writeSimpleDenyListSetDenied,
-} from '../../../evm/artifacts';
-import SimpleDenyListArtifact from '../../../evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
-import {
-  Deployable,
-  type GenericDeployableParams,
+} from '@boostxyz/evm';
+import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
+import { getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { CallParams } from '../utils';
 
 export type { SimpleDenyListPayload };
 
-export class SimpleDenyList extends Deployable<SimpleDenyListPayload> {
+export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   public async isAllowed(
     address: Address,
     params: CallParams<typeof readSimpleDenyListIsAllowed> = {},
@@ -42,11 +43,18 @@ export class SimpleDenyList extends Deployable<SimpleDenyListPayload> {
 
   public override buildParameters(
     _payload?: SimpleDenyListPayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload, config] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     if (!payload.owner || payload.owner === zeroAddress) {
-      const owner = getAccount(config).address;
+      const owner = options.account
+        ? options.account.address
+        : options.config
+          ? getAccount(options.config).address
+          : this._account?.address;
       if (owner) {
         payload.owner = owner;
       } else {
@@ -57,6 +65,7 @@ export class SimpleDenyList extends Deployable<SimpleDenyListPayload> {
       abi: SimpleDenyListArtifact.abi,
       bytecode: SimpleDenyListArtifact.bytecode as Hex,
       args: [prepareSimpleDenyListPayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

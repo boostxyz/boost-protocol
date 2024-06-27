@@ -1,5 +1,3 @@
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
 import {
   type ContractActionPayload,
   prepareContractActionPayload,
@@ -9,22 +7,25 @@ import {
   readContractActionTarget,
   readContractActionValue,
   writeContractActionExecute,
-} from '../../../evm/artifacts';
-import ContractActionArtifact from '../../../evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import {
-  Deployable,
-  type GenericDeployableParams,
+} from '@boostxyz/evm';
+import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
+import type { Hex } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
 export type { ContractActionPayload };
 
-export class ContractAction extends Deployable<ContractActionPayload> {
+export class ContractAction extends DeployableTarget<ContractActionPayload> {
   public async chainId(
     params: CallParams<typeof readContractActionChainId> = {},
   ) {
     return readContractActionChainId(this._config, {
       address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
       ...params,
     });
   }
@@ -34,6 +35,7 @@ export class ContractAction extends Deployable<ContractActionPayload> {
   ) {
     return readContractActionTarget(this._config, {
       address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
       ...params,
     });
   }
@@ -43,6 +45,7 @@ export class ContractAction extends Deployable<ContractActionPayload> {
   ) {
     return readContractActionSelector(this._config, {
       address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
       ...params,
     });
   }
@@ -50,6 +53,7 @@ export class ContractAction extends Deployable<ContractActionPayload> {
   public async value(params: CallParams<typeof readContractActionValue> = {}) {
     return readContractActionValue(this._config, {
       address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
       ...params,
     });
   }
@@ -61,6 +65,7 @@ export class ContractAction extends Deployable<ContractActionPayload> {
     return writeContractActionExecute(this._config, {
       address: this.assertValidAddress(),
       args: [data],
+      ...this.optionallyAttachAccount(),
       ...params,
     });
   }
@@ -72,19 +77,24 @@ export class ContractAction extends Deployable<ContractActionPayload> {
     return readContractActionPrepare(this._config, {
       address: this.assertValidAddress(),
       args: [data],
+      ...this.optionallyAttachAccount(),
       ...params,
     });
   }
 
   public override buildParameters(
     _payload?: ContractActionPayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     return {
       abi: ContractActionArtifact.abi,
       bytecode: ContractActionArtifact.bytecode as Hex,
       args: [prepareContractActionPayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

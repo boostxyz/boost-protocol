@@ -1,5 +1,3 @@
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
 import {
   type AllowListIncentivePayload,
   type ClaimPayload,
@@ -9,18 +7,20 @@ import {
   readAllowListIncentiveIsClaimable,
   readAllowListIncentiveLimit,
   writeAllowListIncentiveClaim,
-} from '../../../evm/artifacts';
-import AllowListIncentiveArtifact from '../../../evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
+} from '@boostxyz/evm';
+import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
+import type { Hex } from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
-import {
-  Deployable,
-  type GenericDeployableParams,
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
 export type { AllowListIncentivePayload };
 
-export class AllowListIncentive extends Deployable<AllowListIncentivePayload> {
+export class AllowListIncentive extends DeployableTarget<AllowListIncentivePayload> {
   public async allowList(
     params: CallParams<typeof readAllowListIncentiveAllowList> = {},
   ): Promise<SimpleAllowList> {
@@ -28,7 +28,10 @@ export class AllowListIncentive extends Deployable<AllowListIncentivePayload> {
       address: this.assertValidAddress(),
       ...params,
     });
-    return new SimpleAllowList(this._config, address);
+    return new SimpleAllowList(
+      { config: this._config, account: this._account },
+      address,
+    );
   }
 
   public async limit(
@@ -66,13 +69,17 @@ export class AllowListIncentive extends Deployable<AllowListIncentivePayload> {
 
   public override buildParameters(
     _payload?: AllowListIncentivePayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     return {
       abi: AllowListIncentiveArtifact.abi,
       bytecode: AllowListIncentiveArtifact.bytecode as Hex,
       args: [prepareAllowListIncentivePayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

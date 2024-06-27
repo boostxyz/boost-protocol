@@ -1,5 +1,3 @@
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
 import {
   type ClaimPayload,
   type ERC20IncentivePayload,
@@ -16,17 +14,20 @@ import {
   writeErc20IncentiveClaim,
   writeErc20IncentiveDrawRaffle,
   writeErc20IncentiveReclaim,
-} from '../../../evm/artifacts';
-import ERC20IncentiveArtifact from '../../../evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
+} from '@boostxyz/evm';
+import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
+import type { Hex } from 'viem';
 import {
   Deployable,
+  type DeployableOptions,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
 export type { ERC20IncentivePayload };
 
-export class ERC20Incentive extends Deployable<ERC20IncentivePayload> {
+export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   public async asset(params: CallParams<typeof readErc20IncentiveAsset> = {}) {
     return readErc20IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -127,13 +128,17 @@ export class ERC20Incentive extends Deployable<ERC20IncentivePayload> {
 
   public override buildParameters(
     _payload?: ERC20IncentivePayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     return {
       abi: ERC20IncentiveArtifact.abi,
       bytecode: ERC20IncentiveArtifact.bytecode as Hex,
       args: [prepareERC20IncentivePayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

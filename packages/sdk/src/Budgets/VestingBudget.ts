@@ -1,5 +1,3 @@
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   type TransferPayload,
   type VestingBudgetPayload,
@@ -15,10 +13,13 @@ import {
   writeVestingBudgetDisburseBatch,
   writeVestingBudgetReclaim,
   writeVestingBudgetSetAuthorized,
-} from '../../../evm/artifacts';
-import VestingBudgetArtifact from '../../../evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
+} from '@boostxyz/evm';
+import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
+import { type Config, getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   Deployable,
+  type DeployableOptions,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
@@ -143,11 +144,18 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
 
   public override buildParameters(
     _payload?: VestingBudgetPayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload, config] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     if (!payload.owner || payload.owner === zeroAddress) {
-      const owner = getAccount(config).address;
+      const owner = options.account
+        ? options.account.address
+        : options.config
+          ? getAccount(options.config).address
+          : this._account?.address;
       if (owner) {
         payload.owner = owner;
       } else {
@@ -158,6 +166,7 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
       abi: VestingBudgetArtifact.abi,
       bytecode: VestingBudgetArtifact.bytecode as Hex,
       args: [prepareVestingBudgetPayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

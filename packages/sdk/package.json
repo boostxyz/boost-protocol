@@ -10,8 +10,9 @@
     ".": "./src/index.ts",
     "./errors": "./src/errors.ts",
     "./Boost": "./src/Boost.ts",
-    "./BoostClient": "./src/BoostClient.ts",
+    "./BoostCore": "./src/BoostCore.ts",
     "./Deployable/Deployable": "./src/Deployable/Deployable.ts",
+    "./Deployable/DeployableTarget": "./src/Deployable/DeployableTarget.ts",
     "./Deployable/Contract": "./src/Deployable/Contract.ts",
     "./Actions/Action": "./src/Actions/Action.ts",
     "./Actions/ContractAction": "./src/Actions/ContractAction.ts",
@@ -51,17 +52,23 @@
         "node": "./dist/Boost.js",
         "types": "./dist/Boost.d.ts"
       },
-      "./BoostClient": {
-        "require": "./dist/BoostClient.cjs",
-        "import": "./dist/BoostClient.js",
-        "node": "./dist/BoostClient.js",
-        "types": "./dist/BoostClient.d.ts"
+      "./BoostCore": {
+        "require": "./dist/BoostCore.cjs",
+        "import": "./dist/BoostCore.js",
+        "node": "./dist/BoostCore.js",
+        "types": "./dist/BoostCore.d.ts"
       },
       "./Deployable/Deployable": {
         "require": "./dist/Deployable/Deployable.cjs",
         "import": "./dist/Deployable/Deployable.js",
         "node": "./dist/Deployable/Deployable.js",
         "types": "./dist/Deployable/Deployable.d.ts"
+      },
+      "./Deployable/DeployableTarget": {
+        "require": "./dist/Deployable/DeployableTarget.cjs",
+        "import": "./dist/Deployable/DeployableTarget.js",
+        "node": "./dist/Deployable/DeployableTarget.js",
+        "types": "./dist/Deployable/DeployableTarget.d.ts"
       },
       "./Deployable/Contract": {
         "require": "./dist/Deployable/Contract.cjs",

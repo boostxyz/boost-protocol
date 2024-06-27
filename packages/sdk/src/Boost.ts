@@ -1,13 +1,11 @@
-import type { Config } from '@wagmi/core';
-import { type Address, zeroAddress } from 'viem';
+import { type Address, type Hex, zeroAddress } from 'viem';
 import type { Action } from './Actions/Action';
 import type { AllowList } from './AllowLists/AllowList';
 import type { Budget } from './Budgets/Budget';
-import { Contract } from './Deployable/Contract';
 import type { Incentive } from './Incentives/Incentive';
 import type { Validator } from './Validators/Validator';
 
-export interface BoostPayload {
+export type BoostPayload = {
   address?: Address;
   budget: Budget;
   action: Action;
@@ -18,7 +16,7 @@ export interface BoostPayload {
   referralFee?: bigint;
   maxParticipants?: bigint;
   owner?: Address;
-}
+};
 
 export class Boost {
   readonly action: Action;
@@ -41,5 +39,12 @@ export class Boost {
     this.referralFee = payload.referralFee || 0n;
     this.maxParticipants = payload.maxParticipants || 0n;
     this.owner = payload.owner || zeroAddress;
+  }
+
+  // public encode() {}
+
+  public static decode(_data: Hex) {
+    // TODO decode hash, initialize class
+    // return new Boost({});
   }
 }

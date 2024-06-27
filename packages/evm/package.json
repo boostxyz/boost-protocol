@@ -3,11 +3,7 @@
   "version": "0.0.0-alpha.0",
   "description": "",
   "private": true,
-  "files": [
-    "dist",
-    "artifacts",
-    "contracts"
-  ],
+  "files": ["dist", "artifacts", "contracts"],
   "type": "module",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",

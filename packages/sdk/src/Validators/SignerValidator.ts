@@ -1,25 +1,24 @@
-import type { Config } from '@wagmi/core';
-import type { Address, Hex } from 'viem';
 import {
   type SignerValidatorPayload,
   type SignerValidatorValidatePayload,
-  type SimpleAllowListPayload,
   prepareSignerValidatorPayload,
   prepareSignerValidatorValidatePayload,
   readSignerValidatorSigners,
   writeSignerValidatorSetAuthorized,
   writeSignerValidatorValidate,
-} from '../../../evm/artifacts';
-import SignerValidatorArtifact from '../../../evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
-import {
-  Deployable,
-  type GenericDeployableParams,
+} from '@boostxyz/evm';
+import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
+import type { Address, Hex } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
 export type { SignerValidatorPayload };
 
-export class SignerValidator extends Deployable<SignerValidatorPayload> {
+export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   public async signers(
     address: Address,
     params: CallParams<typeof readSignerValidatorSigners> = {},
@@ -56,13 +55,17 @@ export class SignerValidator extends Deployable<SignerValidatorPayload> {
 
   public override buildParameters(
     _payload?: SignerValidatorPayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     return {
       abi: SignerValidatorArtifact.abi,
       bytecode: SignerValidatorArtifact.bytecode as Hex,
       args: [prepareSignerValidatorPayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

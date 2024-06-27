@@ -1,5 +1,3 @@
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
 import {
   type CGDAIncentivePayload,
   type CGDAParameters,
@@ -13,17 +11,19 @@ import {
   readCgdaIncentiveTotalBudget,
   writeCgdaIncentiveClaim,
   writeCgdaIncentiveReclaim,
-} from '../../../evm/artifacts';
-import CGDAIncentiveArtifact from '../../../evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
-import {
-  Deployable,
-  type GenericDeployableParams,
+} from '@boostxyz/evm';
+import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
+import type { Hex } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
 export type { CGDAIncentivePayload };
 
-export class CGDAIncentive extends Deployable<CGDAIncentivePayload> {
+export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   public async asset(params: CallParams<typeof readCgdaIncentiveAsset> = {}) {
     return readCgdaIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -113,13 +113,17 @@ export class CGDAIncentive extends Deployable<CGDAIncentivePayload> {
 
   public override buildParameters(
     _payload?: CGDAIncentivePayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     return {
       abi: CGDAIncentiveArtifact.abi,
       bytecode: CGDAIncentiveArtifact.bytecode as Hex,
       args: [prepareCGDAIncentivePayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

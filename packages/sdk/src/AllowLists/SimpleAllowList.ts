@@ -1,22 +1,23 @@
-import { type Config, getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import {
   type SimpleAllowListPayload,
   prepareSimpleAllowListPayload,
   readSimpleAllowListIsAllowed,
   writeSimpleAllowListSetAllowed,
-} from '../../../evm/artifacts';
-import SimpleAllowListArtifact from '../../../evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
-import {
-  Deployable,
-  type GenericDeployableParams,
+} from '@boostxyz/evm';
+import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
+import { getAccount } from '@wagmi/core';
+import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { CallParams } from '../utils';
 
 export type { SimpleAllowListPayload };
 
-export class SimpleAllowList extends Deployable<SimpleAllowListPayload> {
+export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   public async isAllowed(
     address: Address,
     params: CallParams<typeof readSimpleAllowListIsAllowed> = {},
@@ -24,6 +25,7 @@ export class SimpleAllowList extends Deployable<SimpleAllowListPayload> {
     return await readSimpleAllowListIsAllowed(this._config, {
       address: this.assertValidAddress(),
       args: [address, zeroHash],
+      ...this.optionallyAttachAccount(),
       ...params,
     });
   }
@@ -41,11 +43,18 @@ export class SimpleAllowList extends Deployable<SimpleAllowListPayload> {
   }
   public override buildParameters(
     _payload?: SimpleAllowListPayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload, config] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     if (!payload.owner || payload.owner === zeroAddress) {
-      const owner = getAccount(config).address;
+      const owner = options.account
+        ? options.account.address
+        : options.config
+          ? getAccount(options.config).address
+          : this._account?.address;
       if (owner) {
         payload.owner = owner;
       } else {
@@ -56,6 +65,7 @@ export class SimpleAllowList extends Deployable<SimpleAllowListPayload> {
       abi: SimpleAllowListArtifact.abi,
       bytecode: SimpleAllowListArtifact.bytecode as Hex,
       args: [prepareSimpleAllowListPayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

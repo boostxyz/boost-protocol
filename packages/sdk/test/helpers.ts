@@ -18,12 +18,6 @@ import type { Address, Hex } from 'viem';
 import { accounts } from './accounts';
 import { mockWalletClient, setupConfig, testAccount } from './viem';
 
-export interface Fixtures {
-  bases: { type: RegistryType; name: string; base: Address }[];
-  core: Address;
-  registry: Address;
-}
-
 export async function deployContract(
   client: typeof mockWalletClient,
   ...params: Parameters<typeof mockWalletClient.deployContract>
@@ -34,10 +28,12 @@ export async function deployContract(
   return tx.contractAddress as Address;
 }
 
+export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
+
 export async function deployFixtures(
-  account: Address = accounts.at(0)!.account,
+  account: Address = accounts.at(0)?.account,
   client = mockWalletClient,
-): Promise<Fixtures> {
+) {
   const registry = await deployContract(client, {
     abi: BoostRegistry.abi,
     bytecode: BoostRegistry.bytecode as Hex,
@@ -51,8 +47,8 @@ export async function deployFixtures(
     args: [registry, account],
   });
 
-  const bases = [
-    {
+  const bases = {
+    ContractAction: {
       type: RegistryType.ACTION,
       name: 'ContractAction',
       base: await deployContract(client, {
@@ -61,7 +57,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    ERC721MintAction: {
       type: RegistryType.ACTION,
       name: 'ERC721MintAction',
       base: await deployContract(client, {
@@ -70,7 +66,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    SimpleAllowList: {
       type: RegistryType.ALLOW_LIST,
       name: 'SimpleAllowList',
       base: await deployContract(client, {
@@ -79,7 +75,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    SimpleDenyList: {
       type: RegistryType.ALLOW_LIST,
       name: 'SimpleDenyList',
       base: await deployContract(client, {
@@ -88,7 +84,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    SimpleBudget: {
       type: RegistryType.BUDGET,
       name: 'SimpleBudget',
       base: await deployContract(client, {
@@ -97,7 +93,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    VestingBudget: {
       type: RegistryType.BUDGET,
       name: 'VestingBudget',
       base: await deployContract(client, {
@@ -106,7 +102,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    AllowListIncentive: {
       type: RegistryType.INCENTIVE,
       name: 'AllowListIncentive',
       base: await deployContract(client, {
@@ -115,7 +111,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    CGDAIncentive: {
       type: RegistryType.INCENTIVE,
       name: 'CGDAIncentive',
       base: await deployContract(client, {
@@ -124,7 +120,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    ERC20Incentive: {
       type: RegistryType.INCENTIVE,
       name: 'ERC20Incentive',
       base: await deployContract(client, {
@@ -133,7 +129,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    ERC1155Incentive: {
       type: RegistryType.INCENTIVE,
       name: 'ERC1155Incentive',
       base: await deployContract(client, {
@@ -142,7 +138,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    PointsIncentive: {
       type: RegistryType.INCENTIVE,
       name: 'PointsIncentive',
       base: await deployContract(client, {
@@ -151,7 +147,7 @@ export async function deployFixtures(
         account,
       }),
     },
-    {
+    SignerValidator: {
       type: RegistryType.VALIDATOR,
       name: 'SignerValidator',
       base: await deployContract(client, {
@@ -160,11 +156,11 @@ export async function deployFixtures(
         account,
       }),
     },
-  ];
+  };
 
   const config = setupConfig(client);
 
-  for (const { type, name, base } of bases) {
+  for (const { type, name, base } of Object.values(bases)) {
     await writeBoostRegistryRegister(config, {
       account: { ...testAccount, type: 'local' },
       address: registry,

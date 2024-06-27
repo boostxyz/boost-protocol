@@ -4,9 +4,7 @@
   "type": "module",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": ["packages/*"],
   "packageManager": "pnpm@8.15.8",
   "engines": {
     "pnpm": "8.15.8"

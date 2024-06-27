@@ -1,5 +1,3 @@
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
 import {
   type ClaimPayload,
   type ERC1155IncentivePayload,
@@ -16,17 +14,19 @@ import {
   readErc1155SupportsInterface,
   writeErc1155IncentiveClaim,
   writeErc1155IncentiveReclaim,
-} from '../../../evm/artifacts';
-import ERC1155IncentiveArtifact from '../../../evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
-import {
-  Deployable,
-  type GenericDeployableParams,
+} from '@boostxyz/evm';
+import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
+import type { Hex } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
 export type { ERC1155IncentivePayload };
 
-export class ERC1155Incentive extends Deployable<ERC1155IncentivePayload> {
+export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> {
   public async asset(
     params: CallParams<typeof readErc1155IncentiveAsset> = {},
   ) {
@@ -129,13 +129,17 @@ export class ERC1155Incentive extends Deployable<ERC1155IncentivePayload> {
 
   public override buildParameters(
     _payload?: ERC1155IncentivePayload,
-    _config?: Config,
+    _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload] = this.validateDeploymentConfig(_payload, _config);
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
     return {
       abi: ERC1155IncentiveArtifact.abi,
       bytecode: ERC1155IncentiveArtifact.bytecode as Hex,
       args: [prepareERC1155IncentivePayload(payload)],
+      ...this.optionallyAttachAccount(options.account),
     };
   }
 }

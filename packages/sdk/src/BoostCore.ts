@@ -1,11 +1,19 @@
 import BoostCoreArtifact from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
-import { getAccount, waitForTransactionReceipt } from '@wagmi/core';
+import {
+  getAccount,
+  getTransaction,
+  getTransactionReceipt,
+  simulateContract,
+  waitForTransactionReceipt,
+} from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
   type Hash,
   type Hex,
   decodeAbiParameters,
+  decodeFunctionData,
+  decodeFunctionResult,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -14,6 +22,9 @@ import {
   type Target,
   boostCoreAbi,
   prepareBoostPayload,
+  readBoostCoreGetBoost,
+  readBoostCoreGetBoostCount,
+  simulateBoostCoreCreateBoost,
 } from '../../evm/artifacts';
 
 import type { Action } from './Actions/Action';
@@ -34,6 +45,7 @@ import {
   SimpleDenyList,
   type SimpleDenyListPayload,
 } from './AllowLists/SimpleDenyList';
+import { Boost } from './Boost';
 import type { Budget } from './Budgets/Budget';
 import { SimpleBudget, type SimpleBudgetPayload } from './Budgets/SimpleBudget';
 import {
@@ -100,7 +112,7 @@ export type BoostClientConfig =
   | BoostCoreDeployedOptions
   | BoostCoreOptionsWithPayload;
 
-export type CreatBoostPayload = {
+export type CreateBoostPayload = {
   budget: Budget | Address;
   action: Action | Target;
   validator: Validator | Target;
@@ -137,16 +149,17 @@ export class BoostCore extends Deployable<[Address, Address]> {
 
   // TODO make this transactional? if any deployment fails what do we do with the previously deployed deployables?
   public async createBoost(
-    _boostPayload: CreatBoostPayload,
+    _boostPayload: CreateBoostPayload,
     _options: DeployableOptions = {
       config: this._config,
       account: this._account,
     },
   ) {
-    const [payload, options] = this.validateDeploymentConfig<CreatBoostPayload>(
-      _boostPayload,
-      _options,
-    );
+    const [payload, options] =
+      this.validateDeploymentConfig<CreateBoostPayload>(
+        _boostPayload,
+        _options,
+      );
 
     let {
       budget,
@@ -157,7 +170,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
       protocolFee = 0n,
       referralFee = 0n,
       maxParticipants = 0n,
-      owner = zeroAddress,
+      owner,
     } = payload;
 
     const boostFactory = createWriteContract({
@@ -345,71 +358,83 @@ export class BoostCore extends Deployable<[Address, Address]> {
       owner,
     };
 
-    const encodedBoost = await boostFactory(options.config, {
+    const boostHash = await boostFactory(options.config, {
       args: [prepareBoostPayload(onChainPayload)],
       ...this.optionallyAttachAccount(options.account),
     });
+    await waitForTransactionReceipt(options.config, {
+      hash: boostHash,
+    });
+    const tx = await getTransaction(options.config, {
+      hash: boostHash,
+    });
+    const { args } = decodeFunctionData({
+      abi: boostCoreAbi,
+      data: tx.input,
+    });
+    const boostCreation = await simulateBoostCoreCreateBoost(options.config, {
+      address: this.address!,
+      args: args as [Hex],
+      ...this.optionallyAttachAccount(),
+    });
 
-    console.log(encodedBoost);
-    const values = decodeAbiParameters(
-      [
-        {
-          components: [
-            {
-              internalType: 'contract Action',
-              name: 'action',
-              type: 'address',
-            },
-            {
-              internalType: 'contract Validator',
-              name: 'validator',
-              type: 'address',
-            },
-            {
-              internalType: 'contract AllowList',
-              name: 'allowList',
-              type: 'address',
-            },
-            {
-              internalType: 'contract Budget',
-              name: 'budget',
-              type: 'address',
-            },
-            {
-              internalType: 'contract Incentive[]',
-              name: 'incentives',
-              type: 'address[]',
-            },
-            {
-              internalType: 'uint64',
-              name: 'protocolFee',
-              type: 'uint64',
-            },
-            {
-              internalType: 'uint64',
-              name: 'referralFee',
-              type: 'uint64',
-            },
-            {
-              internalType: 'uint256',
-              name: 'maxParticipants',
-              type: 'uint256',
-            },
-            {
-              internalType: 'address',
-              name: 'owner',
-              type: 'address',
-            },
-          ],
-          internalType: 'struct BoostLib.Boost',
-          name: '',
-          type: 'tuple',
-        },
-      ],
-      encodedBoost,
-    );
-
-    console.log(values);
+    // const values = decodeAbiParameters(
+    //   [
+    //     {
+    //       components: [
+    //         {
+    //           internalType: 'contract Action',
+    //           name: 'action',
+    //           type: 'address',
+    //         },
+    //         {
+    //           internalType: 'contract Validator',
+    //           name: 'validator',
+    //           type: 'address',
+    //         },
+    //         {
+    //           internalType: 'contract AllowList',
+    //           name: 'allowList',
+    //           type: 'address',
+    //         },
+    //         {
+    //           internalType: 'contract Budget',
+    //           name: 'budget',
+    //           type: 'address',
+    //         },
+    //         {
+    //           internalType: 'contract Incentive[]',
+    //           name: 'incentives',
+    //           type: 'address[]',
+    //         },
+    //         {
+    //           internalType: 'uint64',
+    //           name: 'protocolFee',
+    //           type: 'uint64',
+    //         },
+    //         {
+    //           internalType: 'uint64',
+    //           name: 'referralFee',
+    //           type: 'uint64',
+    //         },
+    //         {
+    //           internalType: 'uint256',
+    //           name: 'maxParticipants',
+    //           type: 'uint256',
+    //         },
+    //         {
+    //           internalType: 'address',
+    //           name: 'owner',
+    //           type: 'address',
+    //         },
+    //       ],
+    //       internalType: 'struct BoostLib.Boost',
+    //       name: '',
+    //       type: 'tuple',
+    //     },
+    //   ],
+    //   encodedBoost,
+    // );
   }
 
   ContractAction(

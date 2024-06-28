@@ -23,7 +23,7 @@ export const mockWalletClient = createTestClient({
   transport: http(),
   chain: hardhat,
   mode: 'hardhat',
-  account,
+  account: testAccount,
   key,
 })
   .extend(publicActions)

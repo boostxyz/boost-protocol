@@ -5,7 +5,7 @@ import type { Budget } from './Budgets/Budget';
 import type { Incentive } from './Incentives/Incentive';
 import type { Validator } from './Validators/Validator';
 
-export type BoostPayload = {
+export interface BoostPayload {
   address?: Address;
   budget: Budget;
   action: Action;
@@ -16,7 +16,19 @@ export type BoostPayload = {
   referralFee?: bigint;
   maxParticipants?: bigint;
   owner?: Address;
-};
+}
+
+export interface LibBoost {
+  action: Address;
+  validator: Address;
+  allowList: Address;
+  budget: Address;
+  incentives: Array<Address>;
+  protocolFee: bigint;
+  referralFee: bigint;
+  maxParticipants: bigint;
+  owner: Address;
+}
 
 export class Boost {
   readonly action: Action;

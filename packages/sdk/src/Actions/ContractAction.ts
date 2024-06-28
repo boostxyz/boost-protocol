@@ -10,6 +10,7 @@ import {
 } from '@boostxyz/evm';
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import type { Hex } from 'viem';
+import { simulateContract } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,

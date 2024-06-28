@@ -8,8 +8,19 @@ import {Validator} from "contracts/validators/Validator.sol";
 import {SignerValidator} from "contracts/validators/Validator.sol";
 
 // Define Enums
-enum FilterType { EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN }
-enum PrimitiveType { UINT, ADDRESS, BYTES, STRING }
+enum FilterType {
+    EQUAL,
+    NOT_EQUAL,
+    GREATER_THAN,
+    LESS_THAN
+}
+
+enum PrimitiveType {
+    UINT,
+    ADDRESS,
+    BYTES,
+    STRING
+}
 
 // Define Structs
 struct Criteria {
@@ -27,11 +38,7 @@ struct ActionEvent {
 contract ActionEventValidator is SignerValidator {
     ActionEvent private actionEvent;
 
-    event ActionEventInitialized(
-        bytes4 indexed eventSignature,
-        uint8 actionType,
-        Criteria[4] actionParameters
-    );
+    event ActionEventInitialized(bytes4 indexed eventSignature, uint8 actionType, Criteria[4] actionParameters);
 
     /// @notice Initialize the contract with the list of authorized signers and the ActionEvent
     /// @param data_ The compressed data containing the list of authorized signers and the ActionEvent

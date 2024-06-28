@@ -38,6 +38,15 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address owner;
     }
 
+    event BoostCreated(
+        uint256 indexed boostIndex,
+        address indexed owner,
+        address indexed action,
+        address validator,
+        address allowList,
+        address budget
+    );
+
     /// @notice The list of boosts
     BoostLib.Boost[] private _boosts;
 
@@ -106,7 +115,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 ? boost.action.supportsInterface(type(Validator).interfaceId) ? address(boost.action) : address(0)
                 : _makeTarget(type(Validator).interfaceId, payload_.validator, true)
         );
-
+        emit BoostCreated(_boosts.length - 1, boost.owner, address(boost.action), address(boost.validator), address(boost.allowList), address(boost.budget));
         return boost;
     }
 

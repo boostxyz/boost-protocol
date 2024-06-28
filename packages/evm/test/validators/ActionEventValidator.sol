@@ -47,19 +47,13 @@ contract ActionEventValidatorTest is Test {
         signers[2] = address(smartSignerMock);
 
         Criteria[4] memory criteria;
-        for (uint i = 0; i < 4; i++) {
-            criteria[i] = Criteria({
-                filterType: FilterType.EQUAL,
-                fieldType: PrimitiveType.BYTES,
-                filterData: bytes("")
-            });
+        for (uint256 i = 0; i < 4; i++) {
+            criteria[i] =
+                Criteria({filterType: FilterType.EQUAL, fieldType: PrimitiveType.BYTES, filterData: bytes("")});
         }
 
-        ActionEvent memory actionEvent = ActionEvent({
-            eventSignature: bytes4(keccak256("TestEvent")),
-            actionType: 1,
-            actionParameters: criteria
-        });
+        ActionEvent memory actionEvent =
+            ActionEvent({eventSignature: bytes4(keccak256("TestEvent")), actionType: 1, actionParameters: criteria});
 
         bytes memory data = abi.encode(signers, actionEvent);
         validator = ActionEventValidator(LibClone.clone(address(baseValidator)));
@@ -102,5 +96,4 @@ contract ActionEventValidatorTest is Test {
 
         assertNotEq(version, 0, "Version should not be 0");
     }
-
 }

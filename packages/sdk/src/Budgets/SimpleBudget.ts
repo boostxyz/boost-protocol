@@ -8,13 +8,19 @@ import {
   readSimpleBudgetIsAuthorized,
   readSimpleBudgetTotal,
   readVestingBudgetStart,
+  simpleAllowListAbi,
+  simulateSimpleBudgetAllocate,
+  simulateSimpleBudgetDisburse,
+  simulateSimpleBudgetDisburseBatch,
+  simulateSimpleBudgetReclaim,
+  simulateSimpleBudgetSetAuthorized,
   writeSimpleBudgetAllocate,
   writeSimpleBudgetDisburse,
   writeSimpleBudgetDisburseBatch,
   writeSimpleBudgetReclaim,
   writeSimpleBudgetSetAuthorized,
 } from '@boostxyz/evm';
-import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import { getAccount } from '@wagmi/core';
 import { type Address, type Hex, zeroAddress } from 'viem';
 import {
@@ -35,7 +41,18 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
     });
   }
 
-  public allocate(
+  public async allocate(
+    transfer: TransferPayload,
+    params: CallParams<typeof writeSimpleBudgetAllocate> = {},
+  ) {
+    return this.awaitResult(
+      this.allocateRaw(transfer, params),
+      simpleAllowListAbi,
+      simulateSimpleBudgetAllocate,
+    );
+  }
+
+  public allocateRaw(
     transfer: TransferPayload,
     params: CallParams<typeof writeSimpleBudgetAllocate> = {},
   ) {
@@ -46,7 +63,18 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
     });
   }
 
-  public reclaim(
+  public async reclaim(
+    transfer: TransferPayload,
+    params: CallParams<typeof writeSimpleBudgetReclaim> = {},
+  ) {
+    return this.awaitResult(
+      this.reclaimRaw(transfer, params),
+      simpleAllowListAbi,
+      simulateSimpleBudgetReclaim,
+    );
+  }
+
+  public reclaimRaw(
     transfer: TransferPayload,
     params: CallParams<typeof writeSimpleBudgetReclaim> = {},
   ) {
@@ -57,7 +85,18 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
     });
   }
 
-  public disburse(
+  public async disburse(
+    transfer: TransferPayload,
+    params: CallParams<typeof writeSimpleBudgetDisburse> = {},
+  ) {
+    return this.awaitResult(
+      this.disburseRaw(transfer, params),
+      simpleAllowListAbi,
+      simulateSimpleBudgetDisburse,
+    );
+  }
+
+  public disburseRaw(
     transfer: TransferPayload,
     params: CallParams<typeof writeSimpleBudgetDisburse> = {},
   ) {
@@ -68,9 +107,20 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
     });
   }
 
+  public async disburseBatch(
+    transfers: TransferPayload[],
+    params: CallParams<typeof writeSimpleBudgetDisburseBatch> = {},
+  ) {
+    return this.awaitResult(
+      this.disburseBatchRaw(transfers, params),
+      simpleAllowListAbi,
+      simulateSimpleBudgetDisburseBatch,
+    );
+  }
+
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
-  public disburseBatch(
+  public disburseBatchRaw(
     transfers: TransferPayload[],
     params: CallParams<typeof writeSimpleBudgetDisburseBatch> = {},
   ) {
@@ -82,6 +132,18 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
   }
 
   public async setAuthorized(
+    addresses: Address[],
+    allowed: boolean[],
+    params: CallParams<typeof writeSimpleBudgetSetAuthorized> = {},
+  ) {
+    return this.awaitResult(
+      this.setAuthorizedRaw(addresses, allowed, params),
+      simpleAllowListAbi,
+      simulateSimpleBudgetSetAuthorized,
+    );
+  }
+
+  public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
     params: CallParams<typeof writeSimpleBudgetSetAuthorized> = {},
@@ -161,8 +223,8 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
       }
     }
     return {
-      abi: SimpleBudgetArtifact.abi,
-      bytecode: SimpleBudgetArtifact.bytecode as Hex,
+      abi: simpleAllowListAbi,
+      bytecode: bytecode as Hex,
       args: [prepareSimpleBudgetPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

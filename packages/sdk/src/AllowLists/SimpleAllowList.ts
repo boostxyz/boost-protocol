@@ -2,9 +2,11 @@ import {
   type SimpleAllowListPayload,
   prepareSimpleAllowListPayload,
   readSimpleAllowListIsAllowed,
+  simpleAllowListAbi,
+  simulateSimpleAllowListSetAllowed,
   writeSimpleAllowListSetAllowed,
 } from '@boostxyz/evm';
-import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import { getAccount } from '@wagmi/core';
 import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import type {
@@ -33,7 +35,19 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   public async setAllowed(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof readSimpleAllowListIsAllowed> = {},
+    params: CallParams<typeof writeSimpleAllowListSetAllowed> = {},
+  ) {
+    return this.awaitResult(
+      this.setAllowedRaw(addresses, allowed, params),
+      simpleAllowListAbi,
+      simulateSimpleAllowListSetAllowed,
+    );
+  }
+
+  public async setAllowedRaw(
+    addresses: Address[],
+    allowed: boolean[],
+    params: CallParams<typeof writeSimpleAllowListSetAllowed> = {},
   ) {
     return await writeSimpleAllowListSetAllowed(this._config, {
       address: this.assertValidAddress(),
@@ -41,6 +55,7 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
       ...params,
     });
   }
+
   public override buildParameters(
     _payload?: SimpleAllowListPayload,
     _options?: DeployableOptions,
@@ -62,8 +77,8 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
       }
     }
     return {
-      abi: SimpleAllowListArtifact.abi,
-      bytecode: SimpleAllowListArtifact.bytecode as Hex,
+      abi: simpleAllowListAbi,
+      bytecode: bytecode as Hex,
       args: [prepareSimpleAllowListPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

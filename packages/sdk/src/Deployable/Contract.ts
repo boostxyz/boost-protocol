@@ -4,7 +4,15 @@ import {
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import type { CreateSimulateContractReturnType } from '@wagmi/core/codegen';
-import { type Abi, type Address, type Hash, decodeFunctionData } from 'viem';
+import {
+  type Abi,
+  type AbiStateMutability,
+  type Address,
+  type ContractFunctionArgs,
+  type ContractFunctionName,
+  type Hash,
+  decodeFunctionData,
+} from 'viem';
 import { ContractAddressRequiredError } from '../errors';
 
 export class Contract {
@@ -36,10 +44,13 @@ export class Contract {
     return address;
   }
 
-  protected async awaitResult<A extends Abi, FunctionName extends string>(
+  protected async awaitResult<
+    const abi extends Abi | readonly unknown[],
+    functionName extends ContractFunctionName<abi>,
+  >(
     hashPromise: Promise<Hash>,
-    abi: A,
-    fn: CreateSimulateContractReturnType<A, undefined, FunctionName>,
+    abi: abi,
+    fn: CreateSimulateContractReturnType<abi, undefined, functionName>,
   ) {
     const hash = await hashPromise;
     const receipt = await waitForTransactionReceipt(this._config, {
@@ -52,10 +63,11 @@ export class Contract {
     });
     const { result } = await fn(this._config, {
       account: tx.from,
-      address: tx.to!,
-      args,
+      address: tx.to,
+      args: args as ContractFunctionArgs<abi, AbiStateMutability, functionName>,
       blockNumber: receipt.blockNumber,
-    });
+      // biome-ignore lint/suspicious/noExplicitAny: TODO this is an extremely complex type, but this method is intended for internal use and as such is alright for now
+    } as any);
     return result;
   }
 }

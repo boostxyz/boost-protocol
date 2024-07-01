@@ -2,9 +2,11 @@ import {
   type SimpleDenyListPayload,
   prepareSimpleDenyListPayload,
   readSimpleDenyListIsAllowed,
+  simpleDenyListAbi,
+  simulateSimpleDenyListSetDenied,
   writeSimpleDenyListSetDenied,
 } from '@boostxyz/evm';
-import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import { getAccount } from '@wagmi/core';
 import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
 import type {
@@ -30,6 +32,18 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   }
 
   public async setAllowed(
+    addresses: Address[],
+    allowed: boolean[],
+    params: CallParams<typeof writeSimpleDenyListSetDenied> = {},
+  ) {
+    return this.awaitResult(
+      this.setAllowedRaw(addresses, allowed, params),
+      simpleDenyListAbi,
+      simulateSimpleDenyListSetDenied,
+    );
+  }
+
+  public async setAllowedRaw(
     addresses: Address[],
     allowed: boolean[],
     params: CallParams<typeof writeSimpleDenyListSetDenied> = {},
@@ -62,8 +76,8 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
       }
     }
     return {
-      abi: SimpleDenyListArtifact.abi,
-      bytecode: SimpleDenyListArtifact.bytecode as Hex,
+      abi: simpleDenyListAbi,
+      bytecode: bytecode as Hex,
       args: [prepareSimpleDenyListPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

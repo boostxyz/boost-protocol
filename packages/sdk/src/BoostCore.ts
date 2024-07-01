@@ -2,8 +2,6 @@ import BoostCoreArtifact from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/B
 import {
   getAccount,
   getTransaction,
-  getTransactionReceipt,
-  simulateContract,
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
@@ -11,9 +9,7 @@ import {
   type Address,
   type Hash,
   type Hex,
-  decodeAbiParameters,
   decodeFunctionData,
-  decodeFunctionResult,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -22,8 +18,6 @@ import {
   type Target,
   boostCoreAbi,
   prepareBoostPayload,
-  readBoostCoreGetBoost,
-  readBoostCoreGetBoostCount,
   simulateBoostCoreCreateBoost,
 } from '../../evm/artifacts';
 
@@ -113,25 +107,16 @@ export type BoostClientConfig =
   | BoostCoreOptionsWithPayload;
 
 export type CreateBoostPayload = {
-  budget: Budget | Address;
-  action: Action | Target;
-  validator: Validator | Target;
-  allowList: AllowList | Target;
-  incentives: Array<Incentive | Target>;
+  budget: Budget;
+  action: Action;
+  validator: Validator;
+  allowList: AllowList;
+  incentives: Array<Incentive>;
   protocolFee?: bigint;
   referralFee?: bigint;
   maxParticipants?: bigint;
   owner?: Address;
 };
-
-// biome-ignore lint/suspicious/noExplicitAny: is a typeguard for generic target
-export function isTarget(t: any): t is Target {
-  return (
-    t?.instance !== undefined &&
-    t?.instance !== undefined &&
-    t?.parameters !== undefined
-  );
-}
 
 export class BoostCore extends Deployable<[Address, Address]> {
   constructor({ config, account, ...options }: BoostClientConfig) {
@@ -199,30 +184,23 @@ export class BoostCore extends Deployable<[Address, Address]> {
       }
     }
 
-    console.log(JSON.stringify({ budgetPayload }));
-
     let actionPayload: OnChainBoostPayload['action'] = {
         instance: zeroAddress,
         isBase: false,
         parameters: zeroHash,
       },
       actionHash: Hash | undefined = undefined;
-    if (isTarget(action)) actionPayload = action;
+    if (action.address)
+      actionPayload = {
+        isBase: action.isBase,
+        instance: action.address,
+        parameters: action.isBase
+          ? action.buildParameters(undefined, options).args.at(0) || zeroHash
+          : zeroHash,
+      };
     else {
-      if (action.address)
-        actionPayload = {
-          isBase: action.isBase,
-          instance: action.address,
-          parameters: action.isBase
-            ? action.buildParameters(undefined, options).args.at(0) || zeroHash
-            : zeroHash,
-        };
-      else {
-        actionHash = await action.deploy(undefined, options);
-      }
+      actionHash = await action.deploy(undefined, options);
     }
-
-    console.log(JSON.stringify({ actionPayload }));
 
     let validatorPayload: OnChainBoostPayload['validator'] = {
         instance: zeroAddress,
@@ -230,23 +208,17 @@ export class BoostCore extends Deployable<[Address, Address]> {
         parameters: zeroHash,
       },
       validatorHash: Hash | undefined = undefined;
-    if (isTarget(validator)) validatorPayload = validator;
+    if (validator.address)
+      validatorPayload = {
+        isBase: validator.isBase,
+        instance: validator.address,
+        parameters: validator.isBase
+          ? validator.buildParameters(undefined, options).args.at(0) || zeroHash
+          : zeroHash,
+      };
     else {
-      if (validator.address)
-        validatorPayload = {
-          isBase: validator.isBase,
-          instance: validator.address,
-          parameters: validator.isBase
-            ? validator.buildParameters(undefined, options).args.at(0) ||
-              zeroHash
-            : zeroHash,
-        };
-      else {
-        validatorHash = await validator.deploy(undefined, options);
-      }
+      validatorHash = await validator.deploy(undefined, options);
     }
-
-    console.log(JSON.stringify({ validatorPayload }));
 
     let allowListPayload: OnChainBoostPayload['allowList'] = {
         instance: zeroAddress,
@@ -254,23 +226,17 @@ export class BoostCore extends Deployable<[Address, Address]> {
         parameters: zeroHash,
       },
       allowListHash: Hash | undefined = undefined;
-    if (isTarget(allowList)) allowListPayload = allowList;
+    if (allowList.address)
+      allowListPayload = {
+        isBase: allowList.isBase,
+        instance: allowList.address,
+        parameters: allowList.isBase
+          ? allowList.buildParameters(undefined, options).args.at(0) || zeroHash
+          : zeroHash,
+      };
     else {
-      if (allowList.address)
-        allowListPayload = {
-          isBase: allowList.isBase,
-          instance: allowList.address,
-          parameters: allowList.isBase
-            ? allowList.buildParameters(undefined, options).args.at(0) ||
-              zeroHash
-            : zeroHash,
-        };
-      else {
-        allowListHash = await allowList.deploy(undefined, options);
-      }
+      allowListHash = await allowList.deploy(undefined, options);
     }
-
-    console.log(JSON.stringify({ allowListPayload }));
 
     let incentivesPayloads: Array<Target> = incentives.map(() => ({
         instance: zeroAddress,
@@ -281,20 +247,17 @@ export class BoostCore extends Deployable<[Address, Address]> {
     for (let i = 0; i < incentives.length; i++) {
       // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
       const incentive = incentives.at(i)!;
-      if (isTarget(incentive)) incentivesPayloads[i] = incentive;
+      if (incentive.address)
+        incentivesPayloads[i] = {
+          isBase: incentive.isBase,
+          instance: incentive.address,
+          parameters: incentive.isBase
+            ? incentive.buildParameters(undefined, options).args.at(0) ||
+              zeroHash
+            : zeroHash,
+        };
       else {
-        if (incentive.address)
-          incentivesPayloads[i] = {
-            isBase: incentive.isBase,
-            instance: incentive.address,
-            parameters: incentive.isBase
-              ? incentive.buildParameters(undefined, options).args.at(0) ||
-                zeroHash
-              : zeroHash,
-          };
-        else {
-          incentiveHashes[i] = await incentive.deploy(undefined, options);
-        }
+        incentiveHashes[i] = await incentive.deploy(undefined, options);
       }
     }
 
@@ -372,69 +335,26 @@ export class BoostCore extends Deployable<[Address, Address]> {
       abi: boostCoreAbi,
       data: tx.input,
     });
-    const boostCreation = await simulateBoostCoreCreateBoost(options.config, {
+    const { result } = await simulateBoostCoreCreateBoost(options.config, {
       address: this.address!,
       args: args as [Hex],
       ...this.optionallyAttachAccount(),
     });
 
-    // const values = decodeAbiParameters(
-    //   [
-    //     {
-    //       components: [
-    //         {
-    //           internalType: 'contract Action',
-    //           name: 'action',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'contract Validator',
-    //           name: 'validator',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'contract AllowList',
-    //           name: 'allowList',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'contract Budget',
-    //           name: 'budget',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'contract Incentive[]',
-    //           name: 'incentives',
-    //           type: 'address[]',
-    //         },
-    //         {
-    //           internalType: 'uint64',
-    //           name: 'protocolFee',
-    //           type: 'uint64',
-    //         },
-    //         {
-    //           internalType: 'uint64',
-    //           name: 'referralFee',
-    //           type: 'uint64',
-    //         },
-    //         {
-    //           internalType: 'uint256',
-    //           name: 'maxParticipants',
-    //           type: 'uint256',
-    //         },
-    //         {
-    //           internalType: 'address',
-    //           name: 'owner',
-    //           type: 'address',
-    //         },
-    //       ],
-    //       internalType: 'struct BoostLib.Boost',
-    //       name: '',
-    //       type: 'tuple',
-    //     },
-    //   ],
-    //   encodedBoost,
-    // );
+    // TODO we need to figure out how to ensure the boost has the correct component instances, ie SimpleAllowList vs SimpleDenyList
+    return new Boost({
+      budget: budget.at(result.budget),
+      action: action.at(result.action),
+      validator: validator.at(result.validator),
+      allowList: allowList.at(result.allowList),
+      incentives: incentives.map((incentive, i) =>
+        incentive.at(result.incentives.at(i)!),
+      ),
+      protocolFee: result.protocolFee,
+      referralFee: result.referralFee,
+      maxParticipants: result.maxParticipants,
+      owner: result.owner,
+    });
   }
 
   ContractAction(
@@ -550,7 +470,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
 
-  public override buildParameters(
+  protected override buildParameters(
     _payload?: [Address, Address],
     _options?: DeployableOptions,
   ): GenericDeployableParams {

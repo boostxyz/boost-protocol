@@ -6,7 +6,6 @@ import type { Incentive } from './Incentives/Incentive';
 import type { Validator } from './Validators/Validator';
 
 export interface BoostPayload {
-  address?: Address;
   budget: Budget;
   action: Action;
   validator: Validator;
@@ -18,23 +17,11 @@ export interface BoostPayload {
   owner?: Address;
 }
 
-export interface LibBoost {
-  action: Address;
-  validator: Address;
-  allowList: Address;
-  budget: Address;
-  incentives: Array<Address>;
-  protocolFee: bigint;
-  referralFee: bigint;
-  maxParticipants: bigint;
-  owner: Address;
-}
-
 export class Boost {
+  readonly budget: Budget;
   readonly action: Action;
   readonly validator: Validator;
   readonly allowList: AllowList;
-  readonly budget: Budget;
   readonly incentives: Array<Incentive>;
   readonly protocolFee: bigint;
   readonly referralFee: bigint;
@@ -42,10 +29,10 @@ export class Boost {
   readonly owner: Address;
 
   constructor(payload: BoostPayload) {
+    this.budget = payload.budget;
     this.action = payload.action;
     this.validator = payload.validator;
     this.allowList = payload.allowList;
-    this.budget = payload.budget;
     this.incentives = payload.incentives;
     this.protocolFee = payload.protocolFee || 0n;
     this.referralFee = payload.referralFee || 0n;

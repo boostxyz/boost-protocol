@@ -50,7 +50,7 @@
     "@types/chai": "4",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.24",
-    "@wagmi/cli": "^2.1.4",
+    "@wagmi/cli": "^2.1.11",
     "abitype": "^1.0.2",
     "chai": "4",
     "hardhat": "^2.22.3",

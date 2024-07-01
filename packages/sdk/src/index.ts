@@ -23,6 +23,8 @@ export * from './Budgets/VestingBudget';
 // Deployable
 
 export * from './Deployable/Deployable';
+export * from './Deployable/Contract';
+export * from './Deployable/DeployableTarget';
 
 // Incentives
 

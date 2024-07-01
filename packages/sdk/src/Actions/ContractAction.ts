@@ -1,5 +1,6 @@
 import {
   type ContractActionPayload,
+  contractActionAbi,
   prepareContractActionPayload,
   readContractActionChainId,
   readContractActionPrepare,
@@ -9,7 +10,7 @@ import {
   simulateContractActionExecute,
   writeContractActionExecute,
 } from '@boostxyz/evm';
-import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import { getTransaction, waitForTransactionReceipt } from '@wagmi/core';
 import { type Hex, decodeFunctionData } from 'viem';
 import type {
@@ -64,24 +65,11 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     data: Hex,
     params: CallParams<typeof writeContractActionExecute> = {},
   ) {
-    const hash = await this.executeRaw(data, params);
-    const receipt = await waitForTransactionReceipt(this._config, {
-      hash,
-    });
-    const tx = await getTransaction(this._config, { hash });
-    const { args } = decodeFunctionData({
-      abi: ContractActionArtifact.abi,
-      data: tx.input,
-    });
-    const { result } = await simulateContractActionExecute(this._config, {
-      account: tx.from,
-      address: tx.to!,
-      args: args as [Hex],
-      // value: tx.value, // TS doesn't like me to including this
-      blockNumber: receipt.blockNumber,
-      // do we need to include nonce, gas price, etc. to properly simulate?
-    });
-    return result;
+    return this.awaitResult(
+      this.executeRaw(data, params),
+      contractActionAbi,
+      simulateContractActionExecute,
+    );
   }
 
   public async executeRaw(
@@ -117,8 +105,8 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
       _options,
     );
     return {
-      abi: ContractActionArtifact.abi,
-      bytecode: ContractActionArtifact.bytecode as Hex,
+      abi: contractActionAbi,
+      bytecode: bytecode as Hex,
       args: [prepareContractActionPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

@@ -1,13 +1,18 @@
 import {
   type ERC721MintActionPayload,
+  erc721MintActionAbi,
   prepareERC721MintActionPayload,
   readErc721MintActionPrepare,
+  simulateErc721MintActionExecute,
   writeErc721MintActionExecute,
   writeErc721MintActionValidate,
 } from '@boostxyz/evm';
-import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import type { Config } from '@wagmi/core';
-import type { Hex } from 'viem';
+import {
+  type Config,
+  getTransaction,
+  waitForTransactionReceipt,
+} from '@wagmi/core';
+import { type Hex, decodeFunctionData } from 'viem';
 import {
   Deployable,
   type DeployableOptions,
@@ -20,6 +25,17 @@ export type { ERC721MintActionPayload };
 
 export class ERC721MintAction extends ContractAction {
   public override async execute(
+    data: Hex,
+    params: CallParams<typeof writeErc721MintActionExecute> = {},
+  ) {
+    return this.awaitResult<typeof erc721MintActionAbi, 'execute'>(
+      this.executeRaw(data, params),
+      erc721MintActionAbi,
+      simulateErc721MintActionExecute,
+    );
+  }
+
+  public override async executeRaw(
     data: Hex,
     params: CallParams<typeof writeErc721MintActionExecute> = {},
   ) {

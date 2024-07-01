@@ -19,17 +19,20 @@ const { account, key } = accounts.at(0) || {
 export { account, key };
 export const testAccount = privateKeyToAccount(key);
 
-export const mockWalletClient = createTestClient({
-  transport: http(),
-  chain: hardhat,
-  mode: 'hardhat',
-  account: testAccount,
-  key,
-})
-  .extend(publicActions)
-  .extend(walletActions);
+export const makeTestClient = () =>
+  createTestClient({
+    transport: http(),
+    chain: hardhat,
+    mode: 'hardhat',
+    account: testAccount,
+    key,
+  })
+    .extend(publicActions)
+    .extend(walletActions);
 
-export function setupConfig(walletClient = mockWalletClient) {
+export type TestClient = ReturnType<typeof makeTestClient>;
+
+export function setupConfig(walletClient = makeTestClient()) {
   return createConfig({
     chains: [hardhat],
     client: () => walletClient,

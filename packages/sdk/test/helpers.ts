@@ -1,5 +1,4 @@
-import { RegistryType } from '@boostxyz/evm';
-import { writeBoostRegistryRegister } from '@boostxyz/evm';
+import { RegistryType, writeBoostRegistryRegister } from '@boostxyz/evm';
 import BoostCore from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import BoostRegistry from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
 import ContractAction from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
@@ -15,12 +14,16 @@ import ERC1155Incentive from '@boostxyz/evm/artifacts/contracts/incentives/ERC11
 import PointsIncentive from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import SignerValidator from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import type { Address, Hex } from 'viem';
-import { accounts } from './accounts';
-import { mockWalletClient, setupConfig, testAccount } from './viem';
+import {
+  type TestClient,
+  makeTestClient,
+  setupConfig,
+  testAccount,
+} from './viem';
 
 export async function deployContract(
-  client: typeof mockWalletClient,
-  ...params: Parameters<typeof mockWalletClient.deployContract>
+  client: TestClient,
+  ...params: Parameters<TestClient['deployContract']>
 ) {
   const tx = await client.waitForTransactionReceipt({
     hash: await client.deployContract(...params),
@@ -31,8 +34,8 @@ export async function deployContract(
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
 
 export async function deployFixtures(
-  account: Address = accounts.at(0)?.account,
-  client = mockWalletClient,
+  account = testAccount,
+  client = makeTestClient(),
 ) {
   const registry = await deployContract(client, {
     abi: BoostRegistry.abi,
@@ -44,7 +47,7 @@ export async function deployFixtures(
     abi: BoostCore.abi,
     bytecode: BoostCore.bytecode as Hex,
     account,
-    args: [registry, account],
+    args: [registry, account.address],
   });
 
   const bases = {

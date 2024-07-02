@@ -368,8 +368,6 @@ export class BoostCore extends Deployable<[Address, Address]> {
       ...this.optionallyAttachAccount(),
     });
 
-    console.log(result);
-
     // TODO we need to figure out how to ensure the boost has the correct component instances, ie SimpleAllowList vs SimpleDenyList
     return new Boost({
       id: boostId,

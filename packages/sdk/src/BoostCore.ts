@@ -1,4 +1,19 @@
-import BoostCoreArtifact from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
+import {
+  type BoostPayload as OnChainBoostPayload,
+  type Target,
+  boostCoreAbi,
+  prepareBoostPayload,
+  readBoostCoreGetBoost,
+  readBoostCoreGetBoostCount,
+  simulateBoostCoreClaimIncentive,
+  simulateBoostCoreCreateBoost,
+  simulateBoostCoreSetClaimFee,
+  simulateBoostCoreSetProtocolFeeReceiver,
+  writeBoostCoreClaimIncentive,
+  writeBoostCoreSetClaimFee,
+  writeBoostCoreSetProtocolFeeReceiver,
+} from '@boostxyz/evm';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import {
   getAccount,
   getTransaction,
@@ -10,16 +25,10 @@ import {
   type Hash,
   type Hex,
   decodeFunctionData,
+  parseEventLogs,
   zeroAddress,
   zeroHash,
 } from 'viem';
-import {
-  type BoostPayload as OnChainBoostPayload,
-  type Target,
-  boostCoreAbi,
-  prepareBoostPayload,
-  simulateBoostCoreCreateBoost,
-} from '../../evm/artifacts';
 
 import type { Action } from './Actions/Action';
 import {
@@ -78,7 +87,11 @@ import {
   type SignerValidatorPayload,
 } from './Validators/SignerValidator';
 import type { Validator } from './Validators/Validator';
-import { DeployableUnknownOwnerProvidedError } from './errors';
+import {
+  BoostCoreNoIdentifierEmitted,
+  DeployableUnknownOwnerProvidedError,
+} from './errors';
+import type { CallParams } from './utils';
 
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
@@ -325,12 +338,26 @@ export class BoostCore extends Deployable<[Address, Address]> {
       args: [prepareBoostPayload(onChainPayload)],
       ...this.optionallyAttachAccount(options.account),
     });
-    await waitForTransactionReceipt(options.config, {
+    const receipt = await waitForTransactionReceipt(options.config, {
       hash: boostHash,
     });
+    console.log(receipt);
+    const boostCreatedLog = (
+      await parseEventLogs({
+        abi: boostCoreAbi,
+        eventName: 'BoostCreated',
+        logs: receipt.logs,
+      })
+    ).at(0);
+    let boostId = 0n;
+    if (!boostCreatedLog) {
+      throw new BoostCoreNoIdentifierEmitted();
+    }
+    boostId = boostCreatedLog?.args.boostIndex;
     const tx = await getTransaction(options.config, {
       hash: boostHash,
     });
+    console.log(tx);
     const { args } = decodeFunctionData({
       abi: boostCoreAbi,
       data: tx.input,
@@ -341,8 +368,11 @@ export class BoostCore extends Deployable<[Address, Address]> {
       ...this.optionallyAttachAccount(),
     });
 
+    console.log(result);
+
     // TODO we need to figure out how to ensure the boost has the correct component instances, ie SimpleAllowList vs SimpleDenyList
     return new Boost({
+      id: boostId,
       budget: budget.at(result.budget),
       action: action.at(result.action),
       validator: validator.at(result.validator),
@@ -354,6 +384,104 @@ export class BoostCore extends Deployable<[Address, Address]> {
       referralFee: result.referralFee,
       maxParticipants: result.maxParticipants,
       owner: result.owner,
+    });
+  }
+
+  public async claimIncentive(
+    boostId: bigint,
+    incentiveId: bigint,
+    address: Address,
+    data: Hex,
+    params: CallParams<typeof writeBoostCoreClaimIncentive> = {},
+  ) {
+    return this.awaitResult(
+      this.claimIncentiveRaw(boostId, incentiveId, address, data, params),
+      boostCoreAbi,
+      simulateBoostCoreClaimIncentive,
+    );
+  }
+
+  public async claimIncentiveRaw(
+    boostId: bigint,
+    incentiveId: bigint,
+    address: Address,
+    data: Hex,
+    params: CallParams<typeof writeBoostCoreClaimIncentive> = {},
+  ) {
+    return writeBoostCoreClaimIncentive(this._config, {
+      address: this.assertValidAddress(),
+      args: [boostId, incentiveId, address, data],
+      ...this.optionallyAttachAccount(),
+      ...params,
+    });
+  }
+
+  public async getBoost(
+    boostId: bigint,
+    params: CallParams<typeof readBoostCoreGetBoost> = {},
+  ) {
+    return readBoostCoreGetBoost(this._config, {
+      address: this.assertValidAddress(),
+      args: [boostId],
+      ...this.optionallyAttachAccount(),
+      ...params,
+    });
+  }
+
+  public async getBoostCount(
+    params: CallParams<typeof readBoostCoreGetBoostCount> = {},
+  ) {
+    return readBoostCoreGetBoostCount(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...this.optionallyAttachAccount(),
+      ...params,
+    });
+  }
+
+  public async setProcolFeeReceiver(
+    address: Address,
+    params: CallParams<typeof writeBoostCoreSetProtocolFeeReceiver> = {},
+  ) {
+    return this.awaitResult(
+      this.setProcolFeeReceiverRaw(address, params),
+      boostCoreAbi,
+      simulateBoostCoreSetProtocolFeeReceiver,
+    );
+  }
+
+  public async setProcolFeeReceiverRaw(
+    address: Address,
+    params: CallParams<typeof writeBoostCoreSetClaimFee> = {},
+  ) {
+    return writeBoostCoreSetProtocolFeeReceiver(this._config, {
+      address: this.assertValidAddress(),
+      args: [address],
+      ...this.optionallyAttachAccount(),
+      ...params,
+    });
+  }
+
+  public async setClaimFee(
+    claimFee: bigint,
+    params: CallParams<typeof writeBoostCoreSetClaimFee> = {},
+  ) {
+    return this.awaitResult(
+      this.setClaimFeeRaw(claimFee, params),
+      boostCoreAbi,
+      simulateBoostCoreSetClaimFee,
+    );
+  }
+
+  public async setClaimFeeRaw(
+    claimFee: bigint,
+    params: CallParams<typeof writeBoostCoreSetClaimFee> = {},
+  ) {
+    return writeBoostCoreSetClaimFee(this._config, {
+      address: this.assertValidAddress(),
+      args: [claimFee],
+      ...this.optionallyAttachAccount(),
+      ...params,
     });
   }
 
@@ -479,8 +607,8 @@ export class BoostCore extends Deployable<[Address, Address]> {
       _options,
     );
     return {
-      abi: BoostCoreArtifact.abi,
-      bytecode: BoostCoreArtifact.bytecode as Hex,
+      abi: boostCoreAbi,
+      bytecode: bytecode as Hex,
       args: payload,
       ...this.optionallyAttachAccount(options.account),
     };

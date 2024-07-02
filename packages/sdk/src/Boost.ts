@@ -6,6 +6,7 @@ import type { Incentive } from './Incentives/Incentive';
 import type { Validator } from './Validators/Validator';
 
 export interface BoostPayload {
+  id: bigint;
   budget: Budget;
   action: Action;
   validator: Validator;
@@ -18,6 +19,7 @@ export interface BoostPayload {
 }
 
 export class Boost {
+  readonly id: bigint;
   readonly budget: Budget;
   readonly action: Action;
   readonly validator: Validator;
@@ -29,6 +31,7 @@ export class Boost {
   readonly owner: Address;
 
   constructor(payload: BoostPayload) {
+    this.id = payload.id;
     this.budget = payload.budget;
     this.action = payload.action;
     this.validator = payload.validator;

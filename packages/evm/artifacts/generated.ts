@@ -533,6 +533,49 @@ export const boostCoreAbi = [
     anonymous: false,
     inputs: [
       {
+        name: 'boostIndex',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'owner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'action',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'validator',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'allowList',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'budget',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'BoostCreated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
         name: 'pendingOwner',
         internalType: 'address',
         type: 'address',
@@ -7637,6 +7680,15 @@ export const simulateBoostCoreTransferOwnership =
 export const watchBoostCoreEvent = /*#__PURE__*/ createWatchContractEvent({
   abi: boostCoreAbi,
 })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link boostCoreAbi}__ and `eventName` set to `"BoostCreated"`
+ */
+export const watchBoostCoreBoostCreatedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: boostCoreAbi,
+    eventName: 'BoostCreated',
+  })
 
 /**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link boostCoreAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`

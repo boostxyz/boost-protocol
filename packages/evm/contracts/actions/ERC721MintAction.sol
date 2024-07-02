@@ -71,6 +71,10 @@ contract ERC721MintAction is ContractAction, Validator {
         return super.supportsInterface(interfaceId);
     }
 
+    function getComponentInterface() public pure override(Action, Validator) returns (bytes4) {
+        return type(Validator).interfaceId;
+    }
+
     function _initialize(InitPayload memory init_) internal override onlyInitializing {
         super._initialize(init_);
         _initializeOwner(msg.sender);

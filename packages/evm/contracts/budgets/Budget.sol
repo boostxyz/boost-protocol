@@ -120,9 +120,9 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
 
     /// @notice Set the authorized status of the given accounts
     /// @param accounts_ The accounts to authorize or deauthorize
-    /// @param isAuthorized_ The authorization status for the given accounts
+    /// @param authorized_ The authorization status for the given accounts
     /// @dev The mechanism for managing authorization is left to the implementing contract
-    function setAuthorized(address[] calldata accounts_, bool[] calldata isAuthorized_) external virtual;
+    function setAuthorized(address[] calldata accounts_, bool[] calldata authorized_) external virtual;
 
     /// @notice Check if the given account is authorized to use the budget
     /// @param account_ The account to check

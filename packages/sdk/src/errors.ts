@@ -1,3 +1,9 @@
+export class BoostCoreNoIdentifierEmitted extends Error {
+  constructor() {
+    super(`No "BoostCreated" log was emitted from which to extract boostId`);
+  }
+}
+
 export class ContractAddressRequiredError extends Error {
   constructor() {
     super('Attempted to call contract method without providing an address');

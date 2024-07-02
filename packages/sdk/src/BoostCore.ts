@@ -341,47 +341,32 @@ export class BoostCore extends Deployable<[Address, Address]> {
     const receipt = await waitForTransactionReceipt(options.config, {
       hash: boostHash,
     });
-    console.log(receipt);
-    const boostCreatedLog = (
-      await parseEventLogs({
-        abi: boostCoreAbi,
-        eventName: 'BoostCreated',
-        logs: receipt.logs,
-      })
-    ).at(0);
+    const boostCreatedLog = parseEventLogs({
+      abi: boostCoreAbi,
+      eventName: 'BoostCreated',
+      logs: receipt.logs,
+    }).at(0);
     let boostId = 0n;
     if (!boostCreatedLog) {
       throw new BoostCoreNoIdentifierEmitted();
     }
     boostId = boostCreatedLog?.args.boostIndex;
-    const tx = await getTransaction(options.config, {
-      hash: boostHash,
-    });
-    console.log(tx);
-    const { args } = decodeFunctionData({
-      abi: boostCoreAbi,
-      data: tx.input,
-    });
-    const { result } = await simulateBoostCoreCreateBoost(options.config, {
-      address: this.address!,
-      args: args as [Hex],
-      ...this.optionallyAttachAccount(),
-    });
+    const boost = await this.readBoost(boostId);
 
     // TODO we need to figure out how to ensure the boost has the correct component instances, ie SimpleAllowList vs SimpleDenyList
     return new Boost({
       id: boostId,
-      budget: budget.at(result.budget),
-      action: action.at(result.action),
-      validator: validator.at(result.validator),
-      allowList: allowList.at(result.allowList),
+      budget: budget.at(boost.budget),
+      action: action.at(boost.action),
+      validator: validator.at(boost.validator),
+      allowList: allowList.at(boost.allowList),
       incentives: incentives.map((incentive, i) =>
-        incentive.at(result.incentives.at(i)!),
+        incentive.at(boost.incentives.at(i)!),
       ),
-      protocolFee: result.protocolFee,
-      referralFee: result.referralFee,
-      maxParticipants: result.maxParticipants,
-      owner: result.owner,
+      protocolFee: boost.protocolFee,
+      referralFee: boost.referralFee,
+      maxParticipants: boost.maxParticipants,
+      owner: boost.owner,
     });
   }
 
@@ -415,6 +400,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   public async getBoost(
+    _boostId: bigint,
+    _params: CallParams<typeof readBoostCoreGetBoost> = {},
+  ) {
+    // TODO new Boost() with this.readBoost once we can differentiate boost components
+  }
+
+  public async readBoost(
     boostId: bigint,
     params: CallParams<typeof readBoostCoreGetBoost> = {},
   ) {

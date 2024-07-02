@@ -1,19 +1,14 @@
-import {
-  type Config,
-  getTransaction,
-  waitForTransactionReceipt,
-} from '@wagmi/core';
+import type { Config } from '@wagmi/core';
 import type { CreateSimulateContractReturnType } from '@wagmi/core/codegen';
-import {
-  type Abi,
-  type AbiStateMutability,
-  type Address,
-  type ContractFunctionArgs,
-  type ContractFunctionName,
-  type Hash,
-  decodeFunctionData,
+import type {
+  Abi,
+  Address,
+  ContractFunctionName,
+  Hash,
+  WaitForTransactionReceiptParameters,
 } from 'viem';
 import { ContractAddressRequiredError } from '../errors';
+import { awaitResult } from '../utils';
 
 export class Contract {
   protected _config: Config;
@@ -51,23 +46,8 @@ export class Contract {
     hashPromise: Promise<Hash>,
     abi: abi,
     fn: CreateSimulateContractReturnType<abi, undefined, functionName>,
+    waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
   ) {
-    const hash = await hashPromise;
-    const receipt = await waitForTransactionReceipt(this._config, {
-      hash,
-    });
-    const tx = await getTransaction(this._config, { hash });
-    const { args } = decodeFunctionData({
-      abi,
-      data: tx.input,
-    });
-    const { result } = await fn(this._config, {
-      account: tx.from,
-      address: tx.to,
-      args: args as ContractFunctionArgs<abi, AbiStateMutability, functionName>,
-      blockNumber: receipt.blockNumber,
-      // biome-ignore lint/suspicious/noExplicitAny: TODO this is an extremely complex type, but this method is intended for internal use and as such is alright for now
-    } as any);
-    return result;
+    return awaitResult(this._config, hashPromise, abi, fn, waitParams);
   }
 }

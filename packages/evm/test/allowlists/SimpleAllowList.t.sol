@@ -127,4 +127,12 @@ contract SimpleAllowListTest is Test {
     function testSupportsInterface_Unsupported() public {
         assertFalse(allowList.supportsInterface(type(Test).interfaceId));
     }
+
+    ////////////////////////////
+    // SimpleAllowList.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(allowList.interfaceName(), "SimpleAllowList");
+    }
 }

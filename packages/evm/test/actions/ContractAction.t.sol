@@ -99,4 +99,12 @@ contract ContractActionTest is Test {
             abi.encodeWithSelector(target.mintPayable.selector, address(0xdeadbeef), 100 ether)
         );
     }
+
+    ////////////////////////////
+    // ContractAction.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(action.interfaceName(), "ContractAction");
+    }
 }

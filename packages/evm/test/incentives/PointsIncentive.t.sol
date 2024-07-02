@@ -78,4 +78,12 @@ contract PointsIncentiveTest is Test {
         vm.expectRevert(bytes4(keccak256("Unauthorized()")));
         incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
     }
+
+    ////////////////////////////
+    // PointsIncentive.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(incentive.interfaceName(), "PointsIncentive");
+    }
 }

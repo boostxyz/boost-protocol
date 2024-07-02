@@ -297,6 +297,14 @@ contract ERC20IncentiveTest is Test {
         incentive.drawRaffle();
     }
 
+    ////////////////////////////
+    // ERC20Incentive.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(incentive.interfaceName(), "ERC20Incentive");
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

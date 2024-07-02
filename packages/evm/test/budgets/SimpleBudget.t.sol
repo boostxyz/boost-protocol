@@ -883,4 +883,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return interfaceId == type(IERC1155Receiver).interfaceId;
     }
+
+    ////////////////////////////
+    // SimpleBudget.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(simpleBudget.interfaceName(), "SimpleBudget");
+    }
 }

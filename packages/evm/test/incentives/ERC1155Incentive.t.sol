@@ -206,6 +206,14 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         assertEq(payload.amount, 0);
     }
 
+    ////////////////////////////
+    // ERC1155Incentive.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(incentive.interfaceName(), "ERC1155Incentive");
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

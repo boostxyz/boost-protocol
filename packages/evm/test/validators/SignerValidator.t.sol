@@ -165,6 +165,14 @@ contract SignerValidatorTest is Test {
         assertFalse(validator.supportsInterface(type(Test).interfaceId));
     }
 
+    ////////////////////////////
+    // SignerValidator.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(validator.interfaceName(), "SignerValidator");
+    }
+
     /////////////////////
     // Test Helpers    //
     /////////////////////

@@ -127,4 +127,12 @@ contract SimpleDenyListTest is Test {
     function testSupportsInterface_Unsupported() public {
         assertFalse(denyList.supportsInterface(type(Test).interfaceId));
     }
+
+    ////////////////////////////
+    // SimpleDenyList.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(denyList.interfaceName(), "SimpleDenyList");
+    }
 }

@@ -684,4 +684,12 @@ contract VestingBudgetTest is Test {
 
         return abi.encode(transfer);
     }
+
+    ////////////////////////////
+    // VestingBudget.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(vestingBudget.interfaceName(), "VestingBudget");
+    }
 }

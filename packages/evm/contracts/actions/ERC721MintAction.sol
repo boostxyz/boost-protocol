@@ -78,7 +78,7 @@ contract ERC721MintAction is ContractAction, Validator {
 
     /// @notice Convenience method to differentiate ERC721MintAction from other Actions
     /// @return "ERC721MintAction"
-    function interfaceName() public pure override(ContractAction,Cloneable) returns (string memory) {
+    function interfaceName() public pure override(ContractAction, Cloneable) returns (string memory) {
         return "ERC721MintAction";
     }
 }

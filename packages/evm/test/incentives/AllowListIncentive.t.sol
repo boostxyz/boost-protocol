@@ -108,4 +108,12 @@ contract AllowListIncentiveTest is Test {
     function test_preflight() public {
         assertEq(new bytes(0), incentive.preflight(new bytes(0)));
     }
+
+    ////////////////////////////
+    // AllowListIncentive.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(incentive.interfaceName(), "AllowListIncentive");
+    }
 }

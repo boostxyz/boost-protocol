@@ -185,4 +185,12 @@ contract ERC721MintActionTest is Test {
     function _initialize(address target_, bytes4 selector_, uint256 value_) internal {
         action.initialize(abi.encode(block.chainid, target_, selector_, value_));
     }
+
+    ////////////////////////////
+    // ERC721MintAction.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(action.interfaceName(), "ERC721MintAction");
+    }
 }

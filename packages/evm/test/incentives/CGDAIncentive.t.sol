@@ -271,4 +271,12 @@ contract CGDAIncentiveTest is Test {
             accounts[i] = makeAddr(string(abi.encodePacked(uint256(i))));
         }
     }
+
+    ////////////////////////////
+    // CGDAIncentive.testInterfaceName //
+    ////////////////////////////
+
+    function testInterfaceName() public view {
+        assertEq(incentive.interfaceName(), "CGDAIncentive");
+    }
 }

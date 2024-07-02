@@ -11,6 +11,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {MockERC20, MockERC1155} from "contracts/shared/Mocks.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
+import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
@@ -758,9 +759,14 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     // SimpleBudget.supportsInterface //
     ////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsBudgetInterface() public {
         // Ensure the contract supports the Budget interface
         assertTrue(simpleBudget.supportsInterface(type(Budget).interfaceId));
+    }
+
+    function testSupportsSimpleBudgetInterface() public {
+        // Ensure the contract supports the Budget interface
+        assertTrue(simpleBudget.supportsInterface(type(ASimpleBudget).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public {
@@ -784,7 +790,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 tokens to the budget
         bytes memory data = abi.encodeWithSelector(
-            SimpleBudget.allocate.selector,
+            ASimpleBudget.allocate.selector,
             _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
 

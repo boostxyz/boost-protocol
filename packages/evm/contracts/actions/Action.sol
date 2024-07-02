@@ -36,4 +36,9 @@ abstract contract Action is Cloneable {
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Action).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    function getComponentInterface() public pure virtual returns (bytes4) {
+        return type(Action).interfaceId;
+    } 
+
 }

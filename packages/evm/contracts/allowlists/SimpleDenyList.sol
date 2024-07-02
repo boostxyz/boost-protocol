@@ -35,6 +35,11 @@ contract SimpleDenyList is AllowList {
         return !_denied[user_];
     }
 
+    /// @inheritdoc AllowList
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyOwner {
+        revert BoostError.NotImplemented();
+    }
+
     /// @notice Set the denied status of a user
     /// @param users_ The list of users to update
     /// @param denied_ The denied status of each user

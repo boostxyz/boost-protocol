@@ -46,7 +46,7 @@
     "@nomicfoundation/hardhat-ignition-viem": "^0.15.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
-    "@nomicfoundation/hardhat-viem": "^2.0.0",
+    "@nomicfoundation/hardhat-viem": "^2.0.2",
     "@types/chai": "4",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.24",

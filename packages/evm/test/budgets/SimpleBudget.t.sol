@@ -732,7 +732,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         address[] memory accounts = new address[](1);
         bool[] memory authorized = new bool[](2);
 
-        vm.expectRevert(Budget.LengthMismatch.selector);
+        vm.expectRevert(BoostError.LengthMismatch.selector);
         simpleBudget.setAuthorized(accounts, authorized);
     }
 

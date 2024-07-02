@@ -8,6 +8,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
+import {BoostError} from "contracts/shared/BoostError.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 
@@ -163,7 +164,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         override
         onlyOwner
     {
-        if (account_.length != authorized_.length) revert LengthMismatch();
+        if (account_.length != authorized_.length) revert BoostError.LengthMismatch();
         for (uint256 i = 0; i < account_.length; i++) {
             _isAuthorized[account_[i]] = authorized_[i];
         }

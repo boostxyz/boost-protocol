@@ -61,9 +61,6 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @notice Thrown when there are insufficient funds for an operation
     error InsufficientFunds(address asset, uint256 available, uint256 required);
 
-    /// @notice Thrown when the length of two arrays are not equal
-    error LengthMismatch();
-
     /// @notice Thrown when a transfer fails for an unknown reason
     error TransferFailed(address asset, address to, uint256 amount);
 

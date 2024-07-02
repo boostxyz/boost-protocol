@@ -23,9 +23,6 @@ contract PointsIncentive is Incentive {
     /// @notice The address of the points contract
     address public venue;
 
-    /// @notice The reward amount issued for each claim
-    uint256 public reward;
-
     /// @notice The maximum number of claims that can be made (one per address)
     uint256 public limit;
 

@@ -48,7 +48,7 @@ contract ERC20IncentiveTest is Test {
         // Check the incentive parameters
         assertTrue(incentive.strategy() == ERC20Incentive.Strategy.POOL);
         assertEq(incentive.asset(), address(mockAsset));
-        assertEq(incentive.reward(), 1 ether);
+        assertEq(incentive.currentReward(), 1 ether);
         assertEq(incentive.limit(), 5);
     }
 

@@ -16,6 +16,7 @@ import {Incentive} from "contracts/incentives/Incentive.sol";
 
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
 
 contract NotCloneable is ERC165 {
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {

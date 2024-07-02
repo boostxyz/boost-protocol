@@ -16,9 +16,6 @@ contract CGDAIncentive is Incentive {
     /// @notice The ERC20-like token used for the incentive
     address public asset;
 
-    /// @notice The reward this incentive is dynamic
-    uint256 private override reward;
-
     /// @notice The payload for initializing a CGDAIncentive
     /// @param asset The address of the ERC20-like token
     /// @param initialReward The initial reward amount

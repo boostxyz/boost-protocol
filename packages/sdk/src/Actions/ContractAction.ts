@@ -1,15 +1,18 @@
 import {
   type ContractActionPayload,
+  contractActionAbi,
   prepareContractActionPayload,
   readContractActionChainId,
   readContractActionPrepare,
   readContractActionSelector,
   readContractActionTarget,
   readContractActionValue,
+  simulateContractActionExecute,
   writeContractActionExecute,
 } from '@boostxyz/evm';
-import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import type { Hex } from 'viem';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
+import { getTransaction, waitForTransactionReceipt } from '@wagmi/core';
+import { type Hex, decodeFunctionData } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -62,6 +65,17 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     data: Hex,
     params: CallParams<typeof writeContractActionExecute> = {},
   ) {
+    return this.awaitResult(
+      this.executeRaw(data, params),
+      contractActionAbi,
+      simulateContractActionExecute,
+    );
+  }
+
+  public async executeRaw(
+    data: Hex,
+    params: CallParams<typeof writeContractActionExecute> = {},
+  ) {
     return writeContractActionExecute(this._config, {
       address: this.assertValidAddress(),
       args: [data],
@@ -91,8 +105,8 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
       _options,
     );
     return {
-      abi: ContractActionArtifact.abi,
-      bytecode: ContractActionArtifact.bytecode as Hex,
+      abi: contractActionAbi,
+      bytecode: bytecode as Hex,
       args: [prepareContractActionPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

@@ -1,6 +1,7 @@
 import {
   type ClaimPayload,
   type PointsIncentivePayload,
+  pointsIncentiveAbi,
   prepareClaimPayload,
   preparePointsIncentivePayload,
   readPointsIncentiveIsClaimable,
@@ -8,9 +9,10 @@ import {
   readPointsIncentiveQuantity,
   readPointsIncentiveSelector,
   readPointsIncentiveVenue,
+  simulatePointsIncentiveClaim,
   writePointsIncentiveClaim,
 } from '@boostxyz/evm';
-import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import type { Hex } from 'viem';
 import type {
   DeployableOptions,
@@ -54,8 +56,18 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
-  //prepareClaimPayload
   public async claim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writePointsIncentiveClaim> = {},
+  ) {
+    return this.awaitResult(
+      this.claimRaw(payload, params),
+      pointsIncentiveAbi,
+      simulatePointsIncentiveClaim,
+    );
+  }
+
+  public async claimRaw(
     payload: ClaimPayload,
     params: CallParams<typeof writePointsIncentiveClaim> = {},
   ) {
@@ -87,8 +99,8 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
       _options,
     );
     return {
-      abi: PointsIncentiveArtifact.abi,
-      bytecode: PointsIncentiveArtifact.bytecode as Hex,
+      abi: pointsIncentiveAbi,
+      bytecode: bytecode as Hex,
       args: [preparePointsIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

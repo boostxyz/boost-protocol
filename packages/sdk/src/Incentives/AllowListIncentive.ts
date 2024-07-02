@@ -1,14 +1,16 @@
 import {
   type AllowListIncentivePayload,
   type ClaimPayload,
+  allowListIncentiveAbi,
   prepareAllowListIncentivePayload,
   prepareClaimPayload,
   readAllowListIncentiveAllowList,
   readAllowListIncentiveIsClaimable,
   readAllowListIncentiveLimit,
+  simulateAllowListIncentiveClaim,
   writeAllowListIncentiveClaim,
 } from '@boostxyz/evm';
-import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import type { Hex } from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import type {
@@ -43,8 +45,18 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
-  // use prepareClaimPayload
   public async claim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeAllowListIncentiveClaim> = {},
+  ) {
+    return this.awaitResult(
+      this.claimRaw(payload, params),
+      allowListIncentiveAbi,
+      simulateAllowListIncentiveClaim,
+    );
+  }
+
+  public async claimRaw(
     payload: ClaimPayload,
     params: CallParams<typeof writeAllowListIncentiveClaim> = {},
   ) {
@@ -76,8 +88,8 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
       _options,
     );
     return {
-      abi: AllowListIncentiveArtifact.abi,
-      bytecode: AllowListIncentiveArtifact.bytecode as Hex,
+      abi: allowListIncentiveAbi,
+      bytecode: bytecode as Hex,
       args: [prepareAllowListIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

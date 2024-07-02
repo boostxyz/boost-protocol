@@ -8,14 +8,20 @@ import {
   readVestingBudgetEnd,
   readVestingBudgetIsAuthorized,
   readVestingBudgetTotal,
+  simulateVestingBudgetAllocate,
+  simulateVestingBudgetDisburse,
+  simulateVestingBudgetDisburseBatch,
+  simulateVestingBudgetReclaim,
+  simulateVestingBudgetSetAuthorized,
+  vestingBudgetAbi,
   writeVestingBudgetAllocate,
   writeVestingBudgetDisburse,
   writeVestingBudgetDisburseBatch,
   writeVestingBudgetReclaim,
   writeVestingBudgetSetAuthorized,
 } from '@boostxyz/evm';
-import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
-import { type Config, getAccount } from '@wagmi/core';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
+import { getAccount } from '@wagmi/core';
 import { type Address, type Hex, zeroAddress } from 'viem';
 import {
   Deployable,
@@ -28,7 +34,18 @@ import type { CallParams } from '../utils';
 export type { VestingBudgetPayload };
 
 export class VestingBudget extends Deployable<VestingBudgetPayload> {
-  public allocate(
+  public async allocate(
+    transfer: TransferPayload,
+    params: CallParams<typeof writeVestingBudgetAllocate> = {},
+  ) {
+    return this.awaitResult(
+      this.allocateRaw(transfer, params),
+      vestingBudgetAbi,
+      simulateVestingBudgetAllocate,
+    );
+  }
+
+  public allocateRaw(
     transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetAllocate> = {},
   ) {
@@ -39,9 +56,18 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
     });
   }
 
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
-  public reclaim(
+  public async reclaim(
+    transfer: TransferPayload,
+    params: CallParams<typeof writeVestingBudgetReclaim> = {},
+  ) {
+    return this.awaitResult(
+      this.reclaimRaw(transfer, params),
+      vestingBudgetAbi,
+      simulateVestingBudgetReclaim,
+    );
+  }
+
+  public reclaimRaw(
     transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetReclaim> = {},
   ) {
@@ -52,9 +78,18 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
     });
   }
 
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
-  public disburse(
+  public async disburse(
+    transfer: TransferPayload,
+    params: CallParams<typeof writeVestingBudgetDisburse> = {},
+  ) {
+    return this.awaitResult(
+      this.disburseRaw(transfer, params),
+      vestingBudgetAbi,
+      simulateVestingBudgetDisburse,
+    );
+  }
+
+  public disburseRaw(
     transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetDisburse> = {},
   ) {
@@ -65,9 +100,18 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
     });
   }
 
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
-  public disburseBatch(
+  public async disburseBatch(
+    transfers: TransferPayload[],
+    params: CallParams<typeof writeVestingBudgetDisburseBatch> = {},
+  ) {
+    return this.awaitResult(
+      this.disburseBatchRaw(transfers, params),
+      vestingBudgetAbi,
+      simulateVestingBudgetDisburseBatch,
+    );
+  }
+
+  public disburseBatchRaw(
     transfers: TransferPayload[],
     params: CallParams<typeof writeVestingBudgetDisburseBatch> = {},
   ) {
@@ -79,6 +123,18 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
   }
 
   public async setAuthorized(
+    addresses: Address[],
+    allowed: boolean[],
+    params: CallParams<typeof writeVestingBudgetSetAuthorized> = {},
+  ) {
+    return this.awaitResult(
+      this.setAuthorizedRaw(addresses, allowed, params),
+      vestingBudgetAbi,
+      simulateVestingBudgetSetAuthorized,
+    );
+  }
+
+  public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
     params: CallParams<typeof writeVestingBudgetSetAuthorized> = {},
@@ -163,8 +219,8 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
       }
     }
     return {
-      abi: VestingBudgetArtifact.abi,
-      bytecode: VestingBudgetArtifact.bytecode as Hex,
+      abi: vestingBudgetAbi,
+      bytecode: bytecode as Hex,
       args: [prepareVestingBudgetPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

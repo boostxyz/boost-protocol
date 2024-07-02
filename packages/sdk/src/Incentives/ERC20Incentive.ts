@@ -2,6 +2,7 @@ import {
   type ClaimPayload,
   type ERC20IncentivePayload,
   type StrategyType,
+  erc20IncentiveAbi,
   prepareClaimPayload,
   prepareERC20IncentivePayload,
   readErc20IncentiveAsset,
@@ -11,11 +12,14 @@ import {
   readErc20IncentivePreflight,
   readErc20IncentiveReward,
   readErc20IncentiveStrategy,
+  simulateErc20IncentiveClaim,
+  simulateErc20IncentiveDrawRaffle,
+  simulateErc20IncentiveReclaim,
   writeErc20IncentiveClaim,
   writeErc20IncentiveDrawRaffle,
   writeErc20IncentiveReclaim,
 } from '@boostxyz/evm';
-import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import type { Hex } from 'viem';
 import {
   Deployable,
@@ -75,6 +79,17 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     payload: ClaimPayload,
     params: CallParams<typeof writeErc20IncentiveClaim> = {},
   ) {
+    return this.awaitResult(
+      this.claimRaw(payload, params),
+      erc20IncentiveAbi,
+      simulateErc20IncentiveClaim,
+    );
+  }
+
+  public async claimRaw(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeErc20IncentiveClaim> = {},
+  ) {
     return writeErc20IncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
@@ -82,8 +97,18 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
-  //prepareClaimPayload
   public async reclaim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeErc20IncentiveReclaim> = {},
+  ) {
+    return this.awaitResult(
+      this.reclaimRaw(payload, params),
+      erc20IncentiveAbi,
+      simulateErc20IncentiveReclaim,
+    );
+  }
+
+  public async reclaimRaw(
     payload: ClaimPayload,
     params: CallParams<typeof writeErc20IncentiveReclaim> = {},
   ) {
@@ -94,7 +119,6 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
-  //prepareClaimPayload
   public async isClaimable(
     payload: ClaimPayload,
     params: CallParams<typeof readErc20IncentiveIsClaimable> = {},
@@ -120,6 +144,16 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   public async drawRaffle(
     params: CallParams<typeof writeErc20IncentiveDrawRaffle> = {},
   ) {
+    return this.awaitResult(
+      this.drawRaffleRaw(params),
+      erc20IncentiveAbi,
+      simulateErc20IncentiveDrawRaffle,
+    );
+  }
+
+  public async drawRaffleRaw(
+    params: CallParams<typeof writeErc20IncentiveDrawRaffle> = {},
+  ) {
     return writeErc20IncentiveDrawRaffle(this._config, {
       address: this.assertValidAddress(),
       ...params,
@@ -135,8 +169,8 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
       _options,
     );
     return {
-      abi: ERC20IncentiveArtifact.abi,
-      bytecode: ERC20IncentiveArtifact.bytecode as Hex,
+      abi: erc20IncentiveAbi,
+      bytecode: bytecode as Hex,
       args: [prepareERC20IncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

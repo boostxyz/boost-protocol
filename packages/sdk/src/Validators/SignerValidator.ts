@@ -4,10 +4,13 @@ import {
   prepareSignerValidatorPayload,
   prepareSignerValidatorValidatePayload,
   readSignerValidatorSigners,
+  signerValidatorAbi,
+  simulateSignerValidatorSetAuthorized,
+  simulateSignerValidatorValidate,
   writeSignerValidatorSetAuthorized,
   writeSignerValidatorValidate,
 } from '@boostxyz/evm';
-import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import type { Address, Hex } from 'viem';
 import type {
   DeployableOptions,
@@ -34,6 +37,17 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     payload: SignerValidatorValidatePayload,
     params: CallParams<typeof writeSignerValidatorValidate> = {},
   ) {
+    return this.awaitResult(
+      this.validateRaw(payload, params),
+      signerValidatorAbi,
+      simulateSignerValidatorValidate,
+    );
+  }
+
+  public async validateRaw(
+    payload: SignerValidatorValidatePayload,
+    params: CallParams<typeof writeSignerValidatorValidate> = {},
+  ) {
     return writeSignerValidatorValidate(this._config, {
       address: this.assertValidAddress(),
       args: [prepareSignerValidatorValidatePayload(payload)],
@@ -42,6 +56,18 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   }
 
   public async setAuthorized(
+    addresses: Address[],
+    allowed: boolean[],
+    params: CallParams<typeof writeSignerValidatorSetAuthorized> = {},
+  ) {
+    return this.awaitResult(
+      this.setAuthorizedRaw(addresses, allowed, params),
+      signerValidatorAbi,
+      simulateSignerValidatorSetAuthorized,
+    );
+  }
+
+  public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
     params: CallParams<typeof writeSignerValidatorSetAuthorized> = {},
@@ -62,8 +88,8 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
       _options,
     );
     return {
-      abi: SignerValidatorArtifact.abi,
-      bytecode: SignerValidatorArtifact.bytecode as Hex,
+      abi: signerValidatorAbi,
+      bytecode: bytecode as Hex,
       args: [prepareSignerValidatorPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

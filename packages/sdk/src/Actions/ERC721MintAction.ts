@@ -1,17 +1,18 @@
 import {
   type ERC721MintActionPayload,
+  erc721MintActionAbi,
   prepareERC721MintActionPayload,
   readErc721MintActionPrepare,
+  simulateErc721MintActionExecute,
+  simulateErc721MintActionValidate,
   writeErc721MintActionExecute,
   writeErc721MintActionValidate,
 } from '@boostxyz/evm';
-import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import type { Config } from '@wagmi/core';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import type { Hex } from 'viem';
-import {
-  Deployable,
-  type DeployableOptions,
-  type GenericDeployableParams,
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
 import type { CallParams } from '../utils';
 import { ContractAction } from './ContractAction';
@@ -20,6 +21,17 @@ export type { ERC721MintActionPayload };
 
 export class ERC721MintAction extends ContractAction {
   public override async execute(
+    data: Hex,
+    params: CallParams<typeof writeErc721MintActionExecute> = {},
+  ) {
+    return this.awaitResult(
+      this.executeRaw(data, params),
+      erc721MintActionAbi,
+      simulateErc721MintActionExecute,
+    );
+  }
+
+  public override async executeRaw(
     data: Hex,
     params: CallParams<typeof writeErc721MintActionExecute> = {},
   ) {
@@ -47,6 +59,17 @@ export class ERC721MintAction extends ContractAction {
     data: Hex,
     params: CallParams<typeof writeErc721MintActionValidate> = {},
   ) {
+    return this.awaitResult(
+      this.validateRaw(data, params),
+      erc721MintActionAbi,
+      simulateErc721MintActionValidate,
+    );
+  }
+
+  public async validateRaw(
+    data: Hex,
+    params: CallParams<typeof writeErc721MintActionValidate> = {},
+  ) {
     return writeErc721MintActionValidate(this._config, {
       address: this.assertValidAddress(),
       args: [data],
@@ -64,8 +87,8 @@ export class ERC721MintAction extends ContractAction {
       _options,
     );
     return {
-      abi: ERC721MintActionArtifact.abi,
-      bytecode: ERC721MintActionArtifact.bytecode as Hex,
+      abi: erc721MintActionAbi,
+      bytecode: bytecode as Hex,
       args: [prepareERC721MintActionPayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

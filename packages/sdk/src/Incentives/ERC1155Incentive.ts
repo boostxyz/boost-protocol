@@ -2,6 +2,7 @@ import {
   type ClaimPayload,
   type ERC1155IncentivePayload,
   type StrategyType,
+  erc1155IncentiveAbi,
   prepareClaimPayload,
   prepareERC1155IncentivePayload,
   readErc1155IncentiveAsset,
@@ -12,10 +13,12 @@ import {
   readErc1155IncentiveStrategy,
   readErc1155IncentiveTokenId,
   readErc1155SupportsInterface,
+  simulateErc1155IncentiveClaim,
+  simulateErc1155IncentiveReclaim,
   writeErc1155IncentiveClaim,
   writeErc1155IncentiveReclaim,
 } from '@boostxyz/evm';
-import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import type { Hex } from 'viem';
 import type {
   DeployableOptions,
@@ -76,6 +79,17 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
     payload: ClaimPayload,
     params: CallParams<typeof writeErc1155IncentiveClaim> = {},
   ) {
+    return this.awaitResult(
+      this.claimRaw(payload, params),
+      erc1155IncentiveAbi,
+      simulateErc1155IncentiveClaim,
+    );
+  }
+
+  public async claimRaw(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeErc1155IncentiveClaim> = {},
+  ) {
     return writeErc1155IncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
@@ -84,6 +98,17 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
   }
 
   public async reclaim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeErc1155IncentiveReclaim> = {},
+  ) {
+    return this.awaitResult(
+      this.reclaimRaw(payload, params),
+      erc1155IncentiveAbi,
+      simulateErc1155IncentiveReclaim,
+    );
+  }
+
+  public async reclaimRaw(
     payload: ClaimPayload,
     params: CallParams<typeof writeErc1155IncentiveReclaim> = {},
   ) {
@@ -136,8 +161,8 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
       _options,
     );
     return {
-      abi: ERC1155IncentiveArtifact.abi,
-      bytecode: ERC1155IncentiveArtifact.bytecode as Hex,
+      abi: erc1155IncentiveAbi,
+      bytecode: bytecode as Hex,
       args: [prepareERC1155IncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

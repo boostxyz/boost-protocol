@@ -2,6 +2,7 @@ import {
   type CGDAIncentivePayload,
   type CGDAParameters,
   type ClaimPayload,
+  cgdaIncentiveAbi,
   prepareCGDAIncentivePayload,
   prepareClaimPayload,
   readCgdaIncentiveAsset,
@@ -9,10 +10,12 @@ import {
   readCgdaIncentiveCurrentReward,
   readCgdaIncentiveIsClaimable,
   readCgdaIncentiveTotalBudget,
+  simulateCgdaIncentiveClaim,
+  simulateCgdaIncentiveReclaim,
   writeCgdaIncentiveClaim,
   writeCgdaIncentiveReclaim,
 } from '@boostxyz/evm';
-import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import type { Hex } from 'viem';
 import type {
   DeployableOptions,
@@ -56,8 +59,18 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
-  //prepareClaimPayload
   public async claim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeCgdaIncentiveClaim> = {},
+  ) {
+    return this.awaitResult(
+      this.claimRaw(payload, params),
+      cgdaIncentiveAbi,
+      simulateCgdaIncentiveClaim,
+    );
+  }
+
+  public async claimRaw(
     payload: ClaimPayload,
     params: CallParams<typeof writeCgdaIncentiveClaim> = {},
   ) {
@@ -68,8 +81,18 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
-  //prepareClaimPayload
   public async reclaim(
+    payload: ClaimPayload,
+    params: CallParams<typeof writeCgdaIncentiveReclaim> = {},
+  ) {
+    return this.awaitResult(
+      this.reclaimRaw(payload, params),
+      cgdaIncentiveAbi,
+      simulateCgdaIncentiveReclaim,
+    );
+  }
+
+  public async reclaimRaw(
     payload: ClaimPayload,
     params: CallParams<typeof writeCgdaIncentiveReclaim> = {},
   ) {
@@ -120,8 +143,8 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
       _options,
     );
     return {
-      abi: CGDAIncentiveArtifact.abi,
-      bytecode: CGDAIncentiveArtifact.bytecode as Hex,
+      abi: cgdaIncentiveAbi,
+      bytecode: bytecode as Hex,
       args: [prepareCGDAIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };

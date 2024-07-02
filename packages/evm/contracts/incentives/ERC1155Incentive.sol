@@ -48,6 +48,7 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     /// @notice Construct a new ERC1155Incentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
+        reward = 1;
         _disableInitializers();
     }
 

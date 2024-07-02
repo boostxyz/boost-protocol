@@ -25,6 +25,9 @@ contract AllowListIncentive is Incentive {
     /// @notice The maximum number of claims that can be made (one per address)
     uint256 public limit;
 
+    /// @notice The reward for this incentive is always 0
+    uint256 private override reward;
+
     /// @notice Construct a new AllowListIncentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

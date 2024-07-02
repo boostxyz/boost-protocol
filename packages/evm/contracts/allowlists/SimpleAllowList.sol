@@ -41,7 +41,7 @@ contract SimpleAllowList is AllowList, OwnableRoles {
     }
 
     /// @inheritdoc AllowList
-    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyRoles(LIST_MANAGER_ROLE) {
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external override onlyRoles(LIST_MANAGER_ROLE) {
         if (users_.length != allowed_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {
@@ -51,7 +51,7 @@ contract SimpleAllowList is AllowList, OwnableRoles {
 
     /// @inheritdoc AllowList
     /// @notice This function is not implemented in this contract
-    function setDenied(address[] calldata users_, bool[] calldata denied_) external onlyOwner {
+    function setDenied(address[] calldata users_, bool[] calldata denied_) external override onlyOwner {
         revert BoostError.NotImplemented();
     }
 }

@@ -36,7 +36,7 @@ contract SimpleDenyList is AllowList {
     }
 
     /// @inheritdoc AllowList
-    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyOwner {
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external override onlyOwner {
         revert BoostError.NotImplemented();
     }
 
@@ -45,7 +45,7 @@ contract SimpleDenyList is AllowList {
     /// @param denied_ The denied status of each user
     /// @dev The length of the `users_` and `denied_` arrays must be the same
     /// @dev This function can only be called by the owner
-    function setDenied(address[] calldata users_, bool[] calldata denied_) external onlyOwner {
+    function setDenied(address[] calldata users_, bool[] calldata denied_) external override onlyOwner {
         if (users_.length != denied_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {

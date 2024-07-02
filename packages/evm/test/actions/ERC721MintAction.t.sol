@@ -7,6 +7,7 @@ import {ERC721} from "@solady/tokens/ERC721.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {Action} from "contracts/actions/Action.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 import {Validator} from "contracts/validators/Validator.sol";
 
@@ -44,7 +45,7 @@ contract ERC721MintActionTest is Test {
         _initialize(address(mockAsset), MockERC721.mint.selector, mockAsset.mintPrice());
 
         // Execute is not implemented => revert
-        vm.expectRevert(Action.ExecuteNotImplemented.selector);
+        vm.expectRevert(BoostError.NotImplemented.selector);
         action.execute("");
     }
 

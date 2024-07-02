@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ERC721} from "@solady/tokens/ERC721.sol";
-
+import {BoostError} from "contracts/shared/BoostError.sol";
 import {Action} from "contracts/actions/Action.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
@@ -37,7 +37,7 @@ contract ERC721MintAction is ContractAction, Validator {
     /// @return returnData The return data from the call
     function execute(bytes calldata data_) external payable override returns (bool success, bytes memory returnData) {
         (data_, success, returnData);
-        revert ExecuteNotImplemented();
+        revert BoostError.NotImplemented();
     }
 
     /// @notice Prepare the action for execution and return the expected payload

@@ -130,7 +130,7 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @dev The mechanism for checking authorization is left to the implementing contract
     function isAuthorized(address account_) external view virtual returns (bool);
     
-    function getComponentInterface() public pure virtual override returns (bytes4) {
+    function getComponentInterface() public pure virtual returns (bytes4) {
         return type(Budget).interfaceId;
     } 
 

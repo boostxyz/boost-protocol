@@ -302,7 +302,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Budget, IERC165) returns (bool) {
-        return interfaceId == type(ASimpleBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(ASimpleBudget).interfaceId || Budget.supportsInterface(interfaceId) || IERC165.supportsInterface(interfaceId);
     }
 
     function getComponentInterface() public pure returns (bytes4) {

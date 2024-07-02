@@ -27,6 +27,12 @@ contract MockAllowList is AllowList {
     function isAllowed(address guy, bytes calldata) external view override returns (bool) {
         return guy == owner() || guy == address(0xdeadbeef);
     }
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external override {
+        revert BoostError.NotImplemented();
+    }
+    function setDenied(address[] calldata users_, bool[] calldata denied_) external override {
+        revert BoostError.NotImplemented();
+    }
 }
 
 contract MockIncentive is Incentive {

@@ -176,4 +176,10 @@ contract ERC20Incentive is Incentive {
         asset.safeTransfer(winnerAddress, reward);
         emit Claimed(winnerAddress, abi.encodePacked(asset, winnerAddress, reward));
     }
+
+    /// @notice Convenience method to differentiate ERC20Incentive from other Incentives
+    /// @return "ERC20Incentive"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "ERC20Incentive";
+    }
 }

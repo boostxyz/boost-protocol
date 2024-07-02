@@ -64,6 +64,19 @@ export interface Cloneable$Type {
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "interfaceName",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes4",

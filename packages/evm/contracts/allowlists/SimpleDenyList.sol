@@ -47,4 +47,10 @@ contract SimpleDenyList is AllowList {
             _denied[users_[i]] = denied_[i];
         }
     }
+
+    /// @notice Convenience method to differentiate SimpleDenyList from other AllowLists
+    /// @return "SimpleDenyList"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "SimpleDenyList";
+    }
 }

@@ -96,4 +96,10 @@ contract PointsIncentive is Incentive {
     function _isClaimable(address recipient_) internal view returns (bool) {
         return !claimed[recipient_] && claims < limit;
     }
+    
+    /// @notice Convenience method to differentiate PointsIncentive from other Incentives
+    /// @return "PointsIncentive"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "PointsIncentive";
+    }
 }

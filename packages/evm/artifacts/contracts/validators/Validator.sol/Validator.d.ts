@@ -150,6 +150,19 @@ export interface Validator$Type {
     },
     {
       "inputs": [],
+      "name": "interfaceName",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "owner",
       "outputs": [
         {

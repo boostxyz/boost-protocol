@@ -93,6 +93,13 @@ export const actionAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'prepare',
     outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
@@ -201,6 +208,13 @@ export const allowListAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -401,6 +415,13 @@ export const allowListIncentiveAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -1241,6 +1262,13 @@ export const budgetAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'account_', internalType: 'address', type: 'address' }],
     name: 'isAuthorized',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -1496,6 +1524,13 @@ export const cgdaIncentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'isClaimable',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -1597,6 +1632,13 @@ export const cloneableAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -1707,6 +1749,13 @@ export const contractActionAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -2122,6 +2171,13 @@ export const erc1155IncentiveAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -2606,6 +2662,13 @@ export const erc20IncentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'isClaimable',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -3042,6 +3105,13 @@ export const erc721MintActionAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -3809,6 +3879,13 @@ export const incentiveAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -5236,6 +5313,13 @@ export const pointsIncentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'isClaimable',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -5502,6 +5586,13 @@ export const signerValidatorAbi = [
   {
     type: 'function',
     inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [],
     name: 'owner',
     outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
     stateMutability: 'view',
@@ -5716,6 +5807,13 @@ export const simpleAllowListAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -6028,6 +6126,13 @@ export const simpleBudgetAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'account_', internalType: 'address', type: 'address' }],
     name: 'isAuthorized',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -6246,6 +6351,13 @@ export const simpleDenyListAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [
       { name: 'user_', internalType: 'address', type: 'address' },
       { name: '', internalType: 'bytes', type: 'bytes' },
@@ -6404,6 +6516,13 @@ export const validatorAbi = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -6680,6 +6799,13 @@ export const vestingBudgetAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'interfaceName',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'account_', internalType: 'address', type: 'address' }],
     name: 'isAuthorized',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -6785,6 +6911,14 @@ export const readAction = /*#__PURE__*/ createReadContract({ abi: actionAbi })
 export const readActionValidator = /*#__PURE__*/ createReadContract({
   abi: actionAbi,
   functionName: 'VALIDATOR',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link actionAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readActionInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: actionAbi,
+  functionName: 'interfaceName',
 })
 
 /**
@@ -6894,6 +7028,14 @@ export const watchActionInitializedEvent =
  */
 export const readAllowList = /*#__PURE__*/ createReadContract({
   abi: allowListAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link allowListAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readAllowListInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: allowListAbi,
+  functionName: 'interfaceName',
 })
 
 /**
@@ -7120,6 +7262,15 @@ export const readAllowListIncentiveClaims = /*#__PURE__*/ createReadContract({
   abi: allowListIncentiveAbi,
   functionName: 'claims',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link allowListIncentiveAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readAllowListIncentiveInterfaceName =
+  /*#__PURE__*/ createReadContract({
+    abi: allowListIncentiveAbi,
+    functionName: 'interfaceName',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link allowListIncentiveAbi}__ and `functionName` set to `"isClaimable"`
@@ -7818,6 +7969,14 @@ export const readBudgetDistributed = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link budgetAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readBudgetInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: budgetAbi,
+  functionName: 'interfaceName',
+})
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link budgetAbi}__ and `functionName` set to `"isAuthorized"`
  */
 export const readBudgetIsAuthorized = /*#__PURE__*/ createReadContract({
@@ -8177,6 +8336,14 @@ export const readCgdaIncentiveCurrentReward = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link cgdaIncentiveAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readCgdaIncentiveInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: cgdaIncentiveAbi,
+  functionName: 'interfaceName',
+})
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link cgdaIncentiveAbi}__ and `functionName` set to `"isClaimable"`
  */
 export const readCgdaIncentiveIsClaimable = /*#__PURE__*/ createReadContract({
@@ -8440,6 +8607,14 @@ export const readCloneable = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link cloneableAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readCloneableInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: cloneableAbi,
+  functionName: 'interfaceName',
+})
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link cloneableAbi}__ and `functionName` set to `"supportsInterface"`
  */
 export const readCloneableSupportsInterface = /*#__PURE__*/ createReadContract({
@@ -8514,6 +8689,13 @@ export const readContractActionChainId = /*#__PURE__*/ createReadContract({
   abi: contractActionAbi,
   functionName: 'chainId',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link contractActionAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readContractActionInterfaceName = /*#__PURE__*/ createReadContract(
+  { abi: contractActionAbi, functionName: 'interfaceName' },
+)
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link contractActionAbi}__ and `functionName` set to `"prepare"`
@@ -8829,6 +9011,15 @@ export const readErc1155IncentiveExtraData = /*#__PURE__*/ createReadContract({
   abi: erc1155IncentiveAbi,
   functionName: 'extraData',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc1155IncentiveAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readErc1155IncentiveInterfaceName =
+  /*#__PURE__*/ createReadContract({
+    abi: erc1155IncentiveAbi,
+    functionName: 'interfaceName',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc1155IncentiveAbi}__ and `functionName` set to `"isClaimable"`
@@ -9341,6 +9532,13 @@ export const readErc20IncentiveEntries = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc20IncentiveAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readErc20IncentiveInterfaceName = /*#__PURE__*/ createReadContract(
+  { abi: erc20IncentiveAbi, functionName: 'interfaceName' },
+)
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc20IncentiveAbi}__ and `functionName` set to `"isClaimable"`
  */
 export const readErc20IncentiveIsClaimable = /*#__PURE__*/ createReadContract({
@@ -9838,6 +10036,15 @@ export const readErc721MintActionChainId = /*#__PURE__*/ createReadContract({
   abi: erc721MintActionAbi,
   functionName: 'chainId',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc721MintActionAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readErc721MintActionInterfaceName =
+  /*#__PURE__*/ createReadContract({
+    abi: erc721MintActionAbi,
+    functionName: 'interfaceName',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc721MintActionAbi}__ and `functionName` set to `"owner"`
@@ -10543,6 +10750,14 @@ export const readIncentiveClaimed = /*#__PURE__*/ createReadContract({
 export const readIncentiveClaims = /*#__PURE__*/ createReadContract({
   abi: incentiveAbi,
   functionName: 'claims',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link incentiveAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readIncentiveInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: incentiveAbi,
+  functionName: 'interfaceName',
 })
 
 /**
@@ -12119,6 +12334,15 @@ export const readPointsIncentiveClaims = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readPointsIncentiveInterfaceName =
+  /*#__PURE__*/ createReadContract({
+    abi: pointsIncentiveAbi,
+    functionName: 'interfaceName',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"isClaimable"`
  */
 export const readPointsIncentiveIsClaimable = /*#__PURE__*/ createReadContract({
@@ -12397,6 +12621,15 @@ export const readSignerValidator = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link signerValidatorAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readSignerValidatorInterfaceName =
+  /*#__PURE__*/ createReadContract({
+    abi: signerValidatorAbi,
+    functionName: 'interfaceName',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link signerValidatorAbi}__ and `functionName` set to `"owner"`
  */
 export const readSignerValidatorOwner = /*#__PURE__*/ createReadContract({
@@ -12659,6 +12892,15 @@ export const readSimpleAllowListHasAnyRole = /*#__PURE__*/ createReadContract({
   abi: simpleAllowListAbi,
   functionName: 'hasAnyRole',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link simpleAllowListAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readSimpleAllowListInterfaceName =
+  /*#__PURE__*/ createReadContract({
+    abi: simpleAllowListAbi,
+    functionName: 'interfaceName',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link simpleAllowListAbi}__ and `functionName` set to `"isAllowed"`
@@ -12963,6 +13205,14 @@ export const readSimpleBudgetAvailable = /*#__PURE__*/ createReadContract({
 export const readSimpleBudgetDistributed = /*#__PURE__*/ createReadContract({
   abi: simpleBudgetAbi,
   functionName: 'distributed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link simpleBudgetAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readSimpleBudgetInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: simpleBudgetAbi,
+  functionName: 'interfaceName',
 })
 
 /**
@@ -13313,6 +13563,13 @@ export const readSimpleDenyList = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link simpleDenyListAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readSimpleDenyListInterfaceName = /*#__PURE__*/ createReadContract(
+  { abi: simpleDenyListAbi, functionName: 'interfaceName' },
+)
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link simpleDenyListAbi}__ and `functionName` set to `"isAllowed"`
  */
 export const readSimpleDenyListIsAllowed = /*#__PURE__*/ createReadContract({
@@ -13532,6 +13789,14 @@ export const watchSimpleDenyListOwnershipTransferredEvent =
  */
 export const readValidator = /*#__PURE__*/ createReadContract({
   abi: validatorAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link validatorAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readValidatorInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: validatorAbi,
+  functionName: 'interfaceName',
 })
 
 /**
@@ -13782,6 +14047,14 @@ export const readVestingBudgetDuration = /*#__PURE__*/ createReadContract({
 export const readVestingBudgetEnd = /*#__PURE__*/ createReadContract({
   abi: vestingBudgetAbi,
   functionName: 'end',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link vestingBudgetAbi}__ and `functionName` set to `"interfaceName"`
+ */
+export const readVestingBudgetInterfaceName = /*#__PURE__*/ createReadContract({
+  abi: vestingBudgetAbi,
+  functionName: 'interfaceName',
 })
 
 /**

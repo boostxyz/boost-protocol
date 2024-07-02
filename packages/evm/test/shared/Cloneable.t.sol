@@ -4,7 +4,11 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 
-contract CloneableImpl is Cloneable {}
+contract CloneableImpl is Cloneable {
+    function interfaceName() public pure override(Cloneable) returns (string memory) {
+        return "CloneableImpl2";
+    }
+}
 
 contract CloneableImpl2 is Cloneable {
     uint256 private something;
@@ -15,6 +19,10 @@ contract CloneableImpl2 is Cloneable {
 
     function getSomething() external view returns (uint256) {
         return something;
+    }
+
+    function interfaceName() public pure override(Cloneable) returns (string memory) {
+        return "CloneableImpl2";
     }
 }
 

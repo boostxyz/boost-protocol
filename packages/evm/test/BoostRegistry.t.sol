@@ -27,6 +27,10 @@ contract MockAllowList is AllowList {
     function isAllowed(address guy, bytes calldata) external view override returns (bool) {
         return guy == owner() || guy == address(0xdeadbeef);
     }
+
+    function interfaceName() public pure override(Cloneable) returns (string memory) {
+        return "MockAllowList";
+    }
 }
 
 contract MockIncentive is Incentive {
@@ -46,6 +50,10 @@ contract MockIncentive is Incentive {
 
     function reclaim(bytes calldata) external virtual override returns (bool) {
         return true;
+    }
+
+    function interfaceName() public pure override(Cloneable) returns (string memory) {
+        return "MockIncentive";
     }
 }
 

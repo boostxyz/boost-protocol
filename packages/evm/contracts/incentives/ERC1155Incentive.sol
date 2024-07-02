@@ -174,4 +174,10 @@ contract ERC1155Incentive is Incentive, IERC1155Receiver {
     {
         return this.onERC1155BatchReceived.selector;
     }
+
+    /// @notice Convenience method to differentiate ERC1155Incentive from other Incentives
+    /// @return "ERC1155Incentive"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "ERC1155Incentive";
+    }
 }

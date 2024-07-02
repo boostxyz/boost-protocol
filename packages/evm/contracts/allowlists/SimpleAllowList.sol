@@ -52,4 +52,10 @@ contract SimpleAllowList is AllowList, OwnableRoles {
             _allowed[users_[i]] = allowed_[i];
         }
     }
+
+    /// @notice Convenience method to differentiate SimpleAllowList from other AllowLists
+    /// @return "SimpleAllowList"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "SimpleAllowList";
+    }
 }

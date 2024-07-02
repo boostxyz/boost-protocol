@@ -151,4 +151,10 @@ contract CGDAIncentive is Incentive {
         uint256 reward = currentReward();
         return reward > 0 && asset.balanceOf(address(this)) >= reward && !claimed[recipient_];
     }
+
+    /// @notice Convenience method to differentiate CGDAIncentive from other Incentives
+    /// @return "CGDAIncentive"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "CGDAIncentive";
+    }
 }

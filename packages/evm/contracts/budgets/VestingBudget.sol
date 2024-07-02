@@ -253,4 +253,10 @@ contract VestingBudget is Budget, ReentrancyGuard {
             return totalAllocation * (timestamp - start) / duration;
         }
     }
+
+    /// @notice Convenience method to differentiate VestingBudget from other Budgets
+    /// @return "VestingBudget"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "VestingBudget";
+    }
 }

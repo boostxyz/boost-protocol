@@ -63,4 +63,10 @@ contract SignerValidator is Validator {
             signers[signers_[i]] = authorized_[i];
         }
     }
+
+    /// @notice Convenience method to differentiate SignerValidator from other Incentives
+    /// @return "SignerValidator"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "SignerValidator";
+    }
 }

@@ -317,4 +317,10 @@ contract SimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     function supportsInterface(bytes4 interfaceId) public view virtual override(Budget, IERC165) returns (bool) {
         return interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    /// @notice Convenience method to differentiate SimpleBudget from other Budgets
+    /// @return "SimpleBudget"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "SimpleBudget";
+    }
 }

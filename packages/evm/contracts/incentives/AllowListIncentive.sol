@@ -82,4 +82,10 @@ contract AllowListIncentive is Incentive {
         allowed[0] = true;
         return (users, allowed);
     }
+
+    /// @notice Convenience method to differentiate AllowListIncentive from other Incentives
+    /// @return "AllowListIncentive"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "AllowListIncentive";
+    }
 }

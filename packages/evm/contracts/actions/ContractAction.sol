@@ -73,4 +73,10 @@ contract ContractAction is Action {
             calldatacopy(add(payload, 0x24), calldata_.offset, calldata_.length)
         }
     }
+
+    /// @notice Convenience method to differentiate ContractAction from other Actions
+    /// @return "ContractAction"
+    function interfaceName() public pure virtual override returns (string memory) {
+        return "ContractAction";
+    }
 }

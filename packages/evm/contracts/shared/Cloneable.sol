@@ -39,4 +39,8 @@ abstract contract Cloneable is Initializable, ERC165 {
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(Cloneable).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    /// @notice Convenience method to differentiate various contracts implementing this interface
+    /// @return The string name of the contract implementing this interface
+    function interfaceName() public pure virtual returns (string memory);
 }

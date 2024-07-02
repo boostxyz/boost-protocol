@@ -162,6 +162,19 @@ export interface Action$Type {
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "interfaceName",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes",

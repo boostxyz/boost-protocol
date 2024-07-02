@@ -75,4 +75,10 @@ contract ERC721MintAction is ContractAction, Validator {
         super._initialize(init_);
         _initializeOwner(msg.sender);
     }
+
+    /// @notice Convenience method to differentiate ERC721MintAction from other Actions
+    /// @return "ERC721MintAction"
+    function interfaceName() public pure override(ContractAction,Cloneable) returns (string memory) {
+        return "ERC721MintAction";
+    }
 }

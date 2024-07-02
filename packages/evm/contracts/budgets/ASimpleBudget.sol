@@ -305,7 +305,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return interfaceId == type(ASimpleBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId || interfaceId == type(IERC165).interfaceId || Budget.supportsInterface(interfaceId);
     }
 
-    function getComponentInterface() public pure returns (bytes4) {
+    function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(ASimpleBudget).interfaceId;
     } 
 }

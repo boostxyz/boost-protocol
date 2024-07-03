@@ -1,15 +1,18 @@
-import {
-  type Config,
-  type Config as WagmiConfig,
-  deployContract,
-} from '@wagmi/core';
-import type { Account, Address, Hash, Hex } from 'viem';
+import { type Config, deployContract } from '@wagmi/core';
+import type {
+  Account,
+  Address,
+  Hash,
+  Hex,
+  WaitForTransactionReceiptParameters,
+} from 'viem';
 import {
   DeployableAlreadyDeployedError,
   DeployableBuildParametersUnspecifiedError,
   DeployableMissingPayloadError,
   DeployableWagmiConfigurationRequiredError,
 } from '../errors';
+import { getDeployedContractAddress } from '../utils';
 import { Contract } from './Contract';
 
 export type GenericDeployableParams = Omit<
@@ -52,6 +55,21 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   public async deploy(
+    _payload?: Payload,
+    _options?: DeployableOptions,
+    waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
+  ): Promise<Address> {
+    const config = _options?.config || this._config;
+    const address = await getDeployedContractAddress(
+      config,
+      this.deployRaw(_payload, _options),
+      waitParams,
+    );
+    this._address = address;
+    return address;
+  }
+
+  public async deployRaw(
     _payload?: Payload,
     _options?: DeployableOptions,
   ): Promise<Hash> {

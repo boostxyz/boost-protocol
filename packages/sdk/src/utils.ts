@@ -15,12 +15,26 @@ import {
   type ContractFunctionArgs,
   decodeFunctionData,
 } from 'viem';
+import { NoContractAddressUponReceipt } from './errors';
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type CallParams<T extends (_c: any, params: any) => any> = Omit<
   Parameters<T>[1],
   'address' | 'args'
 >;
+
+export async function getDeployedContractAddress(
+  config: Config,
+  hash: Promise<Hash>,
+  waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
+) {
+  const receipt = await waitForTransactionReceipt(config, {
+    ...waitParams,
+    hash: await hash,
+  });
+  if (!receipt.contractAddress) throw new NoContractAddressUponReceipt(receipt);
+  return receipt.contractAddress;
+}
 
 export async function awaitResult<
   const abi extends Abi | readonly unknown[],

@@ -11,8 +11,7 @@ import {
   writeContractActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import { getTransaction, waitForTransactionReceipt } from '@wagmi/core';
-import { type Hex, decodeFunctionData } from 'viem';
+import type { Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,

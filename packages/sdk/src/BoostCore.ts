@@ -193,7 +193,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
     else {
       if (budget.address) budgetPayload = budget.address;
       else {
-        budgetHash = await budget.deploy(undefined, options);
+        budgetHash = await budget.deployRaw(undefined, options);
       }
     }
 
@@ -212,7 +212,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
           : zeroHash,
       };
     else {
-      actionHash = await action.deploy(undefined, options);
+      actionHash = await action.deployRaw(undefined, options);
     }
 
     let validatorPayload: OnChainBoostPayload['validator'] = {
@@ -230,7 +230,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
           : zeroHash,
       };
     else {
-      validatorHash = await validator.deploy(undefined, options);
+      validatorHash = await validator.deployRaw(undefined, options);
     }
 
     let allowListPayload: OnChainBoostPayload['allowList'] = {
@@ -248,7 +248,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
           : zeroHash,
       };
     else {
-      allowListHash = await allowList.deploy(undefined, options);
+      allowListHash = await allowList.deployRaw(undefined, options);
     }
 
     let incentivesPayloads: Array<Target> = incentives.map(() => ({
@@ -270,7 +270,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
             : zeroHash,
         };
       else {
-        incentiveHashes[i] = await incentive.deploy(undefined, options);
+        incentiveHashes[i] = await incentive.deployRaw(undefined, options);
       }
     }
 
@@ -351,7 +351,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
       throw new BoostCoreNoIdentifierEmitted();
     }
     boostId = boostCreatedLog?.args.boostIndex;
-    const boost = await this.readBoost(boostId);
+    const boost = await this.getBoost(boostId);
 
     // TODO we need to figure out how to ensure the boost has the correct component instances, ie SimpleAllowList vs SimpleDenyList
     return new Boost({
@@ -400,13 +400,6 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   public async getBoost(
-    _boostId: bigint,
-    _params: CallParams<typeof readBoostCoreGetBoost> = {},
-  ) {
-    // TODO new Boost() with this.readBoost once we can differentiate boost components
-  }
-
-  public async readBoost(
     boostId: bigint,
     params: CallParams<typeof readBoostCoreGetBoost> = {},
   ) {

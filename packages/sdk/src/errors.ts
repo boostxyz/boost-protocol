@@ -1,3 +1,5 @@
+import type { WaitForTransactionReceiptReturnType } from 'viem';
+
 export class BoostCoreNoIdentifierEmitted extends Error {
   constructor() {
     super(`No "BoostCreated" log was emitted from which to extract boostId`);
@@ -49,5 +51,13 @@ export class DeployableMissingPayloadError extends Error {
     super(
       'Expected a valid payload to be available either on Deployable or as argument to deploy.',
     );
+  }
+}
+
+export class NoContractAddressUponReceipt extends Error {
+  public readonly receipt: WaitForTransactionReceiptReturnType;
+  constructor(receipt: WaitForTransactionReceiptReturnType) {
+    super(`Expected a contract address to exist on receipt.`);
+    this.receipt = receipt;
   }
 }

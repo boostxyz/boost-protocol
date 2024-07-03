@@ -1,7 +1,9 @@
 import {
   type SimpleDenyListPayload,
   prepareSimpleDenyListPayload,
+  readSimpleDenyListGetComponentInterface,
   readSimpleDenyListIsAllowed,
+  readSimpleDenyListSupportsInterface,
   simpleDenyListAbi,
   simulateSimpleDenyListSetDenied,
   writeSimpleDenyListSetDenied,
@@ -52,6 +54,29 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
       address: this.assertValidAddress(),
       args: [addresses, allowed],
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readSimpleDenyListSupportsInterface> = {},
+  ) {
+    return readSimpleDenyListSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readSimpleDenyListGetComponentInterface> = {},
+  ) {
+    return readSimpleDenyListGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

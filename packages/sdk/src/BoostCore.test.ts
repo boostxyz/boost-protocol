@@ -66,7 +66,7 @@ describe('BoostCore', () => {
       incentives: [],
     });
     expect(await client.getBoostCount()).toBe(1n);
-    const onChainBoost = await client.readBoost(0n);
+    const onChainBoost = await client.getBoost(0n);
     expect(boost.id).toBe(0n);
     expect(boost.action.address).toBe(onChainBoost.action);
     expect(boost.validator.address).toBe(onChainBoost.validator);
@@ -191,7 +191,7 @@ describe('BoostCore', () => {
     );
     console.log(aResult);
 
-    console.log(await client.readBoost(0n));
-    console.log(await client.readBoost(1n));
+    console.log(await client.getBoost(0n));
+    console.log(await client.getBoost(1n));
   });
 });

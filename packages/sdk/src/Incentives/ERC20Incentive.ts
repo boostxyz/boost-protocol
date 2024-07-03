@@ -6,12 +6,16 @@ import {
   prepareClaimPayload,
   prepareERC20IncentivePayload,
   readErc20IncentiveAsset,
+  readErc20IncentiveClaimed,
+  readErc20IncentiveClaims,
   readErc20IncentiveEntries,
+  readErc20IncentiveGetComponentInterface,
   readErc20IncentiveIsClaimable,
   readErc20IncentiveLimit,
   readErc20IncentivePreflight,
   readErc20IncentiveReward,
   readErc20IncentiveStrategy,
+  readErc20IncentiveSupportsInterface,
   simulateErc20IncentiveClaim,
   simulateErc20IncentiveDrawRaffle,
   simulateErc20IncentiveReclaim,
@@ -20,11 +24,10 @@ import {
   writeErc20IncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
-import type { Hex } from 'viem';
-import {
-  Deployable,
-  type DeployableOptions,
-  type GenericDeployableParams,
+import type { Address, Hex } from 'viem';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
@@ -32,6 +35,27 @@ import type { CallParams } from '../utils';
 export type { ERC20IncentivePayload };
 
 export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
+  public async claims(
+    params: CallParams<typeof readErc20IncentiveClaims> = {},
+  ) {
+    return readErc20IncentiveClaims(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async claimed(
+    address: Address,
+    params: CallParams<typeof readErc20IncentiveClaimed> = {},
+  ) {
+    return readErc20IncentiveClaimed(this._config, {
+      address: this.assertValidAddress(),
+      args: [address],
+      ...params,
+    });
+  }
+
   public async asset(params: CallParams<typeof readErc20IncentiveAsset> = {}) {
     return readErc20IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -157,6 +181,29 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return writeErc20IncentiveDrawRaffle(this._config, {
       address: this.assertValidAddress(),
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readErc20IncentiveSupportsInterface> = {},
+  ) {
+    return readErc20IncentiveSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readErc20IncentiveGetComponentInterface> = {},
+  ) {
+    return readErc20IncentiveGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

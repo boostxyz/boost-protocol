@@ -7,8 +7,13 @@ import {
   prepareClaimPayload,
   readCgdaIncentiveAsset,
   readCgdaIncentiveCgdaParams,
+  readCgdaIncentiveClaimed,
+  readCgdaIncentiveClaims,
   readCgdaIncentiveCurrentReward,
+  readCgdaIncentiveGetComponentInterface,
   readCgdaIncentiveIsClaimable,
+  readCgdaIncentiveReward,
+  readCgdaIncentiveSupportsInterface,
   readCgdaIncentiveTotalBudget,
   simulateCgdaIncentiveClaim,
   simulateCgdaIncentiveReclaim,
@@ -16,7 +21,7 @@ import {
   writeCgdaIncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
-import type { Hex } from 'viem';
+import type { Address, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -27,6 +32,33 @@ import type { CallParams } from '../utils';
 export type { CGDAIncentivePayload };
 
 export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
+  public async claims(params: CallParams<typeof readCgdaIncentiveClaims> = {}) {
+    return readCgdaIncentiveClaims(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async reward(params: CallParams<typeof readCgdaIncentiveReward> = {}) {
+    return readCgdaIncentiveReward(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async claimed(
+    address: Address,
+    params: CallParams<typeof readCgdaIncentiveClaimed> = {},
+  ) {
+    return readCgdaIncentiveClaimed(this._config, {
+      address: this.assertValidAddress(),
+      args: [address],
+      ...params,
+    });
+  }
+
   public async asset(params: CallParams<typeof readCgdaIncentiveAsset> = {}) {
     return readCgdaIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -131,6 +163,29 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     return readCgdaIncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readCgdaIncentiveSupportsInterface> = {},
+  ) {
+    return readCgdaIncentiveSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readCgdaIncentiveGetComponentInterface> = {},
+  ) {
+    return readCgdaIncentiveGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

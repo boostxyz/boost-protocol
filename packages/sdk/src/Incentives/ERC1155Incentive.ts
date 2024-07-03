@@ -1,15 +1,20 @@
 import {
   type ClaimPayload,
   type ERC1155IncentivePayload,
+  type ERC1155StrategyType,
   type StrategyType,
   erc1155IncentiveAbi,
   prepareClaimPayload,
   prepareERC1155IncentivePayload,
   readErc1155IncentiveAsset,
+  readErc1155IncentiveClaimed,
+  readErc1155IncentiveClaims,
   readErc1155IncentiveExtraData,
+  readErc1155IncentiveGetComponentInterface,
   readErc1155IncentiveIsClaimable,
   readErc1155IncentiveLimit,
   readErc1155IncentivePreflight,
+  readErc1155IncentiveReward,
   readErc1155IncentiveStrategy,
   readErc1155IncentiveTokenId,
   readErc1155SupportsInterface,
@@ -19,7 +24,7 @@ import {
   writeErc1155IncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
-import type { Hex } from 'viem';
+import type { Address, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -27,9 +32,40 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { CallParams } from '../utils';
 
-export type { ERC1155IncentivePayload };
+export type { ERC1155IncentivePayload, ERC1155StrategyType };
 
 export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> {
+  public async claims(
+    params: CallParams<typeof readErc1155IncentiveClaims> = {},
+  ) {
+    return readErc1155IncentiveClaims(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async reward(
+    params: CallParams<typeof readErc1155IncentiveReward> = {},
+  ) {
+    return readErc1155IncentiveReward(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async claimed(
+    address: Address,
+    params: CallParams<typeof readErc1155IncentiveClaimed> = {},
+  ) {
+    return readErc1155IncentiveClaimed(this._config, {
+      address: this.assertValidAddress(),
+      args: [address],
+      ...params,
+    });
+  }
+
   public async asset(
     params: CallParams<typeof readErc1155IncentiveAsset> = {},
   ) {
@@ -149,6 +185,17 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
       address: this.assertValidAddress(),
       args: [interfaceId],
       ...params,
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readErc1155IncentiveGetComponentInterface> = {},
+  ) {
+    return readErc1155IncentiveGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

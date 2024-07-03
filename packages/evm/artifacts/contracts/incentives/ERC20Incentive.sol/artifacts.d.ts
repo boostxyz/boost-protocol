@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { ERC20Incentive$Type } from "./ERC20Incentive";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["ERC20Incentive"]: ERC20Incentive$Type;
     ["contracts/incentives/ERC20Incentive.sol:ERC20Incentive"]: ERC20Incentive$Type;
+  }
+
+  interface ContractTypesMap {
+    ["ERC20Incentive"]: GetContractReturnType<ERC20Incentive$Type["abi"]>;
+    ["contracts/incentives/ERC20Incentive.sol:ERC20Incentive"]: GetContractReturnType<ERC20Incentive$Type["abi"]>;
   }
 }

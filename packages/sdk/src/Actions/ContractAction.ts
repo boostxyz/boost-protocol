@@ -3,8 +3,10 @@ import {
   contractActionAbi,
   prepareContractActionPayload,
   readContractActionChainId,
+  readContractActionGetComponentInterface,
   readContractActionPrepare,
   readContractActionSelector,
+  readContractActionSupportsInterface,
   readContractActionTarget,
   readContractActionValue,
   simulateContractActionExecute,
@@ -77,9 +79,9 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   ) {
     return writeContractActionExecute(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
       ...this.optionallyAttachAccount(),
       ...params,
+      args: [data],
     });
   }
 
@@ -92,6 +94,29 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
       args: [data],
       ...this.optionallyAttachAccount(),
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readContractActionSupportsInterface> = {},
+  ) {
+    return readContractActionSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readContractActionGetComponentInterface> = {},
+  ) {
+    return readContractActionGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

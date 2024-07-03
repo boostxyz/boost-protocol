@@ -5,13 +5,18 @@ import {
   prepareAllowListIncentivePayload,
   prepareClaimPayload,
   readAllowListIncentiveAllowList,
+  readAllowListIncentiveClaimed,
+  readAllowListIncentiveClaims,
+  readAllowListIncentiveGetComponentInterface,
   readAllowListIncentiveIsClaimable,
   readAllowListIncentiveLimit,
+  readAllowListIncentiveReward,
+  readAllowListIncentiveSupportsInterface,
   simulateAllowListIncentiveClaim,
   writeAllowListIncentiveClaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
-import type { Hex } from 'viem';
+import type { Address, Hex } from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import type {
   DeployableOptions,
@@ -23,6 +28,37 @@ import type { CallParams } from '../utils';
 export type { AllowListIncentivePayload };
 
 export class AllowListIncentive extends DeployableTarget<AllowListIncentivePayload> {
+  public async claims(
+    params: CallParams<typeof readAllowListIncentiveClaims> = {},
+  ) {
+    return readAllowListIncentiveClaims(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async reward(
+    params: CallParams<typeof readAllowListIncentiveReward> = {},
+  ) {
+    return readAllowListIncentiveReward(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async claimed(
+    address: Address,
+    params: CallParams<typeof readAllowListIncentiveClaimed> = {},
+  ) {
+    return readAllowListIncentiveClaimed(this._config, {
+      address: this.assertValidAddress(),
+      args: [address],
+      ...params,
+    });
+  }
+
   public async allowList(
     params: CallParams<typeof readAllowListIncentiveAllowList> = {},
   ): Promise<SimpleAllowList> {
@@ -76,6 +112,29 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readAllowListIncentiveSupportsInterface> = {},
+  ) {
+    return readAllowListIncentiveSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readAllowListIncentiveGetComponentInterface> = {},
+  ) {
+    return readAllowListIncentiveGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

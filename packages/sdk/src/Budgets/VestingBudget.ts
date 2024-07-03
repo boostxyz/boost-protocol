@@ -4,9 +4,14 @@ import {
   prepareTransferPayload,
   prepareVestingBudgetPayload,
   readVestingBudgetAvailable,
+  readVestingBudgetCliff,
   readVestingBudgetDistributed,
+  readVestingBudgetDuration,
   readVestingBudgetEnd,
+  readVestingBudgetGetComponentInterface,
   readVestingBudgetIsAuthorized,
+  readVestingBudgetStart,
+  readVestingBudgetSupportsInterface,
   readVestingBudgetTotal,
   simulateVestingBudgetAllocate,
   simulateVestingBudgetDisburse,
@@ -28,12 +33,37 @@ import {
   type DeployableOptions,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { CallParams } from '../utils';
 
 export type { VestingBudgetPayload };
 
-export class VestingBudget extends Deployable<VestingBudgetPayload> {
+export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
+  public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
+    return readVestingBudgetStart(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public duration(params: CallParams<typeof readVestingBudgetDuration> = {}) {
+    return readVestingBudgetDuration(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public cliff(params: CallParams<typeof readVestingBudgetCliff> = {}) {
+    return readVestingBudgetCliff(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
   public async allocate(
     transfer: TransferPayload,
     params: CallParams<typeof writeVestingBudgetAllocate> = {},
@@ -195,6 +225,29 @@ export class VestingBudget extends Deployable<VestingBudgetPayload> {
       address: this.assertValidAddress(),
       args: [asset],
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readVestingBudgetSupportsInterface> = {},
+  ) {
+    return readVestingBudgetSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readVestingBudgetGetComponentInterface> = {},
+  ) {
+    return readVestingBudgetGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

@@ -67,11 +67,6 @@
     },
     {
       "inputs": [],
-      "name": "LengthMismatch",
-      "type": "error"
-    },
-    {
-      "inputs": [],
       "name": "NewOwnerIsZeroAddress",
       "type": "error"
     },
@@ -333,6 +328,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getComponentInterface",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes",
@@ -457,7 +465,7 @@
         },
         {
           "internalType": "bool[]",
-          "name": "isAuthorized_",
+          "name": "authorized_",
           "type": "bool[]"
         }
       ],

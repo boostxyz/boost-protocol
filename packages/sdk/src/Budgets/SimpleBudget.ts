@@ -5,7 +5,9 @@ import {
   prepareTransferPayload,
   readSimpleBudgetAvailable,
   readSimpleBudgetDistributed,
+  readSimpleBudgetGetComponentInterface,
   readSimpleBudgetIsAuthorized,
+  readSimpleBudgetSupportsInterface,
   readSimpleBudgetTotal,
   readVestingBudgetStart,
   simpleAllowListAbi,
@@ -28,12 +30,13 @@ import {
   type DeployableOptions,
   type GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { CallParams } from '../utils';
 
 export type { SimpleBudgetPayload };
 
-export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
+export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
     return readVestingBudgetStart(this._config, {
       address: this.assertValidAddress(),
@@ -199,6 +202,29 @@ export class SimpleBudget extends Deployable<SimpleBudgetPayload> {
       address: this.assertValidAddress(),
       args: tokenId ? [asset, tokenId] : [asset],
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readSimpleBudgetSupportsInterface> = {},
+  ) {
+    return readSimpleBudgetSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readSimpleBudgetGetComponentInterface> = {},
+  ) {
+    return readSimpleBudgetGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

@@ -2,7 +2,9 @@ import {
   type ERC721MintActionPayload,
   erc721MintActionAbi,
   prepareERC721MintActionPayload,
+  readErc721MintActionGetComponentInterface,
   readErc721MintActionPrepare,
+  readErc721MintActionSupportsInterface,
   simulateErc721MintActionExecute,
   simulateErc721MintActionValidate,
   writeErc721MintActionExecute,
@@ -75,6 +77,29 @@ export class ERC721MintAction extends ContractAction {
       args: [data],
       ...this.optionallyAttachAccount(),
       ...params,
+    });
+  }
+
+  public override async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readErc721MintActionSupportsInterface> = {},
+  ) {
+    return readErc721MintActionSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [interfaceId],
+    });
+  }
+
+  public override async getComponentInterface(
+    params: CallParams<typeof readErc721MintActionGetComponentInterface> = {},
+  ) {
+    return readErc721MintActionGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

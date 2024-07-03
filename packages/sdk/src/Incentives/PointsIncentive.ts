@@ -4,16 +4,21 @@ import {
   pointsIncentiveAbi,
   prepareClaimPayload,
   preparePointsIncentivePayload,
+  readPointsIncentiveClaimed,
+  readPointsIncentiveClaims,
+  readPointsIncentiveCurrentReward,
+  readPointsIncentiveGetComponentInterface,
   readPointsIncentiveIsClaimable,
   readPointsIncentiveLimit,
-  readPointsIncentiveQuantity,
+  readPointsIncentiveReward,
   readPointsIncentiveSelector,
+  readPointsIncentiveSupportsInterface,
   readPointsIncentiveVenue,
   simulatePointsIncentiveClaim,
   writePointsIncentiveClaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import type { Hex } from 'viem';
+import type { Address, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -24,17 +29,49 @@ import type { CallParams } from '../utils';
 export type { PointsIncentivePayload };
 
 export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
-  public async venue(params: CallParams<typeof readPointsIncentiveVenue> = {}) {
-    return readPointsIncentiveVenue(this._config, {
+  public async claims(
+    params: CallParams<typeof readPointsIncentiveClaims> = {},
+  ) {
+    return readPointsIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
+      args: [],
       ...params,
     });
   }
 
-  public async quantity(
-    params: CallParams<typeof readPointsIncentiveQuantity> = {},
+  public async currentReward(
+    params: CallParams<typeof readPointsIncentiveCurrentReward> = {},
   ) {
-    return readPointsIncentiveQuantity(this._config, {
+    return readPointsIncentiveCurrentReward(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async reward(
+    params: CallParams<typeof readPointsIncentiveReward> = {},
+  ) {
+    return readPointsIncentiveReward(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...params,
+    });
+  }
+
+  public async claimed(
+    address: Address,
+    params: CallParams<typeof readPointsIncentiveClaimed> = {},
+  ) {
+    return readPointsIncentiveClaimed(this._config, {
+      address: this.assertValidAddress(),
+      args: [address],
+      ...params,
+    });
+  }
+
+  public async venue(params: CallParams<typeof readPointsIncentiveVenue> = {}) {
+    return readPointsIncentiveVenue(this._config, {
       address: this.assertValidAddress(),
       ...params,
     });
@@ -87,6 +124,28 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
       ...params,
+    });
+  }
+
+  public async supportsInterface(
+    interfaceId: Hex,
+    params: CallParams<typeof readPointsIncentiveSupportsInterface> = {},
+  ) {
+    return readPointsIncentiveSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      args: [interfaceId],
+      ...params,
+    });
+  }
+
+  public async getComponentInterface(
+    params: CallParams<typeof readPointsIncentiveGetComponentInterface> = {},
+  ) {
+    return readPointsIncentiveGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      ...params,
+      args: [],
     });
   }
 

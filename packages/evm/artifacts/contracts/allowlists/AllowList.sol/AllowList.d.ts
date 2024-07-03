@@ -136,6 +136,19 @@ export interface AllowList$Type {
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getComponentInterface",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes",
@@ -216,6 +229,42 @@ export interface AllowList$Type {
       "name": "requestOwnershipHandover",
       "outputs": [],
       "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "users_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "bool[]",
+          "name": "allowed_",
+          "type": "bool[]"
+        }
+      ],
+      "name": "setAllowed",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "users_",
+          "type": "address[]"
+        },
+        {
+          "internalType": "bool[]",
+          "name": "denied_",
+          "type": "bool[]"
+        }
+      ],
+      "name": "setDenied",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {

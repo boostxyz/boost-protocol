@@ -16,6 +16,7 @@ import {Incentive} from "contracts/incentives/Incentive.sol";
 
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
 
 contract NotCloneable is ERC165 {
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -26,6 +27,12 @@ contract NotCloneable is ERC165 {
 contract MockAllowList is AllowList {
     function isAllowed(address guy, bytes calldata) external view override returns (bool) {
         return guy == owner() || guy == address(0xdeadbeef);
+    }
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external override {
+        revert BoostError.NotImplemented();
+    }
+    function setDenied(address[] calldata users_, bool[] calldata denied_) external override {
+        revert BoostError.NotImplemented();
     }
 }
 

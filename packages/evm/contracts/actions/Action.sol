@@ -12,9 +12,6 @@ abstract contract Action is Cloneable {
     /// @dev The `data` field should contain the return data from the action, if any.
     event ActionExecuted(address indexed executor, address caller, bool success, bytes data);
 
-    /// @notice Thrown when the `execute` function is not implemented
-    error ExecuteNotImplemented();
-
     /// @notice Emitted when the action is validated
     /// @dev The `data` field should contain implementation-specific context, if applicable.
     event ActionValidated(address indexed user, bool isValidated, bytes data);
@@ -36,4 +33,9 @@ abstract contract Action is Cloneable {
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Action).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    function getComponentInterface() public pure virtual returns (bytes4) {
+        return type(Action).interfaceId;
+    } 
+
 }

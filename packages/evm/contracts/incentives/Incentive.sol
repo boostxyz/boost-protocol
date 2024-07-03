@@ -31,6 +31,9 @@ abstract contract Incentive is Ownable, Cloneable, ReentrancyGuard {
     /// @notice The number of claims that have been made
     uint256 public claims;
 
+    /// @notice The reward amount issued for each claim
+    uint256 public reward;
+
     /// @notice A mapping of address to claim status
     mapping(address => bool) public claimed;
 
@@ -61,8 +64,19 @@ abstract contract Incentive is Ownable, Cloneable, ReentrancyGuard {
     /// @dev This function is to be called by {BoostCore} before the incentive is initialized to determine the required budget allowance. It returns an ABI-encoded payload that can be passed directly to the {Budget} contract for interpretation.
     function preflight(bytes calldata data_) external view virtual returns (bytes memory);
 
+    /// @return The current reward
+    function currentReward() public view virtual returns (uint256)
+    {
+        return reward;
+    }
+
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Incentive).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    function getComponentInterface() public pure virtual returns (bytes4) {
+        return type(Incentive).interfaceId;
+    } 
 }

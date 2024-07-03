@@ -61,9 +61,6 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @notice Thrown when there are insufficient funds for an operation
     error InsufficientFunds(address asset, uint256 available, uint256 required);
 
-    /// @notice Thrown when the length of two arrays are not equal
-    error LengthMismatch();
-
     /// @notice Thrown when a transfer fails for an unknown reason
     error TransferFailed(address asset, address to, uint256 amount);
 
@@ -120,15 +117,19 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
 
     /// @notice Set the authorized status of the given accounts
     /// @param accounts_ The accounts to authorize or deauthorize
-    /// @param isAuthorized_ The authorization status for the given accounts
+    /// @param authorized_ The authorization status for the given accounts
     /// @dev The mechanism for managing authorization is left to the implementing contract
-    function setAuthorized(address[] calldata accounts_, bool[] calldata isAuthorized_) external virtual;
+    function setAuthorized(address[] calldata accounts_, bool[] calldata authorized_) external virtual;
 
     /// @notice Check if the given account is authorized to use the budget
     /// @param account_ The account to check
     /// @return True if the account is authorized
     /// @dev The mechanism for checking authorization is left to the implementing contract
     function isAuthorized(address account_) external view virtual returns (bool);
+    
+    function getComponentInterface() public pure virtual returns (bytes4) {
+        return type(Budget).interfaceId;
+    } 
 
     /// @inheritdoc Receiver
     receive() external payable virtual override {

@@ -16,15 +16,12 @@ contract PointsIncentive is Incentive {
     struct InitPayload {
         address venue;
         bytes4 selector;
-        uint256 quantity;
+        uint256 reward;
         uint256 limit;
     }
 
     /// @notice The address of the points contract
     address public venue;
-
-    /// @notice The quantity amount issued for each claim
-    uint256 public quantity;
 
     /// @notice The maximum number of claims that can be made (one per address)
     uint256 public limit;
@@ -39,14 +36,14 @@ contract PointsIncentive is Incentive {
     }
 
     /// @notice Initialize the contract with the incentive parameters
-    /// @param data_ The compressed incentive parameters `(address points, uint256 quantity, uint256 limit)`
+    /// @param data_ The compressed incentive parameters `(address points, uint256 reward, uint256 limit)`
     function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
-        if (init_.quantity == 0 || init_.limit == 0) revert BoostError.InvalidInitialization();
+        if (init_.reward == 0 || init_.limit == 0) revert BoostError.InvalidInitialization();
 
         venue = init_.venue;
         selector = init_.selector;
-        quantity = init_.quantity;
+        reward = init_.reward;
         limit = init_.limit;
         _initializeOwner(msg.sender);
     }
@@ -61,10 +58,10 @@ contract PointsIncentive is Incentive {
         claims++;
         claimed[claim_.target] = true;
 
-        (bool success,) = venue.call(abi.encodeWithSelector(selector, claim_.target, quantity));
+        (bool success,) = venue.call(abi.encodeWithSelector(selector, claim_.target, reward));
         if (!success) revert ClaimFailed();
 
-        emit Claimed(claim_.target, abi.encodePacked(venue, claim_.target, quantity));
+        emit Claimed(claim_.target, abi.encodePacked(venue, claim_.target, reward));
         return true;
     }
 

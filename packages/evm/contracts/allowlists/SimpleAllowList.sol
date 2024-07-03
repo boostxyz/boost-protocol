@@ -40,16 +40,18 @@ contract SimpleAllowList is AllowList, OwnableRoles {
         return _allowed[user_];
     }
 
-    /// @notice Set the allowed status of a user
-    /// @param users_ The list of users to update
-    /// @param allowed_ The allowed status of each user
-    /// @dev The length of the `users_` and `allowed_` arrays must be the same
-    /// @dev This function can only be called by the owner
-    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyRoles(LIST_MANAGER_ROLE) {
+    /// @inheritdoc AllowList
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external override onlyRoles(LIST_MANAGER_ROLE) {
         if (users_.length != allowed_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {
             _allowed[users_[i]] = allowed_[i];
         }
+    }
+
+    /// @inheritdoc AllowList
+    /// @notice This function is not implemented in this contract
+    function setDenied(address[] calldata users_, bool[] calldata denied_) external override onlyOwner {
+        revert BoostError.NotImplemented();
     }
 }

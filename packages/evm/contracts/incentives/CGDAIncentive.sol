@@ -137,7 +137,7 @@ contract CGDAIncentive is Incentive {
     /// @return The current reward
     /// @dev The reward is calculated based on the time since the last claim, the available budget, and the reward parameters. It increases linearly over time in the absence of claims, with each hour adding `rewardBoost` to the current reward, up to the available budget.
     /// @dev For example, if there is one claim in the first hour, then no claims for three hours, the claimable reward would be `initialReward - rewardDecay + (rewardBoost * 3)`
-    function currentReward() public view returns (uint256) {
+    function currentReward() public view override returns (uint256) {
         uint256 timeSinceLastClaim = block.timestamp - cgdaParams.lastClaimTime;
         uint256 available = asset.balanceOf(address(this));
 

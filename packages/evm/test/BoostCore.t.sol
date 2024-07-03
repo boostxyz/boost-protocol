@@ -134,7 +134,7 @@ contract BoostCoreTest is Test {
         assertTrue(_incentive.supportsInterface(type(Incentive).interfaceId));
         assertTrue(_incentive.strategy() == ERC20Incentive.Strategy.POOL);
         assertEq(_incentive.asset(), address(mockERC20));
-        assertEq(_incentive.reward(), 1 ether);
+        assertEq(_incentive.currentReward(), 1 ether);
         assertEq(_incentive.limit(), 100);
         assertEq(_incentive.claims(), 0);
 

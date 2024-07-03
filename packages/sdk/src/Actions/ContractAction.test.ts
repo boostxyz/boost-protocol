@@ -1,6 +1,6 @@
 import type { Config } from '@wagmi/core';
-import { zeroAddress } from 'viem';
-import { beforeEach, describe, test } from 'vitest';
+import { isAddress, zeroAddress } from 'viem';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { setupConfig, testAccount } from '../../test/viem';
 import { ContractAction } from './ContractAction';
 
@@ -22,6 +22,21 @@ describe('ContractAction', () => {
       },
     );
     const address = await action.deploy();
-    console.log(address);
+    expect(isAddress(address)).toBe(true);
+  });
+
+  test('can successfully be initialized after deployment', async () => {
+    const action = new ContractAction(
+      { config, account: testAccount },
+      {
+        chainId: BigInt(31_337),
+        target: zeroAddress,
+        selector: '0xdeadbeef',
+        value: 2n,
+      },
+    );
+    await action.deploy();
+    await action.initialize();
+    console.log(await action.chainId());
   });
 });

@@ -4,12 +4,26 @@ pragma solidity ^0.8.24;
 import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
+
 import {Validator} from "contracts/validators/Validator.sol";
+
+abstract contract ASignerValidator is Validator {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Validator) returns (bytes4) {
+        return type(ASignerValidator).interfaceId;
+    }
+    
+    /// @inheritdoc Cloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Validator) returns (bool) {
+        return interfaceId == type(ASignerValidator).interfaceId || super.supportsInterface(interfaceId);
+    }
+}
 
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
-contract SignerValidator is Validator {
+contract SignerValidator is ASignerValidator {
     using SignatureCheckerLib for address;
 
     /// @dev The set of authorized signers

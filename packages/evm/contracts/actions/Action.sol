@@ -34,7 +34,8 @@ abstract contract Action is Cloneable {
         return interfaceId == type(Action).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function getComponentInterface() public pure virtual returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(Action).interfaceId;
     }
 }

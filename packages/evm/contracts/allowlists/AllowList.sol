@@ -25,21 +25,8 @@ abstract contract AllowList is Ownable, Cloneable {
         return interfaceId == type(AllowList).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    /// @notice Set the allowed status of a user
-    /// @param users_ The list of users to update
-    /// @param allowed_ The allowed status of each user
-    /// @dev The length of the `users_` and `allowed_` arrays must be the same
-    /// @dev This function can only be called by the owner
-    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external virtual;
-
-    /// @notice Set the denied status of a user
-    /// @param users_ The list of users to update
-    /// @param denied_ The denied status of each user
-    /// @dev The length of the `users_` and `denied_` arrays must be the same
-    /// @dev This function can only be called by the owner
-    function setDenied(address[] calldata users_, bool[] calldata denied_) external virtual;
-
-    function getComponentInterface() public pure virtual returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(AllowList).interfaceId;
     }
 }

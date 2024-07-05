@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { Cloneable$Type } from "./Cloneable";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["Cloneable"]: Cloneable$Type;
     ["contracts/shared/Cloneable.sol:Cloneable"]: Cloneable$Type;
+  }
+
+  interface ContractTypesMap {
+    ["Cloneable"]: GetContractReturnType<Cloneable$Type["abi"]>;
+    ["contracts/shared/Cloneable.sol:Cloneable"]: GetContractReturnType<Cloneable$Type["abi"]>;
   }
 }

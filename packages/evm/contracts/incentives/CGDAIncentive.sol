@@ -3,14 +3,28 @@ pragma solidity ^0.8.24;
 
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
+
 import {Budget} from "contracts/budgets/Budget.sol";
 
 import {Incentive} from "./Incentive.sol";
 
+abstract contract ACGDAIncentive is Incentive {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+        return type(ACGDAIncentive).interfaceId;
+    }
+    
+    /// @inheritdoc Cloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+        return interfaceId == type(ACGDAIncentive).interfaceId || super.supportsInterface(interfaceId);
+    }
+}
+
 /// @title Continuous Gradual Dutch Auction Incentive
 /// @notice An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
-contract CGDAIncentive is Incentive {
+contract CGDAIncentive is ACGDAIncentive {
     using SafeTransferLib for address;
 
     /// @notice The ERC20-like token used for the incentive

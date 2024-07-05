@@ -6,16 +6,21 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
+import { APointsIncentive$Type } from "./APointsIncentive";
 import { PointsIncentive$Type } from "./PointsIncentive";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
+    ["APointsIncentive"]: APointsIncentive$Type;
     ["PointsIncentive"]: PointsIncentive$Type;
+    ["contracts/incentives/PointsIncentive.sol:APointsIncentive"]: APointsIncentive$Type;
     ["contracts/incentives/PointsIncentive.sol:PointsIncentive"]: PointsIncentive$Type;
   }
 
   interface ContractTypesMap {
+    ["APointsIncentive"]: GetContractReturnType<APointsIncentive$Type["abi"]>;
     ["PointsIncentive"]: GetContractReturnType<PointsIncentive$Type["abi"]>;
+    ["contracts/incentives/PointsIncentive.sol:APointsIncentive"]: GetContractReturnType<APointsIncentive$Type["abi"]>;
     ["contracts/incentives/PointsIncentive.sol:PointsIncentive"]: GetContractReturnType<PointsIncentive$Type["abi"]>;
   }
 }

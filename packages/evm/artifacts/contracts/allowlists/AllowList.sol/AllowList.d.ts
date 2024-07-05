@@ -234,42 +234,6 @@ export interface AllowList$Type {
     {
       "inputs": [
         {
-          "internalType": "address[]",
-          "name": "users_",
-          "type": "address[]"
-        },
-        {
-          "internalType": "bool[]",
-          "name": "allowed_",
-          "type": "bool[]"
-        }
-      ],
-      "name": "setAllowed",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address[]",
-          "name": "users_",
-          "type": "address[]"
-        },
-        {
-          "internalType": "bool[]",
-          "name": "denied_",
-          "type": "bool[]"
-        }
-      ],
-      "name": "setDenied",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "bytes4",
           "name": "interfaceId",
           "type": "bytes4"

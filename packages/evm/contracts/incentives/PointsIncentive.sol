@@ -2,8 +2,22 @@
 pragma solidity ^0.8.24;
 
 import {BoostError} from "contracts/shared/BoostError.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "./Incentive.sol";
+
+abstract contract APointsIncentive is Incentive {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+        return type(APointsIncentive).interfaceId;
+    }
+    
+    /// @inheritdoc Cloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+        return interfaceId == type(APointsIncentive).interfaceId || super.supportsInterface(interfaceId);
+    }
+}
 
 /// @title Points Incentive
 /// @notice A simple on-chain points incentive implementation that allows claiming of soulbound tokens
@@ -11,7 +25,7 @@ import {Incentive} from "./Incentive.sol";
 ///     - The claimer must not have already claimed the incentive; and
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to operate the points contract's issuance function
-contract PointsIncentive is Incentive {
+contract PointsIncentive is APointsIncentive {
     /// @notice The payload for initializing a PointsIncentive
     struct InitPayload {
         address venue;

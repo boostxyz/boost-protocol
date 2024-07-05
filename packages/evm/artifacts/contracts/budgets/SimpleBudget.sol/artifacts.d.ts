@@ -6,16 +6,21 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
+import { ASimpleBudget$Type } from "./ASimpleBudget";
 import { SimpleBudget$Type } from "./SimpleBudget";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
+    ["ASimpleBudget"]: ASimpleBudget$Type;
     ["SimpleBudget"]: SimpleBudget$Type;
+    ["contracts/budgets/SimpleBudget.sol:ASimpleBudget"]: ASimpleBudget$Type;
     ["contracts/budgets/SimpleBudget.sol:SimpleBudget"]: SimpleBudget$Type;
   }
 
   interface ContractTypesMap {
+    ["ASimpleBudget"]: GetContractReturnType<ASimpleBudget$Type["abi"]>;
     ["SimpleBudget"]: GetContractReturnType<SimpleBudget$Type["abi"]>;
+    ["contracts/budgets/SimpleBudget.sol:ASimpleBudget"]: GetContractReturnType<ASimpleBudget$Type["abi"]>;
     ["contracts/budgets/SimpleBudget.sol:SimpleBudget"]: GetContractReturnType<SimpleBudget$Type["abi"]>;
   }
 }

@@ -6,16 +6,21 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
+import { AAllowListIncentive$Type } from "./AAllowListIncentive";
 import { AllowListIncentive$Type } from "./AllowListIncentive";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
+    ["AAllowListIncentive"]: AAllowListIncentive$Type;
     ["AllowListIncentive"]: AllowListIncentive$Type;
+    ["contracts/incentives/AllowListIncentive.sol:AAllowListIncentive"]: AAllowListIncentive$Type;
     ["contracts/incentives/AllowListIncentive.sol:AllowListIncentive"]: AllowListIncentive$Type;
   }
 
   interface ContractTypesMap {
+    ["AAllowListIncentive"]: GetContractReturnType<AAllowListIncentive$Type["abi"]>;
     ["AllowListIncentive"]: GetContractReturnType<AllowListIncentive$Type["abi"]>;
+    ["contracts/incentives/AllowListIncentive.sol:AAllowListIncentive"]: GetContractReturnType<AAllowListIncentive$Type["abi"]>;
     ["contracts/incentives/AllowListIncentive.sol:AllowListIncentive"]: GetContractReturnType<AllowListIncentive$Type["abi"]>;
   }
 }

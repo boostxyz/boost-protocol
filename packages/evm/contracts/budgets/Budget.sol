@@ -110,11 +110,6 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @return The amount of assets reconciled
     function reconcile(bytes calldata data_) external virtual returns (uint256);
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
-        return interfaceId == type(Budget).interfaceId || super.supportsInterface(interfaceId);
-    }
-
     /// @notice Set the authorized status of the given accounts
     /// @param accounts_ The accounts to authorize or deauthorize
     /// @param authorized_ The authorization status for the given accounts
@@ -127,8 +122,14 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @dev The mechanism for checking authorization is left to the implementing contract
     function isAuthorized(address account_) external view virtual returns (bool);
 
-    function getComponentInterface() public pure virtual returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(Budget).interfaceId;
+    }
+
+    /// @inheritdoc Cloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
+        return interfaceId == type(Budget).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc Receiver

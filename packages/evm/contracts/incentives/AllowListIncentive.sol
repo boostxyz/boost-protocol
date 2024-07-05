@@ -2,9 +2,22 @@
 pragma solidity ^0.8.24;
 
 import {BoostError} from "contracts/shared/BoostError.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
+
+abstract contract AAllowListIncentive is Incentive {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+        return type(AAllowListIncentive).interfaceId;
+    }
+    
+    /// @inheritdoc Cloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+        return interfaceId == type(AAllowListIncentive).interfaceId || super.supportsInterface(interfaceId);
+    }
+}
 
 /// @title SimpleAllowList Incentive
 /// @notice An incentive implementation that grants the claimer a slot on an {SimpleAllowList}
@@ -12,7 +25,7 @@ import {Incentive} from "contracts/incentives/Incentive.sol";
 ///     - The claimer must not already be on the allow list; and
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to modify the allow list
-contract AllowListIncentive is Incentive {
+contract AllowListIncentive is AAllowListIncentive {
     /// @notice The payload for initializing an AllowListIncentive
     struct InitPayload {
         SimpleAllowList allowList;

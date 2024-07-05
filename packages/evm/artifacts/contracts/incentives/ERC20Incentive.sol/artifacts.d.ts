@@ -6,16 +6,21 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
+import { AERC20Incentive$Type } from "./AERC20Incentive";
 import { ERC20Incentive$Type } from "./ERC20Incentive";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
+    ["AERC20Incentive"]: AERC20Incentive$Type;
     ["ERC20Incentive"]: ERC20Incentive$Type;
+    ["contracts/incentives/ERC20Incentive.sol:AERC20Incentive"]: AERC20Incentive$Type;
     ["contracts/incentives/ERC20Incentive.sol:ERC20Incentive"]: ERC20Incentive$Type;
   }
 
   interface ContractTypesMap {
+    ["AERC20Incentive"]: GetContractReturnType<AERC20Incentive$Type["abi"]>;
     ["ERC20Incentive"]: GetContractReturnType<ERC20Incentive$Type["abi"]>;
+    ["contracts/incentives/ERC20Incentive.sol:AERC20Incentive"]: GetContractReturnType<AERC20Incentive$Type["abi"]>;
     ["contracts/incentives/ERC20Incentive.sol:ERC20Incentive"]: GetContractReturnType<ERC20Incentive$Type["abi"]>;
   }
 }

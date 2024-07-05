@@ -4,13 +4,27 @@ pragma solidity ^0.8.24;
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
+
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "./Incentive.sol";
 
+abstract contract AERC20Incentive is Incentive {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+        return type(AERC20Incentive).interfaceId;
+    }
+    
+    /// @inheritdoc Cloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+        return interfaceId == type(AERC20Incentive).interfaceId || super.supportsInterface(interfaceId);
+    }
+}
+
 /// @title ERC20 Incentive
 /// @notice A simple ERC20 incentive implementation that allows claiming of tokens
-contract ERC20Incentive is Incentive {
+contract ERC20Incentive is AERC20Incentive {
     using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 

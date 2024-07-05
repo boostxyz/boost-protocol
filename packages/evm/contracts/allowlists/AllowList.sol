@@ -13,7 +13,7 @@ abstract contract AllowList is Ownable, Cloneable {
     constructor() {
         _initializeOwner(msg.sender);
     }
-    
+
     /// @notice Check if a user is authorized
     /// @param user_ The address of the user
     /// @param data_ The data payload for the authorization check, if applicable
@@ -32,7 +32,6 @@ abstract contract AllowList is Ownable, Cloneable {
     /// @dev This function can only be called by the owner
     function setAllowed(address[] calldata users_, bool[] calldata allowed_) external virtual;
 
-
     /// @notice Set the denied status of a user
     /// @param users_ The list of users to update
     /// @param denied_ The denied status of each user
@@ -42,5 +41,5 @@ abstract contract AllowList is Ownable, Cloneable {
 
     function getComponentInterface() public pure virtual returns (bytes4) {
         return type(AllowList).interfaceId;
-    } 
+    }
 }

@@ -24,6 +24,8 @@ import type { CallParams } from '../utils';
 export type { ContractActionPayload };
 
 export class ContractAction extends DeployableTarget<ContractActionPayload> {
+  public static base = import.meta.env.VITE_CONTRACT_ACTION_BASE;
+
   public async chainId(
     params: CallParams<typeof readContractActionChainId> = {},
   ) {

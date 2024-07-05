@@ -126,10 +126,10 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @return True if the account is authorized
     /// @dev The mechanism for checking authorization is left to the implementing contract
     function isAuthorized(address account_) external view virtual returns (bool);
-    
+
     function getComponentInterface() public pure virtual returns (bytes4) {
         return type(Budget).interfaceId;
-    } 
+    }
 
     /// @inheritdoc Receiver
     receive() external payable virtual override {

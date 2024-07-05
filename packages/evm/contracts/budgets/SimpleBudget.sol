@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
+
 import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 
 /// @title Simple Budget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
 contract SimpleBudget is ASimpleBudget {
-
     /// @notice The payload for initializing a SimpleBudget
     struct InitPayload {
         address owner;
@@ -28,5 +28,4 @@ contract SimpleBudget is ASimpleBudget {
             _isAuthorized[init_.authorized[i]] = true;
         }
     }
-
 }

@@ -28,6 +28,8 @@ import type { CallParams } from '../utils';
 export type { AllowListIncentivePayload };
 
 export class AllowListIncentive extends DeployableTarget<AllowListIncentivePayload> {
+  public static base = import.meta.env.VITE_ALLOWLIST_INCENTIVE_BASE;
+
   public async claims(
     params: CallParams<typeof readAllowListIncentiveClaims> = {},
   ) {

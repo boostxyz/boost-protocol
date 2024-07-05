@@ -34,5 +34,5 @@ abstract contract Validator is Ownable, Cloneable {
 
     function getComponentInterface() public pure virtual returns (bytes4) {
         return type(Validator).interfaceId;
-    } 
+    }
 }

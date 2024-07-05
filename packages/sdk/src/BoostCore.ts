@@ -6,7 +6,6 @@ import {
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
   simulateBoostCoreClaimIncentive,
-  simulateBoostCoreCreateBoost,
   simulateBoostCoreSetClaimFee,
   simulateBoostCoreSetProtocolFeeReceiver,
   writeBoostCoreClaimIncentive,
@@ -14,17 +13,12 @@ import {
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
-import {
-  getAccount,
-  getTransaction,
-  waitForTransactionReceipt,
-} from '@wagmi/core';
+import { getAccount, waitForTransactionReceipt } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
   type Hash,
   type Hex,
-  decodeFunctionData,
   parseEventLogs,
   zeroAddress,
   zeroHash,

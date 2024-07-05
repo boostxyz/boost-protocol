@@ -41,7 +41,7 @@ contract ERC20Incentive is Incentive {
 
     /// @notice The strategy for the incentive (MINT or POOL)
     Strategy public strategy;
-    
+
     /// @notice The limit (max claims, or max entries for raffles)
     uint256 public limit;
 

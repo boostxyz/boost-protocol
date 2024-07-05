@@ -37,6 +37,8 @@ import type { CallParams } from '../utils';
 export type { SimpleBudgetPayload };
 
 export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
+  public static base = import.meta.env.VITE_SIMPLE_BUDGET_BASE;
+
   public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
     return readVestingBudgetStart(this._config, {
       address: this.assertValidAddress(),

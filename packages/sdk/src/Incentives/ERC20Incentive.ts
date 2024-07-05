@@ -35,6 +35,8 @@ import type { CallParams } from '../utils';
 export type { ERC20IncentivePayload };
 
 export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
+  public static base = import.meta.env.VITE_ERC20_INCENTIVE_BASE;
+
   public async claims(
     params: CallParams<typeof readErc20IncentiveClaims> = {},
   ) {

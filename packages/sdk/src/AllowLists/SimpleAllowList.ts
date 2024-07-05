@@ -22,6 +22,8 @@ import type { CallParams } from '../utils';
 export type { SimpleAllowListPayload };
 
 export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
+  public static base = import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE;
+
   public async isAllowed(
     address: Address,
     params: CallParams<typeof readSimpleAllowListIsAllowed> = {},

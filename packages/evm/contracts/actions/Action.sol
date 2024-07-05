@@ -36,6 +36,5 @@ abstract contract Action is Cloneable {
 
     function getComponentInterface() public pure virtual returns (bytes4) {
         return type(Action).interfaceId;
-    } 
-
+    }
 }

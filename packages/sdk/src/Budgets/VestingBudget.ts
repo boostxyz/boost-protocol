@@ -40,6 +40,8 @@ import type { CallParams } from '../utils';
 export type { VestingBudgetPayload };
 
 export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
+  public static base = import.meta.env.VITE_VESTING_BUDGET_BASE;
+
   public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
     return readVestingBudgetStart(this._config, {
       address: this.assertValidAddress(),

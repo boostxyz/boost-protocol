@@ -22,6 +22,8 @@ import type { CallParams } from '../utils';
 export type { SignerValidatorPayload };
 
 export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
+  public static base = import.meta.env.VITE_SIGNER_VALIDATOR_BASE;
+
   public async signers(
     address: Address,
     params: CallParams<typeof readSignerValidatorSigners> = {},

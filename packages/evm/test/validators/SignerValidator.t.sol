@@ -152,6 +152,15 @@ contract SignerValidatorTest is Test {
         assertTrue(validator.signers(fakeSigner));
     }
 
+    ////////////////////////////////////
+    // VestingBudget.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Ensure the contract supports the Budget interface
+        console.logBytes4(validator.getComponentInterface());
+    }
+
     ///////////////////////////////////////
     // SignerValidator.supportsInterface //
     ///////////////////////////////////////

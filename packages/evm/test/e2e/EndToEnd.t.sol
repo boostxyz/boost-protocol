@@ -27,6 +27,7 @@ import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
+import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 
 import {Validator} from "contracts/validators/Validator.sol";
 
@@ -266,7 +267,7 @@ contract EndToEnd is Test {
                 )
             ),
             // "... of '100 ERC20' with a max of 5 participants"
-            parameters: abi.encode(erc20, ERC20Incentive.Strategy.POOL, 100 ether, 5)
+            parameters: abi.encode(erc20, AERC20Incentive.Strategy.POOL, 100 ether, 5)
         });
 
         return core.createBoost(

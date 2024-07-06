@@ -12,6 +12,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {ERC1155Incentive} from "contracts/incentives/ERC1155Incentive.sol";
+import {AERC1155Incentive} from "contracts/incentives/AERC1155Incentive.sol";
 
 import {Budget} from "contracts/budgets/Budget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
@@ -43,10 +44,10 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testInitialize() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
         // Check the incentive parameters
-        assertTrue(incentive.strategy() == ERC1155Incentive.Strategy.POOL);
+        assertTrue(incentive.strategy() == AERC1155Incentive.Strategy.POOL);
         assertEq(address(incentive.asset()), address(mockAsset));
         assertEq(incentive.tokenId(), 42);
         assertEq(incentive.limit(), 5);
@@ -55,23 +56,23 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     function testInitialize_InsufficientAllocation() public {
         // Initialize with maxReward > allocation => revert
         vm.expectRevert(abi.encodeWithSelector(BoostError.InsufficientFunds.selector, mockAsset, 100, 101));
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 101);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 101);
     }
 
     function testInitialize_UnsupportedStrategy() public {
         // Initialize with MINT (not yet supported) => revert
         vm.expectRevert(BoostError.NotImplemented.selector);
-        _initialize(mockAsset, ERC1155Incentive.Strategy.MINT, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.MINT, 42, 5);
     }
 
     function testInitialize_InvalidInitialization() public {
         // Initialize with zero max claims
         vm.expectRevert(BoostError.InvalidInitialization.selector);
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 0);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 0);
 
         // Initialize with MINT strategy (not yet supported)
         vm.expectRevert(BoostError.NotImplemented.selector);
-        _initialize(mockAsset, ERC1155Incentive.Strategy.MINT, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.MINT, 42, 5);
     }
 
     //////////////////////////
@@ -80,7 +81,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testClaim() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
         vm.expectEmit(true, false, false, true);
         emit Incentive.Claimed(
@@ -97,7 +98,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testClaim_AlreadyClaimed() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
         // Claim the incentive on behalf of address(1)
         bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
@@ -114,7 +115,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testReclaim() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 100);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 100);
         assertEq(incentive.limit(), 100);
 
         // Reclaim 50x the reward amount
@@ -129,7 +130,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testReclaim_InvalidAmount() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 100);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 100);
 
         // Reclaim 101 tokens => exceeds balance => revert
         bytes memory reclaimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(101)}));
@@ -143,7 +144,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testIsClaimable() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
         // Check if the incentive is claimable
         bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
@@ -152,7 +153,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testIsClaimable_AlreadyClaimed() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
         // Claim the incentive on behalf of address(1)
         bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
@@ -164,7 +165,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testIsClaimable_ExceedsMaxClaims() public {
         // Initialize the ERC1155Incentive
-        _initialize(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 5);
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(6);
@@ -187,7 +188,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testPreflight() public {
         // Check the preflight data
-        bytes memory data = incentive.preflight(_initPayload(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 5));
+        bytes memory data = incentive.preflight(_initPayload(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5));
         Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
@@ -200,10 +201,33 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function testPreflight_WeirdRewards() public {
         // Preflight with zero max claims
-        bytes memory noClaims = incentive.preflight(_initPayload(mockAsset, ERC1155Incentive.Strategy.POOL, 42, 0));
+        bytes memory noClaims = incentive.preflight(_initPayload(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 0));
         Budget.Transfer memory request = abi.decode(noClaims, (Budget.Transfer));
         Budget.ERC1155Payload memory payload = abi.decode(request.data, (Budget.ERC1155Payload));
         assertEq(payload.amount, 0);
+    }
+
+    ////////////////////////////////////
+    // ERC1155Incentive.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(incentive.getComponentInterface());
+    }
+
+    /////////////////////////////////////
+    // ERC1155Incentive.supportsInterface //
+    /////////////////////////////////////
+
+    function testSupportsInterface() public {
+        // Ensure the contract supports the Budget interface
+        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+    }
+
+    function testSupportsInterface_NotSupported() public {
+        // Ensure the contract does not support an unsupported interface
+        assertFalse(incentive.supportsInterface(type(Test).interfaceId));
     }
 
     ///////////////////////////

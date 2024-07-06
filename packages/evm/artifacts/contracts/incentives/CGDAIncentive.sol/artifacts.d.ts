@@ -6,21 +6,16 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
-import { ACGDAIncentive$Type } from "./ACGDAIncentive";
 import { CGDAIncentive$Type } from "./CGDAIncentive";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
-    ["ACGDAIncentive"]: ACGDAIncentive$Type;
     ["CGDAIncentive"]: CGDAIncentive$Type;
-    ["contracts/incentives/CGDAIncentive.sol:ACGDAIncentive"]: ACGDAIncentive$Type;
     ["contracts/incentives/CGDAIncentive.sol:CGDAIncentive"]: CGDAIncentive$Type;
   }
 
   interface ContractTypesMap {
-    ["ACGDAIncentive"]: GetContractReturnType<ACGDAIncentive$Type["abi"]>;
     ["CGDAIncentive"]: GetContractReturnType<CGDAIncentive$Type["abi"]>;
-    ["contracts/incentives/CGDAIncentive.sol:ACGDAIncentive"]: GetContractReturnType<ACGDAIncentive$Type["abi"]>;
     ["contracts/incentives/CGDAIncentive.sol:CGDAIncentive"]: GetContractReturnType<CGDAIncentive$Type["abi"]>;
   }
 }

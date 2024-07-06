@@ -6,6 +6,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
+import {Action} from "contracts/actions/Action.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
 import {AContractAction} from "contracts/actions/AContractAction.sol";
 
@@ -99,5 +100,23 @@ contract ContractActionTest is Test {
             action.prepare(abi.encode(address(0xdeadbeef), 100 ether)),
             abi.encodeWithSelector(target.mintPayable.selector, address(0xdeadbeef), 100 ether)
         );
+    }
+
+    ////////////////////////////////////
+    // ContractAction.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(action.getComponentInterface());
+    }
+
+    ////////////////////////////////////
+    // ContractAction.supportsInterface //
+    ////////////////////////////////////
+
+    function testSupportsActionInterface() public {
+        // Ensure the contract supports the Budget interface
+        assertTrue(action.supportsInterface(type(Action).interfaceId));
     }
 }

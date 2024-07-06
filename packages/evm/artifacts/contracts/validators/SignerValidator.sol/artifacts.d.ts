@@ -6,21 +6,16 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
-import { ASignerValidator$Type } from "./ASignerValidator";
 import { SignerValidator$Type } from "./SignerValidator";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
-    ["ASignerValidator"]: ASignerValidator$Type;
     ["SignerValidator"]: SignerValidator$Type;
-    ["contracts/validators/SignerValidator.sol:ASignerValidator"]: ASignerValidator$Type;
     ["contracts/validators/SignerValidator.sol:SignerValidator"]: SignerValidator$Type;
   }
 
   interface ContractTypesMap {
-    ["ASignerValidator"]: GetContractReturnType<ASignerValidator$Type["abi"]>;
     ["SignerValidator"]: GetContractReturnType<SignerValidator$Type["abi"]>;
-    ["contracts/validators/SignerValidator.sol:ASignerValidator"]: GetContractReturnType<ASignerValidator$Type["abi"]>;
     ["contracts/validators/SignerValidator.sol:SignerValidator"]: GetContractReturnType<SignerValidator$Type["abi"]>;
   }
 }

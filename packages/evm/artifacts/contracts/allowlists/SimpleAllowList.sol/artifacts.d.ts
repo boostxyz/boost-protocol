@@ -6,21 +6,16 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
-import { ASimpleAllowList$Type } from "./ASimpleAllowList";
 import { SimpleAllowList$Type } from "./SimpleAllowList";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
-    ["ASimpleAllowList"]: ASimpleAllowList$Type;
     ["SimpleAllowList"]: SimpleAllowList$Type;
-    ["contracts/allowlists/SimpleAllowList.sol:ASimpleAllowList"]: ASimpleAllowList$Type;
     ["contracts/allowlists/SimpleAllowList.sol:SimpleAllowList"]: SimpleAllowList$Type;
   }
 
   interface ContractTypesMap {
-    ["ASimpleAllowList"]: GetContractReturnType<ASimpleAllowList$Type["abi"]>;
     ["SimpleAllowList"]: GetContractReturnType<SimpleAllowList$Type["abi"]>;
-    ["contracts/allowlists/SimpleAllowList.sol:ASimpleAllowList"]: GetContractReturnType<ASimpleAllowList$Type["abi"]>;
     ["contracts/allowlists/SimpleAllowList.sol:SimpleAllowList"]: GetContractReturnType<SimpleAllowList$Type["abi"]>;
   }
 }

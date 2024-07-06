@@ -6,21 +6,16 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
-import { AContractAction$Type } from "./AContractAction";
 import { ContractAction$Type } from "./ContractAction";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
-    ["AContractAction"]: AContractAction$Type;
     ["ContractAction"]: ContractAction$Type;
-    ["contracts/actions/ContractAction.sol:AContractAction"]: AContractAction$Type;
     ["contracts/actions/ContractAction.sol:ContractAction"]: ContractAction$Type;
   }
 
   interface ContractTypesMap {
-    ["AContractAction"]: GetContractReturnType<AContractAction$Type["abi"]>;
     ["ContractAction"]: GetContractReturnType<ContractAction$Type["abi"]>;
-    ["contracts/actions/ContractAction.sol:AContractAction"]: GetContractReturnType<AContractAction$Type["abi"]>;
     ["contracts/actions/ContractAction.sol:ContractAction"]: GetContractReturnType<ContractAction$Type["abi"]>;
   }
 }

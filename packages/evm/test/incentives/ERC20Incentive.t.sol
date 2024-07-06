@@ -10,6 +10,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
+import {AERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 
 import {Budget} from "contracts/budgets/Budget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
@@ -43,10 +44,10 @@ contract ERC20IncentiveTest is Test {
 
     function testInitialize() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Check the incentive parameters
-        assertTrue(incentive.strategy() == ERC20Incentive.Strategy.POOL);
+        assertTrue(incentive.strategy() == AERC20Incentive.Strategy.POOL);
         assertEq(incentive.asset(), address(mockAsset));
         assertEq(incentive.currentReward(), 1 ether);
         assertEq(incentive.limit(), 5);
@@ -55,23 +56,23 @@ contract ERC20IncentiveTest is Test {
     function testInitialize_InsufficientAllocation() public {
         // Initialize with maxReward > allocation => revert
         vm.expectRevert(abi.encodeWithSelector(BoostError.InsufficientFunds.selector, mockAsset, 100 ether, 101 ether));
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 101);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 101);
     }
 
     function testInitialize_UnsupportedStrategy() public {
         // Initialize with MINT (not yet supported) => revert
         vm.expectRevert(BoostError.NotImplemented.selector);
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.MINT, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.MINT, 1 ether, 5);
     }
 
     function testInitialize_InvalidInitialization() public {
         // Initialize with no reward amount
         vm.expectRevert(BoostError.InvalidInitialization.selector);
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 0 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 0 ether, 5);
 
         // Initialize with zero max claims
         vm.expectRevert(BoostError.InvalidInitialization.selector);
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 0);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 0);
     }
 
     //////////////////////////
@@ -80,7 +81,7 @@ contract ERC20IncentiveTest is Test {
 
     function testClaim() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         vm.expectEmit(true, false, false, true);
         emit Incentive.Claimed(address(1), abi.encodePacked(address(mockAsset), address(1), uint256(1 ether)));
@@ -95,7 +96,7 @@ contract ERC20IncentiveTest is Test {
 
     function testClaim_AlreadyClaimed() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Claim the incentive on behalf of address(1)
         bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
@@ -108,7 +109,7 @@ contract ERC20IncentiveTest is Test {
 
     function testClaim_RaffleStrategy() public {
         // Initialize the ERC20Incentive raffling 100 eth to 1 of 5 entrants
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
 
         // Claim the incentive, which means adding the address to the entries list
         bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
@@ -126,7 +127,7 @@ contract ERC20IncentiveTest is Test {
 
     function testReclaim() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 100);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 100);
         assertEq(incentive.limit(), 100);
 
         // Reclaim 50x the reward amount
@@ -142,7 +143,7 @@ contract ERC20IncentiveTest is Test {
 
     function testReclaim_InvalidAmount() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 100);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 100);
 
         // Reclaim 50.1x => not an integer multiple of the reward amount => revert
         bytes memory reclaimPayload =
@@ -153,7 +154,7 @@ contract ERC20IncentiveTest is Test {
 
     function testReclaim_RaffleStrategy() public {
         // Initialize the ERC20Incentive raffling 100 eth to 1 of 5 entrants
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
 
         // Claim the incentive for 1 address, adding it to the raffle entries
         // and locking in the reward since there's at least 1 potential winner
@@ -177,7 +178,7 @@ contract ERC20IncentiveTest is Test {
 
     function testIsClaimable() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Check if the incentive is claimable
         bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
@@ -186,7 +187,7 @@ contract ERC20IncentiveTest is Test {
 
     function testIsClaimable_AlreadyClaimed() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Claim the incentive on behalf of address(1)
         bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
@@ -198,7 +199,7 @@ contract ERC20IncentiveTest is Test {
 
     function testIsClaimable_ExceedsMaxClaims() public {
         // Initialize the ERC20Incentive
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(6);
@@ -222,7 +223,7 @@ contract ERC20IncentiveTest is Test {
     function testPreflight() public {
         // Check the preflight data
         bytes memory data =
-            incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5));
+            incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5));
         Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
@@ -234,14 +235,14 @@ contract ERC20IncentiveTest is Test {
     function testPreflight_WeirdRewards() public {
         // Preflight with no reward amount
         bytes memory noRewards =
-            incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.POOL, 0 ether, 5));
+            incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 0 ether, 5));
         Budget.Transfer memory request = abi.decode(noRewards, (Budget.Transfer));
         Budget.FungiblePayload memory payload = abi.decode(request.data, (Budget.FungiblePayload));
         assertEq(payload.amount, 0);
 
         // Preflight with zero max claims
         bytes memory noClaims =
-            incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 0));
+            incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 0));
         Budget.Transfer memory request2 = abi.decode(noClaims, (Budget.Transfer));
         Budget.FungiblePayload memory payload2 = abi.decode(request2.data, (Budget.FungiblePayload));
         assertEq(payload2.amount, 0);
@@ -250,7 +251,7 @@ contract ERC20IncentiveTest is Test {
     function testPreflight_RaffleStrategy() public {
         // Check the preflight data for a raffle
         bytes memory data =
-            incentive.preflight(_initPayload(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 1 ether, 5));
+            incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 1 ether, 5));
         Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
@@ -265,7 +266,7 @@ contract ERC20IncentiveTest is Test {
 
     function testDrawRaffle() public {
         // Initialize the ERC20Incentive raffling 100 eth to 1 of 5 entrants
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
 
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(5);
@@ -290,11 +291,34 @@ contract ERC20IncentiveTest is Test {
 
     function testDrawRaffle_NotRaffleStrategy() public {
         // Initialize the ERC20Incentive with a POOL strategy
-        _initialize(address(mockAsset), ERC20Incentive.Strategy.POOL, 1 ether, 5);
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Attempt to draw the raffle => revert
         vm.expectRevert(BoostError.Unauthorized.selector);
         incentive.drawRaffle();
+    }
+
+    ////////////////////////////////////
+    // ERC20Incentive.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(incentive.getComponentInterface());
+    }
+
+    /////////////////////////////////////
+    // ERC20Incentive.supportsInterface //
+    /////////////////////////////////////
+
+    function testSupportsInterface() public {
+        // Ensure the contract supports the Budget interface
+        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+    }
+
+    function testSupportsInterface_NotSupported() public {
+        // Ensure the contract does not support an unsupported interface
+        assertFalse(incentive.supportsInterface(type(Test).interfaceId));
     }
 
     ///////////////////////////
@@ -305,11 +329,11 @@ contract ERC20IncentiveTest is Test {
         return ERC20Incentive(LibClone.clone(address(new ERC20Incentive())));
     }
 
-    function _initialize(address asset, ERC20Incentive.Strategy strategy, uint256 reward, uint256 limit) internal {
+    function _initialize(address asset, AERC20Incentive.Strategy strategy, uint256 reward, uint256 limit) internal {
         incentive.initialize(_initPayload(asset, strategy, reward, limit));
     }
 
-    function _initPayload(address asset, ERC20Incentive.Strategy strategy, uint256 reward, uint256 limit)
+    function _initPayload(address asset, AERC20Incentive.Strategy strategy, uint256 reward, uint256 limit)
         internal
         pure
         returns (bytes memory)

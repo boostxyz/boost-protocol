@@ -241,6 +241,29 @@ contract CGDAIncentiveTest is Test {
         assertEq(abi.decode(transfer.data, (uint256)), 10 ether);
     }
 
+    ////////////////////////////////////
+    // CGDAIncentive.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(incentive.getComponentInterface());
+    }
+
+    /////////////////////////////////////
+    // CGDAIncentive.supportsInterface //
+    /////////////////////////////////////
+
+    function testSupportsInterface() public {
+        // Ensure the contract supports the Budget interface
+        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+    }
+
+    function testSupportsInterface_NotSupported() public {
+        // Ensure the contract does not support an unsupported interface
+        assertFalse(incentive.supportsInterface(type(Test).interfaceId));
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

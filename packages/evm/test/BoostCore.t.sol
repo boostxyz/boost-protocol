@@ -23,6 +23,7 @@ import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 // Incentives
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
+import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 
 // Validators
 import {Validator} from "contracts/validators/Validator.sol";
@@ -132,7 +133,7 @@ contract BoostCoreTest is Test {
         assertEq(1, boost.incentives.length);
         ERC20Incentive _incentive = ERC20Incentive(address(boost.incentives[0]));
         assertTrue(_incentive.supportsInterface(type(Incentive).interfaceId));
-        assertTrue(_incentive.strategy() == ERC20Incentive.Strategy.POOL);
+        assertTrue(_incentive.strategy() == AERC20Incentive.Strategy.POOL);
         assertEq(_incentive.asset(), address(mockERC20));
         assertEq(_incentive.currentReward(), 1 ether);
         assertEq(_incentive.limit(), 100);
@@ -279,7 +280,7 @@ contract BoostCoreTest is Test {
                 parameters: abi.encode(
                     ERC20Incentive.InitPayload({
                         asset: address(mockERC20),
-                        strategy: ERC20Incentive.Strategy.POOL,
+                        strategy: AERC20Incentive.Strategy.POOL,
                         reward: 1 ether,
                         limit: 100
                     })

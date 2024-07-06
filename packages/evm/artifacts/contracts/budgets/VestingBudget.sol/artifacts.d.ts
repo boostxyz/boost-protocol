@@ -6,21 +6,16 @@
 import "hardhat/types/artifacts";
 import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
-import { AVestingBudget$Type } from "./AVestingBudget";
 import { VestingBudget$Type } from "./VestingBudget";
 
 declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
-    ["AVestingBudget"]: AVestingBudget$Type;
     ["VestingBudget"]: VestingBudget$Type;
-    ["contracts/budgets/VestingBudget.sol:AVestingBudget"]: AVestingBudget$Type;
     ["contracts/budgets/VestingBudget.sol:VestingBudget"]: VestingBudget$Type;
   }
 
   interface ContractTypesMap {
-    ["AVestingBudget"]: GetContractReturnType<AVestingBudget$Type["abi"]>;
     ["VestingBudget"]: GetContractReturnType<VestingBudget$Type["abi"]>;
-    ["contracts/budgets/VestingBudget.sol:AVestingBudget"]: GetContractReturnType<AVestingBudget$Type["abi"]>;
     ["contracts/budgets/VestingBudget.sol:VestingBudget"]: GetContractReturnType<VestingBudget$Type["abi"]>;
   }
 }

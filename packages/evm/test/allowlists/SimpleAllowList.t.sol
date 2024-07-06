@@ -115,6 +115,15 @@ contract SimpleAllowListTest is Test {
         allowList.setAllowed(new address[](1), new bool[](2));
     }
 
+    ////////////////////////////////////
+    // SimpleAllowList.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(allowList.getComponentInterface());
+    }
+
     ///////////////////////////////////////
     // SimpleAllowList.supportsInterface //
     ///////////////////////////////////////

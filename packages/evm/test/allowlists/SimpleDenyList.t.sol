@@ -115,6 +115,15 @@ contract SimpleDenyListTest is Test {
         denyList.setDenied(new address[](1), new bool[](2));
     }
 
+    ////////////////////////////////////
+    // SimpleDenyList.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(denyList.getComponentInterface());
+    }
+
     ///////////////////////////////////////
     // SimpleDenyList.supportsInterface //
     ///////////////////////////////////////

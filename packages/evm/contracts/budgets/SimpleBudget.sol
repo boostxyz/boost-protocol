@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
+
 import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 
 /// @title Simple Budget

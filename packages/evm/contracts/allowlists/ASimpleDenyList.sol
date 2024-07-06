@@ -14,7 +14,7 @@ abstract contract ASimpleDenyList is AllowList {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -39,11 +39,11 @@ abstract contract ASimpleDenyList is AllowList {
         }
     }
 
-        /// @inheritdoc Cloneable
+    /// @inheritdoc Cloneable
     function getComponentInterface() public pure virtual override(AllowList) returns (bytes4) {
         return type(ASimpleDenyList).interfaceId;
     }
-    
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(AllowList) returns (bool) {
         return interfaceId == type(ASimpleDenyList).interfaceId || super.supportsInterface(interfaceId);

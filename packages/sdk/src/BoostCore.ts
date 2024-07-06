@@ -17,14 +17,14 @@ import { getAccount, waitForTransactionReceipt } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
-  type Hash,
   type Hex,
+  isAddress,
   parseEventLogs,
   zeroAddress,
   zeroHash,
 } from 'viem';
 
-import type { Action } from './Actions/Action';
+import { type Action, actionFromAddress } from './Actions/Action';
 import {
   ContractAction,
   type ContractActionPayload,
@@ -33,7 +33,7 @@ import {
   ERC721MintAction,
   type ERC721MintActionPayload,
 } from './Actions/ERC721MintAction';
-import type { AllowList } from './AllowLists/AllowList';
+import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
 import {
   SimpleAllowList,
   type SimpleAllowListPayload,
@@ -43,7 +43,7 @@ import {
   type SimpleDenyListPayload,
 } from './AllowLists/SimpleDenyList';
 import { Boost } from './Boost';
-import type { Budget } from './Budgets/Budget';
+import { type Budget, budgetFromAddress } from './Budgets/Budget';
 import { SimpleBudget, type SimpleBudgetPayload } from './Budgets/SimpleBudget';
 import {
   VestingBudget,
@@ -71,7 +71,7 @@ import {
   ERC1155Incentive,
   type ERC1155IncentivePayload,
 } from './Incentives/ERC1155Incentive';
-import type { Incentive } from './Incentives/Incentive';
+import { type Incentive, incentiveFromAddress } from './Incentives/Incentive';
 import {
   PointsIncentive,
   type PointsIncentivePayload,
@@ -80,10 +80,11 @@ import {
   SignerValidator,
   type SignerValidatorPayload,
 } from './Validators/SignerValidator';
-import type { Validator } from './Validators/Validator';
+import { type Validator, validatorFromAddress } from './Validators/Validator';
 import {
   BoostCoreNoIdentifierEmitted,
   DeployableUnknownOwnerProvidedError,
+  NoContractAddressUponReceiptError,
 } from './errors';
 import type { CallParams } from './utils';
 
@@ -181,139 +182,108 @@ export class BoostCore extends Deployable<[Address, Address]> {
       }
     }
 
-    let budgetPayload: OnChainBoostPayload['budget'] = zeroAddress,
-      budgetHash: Hash | undefined = undefined;
-    if (typeof budget === 'string') budgetPayload = budget;
+    let budgetPayload: OnChainBoostPayload['budget'] = zeroAddress;
+    if (typeof budget === 'string' && isAddress(budget)) budgetPayload = budget;
     else {
       if (budget.address) budgetPayload = budget.address;
       else {
-        budgetHash = await budget.deployRaw(undefined, options);
+        const budgetHash = await budget.deployRaw(undefined, options);
+        const receipt = await waitForTransactionReceipt(options.config, {
+          hash: budgetHash,
+        });
+        if (!receipt.contractAddress)
+          throw new NoContractAddressUponReceiptError(receipt);
+        budgetPayload = receipt.contractAddress;
       }
     }
 
+    // if we're supplying an address, it could be a pre-initialized target
+    // if base is explicitly set to false, then it will not be initialized, and it will be referenced as is if it implements interface correctly
     let actionPayload: OnChainBoostPayload['action'] = {
-        instance: zeroAddress,
-        isBase: false,
-        parameters: zeroHash,
-      },
-      actionHash: Hash | undefined = undefined;
-    if (action.address)
+      instance: zeroAddress,
+      isBase: true,
+      parameters: zeroHash,
+    };
+    if (action.address) {
+      const isBase = action.address === action.base || action.isBase;
       actionPayload = {
-        isBase: action.isBase,
+        isBase: isBase,
         instance: action.address,
-        parameters: action.isBase
+        parameters: isBase
           ? action.buildParameters(undefined, options).args.at(0) || zeroHash
           : zeroHash,
       };
-    else {
-      actionHash = await action.deployRaw(undefined, options);
+    } else {
+      actionPayload.parameters =
+        action.buildParameters(undefined, options).args.at(0) || zeroHash;
+      actionPayload.instance = action.base;
     }
 
     let validatorPayload: OnChainBoostPayload['validator'] = {
-        instance: zeroAddress,
-        isBase: false,
-        parameters: zeroHash,
-      },
-      validatorHash: Hash | undefined = undefined;
-    if (validator.address)
+      instance: zeroAddress,
+      isBase: true,
+      parameters: zeroHash,
+    };
+    if (validator.address) {
+      const isBase = validator.address === validator.base || validator.isBase;
       validatorPayload = {
-        isBase: validator.isBase,
+        isBase: isBase,
         instance: validator.address,
-        parameters: validator.isBase
+        parameters: isBase
           ? validator.buildParameters(undefined, options).args.at(0) || zeroHash
           : zeroHash,
       };
-    else {
-      validatorHash = await validator.deployRaw(undefined, options);
+    } else {
+      validatorPayload.parameters =
+        validator.buildParameters(undefined, options).args.at(0) || zeroHash;
+      validatorPayload.instance = validator.base;
     }
 
     let allowListPayload: OnChainBoostPayload['allowList'] = {
-        instance: zeroAddress,
-        isBase: false,
-        parameters: zeroHash,
-      },
-      allowListHash: Hash | undefined = undefined;
-    if (allowList.address)
+      instance: zeroAddress,
+      isBase: true,
+      parameters: zeroHash,
+    };
+    if (allowList.address) {
+      const isBase = allowList.address === allowList.base || allowList.isBase;
       allowListPayload = {
-        isBase: allowList.isBase,
+        isBase: isBase,
         instance: allowList.address,
-        parameters: allowList.isBase
+        parameters: isBase
           ? allowList.buildParameters(undefined, options).args.at(0) || zeroHash
           : zeroHash,
       };
-    else {
-      allowListHash = await allowList.deployRaw(undefined, options);
+    } else {
+      allowListPayload.parameters =
+        allowList.buildParameters(undefined, options).args.at(0) || zeroHash;
+      allowListPayload.instance = allowList.base;
     }
 
     let incentivesPayloads: Array<Target> = incentives.map(() => ({
-        instance: zeroAddress,
-        isBase: false,
-        parameters: zeroHash,
-      })),
-      incentiveHashes = incentives.map<Hash | undefined>(() => undefined);
+      instance: zeroAddress,
+      isBase: true,
+      parameters: zeroHash,
+    }));
     for (let i = 0; i < incentives.length; i++) {
       // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
       const incentive = incentives.at(i)!;
-      if (incentive.address)
+      if (incentive.address) {
+        const isBase = allowList.address === allowList.base || allowList.isBase;
         incentivesPayloads[i] = {
-          isBase: incentive.isBase,
+          isBase: isBase,
           instance: incentive.address,
-          parameters: incentive.isBase
+          parameters: isBase
             ? incentive.buildParameters(undefined, options).args.at(0) ||
               zeroHash
             : zeroHash,
         };
-      else {
-        incentiveHashes[i] = await incentive.deployRaw(undefined, options);
+      } else {
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
+        incentivesPayloads[i]!.parameters =
+          incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
+        incentivesPayloads[i]!.instance = incentive.base;
       }
-    }
-
-    const [
-      budgetAddress,
-      actionAddress,
-      validatorAddress,
-      allowListAddress,
-      incentiveAddresses,
-    ] = await Promise.all([
-      budgetHash
-        ? waitForTransactionReceipt(options.config, {
-            hash: budgetHash,
-          }).then((contract) => contract.contractAddress)
-        : Promise.resolve(budgetPayload),
-      actionHash
-        ? waitForTransactionReceipt(options.config, {
-            hash: actionHash,
-          }).then((contract) => contract.contractAddress)
-        : Promise.resolve(actionPayload.instance),
-      validatorHash
-        ? waitForTransactionReceipt(options.config, {
-            hash: validatorHash,
-          }).then((contract) => contract.contractAddress)
-        : Promise.resolve(validatorPayload.instance),
-      allowListHash
-        ? waitForTransactionReceipt(options.config, {
-            hash: allowListHash,
-          }).then((contract) => contract.contractAddress)
-        : Promise.resolve(allowListPayload.instance),
-      Promise.all(
-        incentiveHashes.map((hash, i) =>
-          hash
-            ? waitForTransactionReceipt(options.config, {
-                hash: hash,
-              }).then((contract) => contract.contractAddress)
-            : // biome-ignore lint/style/noNonNullAssertion: these incentive arrays will always be of the same length
-              Promise.resolve(incentivesPayloads.at(i)!.instance),
-        ),
-      ),
-    ]);
-
-    if (budgetAddress) budgetPayload = budgetAddress;
-    if (actionAddress) actionPayload.instance = actionAddress;
-    if (validatorAddress) validatorPayload.instance = validatorAddress;
-    if (allowListAddress) allowListPayload.instance = allowListAddress;
-    for (let i = 0; i < incentiveAddresses.length; i++) {
-      // biome-ignore lint/style/noNonNullAssertion: these incentive arrays will always be of the same length
-      incentivesPayloads.at(i)!.instance = incentiveAddresses.at(i)!;
     }
 
     const onChainPayload = {
@@ -327,6 +297,8 @@ export class BoostCore extends Deployable<[Address, Address]> {
       maxParticipants,
       owner,
     };
+
+    console.log(onChainPayload);
 
     const boostHash = await boostFactory(options.config, {
       args: [prepareBoostPayload(onChainPayload)],
@@ -345,9 +317,8 @@ export class BoostCore extends Deployable<[Address, Address]> {
       throw new BoostCoreNoIdentifierEmitted();
     }
     boostId = boostCreatedLog?.args.boostIndex;
-    const boost = await this.getBoost(boostId);
+    const boost = await this.readBoost(boostId);
 
-    // TODO we need to figure out how to ensure the boost has the correct component instances, ie SimpleAllowList vs SimpleDenyList
     return new Boost({
       id: boostId,
       budget: budget.at(boost.budget),
@@ -393,15 +364,60 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
-  public async getBoost(
-    boostId: bigint,
+  public async readBoost(
+    id: bigint,
     params: CallParams<typeof readBoostCoreGetBoost> = {},
   ) {
     return readBoostCoreGetBoost(this._config, {
       address: this.assertValidAddress(),
-      args: [boostId],
+      args: [id],
       ...this.optionallyAttachAccount(),
       ...params,
+    });
+  }
+
+  public async getBoost(
+    _id: string | bigint,
+    params: CallParams<typeof readBoostCoreGetBoost> = {},
+  ) {
+    let id: bigint;
+    if (typeof _id === 'string') {
+      id = BigInt(_id);
+    } else id = _id;
+    const {
+      protocolFee,
+      referralFee,
+      maxParticipants,
+      owner,
+      ...boostPayload
+    } = await this.readBoost(id, params);
+    const options: DeployableOptions = {
+      config: this._config,
+      account: this._account,
+    };
+    const [action, budget, validator, allowList, incentives] =
+      await Promise.all([
+        actionFromAddress(options, boostPayload.action),
+        budgetFromAddress(options, boostPayload.budget),
+        validatorFromAddress(options, boostPayload.validator),
+        allowListFromAddress(options, boostPayload.allowList),
+        Promise.all(
+          boostPayload.incentives.map((incentiveAddress) =>
+            incentiveFromAddress(options, incentiveAddress),
+          ),
+        ),
+      ]);
+    return new Boost({
+      id,
+      action,
+      budget,
+      validator,
+      allowList,
+      incentives,
+      protocolFee,
+      referralFee,
+      maxParticipants,
+      owner,
     });
   }
 
@@ -464,7 +480,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
 
   ContractAction(
     options: DeployablePayloadOrAddress<ContractActionPayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new ContractAction(
       { config: this._config, account: this._account },
@@ -474,7 +490,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   ERC721MintAction(
     options: DeployablePayloadOrAddress<ERC721MintActionPayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new ERC721MintAction(
       { config: this._config, account: this._account },
@@ -484,7 +500,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   SimpleAllowList(
     options: DeployablePayloadOrAddress<SimpleAllowListPayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new SimpleAllowList(
       { config: this._config, account: this._account },
@@ -494,7 +510,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   SimpleDenyList(
     options: DeployablePayloadOrAddress<SimpleDenyListPayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new SimpleDenyList(
       { config: this._config, account: this._account },
@@ -516,7 +532,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   AllowListIncentive(
     options: DeployablePayloadOrAddress<AllowListIncentivePayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new AllowListIncentive(
       { config: this._config, account: this._account },
@@ -526,7 +542,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   CGDAIncentive(
     options: DeployablePayloadOrAddress<CGDAIncentivePayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new CGDAIncentive(
       { config: this._config, account: this._account },
@@ -536,7 +552,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   ERC20Incentive(
     options: DeployablePayloadOrAddress<ERC20IncentivePayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new ERC20Incentive(
       { config: this._config, account: this._account },
@@ -546,7 +562,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   ERC1155Incentive(
     options: DeployablePayloadOrAddress<ERC1155IncentivePayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new ERC1155Incentive(
       { config: this._config, account: this._account },
@@ -556,7 +572,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   PointsIncentive(
     options: DeployablePayloadOrAddress<PointsIncentivePayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new PointsIncentive(
       { config: this._config, account: this._account },
@@ -566,7 +582,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
   SignerValidator(
     options: DeployablePayloadOrAddress<SignerValidatorPayload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     return new SignerValidator(
       { config: this._config, account: this._account },

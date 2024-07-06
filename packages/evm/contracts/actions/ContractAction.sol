@@ -8,7 +8,6 @@ import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {AContractAction} from "contracts/actions/AContractAction.sol";
 
 contract ContractAction is AContractAction {
-
     /// @notice The payload for initializing a ContractAction
     /// @param target The target contract address
     /// @param selector The selector for the function to be called

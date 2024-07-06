@@ -25,6 +25,7 @@ export type { ContractActionPayload };
 
 export class ContractAction extends DeployableTarget<ContractActionPayload> {
   public static base = import.meta.env.VITE_CONTRACT_ACTION_BASE;
+  public override readonly base = ContractAction.base;
 
   public async chainId(
     params: CallParams<typeof readContractActionChainId> = {},

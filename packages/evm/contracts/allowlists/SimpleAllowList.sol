@@ -11,7 +11,6 @@ import {ASimpleAllowList} from "contracts/allowlists/ASimpleAllowList.sol";
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
 contract SimpleAllowList is ASimpleAllowList {
-
     /// @notice Construct a new SimpleAllowList
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

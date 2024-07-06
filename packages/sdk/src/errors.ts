@@ -1,4 +1,8 @@
-import type { WaitForTransactionReceiptReturnType } from 'viem';
+import {
+  type Hex,
+  type WaitForTransactionReceiptReturnType,
+  zeroHash,
+} from 'viem';
 
 export class BoostCoreNoIdentifierEmitted extends Error {
   constructor() {
@@ -54,10 +58,21 @@ export class DeployableMissingPayloadError extends Error {
   }
 }
 
-export class NoContractAddressUponReceipt extends Error {
+export class NoContractAddressUponReceiptError extends Error {
   public readonly receipt: WaitForTransactionReceiptReturnType;
   constructor(receipt: WaitForTransactionReceiptReturnType) {
     super(`Expected a contract address to exist on receipt.`);
     this.receipt = receipt;
+  }
+}
+
+export class InvalidComponentInterfaceError extends Error {
+  public readonly expected: Hex[] = [];
+  public readonly received: Hex = zeroHash;
+
+  constructor(expected: Hex[], received: Hex) {
+    super(`Address provided is not `);
+    this.expected = expected;
+    this.received = received;
   }
 }

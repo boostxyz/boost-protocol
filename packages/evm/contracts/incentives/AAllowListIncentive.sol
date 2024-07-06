@@ -22,7 +22,7 @@ abstract contract AAllowListIncentive is Incentive {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the allowlist
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -73,7 +73,7 @@ abstract contract AAllowListIncentive is Incentive {
     function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
         return type(AAllowListIncentive).interfaceId;
     }
-    
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
         return interfaceId == type(AAllowListIncentive).interfaceId || super.supportsInterface(interfaceId);

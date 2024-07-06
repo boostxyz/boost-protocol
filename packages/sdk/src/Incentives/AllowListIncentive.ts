@@ -29,6 +29,7 @@ export type { AllowListIncentivePayload };
 
 export class AllowListIncentive extends DeployableTarget<AllowListIncentivePayload> {
   public static base = import.meta.env.VITE_ALLOWLIST_INCENTIVE_BASE;
+  public override readonly base = AllowListIncentive.base;
 
   public async claims(
     params: CallParams<typeof readAllowListIncentiveClaims> = {},

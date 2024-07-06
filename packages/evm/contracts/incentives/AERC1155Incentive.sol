@@ -40,7 +40,7 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the incentive
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -126,9 +126,10 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
     function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
         return type(AERC1155Incentive).interfaceId;
     }
-    
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive, IERC165) returns (bool) {
-        return interfaceId == type(AERC1155Incentive).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(AERC1155Incentive).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 }

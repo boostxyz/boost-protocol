@@ -6,7 +6,6 @@ import {ASimpleDenyList} from "contracts/allowlists/ASimpleDenyList.sol";
 /// @title SimpleDenyList
 /// @notice A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list
 contract SimpleDenyList is ASimpleDenyList {
-
     /// @notice Construct a new SimpleDenyList
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

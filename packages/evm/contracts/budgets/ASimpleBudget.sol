@@ -35,7 +35,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -307,5 +307,5 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     /// @inheritdoc Cloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(ASimpleBudget).interfaceId;
-    } 
+    }
 }

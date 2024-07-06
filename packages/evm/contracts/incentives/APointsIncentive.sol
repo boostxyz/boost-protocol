@@ -14,7 +14,6 @@ import {Incentive} from "./Incentive.sol";
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to operate the points contract's issuance function
 abstract contract APointsIncentive is Incentive {
-
     /// @notice The address of the points contract
     address public venue;
 
@@ -26,7 +25,7 @@ abstract contract APointsIncentive is Incentive {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the incentive
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -80,7 +79,7 @@ abstract contract APointsIncentive is Incentive {
     function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
         return type(APointsIncentive).interfaceId;
     }
-    
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
         return interfaceId == type(APointsIncentive).interfaceId || super.supportsInterface(interfaceId);

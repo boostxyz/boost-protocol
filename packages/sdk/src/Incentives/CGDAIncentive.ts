@@ -33,6 +33,7 @@ export type { CGDAIncentivePayload };
 
 export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   public static base = import.meta.env.VITE_CGDA_INCENTIVE_BASE;
+  public override readonly base = CGDAIncentive.base;
 
   public async claims(params: CallParams<typeof readCgdaIncentiveClaims> = {}) {
     return readCgdaIncentiveClaims(this._config, {

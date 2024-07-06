@@ -42,11 +42,4 @@ export class Boost {
     this.maxParticipants = payload.maxParticipants || 0n;
     this.owner = payload.owner || zeroAddress;
   }
-
-  // public encode() {}
-
-  public static decode(_data: Hex) {
-    // TODO decode hash, initialize class
-    // return new Boost({});
-  }
 }

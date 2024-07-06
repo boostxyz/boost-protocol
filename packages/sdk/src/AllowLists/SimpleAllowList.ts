@@ -23,6 +23,7 @@ export type { SimpleAllowListPayload };
 
 export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   public static base = import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE;
+  public override readonly base = SimpleAllowList.base;
 
   public async isAllowed(
     address: Address,

@@ -18,7 +18,7 @@ abstract contract AERC20Incentive is Incentive {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -131,7 +131,7 @@ abstract contract AERC20Incentive is Incentive {
     function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
         return type(AERC20Incentive).interfaceId;
     }
-    
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
         return interfaceId == type(AERC20Incentive).interfaceId || super.supportsInterface(interfaceId);

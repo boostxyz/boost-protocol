@@ -52,7 +52,7 @@ abstract contract ASignerValidator is Validator {
     function getComponentInterface() public pure virtual override(Validator) returns (bytes4) {
         return type(ASignerValidator).interfaceId;
     }
-    
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Validator) returns (bool) {
         return interfaceId == type(ASignerValidator).interfaceId || super.supportsInterface(interfaceId);

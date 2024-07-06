@@ -14,7 +14,7 @@ import {Incentive} from "contracts/incentives/Incentive.sol";
 /// @notice An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
 contract CGDAIncentive is ACGDAIncentive {
     using SafeTransferLib for address;
-    
+
     /// @notice The payload for initializing a CGDAIncentive
     /// @param asset The address of the ERC20-like token
     /// @param initialReward The initial reward amount

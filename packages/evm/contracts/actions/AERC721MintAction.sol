@@ -65,9 +65,15 @@ abstract contract AERC721MintAction is ContractAction, Validator {
     function getComponentInterface() public pure virtual override(AContractAction, Validator) returns (bytes4) {
         return type(AERC721MintAction).interfaceId;
     }
-    
+
     /// @inheritdoc AContractAction
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AContractAction, Validator) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AContractAction, Validator)
+        returns (bool)
+    {
         return interfaceId == type(AERC721MintAction).interfaceId || super.supportsInterface(interfaceId);
     }
 }

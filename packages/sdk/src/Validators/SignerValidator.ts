@@ -23,6 +23,7 @@ export type { SignerValidatorPayload };
 
 export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   public static base = import.meta.env.VITE_SIGNER_VALIDATOR_BASE;
+  public override readonly base = SignerValidator.base;
 
   public async signers(
     address: Address,

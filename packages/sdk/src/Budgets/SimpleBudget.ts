@@ -38,6 +38,7 @@ export type { SimpleBudgetPayload };
 
 export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   public static base = import.meta.env.VITE_SIMPLE_BUDGET_BASE;
+  public override readonly base = SimpleBudget.base;
 
   public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
     return readVestingBudgetStart(this._config, {

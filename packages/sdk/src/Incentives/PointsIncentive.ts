@@ -30,6 +30,7 @@ export type { PointsIncentivePayload };
 
 export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   public static base = import.meta.env.VITE_POINTS_INCENTIVE_BASE;
+  public override readonly base = PointsIncentive.base;
 
   public async claims(
     params: CallParams<typeof readPointsIncentiveClaims> = {},

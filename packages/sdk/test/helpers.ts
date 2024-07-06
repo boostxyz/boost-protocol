@@ -1,20 +1,35 @@
+//@ts-nocheck
 import { RegistryType, writeBoostRegistryRegister } from '@boostxyz/evm';
 import BoostCore from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import BoostRegistry from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
-import ContractAction from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import ERC721MintAction from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import SimpleAllowList from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
-import SimpleDenyList from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
-import SimpleBudget from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
-import VestingBudget from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
-import AllowListIncentive from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
-import CGDAIncentive from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
-import ERC20Incentive from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
-import ERC1155Incentive from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
-import PointsIncentive from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import SignerValidator from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
+import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
+import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
+import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
+import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
+import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
+import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
+import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
+import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
+import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
+import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
+import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
+import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { deployContract } from '@wagmi/core';
 import type { Hex } from 'viem';
+import {
+  AllowListIncentive,
+  CGDAIncentive,
+  ContractAction,
+  ERC20Incentive,
+  ERC721MintAction,
+  ERC1155Incentive,
+  PointsIncentive,
+  SignerValidator,
+  SimpleAllowList,
+  SimpleBudget,
+  SimpleDenyList,
+  VestingBudget,
+} from '../src';
 import { getDeployedContractAddress } from '../src/utils';
 import { setupConfig, testAccount } from './viem';
 
@@ -43,150 +58,216 @@ export async function deployFixtures(
     }),
   );
 
+  const contractActionBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: ContractActionArtifact.abi,
+      bytecode: ContractActionArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const erc721MintActionBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: ERC721MintActionArtifact.abi,
+      bytecode: ERC721MintActionArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const simpleAllowListBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: SimpleAllowListArtifact.abi,
+      bytecode: SimpleAllowListArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const simpleDenyListBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: SimpleDenyListArtifact.abi,
+      bytecode: SimpleDenyListArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const simpleBudgetBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: SimpleBudgetArtifact.abi,
+      bytecode: SimpleBudgetArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const vestingBudgetBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: VestingBudgetArtifact.abi,
+      bytecode: VestingBudgetArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
+  const allowListIncentiveBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: AllowListIncentiveArtifact.abi,
+      bytecode: AllowListIncentiveArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const cgdaIncentiveBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: CGDAIncentiveArtifact.abi,
+      bytecode: CGDAIncentiveArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
+  const erc20IncentiveBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: ERC20IncentiveArtifact.abi,
+      bytecode: ERC20IncentiveArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
+  const erc1155IncentiveBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: ERC1155IncentiveArtifact.abi,
+      bytecode: ERC1155IncentiveArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
+  const pointsIncentiveBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: PointsIncentiveArtifact.abi,
+      bytecode: PointsIncentiveArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
+  const signerValidatorBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: SignerValidatorArtifact.abi,
+      bytecode: SignerValidatorArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
   const bases = {
     ContractAction: {
       type: RegistryType.ACTION,
       name: 'ContractAction',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: ContractAction.abi,
-          bytecode: ContractAction.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: contractActionBase,
+      Test: class TContractAction extends ContractAction {
+        public static override base = contractActionBase;
+        public override readonly base = contractActionBase;
+      },
     },
     ERC721MintAction: {
       type: RegistryType.ACTION,
       name: 'ERC721MintAction',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: ERC721MintAction.abi,
-          bytecode: ERC721MintAction.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: erc721MintActionBase,
+      Test: class TERC721MintAction extends ERC721MintAction {
+        public static override base = erc721MintActionBase;
+        public override readonly base = erc721MintActionBase;
+      },
     },
     SimpleAllowList: {
       type: RegistryType.ALLOW_LIST,
       name: 'SimpleAllowList',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: SimpleAllowList.abi,
-          bytecode: SimpleAllowList.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: simpleAllowListBase,
+      Test: class TSimpleAllowList extends SimpleAllowList {
+        public static override base = simpleAllowListBase;
+        public override readonly base = simpleAllowListBase;
+      },
     },
     SimpleDenyList: {
       type: RegistryType.ALLOW_LIST,
       name: 'SimpleDenyList',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: SimpleDenyList.abi,
-          bytecode: SimpleDenyList.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: simpleDenyListBase,
+      Test: class TSimpleDenyList extends SimpleDenyList {
+        public static override base = simpleDenyListBase;
+        public override readonly base = simpleDenyListBase;
+      },
     },
     SimpleBudget: {
       type: RegistryType.BUDGET,
       name: 'SimpleBudget',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: SimpleBudget.abi,
-          bytecode: SimpleBudget.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: simpleBudgetBase,
+      Test: class TSimpleBudget extends SimpleBudget {
+        public static override base = simpleBudgetBase;
+        public override readonly base = simpleBudgetBase;
+      },
     },
     VestingBudget: {
       type: RegistryType.BUDGET,
       name: 'VestingBudget',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: VestingBudget.abi,
-          bytecode: VestingBudget.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: vestingBudgetBase,
+      Test: class TVestingBudget extends VestingBudget {
+        public static override base = vestingBudgetBase;
+        public override readonly base = vestingBudgetBase;
+      },
     },
     AllowListIncentive: {
       type: RegistryType.INCENTIVE,
       name: 'AllowListIncentive',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: AllowListIncentive.abi,
-          bytecode: AllowListIncentive.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: allowListIncentiveBase,
+      Test: class TAllowListIncentive extends AllowListIncentive {
+        public static override base = allowListIncentiveBase;
+        public override readonly base = allowListIncentiveBase;
+      },
     },
     CGDAIncentive: {
       type: RegistryType.INCENTIVE,
       name: 'CGDAIncentive',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: CGDAIncentive.abi,
-          bytecode: CGDAIncentive.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: cgdaIncentiveBase,
+      Test: class TCGDAIncentive extends CGDAIncentive {
+        public static override base = cgdaIncentiveBase;
+        public override readonly base = cgdaIncentiveBase;
+      },
     },
     ERC20Incentive: {
       type: RegistryType.INCENTIVE,
       name: 'ERC20Incentive',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: ERC20Incentive.abi,
-          bytecode: ERC20Incentive.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: erc20IncentiveBase,
+      Test: class TERC20Incentive extends ERC20Incentive {
+        public static override base = erc20IncentiveBase;
+        public override readonly base = erc20IncentiveBase;
+      },
     },
     ERC1155Incentive: {
       type: RegistryType.INCENTIVE,
       name: 'ERC1155Incentive',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: ERC1155Incentive.abi,
-          bytecode: ERC1155Incentive.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: erc1155IncentiveBase,
+      Test: class TERC1155Incentive extends ERC1155Incentive {
+        public static override base = erc1155IncentiveBase;
+        public override readonly base = erc1155IncentiveBase;
+      },
     },
     PointsIncentive: {
       type: RegistryType.INCENTIVE,
       name: 'PointsIncentive',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: PointsIncentive.abi,
-          bytecode: PointsIncentive.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: pointsIncentiveBase,
+      Test: class TPointsIncentive extends PointsIncentive {
+        public static override base = pointsIncentiveBase;
+        public override readonly base = pointsIncentiveBase;
+      },
     },
     SignerValidator: {
       type: RegistryType.VALIDATOR,
       name: 'SignerValidator',
-      base: await getDeployedContractAddress(
-        config,
-        deployContract(config, {
-          abi: SignerValidator.abi,
-          bytecode: SignerValidator.bytecode as Hex,
-          account,
-        }),
-      ),
+      base: signerValidatorBase,
+      Test: class TSignerValidator extends SignerValidator {
+        public static override base = signerValidatorBase;
+        public override readonly base = signerValidatorBase;
+      },
     },
   };
 

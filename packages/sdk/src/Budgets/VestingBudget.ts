@@ -28,10 +28,9 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
 import { getAccount } from '@wagmi/core';
 import { type Address, type Hex, zeroAddress } from 'viem';
-import {
-  Deployable,
-  type DeployableOptions,
-  type GenericDeployableParams,
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
@@ -41,6 +40,7 @@ export type { VestingBudgetPayload };
 
 export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   public static base = import.meta.env.VITE_VESTING_BUDGET_BASE;
+  public override readonly base = VestingBudget.base;
 
   public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
     return readVestingBudgetStart(this._config, {

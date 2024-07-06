@@ -3,7 +3,13 @@ import {
   waitForTransactionReceipt,
   writeContract,
 } from '@wagmi/core';
-import type { Address, Hash, WaitForTransactionReceiptParameters } from 'viem';
+import {
+  type Address,
+  type Hash,
+  type WaitForTransactionReceiptParameters,
+  zeroAddress,
+  zeroHash,
+} from 'viem';
 import { DeployableAlreadyDeployedError } from '../errors';
 import {
   Deployable,
@@ -12,37 +18,24 @@ import {
 } from './Deployable';
 
 export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
-  readonly isBase: boolean;
+  readonly base: string = zeroAddress;
+  readonly isBase: boolean = true;
   constructor(
     options: DeployableOptions,
     payload: DeployablePayloadOrAddress<Payload>,
-    isBase = false,
+    isBase?: boolean,
   ) {
     super(options, payload);
-    this.isBase = isBase;
-  }
-
-  public async initialize(
-    _payload?: Payload,
-    _options?: DeployableOptions,
-    waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
-  ) {
-    const payload = _payload || this._payload;
-    const config = _options?.config || this._config;
-    console.log(payload);
-    const { abi, args } = this.buildParameters(payload);
-    console.log(args);
-    const hash = await writeContract(config, {
-      ...this.optionallyAttachAccount(_options?.account),
-      abi,
-      args,
-      functionName: 'initialize',
-      address: this.assertValidAddress(),
-    });
-    await waitForTransactionReceipt(config, {
-      ...waitParams,
-      hash,
-    });
+    // mainly for boost creation, if we're not explicitly stating that we're targeting a base contract, attempt to infer
+    // if we're targeting a predeployed contract, and base isn't explicitly true, mark it as false so it doesn't clone+initialize
+    // if we're supplying a payload with which to clone+initialize, base should be true
+    if (isBase === undefined) {
+      if (typeof payload === 'string') {
+        this.isBase = false;
+      } else {
+        this.isBase = true;
+      }
+    } else this.isBase = isBase;
   }
 
   public override async deploy(

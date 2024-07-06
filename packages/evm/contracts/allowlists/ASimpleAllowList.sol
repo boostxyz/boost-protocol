@@ -19,7 +19,7 @@ abstract contract ASimpleAllowList is AllowList, OwnableRoles {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -36,10 +36,7 @@ abstract contract ASimpleAllowList is AllowList, OwnableRoles {
     /// @param allowed_ The allowed status of each user
     /// @dev The length of the `users_` and `allowed_` arrays must be the same
     /// @dev This function can only be called by the owner
-    function setAllowed(address[] calldata users_, bool[] calldata allowed_)
-        external
-        onlyRoles(LIST_MANAGER_ROLE)
-    {
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external onlyRoles(LIST_MANAGER_ROLE) {
         if (users_.length != allowed_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {
@@ -51,7 +48,7 @@ abstract contract ASimpleAllowList is AllowList, OwnableRoles {
     function getComponentInterface() public pure virtual override(AllowList) returns (bytes4) {
         return type(ASimpleAllowList).interfaceId;
     }
-    
+
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(AllowList) returns (bool) {
         return interfaceId == type(ASimpleAllowList).interfaceId || super.supportsInterface(interfaceId);

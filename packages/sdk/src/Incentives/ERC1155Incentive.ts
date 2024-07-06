@@ -36,6 +36,7 @@ export type { ERC1155IncentivePayload, ERC1155StrategyType };
 
 export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> {
   public static base = import.meta.env.VITE_ERC1155_INCENTIVE_BASE;
+  public override readonly base = ERC1155Incentive.base;
 
   public async claims(
     params: CallParams<typeof readErc1155IncentiveClaims> = {},

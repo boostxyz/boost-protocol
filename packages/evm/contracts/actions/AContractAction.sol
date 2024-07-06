@@ -23,9 +23,9 @@ abstract contract AContractAction is Action {
     /// @notice The native token value to send with the function call
     uint256 public value;
 
-   /// @inheritdoc Cloneable
+    /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
 
@@ -57,7 +57,7 @@ abstract contract AContractAction is Action {
     function getComponentInterface() public pure virtual override(Action) returns (bytes4) {
         return type(AContractAction).interfaceId;
     }
-    
+
     /// @inheritdoc Action
     function supportsInterface(bytes4 interfaceId) public view virtual override(Action) returns (bool) {
         return interfaceId == type(AContractAction).interfaceId || super.supportsInterface(interfaceId);

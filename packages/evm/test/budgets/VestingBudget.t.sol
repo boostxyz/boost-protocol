@@ -655,7 +655,6 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.total(address(0)), 1 ether);
     }
 
-
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

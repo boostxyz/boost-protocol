@@ -707,11 +707,24 @@ export interface ASimpleBudget$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "ASimpleBudget",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<ASimpleBudget$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/budgets/ASimpleBudget.sol:ASimpleBudget",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<ASimpleBudget$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "ASimpleBudget",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<ASimpleBudget$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/budgets/ASimpleBudget.sol:ASimpleBudget",
     constructorArgs?: [],
@@ -721,6 +734,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "ASimpleBudget",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<ASimpleBudget$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/budgets/ASimpleBudget.sol:ASimpleBudget",
     address: Address,

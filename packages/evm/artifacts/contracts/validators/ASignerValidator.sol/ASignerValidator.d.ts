@@ -335,11 +335,24 @@ export interface ASignerValidator$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "ASignerValidator",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<ASignerValidator$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/validators/ASignerValidator.sol:ASignerValidator",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<ASignerValidator$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "ASignerValidator",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<ASignerValidator$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/validators/ASignerValidator.sol:ASignerValidator",
     constructorArgs?: [],
@@ -349,6 +362,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "ASignerValidator",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<ASignerValidator$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/validators/ASignerValidator.sol:ASignerValidator",
     address: Address,

@@ -466,11 +466,24 @@ export interface AERC721MintAction$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "AERC721MintAction",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<AERC721MintAction$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/actions/AERC721MintAction.sol:AERC721MintAction",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<AERC721MintAction$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "AERC721MintAction",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<AERC721MintAction$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/actions/AERC721MintAction.sol:AERC721MintAction",
     constructorArgs?: [],
@@ -480,6 +493,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "AERC721MintAction",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<AERC721MintAction$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/actions/AERC721MintAction.sol:AERC721MintAction",
     address: Address,

@@ -443,11 +443,24 @@ export interface ASimpleAllowList$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "ASimpleAllowList",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<ASimpleAllowList$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/allowlists/ASimpleAllowList.sol:ASimpleAllowList",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<ASimpleAllowList$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "ASimpleAllowList",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<ASimpleAllowList$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/allowlists/ASimpleAllowList.sol:ASimpleAllowList",
     constructorArgs?: [],
@@ -457,6 +470,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "ASimpleAllowList",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<ASimpleAllowList$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/allowlists/ASimpleAllowList.sol:ASimpleAllowList",
     address: Address,

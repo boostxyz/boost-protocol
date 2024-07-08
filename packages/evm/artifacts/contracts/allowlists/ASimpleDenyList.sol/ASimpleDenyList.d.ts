@@ -295,11 +295,24 @@ export interface ASimpleDenyList$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "ASimpleDenyList",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<ASimpleDenyList$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/allowlists/ASimpleDenyList.sol:ASimpleDenyList",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<ASimpleDenyList$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "ASimpleDenyList",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<ASimpleDenyList$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/allowlists/ASimpleDenyList.sol:ASimpleDenyList",
     constructorArgs?: [],
@@ -309,6 +322,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "ASimpleDenyList",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<ASimpleDenyList$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/allowlists/ASimpleDenyList.sol:ASimpleDenyList",
     address: Address,

@@ -460,11 +460,24 @@ export interface APointsIncentive$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "APointsIncentive",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<APointsIncentive$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/incentives/APointsIncentive.sol:APointsIncentive",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<APointsIncentive$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "APointsIncentive",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<APointsIncentive$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/incentives/APointsIncentive.sol:APointsIncentive",
     constructorArgs?: [],
@@ -474,6 +487,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "APointsIncentive",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<APointsIncentive$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/incentives/APointsIncentive.sol:APointsIncentive",
     address: Address,

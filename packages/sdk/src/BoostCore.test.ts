@@ -1,21 +1,20 @@
 import { StrategyType } from '@boostxyz/evm';
 import { parseEther } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { MockERC20 } from '../test/MockERC20';
-import { type Fixtures, deployFixtures } from '../test/helpers';
-import { setupConfig, testAccount } from '../test/viem';
+import {
+  type Fixtures,
+  defaultOptions,
+  deployFixtures,
+  freshERC20,
+} from '../test/helpers';
+import { testAccount } from '../test/viem';
 import { ContractAction } from './Actions/ContractAction';
 import { SimpleAllowList } from './AllowLists/SimpleAllowList';
 import { BoostCore } from './BoostCore';
 import { SimpleBudget } from './Budgets/SimpleBudget';
-import type { DeployableOptions } from './Deployable/Deployable';
 import { SignerValidator } from './Validators/SignerValidator';
 
 let fixtures: Fixtures;
-const options: DeployableOptions = {
-  config: setupConfig(),
-  account: testAccount,
-};
 
 beforeAll(async () => {
   fixtures = await deployFixtures();
@@ -25,7 +24,7 @@ describe('BoostCore', () => {
   test('can successfully create a boost using all base contract implementations', async () => {
     const { core, bases } = fixtures;
     const client = new BoostCore({
-      ...options,
+      ...defaultOptions,
       address: core,
     });
 
@@ -34,29 +33,31 @@ describe('BoostCore', () => {
     // normally you would use the follow api for brevity
     // budget: client.SimpleBudget({} | '0xaddress')
     const boost = await client.createBoost({
-      budget: new bases.SimpleBudget.Test(options, {
+      budget: new bases.SimpleBudget.Test(defaultOptions, {
         owner: testAccount.address,
         authorized: [],
       }),
-      action: new bases.ContractAction.Test(options, {
+      action: new bases.ContractAction.Test(defaultOptions, {
         chainId: BigInt(31_337),
         target: core,
         selector: '0xdeadbeef',
         value: 0n,
       }),
-      validator: new bases.SignerValidator.Test(options, {
+      validator: new bases.SignerValidator.Test(defaultOptions, {
         signers: [testAccount.address],
       }),
-      allowList: new bases.SimpleAllowList.Test(options, {
+      allowList: new bases.SimpleAllowList.Test(defaultOptions, {
         owner: testAccount.address,
         allowed: [],
       }),
-      incentives: [new bases.ERC20Incentive.Test(options, {
-       asset: erc20.address!,
-       reward: parseEther('1'),
-       limit: 100n,
-       strategy: StrategyType.POOL
-      }],
+      incentives: [
+        new bases.ERC20Incentive.Test(defaultOptions, {
+          asset: (await freshERC20()).address!,
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+      ],
     });
     expect(await client.getBoostCount()).toBe(1n);
     const onChainBoost = await client.readBoost(0n);
@@ -70,33 +71,41 @@ describe('BoostCore', () => {
     expect(boost.maxParticipants).toBe(onChainBoost.maxParticipants);
     expect(boost.owner).toBe(onChainBoost.owner);
     expect(boost.incentives.length).toBe(onChainBoost.incentives.length);
+    expect(boost.incentives.at(0)).toBe(onChainBoost.incentives.at(0));
   });
 
   test('can successfully retrieve a Boost with correct component interfaces', async () => {
     const { core, bases } = fixtures;
     const client = new BoostCore({
-      ...options,
+      ...defaultOptions,
       address: core,
     });
     const { id } = await client.createBoost({
-      budget: new bases.SimpleBudget.Test(options, {
+      budget: new bases.SimpleBudget.Test(defaultOptions, {
         owner: testAccount.address,
         authorized: [],
       }),
-      action: new bases.ContractAction.Test(options, {
+      action: new bases.ContractAction.Test(defaultOptions, {
         chainId: BigInt(31_337),
         target: core,
         selector: '0xdeadbeef',
         value: 0n,
       }),
-      validator: new bases.SignerValidator.Test(options, {
+      validator: new bases.SignerValidator.Test(defaultOptions, {
         signers: [testAccount.address],
       }),
-      allowList: new bases.SimpleAllowList.Test(options, {
+      allowList: new bases.SimpleAllowList.Test(defaultOptions, {
         owner: testAccount.address,
         allowed: [],
       }),
-      incentives: [],
+      incentives: [
+        new bases.ERC20Incentive.Test(defaultOptions, {
+          asset: (await freshERC20()).address!,
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+      ],
     });
     const boost = await client.getBoost(id);
     expect(boost.budget instanceof SimpleBudget).toBe(true);
@@ -105,5 +114,7 @@ describe('BoostCore', () => {
     expect(boost.allowList instanceof SimpleAllowList).toBe(true);
   });
 
-  test('can reuse an existing action', async () => {});
+  // test('can reuse an existing action', async () => {
+
+  // });
 });

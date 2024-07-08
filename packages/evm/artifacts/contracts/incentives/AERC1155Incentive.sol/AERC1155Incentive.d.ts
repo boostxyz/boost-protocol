@@ -575,11 +575,24 @@ export interface AERC1155Incentive$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "AERC1155Incentive",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<AERC1155Incentive$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/incentives/AERC1155Incentive.sol:AERC1155Incentive",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<AERC1155Incentive$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "AERC1155Incentive",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<AERC1155Incentive$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/incentives/AERC1155Incentive.sol:AERC1155Incentive",
     constructorArgs?: [],
@@ -589,6 +602,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "AERC1155Incentive",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<AERC1155Incentive$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/incentives/AERC1155Incentive.sol:AERC1155Incentive",
     address: Address,

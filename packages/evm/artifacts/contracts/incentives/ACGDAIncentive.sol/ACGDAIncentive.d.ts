@@ -470,11 +470,24 @@ export interface ACGDAIncentive$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "ACGDAIncentive",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<ACGDAIncentive$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/incentives/ACGDAIncentive.sol:ACGDAIncentive",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<ACGDAIncentive$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "ACGDAIncentive",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<ACGDAIncentive$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/incentives/ACGDAIncentive.sol:ACGDAIncentive",
     constructorArgs?: [],
@@ -484,6 +497,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "ACGDAIncentive",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<ACGDAIncentive$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/incentives/ACGDAIncentive.sol:ACGDAIncentive",
     address: Address,

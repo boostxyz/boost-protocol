@@ -15,7 +15,7 @@ import {
   type ContractFunctionArgs,
   decodeFunctionData,
 } from 'viem';
-import { NoContractAddressUponReceipt } from './errors';
+import { NoContractAddressUponReceiptError } from './errors';
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type CallParams<T extends (_c: any, params: any) => any> = Omit<
@@ -32,7 +32,8 @@ export async function getDeployedContractAddress(
     ...waitParams,
     hash: await hash,
   });
-  if (!receipt.contractAddress) throw new NoContractAddressUponReceipt(receipt);
+  if (!receipt.contractAddress)
+    throw new NoContractAddressUponReceiptError(receipt);
   return receipt.contractAddress;
 }
 

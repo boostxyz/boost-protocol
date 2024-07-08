@@ -1,4 +1,3 @@
-//@ts-nocheck
 import {
   RegistryType,
   readMockErc20BalanceOf,
@@ -19,12 +18,9 @@ import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import MockERC20Artifact from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC20.json';
-import MockERC721Artifact from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC721.json';
-import MockERC1155Artifact from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC1155.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { deployContract } from '@wagmi/core';
-import { type Hex, parseEther, zeroAddress } from 'viem';
+import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
   AllowListIncentive,
   type Budget,
@@ -41,17 +37,23 @@ import {
   VestingBudget,
 } from '../src';
 import { getDeployedContractAddress } from '../src/utils';
+import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
 import { MockERC1155 } from './MockERC1155';
 import { setupConfig, testAccount } from './viem';
 
+export const defaultOptions: DeployableOptions = {
+  config: setupConfig(),
+  account: testAccount,
+};
+
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
 
-export async function deployFixtures(
-  config = setupConfig(),
-  account = testAccount,
-) {
+export async function deployFixtures({
+  config,
+  account,
+}: DeployableOptions = defaultOptions) {
   const registry = await getDeployedContractAddress(
     config,
     deployContract(config, {
@@ -67,7 +69,7 @@ export async function deployFixtures(
       abi: BoostCore.abi,
       bytecode: BoostCore.bytecode as Hex,
       account,
-      args: [registry, account.address],
+      args: [registry, account!.address],
     }),
   );
 
@@ -299,7 +301,10 @@ export async function deployFixtures(
   };
 }
 
-export async function freshBudget(fixtures: Fixtures) {
+export async function freshBudget(
+  options: DeployableOptions,
+  fixtures: Fixtures,
+) {
   const budget = new SimpleBudget(options, {
     owner: testAccount.address,
     authorized: [testAccount.address, fixtures.core],
@@ -308,58 +313,69 @@ export async function freshBudget(fixtures: Fixtures) {
   return budget;
 }
 
-export async function freshERC20() {
+export async function freshERC20(options: DeployableOptions = defaultOptions) {
   const erc20 = new MockERC20(options, {});
   await erc20.deploy();
   return erc20;
 }
 
-export async function freshERC1155() {
+export async function freshERC1155(
+  options: DeployableOptions = defaultOptions,
+) {
   const erc1155 = new MockERC1155(options, {});
   await erc1155.deploy();
   return erc1155;
 }
 
-export async function freshERC721() {
+export async function freshERC721(options: DeployableOptions = defaultOptions) {
   const erc721 = new MockERC721(options, {});
   await erc721.deploy();
   return erc721;
 }
 
 export async function fundErc20(
+  options: DeployableOptions,
   erc20: MockERC20,
   funded: Address[] = [],
   amount: bigint = parseEther('100'),
 ) {
   for (const address of [testAccount.address, ...(funded ?? [])]) {
-    await erc20.mint([address, amount]);
-    const balance = await readMockErc20BalanceOf(options.config, address);
-    if (amount !== balance)
-      throw new Error('Balance did not match', { amount, balance });
+    await erc20.mint(address, amount);
+    const balance = await readMockErc20BalanceOf(options.config, {
+      address: erc20.address!,
+      args: [address],
+    });
+    if (amount !== balance) throw new Error(`Balance did not match`);
   }
 }
 
 export async function mintErc1155(
+  options: DeployableOptions,
   erc1155?: MockERC1155,
   tokenId = 1n,
   amount = 100n,
 ) {
-  if (!erc1155) erc1155 = await freshERC1155();
+  if (!erc1155) erc1155 = await freshERC1155(options);
   await erc1155.mint(testAccount.address, tokenId, amount);
-  const balance = await readMockErc1155BalanceOf(testAccount.address, tokenId);
+  const balance = await readMockErc1155BalanceOf(options.config, {
+    address: erc1155.address!,
+    args: [testAccount.address, tokenId],
+  });
   if (balance !== amount)
-    throw new Error('Balance did not match', { balance, amount });
+    throw new Error('Balance did not match', { cause: { balance, amount } });
   return erc1155;
 }
 
 export async function fundBudget(
+  options: DeployableOptions,
+  fixtures: Fixtures,
   budget?: Budget,
   erc20?: MockERC20,
   erc1155?: MockERC1155,
 ) {
-  if (!budget) budget = await freshBudget();
-  if (!erc20) erc20 = await freshERC20();
-  if (!erc1155) erc1155 = await freshERC1155();
+  if (!budget) budget = await freshBudget(options, fixtures);
+  if (!erc20) erc20 = await freshERC20(options);
+  if (!erc1155) erc1155 = await freshERC1155(options);
 
   await budget.allocate(
     {

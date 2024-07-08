@@ -447,11 +447,24 @@ export interface AAllowListIncentive$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "AAllowListIncentive",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<AAllowListIncentive$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/incentives/AAllowListIncentive.sol:AAllowListIncentive",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<AAllowListIncentive$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "AAllowListIncentive",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<AAllowListIncentive$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/incentives/AAllowListIncentive.sol:AAllowListIncentive",
     constructorArgs?: [],
@@ -461,6 +474,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "AAllowListIncentive",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<AAllowListIncentive$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/incentives/AAllowListIncentive.sol:AAllowListIncentive",
     address: Address,

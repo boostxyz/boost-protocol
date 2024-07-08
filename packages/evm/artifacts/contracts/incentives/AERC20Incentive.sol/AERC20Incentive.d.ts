@@ -515,11 +515,24 @@ export interface AERC20Incentive$Type {
 
 declare module "@nomicfoundation/hardhat-viem/types" {
   export function deployContract(
+    contractName: "AERC20Incentive",
+    constructorArgs?: [],
+    config?: DeployContractConfig
+  ): Promise<GetContractReturnType<AERC20Incentive$Type["abi"]>>;
+  export function deployContract(
     contractName: "contracts/incentives/AERC20Incentive.sol:AERC20Incentive",
     constructorArgs?: [],
     config?: DeployContractConfig
   ): Promise<GetContractReturnType<AERC20Incentive$Type["abi"]>>;
 
+  export function sendDeploymentTransaction(
+    contractName: "AERC20Incentive",
+    constructorArgs?: [],
+    config?: SendDeploymentTransactionConfig
+  ): Promise<{
+    contract: GetContractReturnType<AERC20Incentive$Type["abi"]>;
+    deploymentTransaction: GetTransactionReturnType;
+  }>;
   export function sendDeploymentTransaction(
     contractName: "contracts/incentives/AERC20Incentive.sol:AERC20Incentive",
     constructorArgs?: [],
@@ -529,6 +542,11 @@ declare module "@nomicfoundation/hardhat-viem/types" {
     deploymentTransaction: GetTransactionReturnType;
   }>;
 
+  export function getContractAt(
+    contractName: "AERC20Incentive",
+    address: Address,
+    config?: GetContractAtConfig
+  ): Promise<GetContractReturnType<AERC20Incentive$Type["abi"]>>;
   export function getContractAt(
     contractName: "contracts/incentives/AERC20Incentive.sol:AERC20Incentive",
     address: Address,

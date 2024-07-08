@@ -1,5 +1,11 @@
 //@ts-nocheck
-import { RegistryType, writeBoostRegistryRegister } from '@boostxyz/evm';
+import {
+  RegistryType,
+  readMockErc20BalanceOf,
+  readMockErc1155BalanceOf,
+  writeBoostRegistryRegister,
+  writeMockErc20Approve,
+} from '@boostxyz/evm';
 import BoostCore from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import BoostRegistry from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
@@ -13,11 +19,15 @@ import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
+import MockERC20Artifact from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC20.json';
+import MockERC721Artifact from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC721.json';
+import MockERC1155Artifact from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC1155.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { deployContract } from '@wagmi/core';
-import type { Hex } from 'viem';
+import { type Hex, parseEther, zeroAddress } from 'viem';
 import {
   AllowListIncentive,
+  type Budget,
   CGDAIncentive,
   ContractAction,
   ERC20Incentive,
@@ -31,6 +41,9 @@ import {
   VestingBudget,
 } from '../src';
 import { getDeployedContractAddress } from '../src/utils';
+import { MockERC20 } from './MockERC20';
+import { MockERC721 } from './MockERC721';
+import { MockERC1155 } from './MockERC1155';
 import { setupConfig, testAccount } from './viem';
 
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
@@ -284,4 +297,89 @@ export async function deployFixtures(
     core,
     bases,
   };
+}
+
+export async function freshBudget(fixtures: Fixtures) {
+  const budget = new SimpleBudget(options, {
+    owner: testAccount.address,
+    authorized: [testAccount.address, fixtures.core],
+  });
+  await budget.deploy();
+  return budget;
+}
+
+export async function freshERC20() {
+  const erc20 = new MockERC20(options, {});
+  await erc20.deploy();
+  return erc20;
+}
+
+export async function freshERC1155() {
+  const erc1155 = new MockERC1155(options, {});
+  await erc1155.deploy();
+  return erc1155;
+}
+
+export async function freshERC721() {
+  const erc721 = new MockERC721(options, {});
+  await erc721.deploy();
+  return erc721;
+}
+
+export async function fundErc20(
+  erc20: MockERC20,
+  funded: Address[] = [],
+  amount: bigint = parseEther('100'),
+) {
+  for (const address of [testAccount.address, ...(funded ?? [])]) {
+    await erc20.mint([address, amount]);
+    const balance = await readMockErc20BalanceOf(options.config, address);
+    if (amount !== balance)
+      throw new Error('Balance did not match', { amount, balance });
+  }
+}
+
+export async function mintErc1155(
+  erc1155?: MockERC1155,
+  tokenId = 1n,
+  amount = 100n,
+) {
+  if (!erc1155) erc1155 = await freshERC1155();
+  await erc1155.mint(testAccount.address, tokenId, amount);
+  const balance = await readMockErc1155BalanceOf(testAccount.address, tokenId);
+  if (balance !== amount)
+    throw new Error('Balance did not match', { balance, amount });
+  return erc1155;
+}
+
+export async function fundBudget(
+  budget?: Budget,
+  erc20?: MockERC20,
+  erc1155?: MockERC1155,
+) {
+  if (!budget) budget = await freshBudget();
+  if (!erc20) erc20 = await freshERC20();
+  if (!erc1155) erc1155 = await freshERC1155();
+
+  await budget.allocate(
+    {
+      amount: parseEther('1.0'),
+      asset: zeroAddress,
+      target: testAccount.address,
+    },
+    { value: parseEther('1.0') },
+  );
+
+  await writeMockErc20Approve(options.config, {
+    args: [budget.address!, parseEther('100')],
+    address: erc20.address!,
+  });
+  await budget.allocate({
+    tokenId: 1n,
+    amount: 100n,
+    asset: erc1155.address,
+    target: testAccount.address,
+  });
+
+  return { budget, erc20, erc1155 };
 }

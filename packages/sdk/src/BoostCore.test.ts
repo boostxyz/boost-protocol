@@ -1,13 +1,7 @@
-import {
-  boostCoreAbi,
-  prepareBoostPayload,
-  prepareContractActionPayload,
-  prepareSignerValidatorPayload,
-  prepareSimpleAllowListPayload,
-  simulateBoostCoreCreateBoost,
-} from '@boostxyz/evm';
-import { writeContract } from '@wagmi/core';
+import { StrategyType } from '@boostxyz/evm';
+import { parseEther } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
+import { MockERC20 } from '../test/MockERC20';
 import { type Fixtures, deployFixtures } from '../test/helpers';
 import { setupConfig, testAccount } from '../test/viem';
 import { ContractAction } from './Actions/ContractAction';
@@ -16,7 +10,6 @@ import { BoostCore } from './BoostCore';
 import { SimpleBudget } from './Budgets/SimpleBudget';
 import type { DeployableOptions } from './Deployable/Deployable';
 import { SignerValidator } from './Validators/SignerValidator';
-import { awaitResult } from './utils';
 
 let fixtures: Fixtures;
 const options: DeployableOptions = {
@@ -35,6 +28,7 @@ describe('BoostCore', () => {
       ...options,
       address: core,
     });
+
     // to whom it may concern, this syntax is only used because we need to use test classes
     // that are preconfigured with the dynamic base addresses generated at test time.
     // normally you would use the follow api for brevity
@@ -57,7 +51,12 @@ describe('BoostCore', () => {
         owner: testAccount.address,
         allowed: [],
       }),
-      incentives: [],
+      incentives: [new bases.ERC20Incentive.Test(options, {
+       asset: erc20.address!,
+       reward: parseEther('1'),
+       limit: 100n,
+       strategy: StrategyType.POOL
+      }],
     });
     expect(await client.getBoostCount()).toBe(1n);
     const onChainBoost = await client.readBoost(0n);
@@ -106,118 +105,5 @@ describe('BoostCore', () => {
     expect(boost.allowList instanceof SimpleAllowList).toBe(true);
   });
 
-  // TODO is this worth including?
-  test.skip('can successfully handle multiple boosts created in parallel', async () => {
-    const config = setupConfig();
-    const { core, bases } = fixtures;
-    const client = new BoostCore({
-      ...options,
-      address: core,
-    });
-
-    const simulatedA = await simulateBoostCoreCreateBoost(config, {
-      address: core,
-      account: testAccount,
-      args: [
-        prepareBoostPayload({
-          budget: bases.SimpleBudget.base,
-          action: {
-            instance: bases.ContractAction.base,
-            parameters: prepareContractActionPayload({
-              chainId: BigInt(31_337),
-              target: core,
-              selector: '0xdeadbeef',
-              value: 0n,
-            }),
-            isBase: true,
-          },
-          validator: {
-            instance: bases.SignerValidator.base,
-            parameters: prepareSignerValidatorPayload({
-              signers: [testAccount.address],
-            }),
-            isBase: true,
-          },
-          allowList: {
-            instance: bases.SimpleAllowList.base,
-            parameters: prepareSimpleAllowListPayload({
-              owner: testAccount.address,
-              allowed: [],
-            }),
-            isBase: true,
-          },
-          incentives: [],
-          protocolFee: 1n,
-          referralFee: 1n,
-          maxParticipants: 1n,
-          owner: testAccount.address,
-        }),
-      ],
-    });
-
-    console.log(simulatedA);
-
-    const simulatedB = await simulateBoostCoreCreateBoost(config, {
-      address: core,
-      account: testAccount,
-      args: [
-        prepareBoostPayload({
-          budget: bases.SimpleBudget.base,
-          action: {
-            instance: bases.ContractAction.base,
-            parameters: prepareContractActionPayload({
-              chainId: BigInt(31_337),
-              target: core,
-              selector: '0xdeadbeef',
-              value: 0n,
-            }),
-            isBase: true,
-          },
-          validator: {
-            instance: bases.SignerValidator.base,
-            parameters: prepareSignerValidatorPayload({
-              signers: [testAccount.address],
-            }),
-            isBase: true,
-          },
-          allowList: {
-            instance: bases.SimpleAllowList.base,
-            parameters: prepareSimpleAllowListPayload({
-              owner: testAccount.address,
-              allowed: [],
-            }),
-            isBase: true,
-          },
-          incentives: [],
-          protocolFee: 2n,
-          referralFee: 2n,
-          maxParticipants: 2n,
-          owner: testAccount.address,
-        }),
-      ],
-    });
-
-    console.log(simulatedB);
-
-    const txB = await writeContract(config, simulatedB.request);
-    const txA = await writeContract(config, simulatedA.request);
-
-    const bResult = await awaitResult(
-      config,
-      Promise.resolve(txB),
-      boostCoreAbi,
-      simulateBoostCoreCreateBoost,
-    );
-    console.log(bResult);
-    const aResult = await awaitResult(
-      config,
-      Promise.resolve(txA),
-      boostCoreAbi,
-      simulateBoostCoreCreateBoost,
-    );
-    console.log(aResult);
-
-    console.log(await client.getBoost(0n));
-    console.log(await client.getBoost(1n));
-  });
+  test('can reuse an existing action', async () => {});
 });

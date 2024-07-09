@@ -109,46 +109,50 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(
-      this.claimRaw(payload, params),
-      erc20IncentiveAbi,
-      simulateErc20IncentiveClaim,
-    );
+    return this.awaitResult(this.claimRaw(payload, params));
   }
 
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
   ) {
-    return writeErc20IncentiveClaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateErc20IncentiveClaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeErc20IncentiveClaim(this._config, request);
+    return { hash, result };
   }
 
   public async reclaim(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
   ) {
-    return this.awaitResult(
-      this.reclaimRaw(payload, params),
-      erc20IncentiveAbi,
-      simulateErc20IncentiveReclaim,
-    );
+    return this.awaitResult(this.reclaimRaw(payload, params));
   }
 
   public async reclaimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
   ) {
-    return writeErc20IncentiveReclaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateErc20IncentiveReclaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeErc20IncentiveReclaim(this._config, request);
+    return { hash, result };
   }
 
   public async isClaimable(
@@ -170,6 +174,7 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return readErc20IncentivePreflight(this._config, {
       address: this.assertValidAddress(),
       args: [prepareERC20IncentivePayload(data)],
+      ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
@@ -178,21 +183,23 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   public async drawRaffle(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
   ) {
-    return this.awaitResult(
-      this.drawRaffleRaw(params),
-      erc20IncentiveAbi,
-      simulateErc20IncentiveDrawRaffle,
-    );
+    return this.awaitResult(this.drawRaffleRaw(params));
   }
 
   public async drawRaffleRaw(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
   ) {
-    return writeErc20IncentiveDrawRaffle(this._config, {
-      address: this.assertValidAddress(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateErc20IncentiveDrawRaffle(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeErc20IncentiveDrawRaffle(this._config, request);
+    return { hash, result };
   }
 
   public async supportsInterface(

@@ -41,23 +41,25 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     payload: SignerValidatorValidatePayload,
     params?: WriteParams<typeof signerValidatorAbi, 'validate'>,
   ) {
-    return this.awaitResult(
-      this.validateRaw(payload, params),
-      signerValidatorAbi,
-      simulateSignerValidatorValidate,
-    );
+    return this.awaitResult(this.validateRaw(payload, params));
   }
 
   public async validateRaw(
     payload: SignerValidatorValidatePayload,
     params?: ReadParams<typeof signerValidatorAbi, 'validate'>,
   ) {
-    return writeSignerValidatorValidate(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareSignerValidatorValidatePayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateSignerValidatorValidate(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareSignerValidatorValidatePayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeSignerValidatorValidate(this._config, request);
+    return { hash, result };
   }
 
   public async setAuthorized(
@@ -65,11 +67,7 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     allowed: boolean[],
     params?: WriteParams<typeof signerValidatorAbi, 'setAuthorized'>,
   ) {
-    return this.awaitResult(
-      this.setAuthorizedRaw(addresses, allowed, params),
-      signerValidatorAbi,
-      simulateSignerValidatorSetAuthorized,
-    );
+    return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
   }
 
   public async setAuthorizedRaw(
@@ -77,12 +75,18 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     allowed: boolean[],
     params?: WriteParams<typeof signerValidatorAbi, 'setAuthorized'>,
   ) {
-    return await writeSignerValidatorSetAuthorized(this._config, {
-      address: this.assertValidAddress(),
-      args: [addresses, allowed],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateSignerValidatorSetAuthorized(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [addresses, allowed],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeSignerValidatorSetAuthorized(this._config, request);
+    return { hash, result };
   }
 
   public override buildParameters(

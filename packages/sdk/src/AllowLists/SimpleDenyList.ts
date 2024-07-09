@@ -32,6 +32,7 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     return await readSimpleDenyListIsAllowed(this._config, {
       address: this.assertValidAddress(),
       args: [address, zeroHash],
+      ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
@@ -42,11 +43,7 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     allowed: boolean[],
     params?: WriteParams<typeof simpleDenyListAbi, 'setDenied'>,
   ) {
-    return this.awaitResult(
-      this.setDeniedRaw(addresses, allowed, params),
-      simpleDenyListAbi,
-      simulateSimpleDenyListSetDenied,
-    );
+    return this.awaitResult(this.setDeniedRaw(addresses, allowed, params));
   }
 
   public async setDeniedRaw(
@@ -54,12 +51,18 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     allowed: boolean[],
     params?: WriteParams<typeof simpleDenyListAbi, 'setDenied'>,
   ) {
-    return await writeSimpleDenyListSetDenied(this._config, {
-      address: this.assertValidAddress(),
-      args: [addresses, allowed],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateSimpleDenyListSetDenied(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [addresses, allowed],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeSimpleDenyListSetDenied(this._config, request);
+    return { hash, result };
   }
 
   public async supportsInterface(

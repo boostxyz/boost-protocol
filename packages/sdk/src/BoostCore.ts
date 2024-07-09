@@ -143,10 +143,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   // TODO make this transactional? if any deployment fails what do we do with the previously deployed deployables?
   public async createBoost(
     _boostPayload: CreateBoostPayload,
-    _options: DeployableOptions = {
-      config: this._config,
-      account: this._account,
-    },
+    _options?: DeployableOptions,
   ) {
     const [payload, options] =
       this.validateDeploymentConfig<CreateBoostPayload>(
@@ -286,6 +283,8 @@ export class BoostCore extends Deployable<[Address, Address]> {
       }
     }
 
+    console.log(incentivesPayloads);
+
     const onChainPayload = {
       budget: budgetPayload,
       action: actionPayload,
@@ -299,6 +298,11 @@ export class BoostCore extends Deployable<[Address, Address]> {
     };
 
     console.log(onChainPayload);
+
+    console.log({
+      args: [prepareBoostPayload(onChainPayload)],
+      ...this.optionallyAttachAccount(options.account),
+    });
 
     const boostHash = await boostFactory(options.config, {
       args: [prepareBoostPayload(onChainPayload)],
@@ -344,8 +348,6 @@ export class BoostCore extends Deployable<[Address, Address]> {
   ) {
     return this.awaitResult(
       this.claimIncentiveRaw(boostId, incentiveId, address, data, params),
-      boostCoreAbi,
-      simulateBoostCoreClaimIncentive,
     );
   }
 
@@ -356,13 +358,18 @@ export class BoostCore extends Deployable<[Address, Address]> {
     data: Hex,
     params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
   ) {
-    return writeBoostCoreClaimIncentive(this._config, {
-      address: this.assertValidAddress(),
-      args: [boostId, incentiveId, address, data],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateBoostCoreClaimIncentive(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [boostId, incentiveId, address, data],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeBoostCoreClaimIncentive(this._config, request);
+    return { hash, result };
   }
 
   public async readBoost(
@@ -439,48 +446,53 @@ export class BoostCore extends Deployable<[Address, Address]> {
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
-    return this.awaitResult(
-      this.setProcolFeeReceiverRaw(address, params),
-      boostCoreAbi,
-      simulateBoostCoreSetProtocolFeeReceiver,
-    );
+    return this.awaitResult(this.setProcolFeeReceiverRaw(address, params));
   }
 
   public async setProcolFeeReceiverRaw(
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
-    return writeBoostCoreSetProtocolFeeReceiver(this._config, {
-      address: this.assertValidAddress(),
-      args: [address],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateBoostCoreSetProtocolFeeReceiver(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [address],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeBoostCoreSetProtocolFeeReceiver(
+      this._config,
+      request,
+    );
+    return { hash, result };
   }
 
   public async setClaimFee(
     claimFee: bigint,
     params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
   ) {
-    return this.awaitResult(
-      this.setClaimFeeRaw(claimFee, params),
-      boostCoreAbi,
-      simulateBoostCoreSetClaimFee,
-    );
+    return this.awaitResult(this.setClaimFeeRaw(claimFee, params));
   }
 
   public async setClaimFeeRaw(
     claimFee: bigint,
     params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
   ) {
-    return writeBoostCoreSetClaimFee(this._config, {
-      address: this.assertValidAddress(),
-      args: [claimFee],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateBoostCoreSetClaimFee(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [claimFee],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeBoostCoreSetClaimFee(this._config, request);
+    return { hash, result };
   }
 
   ContractAction(

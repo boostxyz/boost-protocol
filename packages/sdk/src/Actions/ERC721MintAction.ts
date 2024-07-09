@@ -29,24 +29,25 @@ export class ERC721MintAction extends ContractAction {
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
   ) {
-    return this.awaitResult(
-      this.executeRaw(data, params),
-      erc721MintActionAbi,
-      simulateErc721MintActionExecute,
-    );
+    return this.awaitResult(this.executeRaw(data, params));
   }
 
   public override async executeRaw(
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
   ) {
-    return writeErc721MintActionExecute(this._config, {
-      address: this.assertValidAddress(),
-      args: [data],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateErc721MintActionExecute(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [data],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeErc721MintActionExecute(this._config, request);
+    return { hash, result };
   }
 
   public override async prepare(
@@ -66,24 +67,25 @@ export class ERC721MintAction extends ContractAction {
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
   ) {
-    return this.awaitResult(
-      this.validateRaw(data, params),
-      erc721MintActionAbi,
-      simulateErc721MintActionValidate,
-    );
+    return this.awaitResult(this.validateRaw(data, params));
   }
 
   public async validateRaw(
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
   ) {
-    return writeErc721MintActionValidate(this._config, {
-      address: this.assertValidAddress(),
-      args: [data],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateErc721MintActionValidate(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [data],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeErc721MintActionValidate(this._config, request);
+    return { hash, result };
   }
 
   public override async supportsInterface(

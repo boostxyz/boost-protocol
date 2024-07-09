@@ -122,46 +122,50 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
     payload: ClaimPayload,
     params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(
-      this.claimRaw(payload, params),
-      erc1155IncentiveAbi,
-      simulateErc1155IncentiveClaim,
-    );
+    return this.awaitResult(this.claimRaw(payload, params));
   }
 
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
   ) {
-    return writeErc1155IncentiveClaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateErc1155IncentiveClaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeErc1155IncentiveClaim(this._config, request);
+    return { hash, result };
   }
 
   public async reclaim(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>,
   ) {
-    return this.awaitResult(
-      this.reclaimRaw(payload, params),
-      erc1155IncentiveAbi,
-      simulateErc1155IncentiveReclaim,
-    );
+    return this.awaitResult(this.reclaimRaw(payload, params));
   }
 
   public async reclaimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>,
   ) {
-    return writeErc1155IncentiveReclaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateErc1155IncentiveReclaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeErc1155IncentiveReclaim(this._config, request);
+    return { hash, result };
   }
 
   public async isClaimable(

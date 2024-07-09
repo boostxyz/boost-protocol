@@ -43,11 +43,7 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     allowed: boolean[],
     params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
-    return this.awaitResult(
-      this.setAllowedRaw(addresses, allowed, params),
-      simpleAllowListAbi,
-      simulateSimpleAllowListSetAllowed,
-    );
+    return this.awaitResult(this.setAllowedRaw(addresses, allowed, params));
   }
 
   public async setAllowedRaw(
@@ -55,12 +51,18 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     allowed: boolean[],
     params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
-    return await writeSimpleAllowListSetAllowed(this._config, {
-      address: this.assertValidAddress(),
-      args: [addresses, allowed],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateSimpleAllowListSetAllowed(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [addresses, allowed],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeSimpleAllowListSetAllowed(this._config, request);
+    return { hash, result };
   }
 
   public async supportsInterface(

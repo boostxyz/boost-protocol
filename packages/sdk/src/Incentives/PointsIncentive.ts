@@ -107,23 +107,25 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     payload: ClaimPayload,
     params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(
-      this.claimRaw(payload, params),
-      pointsIncentiveAbi,
-      simulatePointsIncentiveClaim,
-    );
+    return this.awaitResult(this.claimRaw(payload, params));
   }
 
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
   ) {
-    return writePointsIncentiveClaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulatePointsIncentiveClaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writePointsIncentiveClaim(this._config, request);
+    return { hash, result };
   }
 
   public async isClaimable(

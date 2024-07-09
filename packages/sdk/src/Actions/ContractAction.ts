@@ -71,24 +71,25 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     data: Hex,
     params?: WriteParams<typeof contractActionAbi, 'execute'>,
   ) {
-    return this.awaitResult(
-      this.executeRaw(data, params),
-      contractActionAbi,
-      simulateContractActionExecute,
-    );
+    return this.awaitResult(this.executeRaw(data, params));
   }
 
   public async executeRaw(
     data: Hex,
     params?: WriteParams<typeof contractActionAbi, 'execute'>,
   ) {
-    return writeContractActionExecute(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [data],
-    });
+    const { request, result } = await simulateContractActionExecute(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+        args: [data],
+      },
+    );
+    const hash = await writeContractActionExecute(this._config, request);
+    return { hash, result };
   }
 
   public async prepare(

@@ -8,7 +8,7 @@ import type {
   WaitForTransactionReceiptParameters,
 } from 'viem';
 import { ContractAddressRequiredError } from '../errors';
-import { awaitResult } from '../utils';
+import { type HashAndSimulatedResult, awaitResult } from '../utils';
 
 export class Contract {
   protected _config: Config;
@@ -39,15 +39,10 @@ export class Contract {
     return address;
   }
 
-  protected async awaitResult<
-    const abi extends Abi | readonly unknown[],
-    functionName extends ContractFunctionName<abi>,
-  >(
-    hashPromise: Promise<Hash>,
-    abi: abi,
-    fn: CreateSimulateContractReturnType<abi, undefined, functionName>,
+  protected async awaitResult<Result = unknown>(
+    hashPromise: Promise<HashAndSimulatedResult<Result>>,
     waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
   ) {
-    return awaitResult(this._config, hashPromise, abi, fn, waitParams);
+    return awaitResult(this._config, hashPromise, waitParams);
   }
 }

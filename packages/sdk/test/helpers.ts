@@ -1,5 +1,6 @@
 import {
   RegistryType,
+  mockErc20Abi,
   readMockErc20BalanceOf,
   readMockErc1155BalanceOf,
   writeBoostRegistryRegister,
@@ -21,6 +22,7 @@ import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentive
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { deployContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
+import { writeContract } from 'viem/actions';
 import {
   AllowListIncentive,
   type Budget,
@@ -307,9 +309,9 @@ export async function freshBudget(
   options: DeployableTestOptions,
   fixtures: Fixtures,
 ) {
-  const budget = new SimpleBudget(options, {
-    owner: testAccount.address,
-    authorized: [testAccount.address, fixtures.core],
+  const budget = new fixtures.bases.SimpleBudget.Test(defaultOptions, {
+    owner: options.account.address,
+    authorized: [options.account.address],
   });
   await budget.deploy();
   return budget;
@@ -395,6 +397,7 @@ export async function fundBudget(
   await writeMockErc20Approve(options.config, {
     args: [budget.address!, parseEther('100')],
     address: erc20.address!,
+    account: options.account,
   });
   await budget.allocate({
     tokenId: 1n,

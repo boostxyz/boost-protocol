@@ -93,23 +93,25 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     payload: ClaimPayload,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(
-      this.claimRaw(payload, params),
-      allowListIncentiveAbi,
-      simulateAllowListIncentiveClaim,
-    );
+    return this.awaitResult(this.claimRaw(payload, params));
   }
 
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
-    return writeAllowListIncentiveClaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateAllowListIncentiveClaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeAllowListIncentiveClaim(this._config, request);
+    return { hash, result };
   }
 
   // use prepareClaimPayload?

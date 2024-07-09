@@ -10,12 +10,12 @@ import {
   type DeployableOptions,
   type GenericDeployableParams,
 } from '../src';
-import type { CallParams } from './../src/utils';
+import type { WriteParams } from '../src/utils';
 
 export class MockERC721 extends Deployable {
   public async mint(
     address: Address,
-    params: CallParams<typeof writeMockErc721Mint> = {},
+    params: WriteParams<typeof mockErc721Abi, 'mint'>,
   ) {
     return this.awaitResult(
       this.mintRaw(address, params),
@@ -26,12 +26,13 @@ export class MockERC721 extends Deployable {
 
   public async mintRaw(
     address: Address,
-    params: CallParams<typeof writeMockErc721Mint> = {},
+    params: WriteParams<typeof mockErc721Abi, 'mint'>,
   ) {
     return writeMockErc721Mint(this._config, {
       address: this.assertValidAddress(),
       args: [address],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 

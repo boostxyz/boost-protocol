@@ -104,46 +104,47 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(
-      this.claimRaw(payload, params),
-      cgdaIncentiveAbi,
-      simulateCgdaIncentiveClaim,
-    );
+    return this.awaitResult(this.claimRaw(payload, params));
   }
 
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
   ) {
-    return writeCgdaIncentiveClaim(this._config, {
+    const { request, result } = await simulateCgdaIncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
+      ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+    const hash = await writeCgdaIncentiveClaim(this._config, request);
+    return { hash, result };
   }
 
   public async reclaim(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>,
   ) {
-    return this.awaitResult(
-      this.reclaimRaw(payload, params),
-      cgdaIncentiveAbi,
-      simulateCgdaIncentiveReclaim,
-    );
+    return this.awaitResult(this.reclaimRaw(payload, params));
   }
 
   public async reclaimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>,
   ) {
-    return writeCgdaIncentiveReclaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateCgdaIncentiveReclaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeCgdaIncentiveReclaim(this._config, request);
+    return { hash, result };
   }
 
   public async isClaimable(

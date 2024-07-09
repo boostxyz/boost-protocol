@@ -73,92 +73,100 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
   ) {
-    return this.awaitResult(
-      this.allocateRaw(transfer, params),
-      vestingBudgetAbi,
-      simulateVestingBudgetAllocate,
-    );
+    return this.awaitResult(this.allocateRaw(transfer, params));
   }
 
-  public allocateRaw(
+  public async allocateRaw(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
   ) {
-    return writeVestingBudgetAllocate(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareFungibleTransfer(transfer)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateVestingBudgetAllocate(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareFungibleTransfer(transfer)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeVestingBudgetAllocate(this._config, request);
+    return { hash, result };
   }
 
   public async reclaim(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
   ) {
-    return this.awaitResult(
-      this.reclaimRaw(transfer, params),
-      vestingBudgetAbi,
-      simulateVestingBudgetReclaim,
-    );
+    return this.awaitResult(this.reclaimRaw(transfer, params));
   }
 
-  public reclaimRaw(
+  public async reclaimRaw(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
   ) {
-    return writeVestingBudgetReclaim(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareFungibleTransfer(transfer)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateVestingBudgetReclaim(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareFungibleTransfer(transfer)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeVestingBudgetReclaim(this._config, request);
+    return { hash, result };
   }
 
   public async disburse(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
   ) {
-    return this.awaitResult(
-      this.disburseRaw(transfer, params),
-      vestingBudgetAbi,
-      simulateVestingBudgetDisburse,
-    );
+    return this.awaitResult(this.disburseRaw(transfer, params));
   }
 
-  public disburseRaw(
+  public async disburseRaw(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
   ) {
-    return writeVestingBudgetDisburse(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareFungibleTransfer(transfer)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateVestingBudgetDisburse(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareFungibleTransfer(transfer)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeVestingBudgetDisburse(this._config, request);
+    return { hash, result };
   }
 
   public async disburseBatch(
     transfers: FungibleTransferPayload[],
     params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
   ) {
-    return this.awaitResult(
-      this.disburseBatchRaw(transfers, params),
-      vestingBudgetAbi,
-      simulateVestingBudgetDisburseBatch,
-    );
+    return this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
 
-  public disburseBatchRaw(
+  public async disburseBatchRaw(
     transfers: FungibleTransferPayload[],
     params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
   ) {
-    return writeVestingBudgetDisburseBatch(this._config, {
-      address: this.assertValidAddress(),
-      args: [transfers.map(prepareFungibleTransfer)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateVestingBudgetDisburseBatch(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [transfers.map(prepareFungibleTransfer)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeVestingBudgetDisburseBatch(this._config, request);
+    return { hash, result };
   }
 
   public async setAuthorized(
@@ -166,11 +174,7 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     allowed: boolean[],
     params?: WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>,
   ) {
-    return this.awaitResult(
-      this.setAuthorizedRaw(addresses, allowed, params),
-      vestingBudgetAbi,
-      simulateVestingBudgetSetAuthorized,
-    );
+    return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
   }
 
   public async setAuthorizedRaw(
@@ -178,12 +182,18 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     allowed: boolean[],
     params?: WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>,
   ) {
-    return await writeVestingBudgetSetAuthorized(this._config, {
-      address: this.assertValidAddress(),
-      args: [addresses, allowed],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const { request, result } = await simulateVestingBudgetSetAuthorized(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [addresses, allowed],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeVestingBudgetSetAuthorized(this._config, request);
+    return { hash, result };
   }
 
   public isAuthorized(

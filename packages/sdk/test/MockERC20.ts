@@ -12,13 +12,13 @@ import {
   type DeployableOptions,
   type GenericDeployableParams,
 } from '../src';
-import type { CallParams } from './../src/utils';
+import type { WriteParams } from './../src/utils';
 
 export class MockERC20 extends Deployable {
   public async mint(
     address: Address,
     value: bigint,
-    params: CallParams<typeof writeMockErc20Mint> = {},
+    params: WriteParams<typeof mockErc20Abi, 'mint'>,
   ) {
     return this.awaitResult(
       this.mintRaw(address, value, params),
@@ -30,19 +30,21 @@ export class MockERC20 extends Deployable {
   public async mintRaw(
     address: Address,
     value: bigint,
-    params: CallParams<typeof writeMockErc20Mint> = {},
+    params: WriteParams<typeof mockErc20Abi, 'mint'>,
   ) {
     return writeMockErc20Mint(this._config, {
       address: this.assertValidAddress(),
       args: [address, value],
-      ...params,
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async mintPayable(
     address: Address,
     value: bigint,
-    params: CallParams<typeof writeMockErc20MintPayable> = {},
+    params: WriteParams<typeof mockErc20Abi, 'mintPayable'>,
   ) {
     return this.awaitResult(
       this.mintPayableRaw(address, value, params),
@@ -53,12 +55,14 @@ export class MockERC20 extends Deployable {
   public async mintPayableRaw(
     address: Address,
     value: bigint,
-    params: CallParams<typeof writeMockErc20MintPayable> = {},
+    params: WriteParams<typeof mockErc20Abi, 'mintPayable'>,
   ) {
     return writeMockErc20MintPayable(this._config, {
       address: this.assertValidAddress(),
       args: [address, value],
-      ...params,
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 

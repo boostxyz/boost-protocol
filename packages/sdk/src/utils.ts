@@ -52,36 +52,17 @@ export async function getDeployedContractAddress(
   return receipt.contractAddress;
 }
 
-export async function awaitResult<
-  const abi extends Abi | readonly unknown[],
-  functionName extends ContractFunctionName<abi>,
->(
+export type HashAndSimulatedResult<T = unknown> = { hash: Hash; result: T };
+
+export async function awaitResult<Result = unknown>(
   config: Config,
-  hashPromise: Promise<Hash>,
-  abi: abi,
-  simulationFunction: CreateSimulateContractReturnType<
-    abi,
-    undefined,
-    functionName
-  >,
+  hashPromise: Promise<HashAndSimulatedResult<Result>>,
   waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
-) {
-  const hash = await hashPromise;
-  const receipt = await waitForTransactionReceipt(config, {
+): Promise<Result> {
+  const { hash, result } = await hashPromise;
+  await waitForTransactionReceipt(config, {
     ...waitParams,
     hash,
   });
-  const tx = await getTransaction(config, { hash });
-  const { args } = decodeFunctionData({
-    abi,
-    data: tx.input,
-  });
-  const { result } = await simulationFunction(config, {
-    account: tx.from,
-    address: tx.to,
-    args: args as ContractFunctionArgs<abi, AbiStateMutability, functionName>,
-    blockNumber: receipt.blockNumber,
-    // biome-ignore lint/suspicious/noExplicitAny: TODO this is an extremely complex type, but this method is intended for internal use and as such is alright for now
-  } as any);
   return result;
 }

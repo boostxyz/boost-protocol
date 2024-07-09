@@ -17,7 +17,7 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { SimpleDenyListPayload };
 
@@ -27,58 +27,62 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
 
   public async isAllowed(
     address: Address,
-    params: CallParams<typeof readSimpleDenyListIsAllowed> = {},
+    params?: ReadParams<typeof simpleDenyListAbi, 'isAllowed'>,
   ): Promise<boolean> {
     return await readSimpleDenyListIsAllowed(this._config, {
       address: this.assertValidAddress(),
       args: [address, zeroHash],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async setAllowed(
+  public async setDenied(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeSimpleDenyListSetDenied> = {},
+    params?: WriteParams<typeof simpleDenyListAbi, 'setDenied'>,
   ) {
     return this.awaitResult(
-      this.setAllowedRaw(addresses, allowed, params),
+      this.setDeniedRaw(addresses, allowed, params),
       simpleDenyListAbi,
       simulateSimpleDenyListSetDenied,
     );
   }
 
-  public async setAllowedRaw(
+  public async setDeniedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeSimpleDenyListSetDenied> = {},
+    params?: WriteParams<typeof simpleDenyListAbi, 'setDenied'>,
   ) {
     return await writeSimpleDenyListSetDenied(this._config, {
       address: this.assertValidAddress(),
       args: [addresses, allowed],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readSimpleDenyListSupportsInterface> = {},
+    params?: ReadParams<typeof simpleDenyListAbi, 'supportsInterface'>,
   ) {
     return readSimpleDenyListSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readSimpleDenyListGetComponentInterface> = {},
+    params?: ReadParams<typeof simpleDenyListAbi, 'getComponentInterface'>,
   ) {
     return readSimpleDenyListGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

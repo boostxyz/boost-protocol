@@ -16,7 +16,7 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 import { ContractAction } from './ContractAction';
 
 export type { ERC721MintActionPayload };
@@ -27,7 +27,7 @@ export class ERC721MintAction extends ContractAction {
 
   public override async execute(
     data: Hex,
-    params: CallParams<typeof writeErc721MintActionExecute> = {},
+    params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
   ) {
     return this.awaitResult(
       this.executeRaw(data, params),
@@ -38,31 +38,33 @@ export class ERC721MintAction extends ContractAction {
 
   public override async executeRaw(
     data: Hex,
-    params: CallParams<typeof writeErc721MintActionExecute> = {},
+    params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
   ) {
     return writeErc721MintActionExecute(this._config, {
       address: this.assertValidAddress(),
       args: [data],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public override async prepare(
     data: Hex,
-    params: CallParams<typeof readErc721MintActionPrepare> = {},
+    params?: ReadParams<typeof erc721MintActionAbi, 'prepare'>,
   ) {
     return readErc721MintActionPrepare(this._config, {
       address: this.assertValidAddress(),
       args: [data],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async validate(
     data: Hex,
-    params: CallParams<typeof writeErc721MintActionValidate> = {},
+    params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
   ) {
     return this.awaitResult(
       this.validateRaw(data, params),
@@ -73,35 +75,38 @@ export class ERC721MintAction extends ContractAction {
 
   public async validateRaw(
     data: Hex,
-    params: CallParams<typeof writeErc721MintActionValidate> = {},
+    params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
   ) {
     return writeErc721MintActionValidate(this._config, {
       address: this.assertValidAddress(),
       args: [data],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public override async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readErc721MintActionSupportsInterface> = {},
+    params?: ReadParams<typeof erc721MintActionAbi, 'supportsInterface'>,
   ) {
     return readErc721MintActionSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public override async getComponentInterface(
-    params: CallParams<typeof readErc721MintActionGetComponentInterface> = {},
+    params?: ReadParams<typeof erc721MintActionAbi, 'getComponentInterface'>,
   ) {
     return readErc721MintActionGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

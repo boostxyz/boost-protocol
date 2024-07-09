@@ -30,7 +30,7 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { ERC1155IncentivePayload, ERC1155StrategyType };
 
@@ -39,84 +39,88 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
   public override readonly base = ERC1155Incentive.base;
 
   public async claims(
-    params: CallParams<typeof readErc1155IncentiveClaims> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'claims'>,
   ) {
     return readErc1155IncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reward(
-    params: CallParams<typeof readErc1155IncentiveReward> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'reward'>,
   ) {
     return readErc1155IncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claimed(
     address: Address,
-    params: CallParams<typeof readErc1155IncentiveClaimed> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'claimed'>,
   ) {
     return readErc1155IncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async asset(
-    params: CallParams<typeof readErc1155IncentiveAsset> = {},
-  ) {
+  public async asset(params?: ReadParams<typeof erc1155IncentiveAbi, 'asset'>) {
     return readErc1155IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async strategy(
-    params: CallParams<typeof readErc1155IncentiveStrategy> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'strategy'>,
   ): Promise<StrategyType> {
     return readErc1155IncentiveStrategy(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     }) as Promise<StrategyType>;
   }
 
-  public async limit(
-    params: CallParams<typeof readErc1155IncentiveLimit> = {},
-  ) {
+  public async limit(params?: ReadParams<typeof erc1155IncentiveAbi, 'limit'>) {
     return readErc1155IncentiveLimit(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async tokenId(
-    params: CallParams<typeof readErc1155IncentiveTokenId> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'tokenId'>,
   ) {
     return readErc1155IncentiveTokenId(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async extraData(
-    params: CallParams<typeof readErc1155IncentiveExtraData> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'extraData'>,
   ) {
     return readErc1155IncentiveExtraData(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claim(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc1155IncentiveClaim> = {},
+    params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
   ) {
     return this.awaitResult(
       this.claimRaw(payload, params),
@@ -127,18 +131,19 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
 
   public async claimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc1155IncentiveClaim> = {},
+    params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
   ) {
     return writeErc1155IncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reclaim(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc1155IncentiveReclaim> = {},
+    params?: WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>,
   ) {
     return this.awaitResult(
       this.reclaimRaw(payload, params),
@@ -149,55 +154,60 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
 
   public async reclaimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc1155IncentiveReclaim> = {},
+    params?: WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>,
   ) {
     return writeErc1155IncentiveReclaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async isClaimable(
     payload: ClaimPayload,
-    params: CallParams<typeof readErc1155IncentiveIsClaimable> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'isClaimable'>,
   ) {
     return readErc1155IncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async preflight(
     data: ERC1155IncentivePayload,
-    params: CallParams<typeof readErc1155IncentivePreflight> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'preflight'>,
   ) {
     return readErc1155IncentivePreflight(this._config, {
       address: this.assertValidAddress(),
       args: [prepareERC1155IncentivePayload(data)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readErc1155SupportsInterface> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'supportsInterface'>,
   ) {
     return readErc1155SupportsInterface(this._config, {
       address: this.assertValidAddress(),
       args: [interfaceId],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readErc1155IncentiveGetComponentInterface> = {},
+    params?: ReadParams<typeof erc1155IncentiveAbi, 'getComponentInterface'>,
   ) {
     return readErc1155IncentiveGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

@@ -57,7 +57,7 @@ export class Deployable<Payload = unknown> extends Contract {
   public async deploy(
     _payload?: Payload,
     _options?: DeployableOptions,
-    waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
+    waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
   ): Promise<Address> {
     const config = _options?.config || this._config;
     const address = await getDeployedContractAddress(

@@ -253,74 +253,6 @@ export function prepareERC1155Payload({
   );
 }
 
-export interface ERC1155TransferPayload {
-  tokenId: bigint;
-  amount: bigint;
-  asset: Address;
-  target: Address;
-}
-
-export function prepareERC1155Transfer({
-  tokenId,
-  amount,
-  asset,
-  target,
-}: ERC1155TransferPayload) {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      'Transfer request',
-      'struct Transfer { uint8 assetType; address asset; address target; bytes data; }',
-    ]),
-    [
-      {
-        assetType: 2,
-        asset,
-        data: prepareERC1155Payload({ tokenId, amount }),
-        target,
-      },
-    ],
-  );
-}
-
-export interface FungiblePayload { amount: bigint }
-
-export function prepareFungiblePayload({ amount }: FungiblePayload) {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      'FungiblePayload payload',
-      'struct FungiblePayload { uint256 amount; }',
-    ]),
-    [{ amount }],
-  );
-}
-
-export interface FungibleTransferPayload {
-  amount: bigint;
-  asset: Address;
-  target: Address;
-}
-
-export function prepareFungibleTransfer({
-  amount,
-  asset,
-  target,
-}: FungibleTransferPayload) {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      'Transfer request',
-      'struct Transfer { uint8 assetType; address asset; address target; bytes data; }',
-    ]),
-    [
-      {
-        assetType: asset == zeroAddress ? 0 : 1,
-        asset,
-        data: prepareFungiblePayload({ amount }),
-        target,
-      },
-    ],
-  );
-}
-
 export interface PointsIncentivePayload {
   venue: Address;
   selector: Hex;
@@ -548,6 +480,10 @@ export const prepareClaimPayload = ({ target, data = zeroHash }: ClaimPayload) =
   )
 }
 
+/*
+* Transfer Payloads
+*/
+
 export enum AssetType {
   ETH,
   ERC20,
@@ -573,3 +509,70 @@ export const prepareTransferPayload =({ assetType, address, target, data }: Tran
   )
 }
 
+export interface ERC1155TransferPayload {
+  tokenId: bigint;
+  amount: bigint;
+  asset: Address;
+  target: Address;
+}
+
+export function prepareERC1155Transfer({
+  tokenId,
+  amount,
+  asset,
+  target,
+}: ERC1155TransferPayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'Transfer request',
+      'struct Transfer { uint8 assetType; address asset; address target; bytes data; }',
+    ]),
+    [
+      {
+        assetType: AssetType.ERC1155,
+        asset,
+        data: prepareERC1155Payload({ tokenId, amount }),
+        target,
+      },
+    ],
+  );
+}
+
+export interface FungiblePayload { amount: bigint }
+
+export function prepareFungiblePayload({ amount }: FungiblePayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'FungiblePayload payload',
+      'struct FungiblePayload { uint256 amount; }',
+    ]),
+    [{ amount }],
+  );
+}
+
+export interface FungibleTransferPayload {
+  amount: bigint;
+  asset: Address;
+  target: Address;
+}
+
+export function prepareFungibleTransfer({
+  amount,
+  asset,
+  target,
+}: FungibleTransferPayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'Transfer request',
+      'struct Transfer { uint8 assetType; address asset; address target; bytes data; }',
+    ]),
+    [
+      {
+        assetType: asset == zeroAddress ? AssetType.ETH : AssetType.ERC20,
+        asset,
+        data: prepareFungiblePayload({ amount }),
+        target,
+      },
+    ],
+  );
+}

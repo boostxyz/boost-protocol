@@ -27,7 +27,7 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { CGDAIncentivePayload };
 
@@ -35,47 +35,52 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   public static base = import.meta.env.VITE_CGDA_INCENTIVE_BASE;
   public override readonly base = CGDAIncentive.base;
 
-  public async claims(params: CallParams<typeof readCgdaIncentiveClaims> = {}) {
+  public async claims(params?: ReadParams<typeof cgdaIncentiveAbi, 'claims'>) {
     return readCgdaIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async reward(params: CallParams<typeof readCgdaIncentiveReward> = {}) {
+  public async reward(params?: ReadParams<typeof cgdaIncentiveAbi, 'reward'>) {
     return readCgdaIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claimed(
     address: Address,
-    params: CallParams<typeof readCgdaIncentiveClaimed> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'claimed'>,
   ) {
     return readCgdaIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async asset(params: CallParams<typeof readCgdaIncentiveAsset> = {}) {
+  public async asset(params?: ReadParams<typeof cgdaIncentiveAbi, 'asset'>) {
     return readCgdaIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async cgdaParams(
-    params: CallParams<typeof readCgdaIncentiveCgdaParams> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'cgdaParams'>,
   ): Promise<CGDAParameters> {
     const [rewardDecay, rewardBoost, lastClaimTime, currentReward] =
       await readCgdaIncentiveCgdaParams(this._config, {
         address: this.assertValidAddress(),
-        ...params,
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
       });
     return {
       rewardDecay,
@@ -86,17 +91,18 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   public async totalBudget(
-    params: CallParams<typeof readCgdaIncentiveTotalBudget> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'totalBudget'>,
   ) {
     return readCgdaIncentiveTotalBudget(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claim(
     payload: ClaimPayload,
-    params: CallParams<typeof writeCgdaIncentiveClaim> = {},
+    params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
   ) {
     return this.awaitResult(
       this.claimRaw(payload, params),
@@ -107,18 +113,19 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
 
   public async claimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writeCgdaIncentiveClaim> = {},
+    params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
   ) {
     return writeCgdaIncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reclaim(
     payload: ClaimPayload,
-    params: CallParams<typeof writeCgdaIncentiveReclaim> = {},
+    params?: WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>,
   ) {
     return this.awaitResult(
       this.reclaimRaw(payload, params),
@@ -129,65 +136,71 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
 
   public async reclaimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writeCgdaIncentiveReclaim> = {},
+    params?: WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>,
   ) {
     return writeCgdaIncentiveReclaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async isClaimable(
     payload: ClaimPayload,
-    params: CallParams<typeof readCgdaIncentiveIsClaimable> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'isClaimable'>,
   ) {
     return readCgdaIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async preflight(
     data: CGDAIncentivePayload,
-    params: CallParams<typeof readCgdaIncentiveIsClaimable> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'preflight'>,
   ) {
     return readCgdaIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareCGDAIncentivePayload(data)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async currentReward(
-    params: CallParams<typeof readCgdaIncentiveCurrentReward> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'currentReward'>,
   ) {
     return readCgdaIncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readCgdaIncentiveSupportsInterface> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'supportsInterface'>,
   ) {
     return readCgdaIncentiveSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readCgdaIncentiveGetComponentInterface> = {},
+    params?: ReadParams<typeof cgdaIncentiveAbi, 'getComponentInterface'>,
   ) {
     return readCgdaIncentiveGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

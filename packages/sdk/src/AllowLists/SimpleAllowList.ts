@@ -17,7 +17,7 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
-import type { CallParams } from '../utils';
+import type { ReadParams } from '../utils';
 
 export type { SimpleAllowListPayload };
 
@@ -27,20 +27,21 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
 
   public async isAllowed(
     address: Address,
-    params: CallParams<typeof readSimpleAllowListIsAllowed> = {},
+    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ): Promise<boolean> {
     return await readSimpleAllowListIsAllowed(this._config, {
       address: this.assertValidAddress(),
       args: [address, zeroHash],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async setAllowed(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeSimpleAllowListSetAllowed> = {},
+    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
     return this.awaitResult(
       this.setAllowedRaw(addresses, allowed, params),
@@ -52,34 +53,37 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   public async setAllowedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeSimpleAllowListSetAllowed> = {},
+    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
     return await writeSimpleAllowListSetAllowed(this._config, {
       address: this.assertValidAddress(),
       args: [addresses, allowed],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readSimpleAllowListSupportsInterface> = {},
+    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
     return readSimpleAllowListSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readSimpleAllowListGetComponentInterface> = {},
+    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
     return readSimpleAllowListGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

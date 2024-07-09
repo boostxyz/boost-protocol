@@ -30,7 +30,7 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { ERC20IncentivePayload };
 
@@ -38,73 +38,76 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   public static base = import.meta.env.VITE_ERC20_INCENTIVE_BASE;
   public override readonly base = ERC20Incentive.base;
 
-  public async claims(
-    params: CallParams<typeof readErc20IncentiveClaims> = {},
-  ) {
+  public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
     return readErc20IncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claimed(
     address: Address,
-    params: CallParams<typeof readErc20IncentiveClaimed> = {},
+    params?: ReadParams<typeof erc20IncentiveAbi, 'claimed'>,
   ) {
     return readErc20IncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async asset(params: CallParams<typeof readErc20IncentiveAsset> = {}) {
+  public async asset(params?: ReadParams<typeof erc20IncentiveAbi, 'asset'>) {
     return readErc20IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async strategy(
-    params: CallParams<typeof readErc20IncentiveStrategy> = {},
+    params?: ReadParams<typeof erc20IncentiveAbi, 'strategy'>,
   ): Promise<StrategyType> {
     return readErc20IncentiveStrategy(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     }) as Promise<StrategyType>;
   }
 
-  public async reward(
-    params: CallParams<typeof readErc20IncentiveReward> = {},
-  ) {
+  public async reward(params?: ReadParams<typeof erc20IncentiveAbi, 'reward'>) {
     return readErc20IncentiveReward(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async limit(params: CallParams<typeof readErc20IncentiveLimit> = {}) {
+  public async limit(params?: ReadParams<typeof erc20IncentiveAbi, 'limit'>) {
     return readErc20IncentiveLimit(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async entries(
     i: bigint,
-    params: CallParams<typeof readErc20IncentiveEntries> = {},
+    params?: ReadParams<typeof erc20IncentiveAbi, 'entries'>,
   ) {
     return readErc20IncentiveEntries(this._config, {
       address: this.assertValidAddress(),
       args: [i],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claim(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc20IncentiveClaim> = {},
+    params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
   ) {
     return this.awaitResult(
       this.claimRaw(payload, params),
@@ -115,18 +118,19 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
 
   public async claimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc20IncentiveClaim> = {},
+    params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
   ) {
     return writeErc20IncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reclaim(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc20IncentiveReclaim> = {},
+    params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
   ) {
     return this.awaitResult(
       this.reclaimRaw(payload, params),
@@ -137,39 +141,42 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
 
   public async reclaimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writeErc20IncentiveReclaim> = {},
+    params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
   ) {
     return writeErc20IncentiveReclaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async isClaimable(
     payload: ClaimPayload,
-    params: CallParams<typeof readErc20IncentiveIsClaimable> = {},
+    params?: ReadParams<typeof erc20IncentiveAbi, 'isClaimable'>,
   ) {
     return readErc20IncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async preflight(
     data: ERC20IncentivePayload,
-    params: CallParams<typeof readErc20IncentivePreflight> = {},
+    params?: ReadParams<typeof erc20IncentiveAbi, 'preflight'>,
   ) {
     return readErc20IncentivePreflight(this._config, {
       address: this.assertValidAddress(),
       args: [prepareERC20IncentivePayload(data)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async drawRaffle(
-    params: CallParams<typeof writeErc20IncentiveDrawRaffle> = {},
+    params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
   ) {
     return this.awaitResult(
       this.drawRaffleRaw(params),
@@ -179,33 +186,36 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   public async drawRaffleRaw(
-    params: CallParams<typeof writeErc20IncentiveDrawRaffle> = {},
+    params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
   ) {
     return writeErc20IncentiveDrawRaffle(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readErc20IncentiveSupportsInterface> = {},
+    params?: ReadParams<typeof erc20IncentiveAbi, 'supportsInterface'>,
   ) {
     return readErc20IncentiveSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readErc20IncentiveGetComponentInterface> = {},
+    params?: ReadParams<typeof erc20IncentiveAbi, 'getComponentInterface'>,
   ) {
     return readErc20IncentiveGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

@@ -1,6 +1,10 @@
 import {
+  type ERC1155TransferPayload,
+  type FungibleTransferPayload,
   type SimpleBudgetPayload,
   type TransferPayload,
+  prepareERC1155Transfer,
+  prepareFungibleTransfer,
   prepareSimpleBudgetPayload,
   prepareTransferPayload,
   readSimpleBudgetAvailable,
@@ -10,7 +14,7 @@ import {
   readSimpleBudgetSupportsInterface,
   readSimpleBudgetTotal,
   readVestingBudgetStart,
-  simpleAllowListAbi,
+  simpleBudgetAbi,
   simulateSimpleBudgetAllocate,
   simulateSimpleBudgetDisburse,
   simulateSimpleBudgetDisburseBatch,
@@ -24,102 +28,124 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import { getAccount } from '@wagmi/core';
+import type { CreateWriteContractParameters } from '@wagmi/core/codegen';
 import { type Address, type Hex, zeroAddress } from 'viem';
-import {
-  Deployable,
-  type DeployableOptions,
-  type GenericDeployableParams,
+import { writeContract } from 'viem/actions';
+import type {
+  DeployableOptions,
+  GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import { DeployableUnknownOwnerProvidedError } from '../errors';
-import type { CallParams } from '../utils';
+import {
+  DeployableUnknownOwnerProvidedError,
+  UnknownTransferPayloadSupplied,
+} from '../errors';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { SimpleBudgetPayload };
+
+export function isFungibleTransfer(
+  transfer: FungibleTransferPayload | ERC1155TransferPayload,
+): transfer is FungibleTransferPayload {
+  return (transfer as ERC1155TransferPayload).tokenId === undefined;
+}
+
+export function isERC1155TransferPayload(
+  transfer: FungibleTransferPayload | ERC1155TransferPayload,
+): transfer is ERC1155TransferPayload {
+  return (transfer as ERC1155TransferPayload).tokenId !== undefined;
+}
+
+export function prepareTransfer(
+  transfer: FungibleTransferPayload | ERC1155TransferPayload,
+) {
+  if (isFungibleTransfer(transfer)) {
+    return prepareFungibleTransfer(transfer);
+  } else if (isERC1155TransferPayload(transfer)) {
+    return prepareERC1155Transfer(transfer);
+  } else throw new UnknownTransferPayloadSupplied(transfer);
+}
 
 export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   public static base = import.meta.env.VITE_SIMPLE_BUDGET_BASE;
   public override readonly base = SimpleBudget.base;
 
-  public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
-    return readVestingBudgetStart(this._config, {
-      address: this.assertValidAddress(),
-      ...params,
-    });
-  }
-
   public async allocate(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeSimpleBudgetAllocate> = {},
+    transfer: FungibleTransferPayload | ERC1155TransferPayload,
+    params?: WriteParams<typeof simpleBudgetAbi, 'allocate'>,
   ) {
     return this.awaitResult(
       this.allocateRaw(transfer, params),
-      simpleAllowListAbi,
+      simpleBudgetAbi,
       simulateSimpleBudgetAllocate,
     );
   }
 
   public allocateRaw(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeSimpleBudgetAllocate> = {},
+    transfer: FungibleTransferPayload | ERC1155TransferPayload,
+    params?: WriteParams<typeof simpleBudgetAbi, 'allocate'>,
   ) {
     return writeSimpleBudgetAllocate(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareTransferPayload(transfer)],
-      ...params,
+      args: [prepareTransfer(transfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reclaim(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeSimpleBudgetReclaim> = {},
+    transfer: FungibleTransferPayload | ERC1155TransferPayload,
+    params?: WriteParams<typeof simpleBudgetAbi, 'reclaim'>,
   ) {
     return this.awaitResult(
       this.reclaimRaw(transfer, params),
-      simpleAllowListAbi,
+      simpleBudgetAbi,
       simulateSimpleBudgetReclaim,
     );
   }
 
   public reclaimRaw(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeSimpleBudgetReclaim> = {},
+    transfer: FungibleTransferPayload | ERC1155TransferPayload,
+    params?: WriteParams<typeof simpleBudgetAbi, 'reclaim'>,
   ) {
     return writeSimpleBudgetReclaim(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareTransferPayload(transfer)],
-      ...params,
+      args: [prepareTransfer(transfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async disburse(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeSimpleBudgetDisburse> = {},
+    transfer: FungibleTransferPayload | ERC1155TransferPayload,
+    params?: WriteParams<typeof simpleBudgetAbi, 'disburse'>,
   ) {
     return this.awaitResult(
       this.disburseRaw(transfer, params),
-      simpleAllowListAbi,
+      simpleBudgetAbi,
       simulateSimpleBudgetDisburse,
     );
   }
 
   public disburseRaw(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeSimpleBudgetDisburse> = {},
+    transfer: FungibleTransferPayload | ERC1155TransferPayload,
+    params?: WriteParams<typeof simpleBudgetAbi, 'disburse'>,
   ) {
     return writeSimpleBudgetDisburse(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareTransferPayload(transfer)],
-      ...params,
+      args: [prepareTransfer(transfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async disburseBatch(
-    transfers: TransferPayload[],
-    params: CallParams<typeof writeSimpleBudgetDisburseBatch> = {},
+    transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
+    params?: WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>,
   ) {
     return this.awaitResult(
       this.disburseBatchRaw(transfers, params),
-      simpleAllowListAbi,
+      simpleBudgetAbi,
       simulateSimpleBudgetDisburseBatch,
     );
   }
@@ -127,24 +153,25 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
   public disburseBatchRaw(
-    transfers: TransferPayload[],
-    params: CallParams<typeof writeSimpleBudgetDisburseBatch> = {},
+    transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
+    params?: WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>,
   ) {
     return writeSimpleBudgetDisburseBatch(this._config, {
       address: this.assertValidAddress(),
-      args: [transfers.map(prepareTransferPayload)],
-      ...params,
+      args: [transfers.map(prepareTransfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeSimpleBudgetSetAuthorized> = {},
+    params?: WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>,
   ) {
     return this.awaitResult(
       this.setAuthorizedRaw(addresses, allowed, params),
-      simpleAllowListAbi,
+      simpleBudgetAbi,
       simulateSimpleBudgetSetAuthorized,
     );
   }
@@ -152,81 +179,88 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeSimpleBudgetSetAuthorized> = {},
+    params?: WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>,
   ) {
     return await writeSimpleBudgetSetAuthorized(this._config, {
       address: this.assertValidAddress(),
       args: [addresses, allowed],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public isAuthorized(
     account: Address,
-    params: CallParams<typeof readSimpleBudgetIsAuthorized> = {},
+    params?: ReadParams<typeof simpleBudgetAbi, 'isAuthorized'>,
   ) {
     return readSimpleBudgetIsAuthorized(this._config, {
       address: this.assertValidAddress(),
       args: [account],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public total(
     asset: Address,
     tokenId: bigint | undefined,
-    params: CallParams<typeof readSimpleBudgetTotal> = {},
+    params?: ReadParams<typeof simpleBudgetAbi, 'total'>,
   ) {
     return readSimpleBudgetTotal(this._config, {
       address: this.assertValidAddress(),
       args: tokenId ? [asset, tokenId] : [asset],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public available(
     asset: Address,
     tokenId: bigint | undefined,
-    params: CallParams<typeof readSimpleBudgetAvailable> = {},
+    params?: ReadParams<typeof simpleBudgetAbi, 'available'>,
   ) {
     return readSimpleBudgetAvailable(this._config, {
       address: this.assertValidAddress(),
       args: tokenId ? [asset, tokenId] : [asset],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public distributed(
     asset: Address,
     tokenId: bigint | undefined,
-    params: CallParams<typeof readSimpleBudgetDistributed> = {},
+    params?: ReadParams<typeof simpleBudgetAbi, 'distributed'>,
   ) {
     return readSimpleBudgetDistributed(this._config, {
       address: this.assertValidAddress(),
       args: tokenId ? [asset, tokenId] : [asset],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readSimpleBudgetSupportsInterface> = {},
+    params?: ReadParams<typeof simpleBudgetAbi, 'supportsInterface'>,
   ) {
     return readSimpleBudgetSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readSimpleBudgetGetComponentInterface> = {},
+    params?: ReadParams<typeof simpleBudgetAbi, 'getComponentInterface'>,
   ) {
     return readSimpleBudgetGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }
@@ -252,7 +286,7 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
       }
     }
     return {
-      abi: simpleAllowListAbi,
+      abi: simpleBudgetAbi,
       bytecode: bytecode as Hex,
       args: [prepareSimpleBudgetPayload(payload)],
       ...this.optionallyAttachAccount(options.account),

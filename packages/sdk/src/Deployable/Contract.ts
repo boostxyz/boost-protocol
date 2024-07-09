@@ -46,7 +46,7 @@ export class Contract {
     hashPromise: Promise<Hash>,
     abi: abi,
     fn: CreateSimulateContractReturnType<abi, undefined, functionName>,
-    waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
+    waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
   ) {
     return awaitResult(this._config, hashPromise, abi, fn, waitParams);
   }

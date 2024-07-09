@@ -61,7 +61,9 @@ export class DeployableMissingPayloadError extends Error {
 export class NoContractAddressUponReceiptError extends Error {
   public readonly receipt: WaitForTransactionReceiptReturnType;
   constructor(receipt: WaitForTransactionReceiptReturnType) {
-    super(`Expected a contract address to exist on receipt.`);
+    super(`Expected a contract address to exist on receipt.`, {
+      cause: receipt,
+    });
     this.receipt = receipt;
   }
 }
@@ -71,8 +73,19 @@ export class InvalidComponentInterfaceError extends Error {
   public readonly received: Hex = zeroHash;
 
   constructor(expected: Hex[], received: Hex) {
-    super(`Address provided is not `);
+    super(`Address provided is not `, { cause: { expected, received } });
     this.expected = expected;
+    this.received = received;
+  }
+}
+
+export class UnknownTransferPayloadSupplied extends Error {
+  received: unknown;
+  constructor(received: unknown) {
+    super(
+      `Did not provide a valid FungibleTransferPayload or ERC1155 transfer payload.`,
+      { cause: received },
+    );
     this.received = received;
   }
 }

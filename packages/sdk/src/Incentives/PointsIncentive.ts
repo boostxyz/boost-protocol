@@ -24,7 +24,7 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { PointsIncentivePayload };
 
@@ -33,72 +33,79 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   public override readonly base = PointsIncentive.base;
 
   public async claims(
-    params: CallParams<typeof readPointsIncentiveClaims> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'claims'>,
   ) {
     return readPointsIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async currentReward(
-    params: CallParams<typeof readPointsIncentiveCurrentReward> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'currentReward'>,
   ) {
     return readPointsIncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reward(
-    params: CallParams<typeof readPointsIncentiveReward> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'reward'>,
   ) {
     return readPointsIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claimed(
     address: Address,
-    params: CallParams<typeof readPointsIncentiveClaimed> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'claimed'>,
   ) {
     return readPointsIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async venue(params: CallParams<typeof readPointsIncentiveVenue> = {}) {
+  public async venue(params?: ReadParams<typeof pointsIncentiveAbi, 'venue'>) {
     return readPointsIncentiveVenue(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public async limit(params: CallParams<typeof readPointsIncentiveLimit> = {}) {
+  public async limit(params?: ReadParams<typeof pointsIncentiveAbi, 'limit'>) {
     return readPointsIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async selector(
-    params: CallParams<typeof readPointsIncentiveSelector> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'selector'>,
   ) {
     return readPointsIncentiveSelector(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claim(
     payload: ClaimPayload,
-    params: CallParams<typeof writePointsIncentiveClaim> = {},
+    params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
   ) {
     return this.awaitResult(
       this.claimRaw(payload, params),
@@ -109,45 +116,48 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
 
   public async claimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writePointsIncentiveClaim> = {},
+    params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
   ) {
     return writePointsIncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  //prepareClaimPayload
   public async isClaimable(
     payload: ClaimPayload,
-    params: CallParams<typeof readPointsIncentiveIsClaimable> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'isClaimable'>,
   ) {
     return readPointsIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readPointsIncentiveSupportsInterface> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'supportsInterface'>,
   ) {
     return readPointsIncentiveSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       args: [interfaceId],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readPointsIncentiveGetComponentInterface> = {},
+    params?: ReadParams<typeof pointsIncentiveAbi, 'getComponentInterface'>,
   ) {
     return readPointsIncentiveGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

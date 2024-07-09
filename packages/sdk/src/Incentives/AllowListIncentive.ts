@@ -23,7 +23,7 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { AllowListIncentivePayload };
 
@@ -32,42 +32,46 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   public override readonly base = AllowListIncentive.base;
 
   public async claims(
-    params: CallParams<typeof readAllowListIncentiveClaims> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,
   ) {
     return readAllowListIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reward(
-    params: CallParams<typeof readAllowListIncentiveReward> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'reward'>,
   ) {
     return readAllowListIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claimed(
     address: Address,
-    params: CallParams<typeof readAllowListIncentiveClaimed> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'claimed'>,
   ) {
     return readAllowListIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async allowList(
-    params: CallParams<typeof readAllowListIncentiveAllowList> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'allowList'>,
   ): Promise<SimpleAllowList> {
     const address = await readAllowListIncentiveAllowList(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
     return new SimpleAllowList(
       { config: this._config, account: this._account },
@@ -76,17 +80,18 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   public async limit(
-    params: CallParams<typeof readAllowListIncentiveLimit> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'limit'>,
   ) {
     return readAllowListIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async claim(
     payload: ClaimPayload,
-    params: CallParams<typeof writeAllowListIncentiveClaim> = {},
+    params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
     return this.awaitResult(
       this.claimRaw(payload, params),
@@ -97,46 +102,50 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
 
   public async claimRaw(
     payload: ClaimPayload,
-    params: CallParams<typeof writeAllowListIncentiveClaim> = {},
+    params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
     return writeAllowListIncentiveClaim(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   // use prepareClaimPayload?
   public async isClaimable(
     payload: ClaimPayload,
-    params: CallParams<typeof readAllowListIncentiveIsClaimable> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>,
   ) {
     return readAllowListIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readAllowListIncentiveSupportsInterface> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'supportsInterface'>,
   ) {
     return readAllowListIncentiveSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readAllowListIncentiveGetComponentInterface> = {},
+    params?: ReadParams<typeof allowListIncentiveAbi, 'getComponentInterface'>,
   ) {
     return readAllowListIncentiveGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

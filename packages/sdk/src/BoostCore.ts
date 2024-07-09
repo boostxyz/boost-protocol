@@ -86,7 +86,7 @@ import {
   DeployableUnknownOwnerProvidedError,
   NoContractAddressUponReceiptError,
 } from './errors';
-import type { CallParams } from './utils';
+import type { ReadParams, WriteParams } from './utils';
 
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
@@ -340,7 +340,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
     incentiveId: bigint,
     address: Address,
     data: Hex,
-    params: CallParams<typeof writeBoostCoreClaimIncentive> = {},
+    params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
   ) {
     return this.awaitResult(
       this.claimIncentiveRaw(boostId, incentiveId, address, data, params),
@@ -354,31 +354,33 @@ export class BoostCore extends Deployable<[Address, Address]> {
     incentiveId: bigint,
     address: Address,
     data: Hex,
-    params: CallParams<typeof writeBoostCoreClaimIncentive> = {},
+    params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
   ) {
     return writeBoostCoreClaimIncentive(this._config, {
       address: this.assertValidAddress(),
       args: [boostId, incentiveId, address, data],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async readBoost(
     id: bigint,
-    params: CallParams<typeof readBoostCoreGetBoost> = {},
+    params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
   ) {
     return readBoostCoreGetBoost(this._config, {
       address: this.assertValidAddress(),
       args: [id],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async getBoost(
     _id: string | bigint,
-    params: CallParams<typeof readBoostCoreGetBoost> = {},
+    params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
   ) {
     let id: bigint;
     if (typeof _id === 'string') {
@@ -422,19 +424,20 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   public async getBoostCount(
-    params: CallParams<typeof readBoostCoreGetBoostCount> = {},
+    params?: ReadParams<typeof boostCoreAbi, 'getBoostCount'>,
   ) {
     return readBoostCoreGetBoostCount(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async setProcolFeeReceiver(
     address: Address,
-    params: CallParams<typeof writeBoostCoreSetProtocolFeeReceiver> = {},
+    params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
     return this.awaitResult(
       this.setProcolFeeReceiverRaw(address, params),
@@ -445,19 +448,20 @@ export class BoostCore extends Deployable<[Address, Address]> {
 
   public async setProcolFeeReceiverRaw(
     address: Address,
-    params: CallParams<typeof writeBoostCoreSetClaimFee> = {},
+    params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
     return writeBoostCoreSetProtocolFeeReceiver(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async setClaimFee(
     claimFee: bigint,
-    params: CallParams<typeof writeBoostCoreSetClaimFee> = {},
+    params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
   ) {
     return this.awaitResult(
       this.setClaimFeeRaw(claimFee, params),
@@ -468,13 +472,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
 
   public async setClaimFeeRaw(
     claimFee: bigint,
-    params: CallParams<typeof writeBoostCoreSetClaimFee> = {},
+    params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
   ) {
     return writeBoostCoreSetClaimFee(this._config, {
       address: this.assertValidAddress(),
       args: [claimFee],
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 

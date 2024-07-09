@@ -15,18 +15,33 @@ import {
   type ContractFunctionArgs,
   decodeFunctionData,
 } from 'viem';
+import type { WriteContractParameters } from 'viem/actions';
 import { NoContractAddressUponReceiptError } from './errors';
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-export type CallParams<T extends (_c: any, params: any) => any> = Omit<
-  Parameters<T>[1],
-  'address' | 'args'
+export type WriteParams<
+  abi extends Abi,
+  functionName extends ContractFunctionName<abi>,
+> = Partial<
+  Omit<
+    WriteContractParameters<abi, functionName>,
+    'address' | 'args' | 'functionName' | 'abi'
+  >
+>;
+
+export type ReadParams<
+  abi extends Abi,
+  functionName extends ContractFunctionName<abi>,
+> = Partial<
+  Omit<
+    WriteContractParameters<abi, functionName>,
+    'address' | 'args' | 'functionName' | 'abi'
+  >
 >;
 
 export async function getDeployedContractAddress(
   config: Config,
   hash: Promise<Hash>,
-  waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
+  waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
 ) {
   const receipt = await waitForTransactionReceipt(config, {
     ...waitParams,
@@ -49,7 +64,7 @@ export async function awaitResult<
     undefined,
     functionName
   >,
-  waitParams: Omit<WaitForTransactionReceiptParameters, 'hash'> = {},
+  waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
 ) {
   const hash = await hashPromise;
   const receipt = await waitForTransactionReceipt(config, {

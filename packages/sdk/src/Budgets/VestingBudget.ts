@@ -1,7 +1,7 @@
 import {
-  type TransferPayload,
+  type FungibleTransferPayload,
   type VestingBudgetPayload,
-  prepareTransferPayload,
+  prepareFungibleTransfer,
   prepareVestingBudgetPayload,
   readVestingBudgetAvailable,
   readVestingBudgetCliff,
@@ -34,7 +34,7 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
-import type { CallParams } from '../utils';
+import type { ReadParams, WriteParams } from '../utils';
 
 export type { VestingBudgetPayload };
 
@@ -42,33 +42,36 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   public static base = import.meta.env.VITE_VESTING_BUDGET_BASE;
   public override readonly base = VestingBudget.base;
 
-  public start(params: CallParams<typeof readVestingBudgetStart> = {}) {
+  public start(params?: ReadParams<typeof vestingBudgetAbi, 'start'>) {
     return readVestingBudgetStart(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public duration(params: CallParams<typeof readVestingBudgetDuration> = {}) {
+  public duration(params?: ReadParams<typeof vestingBudgetAbi, 'duration'>) {
     return readVestingBudgetDuration(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public cliff(params: CallParams<typeof readVestingBudgetCliff> = {}) {
+  public cliff(params?: ReadParams<typeof vestingBudgetAbi, 'cliff'>) {
     return readVestingBudgetCliff(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async allocate(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeVestingBudgetAllocate> = {},
+    transfer: FungibleTransferPayload,
+    params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
   ) {
     return this.awaitResult(
       this.allocateRaw(transfer, params),
@@ -78,19 +81,20 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   public allocateRaw(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeVestingBudgetAllocate> = {},
+    transfer: FungibleTransferPayload,
+    params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
   ) {
     return writeVestingBudgetAllocate(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareTransferPayload(transfer)],
-      ...params,
+      args: [prepareFungibleTransfer(transfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async reclaim(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeVestingBudgetReclaim> = {},
+    transfer: FungibleTransferPayload,
+    params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
   ) {
     return this.awaitResult(
       this.reclaimRaw(transfer, params),
@@ -100,19 +104,20 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   public reclaimRaw(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeVestingBudgetReclaim> = {},
+    transfer: FungibleTransferPayload,
+    params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
   ) {
     return writeVestingBudgetReclaim(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareTransferPayload(transfer)],
-      ...params,
+      args: [prepareFungibleTransfer(transfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async disburse(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeVestingBudgetDisburse> = {},
+    transfer: FungibleTransferPayload,
+    params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
   ) {
     return this.awaitResult(
       this.disburseRaw(transfer, params),
@@ -122,19 +127,20 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   public disburseRaw(
-    transfer: TransferPayload,
-    params: CallParams<typeof writeVestingBudgetDisburse> = {},
+    transfer: FungibleTransferPayload,
+    params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
   ) {
     return writeVestingBudgetDisburse(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareTransferPayload(transfer)],
-      ...params,
+      args: [prepareFungibleTransfer(transfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async disburseBatch(
-    transfers: TransferPayload[],
-    params: CallParams<typeof writeVestingBudgetDisburseBatch> = {},
+    transfers: FungibleTransferPayload[],
+    params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
   ) {
     return this.awaitResult(
       this.disburseBatchRaw(transfers, params),
@@ -144,20 +150,21 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   public disburseBatchRaw(
-    transfers: TransferPayload[],
-    params: CallParams<typeof writeVestingBudgetDisburseBatch> = {},
+    transfers: FungibleTransferPayload[],
+    params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
   ) {
     return writeVestingBudgetDisburseBatch(this._config, {
       address: this.assertValidAddress(),
-      args: [transfers.map(prepareTransferPayload)],
-      ...params,
+      args: [transfers.map(prepareFungibleTransfer)],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeVestingBudgetSetAuthorized> = {},
+    params?: WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>,
   ) {
     return this.awaitResult(
       this.setAuthorizedRaw(addresses, allowed, params),
@@ -169,86 +176,94 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params: CallParams<typeof writeVestingBudgetSetAuthorized> = {},
+    params?: WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>,
   ) {
     return await writeVestingBudgetSetAuthorized(this._config, {
       address: this.assertValidAddress(),
       args: [addresses, allowed],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public isAuthorized(
     account: Address,
-    params: CallParams<typeof readVestingBudgetIsAuthorized> = {},
+    params?: ReadParams<typeof vestingBudgetAbi, 'isAuthorized'>,
   ) {
     return readVestingBudgetIsAuthorized(this._config, {
       address: this.assertValidAddress(),
       args: [account],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
-  public end(params: CallParams<typeof readVestingBudgetEnd> = {}) {
+  public end(params?: ReadParams<typeof vestingBudgetAbi, 'end'>) {
     return readVestingBudgetEnd(this._config, {
       address: this.assertValidAddress(),
       args: [],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public total(
     asset: Address,
-    params: CallParams<typeof readVestingBudgetTotal> = {},
+    params?: ReadParams<typeof vestingBudgetAbi, 'total'>,
   ) {
     return readVestingBudgetTotal(this._config, {
       address: this.assertValidAddress(),
       args: [asset],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public available(
     asset: Address,
-    params: CallParams<typeof readVestingBudgetAvailable> = {},
+    params?: ReadParams<typeof vestingBudgetAbi, 'available'>,
   ) {
     return readVestingBudgetAvailable(this._config, {
       address: this.assertValidAddress(),
       args: [asset],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public distributed(
     asset: Address,
-    params: CallParams<typeof readVestingBudgetDistributed> = {},
+    params?: ReadParams<typeof vestingBudgetAbi, 'distributed'>,
   ) {
     return readVestingBudgetDistributed(this._config, {
       address: this.assertValidAddress(),
       args: [asset],
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
     });
   }
 
   public async supportsInterface(
     interfaceId: Hex,
-    params: CallParams<typeof readVestingBudgetSupportsInterface> = {},
+    params?: ReadParams<typeof vestingBudgetAbi, 'supportsInterface'>,
   ) {
     return readVestingBudgetSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [interfaceId],
     });
   }
 
   public async getComponentInterface(
-    params: CallParams<typeof readVestingBudgetGetComponentInterface> = {},
+    params?: ReadParams<typeof vestingBudgetAbi, 'getComponentInterface'>,
   ) {
     return readVestingBudgetGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      ...params,
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

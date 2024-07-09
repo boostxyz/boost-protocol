@@ -43,7 +43,9 @@ import { MockERC721 } from './MockERC721';
 import { MockERC1155 } from './MockERC1155';
 import { setupConfig, testAccount } from './viem';
 
-export const defaultOptions: DeployableOptions = {
+export type DeployableTestOptions = Required<DeployableOptions>;
+
+export const defaultOptions: DeployableTestOptions = {
   config: setupConfig(),
   account: testAccount,
 };
@@ -53,7 +55,7 @@ export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
 export async function deployFixtures({
   config,
   account,
-}: DeployableOptions = defaultOptions) {
+}: DeployableTestOptions = defaultOptions) {
   const registry = await getDeployedContractAddress(
     config,
     deployContract(config, {
@@ -302,7 +304,7 @@ export async function deployFixtures({
 }
 
 export async function freshBudget(
-  options: DeployableOptions,
+  options: DeployableTestOptions,
   fixtures: Fixtures,
 ) {
   const budget = new SimpleBudget(options, {
@@ -313,28 +315,32 @@ export async function freshBudget(
   return budget;
 }
 
-export async function freshERC20(options: DeployableOptions = defaultOptions) {
+export async function freshERC20(
+  options: DeployableTestOptions = defaultOptions,
+) {
   const erc20 = new MockERC20(options, {});
   await erc20.deploy();
   return erc20;
 }
 
 export async function freshERC1155(
-  options: DeployableOptions = defaultOptions,
+  options: DeployableTestOptions = defaultOptions,
 ) {
   const erc1155 = new MockERC1155(options, {});
   await erc1155.deploy();
   return erc1155;
 }
 
-export async function freshERC721(options: DeployableOptions = defaultOptions) {
+export async function freshERC721(
+  options: DeployableTestOptions = defaultOptions,
+) {
   const erc721 = new MockERC721(options, {});
   await erc721.deploy();
   return erc721;
 }
 
 export async function fundErc20(
-  options: DeployableOptions,
+  options: DeployableTestOptions,
   erc20: MockERC20,
   funded: Address[] = [],
   amount: bigint = parseEther('100'),
@@ -350,7 +356,7 @@ export async function fundErc20(
 }
 
 export async function mintErc1155(
-  options: DeployableOptions,
+  options: DeployableTestOptions,
   erc1155?: MockERC1155,
   tokenId = 1n,
   amount = 100n,
@@ -359,7 +365,7 @@ export async function mintErc1155(
   await erc1155.mint(testAccount.address, tokenId, amount);
   const balance = await readMockErc1155BalanceOf(options.config, {
     address: erc1155.address!,
-    args: [testAccount.address, tokenId],
+    args: [options.account.address, tokenId],
   });
   if (balance !== amount)
     throw new Error('Balance did not match', { cause: { balance, amount } });
@@ -367,7 +373,7 @@ export async function mintErc1155(
 }
 
 export async function fundBudget(
-  options: DeployableOptions,
+  options: DeployableTestOptions,
   fixtures: Fixtures,
   budget?: Budget,
   erc20?: MockERC20,
@@ -381,7 +387,7 @@ export async function fundBudget(
     {
       amount: parseEther('1.0'),
       asset: zeroAddress,
-      target: testAccount.address,
+      target: options.account.address,
     },
     { value: parseEther('1.0') },
   );
@@ -393,7 +399,7 @@ export async function fundBudget(
   await budget.allocate({
     tokenId: 1n,
     amount: 100n,
-    asset: erc1155.address,
+    asset: erc1155.address!,
     target: testAccount.address,
   });
 

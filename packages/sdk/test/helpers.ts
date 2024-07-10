@@ -1,10 +1,10 @@
 import {
   RegistryType,
-  mockErc20Abi,
   readMockErc20BalanceOf,
   readMockErc1155BalanceOf,
   writeBoostRegistryRegister,
   writeMockErc20Approve,
+  writeMockErc1155SetApprovalForAll,
 } from '@boostxyz/evm';
 import BoostCore from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import BoostRegistry from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
@@ -22,7 +22,6 @@ import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentive
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { deployContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
-import { writeContract } from 'viem/actions';
 import {
   AllowListIncentive,
   type Budget,
@@ -396,16 +395,28 @@ export async function fundBudget(
     { value: parseEther('1.0') },
   );
 
+  // approve and allocate erc20 to the account
   await writeMockErc20Approve(options.config, {
     args: [budget.address!, parseEther('100')],
     address: erc20.address!,
     account: options.account,
   });
   await budget.allocate({
+    amount: parseEther('100'),
+    asset: erc20.address!,
+    target: options.account.address,
+  });
+
+  await writeMockErc1155SetApprovalForAll(options.config, {
+    args: [budget.address!, true],
+    address: erc1155.address!,
+    account: options.account,
+  });
+  await budget.allocate({
     tokenId: 1n,
     amount: 100n,
     asset: erc1155.address!,
-    target: testAccount.address,
+    target: options.account.address,
   });
 
   return { budget, erc20, erc1155 };

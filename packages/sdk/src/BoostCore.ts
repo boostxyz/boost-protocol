@@ -265,14 +265,10 @@ export class BoostCore extends Deployable<[Address, Address]> {
       // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
       const incentive = incentives.at(i)!;
       if (incentive.address) {
-        const isBase = allowList.address === allowList.base || allowList.isBase;
         incentivesPayloads[i] = {
-          isBase: isBase,
-          instance: incentive.address,
-          parameters: isBase
-            ? incentive.buildParameters(undefined, options).args.at(0) ||
-              zeroHash
-            : zeroHash,
+          isBase: true,
+          instance: incentive.base,
+          parameters: incentive.buildParameters(undefined, options).args.at(0)!,
         };
       } else {
         // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
@@ -547,54 +543,34 @@ export class BoostCore extends Deployable<[Address, Address]> {
       options,
     );
   }
-  AllowListIncentive(
-    options: DeployablePayloadOrAddress<AllowListIncentivePayload>,
-    isBase?: boolean,
-  ) {
+  AllowListIncentive(options: AllowListIncentivePayload) {
     return new AllowListIncentive(
       { config: this._config, account: this._account },
       options,
-      isBase,
     );
   }
-  CGDAIncentive(
-    options: DeployablePayloadOrAddress<CGDAIncentivePayload>,
-    isBase?: boolean,
-  ) {
+  CGDAIncentive(options: CGDAIncentivePayload) {
     return new CGDAIncentive(
       { config: this._config, account: this._account },
       options,
-      isBase,
     );
   }
-  ERC20Incentive(
-    options: DeployablePayloadOrAddress<ERC20IncentivePayload>,
-    isBase?: boolean,
-  ) {
+  ERC20Incentive(options: ERC20IncentivePayload) {
     return new ERC20Incentive(
       { config: this._config, account: this._account },
       options,
-      isBase,
     );
   }
-  ERC1155Incentive(
-    options: DeployablePayloadOrAddress<ERC1155IncentivePayload>,
-    isBase?: boolean,
-  ) {
+  ERC1155Incentive(options: ERC1155IncentivePayload) {
     return new ERC1155Incentive(
       { config: this._config, account: this._account },
       options,
-      isBase,
     );
   }
-  PointsIncentive(
-    options: DeployablePayloadOrAddress<PointsIncentivePayload>,
-    isBase?: boolean,
-  ) {
+  PointsIncentive(options: PointsIncentivePayload) {
     return new PointsIncentive(
       { config: this._config, account: this._account },
       options,
-      isBase,
     );
   }
   SignerValidator(

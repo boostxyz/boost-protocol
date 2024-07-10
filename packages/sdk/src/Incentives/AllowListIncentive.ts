@@ -20,6 +20,7 @@ import type { Address, Hex } from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import type {
   DeployableOptions,
+  DeployablePayloadOrAddress,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
@@ -30,6 +31,10 @@ export type { AllowListIncentivePayload };
 export class AllowListIncentive extends DeployableTarget<AllowListIncentivePayload> {
   public static base = import.meta.env.VITE_ALLOWLIST_INCENTIVE_BASE;
   public override readonly base = AllowListIncentive.base;
+
+  constructor(options: DeployableOptions, payload: AllowListIncentivePayload) {
+    super(options, payload, true);
+  }
 
   public async claims(
     params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,

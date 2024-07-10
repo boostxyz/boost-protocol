@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./errors": "./src/errors.ts",
     "./Boost": "./src/Boost.ts",
+    "./BoostRegistry": "./src/BoostRegistry.ts",
     "./BoostCore": "./src/BoostCore.ts",
     "./Deployable/Deployable": "./src/Deployable/Deployable.ts",
     "./Deployable/DeployableTarget": "./src/Deployable/DeployableTarget.ts",
@@ -51,6 +52,12 @@
         "import": "./dist/Boost.js",
         "node": "./dist/Boost.js",
         "types": "./dist/Boost.d.ts"
+      },
+      "./BoostRegistry": {
+        "require": "./dist/BoostRegistry.cjs",
+        "import": "./dist/BoostRegistry.js",
+        "node": "./dist/BoostRegistry.js",
+        "types": "./dist/BoostRegistry.d.ts"
       },
       "./BoostCore": {
         "require": "./dist/BoostCore.cjs",

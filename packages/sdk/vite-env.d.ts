@@ -3,6 +3,7 @@
 import type { Address } from 'viem';
 
 interface ImportMetaEnv {
+  readonly VITE_BOOST_REGISTRY_ADDRESS: Address;
   readonly VITE_BOOST_CORE_ADDRESS: Address;
   readonly VITE_CONTRACT_ACTION_BASE: Address;
   readonly VITE_ERC721_MINT_ACTION_BASE: Address;

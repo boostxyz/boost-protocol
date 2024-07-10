@@ -18,12 +18,10 @@ import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
   type Hex,
-  isAddress,
   parseEventLogs,
   zeroAddress,
   zeroHash,
 } from 'viem';
-
 import { type Action, actionFromAddress } from './Actions/Action';
 import {
   ContractAction,
@@ -83,6 +81,7 @@ import {
 import { type Validator, validatorFromAddress } from './Validators/Validator';
 import {
   BoostCoreNoIdentifierEmitted,
+  BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
   NoContractAddressUponReceiptError,
 } from './errors';
@@ -110,7 +109,7 @@ function isBoostCoreDeployable(opts: any): opts is BoostCoreOptionsWithPayload {
   return opts.registryAddress && opts.protocolFeeReceiver;
 }
 
-export type BoostClientConfig =
+export type BoostCoreConfig =
   | BoostCoreDeployedOptions
   | BoostCoreOptionsWithPayload;
 
@@ -127,7 +126,7 @@ export type CreateBoostPayload = {
 };
 
 export class BoostCore extends Deployable<[Address, Address]> {
-  constructor({ config, account, ...options }: BoostClientConfig) {
+  constructor({ config, account, ...options }: BoostCoreConfig) {
     if (isBoostCoreDeployed(options) && options.address) {
       super({ account, config }, options.address);
     } else if (isBoostCoreDeployable(options)) {
@@ -145,6 +144,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
     _boostPayload: CreateBoostPayload,
     _options?: DeployableOptions,
   ) {
+    const coreAddress = this.assertValidAddress();
     const [payload, options] =
       this.validateDeploymentConfig<CreateBoostPayload>(
         _boostPayload,
@@ -180,18 +180,25 @@ export class BoostCore extends Deployable<[Address, Address]> {
     }
 
     let budgetPayload: OnChainBoostPayload['budget'] = zeroAddress;
-    if (typeof budget === 'string' && isAddress(budget)) budgetPayload = budget;
-    else {
-      if (budget.address) budgetPayload = budget.address;
-      else {
-        const budgetHash = await budget.deployRaw(undefined, options);
-        const receipt = await waitForTransactionReceipt(options.config, {
-          hash: budgetHash,
-        });
-        if (!receipt.contractAddress)
-          throw new NoContractAddressUponReceiptError(receipt);
-        budgetPayload = receipt.contractAddress;
+    if (budget.address) {
+      budgetPayload = budget.address;
+      console.log(await budget.isAuthorized(coreAddress));
+      if (!(await budget.isAuthorized(coreAddress))) {
+        throw new BudgetMustAuthorizeBoostCore(coreAddress);
       }
+    } else {
+      // budgets are either instantiated with an address or payload, so in this branch payload will exist
+      const authorized = budget.payload?.authorized || [];
+      if (!authorized.includes(coreAddress)) {
+        throw new BudgetMustAuthorizeBoostCore(coreAddress);
+      }
+      const budgetHash = await budget.deployRaw(undefined, options);
+      const receipt = await waitForTransactionReceipt(options.config, {
+        hash: budgetHash,
+      });
+      if (!receipt.contractAddress)
+        throw new NoContractAddressUponReceiptError(receipt);
+      budgetPayload = receipt.contractAddress;
     }
 
     // if we're supplying an address, it could be a pre-initialized target
@@ -584,7 +591,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
 
-  protected override buildParameters(
+  public override buildParameters(
     _payload?: [Address, Address],
     _options?: DeployableOptions,
   ): GenericDeployableParams {

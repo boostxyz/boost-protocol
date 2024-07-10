@@ -23,7 +23,7 @@ describe('ERC1155Incentive', () => {
         extraData: '0x',
       },
     );
-    const address = await action.deploy();
-    expect(isAddress(address)).toBe(true);
+    await action.deploy();
+    expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 });

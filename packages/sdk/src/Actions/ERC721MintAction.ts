@@ -1,5 +1,6 @@
 import {
   type ERC721MintActionPayload,
+  RegistryType,
   erc721MintActionAbi,
   prepareERC721MintActionPayload,
   readErc721MintActionGetComponentInterface,
@@ -24,6 +25,9 @@ export type { ERC721MintActionPayload };
 export class ERC721MintAction extends ContractAction {
   public static override base = import.meta.env.VITE_ERC721_MINT_ACTION_BASE;
   public override readonly base = ERC721MintAction.base;
+
+  public static override registryType: RegistryType = RegistryType.ACTION;
+  public override readonly registryType: RegistryType = RegistryType.ACTION;
 
   public override async execute(
     data: Hex,

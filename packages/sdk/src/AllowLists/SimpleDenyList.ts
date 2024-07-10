@@ -1,4 +1,5 @@
 import {
+  RegistryType,
   type SimpleDenyListPayload,
   prepareSimpleDenyListPayload,
   readSimpleDenyListGetComponentInterface,
@@ -24,6 +25,9 @@ export type { SimpleDenyListPayload };
 export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   public static base = import.meta.env.VITE_SIMPLE_DENYLIST_BASE;
   public override readonly base = SimpleDenyList.base;
+
+  public static registryType: RegistryType = RegistryType.ALLOW_LIST;
+  public override readonly registryType: RegistryType = RegistryType.ALLOW_LIST;
 
   public async isAllowed(
     address: Address,

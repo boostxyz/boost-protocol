@@ -69,7 +69,7 @@ export class MockERC20 extends Deployable {
     _payload = {},
     _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [{}, options] = this.validateDeploymentConfig(_payload, _options);
+    const [, options] = this.validateDeploymentConfig(_payload, _options);
     //@ts-expect-error this is a test utility, ignoring required args in parameter return
     return {
       abi: mockErc20Abi,

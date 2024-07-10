@@ -73,7 +73,9 @@ export class InvalidComponentInterfaceError extends Error {
   public readonly received: Hex = zeroHash;
 
   constructor(expected: Hex[], received: Hex) {
-    super(`Address provided is not `, { cause: { expected, received } });
+    super(`Address provided does not match any expected protocol interface`, {
+      cause: { expected, received },
+    });
     this.expected = expected;
     this.received = received;
   }
@@ -87,5 +89,13 @@ export class UnknownTransferPayloadSupplied extends Error {
       { cause: received },
     );
     this.received = received;
+  }
+}
+
+export class BudgetMustAuthorizeBoostCore extends Error {
+  constructor(boostCoreAddress: string) {
+    super(
+      `Budget needs to explicitly authorize ${boostCoreAddress}. You can retrieve this value from BoostCore.address`,
+    );
   }
 }

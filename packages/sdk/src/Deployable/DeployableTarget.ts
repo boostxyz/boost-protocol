@@ -1,3 +1,4 @@
+import { RegistryType } from '@boostxyz/evm';
 import {
   deployContract,
   waitForTransactionReceipt,
@@ -20,31 +21,24 @@ import {
 export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
   readonly base: string = zeroAddress;
   readonly isBase: boolean = true;
+  readonly registryType: RegistryType = RegistryType.ACTION;
   constructor(
     options: DeployableOptions,
     payload: DeployablePayloadOrAddress<Payload>,
     isBase?: boolean,
   ) {
     super(options, payload);
-    // mainly for boost creation, if we're not explicitly stating that we're targeting a base contract, attempt to infer
-    // if we're targeting a predeployed contract, and base isn't explicitly true, mark it as false so it doesn't clone+initialize
-    // if we're supplying a payload with which to clone+initialize, base should be true
-    if (isBase === undefined) {
-      if (typeof payload === 'string') {
-        this.isBase = false;
-      } else {
-        this.isBase = true;
-      }
-    } else this.isBase = isBase;
+    if (isBase !== undefined) this.isBase = isBase;
   }
 
   public override async deploy(
     payload?: Payload,
     options?: DeployableOptions,
     waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
-  ): Promise<Address> {
+  ) {
     await super.deploy(payload, options, waitParams);
-    return this.assertValidAddress();
+    this.assertValidAddress();
+    return this;
   }
 
   public override async deployRaw(

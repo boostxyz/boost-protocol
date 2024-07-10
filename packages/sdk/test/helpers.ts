@@ -1,13 +1,15 @@
 import {
   RegistryType,
+  prepareSimpleBudgetPayload,
   readMockErc20BalanceOf,
   readMockErc1155BalanceOf,
   writeBoostRegistryRegister,
   writeMockErc20Approve,
   writeMockErc1155SetApprovalForAll,
+  writeSimpleBudgetInitialize,
 } from '@boostxyz/evm';
-import BoostCore from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
-import BoostRegistry from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
+import BoostCoreArtifact from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
+import BoostRegistryArtifact from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
@@ -24,6 +26,7 @@ import { deployContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
   AllowListIncentive,
+  BoostCore,
   type Budget,
   CGDAIncentive,
   ContractAction,
@@ -37,6 +40,7 @@ import {
   SimpleDenyList,
   VestingBudget,
 } from '../src';
+import { BoostRegistry } from '../src/BoostRegistry';
 import { getDeployedContractAddress } from '../src/utils';
 import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';
@@ -53,28 +57,15 @@ export const defaultOptions: DeployableTestOptions = {
 
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
 
-export async function deployFixtures({
-  config,
-  account,
-}: DeployableTestOptions = defaultOptions) {
-  const registry = await getDeployedContractAddress(
-    config,
-    deployContract(config, {
-      abi: BoostRegistry.abi,
-      bytecode: BoostRegistry.bytecode as Hex,
-      account,
-    }),
-  );
-
-  const core = await getDeployedContractAddress(
-    config,
-    deployContract(config, {
-      abi: BoostCore.abi,
-      bytecode: BoostCore.bytecode as Hex,
-      account,
-      args: [registry, account!.address],
-    }),
-  );
+export async function deployFixtures(
+  options: DeployableTestOptions = defaultOptions,
+) {
+  const { config, account } = options;
+  const registry = await new BoostRegistry(options).deploy();
+  const core = await new BoostCore({
+    ...options,
+    registryAddress: registry.assertValidAddress(),
+  }).deploy();
 
   const contractActionBase = await getDeployedContractAddress(
     config,
@@ -179,122 +170,58 @@ export async function deployFixtures({
   );
 
   const bases = {
-    ContractAction: {
-      type: RegistryType.ACTION,
-      name: 'ContractAction',
-      base: contractActionBase,
-      Test: class TContractAction extends ContractAction {
-        public static override base = contractActionBase;
-        public override readonly base = contractActionBase;
-      },
+    ContractAction: class TContractAction extends ContractAction {
+      public static override base = contractActionBase;
+      public override readonly base = contractActionBase;
     },
-    ERC721MintAction: {
-      type: RegistryType.ACTION,
-      name: 'ERC721MintAction',
-      base: erc721MintActionBase,
-      Test: class TERC721MintAction extends ERC721MintAction {
-        public static override base = erc721MintActionBase;
-        public override readonly base = erc721MintActionBase;
-      },
+    ERC721MintAction: class TERC721MintAction extends ERC721MintAction {
+      public static override base = erc721MintActionBase;
+      public override readonly base = erc721MintActionBase;
     },
-    SimpleAllowList: {
-      type: RegistryType.ALLOW_LIST,
-      name: 'SimpleAllowList',
-      base: simpleAllowListBase,
-      Test: class TSimpleAllowList extends SimpleAllowList {
-        public static override base = simpleAllowListBase;
-        public override readonly base = simpleAllowListBase;
-      },
+    SimpleAllowList: class TSimpleAllowList extends SimpleAllowList {
+      public static override base = simpleAllowListBase;
+      public override readonly base = simpleAllowListBase;
     },
-    SimpleDenyList: {
-      type: RegistryType.ALLOW_LIST,
-      name: 'SimpleDenyList',
-      base: simpleDenyListBase,
-      Test: class TSimpleDenyList extends SimpleDenyList {
-        public static override base = simpleDenyListBase;
-        public override readonly base = simpleDenyListBase;
-      },
+    SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
+      public static override base = simpleDenyListBase;
+      public override readonly base = simpleDenyListBase;
     },
-    SimpleBudget: {
-      type: RegistryType.BUDGET,
-      name: 'SimpleBudget',
-      base: simpleBudgetBase,
-      Test: class TSimpleBudget extends SimpleBudget {
-        public static override base = simpleBudgetBase;
-        public override readonly base = simpleBudgetBase;
-      },
+    SimpleBudget: class TSimpleBudget extends SimpleBudget {
+      public static override base = simpleBudgetBase;
+      public override readonly base = simpleBudgetBase;
     },
-    VestingBudget: {
-      type: RegistryType.BUDGET,
-      name: 'VestingBudget',
-      base: vestingBudgetBase,
-      Test: class TVestingBudget extends VestingBudget {
-        public static override base = vestingBudgetBase;
-        public override readonly base = vestingBudgetBase;
-      },
+    VestingBudget: class TVestingBudget extends VestingBudget {
+      public static override base = vestingBudgetBase;
+      public override readonly base = vestingBudgetBase;
     },
-    AllowListIncentive: {
-      type: RegistryType.INCENTIVE,
-      name: 'AllowListIncentive',
-      base: allowListIncentiveBase,
-      Test: class TAllowListIncentive extends AllowListIncentive {
-        public static override base = allowListIncentiveBase;
-        public override readonly base = allowListIncentiveBase;
-      },
+    AllowListIncentive: class TAllowListIncentive extends AllowListIncentive {
+      public static override base = allowListIncentiveBase;
+      public override readonly base = allowListIncentiveBase;
     },
-    CGDAIncentive: {
-      type: RegistryType.INCENTIVE,
-      name: 'CGDAIncentive',
-      base: cgdaIncentiveBase,
-      Test: class TCGDAIncentive extends CGDAIncentive {
-        public static override base = cgdaIncentiveBase;
-        public override readonly base = cgdaIncentiveBase;
-      },
+    CGDAIncentive: class TCGDAIncentive extends CGDAIncentive {
+      public static override base = cgdaIncentiveBase;
+      public override readonly base = cgdaIncentiveBase;
     },
-    ERC20Incentive: {
-      type: RegistryType.INCENTIVE,
-      name: 'ERC20Incentive',
-      base: erc20IncentiveBase,
-      Test: class TERC20Incentive extends ERC20Incentive {
-        public static override base = erc20IncentiveBase;
-        public override readonly base = erc20IncentiveBase;
-      },
+    ERC20Incentive: class TERC20Incentive extends ERC20Incentive {
+      public static override base = erc20IncentiveBase;
+      public override readonly base = erc20IncentiveBase;
     },
-    ERC1155Incentive: {
-      type: RegistryType.INCENTIVE,
-      name: 'ERC1155Incentive',
-      base: erc1155IncentiveBase,
-      Test: class TERC1155Incentive extends ERC1155Incentive {
-        public static override base = erc1155IncentiveBase;
-        public override readonly base = erc1155IncentiveBase;
-      },
+    ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
+      public static override base = erc1155IncentiveBase;
+      public override readonly base = erc1155IncentiveBase;
     },
-    PointsIncentive: {
-      type: RegistryType.INCENTIVE,
-      name: 'PointsIncentive',
-      base: pointsIncentiveBase,
-      Test: class TPointsIncentive extends PointsIncentive {
-        public static override base = pointsIncentiveBase;
-        public override readonly base = pointsIncentiveBase;
-      },
+    PointsIncentive: class TPointsIncentive extends PointsIncentive {
+      public static override base = pointsIncentiveBase;
+      public override readonly base = pointsIncentiveBase;
     },
-    SignerValidator: {
-      type: RegistryType.VALIDATOR,
-      name: 'SignerValidator',
-      base: signerValidatorBase,
-      Test: class TSignerValidator extends SignerValidator {
-        public static override base = signerValidatorBase;
-        public override readonly base = signerValidatorBase;
-      },
+    SignerValidator: class TSignerValidator extends SignerValidator {
+      public static override base = signerValidatorBase;
+      public override readonly base = signerValidatorBase;
     },
   };
 
-  for (const { type, name, base } of Object.values(bases)) {
-    await writeBoostRegistryRegister(config, {
-      account,
-      address: registry,
-      args: [type, name, base],
-    });
+  for (const [name, deployable] of Object.entries(bases)) {
+    await registry.register(deployable.registryType, name, deployable.base);
   }
 
   return {
@@ -308,11 +235,24 @@ export async function freshBudget(
   options: DeployableTestOptions,
   fixtures: Fixtures,
 ) {
-  const budget = new fixtures.bases.SimpleBudget.Test(defaultOptions, {
+  const budget = new fixtures.bases.SimpleBudget(defaultOptions, {
     owner: options.account.address,
-    authorized: [options.account.address],
+    authorized: [options.account.address, fixtures.core.assertValidAddress()],
   });
   await budget.deploy();
+  await writeSimpleBudgetInitialize(options.config, {
+    address: budget.assertValidAddress(),
+    account: options.account,
+    args: [
+      prepareSimpleBudgetPayload({
+        owner: options.account.address,
+        authorized: [
+          options.account.address,
+          fixtures.core.assertValidAddress(),
+        ],
+      }),
+    ],
+  });
   return budget;
 }
 

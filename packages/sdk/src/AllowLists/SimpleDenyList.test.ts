@@ -19,7 +19,7 @@ describe('SimpleDenyList', () => {
         allowed: [],
       },
     );
-    const address = await action.deploy();
-    expect(isAddress(address)).toBe(true);
+    await action.deploy();
+    expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 });

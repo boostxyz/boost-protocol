@@ -2,6 +2,7 @@ import {
   type CGDAIncentivePayload,
   type CGDAParameters,
   type ClaimPayload,
+  RegistryType,
   cgdaIncentiveAbi,
   prepareCGDAIncentivePayload,
   prepareClaimPayload,
@@ -35,9 +36,8 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   public static base = import.meta.env.VITE_CGDA_INCENTIVE_BASE;
   public override readonly base = CGDAIncentive.base;
 
-  constructor(options: DeployableOptions, payload: CGDAIncentivePayload) {
-    super(options, payload, true);
-  }
+  public static registryType: RegistryType = RegistryType.INCENTIVE;
+  public override readonly registryType: RegistryType = RegistryType.INCENTIVE;
 
   public async claims(params?: ReadParams<typeof cgdaIncentiveAbi, 'claims'>) {
     return readCgdaIncentiveClaims(this._config, {

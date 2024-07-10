@@ -58,7 +58,7 @@ export class Deployable<Payload = unknown> extends Contract {
     _payload?: Payload,
     _options?: DeployableOptions,
     waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
-  ): Promise<Address> {
+  ) {
     const config = _options?.config || this._config;
     const address = await getDeployedContractAddress(
       config,
@@ -66,7 +66,7 @@ export class Deployable<Payload = unknown> extends Contract {
       waitParams,
     );
     this._address = address;
-    return address;
+    return this;
   }
 
   public async deployRaw(
@@ -74,11 +74,13 @@ export class Deployable<Payload = unknown> extends Contract {
     _options?: DeployableOptions,
   ): Promise<Hash> {
     if (this.address) throw new DeployableAlreadyDeployedError(this.address);
-    const payload = _payload || this._payload;
-    const config = _options?.config || this._config;
-    return await deployContract(config, {
+    const [payload, options] = this.validateDeploymentConfig(
+      _payload,
+      _options,
+    );
+    return await deployContract(options.config, {
       ...this.buildParameters(payload),
-      ...this.optionallyAttachAccount(_options?.account),
+      ...this.optionallyAttachAccount(options.account),
     });
   }
 
@@ -87,7 +89,7 @@ export class Deployable<Payload = unknown> extends Contract {
     return this._account ? { account: this._account } : {};
   }
 
-  protected buildParameters(
+  public buildParameters(
     _payload?: Payload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {

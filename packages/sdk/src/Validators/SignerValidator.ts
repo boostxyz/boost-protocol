@@ -1,4 +1,5 @@
 import {
+  RegistryType,
   type SignerValidatorPayload,
   type SignerValidatorValidatePayload,
   prepareSignerValidatorPayload,
@@ -24,6 +25,9 @@ export type { SignerValidatorPayload };
 export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   public static base = import.meta.env.VITE_SIGNER_VALIDATOR_BASE;
   public override readonly base = SignerValidator.base;
+
+  public static registryType: RegistryType = RegistryType.VALIDATOR;
+  public override readonly registryType: RegistryType = RegistryType.VALIDATOR;
 
   public async signers(
     address: Address,

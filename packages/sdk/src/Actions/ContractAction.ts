@@ -1,5 +1,6 @@
 import {
   type ContractActionPayload,
+  RegistryType,
   contractActionAbi,
   prepareContractActionPayload,
   readContractActionChainId,
@@ -26,6 +27,9 @@ export type { ContractActionPayload };
 export class ContractAction extends DeployableTarget<ContractActionPayload> {
   public static base = import.meta.env.VITE_CONTRACT_ACTION_BASE;
   public override readonly base = ContractAction.base;
+
+  public static registryType: RegistryType = RegistryType.ACTION;
+  public override readonly registryType: RegistryType = RegistryType.ACTION;
 
   public async chainId(
     params?: ReadParams<typeof contractActionAbi, 'chainId'>,

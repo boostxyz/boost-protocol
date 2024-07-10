@@ -33,7 +33,7 @@ export class Contract {
     return this;
   }
 
-  protected assertValidAddress() {
+  public assertValidAddress() {
     const address = this.address;
     if (!address) throw new ContractAddressRequiredError();
     return address;

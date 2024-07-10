@@ -31,7 +31,7 @@ describe('BoostCore', () => {
     const { core, bases } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
-      address: core,
+      address: core.assertValidAddress(),
     });
 
     // to whom it may concern, this syntax is only used because we need to use test classes
@@ -41,21 +41,21 @@ describe('BoostCore', () => {
     const { budget, erc20 } = await fundBudget(defaultOptions, fixtures);
     const boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction.Test(defaultOptions, {
+      action: new bases.ContractAction(defaultOptions, {
         chainId: BigInt(31_337),
-        target: core,
+        target: core.assertValidAddress(),
         selector: '0xdeadbeef',
         value: 0n,
       }),
-      validator: new bases.SignerValidator.Test(defaultOptions, {
+      validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
       }),
-      allowList: new bases.SimpleAllowList.Test(defaultOptions, {
+      allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive.Test(defaultOptions, {
+        new bases.ERC20Incentive(defaultOptions, {
           asset: erc20.address!,
           reward: parseEther('1'),
           limit: 100n,
@@ -82,28 +82,28 @@ describe('BoostCore', () => {
     const { core, bases } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
-      address: core,
+      address: core.assertValidAddress(),
     });
     const { id } = await client.createBoost({
-      budget: new bases.SimpleBudget.Test(defaultOptions, {
+      budget: new bases.SimpleBudget(defaultOptions, {
         owner: testAccount.address,
         authorized: [testAccount.address],
       }),
-      action: new bases.ContractAction.Test(defaultOptions, {
+      action: new bases.ContractAction(defaultOptions, {
         chainId: BigInt(31_337),
-        target: core,
+        target: core.assertValidAddress(),
         selector: '0xdeadbeef',
         value: 0n,
       }),
-      validator: new bases.SignerValidator.Test(defaultOptions, {
+      validator: new bases.SignerValidator(defaultOptions, {
         signers: [testAccount.address],
       }),
-      allowList: new bases.SimpleAllowList.Test(defaultOptions, {
+      allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: testAccount.address,
         allowed: [testAccount.address],
       }),
       incentives: [
-        new bases.ERC20Incentive.Test(defaultOptions, {
+        new bases.ERC20Incentive(defaultOptions, {
           asset: (await freshERC20()).address!,
           reward: parseEther('1'),
           limit: 100n,

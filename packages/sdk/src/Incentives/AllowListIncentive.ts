@@ -1,6 +1,7 @@
 import {
   type AllowListIncentivePayload,
   type ClaimPayload,
+  RegistryType,
   allowListIncentiveAbi,
   prepareAllowListIncentivePayload,
   prepareClaimPayload,
@@ -20,7 +21,6 @@ import type { Address, Hex } from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import type {
   DeployableOptions,
-  DeployablePayloadOrAddress,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
@@ -32,9 +32,8 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   public static base = import.meta.env.VITE_ALLOWLIST_INCENTIVE_BASE;
   public override readonly base = AllowListIncentive.base;
 
-  constructor(options: DeployableOptions, payload: AllowListIncentivePayload) {
-    super(options, payload, true);
-  }
+  public static registryType: RegistryType = RegistryType.INCENTIVE;
+  public override readonly registryType: RegistryType = RegistryType.INCENTIVE;
 
   public async claims(
     params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,

@@ -21,11 +21,7 @@ export class MockERC1155 extends Deployable {
     amount: bigint,
     params: WriteParams<typeof mockErc1155Abi, 'mint'> = {},
   ) {
-    return this.awaitResult(
-      this.mintRaw(address, id, amount, params),
-      mockErc1155Abi,
-      simulateMockErc1155Mint,
-    );
+    return this.awaitResult(this.mintRaw(address, id, amount, params));
   }
 
   public async mintRaw(
@@ -34,12 +30,15 @@ export class MockERC1155 extends Deployable {
     amount: bigint,
     params: WriteParams<typeof mockErc1155Abi, 'mint'> = {},
   ) {
-    return writeMockErc1155Mint(this._config, {
+    const { request, result } = await simulateMockErc1155Mint(this._config, {
       address: this.assertValidAddress(),
       args: [address, id, amount],
+      ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+    const hash = await writeMockErc1155Mint(this._config, request);
+    return { hash, result };
   }
 
   public async burn(
@@ -48,11 +47,7 @@ export class MockERC1155 extends Deployable {
     amount: bigint,
     params: WriteParams<typeof mockErc1155Abi, 'burn'> = {},
   ) {
-    return this.awaitResult(
-      this.burnRaw(address, id, amount, params),
-      mockErc1155Abi,
-      simulateMockErc1155Burn,
-    );
+    return this.awaitResult(this.burnRaw(address, id, amount, params));
   }
 
   public async burnRaw(
@@ -61,12 +56,15 @@ export class MockERC1155 extends Deployable {
     amount: bigint,
     params: WriteParams<typeof mockErc1155Abi, 'burn'> = {},
   ) {
-    return writeMockErc1155Burn(this._config, {
+    const { request, result } = await simulateMockErc1155Burn(this._config, {
       address: this.assertValidAddress(),
       args: [address, id, amount],
+      ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+    const hash = await writeMockErc1155Burn(this._config, request);
+    return { hash, result };
   }
 
   public override buildParameters(

@@ -343,10 +343,11 @@ export async function freshERC721(
 
 export async function fundErc20(
   options: DeployableTestOptions,
-  erc20: MockERC20,
+  erc20?: MockERC20,
   funded: Address[] = [],
   amount: bigint = parseEther('100'),
 ) {
+  if (!erc20) erc20 = await freshERC20();
   for (const address of [testAccount.address, ...(funded ?? [])]) {
     await erc20.mint(address, amount);
     const balance = await readMockErc20BalanceOf(options.config, {
@@ -355,9 +356,10 @@ export async function fundErc20(
     });
     if (amount !== balance) throw new Error(`Balance did not match`);
   }
+  return erc20;
 }
 
-export async function mintErc1155(
+export async function fundErc1155(
   options: DeployableTestOptions,
   erc1155?: MockERC1155,
   tokenId = 1n,
@@ -382,8 +384,8 @@ export async function fundBudget(
   erc1155?: MockERC1155,
 ) {
   if (!budget) budget = await freshBudget(options, fixtures);
-  if (!erc20) erc20 = await freshERC20(options);
-  if (!erc1155) erc1155 = await freshERC1155(options);
+  if (!erc20) erc20 = await fundErc20(options);
+  if (!erc1155) erc1155 = await fundErc1155(options);
 
   await budget.allocate(
     {

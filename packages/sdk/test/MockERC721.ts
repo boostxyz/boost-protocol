@@ -15,25 +15,24 @@ import type { WriteParams } from '../src/utils';
 export class MockERC721 extends Deployable {
   public async mint(
     address: Address,
-    params: WriteParams<typeof mockErc721Abi, 'mint'>,
+    params?: WriteParams<typeof mockErc721Abi, 'mint'>,
   ) {
-    return this.awaitResult(
-      this.mintRaw(address, params),
-      mockErc721Abi,
-      simulateMockErc721Mint,
-    );
+    return this.awaitResult(this.mintRaw(address, params));
   }
 
   public async mintRaw(
     address: Address,
-    params: WriteParams<typeof mockErc721Abi, 'mint'>,
+    params?: WriteParams<typeof mockErc721Abi, 'mint'>,
   ) {
-    return writeMockErc721Mint(this._config, {
+    const { request, result } = await simulateMockErc721Mint(this._config, {
       address: this.assertValidAddress(),
       args: [address],
+      ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+    const hash = await writeMockErc721Mint(this._config, request);
+    return { hash, result };
   }
 
   public override buildParameters(

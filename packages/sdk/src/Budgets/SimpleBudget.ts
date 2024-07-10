@@ -12,6 +12,7 @@ import {
   readSimpleBudgetSupportsInterface,
   readSimpleBudgetTotal,
   simpleBudgetAbi,
+  simulateSimpleBudgetAllocate,
   simulateSimpleBudgetDisburse,
   simulateSimpleBudgetDisburseBatch,
   simulateSimpleBudgetReclaim,
@@ -54,7 +55,6 @@ export function prepareTransfer(
   transfer: FungibleTransferPayload | ERC1155TransferPayload,
 ) {
   if (isFungibleTransfer(transfer)) {
-    console.log('isFungibleTransfer');
     return prepareFungibleTransfer(transfer);
   } else if (isERC1155TransferPayload(transfer)) {
     return prepareERC1155Transfer(transfer);
@@ -76,26 +76,18 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'allocate'>,
   ) {
-    const hash = await writeSimpleBudgetAllocate(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareTransfer(transfer)],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-    return { hash, result: true };
-    // const { request, result } = await simulateSimpleBudgetAllocate(
-    //   this._config,
-    //   {
-    //     address: this.assertValidAddress(),
-    //     args: [prepareTransfer(transfer)],
-    //     ...this.optionallyAttachAccount(),
-    //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-    //     ...(params as any),
-    //   },
-    // );
-    // const hash = await writeSimpleBudgetAllocate(this._config, request);
-    // return { hash, result };
+    const { request, result } = await simulateSimpleBudgetAllocate(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [prepareTransfer(transfer)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeSimpleBudgetAllocate(this._config, request);
+    return { hash, result };
   }
 
   public async reclaim(

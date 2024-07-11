@@ -4,6 +4,7 @@ import {
   readErc20IncentiveOwner,
   readSimpleBudgetIsAuthorized,
 } from '@boostxyz/evm';
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { parseEther } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
@@ -132,7 +133,75 @@ describe('BoostCore', () => {
     expect(boost.incentives.at(0) instanceof ERC20Incentive).toBe(true);
   });
 
-  // test('can reuse an existing action', async () => {
+  test('can reuse an existing action', async () => {
+    const { core, bases } = fixtures;
+    const client = new BoostCore({
+      ...defaultOptions,
+      address: core.assertValidAddress(),
+    });
 
-  // });
+    // to whom it may concern, this syntax is only used because we need to use test classes
+    // that are preconfigured with the dynamic base addresses generated at test time.
+    // normally you would use the follow api for brevity
+    // budget: client.SimpleBudget({} | '0xaddress')
+    const { budget, erc20 } = await fundBudget(defaultOptions, fixtures);
+
+    await erc20.mint(defaultOptions.account.address, parseEther('1000'));
+    await erc20.approve(defaultOptions.account.address, parseEther('1000'));
+    await budget.allocate({
+      amount: parseEther('1000'),
+      asset: erc20.assertValidAddress(),
+      target: defaultOptions.account.address,
+    });
+
+    const _boost = await client.createBoost({
+      budget: budget,
+      action: new bases.ContractAction(defaultOptions, {
+        chainId: BigInt(31_337),
+        target: core.assertValidAddress(),
+        selector: '0xdeadbeef',
+        value: 0n,
+      }),
+      validator: new bases.SignerValidator(defaultOptions, {
+        signers: [defaultOptions.account.address],
+      }),
+      allowList: new bases.SimpleAllowList(defaultOptions, {
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        new bases.ERC20Incentive(defaultOptions, {
+          asset: erc20.address!,
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+      ],
+    });
+    const boost = await client.createBoost({
+      budget: budget,
+      action: new bases.ContractAction(
+        defaultOptions,
+        _boost.action.assertValidAddress(),
+        false,
+      ),
+      validator: new bases.SignerValidator(defaultOptions, {
+        signers: [defaultOptions.account.address],
+      }),
+      allowList: new bases.SimpleAllowList(defaultOptions, {
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        new bases.ERC20Incentive(defaultOptions, {
+          asset: erc20.address!,
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+      ],
+    });
+    const onChainBoost = await client.readBoost(boost.id);
+    expect(onChainBoost.action).toBe(_boost.action.assertValidAddress());
+  });
 });

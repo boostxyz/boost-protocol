@@ -1,7 +1,9 @@
 import {
   mockErc20Abi,
+  simulateMockErc20Approve,
   simulateMockErc20Mint,
   simulateMockErc20MintPayable,
+  writeMockErc20Approve,
   writeMockErc20Mint,
   writeMockErc20MintPayable,
 } from '@boostxyz/evm';
@@ -15,6 +17,30 @@ import {
 import type { WriteParams } from './../src/utils';
 
 export class MockERC20 extends Deployable {
+  public async approve(
+    address: Address,
+    value: bigint,
+    params?: WriteParams<typeof mockErc20Abi, 'approve'>,
+  ) {
+    return this.awaitResult(this.approveRaw(address, value, params));
+  }
+
+  public async approveRaw(
+    address: Address,
+    value: bigint,
+    params?: WriteParams<typeof mockErc20Abi, 'approve'>,
+  ) {
+    const { request, result } = await simulateMockErc20Approve(this._config, {
+      address: this.assertValidAddress(),
+      args: [address, value],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+    const hash = await writeMockErc20Approve(this._config, request);
+    return { hash, result };
+  }
+
   public async mint(
     address: Address,
     value: bigint,

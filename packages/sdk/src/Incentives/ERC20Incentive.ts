@@ -36,11 +36,8 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { ERC20IncentivePayload };
 
 export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
-  public static base = import.meta.env.VITE_ERC20_INCENTIVE_BASE;
-  public override readonly base = ERC20Incentive.base;
-
-  public static registryType: RegistryType = RegistryType.INCENTIVE;
-  public override readonly registryType: RegistryType = RegistryType.INCENTIVE;
+  public static override base = import.meta.env.VITE_ERC20_INCENTIVE_BASE;
+  public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
   public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
     return readErc20IncentiveClaims(this._config, {

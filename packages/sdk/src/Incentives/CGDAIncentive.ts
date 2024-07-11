@@ -33,11 +33,8 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { CGDAIncentivePayload };
 
 export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
-  public static base = import.meta.env.VITE_CGDA_INCENTIVE_BASE;
-  public override readonly base = CGDAIncentive.base;
-
-  public static registryType: RegistryType = RegistryType.INCENTIVE;
-  public override readonly registryType: RegistryType = RegistryType.INCENTIVE;
+  public static override base = import.meta.env.VITE_CGDA_INCENTIVE_BASE;
+  public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
   public async claims(params?: ReadParams<typeof cgdaIncentiveAbi, 'claims'>) {
     return readCgdaIncentiveClaims(this._config, {

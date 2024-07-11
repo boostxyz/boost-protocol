@@ -40,11 +40,8 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { VestingBudgetPayload };
 
 export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
-  public static base = import.meta.env.VITE_VESTING_BUDGET_BASE;
-  public override readonly base = VestingBudget.base;
-
-  public static registryType: RegistryType = RegistryType.BUDGET;
-  public override readonly registryType: RegistryType = RegistryType.BUDGET;
+  public static override base = import.meta.env.VITE_VESTING_BUDGET_BASE;
+  public static override registryType: RegistryType = RegistryType.BUDGET;
 
   public start(params?: ReadParams<typeof vestingBudgetAbi, 'start'>) {
     return readVestingBudgetStart(this._config, {

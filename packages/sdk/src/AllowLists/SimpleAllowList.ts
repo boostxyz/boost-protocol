@@ -23,11 +23,8 @@ import type { ReadParams } from '../utils';
 export type { SimpleAllowListPayload };
 
 export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
-  public static base = import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE;
-  public override readonly base = SimpleAllowList.base;
-
-  public static registryType: RegistryType = RegistryType.ALLOW_LIST;
-  public override readonly registryType: RegistryType = RegistryType.ALLOW_LIST;
+  public static override base = import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE;
+  public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
 
   public async isAllowed(
     address: Address,

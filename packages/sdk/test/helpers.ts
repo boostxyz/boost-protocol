@@ -1,15 +1,9 @@
 import {
-  RegistryType,
-  prepareSimpleBudgetPayload,
   readMockErc20BalanceOf,
   readMockErc1155BalanceOf,
-  writeBoostRegistryRegister,
   writeMockErc20Approve,
   writeMockErc1155SetApprovalForAll,
-  writeSimpleBudgetInitialize,
 } from '@boostxyz/evm';
-import BoostCoreArtifact from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
-import BoostRegistryArtifact from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
@@ -56,6 +50,7 @@ export const defaultOptions: DeployableTestOptions = {
 };
 
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
+export type BudgetFixtures = Awaited<ReturnType<typeof fundBudget>>;
 
 export async function deployFixtures(
   options: DeployableTestOptions = defaultOptions,
@@ -65,6 +60,7 @@ export async function deployFixtures(
   const core = await new BoostCore({
     ...options,
     registryAddress: registry.assertValidAddress(),
+    protocolFeeReceiver: account.address,
   }).deploy();
 
   const contractActionBase = await getDeployedContractAddress(
@@ -172,51 +168,39 @@ export async function deployFixtures(
   const bases = {
     ContractAction: class TContractAction extends ContractAction {
       public static override base = contractActionBase;
-      public override readonly base = contractActionBase;
     },
     ERC721MintAction: class TERC721MintAction extends ERC721MintAction {
       public static override base = erc721MintActionBase;
-      public override readonly base = erc721MintActionBase;
     },
     SimpleAllowList: class TSimpleAllowList extends SimpleAllowList {
       public static override base = simpleAllowListBase;
-      public override readonly base = simpleAllowListBase;
     },
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
       public static override base = simpleDenyListBase;
-      public override readonly base = simpleDenyListBase;
     },
     SimpleBudget: class TSimpleBudget extends SimpleBudget {
       public static override base = simpleBudgetBase;
-      public override readonly base = simpleBudgetBase;
     },
     VestingBudget: class TVestingBudget extends VestingBudget {
       public static override base = vestingBudgetBase;
-      public override readonly base = vestingBudgetBase;
     },
     AllowListIncentive: class TAllowListIncentive extends AllowListIncentive {
       public static override base = allowListIncentiveBase;
-      public override readonly base = allowListIncentiveBase;
     },
     CGDAIncentive: class TCGDAIncentive extends CGDAIncentive {
       public static override base = cgdaIncentiveBase;
-      public override readonly base = cgdaIncentiveBase;
     },
     ERC20Incentive: class TERC20Incentive extends ERC20Incentive {
       public static override base = erc20IncentiveBase;
-      public override readonly base = erc20IncentiveBase;
     },
     ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
       public static override base = erc1155IncentiveBase;
-      public override readonly base = erc1155IncentiveBase;
     },
     PointsIncentive: class TPointsIncentive extends PointsIncentive {
       public static override base = pointsIncentiveBase;
-      public override readonly base = pointsIncentiveBase;
     },
     SignerValidator: class TSignerValidator extends SignerValidator {
       public static override base = signerValidatorBase;
-      public override readonly base = signerValidatorBase;
     },
   };
 
@@ -235,25 +219,13 @@ export async function freshBudget(
   options: DeployableTestOptions,
   fixtures: Fixtures,
 ) {
-  const budget = new fixtures.bases.SimpleBudget(defaultOptions, {
-    owner: options.account.address,
-    authorized: [options.account.address, fixtures.core.assertValidAddress()],
-  });
-  await budget.deploy();
-  await writeSimpleBudgetInitialize(options.config, {
-    address: budget.assertValidAddress(),
-    account: options.account,
-    args: [
-      prepareSimpleBudgetPayload({
-        owner: options.account.address,
-        authorized: [
-          options.account.address,
-          fixtures.core.assertValidAddress(),
-        ],
-      }),
-    ],
-  });
-  return budget;
+  return fixtures.registry.clone(
+    crypto.randomUUID(),
+    new fixtures.bases.SimpleBudget(options, {
+      owner: options.account.address,
+      authorized: [options.account.address, fixtures.core.assertValidAddress()],
+    }),
+  );
 }
 
 export async function freshERC20(

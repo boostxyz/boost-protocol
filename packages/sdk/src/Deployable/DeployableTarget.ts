@@ -19,9 +19,10 @@ import {
 } from './Deployable';
 
 export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
-  readonly base: string = zeroAddress;
+  static readonly base: Address = zeroAddress;
+  static readonly registryType: RegistryType = RegistryType.ACTION;
   readonly isBase: boolean = true;
-  readonly registryType: RegistryType = RegistryType.ACTION;
+
   constructor(
     options: DeployableOptions,
     payload: DeployablePayloadOrAddress<Payload>,
@@ -29,6 +30,14 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
   ) {
     super(options, payload);
     if (isBase !== undefined) this.isBase = isBase;
+  }
+
+  public get base(): Address {
+    return (this.constructor as typeof DeployableTarget).base;
+  }
+
+  public get registryType(): RegistryType {
+    return (this.constructor as typeof DeployableTarget).registryType;
   }
 
   public override async deploy(
@@ -52,6 +61,7 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
     return await deployContract(config, {
       ...deployment,
       ...this.optionallyAttachAccount(_options?.account),
+      // Deployable targets don't construct with arguments, they initialize with encoded payloads
       args: [],
     });
   }

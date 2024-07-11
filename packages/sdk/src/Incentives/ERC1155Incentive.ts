@@ -36,11 +36,8 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { ERC1155IncentivePayload, ERC1155StrategyType };
 
 export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> {
-  public static base = import.meta.env.VITE_ERC1155_INCENTIVE_BASE;
-  public override readonly base = ERC1155Incentive.base;
-
-  public static registryType: RegistryType = RegistryType.INCENTIVE;
-  public override readonly registryType: RegistryType = RegistryType.INCENTIVE;
+  public static override base = import.meta.env.VITE_ERC1155_INCENTIVE_BASE;
+  public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
   public async claims(
     params?: ReadParams<typeof erc1155IncentiveAbi, 'claims'>,

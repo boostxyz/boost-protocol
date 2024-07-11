@@ -63,11 +63,8 @@ export function prepareTransfer(
 }
 
 export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
-  public static base = import.meta.env.VITE_SIMPLE_BUDGET_BASE;
-  public override readonly base = SimpleBudget.base;
-
-  public static registryType: RegistryType = RegistryType.BUDGET;
-  public override readonly registryType: RegistryType = RegistryType.BUDGET;
+  public static override base = import.meta.env.VITE_SIMPLE_BUDGET_BASE;
+  public static override registryType: RegistryType = RegistryType.BUDGET;
 
   public async allocate(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,

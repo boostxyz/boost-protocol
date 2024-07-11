@@ -34,7 +34,8 @@
     "bench:ci": "CI=true vitest bench",
     "clean": "rm -rf dist",
     "test": "vitest dev",
-    "test:ci": "CI=true vitest --coverage"
+    "test:ci": "CI=true vitest --coverage",
+    "typedoc": "npx typedoc"
   },
   "devDependencies": {
     "@boostxyz/evm": "workspace:*"

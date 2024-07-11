@@ -182,7 +182,6 @@ export class BoostCore extends Deployable<[Address, Address]> {
     let budgetPayload: OnChainBoostPayload['budget'] = zeroAddress;
     if (budget.address) {
       budgetPayload = budget.address;
-      console.log(await budget.isAuthorized(coreAddress));
       if (!(await budget.isAuthorized(coreAddress))) {
         throw new BudgetMustAuthorizeBoostCore(coreAddress);
       }
@@ -286,8 +285,6 @@ export class BoostCore extends Deployable<[Address, Address]> {
       }
     }
 
-    console.log(incentivesPayloads);
-
     const onChainPayload = {
       budget: budgetPayload,
       action: actionPayload,
@@ -299,13 +296,6 @@ export class BoostCore extends Deployable<[Address, Address]> {
       maxParticipants,
       owner,
     };
-
-    console.log(onChainPayload);
-
-    console.log({
-      args: [prepareBoostPayload(onChainPayload)],
-      ...this.optionallyAttachAccount(options.account),
-    });
 
     const boostHash = await boostFactory(options.config, {
       args: [prepareBoostPayload(onChainPayload)],

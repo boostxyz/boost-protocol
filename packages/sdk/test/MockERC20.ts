@@ -44,7 +44,8 @@ export class MockERC20 extends Deployable {
     value: bigint,
     params?: WriteParams<typeof mockErc20Abi, 'mintPayable'>,
   ) {
-    return this.awaitResult(this.mintPayableRaw(address, value, params));
+    // biome-ignore lint/suspicious/noExplicitAny: this is a mock contract, it's fine
+    return this.awaitResult(this.mintPayableRaw(address, value, params as any));
   }
   public async mintPayableRaw(
     address: Address,

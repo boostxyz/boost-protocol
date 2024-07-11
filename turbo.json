@@ -10,6 +10,10 @@
     "test:ci": {
       "outputs": ["coverage/**"]
     },
+    "typedoc": {
+      "inputs": ["src"],
+      "outputs": ["docs/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

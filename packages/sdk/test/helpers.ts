@@ -210,6 +210,7 @@ export async function deployFixtures(
   };
 
   for (const [name, deployable] of Object.entries(bases)) {
+    console.log(name, deployable.base);
     await registry.register(deployable.registryType, name, deployable.base);
   }
 

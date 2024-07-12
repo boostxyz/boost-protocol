@@ -274,6 +274,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
       if (incentive.address) {
         throw new IncentiveNotCloneableError(incentive);
       }
+      console.log(incentive.base);
       incentivesPayloads[i] = {
         isBase: true,
         instance: incentive.base,

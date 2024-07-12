@@ -38,7 +38,11 @@ import {
 } from '../errors';
 import type { ReadParams, WriteParams } from '../utils';
 
-export type { SimpleBudgetPayload };
+export type {
+  SimpleBudgetPayload,
+  FungibleTransferPayload,
+  ERC1155TransferPayload,
+};
 
 export function isFungibleTransfer(
   transfer: FungibleTransferPayload | ERC1155TransferPayload,

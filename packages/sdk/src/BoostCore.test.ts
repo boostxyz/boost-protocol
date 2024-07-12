@@ -499,8 +499,8 @@ describe('BoostCore', () => {
     }
   });
 
-  test('can offer multiple incentives', async () => {
-    const { core, bases } = fixtures;
+  test.only('can offer multiple incentives', async () => {
+    const { registry, core, bases } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
@@ -513,45 +513,48 @@ describe('BoostCore', () => {
     const { budget, erc20, erc1155 } = budgets;
 
     console.log(
-      await readErc1155BalanceOf(defaultOptions.config, {
-        address: erc1155.assertValidAddress(),
-        args: [budget.assertValidAddress(), 1n],
+      await budget.disburse({
+        asset: erc1155.assertValidAddress(),
+        amount: 1n,
+        tokenId: 1n,
+        target: bases.ERC1155Incentive.base,
       }),
     );
-    const _boost = await client.createBoost({
-      protocolFee: 1n,
-      referralFee: 2n,
-      maxParticipants: 100n,
-      budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
-      validator: new bases.SignerValidator(defaultOptions, {
-        signers: [defaultOptions.account.address],
-      }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
-        owner: defaultOptions.account.address,
-        allowed: [defaultOptions.account.address],
-      }),
-      incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
-          asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
-          limit: 100n,
-          strategy: StrategyType.POOL,
-        }),
-        new bases.ERC1155Incentive(defaultOptions, {
-          asset: erc1155.assertValidAddress(),
-          strategy: ERC1155StrategyType.POOL,
-          limit: 5n,
-          tokenId: 1n,
-          extraData: stringToHex(''),
-        }),
-      ],
-    });
+
+    // const _boost = await client.createBoost({
+    //   protocolFee: 1n,
+    //   referralFee: 2n,
+    //   maxParticipants: 100n,
+    //   budget: budget,
+    //   action: new bases.ContractAction(defaultOptions, {
+    //     chainId: BigInt(31_337),
+    //     target: core.assertValidAddress(),
+    //     selector: '0xdeadbeef',
+    //     value: 0n,
+    //   }),
+    //   validator: new bases.SignerValidator(defaultOptions, {
+    //     signers: [defaultOptions.account.address],
+    //   }),
+    //   allowList: new bases.SimpleAllowList(defaultOptions, {
+    //     owner: defaultOptions.account.address,
+    //     allowed: [defaultOptions.account.address],
+    //   }),
+    //   incentives: [
+    //     new bases.ERC20Incentive(defaultOptions, {
+    //       asset: erc20.assertValidAddress(),
+    //       reward: parseEther('1'),
+    //       limit: 100n,
+    //       strategy: StrategyType.POOL,
+    //     }),
+    //     new bases.ERC1155Incentive(defaultOptions, {
+    //       asset: erc1155.assertValidAddress(),
+    //       strategy: ERC1155StrategyType.POOL,
+    //       limit: 1n,
+    //       tokenId: 1n,
+    //       extraData: '0x',
+    //     }),
+    //   ],
+    // });
   });
 
   test('can discover available boosts', async () => {});

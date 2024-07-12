@@ -5,6 +5,7 @@ import {
   Hex,
   encodeAbiParameters,
   parseAbiParameters,
+  stringToHex,
   zeroAddress,
   zeroHash
 } from 'viem';
@@ -249,7 +250,7 @@ export function prepareERC1155Payload({
       'ERC1155Payload payload',
       'struct ERC1155Payload { uint256 tokenId; uint256 amount; bytes data; }',
     ]),
-    [{ tokenId, amount, data: zeroHash }],
+    [{ tokenId, amount, data: '0x' }],
   );
 }
 

@@ -1,6 +1,10 @@
-import { StrategyType } from '@boostxyz/evm';
+import {
+  ERC1155StrategyType,
+  StrategyType,
+  readErc1155BalanceOf,
+} from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { parseEther } from 'viem';
+import { parseEther, stringToBytes, stringToHex } from 'viem';
 import { beforeEach, describe, expect, test } from 'vitest';
 import {
   type BudgetFixtures,
@@ -494,4 +498,63 @@ describe('BoostCore', () => {
       expect(e).toBeInstanceOf(IncentiveNotCloneableError);
     }
   });
+
+  test('can offer multiple incentives', async () => {
+    const { core, bases } = fixtures;
+    const client = new BoostCore({
+      ...defaultOptions,
+      address: core.assertValidAddress(),
+    });
+
+    // to whom it may concern, this syntax is only used because we need to use test classes
+    // that are preconfigured with the dynamic base addresses generated at test time.
+    // normally you would use the follow api for brevity
+    // budget: client.SimpleBudget({} | '0xaddress')
+    const { budget, erc20, erc1155 } = budgets;
+
+    console.log(
+      await readErc1155BalanceOf(defaultOptions.config, {
+        address: erc1155.assertValidAddress(),
+        args: [budget.assertValidAddress(), 1n],
+      }),
+    );
+    const _boost = await client.createBoost({
+      protocolFee: 1n,
+      referralFee: 2n,
+      maxParticipants: 100n,
+      budget: budget,
+      action: new bases.ContractAction(defaultOptions, {
+        chainId: BigInt(31_337),
+        target: core.assertValidAddress(),
+        selector: '0xdeadbeef',
+        value: 0n,
+      }),
+      validator: new bases.SignerValidator(defaultOptions, {
+        signers: [defaultOptions.account.address],
+      }),
+      allowList: new bases.SimpleAllowList(defaultOptions, {
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        new bases.ERC20Incentive(defaultOptions, {
+          asset: erc20.assertValidAddress(),
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+        new bases.ERC1155Incentive(defaultOptions, {
+          asset: erc1155.assertValidAddress(),
+          strategy: ERC1155StrategyType.POOL,
+          limit: 5n,
+          tokenId: 1n,
+          extraData: stringToHex(''),
+        }),
+      ],
+    });
+  });
+
+  test('can discover available boosts', async () => {});
+
+  test('can participate in a boost', async () => {});
 });

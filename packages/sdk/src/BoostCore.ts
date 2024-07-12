@@ -272,14 +272,20 @@ export class BoostCore extends Deployable<[Address, Address]> {
       // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
       const incentive = incentives.at(i)!;
       if (incentive.address) {
-        throw new IncentiveNotCloneableError(incentive);
+        const isBase = incentive.address === incentive.base || incentive.isBase;
+        incentivesPayloads[i] = {
+          isBase: isBase,
+          instance: incentive.address,
+          parameters: isBase
+            ? incentive.buildParameters(undefined, options).args.at(0) ||
+              zeroHash
+            : zeroHash,
+        };
+      } else {
+        incentivesPayloads[i]!.parameters =
+          incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
+        incentivesPayloads[i]!.instance = incentive.base;
       }
-      console.log(incentive.base);
-      incentivesPayloads[i] = {
-        isBase: true,
-        instance: incentive.base,
-        parameters: incentive.buildParameters(undefined, options).args.at(0)!,
-      };
     }
 
     const onChainPayload = {

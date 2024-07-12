@@ -512,49 +512,53 @@ describe('BoostCore', () => {
     // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20, erc1155 } = budgets;
 
-    console.log(
-      await budget.disburse({
-        asset: erc1155.assertValidAddress(),
-        amount: 1n,
-        tokenId: 1n,
-        target: bases.ERC1155Incentive.base,
-      }),
-    );
+    const cgdaIncentive = new bases.CGDAIncentive(defaultOptions, {
+      asset: erc20.assertValidAddress(),
+      initialReward: 1n,
+      totalBudget: 10n,
+      rewardBoost: 1n,
+      rewardDecay: 1n,
+    });
+    await cgdaIncentive.deploy();
+    await erc20.mint(cgdaIncentive.assertValidAddress(), 10n);
+    console.log(cgdaIncentive.address);
 
-    // const _boost = await client.createBoost({
-    //   protocolFee: 1n,
-    //   referralFee: 2n,
-    //   maxParticipants: 100n,
-    //   budget: budget,
-    //   action: new bases.ContractAction(defaultOptions, {
-    //     chainId: BigInt(31_337),
-    //     target: core.assertValidAddress(),
-    //     selector: '0xdeadbeef',
-    //     value: 0n,
-    //   }),
-    //   validator: new bases.SignerValidator(defaultOptions, {
-    //     signers: [defaultOptions.account.address],
-    //   }),
-    //   allowList: new bases.SimpleAllowList(defaultOptions, {
-    //     owner: defaultOptions.account.address,
-    //     allowed: [defaultOptions.account.address],
-    //   }),
-    //   incentives: [
-    //     new bases.ERC20Incentive(defaultOptions, {
-    //       asset: erc20.assertValidAddress(),
-    //       reward: parseEther('1'),
-    //       limit: 100n,
-    //       strategy: StrategyType.POOL,
-    //     }),
-    //     new bases.ERC1155Incentive(defaultOptions, {
-    //       asset: erc1155.assertValidAddress(),
-    //       strategy: ERC1155StrategyType.POOL,
-    //       limit: 1n,
-    //       tokenId: 1n,
-    //       extraData: '0x',
-    //     }),
-    //   ],
-    // });
+    const _boost = await client.createBoost({
+      protocolFee: 1n,
+      referralFee: 2n,
+      maxParticipants: 100n,
+      budget: budget,
+      action: new bases.ContractAction(defaultOptions, {
+        chainId: BigInt(31_337),
+        target: core.assertValidAddress(),
+        selector: '0xdeadbeef',
+        value: 0n,
+      }),
+      validator: new bases.SignerValidator(defaultOptions, {
+        signers: [defaultOptions.account.address],
+      }),
+      allowList: new bases.SimpleAllowList(defaultOptions, {
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        // new bases.ERC20Incentive(defaultOptions, {
+        //   asset: erc20.assertValidAddress(),
+        //   reward: parseEther('1'),
+        //   limit: 100n,
+        //   strategy: StrategyType.POOL,
+        // }),
+        // new bases.ERC1155Incentive(defaultOptions, {
+        //   asset: erc1155.assertValidAddress(),
+        //   strategy: ERC1155StrategyType.POOL,
+        //   limit: 1n,
+        //   tokenId: 1n,
+        //   extraData: '0x',
+        // }),
+        cgdaIncentive,
+      ],
+    });
+    console.log(_boost.incentives.at(0).address);
   });
 
   test('can discover available boosts', async () => {});

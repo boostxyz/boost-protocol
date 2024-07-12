@@ -210,7 +210,7 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
 
   public total(
     asset: Address,
-    tokenId: bigint | undefined,
+    tokenId?: bigint | undefined,
     params?: ReadParams<typeof simpleBudgetAbi, 'total'>,
   ) {
     return readSimpleBudgetTotal(this._config, {
@@ -223,7 +223,7 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
 
   public available(
     asset: Address,
-    tokenId: bigint | undefined,
+    tokenId?: bigint | undefined,
     params?: ReadParams<typeof simpleBudgetAbi, 'available'>,
   ) {
     return readSimpleBudgetAvailable(this._config, {
@@ -236,7 +236,7 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
 
   public distributed(
     asset: Address,
-    tokenId: bigint | undefined,
+    tokenId?: bigint | undefined,
     params?: ReadParams<typeof simpleBudgetAbi, 'distributed'>,
   ) {
     return readSimpleBudgetDistributed(this._config, {

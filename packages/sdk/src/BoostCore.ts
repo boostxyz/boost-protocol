@@ -83,6 +83,7 @@ import {
   BoostCoreNoIdentifierEmitted,
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
+  IncentiveNotCloneableError,
   NoContractAddressUponReceiptError,
 } from './errors';
 import type { ReadParams, WriteParams } from './utils';
@@ -271,18 +272,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
       // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
       const incentive = incentives.at(i)!;
       if (incentive.address) {
-        incentivesPayloads[i] = {
-          isBase: true,
-          instance: incentive.base,
-          parameters: incentive.buildParameters(undefined, options).args.at(0)!,
-        };
-      } else {
-        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-        incentivesPayloads[i]!.parameters =
-          incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
-        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-        incentivesPayloads[i]!.instance = incentive.base;
+        throw new IncentiveNotCloneableError(incentive);
       }
+      incentivesPayloads[i] = {
+        isBase: true,
+        instance: incentive.base,
+        parameters: incentive.buildParameters(undefined, options).args.at(0)!,
+      };
     }
 
     const onChainPayload = {

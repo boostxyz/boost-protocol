@@ -33,6 +33,10 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   public static override base = import.meta.env.VITE_POINTS_INCENTIVE_BASE;
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
+  constructor(options: DeployableOptions, payload: PointsIncentivePayload) {
+    super(options, payload, true);
+  }
+
   public async claims(
     params?: ReadParams<typeof pointsIncentiveAbi, 'claims'>,
   ) {

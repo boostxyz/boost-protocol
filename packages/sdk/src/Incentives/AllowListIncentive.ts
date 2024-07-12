@@ -32,6 +32,10 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   public static override base = import.meta.env.VITE_ALLOWLIST_INCENTIVE_BASE;
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
+  constructor(options: DeployableOptions, payload: AllowListIncentivePayload) {
+    super(options, payload, true);
+  }
+
   public async claims(
     params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,
   ) {

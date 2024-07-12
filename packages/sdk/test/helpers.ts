@@ -16,6 +16,7 @@ import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { deployContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
@@ -50,7 +51,11 @@ export const defaultOptions: DeployableTestOptions = {
 };
 
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
-export type BudgetFixtures = Awaited<ReturnType<typeof fundBudget>>;
+export type BudgetFixtures = {
+  budget: SimpleBudget;
+  erc20: MockERC20;
+  erc1155: MockERC1155;
+};
 
 export async function deployFixtures(
   options: DeployableTestOptions = defaultOptions,
@@ -215,17 +220,22 @@ export async function deployFixtures(
   };
 }
 
-export async function freshBudget(
+export function freshBudget(
   options: DeployableTestOptions,
   fixtures: Fixtures,
 ) {
-  return fixtures.registry.clone(
-    crypto.randomUUID(),
-    new fixtures.bases.SimpleBudget(options, {
-      owner: options.account.address,
-      authorized: [options.account.address, fixtures.core.assertValidAddress()],
-    }),
-  );
+  return async function freshBudget() {
+    return fixtures.registry.clone(
+      crypto.randomUUID(),
+      new fixtures.bases.SimpleBudget(options, {
+        owner: options.account.address,
+        authorized: [
+          options.account.address,
+          fixtures.core.assertValidAddress(),
+        ],
+      }),
+    );
+  };
 }
 
 export async function freshERC20(
@@ -252,84 +262,91 @@ export async function freshERC721(
   return erc721;
 }
 
-export async function fundErc20(
+export function fundErc20(
   options: DeployableTestOptions,
   erc20?: MockERC20,
   funded: Address[] = [],
   amount: bigint = parseEther('100'),
 ) {
-  if (!erc20) erc20 = await freshERC20();
-  for (const address of [testAccount.address, ...(funded ?? [])]) {
-    await erc20.mint(address, amount);
-    const balance = await readMockErc20BalanceOf(options.config, {
-      address: erc20.address!,
-      args: [address],
-    });
-    if (amount !== balance) throw new Error(`Balance did not match`);
-  }
-  return erc20;
+  return async function fundErc20() {
+    if (!erc20) erc20 = await freshERC20();
+    for (const address of [options.account.address, ...(funded ?? [])]) {
+      await erc20.mint(address, amount);
+      const balance = await readMockErc20BalanceOf(options.config, {
+        address: erc20.address!,
+        args: [address],
+      });
+      if (amount !== balance) throw new Error(`Balance did not match`);
+    }
+    return erc20;
+  };
 }
 
-export async function fundErc1155(
+export function fundErc1155(
   options: DeployableTestOptions,
   erc1155?: MockERC1155,
   tokenId = 1n,
   amount = 100n,
 ) {
-  if (!erc1155) erc1155 = await freshERC1155(options);
-  await erc1155.mint(testAccount.address, tokenId, amount);
-  const balance = await readMockErc1155BalanceOf(options.config, {
-    address: erc1155.address!,
-    args: [options.account.address, tokenId],
-  });
-  if (balance !== amount)
-    throw new Error('Balance did not match', { cause: { balance, amount } });
-  return erc1155;
+  return async function fundErc1155() {
+    if (!erc1155) erc1155 = await freshERC1155(options);
+    await erc1155.mint(options.account.address, tokenId, amount);
+    const balance = await readMockErc1155BalanceOf(options.config, {
+      address: erc1155.address!,
+      args: [options.account.address, tokenId],
+    });
+    if (balance !== amount)
+      throw new Error('Balance did not match', { cause: { balance, amount } });
+    return erc1155;
+  };
 }
 
-export async function fundBudget(
+export function fundBudget(
   options: DeployableTestOptions,
   fixtures: Fixtures,
   budget?: Budget,
   erc20?: MockERC20,
   erc1155?: MockERC1155,
 ) {
-  if (!budget) budget = await freshBudget(options, fixtures);
-  if (!erc20) erc20 = await fundErc20(options);
-  if (!erc1155) erc1155 = await fundErc1155(options);
-
-  await budget.allocate(
+  return async function fundBudget() {
     {
-      amount: parseEther('1.0'),
-      asset: zeroAddress,
-      target: options.account.address,
-    },
-    { value: parseEther('1.0') },
-  );
+      if (!budget) budget = await loadFixture(freshBudget(options, fixtures));
+      if (!erc20) erc20 = await loadFixture(fundErc20(options));
+      if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
 
-  // approve and allocate erc20 to the account
-  await writeMockErc20Approve(options.config, {
-    args: [budget.address!, parseEther('100')],
-    address: erc20.address!,
-    account: options.account,
-  });
-  await budget.allocate({
-    amount: parseEther('100'),
-    asset: erc20.address!,
-    target: options.account.address,
-  });
+      await budget.allocate(
+        {
+          amount: parseEther('1.0'),
+          asset: zeroAddress,
+          target: options.account.address,
+        },
+        { value: parseEther('1.0') },
+      );
 
-  await writeMockErc1155SetApprovalForAll(options.config, {
-    args: [budget.address!, true],
-    address: erc1155.address!,
-    account: options.account,
-  });
-  await budget.allocate({
-    tokenId: 1n,
-    amount: 100n,
-    asset: erc1155.address!,
-    target: options.account.address,
-  });
+      await erc20.approve(budget.address!, parseEther('100'));
+      await budget.allocate({
+        amount: parseEther('100'),
+        asset: erc20.address!,
+        target: options.account.address,
+      });
 
-  return { budget, erc20, erc1155 };
+      await writeMockErc1155SetApprovalForAll(options.config, {
+        args: [budget.address!, true],
+        address: erc1155.address!,
+        account: options.account,
+      });
+      await budget.allocate({
+        tokenId: 1n,
+        amount: 100n,
+        asset: erc1155.address!,
+        target: options.account.address,
+      });
+
+      return { budget, erc20, erc1155 } as {
+        budget: SimpleBudget;
+        erc20: MockERC20;
+        erc1155: MockERC1155;
+      };
+    }
+  };
 }

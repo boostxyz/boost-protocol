@@ -3,6 +3,7 @@ import {
   type WaitForTransactionReceiptReturnType,
   zeroHash,
 } from 'viem';
+import type { Incentive } from './Incentives/Incentive';
 
 export class BoostCoreNoIdentifierEmitted extends Error {
   constructor() {
@@ -97,5 +98,11 @@ export class BudgetMustAuthorizeBoostCore extends Error {
     super(
       `Budget needs to explicitly authorize ${boostCoreAddress}. You can retrieve this value from BoostCore.address`,
     );
+  }
+}
+
+export class IncentiveNotCloneableError extends Error {
+  constructor(incentive: Incentive) {
+    super(`Incentive not cloneable: ${incentive.constructor.name}`);
   }
 }

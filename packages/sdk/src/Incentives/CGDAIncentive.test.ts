@@ -1,27 +1,17 @@
-import type { Config } from '@wagmi/core';
 import { isAddress, zeroAddress } from 'viem';
-import { beforeEach, describe, expect, test } from 'vitest';
-import { setupConfig, testAccount } from '../../test/viem';
+import { describe, expect, test } from 'vitest';
+import { defaultOptions } from '../../test/helpers';
 import { CGDAIncentive } from './CGDAIncentive';
-
-let config: Config;
-
-beforeEach(() => {
-  config = setupConfig();
-});
 
 describe('CGDAIncentive', () => {
   test('can successfully be deployed', async () => {
-    const action = new CGDAIncentive(
-      { config, account: testAccount },
-      {
-        asset: zeroAddress,
-        initialReward: 0n,
-        rewardDecay: 0n,
-        rewardBoost: 0n,
-        totalBudget: 0n,
-      },
-    );
+    const action = new CGDAIncentive(defaultOptions, {
+      asset: zeroAddress,
+      initialReward: 0n,
+      rewardDecay: 0n,
+      rewardBoost: 0n,
+      totalBudget: 0n,
+    });
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });

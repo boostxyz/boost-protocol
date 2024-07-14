@@ -3,6 +3,7 @@ import {
   readMockErc1155BalanceOf,
   writeMockErc20Approve,
   writeMockErc1155SetApprovalForAll,
+  writePointsInitialize,
 } from '@boostxyz/evm';
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
@@ -41,6 +42,7 @@ import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
 import { MockERC1155 } from './MockERC1155';
+import { MockPoints } from './MockPoints';
 import { setupConfig, testAccount } from './viem';
 
 export type DeployableTestOptions = Required<DeployableOptions>;
@@ -55,6 +57,7 @@ export type BudgetFixtures = {
   budget: SimpleBudget;
   erc20: MockERC20;
   erc1155: MockERC1155;
+  points: MockPoints;
 };
 
 export async function deployFixtures(
@@ -247,6 +250,19 @@ export async function freshERC20(
   return erc20;
 }
 
+export async function freshPoints(
+  options: DeployableTestOptions = defaultOptions,
+) {
+  const points = new MockPoints(options, {});
+  await points.deploy();
+  await writePointsInitialize(options.config, {
+    address: points.assertValidAddress(),
+    args: ['Points', 'POI', options.account.address],
+    account: options.account,
+  });
+  return points;
+}
+
 export async function freshERC1155(
   options: DeployableTestOptions = defaultOptions,
 ) {
@@ -274,12 +290,32 @@ export function fundErc20(
     for (const address of [options.account.address, ...(funded ?? [])]) {
       await erc20.mint(address, amount);
       const balance = await readMockErc20BalanceOf(options.config, {
-        address: erc20.address!,
+        address: erc20.assertValidAddress(),
         args: [address],
       });
       if (amount !== balance) throw new Error(`Balance did not match`);
     }
     return erc20;
+  };
+}
+
+export function fundPoints(
+  options: DeployableTestOptions,
+  points?: MockPoints,
+  funded: Address[] = [],
+  amount: bigint = parseEther('100'),
+) {
+  return async function fundPoints() {
+    if (!points) points = await freshPoints();
+    for (const address of [options.account.address, ...(funded ?? [])]) {
+      await points.issue(address, amount);
+      const balance = await readMockErc20BalanceOf(options.config, {
+        address: points.assertValidAddress(),
+        args: [address],
+      });
+      if (amount !== balance) throw new Error(`Balance did not match`);
+    }
+    return points;
   };
 }
 
@@ -293,7 +329,7 @@ export function fundErc1155(
     if (!erc1155) erc1155 = await freshERC1155(options);
     await erc1155.mint(options.account.address, tokenId, amount);
     const balance = await readMockErc1155BalanceOf(options.config, {
-      address: erc1155.address!,
+      address: erc1155.assertValidAddress(),
       args: [options.account.address, tokenId],
     });
     if (balance !== amount)
@@ -308,12 +344,14 @@ export function fundBudget(
   budget?: Budget,
   erc20?: MockERC20,
   erc1155?: MockERC1155,
+  points?: MockPoints,
 ) {
   return async function fundBudget() {
     {
       if (!budget) budget = await loadFixture(freshBudget(options, fixtures));
       if (!erc20) erc20 = await loadFixture(fundErc20(options));
       if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
+      if (!points) points = await loadFixture(fundPoints(options));
 
       await budget.allocate(
         {
@@ -324,30 +362,26 @@ export function fundBudget(
         { value: parseEther('1.0') },
       );
 
-      await erc20.approve(budget.address!, parseEther('100'));
+      await erc20.approve(budget.assertValidAddress(), parseEther('100'));
       await budget.allocate({
         amount: parseEther('100'),
-        asset: erc20.address!,
+        asset: erc20.assertValidAddress(),
         target: options.account.address,
       });
 
       await writeMockErc1155SetApprovalForAll(options.config, {
-        args: [budget.address!, true],
-        address: erc1155.address!,
+        args: [budget.assertValidAddress(), true],
+        address: erc1155.assertValidAddress(),
         account: options.account,
       });
       await budget.allocate({
         tokenId: 1n,
         amount: 100n,
-        asset: erc1155.address!,
+        asset: erc1155.assertValidAddress(),
         target: options.account.address,
       });
 
-      return { budget, erc20, erc1155 } as {
-        budget: SimpleBudget;
-        erc20: MockERC20;
-        erc1155: MockERC1155;
-      };
+      return { budget, erc20, erc1155, points } as BudgetFixtures;
     }
   };
 }

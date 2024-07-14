@@ -1,24 +1,16 @@
-import type { Config } from '@wagmi/core';
 import { isAddress } from 'viem';
-import { beforeEach, describe, expect, test } from 'vitest';
-import { setupConfig, testAccount } from '../../test/viem';
+import { describe, expect, test } from 'vitest';
+import { testAccount } from '../../test/viem';
 import { SimpleAllowList } from './SimpleAllowList';
 
-let config: Config;
-
-beforeEach(() => {
-  config = setupConfig();
-});
+import { defaultOptions } from '../../test/helpers';
 
 describe('SimpleAllowList', () => {
   test('can successfully be deployed', async () => {
-    const action = new SimpleAllowList(
-      { config, account: testAccount },
-      {
-        owner: testAccount.address,
-        allowed: [],
-      },
-    );
+    const action = new SimpleAllowList(defaultOptions, {
+      owner: testAccount.address,
+      allowed: [],
+    });
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });

@@ -9,11 +9,11 @@ import {
   readErc20IncentiveAsset,
   readErc20IncentiveClaimed,
   readErc20IncentiveClaims,
+  readErc20IncentiveCurrentReward,
   readErc20IncentiveEntries,
   readErc20IncentiveGetComponentInterface,
   readErc20IncentiveIsClaimable,
   readErc20IncentiveLimit,
-  readErc20IncentivePreflight,
   readErc20IncentiveReward,
   readErc20IncentiveStrategy,
   readErc20IncentiveSupportsInterface,
@@ -41,6 +41,17 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
 
   constructor(options: DeployableOptions, payload: ERC20IncentivePayload) {
     super(options, payload, true);
+  }
+
+  public async currentReward(
+    params?: ReadParams<typeof erc20IncentiveAbi, 'currentReward'>,
+  ) {
+    return readErc20IncentiveCurrentReward(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
@@ -167,19 +178,6 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return readErc20IncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-  }
-
-  public async preflight(
-    data: ERC20IncentivePayload,
-    params?: ReadParams<typeof erc20IncentiveAbi, 'preflight'>,
-  ) {
-    return readErc20IncentivePreflight(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareERC20IncentivePayload(data)],
-      ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });

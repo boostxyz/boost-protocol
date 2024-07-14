@@ -3,8 +3,11 @@ import {
   type Target,
   boostCoreAbi,
   prepareBoostPayload,
+  readBoostCoreClaimFee,
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
+  readBoostCoreProtocolFee,
+  readBoostCoreProtocolFeeReceiver,
   simulateBoostCoreClaimIncentive,
   simulateBoostCoreSetClaimFee,
   simulateBoostCoreSetProtocolFeeReceiver,
@@ -254,7 +257,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
         isBase: isBase,
         instance: allowList.address,
         parameters: isBase
-          ? allowList.buildParameters(undefined, options).args.at(0) || zeroHash
+          ? zeroHash // allowList.buildParameters(undefined, options).args.at(0) || zeroHash
           : zeroHash,
       };
     } else {
@@ -313,12 +316,9 @@ export class BoostCore extends Deployable<[Address, Address]> {
       logs: receipt.logs,
     }).at(0);
     let boostId = 0n;
-    if (!boostCreatedLog) {
-      throw new BoostCoreNoIdentifierEmitted();
-    }
+    if (!boostCreatedLog) throw new BoostCoreNoIdentifierEmitted();
     boostId = boostCreatedLog?.args.boostIndex;
     const boost = await this.readBoost(boostId);
-
     return new Boost({
       id: boostId,
       budget: budget.at(boost.budget),
@@ -438,6 +438,30 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  public async protocolFee(
+    params?: ReadParams<typeof boostCoreAbi, 'protocolFee'>,
+  ) {
+    return readBoostCoreProtocolFee(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  public async protocolFeeReceiver(
+    params?: ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>,
+  ) {
+    return readBoostCoreProtocolFeeReceiver(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
   public async setProcolFeeReceiver(
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
@@ -464,6 +488,16 @@ export class BoostCore extends Deployable<[Address, Address]> {
       request,
     );
     return { hash, result };
+  }
+
+  public async claimFee(params?: ReadParams<typeof boostCoreAbi, 'claimFee'>) {
+    return readBoostCoreClaimFee(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   public async setClaimFee(

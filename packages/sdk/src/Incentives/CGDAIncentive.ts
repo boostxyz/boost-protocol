@@ -164,18 +164,6 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
-  public async preflight(
-    data: CGDAIncentivePayload,
-    params?: ReadParams<typeof cgdaIncentiveAbi, 'preflight'>,
-  ) {
-    return readCgdaIncentiveIsClaimable(this._config, {
-      address: this.assertValidAddress(),
-      args: [prepareCGDAIncentivePayload(data)],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-  }
-
   public async currentReward(
     params?: ReadParams<typeof cgdaIncentiveAbi, 'currentReward'>,
   ) {

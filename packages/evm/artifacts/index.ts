@@ -257,26 +257,26 @@ export function prepareERC1155Payload({
 export interface PointsIncentivePayload {
   venue: Address;
   selector: Hex;
-  quantity: bigint;
+  reward: bigint;
   limit: bigint;
 }
 
 export const preparePointsIncentivePayload = ({
   venue,
   selector,
-  quantity,
+  reward,
   limit,
 }: PointsIncentivePayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'venue' },
       { type: 'bytes4', name: 'selector' },
-      { type: 'uint256', name: 'quantity' },
+      { type: 'uint256', name: 'reward' },
       { type: 'uint256', name: 'limit' },
     ],
     [venue,
       selector,
-      quantity,
+      reward,
       limit],
   );
 };

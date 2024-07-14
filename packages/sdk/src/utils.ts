@@ -1,20 +1,12 @@
-import {
-  type Config,
-  getTransaction,
-  waitForTransactionReceipt,
-} from '@wagmi/core';
-import type { CreateSimulateContractReturnType } from '@wagmi/core/codegen';
+import { type Config, waitForTransactionReceipt } from '@wagmi/core';
 import type {
   Abi,
   ContractFunctionName,
   Hash,
+  Hex,
   WaitForTransactionReceiptParameters,
 } from 'viem';
-import {
-  type AbiStateMutability,
-  type ContractFunctionArgs,
-  decodeFunctionData,
-} from 'viem';
+import { isHex, keccak256, toHex } from 'viem';
 import type { WriteContractParameters } from 'viem/actions';
 import { NoContractAddressUponReceiptError } from './errors';
 
@@ -37,6 +29,13 @@ export type ReadParams<
     'address' | 'args' | 'functionName' | 'abi'
   >
 >;
+
+export function bytes4(input: string) {
+  return (isHex(input) ? keccak256(input) : keccak256(toHex(input))).slice(
+    0,
+    10,
+  ) as Hex;
+}
 
 export async function getDeployedContractAddress(
   config: Config,

@@ -147,8 +147,8 @@ export async function mockERC20(
   const token = await viem.deployContract('MockERC20');
 
   for (const address of [ownerClient?.account.address, ...(funded ?? [])]) {
-    await token.write.mint([address, amount]);
-    expect(await token.read.balanceOf([address])).to.equal(amount);
+    await token.write.mint([address!, amount]);
+    expect(await token.read.balanceOf([address!])).to.equal(amount);
   }
 
   return token;
@@ -158,9 +158,9 @@ export async function mockERC1155(tokenId = 1n, amount = 100n) {
   const [ownerClient] = await viem.getWalletClients();
   const token = await viem.deployContract('MockERC1155');
 
-  await token.write.mint([ownerClient?.account.address, tokenId, amount]);
+  await token.write.mint([ownerClient!.account.address, tokenId, amount]);
   expect(
-    await token.read.balanceOf([ownerClient?.account.address, tokenId]),
+    await token.read.balanceOf([ownerClient!.account.address, tokenId]),
   ).to.equal(amount);
 
   return token;
@@ -253,7 +253,7 @@ export async function coreAndRegistry(): Promise<{
   // Deploy the Core
   const core = (await viem.deployContract('BoostCore', [
     registry.address,
-    ownerClient?.account.address,
+    ownerClient!.account.address,
   ])) as GetContractReturnType<BoostCore$Type['abi']>;
 
   return { bases, core, registry };

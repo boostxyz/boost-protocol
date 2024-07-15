@@ -6,7 +6,7 @@ import type {
   Hex,
   WaitForTransactionReceiptParameters,
 } from 'viem';
-import { isHex, keccak256, toHex } from 'viem';
+import { isHex, keccak256, slice, toHex } from 'viem';
 import type { WriteContractParameters } from 'viem/actions';
 import { NoContractAddressUponReceiptError } from './errors';
 
@@ -31,10 +31,7 @@ export type ReadParams<
 >;
 
 export function bytes4(input: string) {
-  return (isHex(input) ? keccak256(input) : keccak256(toHex(input))).slice(
-    0,
-    10,
-  ) as Hex;
+  return slice(isHex(input) ? keccak256(input) : keccak256(toHex(input)), 0, 4);
 }
 
 export async function getDeployedContractAddress(

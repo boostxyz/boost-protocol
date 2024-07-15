@@ -162,30 +162,30 @@ export function simpleAllowList({
 
 export interface SimpleDenyListPayload {
   owner: Address;
-  allowed: Address[];
+  denied: Address[];
 }
 
 export const prepareSimpleDenyListPayload = ({
 owner,
-allowed
+denied
 }: SimpleDenyListPayload) => {
   return encodeAbiParameters(
     [
       { type: 'address', name: 'owner' },
-      { type: 'address[]', name: 'allowed' },
+      { type: 'address[]', name: 'denied' },
     ],
-    [owner, allowed],
+    [owner, denied],
   );
 };
 
 export function simpleDenyList({
   owner,
-  allowed,
+  denied,
 }: SimpleDenyListPayload): Target {
   return {
     isBase: true,
     instance: zeroAddress,
-    parameters: prepareSimpleDenyListPayload({owner, allowed})
+    parameters: prepareSimpleDenyListPayload({owner, denied})
   };
 }
 

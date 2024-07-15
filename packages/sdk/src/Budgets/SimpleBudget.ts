@@ -10,6 +10,7 @@ import {
   readSimpleBudgetDistributed,
   readSimpleBudgetGetComponentInterface,
   readSimpleBudgetIsAuthorized,
+  readSimpleBudgetOwner,
   readSimpleBudgetSupportsInterface,
   readSimpleBudgetTotal,
   simpleBudgetAbi,
@@ -207,6 +208,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
       address: this.assertValidAddress(),
       args: [account],
       ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  public owner(params?: ReadParams<typeof simpleBudgetAbi, 'owner'>) {
+    return readSimpleBudgetOwner(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });

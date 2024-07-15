@@ -242,6 +242,27 @@ export function freshBudget(
   };
 }
 
+export function freshVestingBudget(
+  options: DeployableTestOptions,
+  fixtures: Fixtures,
+) {
+  return async function freshVestingBudget() {
+    return fixtures.registry.clone(
+      crypto.randomUUID(),
+      new fixtures.bases.VestingBudget(options, {
+        owner: options.account.address,
+        authorized: [
+          options.account.address,
+          fixtures.core.assertValidAddress(),
+        ],
+        start: 0n,
+        duration: 10n,
+        cliff: 0n,
+      }),
+    );
+  };
+}
+
 export async function freshERC20(
   options: DeployableTestOptions = defaultOptions,
 ) {
@@ -382,6 +403,45 @@ export function fundBudget(
       });
 
       return { budget, erc20, erc1155, points } as BudgetFixtures;
+    }
+  };
+}
+
+export function fundVestingBudget(
+  options: DeployableTestOptions,
+  fixtures: Fixtures,
+  budget?: Budget,
+  erc20?: MockERC20,
+  erc1155?: MockERC1155,
+  points?: MockPoints,
+) {
+  return async function fundVestingBudget() {
+    {
+      if (!budget)
+        budget = await loadFixture(freshVestingBudget(options, fixtures));
+      if (!erc20) erc20 = await loadFixture(fundErc20(options));
+      if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
+      if (!points) points = await loadFixture(fundPoints(options));
+
+      await budget.allocate(
+        {
+          amount: parseEther('1.0'),
+          asset: zeroAddress,
+          target: options.account.address,
+        },
+        { value: parseEther('1.0') },
+      );
+
+      await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+      await budget.allocate({
+        amount: parseEther('100'),
+        asset: erc20.assertValidAddress(),
+        target: options.account.address,
+      });
+
+      return { budget, erc20, erc1155, points } as BudgetFixtures & {
+        budget: VestingBudget;
+      };
     }
   };
 }

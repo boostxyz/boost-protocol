@@ -699,7 +699,7 @@ describe('BoostCore', () => {
     expect(await client.claimFee()).toBe(100n);
   });
 
-  test('binds actions, budgets, allowlists, incentives, and validators to reuse core options and account', async () => {
+  test('binds all actions, budgets, allowlists, incentives, and validators to reuse core options and account', async () => {
     const { core } = fixtures;
 
     const contractAction = core.ContractAction(zeroAddress);

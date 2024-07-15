@@ -11,6 +11,7 @@ import {
   readVestingBudgetEnd,
   readVestingBudgetGetComponentInterface,
   readVestingBudgetIsAuthorized,
+  readVestingBudgetOwner,
   readVestingBudgetStart,
   readVestingBudgetSupportsInterface,
   readVestingBudgetTotal,
@@ -42,6 +43,15 @@ export type { VestingBudgetPayload };
 export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   public static override base = import.meta.env.VITE_VESTING_BUDGET_BASE;
   public static override registryType: RegistryType = RegistryType.BUDGET;
+
+  public owner(params?: ReadParams<typeof vestingBudgetAbi, 'owner'>) {
+    return readVestingBudgetOwner(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
 
   public start(params?: ReadParams<typeof vestingBudgetAbi, 'start'>) {
     return readVestingBudgetStart(this._config, {

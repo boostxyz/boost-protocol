@@ -6,6 +6,7 @@ import {
   readErc721MintActionGetComponentInterface,
   readErc721MintActionPrepare,
   readErc721MintActionSupportsInterface,
+  readErc721MintActionValidated,
   simulateErc721MintActionExecute,
   simulateErc721MintActionValidate,
   writeErc721MintActionExecute,
@@ -25,6 +26,19 @@ export type { ERC721MintActionPayload };
 export class ERC721MintAction extends ContractAction {
   public static override base = import.meta.env.VITE_ERC721_MINT_ACTION_BASE;
   public static override registryType: RegistryType = RegistryType.ACTION;
+
+  public async validated(
+    token: bigint,
+    params?: ReadParams<typeof erc721MintActionAbi, 'validated'>,
+  ) {
+    return readErc721MintActionValidated(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      args: [token],
+    });
+  }
 
   public override async execute(
     data: Hex,

@@ -1,5 +1,6 @@
 import {
   readMockErc20BalanceOf,
+  readMockErc721BalanceOf,
   readMockErc1155BalanceOf,
   writeMockErc20Approve,
   writeMockErc1155SetApprovalForAll,
@@ -317,6 +318,26 @@ export function fundErc20(
       if (amount !== balance) throw new Error(`Balance did not match`);
     }
     return erc20;
+  };
+}
+
+export function fundErc721(
+  options: DeployableTestOptions,
+  erc721?: MockERC721,
+  funded: Address[] = [],
+  amount: bigint = parseEther('100'),
+) {
+  return async function fundErc721() {
+    if (!erc721) erc721 = await freshERC721();
+    for (const address of [options.account.address, ...(funded ?? [])]) {
+      await erc721.mint(address);
+      const balance = await readMockErc721BalanceOf(options.config, {
+        address: erc721.assertValidAddress(),
+        args: [address],
+      });
+      if (amount !== balance) throw new Error(`Balance did not match`);
+    }
+    return erc721;
   };
 }
 

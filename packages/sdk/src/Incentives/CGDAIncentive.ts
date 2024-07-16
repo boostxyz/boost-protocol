@@ -13,6 +13,7 @@ import {
   readCgdaIncentiveCurrentReward,
   readCgdaIncentiveGetComponentInterface,
   readCgdaIncentiveIsClaimable,
+  readCgdaIncentiveOwner,
   readCgdaIncentiveReward,
   readCgdaIncentiveSupportsInterface,
   readCgdaIncentiveTotalBudget,
@@ -38,6 +39,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
 
   constructor(options: DeployableOptions, payload: CGDAIncentivePayload) {
     super(options, payload, true);
+  }
+
+  public async owner(params?: ReadParams<typeof cgdaIncentiveAbi, 'owner'>) {
+    return readCgdaIncentiveOwner(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   public async claims(params?: ReadParams<typeof cgdaIncentiveAbi, 'claims'>) {

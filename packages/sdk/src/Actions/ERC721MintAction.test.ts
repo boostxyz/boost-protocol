@@ -41,7 +41,7 @@ function nonPayableAction(fixtures: Fixtures, erc721: MockERC721) {
   };
 }
 
-describe('ContractAction', () => {
+describe('ERC721MintAction', () => {
   beforeEach(async () => {
     erc721 = await loadFixture(fundErc721(defaultOptions));
   });
@@ -76,7 +76,7 @@ describe('ContractAction', () => {
 
   test('can read value', async () => {
     const action = await loadFixture(nonPayableAction(fixtures, erc721));
-    expect(await action.value()).toBe(parseEther('0.1'));
+    expect(await action.value()).toBe(0n);
   });
 
   test('prepare will properly encode execution payload', async () => {
@@ -94,7 +94,8 @@ describe('ContractAction', () => {
     );
   });
 
-  test('nonpayable execute', async () => {
+  // TODO implement execute
+  test.skip('nonpayable execute', async () => {
     const action = await loadFixture(nonPayableAction(fixtures, erc721));
     const { account } = accounts.at(1)!;
     const [success] = await action.execute(

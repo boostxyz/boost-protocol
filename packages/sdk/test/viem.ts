@@ -21,7 +21,7 @@ export const testAccount = privateKeyToAccount(key);
 
 export const makeTestClient = () =>
   createTestClient({
-    transport: http(),
+    transport: http(undefined, { retryCount: 0 }),
     chain: hardhat,
     mode: 'hardhat',
     account: testAccount,

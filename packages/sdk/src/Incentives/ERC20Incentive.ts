@@ -6,6 +6,7 @@ import {
   erc20IncentiveAbi,
   prepareClaimPayload,
   prepareERC20IncentivePayload,
+  readCgdaIncentiveOwner,
   readErc20IncentiveAsset,
   readErc20IncentiveClaimed,
   readErc20IncentiveClaims,
@@ -14,6 +15,7 @@ import {
   readErc20IncentiveGetComponentInterface,
   readErc20IncentiveIsClaimable,
   readErc20IncentiveLimit,
+  readErc20IncentiveOwner,
   readErc20IncentiveReward,
   readErc20IncentiveStrategy,
   readErc20IncentiveSupportsInterface,
@@ -41,6 +43,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
 
   constructor(options: DeployableOptions, payload: ERC20IncentivePayload) {
     super(options, payload, true);
+  }
+
+  public async owner(params?: ReadParams<typeof erc20IncentiveAbi, 'owner'>) {
+    return readErc20IncentiveOwner(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   public async currentReward(

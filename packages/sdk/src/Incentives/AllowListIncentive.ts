@@ -11,6 +11,7 @@ import {
   readAllowListIncentiveGetComponentInterface,
   readAllowListIncentiveIsClaimable,
   readAllowListIncentiveLimit,
+  readAllowListIncentiveOwner,
   readAllowListIncentiveReward,
   readAllowListIncentiveSupportsInterface,
   simulateAllowListIncentiveClaim,
@@ -34,6 +35,17 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
 
   constructor(options: DeployableOptions, payload: AllowListIncentivePayload) {
     super(options, payload, true);
+  }
+
+  public async owner(
+    params?: ReadParams<typeof allowListIncentiveAbi, 'owner'>,
+  ) {
+    return readAllowListIncentiveOwner(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   public async claims(
@@ -95,14 +107,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   public async claim(
-    payload: ClaimPayload,
+    payload: Pick<ClaimPayload, 'target'>,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
     return this.awaitResult(this.claimRaw(payload, params));
   }
 
   public async claimRaw(
-    payload: ClaimPayload,
+    payload: Pick<ClaimPayload, 'target'>,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
     const { request, result } = await simulateAllowListIncentiveClaim(
@@ -121,7 +133,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
 
   // use prepareClaimPayload?
   public async isClaimable(
-    payload: ClaimPayload,
+    payload: Pick<ClaimPayload, 'target'>,
     params?: ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>,
   ) {
     return readAllowListIncentiveIsClaimable(this._config, {

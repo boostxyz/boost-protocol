@@ -12,7 +12,6 @@ import {
   deployFixtures,
 } from '../../test/helpers';
 import type { AllowList } from '../AllowLists/AllowList';
-import { AllowListIncentive } from './../../../evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.d';
 import { AllowListIncentive } from './AllowListIncentive';
 
 let fixtures: Fixtures;
@@ -35,26 +34,13 @@ function freshAllowList(fixtures: Fixtures) {
 
 function freshAllowListIncentive(fixtures: Fixtures, allowlist: AllowList) {
   return async function freshAllowListIncentive() {
-    const payload = {
-      allowList: allowlist.assertValidAddress(),
-      limit: 3n,
-    };
-    const allowListIncentive = new fixtures.bases.AllowListIncentive(
-      defaultOptions,
-      payload,
+    return fixtures.registry.clone(
+      crypto.randomUUID(),
+      new fixtures.bases.AllowListIncentive(defaultOptions, {
+        allowList: allowlist.assertValidAddress(),
+        limit: 3n,
+      }),
     );
-    await allowListIncentive.deploy();
-    await writeAllowListIncentiveInitialize(defaultOptions.config, {
-      address: allowListIncentive.assertValidAddress(),
-      args: [
-        prepareAllowListIncentivePayload({
-          allowList: allowlist.assertValidAddress(),
-          limit: 3n,
-        }),
-      ],
-      account: defaultOptions.account,
-    });
-    return allowListIncentive;
   };
 }
 

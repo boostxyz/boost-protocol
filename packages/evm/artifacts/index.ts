@@ -9,6 +9,7 @@ import {
   zeroAddress,
   zeroHash
 } from 'viem';
+import { AbiCoder } from 'ethers';
 
 export enum RegistryType {
   ACTION = 0,
@@ -334,20 +335,18 @@ export const prepareERC1155IncentivePayload = ({
   limit,
   extraData
 }: ERC1155IncentivePayload) => {
-  return encodeAbiParameters(
-    [
-      { type: 'address', name: 'asset' },
-      { type: 'uint8', name: 'strategy' },
-      { type: 'uint256', name: 'tokenId' },
-      { type: 'uint256', name: 'limit' },
-      { type: 'bytes', name: 'extraData' },
-    ],
-    [asset,
-      strategy,
-      tokenId,
-      limit,
-      extraData],
-  );
+  return AbiCoder.defaultAbiCoder().encode([
+    'address',
+    'uint8',
+    'uint256',
+    'uint256',
+    'bytes',
+  ],
+  [asset,
+    strategy,
+    tokenId,
+    limit,
+    zeroHash])
 };
 
 export interface AllowListIncentivePayload {

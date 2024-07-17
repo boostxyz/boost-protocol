@@ -285,6 +285,8 @@ export class BoostCore extends Deployable<[Address, Address]> {
             : zeroHash,
         };
       } else {
+        if (incentive instanceof ERC1155Incentive)
+          console.log(incentive.buildParameters(undefined, options).args.at(0));
         incentivesPayloads[i]!.parameters =
           incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
         incentivesPayloads[i]!.instance = incentive.base;

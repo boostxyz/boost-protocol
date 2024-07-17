@@ -6,7 +6,9 @@ import {
   readSimpleAllowListIsAllowed,
   readSimpleAllowListSupportsInterface,
   simpleAllowListAbi,
+  simulateSimpleAllowListGrantRoles,
   simulateSimpleAllowListSetAllowed,
+  writeSimpleAllowListGrantRoles,
   writeSimpleAllowListSetAllowed,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
@@ -63,6 +65,33 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
       },
     );
     const hash = await writeSimpleAllowListSetAllowed(this._config, request);
+    return { hash, result };
+  }
+
+  public async grantRoles(
+    address: Address,
+    role: bigint,
+    params?: ReadParams<typeof simpleAllowListAbi, 'grantRoles'>,
+  ) {
+    return this.awaitResult(this.grantRolesRaw(address, role, params));
+  }
+
+  public async grantRolesRaw(
+    address: Address,
+    role: bigint,
+    params?: ReadParams<typeof simpleAllowListAbi, 'grantRoles'>,
+  ) {
+    const { request, result } = await simulateSimpleAllowListGrantRoles(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [address, role],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeSimpleAllowListGrantRoles(this._config, request);
     return { hash, result };
   }
 

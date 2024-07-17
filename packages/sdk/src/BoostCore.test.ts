@@ -575,7 +575,7 @@ describe('BoostCore', () => {
       limit: 10n,
       strategy: StrategyType.POOL,
     });
-    const _erc1155Incentive = new bases.ERC1155Incentive(defaultOptions, {
+    const erc1155Incentive = new bases.ERC1155Incentive(defaultOptions, {
       asset: erc1155.assertValidAddress(),
       strategy: ERC1155StrategyType.POOL,
       limit: 1n,
@@ -620,7 +620,7 @@ describe('BoostCore', () => {
         false,
       ),
       incentives: [
-        // erc1155Incentive,
+        erc1155Incentive,
         erc20Incentive,
         cgdaIncentive,
         allowListIncentive,

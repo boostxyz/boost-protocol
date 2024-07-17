@@ -13,7 +13,7 @@ import {
   writeErc721MintActionValidate,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import type { Hex } from 'viem';
+import type { Address, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,

@@ -1,8 +1,8 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage, verifyMessage } from '@wagmi/core';
+import { signMessage } from '@wagmi/core';
 import { encodePacked, isAddress, keccak256 } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { accounts, accountsWithViemAccount } from '../../test/accounts';
+import { accounts } from '../../test/accounts';
 import {
   type Fixtures,
   defaultOptions,
@@ -57,13 +57,6 @@ describe('SignerValidator', () => {
       account: untrustedSigner.privateKey,
       message: { raw: message },
     });
-    console.log(
-      await verifyMessage(defaultOptions.config, {
-        signature: trustedSignature,
-        message: message,
-        address: trustedSigner.account,
-      }),
-    );
     expect(
       await validator.validate({
         signer: trustedSigner.account,

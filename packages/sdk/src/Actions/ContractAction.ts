@@ -14,7 +14,7 @@ import {
   writeContractActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import type { Hex } from 'viem';
+import type { Address, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,

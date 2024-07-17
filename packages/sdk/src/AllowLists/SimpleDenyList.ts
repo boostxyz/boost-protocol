@@ -21,6 +21,7 @@ import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { ReadParams, WriteParams } from '../utils';
 
 export type { SimpleDenyListPayload };
+export { prepareSimpleDenyListPayload };
 
 export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   public static override base = import.meta.env.VITE_SIMPLE_DENYLIST_BASE;

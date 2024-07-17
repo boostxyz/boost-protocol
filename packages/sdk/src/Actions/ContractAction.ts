@@ -23,6 +23,7 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { ReadParams, WriteParams } from '../utils';
 
 export type { ContractActionPayload };
+export { prepareContractActionPayload };
 
 export class ContractAction extends DeployableTarget<ContractActionPayload> {
   public static override base = import.meta.env.VITE_CONTRACT_ACTION_BASE;

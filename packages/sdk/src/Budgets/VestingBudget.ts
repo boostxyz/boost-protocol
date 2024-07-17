@@ -38,7 +38,7 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { ReadParams, WriteParams } from '../utils';
 
-export type { VestingBudgetPayload };
+export type { VestingBudgetPayload, prepareVestingBudgetPayload };
 
 export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   public static override base = import.meta.env.VITE_VESTING_BUDGET_BASE;

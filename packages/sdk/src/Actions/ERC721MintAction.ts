@@ -22,6 +22,7 @@ import type { ReadParams, WriteParams } from '../utils';
 import { ContractAction } from './ContractAction';
 
 export type { ERC721MintActionPayload };
+export { prepareERC721MintActionPayload };
 
 export class ERC721MintAction extends ContractAction {
   public static override base = import.meta.env.VITE_ERC721_MINT_ACTION_BASE;

@@ -23,6 +23,7 @@ import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { ReadParams } from '../utils';
 
 export type { SimpleAllowListPayload };
+export { prepareSimpleAllowListPayload };
 
 export const LIST_MANAGER_ROLE = 2n;
 export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {

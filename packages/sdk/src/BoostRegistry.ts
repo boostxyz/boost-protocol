@@ -19,6 +19,8 @@ import {
 import type { DeployableTarget } from './Deployable/DeployableTarget';
 import type { ReadParams, WriteParams } from './utils';
 
+export { RegistryType };
+
 export const BOOST_REGISTRY_ADDRESS: Address = import.meta.env
   .VITE_BOOST_REGISTRY_ADDRESS;
 

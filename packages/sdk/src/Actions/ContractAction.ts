@@ -28,6 +28,7 @@ export { prepareContractActionPayload };
 /**
  * Description placeholder
  *
+ * @category Actions
  * @export
  * @class ContractAction
  * @typedef {ContractAction}

@@ -20,7 +20,7 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { ReadParams, WriteParams } from '../utils';
 
-export type { SignerValidatorPayload };
+export type { SignerValidatorPayload, prepareSignerValidatorValidatePayload };
 
 export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   public static override base = import.meta.env.VITE_SIGNER_VALIDATOR_BASE;

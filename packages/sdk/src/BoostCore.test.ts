@@ -1,7 +1,11 @@
-import { ERC1155StrategyType, StrategyType } from '@boostxyz/evm';
+import {
+  ERC1155StrategyType,
+  StrategyType,
+  writePointsGrantRoles,
+} from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { parseEther, zeroAddress } from 'viem';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -17,8 +21,10 @@ import { bytes4 } from './utils';
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
 describe('BoostCore', () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures);
+  });
+  beforeEach(async () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 

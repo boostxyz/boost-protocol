@@ -28,6 +28,7 @@ import {
   type Budget,
   CGDAIncentive,
   ContractAction,
+  type CreateBoostPayload,
   ERC20Incentive,
   ERC721MintAction,
   ERC1155Incentive,
@@ -61,6 +62,44 @@ export type BudgetFixtures = {
   erc1155: MockERC1155;
   points: MockPoints;
 };
+
+export async function freshBoost(
+  fixtures: Fixtures,
+  options: Partial<CreateBoostPayload>,
+) {
+  const core = new BoostCore({
+    ...defaultOptions,
+    address: fixtures.core.assertValidAddress(),
+  });
+  return core.createBoost({
+    protocolFee: options.protocolFee || 1n,
+    referralFee: options.protocolFee || 2n,
+    maxParticipants: options.protocolFee || 100n,
+    budget:
+      options.budget ||
+      (await loadFixture(fundBudget(defaultOptions, fixtures))).budget,
+    action:
+      options.action ||
+      new fixtures.bases.ContractAction(defaultOptions, {
+        chainId: BigInt(31_337),
+        target: core.assertValidAddress(),
+        selector: '0xdeadbeef',
+        value: 0n,
+      }),
+    validator:
+      options.validator ||
+      new fixtures.bases.SignerValidator(defaultOptions, {
+        signers: [defaultOptions.account.address],
+      }),
+    allowList:
+      options.allowList ||
+      new fixtures.bases.SimpleAllowList(defaultOptions, {
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+    incentives: options.incentives || [],
+  });
+}
 
 export async function deployFixtures(
   options: DeployableTestOptions = defaultOptions,

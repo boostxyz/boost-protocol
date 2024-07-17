@@ -2,6 +2,7 @@ export * from './BoostRegistry';
 export * from './BoostCore';
 export * from './Boost';
 export * from './errors';
+export * from './utils';
 
 // Actions
 

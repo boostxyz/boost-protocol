@@ -3,13 +3,12 @@
   "version": "0.0.0-alpha.0",
   "private": true,
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
     ".": "./src/index.ts",
+    "./utils": "./src/utils.ts",
     "./errors": "./src/errors.ts",
     "./Boost": "./src/Boost.ts",
     "./BoostRegistry": "./src/BoostRegistry.ts",
@@ -48,6 +47,12 @@
         "import": "./dist/errors.js",
         "node": "./dist/errors.js",
         "types": "./dist/errors.d.ts"
+      },
+      "./utils": {
+        "require": "./dist/utils.cjs",
+        "import": "./dist/utils.js",
+        "node": "./dist/utils.js",
+        "types": "./dist/utils.d.ts"
       },
       "./Boost": {
         "require": "./dist/Boost.cjs",

@@ -92,34 +92,99 @@ import {
 } from './errors';
 import type { ReadParams, WriteParams } from './utils';
 
+/**
+ * Description placeholder
+ *
+ * @type {Address}
+ */
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface BoostCoreDeployedOptions
+ * @typedef {BoostCoreDeployedOptions}
+ * @extends {DeployableOptions}
+ */
 export interface BoostCoreDeployedOptions extends DeployableOptions {
+  /**
+   * Description placeholder
+   *
+   * @type {?Address}
+   */
   address?: Address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} opts
+ * @returns {opts is BoostCoreDeployedOptions}
+ */
 // biome-ignore lint/suspicious/noExplicitAny: type guard
 function isBoostCoreDeployed(opts: any): opts is BoostCoreDeployedOptions {
   return opts.address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface BoostCoreOptionsWithPayload
+ * @typedef {BoostCoreOptionsWithPayload}
+ * @extends {DeployableOptions}
+ */
 export interface BoostCoreOptionsWithPayload extends DeployableOptions {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   registryAddress: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   protocolFeeReceiver: Address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} opts
+ * @returns {opts is BoostCoreOptionsWithPayload}
+ */
 // biome-ignore lint/suspicious/noExplicitAny: type guard
 function isBoostCoreDeployable(opts: any): opts is BoostCoreOptionsWithPayload {
   return opts.registryAddress && opts.protocolFeeReceiver;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {BoostCoreConfig}
+ */
 export type BoostCoreConfig =
   | BoostCoreDeployedOptions
   | BoostCoreOptionsWithPayload;
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {CreateBoostPayload}
+ */
 export type CreateBoostPayload = {
   budget: Budget;
   action: Action;
@@ -132,7 +197,24 @@ export type CreateBoostPayload = {
   owner?: Address;
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class BoostCore
+ * @typedef {BoostCore}
+ * @extends {Deployable<[Address, Address]>}
+ */
 export class BoostCore extends Deployable<[Address, Address]> {
+  /**
+   * Creates an instance of BoostCore.
+   *
+   * @constructor
+   * @param {BoostCoreConfig} param0
+   * @param {Config} param0.config
+   * @param {Account} param0.account
+   * @param {({ address?: Address; } | { registryAddress: Address; protocolFeeReceiver: Address; })} param0....options
+   */
   constructor({ config, account, ...options }: BoostCoreConfig) {
     if (isBoostCoreDeployed(options) && options.address) {
       super({ account, config }, options.address);
@@ -147,6 +229,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   // TODO make this transactional? if any deployment fails what do we do with the previously deployed deployables?
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {CreateBoostPayload} _boostPayload
+   * @param {?DeployableOptions} [_options]
+   * @returns {unknown}
+   */
   public async createBoost(
     _boostPayload: CreateBoostPayload,
     _options?: DeployableOptions,
@@ -338,6 +429,18 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId
+   * @param {bigint} incentiveId
+   * @param {Address} address
+   * @param {Hex} data
+   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
+   * @returns {unknown}
+   */
   public async claimIncentive(
     boostId: bigint,
     incentiveId: bigint,
@@ -350,6 +453,18 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId
+   * @param {bigint} incentiveId
+   * @param {Address} address
+   * @param {Hex} data
+   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
+   * @returns {unknown}
+   */
   public async claimIncentiveRaw(
     boostId: bigint,
     incentiveId: bigint,
@@ -371,6 +486,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {bigint} id
+   * @param {?ReadParams<typeof boostCoreAbi, 'getBoost'>} [params]
+   * @returns {unknown}
+   */
   public async readBoost(
     id: bigint,
     params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
@@ -384,6 +508,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {(string | bigint)} _id
+   * @param {?ReadParams<typeof boostCoreAbi, 'getBoost'>} [params]
+   * @returns {unknown}
+   */
   public async getBoost(
     _id: string | bigint,
     params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
@@ -429,6 +562,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof boostCoreAbi, 'getBoostCount'>} [params]
+   * @returns {unknown}
+   */
   public async getBoostCount(
     params?: ReadParams<typeof boostCoreAbi, 'getBoostCount'>,
   ) {
@@ -441,6 +582,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof boostCoreAbi, 'protocolFee'>} [params]
+   * @returns {unknown}
+   */
   public async protocolFee(
     params?: ReadParams<typeof boostCoreAbi, 'protocolFee'>,
   ) {
@@ -453,6 +602,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>} [params]
+   * @returns {unknown}
+   */
   public async protocolFeeReceiver(
     params?: ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>,
   ) {
@@ -465,6 +622,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>} [params]
+   * @returns {unknown}
+   */
   public async setProcolFeeReceiver(
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
@@ -472,6 +638,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
     return this.awaitResult(this.setProcolFeeReceiverRaw(address, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>} [params]
+   * @returns {unknown}
+   */
   public async setProcolFeeReceiverRaw(
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
@@ -493,6 +668,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof boostCoreAbi, 'claimFee'>} [params]
+   * @returns {unknown}
+   */
   public async claimFee(params?: ReadParams<typeof boostCoreAbi, 'claimFee'>) {
     return readBoostCoreClaimFee(this._config, {
       address: this.assertValidAddress(),
@@ -503,6 +686,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {bigint} claimFee
+   * @param {?WriteParams<typeof boostCoreAbi, 'setClaimFee'>} [params]
+   * @returns {unknown}
+   */
   public async setClaimFee(
     claimFee: bigint,
     params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
@@ -510,6 +702,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
     return this.awaitResult(this.setClaimFeeRaw(claimFee, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {bigint} claimFee
+   * @param {?WriteParams<typeof boostCoreAbi, 'setClaimFee'>} [params]
+   * @returns {unknown}
+   */
   public async setClaimFeeRaw(
     claimFee: bigint,
     params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
@@ -528,6 +729,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @param {DeployablePayloadOrAddress<ContractActionPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {ContractAction}
+   */
   ContractAction(
     options: DeployablePayloadOrAddress<ContractActionPayload>,
     isBase?: boolean,
@@ -538,6 +746,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
       isBase,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {DeployablePayloadOrAddress<ERC721MintActionPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {ERC721MintAction}
+   */
   ERC721MintAction(
     options: DeployablePayloadOrAddress<ERC721MintActionPayload>,
     isBase?: boolean,
@@ -548,6 +763,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
       isBase,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {DeployablePayloadOrAddress<SimpleAllowListPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {SimpleAllowList}
+   */
   SimpleAllowList(
     options: DeployablePayloadOrAddress<SimpleAllowListPayload>,
     isBase?: boolean,
@@ -558,6 +780,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
       isBase,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {DeployablePayloadOrAddress<SimpleDenyListPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {SimpleDenyList}
+   */
   SimpleDenyList(
     options: DeployablePayloadOrAddress<SimpleDenyListPayload>,
     isBase?: boolean,
@@ -568,48 +797,97 @@ export class BoostCore extends Deployable<[Address, Address]> {
       isBase,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {DeployablePayloadOrAddress<SimpleBudgetPayload>} options
+   * @returns {SimpleBudget}
+   */
   SimpleBudget(options: DeployablePayloadOrAddress<SimpleBudgetPayload>) {
     return new SimpleBudget(
       { config: this._config, account: this._account },
       options,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {DeployablePayloadOrAddress<VestingBudgetPayload>} options
+   * @returns {VestingBudget}
+   */
   VestingBudget(options: DeployablePayloadOrAddress<VestingBudgetPayload>) {
     return new VestingBudget(
       { config: this._config, account: this._account },
       options,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {AllowListIncentivePayload} options
+   * @returns {AllowListIncentive}
+   */
   AllowListIncentive(options: AllowListIncentivePayload) {
     return new AllowListIncentive(
       { config: this._config, account: this._account },
       options,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {CGDAIncentivePayload} options
+   * @returns {CGDAIncentive}
+   */
   CGDAIncentive(options: CGDAIncentivePayload) {
     return new CGDAIncentive(
       { config: this._config, account: this._account },
       options,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {ERC20IncentivePayload} options
+   * @returns {ERC20Incentive}
+   */
   ERC20Incentive(options: ERC20IncentivePayload) {
     return new ERC20Incentive(
       { config: this._config, account: this._account },
       options,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {ERC1155IncentivePayload} options
+   * @returns {ERC1155Incentive}
+   */
   ERC1155Incentive(options: ERC1155IncentivePayload) {
     return new ERC1155Incentive(
       { config: this._config, account: this._account },
       options,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {PointsIncentivePayload} options
+   * @returns {PointsIncentive}
+   */
   PointsIncentive(options: PointsIncentivePayload) {
     return new PointsIncentive(
       { config: this._config, account: this._account },
       options,
     );
   }
+  /**
+   * Description placeholder
+   *
+   * @param {DeployablePayloadOrAddress<SignerValidatorPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {SignerValidator}
+   */
   SignerValidator(
     options: DeployablePayloadOrAddress<SignerValidatorPayload>,
     isBase?: boolean,
@@ -621,6 +899,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?[Address, Address]} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: [Address, Address],
     _options?: DeployableOptions,

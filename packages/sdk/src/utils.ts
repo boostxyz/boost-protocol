@@ -10,6 +10,14 @@ import { isHex, keccak256, slice, toHex } from 'viem';
 import type { WriteContractParameters } from 'viem/actions';
 import { NoContractAddressUponReceiptError } from './errors';
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {WriteParams}
+ * @template {Abi} abi
+ * @template {ContractFunctionName<abi>} functionName
+ */
 export type WriteParams<
   abi extends Abi,
   functionName extends ContractFunctionName<abi>,
@@ -20,6 +28,14 @@ export type WriteParams<
   >
 >;
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {ReadParams}
+ * @template {Abi} abi
+ * @template {ContractFunctionName<abi>} functionName
+ */
 export type ReadParams<
   abi extends Abi,
   functionName extends ContractFunctionName<abi>,
@@ -30,10 +46,27 @@ export type ReadParams<
   >
 >;
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {string} input
+ * @returns {*}
+ */
 export function bytes4(input: string) {
   return slice(isHex(input) ? keccak256(input) : keccak256(toHex(input)), 0, 4);
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @async
+ * @param {Config} config
+ * @param {Promise<Hash>} hash
+ * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
+ * @returns {unknown}
+ */
 export async function getDeployedContractAddress(
   config: Config,
   hash: Promise<Hash>,
@@ -48,8 +81,26 @@ export async function getDeployedContractAddress(
   return receipt.contractAddress;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {HashAndSimulatedResult}
+ * @template [T=unknown]
+ */
 export type HashAndSimulatedResult<T = unknown> = { hash: Hash; result: T };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @async
+ * @template [Result=unknown]
+ * @param {Config} config
+ * @param {Promise<HashAndSimulatedResult<Result>>} hashPromise
+ * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
+ * @returns {Promise<Result>}
+ */
 export async function awaitResult<Result = unknown>(
   config: Config,
   hashPromise: Promise<HashAndSimulatedResult<Result>>,

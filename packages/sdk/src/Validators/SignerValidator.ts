@@ -22,10 +22,42 @@ import type { ReadParams, WriteParams } from '../utils';
 
 export type { SignerValidatorPayload, prepareSignerValidatorValidatePayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class SignerValidator
+ * @typedef {SignerValidator}
+ * @extends {DeployableTarget<SignerValidatorPayload>}
+ */
 export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
-  public static override base = import.meta.env.VITE_SIGNER_VALIDATOR_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_SIGNER_VALIDATOR_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.VALIDATOR;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof signerValidatorAbi, 'signers'>} [params]
+   * @returns {unknown}
+   */
   public async signers(
     address: Address,
     params?: ReadParams<typeof signerValidatorAbi, 'signers'>,
@@ -38,6 +70,15 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {SignerValidatorValidatePayload} payload
+   * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
+   * @returns {unknown}
+   */
   public async validate(
     payload: SignerValidatorValidatePayload,
     params?: WriteParams<typeof signerValidatorAbi, 'validate'>,
@@ -45,6 +86,15 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     return this.awaitResult(this.validateRaw(payload, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {SignerValidatorValidatePayload} payload
+   * @param {?ReadParams<typeof signerValidatorAbi, 'validate'>} [params]
+   * @returns {unknown}
+   */
   public async validateRaw(
     payload: SignerValidatorValidatePayload,
     params?: ReadParams<typeof signerValidatorAbi, 'validate'>,
@@ -63,6 +113,16 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
+   * @returns {unknown}
+   */
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
@@ -71,6 +131,16 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
+   * @returns {unknown}
+   */
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
@@ -90,6 +160,14 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     return { hash, result };
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?SignerValidatorPayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: SignerValidatorPayload,
     _options?: DeployableOptions,

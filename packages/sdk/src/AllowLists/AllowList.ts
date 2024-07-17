@@ -8,13 +8,33 @@ import { SimpleDenyList } from './SimpleDenyList';
 
 export { SimpleDenyList, SimpleAllowList };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {AllowList}
+ */
 export type AllowList = SimpleAllowList | SimpleDenyList;
 
+/**
+ * Description placeholder
+ *
+ * @type {{ "0x2bc9016b": any; "0x9d585f63": any; }}
+ */
 export const AllowListByComponentInterface = {
   ['0x2bc9016b']: SimpleAllowList,
   ['0x9d585f63']: SimpleDenyList,
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @async
+ * @param {DeployableOptions} options
+ * @param {Address} address
+ * @returns {unknown}
+ */
 export async function allowListFromAddress(
   options: DeployableOptions,
   address: Address,

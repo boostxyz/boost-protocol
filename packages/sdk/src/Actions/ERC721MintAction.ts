@@ -24,10 +24,42 @@ import { ContractAction } from './ContractAction';
 export type { ERC721MintActionPayload };
 export { prepareERC721MintActionPayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class ERC721MintAction
+ * @typedef {ERC721MintAction}
+ * @extends {ContractAction}
+ */
 export class ERC721MintAction extends ContractAction {
-  public static override base = import.meta.env.VITE_ERC721_MINT_ACTION_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_ERC721_MINT_ACTION_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.ACTION;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {bigint} token
+   * @param {?ReadParams<typeof erc721MintActionAbi, 'validated'>} [params]
+   * @returns {unknown}
+   */
   public async validated(
     token: bigint,
     params?: ReadParams<typeof erc721MintActionAbi, 'validated'>,
@@ -41,6 +73,15 @@ export class ERC721MintAction extends ContractAction {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?WriteParams<typeof erc721MintActionAbi, 'execute'>} [params]
+   * @returns {unknown}
+   */
   public override async execute(
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
@@ -48,6 +89,15 @@ export class ERC721MintAction extends ContractAction {
     return this.awaitResult(this.executeRaw(data, params));
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?WriteParams<typeof erc721MintActionAbi, 'execute'>} [params]
+   * @returns {unknown}
+   */
   public override async executeRaw(
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
@@ -66,6 +116,15 @@ export class ERC721MintAction extends ContractAction {
     return { hash, result };
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?ReadParams<typeof erc721MintActionAbi, 'prepare'>} [params]
+   * @returns {unknown}
+   */
   public override async prepare(
     data: Hex,
     params?: ReadParams<typeof erc721MintActionAbi, 'prepare'>,
@@ -79,6 +138,15 @@ export class ERC721MintAction extends ContractAction {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
+   * @returns {unknown}
+   */
   public async validate(
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
@@ -86,6 +154,15 @@ export class ERC721MintAction extends ContractAction {
     return this.awaitResult(this.validateRaw(data, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
+   * @returns {unknown}
+   */
   public async validateRaw(
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
@@ -104,6 +181,15 @@ export class ERC721MintAction extends ContractAction {
     return { hash, result };
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof erc721MintActionAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public override async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof erc721MintActionAbi, 'supportsInterface'>,
@@ -117,6 +203,14 @@ export class ERC721MintAction extends ContractAction {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc721MintActionAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public override async getComponentInterface(
     params?: ReadParams<typeof erc721MintActionAbi, 'getComponentInterface'>,
   ) {
@@ -129,6 +223,14 @@ export class ERC721MintAction extends ContractAction {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?ERC721MintActionPayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: ERC721MintActionPayload,
     _options?: DeployableOptions,

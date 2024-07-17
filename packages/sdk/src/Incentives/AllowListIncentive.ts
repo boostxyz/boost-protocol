@@ -28,11 +28,43 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { ReadParams, WriteParams } from '../utils';
 
 export type { AllowListIncentivePayload };
+export { prepareAllowListIncentivePayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class AllowListIncentive
+ * @typedef {AllowListIncentive}
+ * @extends {DeployableTarget<AllowListIncentivePayload>}
+ */
 export class AllowListIncentive extends DeployableTarget<AllowListIncentivePayload> {
-  public static override base = import.meta.env.VITE_ALLOWLIST_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_ALLOWLIST_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'owner'>} [params]
+   * @returns {unknown}
+   */
   public async owner(
     params?: ReadParams<typeof allowListIncentiveAbi, 'owner'>,
   ) {
@@ -44,6 +76,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'claims'>} [params]
+   * @returns {unknown}
+   */
   public async claims(
     params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,
   ) {
@@ -55,6 +95,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'reward'>} [params]
+   * @returns {unknown}
+   */
   public async reward(
     params?: ReadParams<typeof allowListIncentiveAbi, 'reward'>,
   ) {
@@ -66,6 +114,15 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'claimed'>} [params]
+   * @returns {unknown}
+   */
   public async claimed(
     address: Address,
     params?: ReadParams<typeof allowListIncentiveAbi, 'claimed'>,
@@ -78,6 +135,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'allowList'>} [params]
+   * @returns {Promise<SimpleAllowList>}
+   */
   public async allowList(
     params?: ReadParams<typeof allowListIncentiveAbi, 'allowList'>,
   ): Promise<SimpleAllowList> {
@@ -92,6 +157,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     );
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'limit'>} [params]
+   * @returns {unknown}
+   */
   public async limit(
     params?: ReadParams<typeof allowListIncentiveAbi, 'limit'>,
   ) {
@@ -102,6 +175,15 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Pick<ClaimPayload, 'target'>} payload
+   * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claim(
     payload: Pick<ClaimPayload, 'target'>,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
@@ -109,6 +191,15 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     return this.awaitResult(this.claimRaw(payload, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Pick<ClaimPayload, 'target'>} payload
+   * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claimRaw(
     payload: Pick<ClaimPayload, 'target'>,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
@@ -128,6 +219,15 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   // use prepareClaimPayload?
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Pick<ClaimPayload, 'target'>} payload
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>} [params]
+   * @returns {unknown}
+   */
   public async isClaimable(
     payload: Pick<ClaimPayload, 'target'>,
     params?: ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>,
@@ -140,6 +240,15 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof allowListIncentiveAbi, 'supportsInterface'>,
@@ -153,6 +262,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof allowListIncentiveAbi, 'getComponentInterface'>,
   ) {
@@ -165,6 +282,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?AllowListIncentivePayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: AllowListIncentivePayload,
     _options?: DeployableOptions,

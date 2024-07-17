@@ -17,6 +17,12 @@ export {
   PointsIncentive,
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {Incentive}
+ */
 export type Incentive =
   | AllowListIncentive
   | CGDAIncentive
@@ -24,6 +30,11 @@ export type Incentive =
   | ERC1155Incentive
   | PointsIncentive;
 
+/**
+ * Description placeholder
+ *
+ * @type {{ "0x1e2e16a8": any; "0x197d2cb3": typeof ERC20Incentive; "0xd1da3349": typeof AllowListIncentive; "0xb168aa66": typeof ERC1155Incentive; "0x31116297": typeof CGDAIncentive; }}
+ */
 export const IncentiveByComponentInterface = {
   ['0x1e2e16a8']: PointsIncentive,
   ['0x197d2cb3']: ERC20Incentive,
@@ -32,6 +43,15 @@ export const IncentiveByComponentInterface = {
   ['0x31116297']: CGDAIncentive,
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @async
+ * @param {DeployableOptions} options
+ * @param {Address} address
+ * @returns {unknown}
+ */
 export async function incentiveFromAddress(
   options: DeployableOptions,
   address: Address,

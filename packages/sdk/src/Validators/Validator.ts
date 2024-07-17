@@ -7,12 +7,32 @@ import { SignerValidator } from './SignerValidator';
 
 export { SignerValidator };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {Validator}
+ */
 export type Validator = SignerValidator;
 
+/**
+ * Description placeholder
+ *
+ * @type {{ "0xd8725ea2": typeof SignerValidator; }}
+ */
 export const ValidatorByComponentInterface = {
   ['0xd8725ea2']: SignerValidator,
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @async
+ * @param {DeployableOptions} options
+ * @param {Address} address
+ * @returns {unknown}
+ */
 export async function validatorFromAddress(
   options: DeployableOptions,
   address: Address,

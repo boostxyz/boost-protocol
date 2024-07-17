@@ -40,10 +40,40 @@ import type { ReadParams, WriteParams } from '../utils';
 
 export type { VestingBudgetPayload, prepareVestingBudgetPayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class VestingBudget
+ * @typedef {VestingBudget}
+ * @extends {DeployableTarget<VestingBudgetPayload>}
+ */
 export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
-  public static override base = import.meta.env.VITE_VESTING_BUDGET_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_VESTING_BUDGET_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.BUDGET;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'owner'>} [params]
+   * @returns {*}
+   */
   public owner(params?: ReadParams<typeof vestingBudgetAbi, 'owner'>) {
     return readVestingBudgetOwner(this._config, {
       address: this.assertValidAddress(),
@@ -53,6 +83,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'start'>} [params]
+   * @returns {*}
+   */
   public start(params?: ReadParams<typeof vestingBudgetAbi, 'start'>) {
     return readVestingBudgetStart(this._config, {
       address: this.assertValidAddress(),
@@ -62,6 +99,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'duration'>} [params]
+   * @returns {*}
+   */
   public duration(params?: ReadParams<typeof vestingBudgetAbi, 'duration'>) {
     return readVestingBudgetDuration(this._config, {
       address: this.assertValidAddress(),
@@ -71,6 +115,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'cliff'>} [params]
+   * @returns {*}
+   */
   public cliff(params?: ReadParams<typeof vestingBudgetAbi, 'cliff'>) {
     return readVestingBudgetCliff(this._config, {
       address: this.assertValidAddress(),
@@ -80,6 +131,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload} transfer
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'allocate'>} [params]
+   * @returns {unknown}
+   */
   public async allocate(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
@@ -87,6 +147,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return this.awaitResult(this.allocateRaw(transfer, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload} transfer
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'allocate'>} [params]
+   * @returns {unknown}
+   */
   public async allocateRaw(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
@@ -105,6 +174,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload} transfer
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaim(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
@@ -112,6 +190,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return this.awaitResult(this.reclaimRaw(transfer, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload} transfer
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaimRaw(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
@@ -130,6 +217,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload} transfer
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburse'>} [params]
+   * @returns {unknown}
+   */
   public async disburse(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
@@ -137,6 +233,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return this.awaitResult(this.disburseRaw(transfer, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload} transfer
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburse'>} [params]
+   * @returns {unknown}
+   */
   public async disburseRaw(
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
@@ -155,6 +260,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload[]} transfers
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>} [params]
+   * @returns {unknown}
+   */
   public async disburseBatch(
     transfers: FungibleTransferPayload[],
     params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
@@ -162,6 +276,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {FungibleTransferPayload[]} transfers
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>} [params]
+   * @returns {unknown}
+   */
   public async disburseBatchRaw(
     transfers: FungibleTransferPayload[],
     params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
@@ -180,6 +303,16 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>} [params]
+   * @returns {unknown}
+   */
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
@@ -188,6 +321,16 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>} [params]
+   * @returns {unknown}
+   */
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
@@ -207,6 +350,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} account
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'isAuthorized'>} [params]
+   * @returns {*}
+   */
   public isAuthorized(
     account: Address,
     params?: ReadParams<typeof vestingBudgetAbi, 'isAuthorized'>,
@@ -219,6 +370,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'end'>} [params]
+   * @returns {*}
+   */
   public end(params?: ReadParams<typeof vestingBudgetAbi, 'end'>) {
     return readVestingBudgetEnd(this._config, {
       address: this.assertValidAddress(),
@@ -228,6 +386,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} asset
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'total'>} [params]
+   * @returns {*}
+   */
   public total(
     asset: Address,
     params?: ReadParams<typeof vestingBudgetAbi, 'total'>,
@@ -240,6 +406,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} asset
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'available'>} [params]
+   * @returns {*}
+   */
   public available(
     asset: Address,
     params?: ReadParams<typeof vestingBudgetAbi, 'available'>,
@@ -252,6 +426,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} asset
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'distributed'>} [params]
+   * @returns {*}
+   */
   public distributed(
     asset: Address,
     params?: ReadParams<typeof vestingBudgetAbi, 'distributed'>,
@@ -264,6 +446,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof vestingBudgetAbi, 'supportsInterface'>,
@@ -277,6 +468,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof vestingBudgetAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof vestingBudgetAbi, 'getComponentInterface'>,
   ) {
@@ -289,6 +488,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?VestingBudgetPayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: VestingBudgetPayload,
     _options?: DeployableOptions,

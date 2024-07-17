@@ -29,10 +29,41 @@ import type { ReadParams, WriteParams } from '../utils';
 
 export type { PointsIncentivePayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class PointsIncentive
+ * @typedef {PointsIncentive}
+ * @extends {DeployableTarget<PointsIncentivePayload>}
+ */
 export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
-  public static override base = import.meta.env.VITE_POINTS_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_POINTS_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'claims'>} [params]
+   * @returns {unknown}
+   */
   public async claims(
     params?: ReadParams<typeof pointsIncentiveAbi, 'claims'>,
   ) {
@@ -44,6 +75,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'currentReward'>} [params]
+   * @returns {unknown}
+   */
   public async currentReward(
     params?: ReadParams<typeof pointsIncentiveAbi, 'currentReward'>,
   ) {
@@ -55,6 +94,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'reward'>} [params]
+   * @returns {unknown}
+   */
   public async reward(
     params?: ReadParams<typeof pointsIncentiveAbi, 'reward'>,
   ) {
@@ -66,6 +113,15 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'claimed'>} [params]
+   * @returns {unknown}
+   */
   public async claimed(
     address: Address,
     params?: ReadParams<typeof pointsIncentiveAbi, 'claimed'>,
@@ -78,6 +134,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'venue'>} [params]
+   * @returns {unknown}
+   */
   public async venue(params?: ReadParams<typeof pointsIncentiveAbi, 'venue'>) {
     return readPointsIncentiveVenue(this._config, {
       address: this.assertValidAddress(),
@@ -86,6 +150,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'limit'>} [params]
+   * @returns {unknown}
+   */
   public async limit(params?: ReadParams<typeof pointsIncentiveAbi, 'limit'>) {
     return readPointsIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
@@ -94,6 +166,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'selector'>} [params]
+   * @returns {unknown}
+   */
   public async selector(
     params?: ReadParams<typeof pointsIncentiveAbi, 'selector'>,
   ) {
@@ -104,6 +184,15 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
@@ -111,6 +200,15 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     return this.awaitResult(this.claimRaw(payload, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
@@ -129,6 +227,15 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'isClaimable'>} [params]
+   * @returns {unknown}
+   */
   public async isClaimable(
     payload: ClaimPayload,
     params?: ReadParams<typeof pointsIncentiveAbi, 'isClaimable'>,
@@ -141,6 +248,15 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof pointsIncentiveAbi, 'supportsInterface'>,
@@ -153,6 +269,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof pointsIncentiveAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof pointsIncentiveAbi, 'getComponentInterface'>,
   ) {
@@ -165,6 +289,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?PointsIncentivePayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: PointsIncentivePayload,
     _options?: DeployableOptions,

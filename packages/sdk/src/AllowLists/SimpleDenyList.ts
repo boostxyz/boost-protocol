@@ -23,10 +23,42 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { SimpleDenyListPayload };
 export { prepareSimpleDenyListPayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class SimpleDenyList
+ * @typedef {SimpleDenyList}
+ * @extends {DeployableTarget<SimpleDenyListPayload>}
+ */
 export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
-  public static override base = import.meta.env.VITE_SIMPLE_DENYLIST_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_SIMPLE_DENYLIST_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof simpleDenyListAbi, 'isAllowed'>} [params]
+   * @returns {Promise<boolean>}
+   */
   public async isAllowed(
     address: Address,
     params?: ReadParams<typeof simpleDenyListAbi, 'isAllowed'>,
@@ -40,6 +72,16 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
+   * @returns {unknown}
+   */
   public async setDenied(
     addresses: Address[],
     allowed: boolean[],
@@ -48,6 +90,16 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     return this.awaitResult(this.setDeniedRaw(addresses, allowed, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
+   * @returns {unknown}
+   */
   public async setDeniedRaw(
     addresses: Address[],
     allowed: boolean[],
@@ -67,6 +119,15 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof simpleDenyListAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof simpleDenyListAbi, 'supportsInterface'>,
@@ -80,6 +141,14 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof simpleDenyListAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof simpleDenyListAbi, 'getComponentInterface'>,
   ) {
@@ -92,6 +161,14 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?SimpleDenyListPayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: SimpleDenyListPayload,
     _options?: DeployableOptions,

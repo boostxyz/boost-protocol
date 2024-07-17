@@ -25,11 +25,48 @@ import type { ReadParams } from '../utils';
 export type { SimpleAllowListPayload };
 export { prepareSimpleAllowListPayload };
 
+/**
+ * Description placeholder
+ *
+ * @type {2n}
+ */
 export const LIST_MANAGER_ROLE = 2n;
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class SimpleAllowList
+ * @typedef {SimpleAllowList}
+ * @extends {DeployableTarget<SimpleAllowListPayload>}
+ */
 export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
-  public static override base = import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_SIMPLE_ALLOWLIST_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
+   * @returns {Promise<boolean>}
+   */
   public async isAllowed(
     address: Address,
     params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
@@ -43,6 +80,16 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
+   * @returns {unknown}
+   */
   public async setAllowed(
     addresses: Address[],
     allowed: boolean[],
@@ -51,6 +98,16 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     return this.awaitResult(this.setAllowedRaw(addresses, allowed, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
+   * @returns {unknown}
+   */
   public async setAllowedRaw(
     addresses: Address[],
     allowed: boolean[],
@@ -70,6 +127,16 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {bigint} role
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'grantRoles'>} [params]
+   * @returns {unknown}
+   */
   public async grantRoles(
     address: Address,
     role: bigint,
@@ -78,6 +145,16 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     return this.awaitResult(this.grantRolesRaw(address, role, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {bigint} role
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'grantRoles'>} [params]
+   * @returns {unknown}
+   */
   public async grantRolesRaw(
     address: Address,
     role: bigint,
@@ -97,6 +174,15 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
@@ -110,6 +196,14 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
@@ -122,6 +216,14 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?SimpleAllowListPayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: SimpleAllowListPayload,
     _options?: DeployableOptions,

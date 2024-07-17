@@ -33,10 +33,41 @@ import type { ReadParams, WriteParams } from '../utils';
 
 export type { CGDAIncentivePayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class CGDAIncentive
+ * @typedef {CGDAIncentive}
+ * @extends {DeployableTarget<CGDAIncentivePayload>}
+ */
 export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
-  public static override base = import.meta.env.VITE_CGDA_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_CGDA_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'owner'>} [params]
+   * @returns {unknown}
+   */
   public async owner(params?: ReadParams<typeof cgdaIncentiveAbi, 'owner'>) {
     return readCgdaIncentiveOwner(this._config, {
       address: this.assertValidAddress(),
@@ -46,6 +77,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'claims'>} [params]
+   * @returns {unknown}
+   */
   public async claims(params?: ReadParams<typeof cgdaIncentiveAbi, 'claims'>) {
     return readCgdaIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
@@ -55,6 +94,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'reward'>} [params]
+   * @returns {unknown}
+   */
   public async reward(params?: ReadParams<typeof cgdaIncentiveAbi, 'reward'>) {
     return readCgdaIncentiveReward(this._config, {
       address: this.assertValidAddress(),
@@ -64,6 +111,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'claimed'>} [params]
+   * @returns {unknown}
+   */
   public async claimed(
     address: Address,
     params?: ReadParams<typeof cgdaIncentiveAbi, 'claimed'>,
@@ -76,6 +132,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'asset'>} [params]
+   * @returns {unknown}
+   */
   public async asset(params?: ReadParams<typeof cgdaIncentiveAbi, 'asset'>) {
     return readCgdaIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -84,6 +148,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'cgdaParams'>} [params]
+   * @returns {Promise<CGDAParameters>}
+   */
   public async cgdaParams(
     params?: ReadParams<typeof cgdaIncentiveAbi, 'cgdaParams'>,
   ): Promise<CGDAParameters> {
@@ -101,6 +173,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'totalBudget'>} [params]
+   * @returns {unknown}
+   */
   public async totalBudget(
     params?: ReadParams<typeof cgdaIncentiveAbi, 'totalBudget'>,
   ) {
@@ -111,6 +191,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
@@ -118,6 +207,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     return this.awaitResult(this.claimRaw(payload, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
@@ -133,6 +231,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaim(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>,
@@ -140,6 +247,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     return this.awaitResult(this.reclaimRaw(payload, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>,
@@ -158,6 +274,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'isClaimable'>} [params]
+   * @returns {unknown}
+   */
   public async isClaimable(
     payload: ClaimPayload,
     params?: ReadParams<typeof cgdaIncentiveAbi, 'isClaimable'>,
@@ -170,6 +295,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'currentReward'>} [params]
+   * @returns {unknown}
+   */
   public async currentReward(
     params?: ReadParams<typeof cgdaIncentiveAbi, 'currentReward'>,
   ) {
@@ -180,6 +313,15 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof cgdaIncentiveAbi, 'supportsInterface'>,
@@ -193,6 +335,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof cgdaIncentiveAbi, 'getComponentInterface'>,
   ) {
@@ -205,6 +355,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?CGDAIncentivePayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: CGDAIncentivePayload,
     _options?: DeployableOptions,

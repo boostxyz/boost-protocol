@@ -45,18 +45,39 @@ export type {
   ERC1155TransferPayload,
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+ * @returns {transfer is FungibleTransferPayload}
+ */
 export function isFungibleTransfer(
   transfer: FungibleTransferPayload | ERC1155TransferPayload,
 ): transfer is FungibleTransferPayload {
   return (transfer as ERC1155TransferPayload).tokenId === undefined;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+ * @returns {transfer is ERC1155TransferPayload}
+ */
 export function isERC1155TransferPayload(
   transfer: FungibleTransferPayload | ERC1155TransferPayload,
 ): transfer is ERC1155TransferPayload {
   return (transfer as ERC1155TransferPayload).tokenId !== undefined;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+ * @returns {*}
+ */
 export function prepareTransfer(
   transfer: FungibleTransferPayload | ERC1155TransferPayload,
 ) {
@@ -67,10 +88,42 @@ export function prepareTransfer(
   } else throw new UnknownTransferPayloadSupplied(transfer);
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class SimpleBudget
+ * @typedef {SimpleBudget}
+ * @extends {DeployableTarget<SimpleBudgetPayload>}
+ */
 export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
-  public static override base = import.meta.env.VITE_SIMPLE_BUDGET_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_SIMPLE_BUDGET_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.BUDGET;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'allocate'>} [params]
+   * @returns {unknown}
+   */
   public async allocate(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'allocate'>,
@@ -78,6 +131,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return this.awaitResult(this.allocateRaw(transfer, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'allocate'>} [params]
+   * @returns {unknown}
+   */
   public async allocateRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'allocate'>,
@@ -96,6 +158,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaim(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'reclaim'>,
@@ -103,6 +174,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return this.awaitResult(this.reclaimRaw(transfer, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaimRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'reclaim'>,
@@ -121,6 +201,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'disburse'>} [params]
+   * @returns {unknown}
+   */
   public async disburse(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'disburse'>,
@@ -128,6 +217,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return this.awaitResult(this.disburseRaw(transfer, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'disburse'>} [params]
+   * @returns {unknown}
+   */
   public async disburseRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'disburse'>,
@@ -146,6 +244,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Array<FungibleTransferPayload | ERC1155TransferPayload>} transfers
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>} [params]
+   * @returns {unknown}
+   */
   public async disburseBatch(
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
     params?: WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>,
@@ -155,6 +262,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
 
   // use prepareFungibleTransfer or prepareERC1155Transfer
   // TODO use data structure
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Array<FungibleTransferPayload | ERC1155TransferPayload>} transfers
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>} [params]
+   * @returns {unknown}
+   */
   public async disburseBatchRaw(
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
     params?: WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>,
@@ -173,6 +289,16 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>} [params]
+   * @returns {unknown}
+   */
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
@@ -181,6 +307,16 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {boolean[]} allowed
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>} [params]
+   * @returns {unknown}
+   */
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
@@ -200,6 +336,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} account
+   * @param {?ReadParams<typeof simpleBudgetAbi, 'isAuthorized'>} [params]
+   * @returns {*}
+   */
   public isAuthorized(
     account: Address,
     params?: ReadParams<typeof simpleBudgetAbi, 'isAuthorized'>,
@@ -213,6 +357,13 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {?ReadParams<typeof simpleBudgetAbi, 'owner'>} [params]
+   * @returns {*}
+   */
   public owner(params?: ReadParams<typeof simpleBudgetAbi, 'owner'>) {
     return readSimpleBudgetOwner(this._config, {
       address: this.assertValidAddress(),
@@ -222,6 +373,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} asset
+   * @param {?(bigint | undefined)} [tokenId]
+   * @param {?ReadParams<typeof simpleBudgetAbi, 'total'>} [params]
+   * @returns {*}
+   */
   public total(
     asset: Address,
     tokenId?: bigint | undefined,
@@ -235,6 +395,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} asset
+   * @param {?(bigint | undefined)} [tokenId]
+   * @param {?ReadParams<typeof simpleBudgetAbi, 'available'>} [params]
+   * @returns {*}
+   */
   public available(
     asset: Address,
     tokenId?: bigint | undefined,
@@ -248,6 +417,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @param {Address} asset
+   * @param {?(bigint | undefined)} [tokenId]
+   * @param {?ReadParams<typeof simpleBudgetAbi, 'distributed'>} [params]
+   * @returns {*}
+   */
   public distributed(
     asset: Address,
     tokenId?: bigint | undefined,
@@ -261,6 +439,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof simpleBudgetAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof simpleBudgetAbi, 'supportsInterface'>,
@@ -274,6 +461,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof simpleBudgetAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof simpleBudgetAbi, 'getComponentInterface'>,
   ) {
@@ -286,6 +481,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?SimpleBudgetPayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: SimpleBudgetPayload,
     _options?: DeployableOptions,

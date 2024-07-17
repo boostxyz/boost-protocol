@@ -21,13 +21,37 @@ import type { ReadParams, WriteParams } from './utils';
 
 export { RegistryType };
 
+/**
+ * Description placeholder
+ *
+ * @type {Address}
+ */
 export const BOOST_REGISTRY_ADDRESS: Address = import.meta.env
   .VITE_BOOST_REGISTRY_ADDRESS;
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface BoostRegistryDeployedOptions
+ * @typedef {BoostRegistryDeployedOptions}
+ * @extends {DeployableOptions}
+ */
 export interface BoostRegistryDeployedOptions extends DeployableOptions {
+  /**
+   * Description placeholder
+   *
+   * @type {?Address}
+   */
   address?: Address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} opts
+ * @returns {opts is BoostRegistryDeployedOptions}
+ */
 function isBoostRegistryDeployed(
   // biome-ignore lint/suspicious/noExplicitAny: type guard
   opts: any,
@@ -35,8 +59,22 @@ function isBoostRegistryDeployed(
   return opts.address && isAddress(opts.address);
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface BoostRegistryOptionsWithPayload
+ * @typedef {BoostRegistryOptionsWithPayload}
+ * @extends {DeployableOptions}
+ */
 export interface BoostRegistryOptionsWithPayload extends DeployableOptions {}
 
+/**
+ * Description placeholder
+ *
+ * @param {*} opts
+ * @returns {opts is BoostRegistryOptionsWithPayload}
+ */
 function isBoostRegistryDeployable(
   // biome-ignore lint/suspicious/noExplicitAny: type guard
   opts: any,
@@ -44,11 +82,34 @@ function isBoostRegistryDeployable(
   return !opts.address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {BoostRegistryConfig}
+ */
 export type BoostRegistryConfig =
   | BoostRegistryDeployedOptions
   | BoostRegistryOptionsWithPayload;
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class BoostRegistry
+ * @typedef {BoostRegistry}
+ * @extends {Deployable<never[]>}
+ */
 export class BoostRegistry extends Deployable<never[]> {
+  /**
+   * Creates an instance of BoostRegistry.
+   *
+   * @constructor
+   * @param {BoostRegistryConfig} param0
+   * @param {Config} param0.config
+   * @param {Account} param0.account
+   * @param {({ address?: Address; } | {})} param0....options
+   */
   constructor({ config, account, ...options }: BoostRegistryConfig) {
     if (isBoostRegistryDeployed(options) && options.address) {
       super({ account, config }, options.address);
@@ -59,6 +120,17 @@ export class BoostRegistry extends Deployable<never[]> {
     }
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {RegistryType} registryType
+   * @param {string} name
+   * @param {Address} implementation
+   * @param {?WriteParams<typeof boostRegistryAbi, 'register'>} [params]
+   * @returns {unknown}
+   */
   public async register(
     registryType: RegistryType,
     name: string,
@@ -70,6 +142,17 @@ export class BoostRegistry extends Deployable<never[]> {
     );
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {RegistryType} registryType
+   * @param {string} name
+   * @param {Address} implementation
+   * @param {?WriteParams<typeof boostRegistryAbi, 'register'>} [params]
+   * @returns {unknown}
+   */
   public async registerRaw(
     registryType: RegistryType,
     name: string,
@@ -90,6 +173,17 @@ export class BoostRegistry extends Deployable<never[]> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @template {DeployableTarget} Target
+   * @param {string} displayName
+   * @param {Target} target
+   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
+   * @returns {unknown}
+   */
   public async clone<Target extends DeployableTarget>(
     displayName: string,
     target: Target,
@@ -99,6 +193,17 @@ export class BoostRegistry extends Deployable<never[]> {
     return target.at(instance);
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @template {DeployableTarget} Target
+   * @param {string} displayName
+   * @param {Target} target
+   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
+   * @returns {unknown}
+   */
   public async deployClone<Target extends DeployableTarget>(
     displayName: string,
     target: Target,
@@ -107,6 +212,16 @@ export class BoostRegistry extends Deployable<never[]> {
     return this.awaitResult(this.deployCloneRaw(displayName, target, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {string} displayName
+   * @param {DeployableTarget} target
+   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
+   * @returns {unknown}
+   */
   public async deployCloneRaw(
     displayName: string,
     target: DeployableTarget,
@@ -135,6 +250,15 @@ export class BoostRegistry extends Deployable<never[]> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} identifier
+   * @param {?ReadParams<typeof boostRegistryAbi, 'getBaseImplementation'>} [params]
+   * @returns {unknown}
+   */
   public async getBaseImplementation(
     identifier: Hex,
     params?: ReadParams<typeof boostRegistryAbi, 'getBaseImplementation'>,
@@ -148,6 +272,15 @@ export class BoostRegistry extends Deployable<never[]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} identifier
+   * @param {?ReadParams<typeof boostRegistryAbi, 'getClone'>} [params]
+   * @returns {unknown}
+   */
   public async getClone(
     identifier: Hex,
     params?: ReadParams<typeof boostRegistryAbi, 'getClone'>,
@@ -161,6 +294,15 @@ export class BoostRegistry extends Deployable<never[]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} deployer
+   * @param {?ReadParams<typeof boostRegistryAbi, 'getClones'>} [params]
+   * @returns {unknown}
+   */
   public async getClones(
     deployer: Address,
     params?: ReadParams<typeof boostRegistryAbi, 'getClones'>,
@@ -174,6 +316,18 @@ export class BoostRegistry extends Deployable<never[]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {RegistryType} registryType
+   * @param {Address} base
+   * @param {Address} deployer
+   * @param {string} displayName
+   * @param {?ReadParams<typeof boostRegistryAbi, 'getCloneIdentifier'>} [params]
+   * @returns {unknown}
+   */
   public async getCloneIdentifier(
     registryType: RegistryType,
     base: Address,
@@ -190,6 +344,16 @@ export class BoostRegistry extends Deployable<never[]> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {RegistryType} registryType
+   * @param {string} displayName
+   * @param {?ReadParams<typeof boostRegistryAbi, 'getIdentifier'>} [params]
+   * @returns {unknown}
+   */
   public async getIdentifier(
     registryType: RegistryType,
     displayName: string,
@@ -204,6 +368,14 @@ export class BoostRegistry extends Deployable<never[]> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?never[]} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: never[],
     _options?: DeployableOptions,

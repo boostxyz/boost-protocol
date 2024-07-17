@@ -25,10 +25,41 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { ContractActionPayload };
 export { prepareContractActionPayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class ContractAction
+ * @typedef {ContractAction}
+ * @extends {DeployableTarget<ContractActionPayload>}
+ */
 export class ContractAction extends DeployableTarget<ContractActionPayload> {
-  public static override base = import.meta.env.VITE_CONTRACT_ACTION_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_CONTRACT_ACTION_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.ACTION;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof contractActionAbi, 'chainId'>} [params]
+   * @returns {unknown}
+   */
   public async chainId(
     params?: ReadParams<typeof contractActionAbi, 'chainId'>,
   ) {
@@ -40,6 +71,14 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof contractActionAbi, 'target'>} [params]
+   * @returns {unknown}
+   */
   public async target(params?: ReadParams<typeof contractActionAbi, 'target'>) {
     return readContractActionTarget(this._config, {
       address: this.assertValidAddress(),
@@ -49,6 +88,14 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof contractActionAbi, 'selector'>} [params]
+   * @returns {unknown}
+   */
   public async selector(
     params?: ReadParams<typeof contractActionAbi, 'selector'>,
   ) {
@@ -60,6 +107,14 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof contractActionAbi, 'value'>} [params]
+   * @returns {unknown}
+   */
   public async value(params?: ReadParams<typeof contractActionAbi, 'value'>) {
     return readContractActionValue(this._config, {
       address: this.assertValidAddress(),
@@ -69,6 +124,15 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?WriteParams<typeof contractActionAbi, 'execute'>} [params]
+   * @returns {unknown}
+   */
   public async execute(
     data: Hex,
     params?: WriteParams<typeof contractActionAbi, 'execute'>,
@@ -76,6 +140,15 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     return this.awaitResult(this.executeRaw(data, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?WriteParams<typeof contractActionAbi, 'execute'>} [params]
+   * @returns {unknown}
+   */
   public async executeRaw(
     data: Hex,
     params?: WriteParams<typeof contractActionAbi, 'execute'>,
@@ -94,6 +167,15 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} data
+   * @param {?ReadParams<typeof contractActionAbi, 'prepare'>} [params]
+   * @returns {unknown}
+   */
   public async prepare(
     data: Hex,
     params?: ReadParams<typeof contractActionAbi, 'prepare'>,
@@ -107,6 +189,15 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof contractActionAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof contractActionAbi, 'supportsInterface'>,
@@ -120,6 +211,14 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof contractActionAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof contractActionAbi, 'getComponentInterface'>,
   ) {
@@ -132,6 +231,14 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?ContractActionPayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: ContractActionPayload,
     _options?: DeployableOptions,

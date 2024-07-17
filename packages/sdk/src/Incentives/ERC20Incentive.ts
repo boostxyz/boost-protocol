@@ -37,10 +37,41 @@ import type { ReadParams, WriteParams } from '../utils';
 
 export type { ERC20IncentivePayload };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @class ERC20Incentive
+ * @typedef {ERC20Incentive}
+ * @extends {DeployableTarget<ERC20IncentivePayload>}
+ */
 export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
-  public static override base = import.meta.env.VITE_ERC20_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {Address}
+   */
+  public static override base: Address = import.meta.env
+    .VITE_ERC20_INCENTIVE_BASE;
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @static
+   * @type {RegistryType}
+   */
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'owner'>} [params]
+   * @returns {unknown}
+   */
   public async owner(params?: ReadParams<typeof erc20IncentiveAbi, 'owner'>) {
     return readErc20IncentiveOwner(this._config, {
       address: this.assertValidAddress(),
@@ -50,6 +81,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'currentReward'>} [params]
+   * @returns {unknown}
+   */
   public async currentReward(
     params?: ReadParams<typeof erc20IncentiveAbi, 'currentReward'>,
   ) {
@@ -61,6 +100,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'claims'>} [params]
+   * @returns {unknown}
+   */
   public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
     return readErc20IncentiveClaims(this._config, {
       address: this.assertValidAddress(),
@@ -70,6 +117,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'claimed'>} [params]
+   * @returns {unknown}
+   */
   public async claimed(
     address: Address,
     params?: ReadParams<typeof erc20IncentiveAbi, 'claimed'>,
@@ -82,6 +138,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'asset'>} [params]
+   * @returns {unknown}
+   */
   public async asset(params?: ReadParams<typeof erc20IncentiveAbi, 'asset'>) {
     return readErc20IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
@@ -90,6 +154,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'strategy'>} [params]
+   * @returns {Promise<StrategyType>}
+   */
   public async strategy(
     params?: ReadParams<typeof erc20IncentiveAbi, 'strategy'>,
   ): Promise<StrategyType> {
@@ -100,6 +172,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     }) as Promise<StrategyType>;
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'reward'>} [params]
+   * @returns {unknown}
+   */
   public async reward(params?: ReadParams<typeof erc20IncentiveAbi, 'reward'>) {
     return readErc20IncentiveReward(this._config, {
       address: this.assertValidAddress(),
@@ -108,6 +188,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'limit'>} [params]
+   * @returns {unknown}
+   */
   public async limit(params?: ReadParams<typeof erc20IncentiveAbi, 'limit'>) {
     return readErc20IncentiveLimit(this._config, {
       address: this.assertValidAddress(),
@@ -116,6 +204,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {bigint} i
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'entries'>} [params]
+   * @returns {unknown}
+   */
   public async entries(
     i: bigint,
     params?: ReadParams<typeof erc20IncentiveAbi, 'entries'>,
@@ -128,6 +225,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
@@ -135,6 +241,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return this.awaitResult(this.claimRaw(payload, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
+   * @returns {unknown}
+   */
   public async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
@@ -153,6 +268,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaim(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
@@ -160,6 +284,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return this.awaitResult(this.reclaimRaw(payload, params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'reclaim'>} [params]
+   * @returns {unknown}
+   */
   public async reclaimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
@@ -178,6 +311,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {ClaimPayload} payload
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'isClaimable'>} [params]
+   * @returns {unknown}
+   */
   public async isClaimable(
     payload: ClaimPayload,
     params?: ReadParams<typeof erc20IncentiveAbi, 'isClaimable'>,
@@ -190,12 +332,28 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>} [params]
+   * @returns {unknown}
+   */
   public async drawRaffle(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
   ) {
     return this.awaitResult(this.drawRaffleRaw(params));
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>} [params]
+   * @returns {unknown}
+   */
   public async drawRaffleRaw(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
   ) {
@@ -212,6 +370,15 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     return { hash, result };
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'supportsInterface'>} [params]
+   * @returns {unknown}
+   */
   public async supportsInterface(
     interfaceId: Hex,
     params?: ReadParams<typeof erc20IncentiveAbi, 'supportsInterface'>,
@@ -225,6 +392,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
   public async getComponentInterface(
     params?: ReadParams<typeof erc20IncentiveAbi, 'getComponentInterface'>,
   ) {
@@ -237,6 +412,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     });
   }
 
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @param {?ERC20IncentivePayload} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {GenericDeployableParams}
+   */
   public override buildParameters(
     _payload?: ERC20IncentivePayload,
     _options?: DeployableOptions,

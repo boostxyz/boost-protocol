@@ -37,10 +37,6 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   public static override base = import.meta.env.VITE_CGDA_INCENTIVE_BASE;
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
-  constructor(options: DeployableOptions, payload: CGDAIncentivePayload) {
-    super(options, payload, true);
-  }
-
   public async owner(params?: ReadParams<typeof cgdaIncentiveAbi, 'owner'>) {
     return readCgdaIncentiveOwner(this._config, {
       address: this.assertValidAddress(),

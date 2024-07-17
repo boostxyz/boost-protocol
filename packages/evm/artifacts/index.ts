@@ -328,6 +328,7 @@ export interface ERC1155IncentivePayload {
   extraData: Hex;
 }
 
+// TODO: there's an issue with this specific payload encoding that exists between viem and ethers
 export const prepareERC1155IncentivePayload = ({
   asset,
   strategy,
@@ -346,7 +347,7 @@ export const prepareERC1155IncentivePayload = ({
     strategy,
     tokenId,
     limit,
-    zeroHash])
+    zeroHash]) as Hex
 };
 
 export interface AllowListIncentivePayload {

@@ -39,10 +39,6 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
   public static override base = import.meta.env.VITE_ERC1155_INCENTIVE_BASE;
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
-  constructor(options: DeployableOptions, payload: ERC1155IncentivePayload) {
-    super(options, payload, true);
-  }
-
   public async claims(
     params?: ReadParams<typeof erc1155IncentiveAbi, 'claims'>,
   ) {

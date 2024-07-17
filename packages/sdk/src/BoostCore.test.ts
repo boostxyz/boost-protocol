@@ -566,7 +566,7 @@ describe('BoostCore', () => {
     // that are preconfigured with the dynamic base addresses generated at test time.
     // normally you would use the follow api for brevity
     // budget: client.SimpleBudget({} | '0xaddress')
-    const { budget, erc20, erc1155, points } = budgets;
+    const { budget, erc20, points } = budgets;
     const allowList = await registry.clone(
       'SharedAllowList',
       new bases.SimpleAllowList(defaultOptions, {

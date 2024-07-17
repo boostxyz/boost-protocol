@@ -41,10 +41,6 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   public static override base = import.meta.env.VITE_ERC20_INCENTIVE_BASE;
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
-  constructor(options: DeployableOptions, payload: ERC20IncentivePayload) {
-    super(options, payload, true);
-  }
-
   public async owner(params?: ReadParams<typeof erc20IncentiveAbi, 'owner'>) {
     return readErc20IncentiveOwner(this._config, {
       address: this.assertValidAddress(),

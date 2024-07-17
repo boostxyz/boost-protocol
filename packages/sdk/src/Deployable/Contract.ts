@@ -1,12 +1,5 @@
 import type { Config } from '@wagmi/core';
-import type { CreateSimulateContractReturnType } from '@wagmi/core/codegen';
-import type {
-  Abi,
-  Address,
-  ContractFunctionName,
-  Hash,
-  WaitForTransactionReceiptParameters,
-} from 'viem';
+import type { Address, WaitForTransactionReceiptParameters } from 'viem';
 import { ContractAddressRequiredError } from '../errors';
 import { type HashAndSimulatedResult, awaitResult } from '../utils';
 

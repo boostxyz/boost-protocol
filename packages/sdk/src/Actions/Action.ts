@@ -7,7 +7,7 @@ import { ContractAction } from './ContractAction';
 import { ERC721MintAction } from './ERC721MintAction';
 
 /**
- * @categoryDescription Actions
+ * @groupDescription Actions
  * These functions are available for...
  * @module
  */

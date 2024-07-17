@@ -151,14 +151,12 @@ describe('ContractAction', () => {
         [account, parseEther('100')],
       ),
     );
-    console.log(
-      await call(getClient(defaultOptions.config)!, {
-        to: erc20.assertValidAddress(),
-        account: defaultOptions.account.address,
-        data: payload,
-        value: parseEther('1'),
-      }),
-    );
+    await call(getClient(defaultOptions.config)!, {
+      to: erc20.assertValidAddress(),
+      account: defaultOptions.account.address,
+      data: payload,
+      value: parseEther('1'),
+    });
     expect(
       await readMockErc20BalanceOf(defaultOptions.config, {
         address: erc20.assertValidAddress(),
@@ -170,6 +168,12 @@ describe('ContractAction', () => {
   test('nonpayable execute', async () => {
     const action = await loadFixture(nonPayableAction(fixtures, erc20));
     const { account } = accounts.at(1)!;
+    console.log(
+      await readMockErc20BalanceOf(defaultOptions.config, {
+        address: erc20.assertValidAddress(),
+        args: [account],
+      }),
+    );
     const [success] = await action.execute(
       encodeAbiParameters(
         [
@@ -180,6 +184,12 @@ describe('ContractAction', () => {
       ),
     );
     expect(success).toBe(true);
+    expect(
+      await readMockErc20BalanceOf(defaultOptions.config, {
+        address: erc20.assertValidAddress(),
+        args: [account],
+      }),
+    ).toBe(parseEther('100'));
   });
 
   test('different chain id should throw', async () => {

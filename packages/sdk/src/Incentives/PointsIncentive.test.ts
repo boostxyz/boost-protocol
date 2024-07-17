@@ -87,4 +87,55 @@ describe('PointsIncentive', () => {
       }),
     ).toBe(1n);
   });
+
+  test('cannot claim twice', async () => {
+    const reward = 1n;
+    const referrer = accounts.at(1)!.account!;
+    const message = keccak256(encodePacked(['string'], ['test']));
+    const trustedSigner = accounts.at(0)!;
+    const trustedSignature = await signMessage(defaultOptions.config, {
+      account: trustedSigner.privateKey,
+      message: { raw: message },
+    });
+    const pointsIncentive = new fixtures.bases.PointsIncentive(defaultOptions, {
+      venue: points.assertValidAddress(),
+      selector: bytes4('issue(address,uint256)'),
+      reward,
+      limit: 10n,
+    });
+    const boost = await freshBoost(fixtures, {
+      incentives: [pointsIncentive],
+    });
+    await writePointsGrantRoles(defaultOptions.config, {
+      address: points.assertValidAddress(),
+      args: [pointsIncentive.assertValidAddress(), 2n],
+      account: defaultOptions.account,
+    });
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      prepareSignerValidatorValidatePayload({
+        signer: trustedSigner.account,
+        hash: message,
+        signature: trustedSignature,
+      }),
+      { value: parseEther('0.000075') },
+    );
+    try {
+      await fixtures.core.claimIncentive(
+        boost.id,
+        0n,
+        referrer,
+        prepareSignerValidatorValidatePayload({
+          signer: trustedSigner.account,
+          hash: message,
+          signature: trustedSignature,
+        }),
+        { value: parseEther('0.000075') },
+      );
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+    }
+  });
 });

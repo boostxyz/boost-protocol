@@ -21,6 +21,7 @@ import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
   type Hex,
+  parseEther,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -93,6 +94,8 @@ import type { ReadParams, WriteParams } from './utils';
 
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
+
+export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 export interface BoostCoreDeployedOptions extends DeployableOptions {
   address?: Address;

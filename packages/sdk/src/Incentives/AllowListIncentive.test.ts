@@ -1,24 +1,30 @@
 import {
-  prepareAllowListIncentivePayload,
-  writeAllowListIncentiveInitialize,
+  prepareSignerValidatorValidatePayload,
+  writePointsGrantRoles,
 } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { isAddress, zeroAddress } from 'viem';
+import { signMessage } from '@wagmi/core';
+import {
+  encodePacked,
+  isAddress,
+  keccak256,
+  parseEther,
+  zeroAddress,
+} from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
+  freshBoost,
 } from '../../test/helpers';
-import type { AllowList } from '../AllowLists/AllowList';
-import { AllowListIncentive } from './AllowListIncentive';
+import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
+import { BOOST_CORE_CLAIM_FEE } from '../BoostCore';
+import { bytes4 } from '../utils';
+import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures;
-
-beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
-});
 
 function freshAllowList(fixtures: Fixtures) {
   return function freshAllowList() {
@@ -26,83 +32,111 @@ function freshAllowList(fixtures: Fixtures) {
       crypto.randomUUID(),
       new fixtures.bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
-        allowed: [defaultOptions.account.address],
-      }),
-    );
-  };
-}
-
-function freshAllowListIncentive(fixtures: Fixtures, allowlist: AllowList) {
-  return async function freshAllowListIncentive() {
-    return fixtures.registry.clone(
-      crypto.randomUUID(),
-      new fixtures.bases.AllowListIncentive(defaultOptions, {
-        allowList: allowlist.assertValidAddress(),
-        limit: 3n,
+        allowed: [],
       }),
     );
   };
 }
 
 describe('AllowListIncentive', () => {
+  beforeAll(async () => {
+    fixtures = await loadFixture(deployFixtures);
+  });
+
   test('can successfully be deployed', async () => {
-    const action = new AllowListIncentive(defaultOptions, {
-      allowList: zeroAddress,
-      limit: 0n,
+    const action = new PointsIncentive(defaultOptions, {
+      venue: zeroAddress,
+      selector: '0xdeadb33f',
+      reward: 1n,
+      limit: 1n,
     });
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 
-  test('can be claimed', async () => {
+  test('can claim', async () => {
+    const referrer = accounts.at(1)!.account!;
+    const message = keccak256(encodePacked(['string'], ['test']));
+    const trustedSigner = accounts.at(0)!;
+    const trustedSignature = await signMessage(defaultOptions.config, {
+      account: trustedSigner.privateKey,
+      message: { raw: message },
+    });
     const allowList = await loadFixture(freshAllowList(fixtures));
-    const incentive = await loadFixture(
-      freshAllowListIncentive(fixtures, allowList),
+    const allowListIncentive = new fixtures.bases.AllowListIncentive(
+      defaultOptions,
+      {
+        allowList: allowList.assertValidAddress(),
+        limit: 3n,
+      },
     );
-    console.log(fixtures.core.assertValidAddress());
-    console.log(fixtures.registry.assertValidAddress());
-    console.log(await incentive.owner());
-    expect(await allowList.isAllowed(zeroAddress)).toBe(false);
-    await incentive.claim({ target: zeroAddress });
-    expect(await allowList.isAllowed(zeroAddress)).toBe(true);
+    const boost = await freshBoost(fixtures, {
+      incentives: [allowListIncentive],
+    });
+    await allowList.grantRoles(
+      allowListIncentive.assertValidAddress(),
+      LIST_MANAGER_ROLE,
+    );
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      prepareSignerValidatorValidatePayload({
+        signer: trustedSigner.account,
+        hash: message,
+        signature: trustedSignature,
+      }),
+      { value: BOOST_CORE_CLAIM_FEE, account: trustedSigner.privateKey },
+    );
+    expect(await allowList.isAllowed(trustedSigner.account)).toBe(true);
   });
 
-  test('cannot be claimed twice', async () => {
+  test('cannot claim twice', async () => {
+    const referrer = accounts.at(1)!.account!;
+    const message = keccak256(encodePacked(['string'], ['test']));
+    const trustedSigner = accounts.at(0)!;
+    const trustedSignature = await signMessage(defaultOptions.config, {
+      account: trustedSigner.privateKey,
+      message: { raw: message },
+    });
     const allowList = await loadFixture(freshAllowList(fixtures));
-    const incentive = await loadFixture(
-      freshAllowListIncentive(fixtures, allowList),
+    const allowListIncentive = new fixtures.bases.AllowListIncentive(
+      defaultOptions,
+      {
+        allowList: allowList.assertValidAddress(),
+        limit: 3n,
+      },
     );
-    expect(await allowList.isAllowed(zeroAddress)).toBe(false);
-    await incentive.claim({ target: zeroAddress });
-    expect(await allowList.isAllowed(zeroAddress)).toBe(true);
+    const boost = await freshBoost(fixtures, {
+      incentives: [allowListIncentive],
+    });
+    await allowList.grantRoles(
+      allowListIncentive.assertValidAddress(),
+      LIST_MANAGER_ROLE,
+    );
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      prepareSignerValidatorValidatePayload({
+        signer: trustedSigner.account,
+        hash: message,
+        signature: trustedSignature,
+      }),
+      { value: BOOST_CORE_CLAIM_FEE, account: trustedSigner.privateKey },
+    );
     try {
-      await incentive.claim({ target: zeroAddress });
-    } catch (e) {
-      expect(e).toBeInstanceOf(Error);
-    }
-  });
-
-  test('can check claimable', async () => {
-    const allowList = await loadFixture(freshAllowList(fixtures));
-    const incentive = await loadFixture(
-      freshAllowListIncentive(fixtures, allowList),
-    );
-    expect(await incentive.isClaimable({ target: zeroAddress })).toBe(true);
-    await incentive.claim({ target: zeroAddress });
-    expect(await allowList.isAllowed(zeroAddress)).toBe(false);
-  });
-
-  test('cannot exceed max claims', async () => {
-    const allowList = await loadFixture(freshAllowList(fixtures));
-    const incentive = await loadFixture(
-      freshAllowListIncentive(fixtures, allowList),
-    );
-    for (let i = 0; i < 3; i++) {
-      const { account } = accounts.at(i)!;
-      await incentive.claim({ target: account });
-    }
-    try {
-      await incentive.claim({ target: zeroAddress });
+      await fixtures.core.claimIncentive(
+        boost.id,
+        0n,
+        referrer,
+        prepareSignerValidatorValidatePayload({
+          signer: trustedSigner.account,
+          hash: message,
+          signature: trustedSignature,
+        }),
+        { value: BOOST_CORE_CLAIM_FEE, account: trustedSigner.privateKey },
+      );
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }

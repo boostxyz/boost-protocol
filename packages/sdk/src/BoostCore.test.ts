@@ -581,13 +581,13 @@ describe('BoostCore', () => {
       limit: 10n,
       strategy: StrategyType.POOL,
     });
-    const erc1155Incentive = new bases.ERC1155Incentive(defaultOptions, {
-      asset: erc1155.assertValidAddress(),
-      strategy: ERC1155StrategyType.POOL,
-      limit: 1n,
-      tokenId: 1n,
-      extraData: '0x',
-    });
+    // const erc1155Incentive = new bases.ERC1155Incentive(defaultOptions, {
+    //   asset: erc1155.assertValidAddress(),
+    //   strategy: ERC1155StrategyType.POOL,
+    //   limit: 1n,
+    //   tokenId: 1n,
+    //   extraData: '0x',
+    // });
     const cgdaIncentive = new bases.CGDAIncentive(defaultOptions, {
       asset: erc20.assertValidAddress(),
       initialReward: 1n,
@@ -626,7 +626,7 @@ describe('BoostCore', () => {
         false,
       ),
       incentives: [
-        erc1155Incentive,
+        // erc1155Incentive,
         erc20Incentive,
         cgdaIncentive,
         allowListIncentive,

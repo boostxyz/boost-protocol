@@ -24,6 +24,7 @@ import type { ReadParams } from '../utils';
 
 export type { SimpleAllowListPayload };
 
+export const LIST_MANAGER_ROLE = 2n;
 export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   public static override base = import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE;
   public static override registryType: RegistryType = RegistryType.ALLOW_LIST;

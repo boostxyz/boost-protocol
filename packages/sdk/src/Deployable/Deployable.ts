@@ -46,14 +46,16 @@ export type DeployablePayloadOrAddress<Payload = unknown> = Payload | Address;
  */
 export interface DeployableOptions {
   /**
-   * Description placeholder
+   * [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
    *
+   * @see {@link Config}
    * @type {Config}
    */
   config: Config;
   /**
-   * Description placeholder
+   * [Viem Local Account](https://viem.sh/docs/accounts/local), if in a Node environment
    *
+   * @see {@link Account}
    * @type {?Account}
    */
   account?: Account;

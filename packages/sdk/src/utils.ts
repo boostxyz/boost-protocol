@@ -11,7 +11,8 @@ import type { WriteContractParameters } from 'viem/actions';
 import { NoContractAddressUponReceiptError } from './errors';
 
 /**
- * Description placeholder
+ * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
+ * See (writeContract)[https://viem.sh/docs/contract/writeContract]
  *
  * @export
  * @typedef {WriteParams}
@@ -29,7 +30,8 @@ export type WriteParams<
 >;
 
 /**
- * Description placeholder
+ * Helper type that encapsulates common readContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
+ * See (readContract)[https://viem.sh/docs/contract/readContract]
  *
  * @export
  * @typedef {ReadParams}
@@ -47,8 +49,9 @@ export type ReadParams<
 >;
 
 /**
- * Description placeholder
+ * Helper utility to convert a string to a bytes4 type
  *
+ * @see {@link slice}
  * @export
  * @param {string} input
  * @returns {*}
@@ -58,14 +61,15 @@ export function bytes4(input: string) {
 }
 
 /**
- * Description placeholder
+ * Utility function to wait for a transaction receipt, and extract the contractAddress
  *
  * @export
  * @async
- * @param {Config} config
- * @param {Promise<Hash>} hash
- * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
+ * @param {Config} config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
+ * @param {Promise<Hash>} hash - A transaction hash promise
+ * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams] - @see {@link WaitForTransactionReceiptParameters}
  * @returns {unknown}
+ * @throws {@link NoContractAddressUponReceiptError} if no `contractAddress` exists after the transaction has been received
  */
 export async function getDeployedContractAddress(
   config: Config,

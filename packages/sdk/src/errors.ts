@@ -6,12 +6,20 @@ import {
 import type { Incentive } from './Incentives/Incentive';
 
 /**
- * Description placeholder
+ * This error is thrown during Boost creation if no `BoostCreated` event was emitted.
  *
  * @export
  * @class BoostCoreNoIdentifierEmitted
  * @typedef {BoostCoreNoIdentifierEmitted}
  * @extends {Error}
+ * @example
+ * ```ts
+ * try {
+ *   await boostCore.createBoost(...)
+ * } catch(e) {
+ *   if(e instanceof BoostCoreNoIdentifierEmitted) {}
+ * }
+ * ```
  */
 export class BoostCoreNoIdentifierEmitted extends Error {
   /**
@@ -25,12 +33,19 @@ export class BoostCoreNoIdentifierEmitted extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when `assertValidAddress` is called, usually because a contract call expects the class to have a valid address attached.
  *
  * @export
  * @class ContractAddressRequiredError
  * @typedef {ContractAddressRequiredError}
  * @extends {Error}
+ * @example
+ * ```ts
+ * try {
+ *   target.assertValidAddress()
+ * } catch(e) {
+ *   if(e instanceof ContractAddressRequiredError) {}
+ * }
  */
 export class ContractAddressRequiredError extends Error {
   /**
@@ -44,7 +59,7 @@ export class ContractAddressRequiredError extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when attempting to deploy a contract that has already been deployed, or has an address attached.
  *
  * @export
  * @class DeployableAlreadyDeployedError
@@ -53,7 +68,7 @@ export class ContractAddressRequiredError extends Error {
  */
 export class DeployableAlreadyDeployedError extends Error {
   /**
-   * Description placeholder
+   * The address already attached to the target.
    *
    * @type {string}
    */
@@ -73,7 +88,7 @@ export class DeployableAlreadyDeployedError extends Error {
 }
 
 /**
- * Description placeholder
+ * You should never see this error if we did our jobs and every target overrides the `buildParameters` method.
  *
  * @export
  * @class DeployableBuildParametersUnspecifiedError
@@ -94,7 +109,7 @@ export class DeployableBuildParametersUnspecifiedError extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when attempting to deploy an `ownable` contract and the owner cannot be ascertained from the initialization payload or configured account.
  *
  * @export
  * @class DeployableUnknownOwnerProvidedError
@@ -115,7 +130,7 @@ export class DeployableUnknownOwnerProvidedError extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when deploying a contract with no valid Wagmi configuration on the instance.
  *
  * @export
  * @class DeployableWagmiConfigurationRequiredError
@@ -136,7 +151,7 @@ export class DeployableWagmiConfigurationRequiredError extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when deploying a contract with no valid initialization payload.
  *
  * @export
  * @class DeployableMissingPayloadError
@@ -157,7 +172,7 @@ export class DeployableMissingPayloadError extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when we receive a transaction receipt for a contract deployment without a contract address on it.
  *
  * @export
  * @class NoContractAddressUponReceiptError
@@ -166,7 +181,7 @@ export class DeployableMissingPayloadError extends Error {
  */
 export class NoContractAddressUponReceiptError extends Error {
   /**
-   * Description placeholder
+   * The raw receipt we receive from [waitForTransactionReceipt](https://v1.viem.sh/docs/actions/public/waitForTransactionReceipt.html#waitfortransactionreceipt)
    *
    * @public
    * @readonly
@@ -188,7 +203,8 @@ export class NoContractAddressUponReceiptError extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when a target address was provided that doesn't match any supported interface for the given registry type.
+ * For example, if you try to do `incentiveFromAddress()` with the address of a deployed `SimpleBudget`
  *
  * @export
  * @class InvalidComponentInterfaceError
@@ -197,7 +213,7 @@ export class NoContractAddressUponReceiptError extends Error {
  */
 export class InvalidComponentInterfaceError extends Error {
   /**
-   * Description placeholder
+   * Expected interface hashes.
    *
    * @public
    * @readonly
@@ -205,7 +221,7 @@ export class InvalidComponentInterfaceError extends Error {
    */
   public readonly expected: Hex[] = [];
   /**
-   * Description placeholder
+   * The actual interface hash.
    *
    * @public
    * @readonly
@@ -230,8 +246,10 @@ export class InvalidComponentInterfaceError extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown when attempting a Budget transfer and arguments aren't of the type `FungibleTransferPayload` or `ERC1155TransferPayload`
  *
+ * @see {@link FungibleTransferPayload}
+ * @see {@link ERC1155TransferPayload}
  * @export
  * @class UnknownTransferPayloadSupplied
  * @typedef {UnknownTransferPayloadSupplied}
@@ -239,7 +257,7 @@ export class InvalidComponentInterfaceError extends Error {
  */
 export class UnknownTransferPayloadSupplied extends Error {
   /**
-   * Description placeholder
+   * The given payload that does not conform to the correct payload shape.
    *
    * @type {unknown}
    */
@@ -260,7 +278,7 @@ export class UnknownTransferPayloadSupplied extends Error {
 }
 
 /**
- * Description placeholder
+ * This error is thrown during Boost creation when the budget doesn't authorize the Boost Core address.
  *
  * @export
  * @class BudgetMustAuthorizeBoostCore
@@ -282,7 +300,8 @@ export class BudgetMustAuthorizeBoostCore extends Error {
 }
 
 /**
- * Description placeholder
+ * The error is thrown when trying to reuse an existing deployed Incentive that isn't a base implementation.
+ * The protocol doesn't allow this.
  *
  * @export
  * @class IncentiveNotCloneableError

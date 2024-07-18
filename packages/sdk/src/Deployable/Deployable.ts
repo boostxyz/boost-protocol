@@ -224,7 +224,6 @@ export class Deployable<Payload = unknown> extends Contract {
     };
     if (!options) throw new DeployableWagmiConfigurationRequiredError();
     const payload = _payload || this._payload;
-    console.log('!!!!!!!!!', payload);
     if (!payload) throw new DeployableMissingPayloadError();
     return [payload, options] as [P, DeployableOptions];
   }

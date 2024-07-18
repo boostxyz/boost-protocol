@@ -227,8 +227,6 @@ export class BoostCore extends Deployable<[Address, Address]> {
       super({ account, config }, BOOST_CORE_ADDRESS);
     }
   }
-
-  // TODO make this transactional? if any deployment fails what do we do with the previously deployed deployables?
   /**
    * Description placeholder
    *

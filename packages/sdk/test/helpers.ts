@@ -105,7 +105,10 @@ export async function deployFixtures(
   options: DeployableTestOptions = defaultOptions,
 ) {
   const { config, account } = options;
-  const registry = await new BoostRegistry(options).deploy();
+  const registry = await new BoostRegistry({
+    address: null,
+    ...options,
+  }).deploy();
   const core = await new BoostCore({
     ...options,
     registryAddress: registry.assertValidAddress(),

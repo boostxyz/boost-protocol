@@ -17,7 +17,7 @@ import {
   type GenericDeployableParams,
 } from './Deployable/Deployable';
 import type { DeployableTarget } from './Deployable/DeployableTarget';
-import type { ReadParams, WriteParams } from './utils';
+import type { HashAndSimulatedResult, ReadParams, WriteParams } from './utils';
 
 export { RegistryType };
 
@@ -216,8 +216,8 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
    *
+   * @see {@link clone}
    * @public
    * @async
    * @template {DeployableTarget} Target
@@ -230,25 +230,24 @@ export class BoostRegistry extends Deployable<never[]> {
     displayName: string,
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
-  ) {
+  ): Promise<Address> {
     return this.awaitResult(this.deployCloneRaw(displayName, target, params));
   }
 
   /**
-   * Description placeholder
-   *
+   * @see {@link clone}
    * @public
    * @async
    * @param {string} displayName
    * @param {DeployableTarget} target
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {unknown}
+   * @returns {unknown} - The transaction hash
    */
   public async deployCloneRaw(
     displayName: string,
     target: DeployableTarget,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
-  ) {
+  ): Promise<HashAndSimulatedResult<Address>> {
     const payload = target.buildParameters(undefined, {
       config: this._config,
       account: this._account,
@@ -273,13 +272,14 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
+   * Get the address of a registered base implementation.
+   * This function will revert if the implementation is not registered
    *
    * @public
    * @async
-   * @param {Hex} identifier
+   * @param {Hex} identifier - The unique identifier for the implementation (see {getIdentifier})
    * @param {?ReadParams<typeof boostRegistryAbi, 'getBaseImplementation'>} [params]
-   * @returns {unknown}
+   * @returns {unknown} - The address of the implementation
    */
   public async getBaseImplementation(
     identifier: Hex,
@@ -295,13 +295,13 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
+   * Get the address of a deployed clone by its identifier
    *
    * @public
    * @async
-   * @param {Hex} identifier
+   * @param {Hex} identifier - The unique identifier for the deployed clone (see {getCloneIdentifier})
    * @param {?ReadParams<typeof boostRegistryAbi, 'getClone'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address>} - The address of the deployed clone
    */
   public async getClone(
     identifier: Hex,
@@ -317,13 +317,13 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
+   * Get the list of identifiers of deployed clones for a given deployer
    *
    * @public
    * @async
-   * @param {Address} deployer
+   * @param {Address} deployer - The address of the deployer
    * @param {?ReadParams<typeof boostRegistryAbi, 'getClones'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address[]>} - The list of deployed clones for the given deployer
    */
   public async getClones(
     deployer: Address,
@@ -339,16 +339,16 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
+   * Build the identifier for a clone of a base implementation
    *
    * @public
    * @async
-   * @param {RegistryType} registryType
-   * @param {Address} base
-   * @param {Address} deployer
-   * @param {string} displayName
+   * @param {RegistryType} registryType - The base type for the implementation
+   * @param {Address} base - The address of the base implementation
+   * @param {Address} deployer - The address of the deployer
+   * @param {string} displayName - The display name of the clone
    * @param {?ReadParams<typeof boostRegistryAbi, 'getCloneIdentifier'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Hex>} - The unique identifier for the clone
    */
   public async getCloneIdentifier(
     registryType: RegistryType,
@@ -367,14 +367,14 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
+   * Build the identifier for a base implementation
    *
    * @public
    * @async
-   * @param {RegistryType} registryType
-   * @param {string} displayName
+   * @param {RegistryType} registryType - The base type for the implementation
+   * @param {string} displayName - The name of the implementation
    * @param {?ReadParams<typeof boostRegistryAbi, 'getIdentifier'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Hex>} - The unique identifier for the implementation
    */
   public async getIdentifier(
     registryType: RegistryType,

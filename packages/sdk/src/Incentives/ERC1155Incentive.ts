@@ -38,6 +38,7 @@ export type { ERC1155IncentivePayload, ERC1155StrategyType };
 /**
  * Description placeholder
  *
+ * @experimental
  * @export
  * @class ERC1155Incentive
  * @typedef {ERC1155Incentive}

@@ -4,7 +4,7 @@ import { ContractAddressRequiredError } from '../errors';
 import { type HashAndSimulatedResult, awaitResult } from '../utils';
 
 /**
- * Description placeholder
+ * A basic Contract class to encapsulate configuration and a potential address
  *
  * @export
  * @class Contract
@@ -18,7 +18,7 @@ export class Contract {
    */
   protected _config: Config;
   /**
-   * Description placeholder
+   * The internally managed address for this contract
    *
    * @protected
    * @type {(Address | undefined)}
@@ -38,7 +38,7 @@ export class Contract {
   }
 
   /**
-   * Description placeholder
+   * A getter returning this contract's deployed address, if it exists.
    *
    * @public
    * @readonly
@@ -49,7 +49,7 @@ export class Contract {
   }
 
   /**
-   * Description placeholder
+   * Will set this contract's address and return the instance for chaining. Does not verify that provided address is valid.
    *
    * @public
    * @param {Address} address
@@ -61,7 +61,7 @@ export class Contract {
   }
 
   /**
-   * Description placeholder
+   * Will set this contract's internal [Wagmi Configuration](https://en.wikipedia.org/wiki/Factorial) and return the instance for chaining.
    *
    * @public
    * @param {Config} config
@@ -73,10 +73,11 @@ export class Contract {
   }
 
   /**
-   * Description placeholder
+   * Utility function to validate the existence of an address on this Contract.
    *
    * @public
-   * @returns {*}
+   * @returns {Address}
+   * @throws {@link ContractAddressRequiredError} if no address exists on this Contract instance
    */
   public assertValidAddress() {
     const address = this.address;
@@ -85,8 +86,7 @@ export class Contract {
   }
 
   /**
-   * Description placeholder
-   *
+   * @see {@link awaitResult}
    * @protected
    * @async
    * @template [Result=unknown]

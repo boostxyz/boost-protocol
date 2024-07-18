@@ -49,9 +49,8 @@ export type ReadParams<
 >;
 
 /**
- * Helper utility to convert a string to a bytes4 type
+ * Helper utility to convert a string to a `bytes4` type
  *
- * @see {@link slice}
  * @export
  * @param {string} input
  * @returns {*}
@@ -86,7 +85,7 @@ export async function getDeployedContractAddress(
 }
 
 /**
- * Description placeholder
+ * Utility type to encapsulate a transaction hash, and the simulated result prior to submitting the transaction.
  *
  * @export
  * @typedef {HashAndSimulatedResult}
@@ -95,7 +94,7 @@ export async function getDeployedContractAddress(
 export type HashAndSimulatedResult<T = unknown> = { hash: Hash; result: T };
 
 /**
- * Description placeholder
+ * Helper function to wait for a transaction receipt given a hash promise.
  *
  * @export
  * @async

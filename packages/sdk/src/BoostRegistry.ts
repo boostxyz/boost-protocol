@@ -149,6 +149,10 @@ export class BoostRegistry extends Deployable<never[]> {
    * @param {Address} implementation - The address of the implementation contract
    * @param {?WriteParams<typeof boostRegistryAbi, 'register'>} [params] - Optional params to provide the underlying Viem contract call
    * @returns {unknown}
+   * @example
+   * ```ts
+   * await registry.register(ContractAction.registryType, 'ContractAction', ContractAction.base)
+   * ```
    */
   public async register(
     registryType: RegistryType,
@@ -192,15 +196,15 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
+   * Deploy a new instance of a registered base implementation, returning the provided target with a new address set on it.
    *
    * @public
    * @async
    * @template {DeployableTarget} Target
-   * @param {string} displayName
-   * @param {Target} target
+   * @param {string} displayName - The display name for the clone
+   * @param {Target} target - An instance of a target contract to clone and initialize
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {unknown}
+   * @returns {Target} - The provided instance, but with a new address attached.
    */
   public async clone<Target extends DeployableTarget>(
     displayName: string,
@@ -398,7 +402,7 @@ export class BoostRegistry extends Deployable<never[]> {
     _payload?: never[],
     _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [, options] = this.validateDeploymentConfig(_payload, _options);
+    const [, options] = this.validateDeploymentConfig([], _options);
     return {
       abi: boostRegistryAbi,
       bytecode: bytecode as Hex,

@@ -22,7 +22,8 @@ import type { ReadParams, WriteParams } from './utils';
 export { RegistryType };
 
 /**
- * Description placeholder
+ * The fixed address for the Boost Registry.
+ * By default, `new BoostRegistry` will use this address if not otherwise provided.
  *
  * @type {Address}
  */
@@ -30,7 +31,7 @@ export const BOOST_REGISTRY_ADDRESS: Address = import.meta.env
   .VITE_BOOST_REGISTRY_ADDRESS;
 
 /**
- * Description placeholder
+ * Instantiation options for a previously deployed Boost Registry
  *
  * @export
  * @interface BoostRegistryDeployedOptions
@@ -39,7 +40,7 @@ export const BOOST_REGISTRY_ADDRESS: Address = import.meta.env
  */
 export interface BoostRegistryDeployedOptions extends DeployableOptions {
   /**
-   * Description placeholder
+   * The address for a Boost Registry, if different than `BOOST_REGISTRY_ADDRESS`
    *
    * @type {?Address}
    */
@@ -47,7 +48,7 @@ export interface BoostRegistryDeployedOptions extends DeployableOptions {
 }
 
 /**
- * Description placeholder
+ * A typeguard to determine if instantiation is using a custom address.
  *
  * @param {*} opts
  * @returns {opts is BoostRegistryDeployedOptions}
@@ -60,17 +61,19 @@ function isBoostRegistryDeployed(
 }
 
 /**
- * Description placeholder
+ * The Boost Registry does not take any construction arguments, so if you'd like to deploy a new Boost Registry, pass an explicit null to the `address` field.
  *
  * @export
  * @interface BoostRegistryOptionsWithPayload
  * @typedef {BoostRegistryOptionsWithPayload}
  * @extends {DeployableOptions}
  */
-export interface BoostRegistryOptionsWithPayload extends DeployableOptions {}
+export interface BoostRegistryOptionsWithPayload extends DeployableOptions {
+  address: null;
+}
 
 /**
- * Description placeholder
+ * A typeguard to determine if the user is intending to deploy a new Boost Registry before usage
  *
  * @param {*} opts
  * @returns {opts is BoostRegistryOptionsWithPayload}
@@ -79,11 +82,24 @@ function isBoostRegistryDeployable(
   // biome-ignore lint/suspicious/noExplicitAny: type guard
   opts: any,
 ): opts is BoostRegistryOptionsWithPayload {
-  return !opts.address;
+  return opts.address === null;
 }
 
 /**
- * Description placeholder
+ * Instantiation options for a Boost Registry.
+ *
+ * @example
+ * To target Boost's Registry, omit the address field.
+ * Otherwise, supply a custom address to a previously deployed custom Boost Registry.
+ * You can also pass `{ address: null }` if you are intending to deploy a new Boost Registry.
+ * ```ts
+ * let registry = new BoostRegistry({ config, account })
+ * // or
+ * registry = new BoostRegistry({ config, account, address: CUSTOM_ADDRESS })
+ * // or
+ * registry = new BoostRegistry({ config, account, address: null })
+ * await registry.deploy()
+ * ```
  *
  * @export
  * @typedef {BoostRegistryConfig}
@@ -93,8 +109,10 @@ export type BoostRegistryConfig =
   | BoostRegistryOptionsWithPayload;
 
 /**
- * Description placeholder
+ * Constructs a new Boost Registry. A registry for base implementations and cloned instances.
+ * This contract is used to register base implementations and deploy new instances of those implementations for use within the Boost protocol.
  *
+ * @see {@link BoostRegistryConfig}
  * @export
  * @class BoostRegistry
  * @typedef {BoostRegistry}
@@ -104,16 +122,17 @@ export class BoostRegistry extends Deployable<never[]> {
   /**
    * Creates an instance of BoostRegistry.
    *
+   * @see {@link BoostRegistryConfig}
    * @constructor
    * @param {BoostRegistryConfig} param0
-   * @param {Config} param0.config
-   * @param {Account} param0.account
+   * @param {Config} param0.config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
+   * @param {Account} param0.account - [Viem Local Account](https://viem.sh/docs/accounts/local)
    * @param {({ address?: Address; } | {})} param0....options
    */
   constructor({ config, account, ...options }: BoostRegistryConfig) {
     if (isBoostRegistryDeployed(options) && options.address) {
       super({ account, config }, options.address);
-    } else if (isBoostRegistryDeployable(options) && !BOOST_REGISTRY_ADDRESS) {
+    } else if (isBoostRegistryDeployable(options)) {
       super({ account, config }, []);
     } else {
       super({ account, config }, BOOST_REGISTRY_ADDRESS);
@@ -121,14 +140,14 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
+   *  Register a new base implementation of a given type
    *
    * @public
    * @async
-   * @param {RegistryType} registryType
-   * @param {string} name
-   * @param {Address} implementation
-   * @param {?WriteParams<typeof boostRegistryAbi, 'register'>} [params]
+   * @param {RegistryType} registryType - The base type for the implementation
+   * @param {string} name - A name for the implementation (must be unique within the given type)
+   * @param {Address} implementation - The address of the implementation contract
+   * @param {?WriteParams<typeof boostRegistryAbi, 'register'>} [params] - Optional params to provide the underlying Viem contract call
    * @returns {unknown}
    */
   public async register(
@@ -143,8 +162,7 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Description placeholder
-   *
+   * @see {@link register}
    * @public
    * @async
    * @param {RegistryType} registryType

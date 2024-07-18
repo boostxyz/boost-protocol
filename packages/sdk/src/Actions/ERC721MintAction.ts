@@ -27,7 +27,6 @@ export { prepareERC721MintActionPayload };
 /**
  * Description placeholder
  *
- * @group Actions
  * @export
  * @class ERC721MintAction
  * @typedef {ERC721MintAction}

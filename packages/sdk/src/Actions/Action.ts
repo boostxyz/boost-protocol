@@ -6,11 +6,6 @@ import { InvalidComponentInterfaceError } from '../errors';
 import { ContractAction } from './ContractAction';
 import { ERC721MintAction } from './ERC721MintAction';
 
-/**
- * @groupDescription Actions
- * These functions are available for...
- * @module
- */
 export { ContractAction, ERC721MintAction };
 
 /**

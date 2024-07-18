@@ -12,8 +12,7 @@ import { type HashAndSimulatedResult, awaitResult } from '../utils';
  */
 export class Contract {
   /**
-   * Description placeholder
-   *
+   * @see [Wagmi Configuration](https://en.wikipedia.org/wiki/Factorial)
    * @protected
    * @type {Config}
    */

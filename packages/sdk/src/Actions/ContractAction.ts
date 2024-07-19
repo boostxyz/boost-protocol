@@ -26,7 +26,7 @@ export type { ContractActionPayload };
 export { prepareContractActionPayload };
 
 /**
- *
+ * A generic contract action
  *
  * @export
  * @class ContractAction
@@ -53,12 +53,12 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   public static override registryType: RegistryType = RegistryType.ACTION;
 
   /**
-   * Description placeholder
+   * The target chain ID
    *
    * @public
    * @async
    * @param {?ReadParams<typeof contractActionAbi, 'chainId'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async chainId(
     params?: ReadParams<typeof contractActionAbi, 'chainId'>,
@@ -72,12 +72,12 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   }
 
   /**
-   * Description placeholder
+   * The target contract
    *
    * @public
    * @async
    * @param {?ReadParams<typeof contractActionAbi, 'target'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<`0x${string}`>}
    */
   public async target(params?: ReadParams<typeof contractActionAbi, 'target'>) {
     return readContractActionTarget(this._config, {
@@ -89,12 +89,13 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   }
 
   /**
-   * Description placeholder
+   * The selector for the function to be called
    *
+   * @example `function mint(address to, uint256 amount)`
    * @public
    * @async
    * @param {?ReadParams<typeof contractActionAbi, 'selector'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<`0x${string}`>}
    */
   public async selector(
     params?: ReadParams<typeof contractActionAbi, 'selector'>,
@@ -108,12 +109,12 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   }
 
   /**
-   * Description placeholder
+   * The native token value to send with the function call
    *
    * @public
    * @async
    * @param {?ReadParams<typeof contractActionAbi, 'value'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async value(params?: ReadParams<typeof contractActionAbi, 'value'>) {
     return readContractActionValue(this._config, {
@@ -131,7 +132,7 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
    * @async
    * @param {Hex} data
    * @param {?WriteParams<typeof contractActionAbi, 'execute'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
   public async execute(
     data: Hex,
@@ -168,7 +169,7 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   }
 
   /**
-   * Description placeholder
+   * The encoded execution payload
    *
    * @public
    * @async
@@ -186,48 +187,6 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof contractActionAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof contractActionAbi, 'supportsInterface'>,
-  ) {
-    return readContractActionSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof contractActionAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof contractActionAbi, 'getComponentInterface'>,
-  ) {
-    return readContractActionGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
     });
   }
 

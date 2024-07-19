@@ -241,48 +241,6 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof allowListIncentiveAbi, 'supportsInterface'>,
-  ) {
-    return readAllowListIncentiveSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof allowListIncentiveAbi, 'getComponentInterface'>,
-  ) {
-    return readAllowListIncentiveGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
-  }
-
-  /**
    * @inheritdoc
    *
    * @public

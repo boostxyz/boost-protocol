@@ -295,7 +295,7 @@ export class BoostRegistry extends Deployable<never[]> {
   }
 
   /**
-   * Get the address of a deployed clone by its identifier
+   * Get the address of a deployed clone by its identifier (index in incentives array)
    *
    * @public
    * @async

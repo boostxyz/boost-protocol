@@ -8,10 +8,8 @@ import {
   prepareSimpleBudgetPayload,
   readSimpleBudgetAvailable,
   readSimpleBudgetDistributed,
-  readSimpleBudgetGetComponentInterface,
   readSimpleBudgetIsAuthorized,
   readSimpleBudgetOwner,
-  readSimpleBudgetSupportsInterface,
   readSimpleBudgetTotal,
   simpleBudgetAbi,
   simulateSimpleBudgetAllocate,
@@ -40,13 +38,13 @@ import {
 import type { ReadParams, WriteParams } from '../utils';
 
 export type {
-  SimpleBudgetPayload,
-  FungibleTransferPayload,
   ERC1155TransferPayload,
+  FungibleTransferPayload,
+  SimpleBudgetPayload,
 };
 
 /**
- * Description placeholder
+ * Typeguard to determine if a transfer payload is a Fungible Transfer
  *
  * @export
  * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
@@ -59,7 +57,7 @@ export function isFungibleTransfer(
 }
 
 /**
- * Description placeholder
+ * Typeguard to determine if a transfer payload is an ERC1155 Transfer
  *
  * @export
  * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
@@ -72,11 +70,12 @@ export function isERC1155TransferPayload(
 }
 
 /**
- * Description placeholder
+ * Given either a fungible transfer, or erc1155 transfer, will properly encode parameters for transfers, claims, disbursements, allocations, etc.
  *
  * @export
  * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
  * @returns {*}
+ * @throws {@link UnknownTransferPayloadSupplied}
  */
 export function prepareTransfer(
   transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -89,7 +88,8 @@ export function prepareTransfer(
 }
 
 /**
- * Description placeholder
+ * A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
+ * This type of budget supports ETH, ERC20, and ERC1155 assets only
  *
  * @export
  * @class SimpleBudget
@@ -116,13 +116,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   public static override registryType: RegistryType = RegistryType.BUDGET;
 
   /**
-   * Description placeholder
+   *  Allocates assets to the budget.
+   *  The caller must have already approved the contract to transfer the asset
+   *  If the asset transfer fails, the allocation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
    * @param {?WriteParams<typeof simpleBudgetAbi, 'allocate'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the allocation was successful
    */
   public async allocate(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -132,13 +134,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   *  Allocates assets to the budget.
+   *  The caller must have already approved the contract to transfer the asset
+   *  If the asset transfer fails, the allocation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
    * @param {?WriteParams<typeof simpleBudgetAbi, 'allocate'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the allocation was successful
    */
   public async allocateRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -159,13 +163,16 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaims assets from the budget.
+   * Only the owner can directly reclaim assets from the budget
+   * If the amount is zero, the entire balance of the asset will be transferred to the receiver
+   * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
    * @param {?WriteParams<typeof simpleBudgetAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the request was successful
    */
   public async reclaim(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -175,13 +182,16 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaims assets from the budget.
+   * Only the owner can directly reclaim assets from the budget
+   * If the amount is zero, the entire balance of the asset will be transferred to the receiver
+   * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
    * @param {?WriteParams<typeof simpleBudgetAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the request was successful
    */
   public async reclaimRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -202,13 +212,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Disburses assets from the budget to a single recipient
+   * If the asset transfer fails, the disbursement will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
    * @param {?WriteParams<typeof simpleBudgetAbi, 'disburse'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the disbursement was successful
    */
   public async disburse(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -218,13 +229,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Disburses assets from the budget to a single recipient
+   * If the asset transfer fails, the disbursement will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
    * @param {?WriteParams<typeof simpleBudgetAbi, 'disburse'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the disbursement was successful
    */
   public async disburseRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -245,13 +257,13 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Disburses assets from the budget to multiple recipients
    *
    * @public
    * @async
    * @param {Array<FungibleTransferPayload | ERC1155TransferPayload>} transfers
    * @param {?WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if all disbursements were successful
    */
   public async disburseBatch(
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
@@ -260,16 +272,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
     return this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
 
-  // use prepareFungibleTransfer or prepareERC1155Transfer
-  // TODO use data structure
   /**
-   * Description placeholder
+   * Disburses assets from the budget to multiple recipients
    *
    * @public
    * @async
    * @param {Array<FungibleTransferPayload | ERC1155TransferPayload>} transfers
    * @param {?WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if all disbursements were successful
    */
   public async disburseBatchRaw(
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
@@ -290,14 +300,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the authorized status of the given accounts
+   * The mechanism for managing authorization is left to the implementing contract
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The accounts to authorize or deauthorize
+   * @param {boolean[]} allowed - The authorization status for the given accounts
    * @param {?WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setAuthorized(
     addresses: Address[],
@@ -308,14 +319,15 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the authorized status of the given accounts
+   * The mechanism for managing authorization is left to the implementing contract
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The accounts to authorize or deauthorize
+   * @param {boolean[]} allowed - The authorization status for the given accounts
    * @param {?WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setAuthorizedRaw(
     addresses: Address[],
@@ -337,12 +349,12 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Check if the given account is authorized to use the budget
    *
    * @public
    * @param {Address} account
    * @param {?ReadParams<typeof simpleBudgetAbi, 'isAuthorized'>} [params]
-   * @returns {*}
+   * @returns {Promise<boolean>} - True if the account is authorized
    */
   public isAuthorized(
     account: Address,
@@ -358,11 +370,11 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the owner of the budget
    *
    * @public
    * @param {?ReadParams<typeof simpleBudgetAbi, 'owner'>} [params]
-   * @returns {*}
+   * @returns {Promise<Address>}
    */
   public owner(params?: ReadParams<typeof simpleBudgetAbi, 'owner'>) {
     return readSimpleBudgetOwner(this._config, {
@@ -374,13 +386,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the total amount of assets allocated to the budget, including any that have been distributed
+   * If a tokenId is provided, get the total amount of ERC1155 assets allocated to the budget, including any that have been distributed
    *
    * @public
-   * @param {Address} asset
-   * @param {?(bigint | undefined)} [tokenId]
+   * @param {Address} asset - The address of the asset
+   * @param {?(bigint | undefined)} [tokenId] - The ID of the token
    * @param {?ReadParams<typeof simpleBudgetAbi, 'total'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>} - The total amount of assets
    */
   public total(
     asset: Address,
@@ -396,13 +409,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the amount of assets available for distribution from the budget.
+   * If a tokenId is provided, get the amount of ERC1155 assets available for distribution from the budget
    *
    * @public
    * @param {Address} asset
    * @param {?(bigint | undefined)} [tokenId]
    * @param {?ReadParams<typeof simpleBudgetAbi, 'available'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>} - The amount of assets available
    */
   public available(
     asset: Address,
@@ -418,13 +432,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the amount of assets that have been distributed from the budget.
+   * If a tokenId is provided, get the amount of ERC1155 assets that have been distributed from the budget
    *
    * @public
    * @param {Address} asset
    * @param {?(bigint | undefined)} [tokenId]
    * @param {?ReadParams<typeof simpleBudgetAbi, 'distributed'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>} - The amount of assets distributed
    */
   public distributed(
     asset: Address,
@@ -436,48 +451,6 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
       args: tokenId ? [asset, tokenId] : [asset],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof simpleBudgetAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof simpleBudgetAbi, 'supportsInterface'>,
-  ) {
-    return readSimpleBudgetSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof simpleBudgetAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof simpleBudgetAbi, 'getComponentInterface'>,
-  ) {
-    return readSimpleBudgetGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
     });
   }
 

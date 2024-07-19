@@ -15,7 +15,7 @@ export { SimpleBudget, VestingBudget };
 export { prepareERC1155Transfer, prepareFungibleTransfer };
 
 /**
- * Description placeholder
+ * A union type representing all valid protocol Budget implementations
  *
  * @export
  * @typedef {Budget}
@@ -23,9 +23,9 @@ export { prepareERC1155Transfer, prepareFungibleTransfer };
 export type Budget = SimpleBudget | VestingBudget;
 
 /**
- * Description placeholder
+ * A map of Budget component interfaces to their constructors.
  *
- * @type {{ "0x7aded85d": any; "0x0f2a5d52": any; }}
+ * @type {{ "0x7aded85d": VestingBudget; "0x0f2a5d52": SimpleBudget; }}
  */
 export const BudgetByComponentInterface = {
   ['0x7aded85d']: VestingBudget,
@@ -33,13 +33,14 @@ export const BudgetByComponentInterface = {
 };
 
 /**
- * Description placeholder
+ * A function that will read a contract's component interface using `getComponentInterface` and return the correct instantiated instance.
  *
  * @export
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
- * @returns {unknown}
+ * @returns {Promise<VestingBudget | SimpleBudget>}
+ * @throws {@link InvalidComponentInterfaceError}
  */
 export async function budgetFromAddress(
   options: DeployableOptions,

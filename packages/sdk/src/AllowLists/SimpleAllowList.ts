@@ -2,9 +2,7 @@ import {
   RegistryType,
   type SimpleAllowListPayload,
   prepareSimpleAllowListPayload,
-  readSimpleAllowListGetComponentInterface,
   readSimpleAllowListIsAllowed,
-  readSimpleAllowListSupportsInterface,
   simpleAllowListAbi,
   simulateSimpleAllowListGrantRoles,
   simulateSimpleAllowListSetAllowed,
@@ -22,17 +20,17 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import type { ReadParams } from '../utils';
 
-export type { SimpleAllowListPayload };
 export { prepareSimpleAllowListPayload };
+export type { SimpleAllowListPayload };
 
 /**
- * Description placeholder
+ * A constant representing the list manager's role
  *
  * @type {2n}
  */
 export const LIST_MANAGER_ROLE = 2n;
 /**
- * Description placeholder
+ * A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
  *
  * @export
  * @class SimpleAllowList
@@ -59,13 +57,13 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
 
   /**
-   * Description placeholder
+   * Check if a user is authorized.
    *
    * @public
    * @async
-   * @param {Address} address
+   * @param {Address} address - The address of the user
    * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
-   * @returns {Promise<boolean>}
+   * @returns {Promise<boolean>} - True if the user is authorized
    */
   public async isAllowed(
     address: Address,
@@ -81,14 +79,15 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the allowed status of a user. The length of the `users_` and `allowed_` arrays must be the same.
+   * This function can only be called by the owner
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The list of users to update
+   * @param {boolean[]} allowed - The allowed status of each user
    * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setAllowed(
     addresses: Address[],
@@ -99,14 +98,15 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the allowed status of a user. The length of the `users_` and `allowed_` arrays must be the same.
+   * This function can only be called by the owner
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The list of users to update
+   * @param {boolean[]} allowed - The allowed status of each user
    * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setAllowedRaw(
     addresses: Address[],
@@ -128,14 +128,14 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   }
 
   /**
-   * Description placeholder
+   * Allows the owner to grant `user` `roles`.
    *
    * @public
    * @async
    * @param {Address} address
    * @param {bigint} role
    * @param {?ReadParams<typeof simpleAllowListAbi, 'grantRoles'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async grantRoles(
     address: Address,
@@ -146,14 +146,14 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   }
 
   /**
-   * Description placeholder
+   * Allows the owner to grant `user` `roles`.
    *
    * @public
    * @async
    * @param {Address} address
    * @param {bigint} role
    * @param {?ReadParams<typeof simpleAllowListAbi, 'grantRoles'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async grantRolesRaw(
     address: Address,
@@ -172,48 +172,6 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     );
     const hash = await writeSimpleAllowListGrantRoles(this._config, request);
     return { hash, result };
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
-  ) {
-    return readSimpleAllowListSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
-  ) {
-    return readSimpleAllowListGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
   }
 
   /**

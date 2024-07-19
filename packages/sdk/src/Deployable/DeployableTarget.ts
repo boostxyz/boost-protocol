@@ -1,17 +1,19 @@
-import { RegistryType } from '@boostxyz/evm';
 import {
-  deployContract,
-  waitForTransactionReceipt,
-  writeContract,
-} from '@wagmi/core';
+  RegistryType,
+  type cloneableAbi,
+  readCloneableGetComponentInterface,
+  readCloneableSupportsInterface,
+} from '@boostxyz/evm';
+import { deployContract } from '@wagmi/core';
 import {
   type Address,
   type Hash,
+  type Hex,
   type WaitForTransactionReceiptParameters,
   zeroAddress,
-  zeroHash,
 } from 'viem';
 import { DeployableAlreadyDeployedError } from '../errors';
+import type { ReadParams } from '../utils';
 import {
   Deployable,
   type DeployableOptions,
@@ -19,7 +21,7 @@ import {
 } from './Deployable';
 
 /**
- * Description placeholder
+ * A base class representing a generic base Boost Protocol target contract, extended by Actions, AllowLists, Budgets, Incentives, and Validators.
  *
  * @export
  * @class DeployableTarget
@@ -29,7 +31,7 @@ import {
  */
 export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
   /**
-   * Description placeholder
+   * A static property representing the address of the base implementation on chain, used when cloning base contracts.
    *
    * @static
    * @readonly
@@ -37,7 +39,7 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
    */
   static readonly base: Address = zeroAddress;
   /**
-   * Description placeholder
+   * The target's registry type.
    *
    * @static
    * @readonly
@@ -45,7 +47,7 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
    */
   static readonly registryType: RegistryType = RegistryType.ACTION;
   /**
-   * Description placeholder
+   * A property asserting that the protocol should eiher clone and initialize a new target from the base implementation, or re-use an existing contract without initializing.
    *
    * @readonly
    * @type {boolean}
@@ -57,8 +59,8 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
    *
    * @constructor
    * @param {DeployableOptions} options
-   * @param {DeployablePayloadOrAddress<Payload>} payload
-   * @param {?boolean} [isBase]
+   * @param {DeployablePayloadOrAddress<Payload>} payload - Either a given implementation's initialization payload, or an address to an existing on chain target.
+   * @param {?boolean} [isBase] - A property asserting that the protocol should eiher clone and initialize a new target from the base implementation, or re-use an existing contract without initializing.
    */
   constructor(
     options: DeployableOptions,
@@ -70,7 +72,7 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
   }
 
   /**
-   * Description placeholder
+   * A getter that will return the base implementation's static address
    *
    * @public
    * @readonly
@@ -81,7 +83,7 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
   }
 
   /**
-   * Description placeholder
+   * A getter that returns the registry type of the base implementation
    *
    * @public
    * @readonly
@@ -132,6 +134,49 @@ export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
       ...deployment,
       ...this.optionallyAttachAccount(_options?.account),
       // Deployable targets don't construct with arguments, they initialize with encoded payloads
+      args: [],
+    });
+  }
+
+  /**
+   * Check if the contract supports the given interface
+   *
+   * @public
+   * @async
+   * @param {Hex} interfaceId - The interface identifier
+   * @param {?ReadParams<typeof contractActionAbi, 'supportsInterface'>} [params]
+   * @returns {unknown} - True if the contract supports the interface
+   */
+  public async supportsInterface(
+    interfaceId: Hex,
+    params?: ReadParams<typeof cloneableAbi, 'supportsInterface'>,
+  ) {
+    return readCloneableSupportsInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      args: [interfaceId],
+    });
+  }
+
+  /**
+   *  Return a cloneable's unique identifier for downstream consumers to differentiate various targets
+   *  All implementations must override this function
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof contractActionAbi, 'getComponentInterface'>} [params]
+   * @returns {unknown}
+   */
+  public async getComponentInterface(
+    params?: ReadParams<typeof cloneableAbi, 'getComponentInterface'>,
+  ) {
+    return readCloneableGetComponentInterface(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
       args: [],
     });
   }

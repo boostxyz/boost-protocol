@@ -3,9 +3,8 @@ import {
   RegistryType,
   erc721MintActionAbi,
   prepareERC721MintActionPayload,
-  readErc721MintActionGetComponentInterface,
+  prepareERC721MintActionValidate,
   readErc721MintActionPrepare,
-  readErc721MintActionSupportsInterface,
   readErc721MintActionValidated,
   simulateErc721MintActionExecute,
   simulateErc721MintActionValidate,
@@ -25,7 +24,10 @@ export type { ERC721MintActionPayload };
 export { prepareERC721MintActionPayload };
 
 /**
- * Description placeholder
+ * A primitive action to mint and/or validate that an ERC721 token has been minted
+ * The action is expected to be prepared with the data payload for the minting of the token
+ * This a minimal generic implementation that should be extended if additional functionality or customizations are required
+ * It is expected that the target contract has an externally accessible mint function whose selector
  *
  * @export
  * @class ERC721MintAction
@@ -52,7 +54,8 @@ export class ERC721MintAction extends ContractAction {
   public static override registryType: RegistryType = RegistryType.ACTION;
 
   /**
-   * Description placeholder
+   * The set of validated tokens
+   * This is intended to prevent multiple validations against the same token ID
    *
    * @public
    * @async
@@ -139,39 +142,43 @@ export class ERC721MintAction extends ContractAction {
   }
 
   /**
-   * Description placeholder
+   * Validate that the action has been completed successfully
    *
    * @public
    * @async
-   * @param {Hex} data
+   * @param {Address} holder - The holder
+   * @param {BigInt} tokenId - The token ID
    * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the action has been validated for the user
    */
   public async validate(
-    data: Hex,
+    holder: Address,
+    tokenId: bigint,
     params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
   ) {
-    return this.awaitResult(this.validateRaw(data, params));
+    return this.awaitResult(this.validateRaw(holder, tokenId, params));
   }
 
   /**
-   * Description placeholder
+   * Validate that the action has been completed successfully
    *
    * @public
    * @async
-   * @param {Hex} data
+   * @param {Address} holder - The holder
+   * @param {BigInt} tokenId - The token ID
    * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the action has been validated for the user
    */
   public async validateRaw(
-    data: Hex,
+    holder: Address,
+    tokenId: bigint,
     params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
   ) {
     const { request, result } = await simulateErc721MintActionValidate(
       this._config,
       {
         address: this.assertValidAddress(),
-        args: [data],
+        args: [prepareERC721MintActionValidate(holder, tokenId)],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),
@@ -179,48 +186,6 @@ export class ERC721MintAction extends ContractAction {
     );
     const hash = await writeErc721MintActionValidate(this._config, request);
     return { hash, result };
-  }
-
-  /**
-   * @inheritdoc
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof erc721MintActionAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public override async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof erc721MintActionAbi, 'supportsInterface'>,
-  ) {
-    return readErc721MintActionSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * @inheritdoc
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof erc721MintActionAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public override async getComponentInterface(
-    params?: ReadParams<typeof erc721MintActionAbi, 'getComponentInterface'>,
-  ) {
-    return readErc721MintActionGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
   }
 
   /**

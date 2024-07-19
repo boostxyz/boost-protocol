@@ -314,48 +314,6 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof cgdaIncentiveAbi, 'supportsInterface'>,
-  ) {
-    return readCgdaIncentiveSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof cgdaIncentiveAbi, 'getComponentInterface'>,
-  ) {
-    return readCgdaIncentiveGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
-  }
-
-  /**
    * @inheritdoc
    *
    * @public

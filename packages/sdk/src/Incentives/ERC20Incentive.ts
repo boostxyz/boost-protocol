@@ -371,48 +371,6 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof erc20IncentiveAbi, 'supportsInterface'>,
-  ) {
-    return readErc20IncentiveSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof erc20IncentiveAbi, 'getComponentInterface'>,
-  ) {
-    return readErc20IncentiveGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
-  }
-
-  /**
    * @inheritdoc
    *
    * @public

@@ -9,7 +9,7 @@ import { SimpleDenyList } from './SimpleDenyList';
 export { SimpleDenyList, SimpleAllowList };
 
 /**
- * Description placeholder
+ * A union type representing all valid protocol AllowList implementations
  *
  * @export
  * @typedef {AllowList}
@@ -17,9 +17,9 @@ export { SimpleDenyList, SimpleAllowList };
 export type AllowList = SimpleAllowList | SimpleDenyList;
 
 /**
- * Description placeholder
+ * A map of AllowList component interfaces to their constructors.
  *
- * @type {{ "0x2bc9016b": any; "0x9d585f63": any; }}
+ * @type {{ "0x2bc9016b": SimpleAllowList; "0x9d585f63": SimpleDenyList; }}
  */
 export const AllowListByComponentInterface = {
   ['0x2bc9016b']: SimpleAllowList,
@@ -27,13 +27,14 @@ export const AllowListByComponentInterface = {
 };
 
 /**
- * Description placeholder
+ * A function that will read a contract's component interface using `getComponentInterface` and return the correct instantiated instance.
  *
  * @export
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
- * @returns {unknown}
+ * @returns {Promise<SimpleAllowList | SimpleDenyList>}
+ * @throws {@link InvalidComponentInterfaceError}
  */
 export async function allowListFromAddress(
   options: DeployableOptions,

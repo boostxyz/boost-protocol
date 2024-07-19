@@ -16,7 +16,7 @@ import { getDeployedContractAddress } from '../utils';
 import { Contract } from './Contract';
 
 /**
- * Description placeholder
+ * A base class representing a deployable contract, contains base implementations for deployment and initialization payload construction.
  *
  * @export
  * @typedef {GenericDeployableParams}
@@ -29,7 +29,7 @@ export type GenericDeployableParams = Omit<
 };
 
 /**
- * Description placeholder
+ * A generic type that encapsulates either an initialization payload for a contract, or a valid address for a previously deployed contract.
  *
  * @export
  * @typedef {DeployablePayloadOrAddress}
@@ -38,7 +38,7 @@ export type GenericDeployableParams = Omit<
 export type DeployablePayloadOrAddress<Payload = unknown> = Payload | Address;
 
 /**
- * Description placeholder
+ * Instantion options for the base deployable.
  *
  * @export
  * @interface DeployableOptions
@@ -71,14 +71,14 @@ export interface DeployableOptions {
  */
 export class Deployable<Payload = unknown> extends Contract {
   /**
-   * Description placeholder
+   * The deployable payload used either for contract construction or initialization
    *
    * @protected
    * @type {(Payload | undefined)}
    */
   protected _payload: Payload | undefined;
   /**
-   * Description placeholder
+   * If it exists, [Viem Local Account](https://viem.sh/docs/accounts/local), if in a Node environment
    *
    * @protected
    * @type {?Account}
@@ -108,7 +108,7 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   /**
-   * Description placeholder
+   * Returns the attached deployable payload, if it exists
    *
    * @readonly
    * @type {Payload}
@@ -118,7 +118,7 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   /**
-   * Description placeholder
+   * Attaches a new payload for use with this deployable's initialization
    *
    * @public
    * @param {Payload} payload
@@ -130,13 +130,13 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   /**
-   * Description placeholder
+   * High level deployment function to deploy and await the contract address.
    *
    * @public
    * @async
    * @param {?Payload} [_payload]
    * @param {?DeployableOptions} [_options]
-   * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
+   * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams] - See [viem.WaitForTransactionReceipt](https://v1.viem.sh/docs/actions/public/waitForTransactionReceipt.html#waitfortransactionreceipt)
    * @returns {unknown}
    */
   public async deploy(
@@ -155,13 +155,16 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   /**
-   * Description placeholder
+   * The lower level contract deployment function that does not await for the transaction receipt.
    *
    * @public
    * @async
    * @param {?Payload} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {Promise<Hash>}
+   * @throws {@link DeployableAlreadyDeployedError}
+   * @throws {@link DeployableWagmiConfigurationRequiredError}
+   * @throws {@link DeployableMissingPayloadError}
    */
   public async deployRaw(
     _payload?: Payload,
@@ -179,7 +182,7 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   /**
-   * Description placeholder
+   * Internal function to attach the connected account to write methods to avoid manually passing in an account each call.
    *
    * @protected
    * @param {?Account} [account]
@@ -191,7 +194,8 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   /**
-   * Description placeholder
+   * Base parameter constructor, should return a partial `viem.deployContract` parameters shape including abi, bytecode, and arguments, if any.
+   * Expected to be overridden by protocol contracts.
    *
    * @public
    * @param {?Payload} [_payload]
@@ -206,13 +210,15 @@ export class Deployable<Payload = unknown> extends Contract {
   }
 
   /**
-   * Description placeholder
+   * Internal method used to ensure that a Wagmi configuration and payload are always present when deploying.
    *
    * @protected
    * @template [P=Payload]
    * @param {?P} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {[P, DeployableOptions]}
+   * @throws {@link DeployableWagmiConfigurationRequiredError}
+   * @throws {@link DeployableMissingPayloadError}
    */
   protected validateDeploymentConfig<P = Payload>(
     _payload?: P,

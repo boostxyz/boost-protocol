@@ -249,47 +249,6 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof pointsIncentiveAbi, 'supportsInterface'>,
-  ) {
-    return readPointsIncentiveSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      args: [interfaceId],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof pointsIncentiveAbi, 'getComponentInterface'>,
-  ) {
-    return readPointsIncentiveGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
-  }
-
-  /**
    * @inheritdoc
    *
    * @public

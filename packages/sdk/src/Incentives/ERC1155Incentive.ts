@@ -337,47 +337,6 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
   }
 
   /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'supportsInterface'>,
-  ) {
-    return readErc1155SupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      args: [interfaceId],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'getComponentInterface'>,
-  ) {
-    return readErc1155IncentiveGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
-  }
-
-  /**
    * @inheritdoc
    *
    * @public

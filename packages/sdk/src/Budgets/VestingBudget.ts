@@ -9,11 +9,9 @@ import {
   readVestingBudgetDistributed,
   readVestingBudgetDuration,
   readVestingBudgetEnd,
-  readVestingBudgetGetComponentInterface,
   readVestingBudgetIsAuthorized,
   readVestingBudgetOwner,
   readVestingBudgetStart,
-  readVestingBudgetSupportsInterface,
   readVestingBudgetTotal,
   simulateVestingBudgetAllocate,
   simulateVestingBudgetDisburse,
@@ -41,7 +39,12 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { VestingBudgetPayload, prepareVestingBudgetPayload };
 
 /**
- * Description placeholder
+ * A vesting-based budget implementation that allows for the distribution of assets over time
+ * Take note of the following when making use of this budget type:
+ * - The budget is designed to manage native and ERC20 token balances only. Using rebasing tokens or other non-standard token types may result in unexpected behavior.
+ * - Any assets allocated to this type of budget will follow the vesting schedule as if they were locked from the beginning, which is to say that, if the vesting has already started, some portion of the assets will be immediately available for distribution.
+ * - A vesting budget can also act as a time-lock, unlocking all assets at a specified point in time. To release assets at a specific time rather than vesting them over time, set the `start` to the desired time and the `duration` to zero.
+ * - This contract is {Ownable} to enable the owner to allocate to the budget, reclaim and disburse assets from the budget, and to set authorized addresses. Additionally, the owner can transfer ownership of the budget to another address. Doing so has no effect on the vesting schedule.
  *
  * @export
  * @class VestingBudget
@@ -68,11 +71,11 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   public static override registryType: RegistryType = RegistryType.BUDGET;
 
   /**
-   * Description placeholder
+   * Get the owner of the budget
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'owner'>} [params]
-   * @returns {*}
+   * @returns {Promise<Address>}
    */
   public owner(params?: ReadParams<typeof vestingBudgetAbi, 'owner'>) {
     return readVestingBudgetOwner(this._config, {
@@ -84,7 +87,7 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * The timestamp at which the vesting schedule begins
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'start'>} [params]
@@ -100,7 +103,7 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * The duration of the vesting schedule (in seconds)
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'duration'>} [params]
@@ -116,7 +119,7 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * The duration of the cliff period (in seconds)
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'cliff'>} [params]
@@ -132,13 +135,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   *  Allocates assets to the budget.
+   *  The caller must have already approved the contract to transfer the asset
+   *  If the asset transfer fails, the allocation will revert
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload} transfer
+   * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'allocate'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the allocation was successful
    */
   public async allocate(
     transfer: FungibleTransferPayload,
@@ -148,13 +153,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   *  Allocates assets to the budget.
+   *  The caller must have already approved the contract to transfer the asset
+   *  If the asset transfer fails, the allocation will revert
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload} transfer
+   * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'allocate'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the allocation was successful
    */
   public async allocateRaw(
     transfer: FungibleTransferPayload,
@@ -175,13 +182,16 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaims assets from the budget.
+   * Only the owner can directly reclaim assets from the budget
+   * If the amount is zero, the entire balance of the asset will be transferred to the receiver
+   * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload} transfer
+   * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the request was successful
    */
   public async reclaim(
     transfer: FungibleTransferPayload,
@@ -191,13 +201,16 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaims assets from the budget.
+   * Only the owner can directly reclaim assets from the budget
+   * If the amount is zero, the entire balance of the asset will be transferred to the receiver
+   * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload} transfer
+   * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the request was successful
    */
   public async reclaimRaw(
     transfer: FungibleTransferPayload,
@@ -218,13 +231,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Disburses assets from the budget to a single recipient
+   * If the asset transfer fails, the disbursement will revert
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload} transfer
+   * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'disburse'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the disbursement was successful
    */
   public async disburse(
     transfer: FungibleTransferPayload,
@@ -234,13 +248,14 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Disburses assets from the budget to a single recipient
+   * If the asset transfer fails, the disbursement will revert
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload} transfer
+   * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'disburse'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the disbursement was successful
    */
   public async disburseRaw(
     transfer: FungibleTransferPayload,
@@ -261,13 +276,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Disburses assets from the budget to multiple recipients
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload[]} transfers
+   * @param {Array<FungibleTransferPayload>} transfers
    * @param {?WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if all disbursements were successful
    */
   public async disburseBatch(
     transfers: FungibleTransferPayload[],
@@ -277,13 +292,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Disburses assets from the budget to multiple recipients
    *
    * @public
    * @async
-   * @param {FungibleTransferPayload[]} transfers
+   * @param {Array<FungibleTransferPayload>} transfers
    * @param {?WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if all disbursements were successful
    */
   public async disburseBatchRaw(
     transfers: FungibleTransferPayload[],
@@ -304,14 +319,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the authorized status of the given accounts
+   * The mechanism for managing authorization is left to the implementing contract
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The accounts to authorize or deauthorize
+   * @param {boolean[]} allowed - The authorization status for the given accounts
    * @param {?WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setAuthorized(
     addresses: Address[],
@@ -322,14 +338,15 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the authorized status of the given accounts
+   * The mechanism for managing authorization is left to the implementing contract
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The accounts to authorize or deauthorize
+   * @param {boolean[]} allowed - The authorization status for the given accounts
    * @param {?WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setAuthorizedRaw(
     addresses: Address[],
@@ -351,12 +368,12 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Check if the given account is authorized to use the budget
    *
    * @public
    * @param {Address} account
    * @param {?ReadParams<typeof vestingBudgetAbi, 'isAuthorized'>} [params]
-   * @returns {*}
+   * @returns {Promise<boolean>} - True if the account is authorized
    */
   public isAuthorized(
     account: Address,
@@ -371,11 +388,11 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the end time of the vesting schedule
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'end'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>}
    */
   public end(params?: ReadParams<typeof vestingBudgetAbi, 'end'>) {
     return readVestingBudgetEnd(this._config, {
@@ -387,12 +404,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the total amount of assets allocated to the budget, including any that have been distributed
+   * This is equal to the sum of the total current balance and the total distributed amount
    *
    * @public
-   * @param {Address} asset
+   * @param {Address} asset -  The address of the asset (or the zero address for native assets)
    * @param {?ReadParams<typeof vestingBudgetAbi, 'total'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>}
    */
   public total(
     asset: Address,
@@ -407,12 +425,13 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the amount of assets available for distribution from the budget as of the current block timestamp
+   * This is equal to the total vested amount minus any already distributed
    *
    * @public
-   * @param {Address} asset
+   * @param {Address} asset -  The address of the asset (or the zero address for native assets)
    * @param {?ReadParams<typeof vestingBudgetAbi, 'available'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>} - The amount of assets currently available for distribution
    */
   public available(
     asset: Address,
@@ -427,12 +446,12 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the amount of assets that have been distributed from the budget
    *
    * @public
    * @param {Address} asset
    * @param {?ReadParams<typeof vestingBudgetAbi, 'distributed'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>} - The amount of assets distributed
    */
   public distributed(
     asset: Address,
@@ -443,48 +462,6 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
       args: [asset],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof vestingBudgetAbi, 'supportsInterface'>,
-  ) {
-    return readVestingBudgetSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof vestingBudgetAbi, 'getComponentInterface'>,
-  ) {
-    return readVestingBudgetGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
     });
   }
 

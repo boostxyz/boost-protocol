@@ -6,6 +6,7 @@ import {
   encodeAbiParameters,
   parseAbiParameters,
   stringToHex,
+  toHex,
   zeroAddress,
   zeroHash
 } from 'viem';
@@ -576,4 +577,14 @@ export function prepareFungibleTransfer({
       },
     ],
   );
+}
+
+export function prepareERC721MintActionValidate(holder: Address, payload: bigint) {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'holder' },
+      { type: 'bytes', name: 'payload' },
+    ],
+    [holder, toHex(payload)],
+  )
 }

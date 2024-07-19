@@ -9,7 +9,7 @@ import { ERC721MintAction } from './ERC721MintAction';
 export { ContractAction, ERC721MintAction };
 
 /**
- * Description placeholder
+ * A union type representing all valid protocol Action implementations
  *
  * @export
  * @typedef {Action}
@@ -17,9 +17,9 @@ export { ContractAction, ERC721MintAction };
 export type Action = ContractAction | ERC721MintAction;
 
 /**
- * Description placeholder
+ * A map of Action component interfaces to their constructors.
  *
- * @type {{ "0x2fae823b": any; "0xcba21e6c": any; }}
+ * @type {{ "0x2fae823b": ContractAction; "0xcba21e6c": ERC721MintAction; }}
  */
 export const ActionByComponentInterface = {
   ['0x2fae823b']: ContractAction,
@@ -27,13 +27,14 @@ export const ActionByComponentInterface = {
 };
 
 /**
- * Description placeholder
+ * A function that will read a contract's component interface using `getComponentInterface` and return the correct instantiated instance.
  *
  * @export
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
- * @returns {unknown}
+ * @returns {Promise<ContractAction | ERC721MintAction>}
+ * @throws {@link InvalidComponentInterfaceError}
  */
 export async function actionFromAddress(
   options: DeployableOptions,

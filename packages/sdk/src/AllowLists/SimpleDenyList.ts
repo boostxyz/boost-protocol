@@ -24,7 +24,7 @@ export type { SimpleDenyListPayload };
 export { prepareSimpleDenyListPayload };
 
 /**
- * Description placeholder
+ * A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list
  *
  * @export
  * @class SimpleDenyList
@@ -51,13 +51,13 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
 
   /**
-   * Description placeholder
+   * Check if a user is authorized (i.e. not denied)
    *
    * @public
    * @async
-   * @param {Address} address
+   * @param {Address} address - The address of the user
    * @param {?ReadParams<typeof simpleDenyListAbi, 'isAllowed'>} [params]
-   * @returns {Promise<boolean>}
+   * @returns {Promise<boolean>} - True if the user is authorized
    */
   public async isAllowed(
     address: Address,
@@ -73,12 +73,12 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the denied status of a user. The length of the `users_` and `denied_` arrays must be the same. This function can only be called by the owner
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The list of users to update
+   * @param {boolean[]} allowed - The denied status of each user
    * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
    * @returns {unknown}
    */
@@ -91,12 +91,12 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the denied status of a user. The length of the `users_` and `denied_` arrays must be the same. This function can only be called by the owner
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The list of users to update
+   * @param {boolean[]} allowed - The denied status of each user
    * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
    * @returns {unknown}
    */
@@ -117,48 +117,6 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
     );
     const hash = await writeSimpleDenyListSetDenied(this._config, request);
     return { hash, result };
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {Hex} interfaceId
-   * @param {?ReadParams<typeof simpleDenyListAbi, 'supportsInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof simpleDenyListAbi, 'supportsInterface'>,
-  ) {
-    return readSimpleDenyListSupportsInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [interfaceId],
-    });
-  }
-
-  /**
-   * Description placeholder
-   *
-   * @public
-   * @async
-   * @param {?ReadParams<typeof simpleDenyListAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
-   */
-  public async getComponentInterface(
-    params?: ReadParams<typeof simpleDenyListAbi, 'getComponentInterface'>,
-  ) {
-    return readSimpleDenyListGetComponentInterface(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [],
-    });
   }
 
   /**

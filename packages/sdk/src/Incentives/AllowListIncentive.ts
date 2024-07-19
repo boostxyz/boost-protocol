@@ -8,12 +8,10 @@ import {
   readAllowListIncentiveAllowList,
   readAllowListIncentiveClaimed,
   readAllowListIncentiveClaims,
-  readAllowListIncentiveGetComponentInterface,
   readAllowListIncentiveIsClaimable,
   readAllowListIncentiveLimit,
   readAllowListIncentiveOwner,
   readAllowListIncentiveReward,
-  readAllowListIncentiveSupportsInterface,
   simulateAllowListIncentiveClaim,
   writeAllowListIncentiveClaim,
 } from '@boostxyz/evm';
@@ -27,11 +25,15 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import type { ReadParams, WriteParams } from '../utils';
 
-export type { AllowListIncentivePayload };
 export { prepareAllowListIncentivePayload };
+export type { AllowListIncentivePayload };
 
 /**
- * Description placeholder
+ * An incentive implementation that grants the claimer a slot on an {SimpleAllowList}
+ * In order for any claim to be successful:
+ * - The claimer must not already be on the allow list; and
+ * - The maximum number of claims must not have been reached; and
+ * - This contract must be authorized to modify the allow list
  *
  * @export
  * @class AllowListIncentive
@@ -58,7 +60,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
   /**
-   * Description placeholder
+   * The owner of the allowList
    *
    * @public
    * @async
@@ -77,7 +79,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
+   * The number of claims that have been made
    *
    * @public
    * @async
@@ -96,7 +98,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
+   * The reward amount issued for each claim
    *
    * @public
    * @async
@@ -115,7 +117,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
+   * Get the claim status for a user
    *
    * @public
    * @async
@@ -136,7 +138,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
+   * The {@link SimpleAllowList} contract
    *
    * @public
    * @async
@@ -158,7 +160,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
+   * The maximum number of claims that can be made (one per address)
    *
    * @public
    * @async
@@ -176,13 +178,13 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
+   * Claim a slot on the {@link SimpleAllowList}
    *
    * @public
    * @async
    * @param {Pick<ClaimPayload, 'target'>} payload
    * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<true>} - return true if successful, otherwise revert
    */
   public async claim(
     payload: Pick<ClaimPayload, 'target'>,
@@ -192,13 +194,13 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * Description placeholder
+   * Claim a slot on the {@link SimpleAllowList}
    *
    * @public
    * @async
    * @param {Pick<ClaimPayload, 'target'>} payload
    * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<true>} - return true if successful, otherwise revert
    */
   public async claimRaw(
     payload: Pick<ClaimPayload, 'target'>,
@@ -218,15 +220,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
     return { hash, result };
   }
 
-  // use prepareClaimPayload?
   /**
-   * Description placeholder
+   * Check if an incentive is claimable
    *
    * @public
    * @async
    * @param {Pick<ClaimPayload, 'target'>} payload
    * @param {?ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the incentive is claimable based on the data payload
    */
   public async isClaimable(
     payload: Pick<ClaimPayload, 'target'>,

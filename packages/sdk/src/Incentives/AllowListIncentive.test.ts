@@ -20,7 +20,6 @@ import {
   freshBoost,
 } from '../../test/helpers';
 import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
-import { BOOST_CORE_CLAIM_FEE } from '../BoostCore';
 import { bytes4 } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
@@ -86,7 +85,7 @@ describe('AllowListIncentive', () => {
         hash: message,
         signature: trustedSignature,
       }),
-      { value: BOOST_CORE_CLAIM_FEE, account: trustedSigner.privateKey },
+      { value: parseEther('0.000075'), account: trustedSigner.privateKey },
     );
     expect(await allowList.isAllowed(trustedSigner.account)).toBe(true);
   });
@@ -123,7 +122,7 @@ describe('AllowListIncentive', () => {
         hash: message,
         signature: trustedSignature,
       }),
-      { value: BOOST_CORE_CLAIM_FEE, account: trustedSigner.privateKey },
+      { value: parseEther('0.000075'), account: trustedSigner.privateKey },
     );
     try {
       await fixtures.core.claimIncentive(
@@ -135,7 +134,7 @@ describe('AllowListIncentive', () => {
           hash: message,
           signature: trustedSignature,
         }),
-        { value: BOOST_CORE_CLAIM_FEE, account: trustedSigner.privateKey },
+        { value: parseEther('0.000075'), account: trustedSigner.privateKey },
       );
     } catch (e) {
       expect(e).toBeInstanceOf(Error);

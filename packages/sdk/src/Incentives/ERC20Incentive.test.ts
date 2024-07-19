@@ -112,7 +112,7 @@ describe('ERC20Incentive', () => {
         hash: message,
         signature: trustedSignature,
       }),
-      { value: BOOST_CORE_CLAIM_FEE },
+      { value: parseEther('0.000075') },
     );
     try {
       await fixtures.core.claimIncentive(
@@ -124,7 +124,7 @@ describe('ERC20Incentive', () => {
           hash: message,
           signature: trustedSignature,
         }),
-        { value: BOOST_CORE_CLAIM_FEE },
+        { value: parseEther('0.000075') },
       );
     } catch (e) {
       expect(e).toBeInstanceOf(Error);

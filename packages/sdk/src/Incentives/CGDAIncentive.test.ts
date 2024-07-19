@@ -5,7 +5,13 @@ import {
 } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
-import { encodePacked, isAddress, keccak256, zeroAddress } from 'viem';
+import {
+  encodePacked,
+  isAddress,
+  keccak256,
+  parseEther,
+  zeroAddress,
+} from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -16,7 +22,6 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { BOOST_CORE_CLAIM_FEE } from '../BoostCore';
 import { CGDAIncentive } from './CGDAIncentive';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
@@ -70,7 +75,7 @@ describe('CGDAIncentive', () => {
         hash: message,
         signature: trustedSignature,
       }),
-      { value: BOOST_CORE_CLAIM_FEE },
+      { value: parseEther('0.000075') },
     );
     expect(
       await readMockErc20BalanceOf(defaultOptions.config, {
@@ -108,7 +113,7 @@ describe('CGDAIncentive', () => {
         hash: message,
         signature: trustedSignature,
       }),
-      { value: BOOST_CORE_CLAIM_FEE },
+      { value: parseEther('0.000075') },
     );
     try {
       await fixtures.core.claimIncentive(
@@ -120,7 +125,7 @@ describe('CGDAIncentive', () => {
           hash: message,
           signature: trustedSignature,
         }),
-        { value: BOOST_CORE_CLAIM_FEE },
+        { value: parseEther('0.000075') },
       );
     } catch (e) {
       expect(e).toBeInstanceOf(Error);

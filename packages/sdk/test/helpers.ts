@@ -31,7 +31,6 @@ import {
   type CreateBoostPayload,
   ERC20Incentive,
   ERC721MintAction,
-  ERC1155Incentive,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
@@ -40,6 +39,7 @@ import {
   VestingBudget,
 } from '../src';
 import { BoostRegistry } from '../src/BoostRegistry';
+import { ERC1155Incentive } from '../src/Incentives/ERC1155Incentive';
 import { getDeployedContractAddress } from '../src/utils';
 import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';

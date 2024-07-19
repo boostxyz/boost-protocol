@@ -84,7 +84,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
    * @public
    * @async
    * @param {?ReadParams<typeof allowListIncentiveAbi, 'claims'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async claims(
     params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,
@@ -103,7 +103,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
    * @public
    * @async
    * @param {?ReadParams<typeof allowListIncentiveAbi, 'reward'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async reward(
     params?: ReadParams<typeof allowListIncentiveAbi, 'reward'>,
@@ -123,7 +123,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
    * @async
    * @param {Address} address
    * @param {?ReadParams<typeof allowListIncentiveAbi, 'claimed'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>}
    */
   public async claimed(
     address: Address,

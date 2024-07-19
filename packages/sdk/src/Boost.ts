@@ -6,7 +6,7 @@ import type { Incentive } from './Incentives/Incentive';
 import type { Validator } from './Validators/Validator';
 
 /**
- * Description placeholder
+ * Configuration used to instantiate a `Boost` instance.
  *
  * @export
  * @interface BoostPayload
@@ -14,61 +14,51 @@ import type { Validator } from './Validators/Validator';
  */
 export interface BoostPayload {
   /**
-   * Description placeholder
    *
    * @type {bigint}
    */
   id: bigint;
   /**
-   * Description placeholder
    *
    * @type {Budget}
    */
   budget: Budget;
   /**
-   * Description placeholder
    *
    * @type {Action}
    */
   action: Action;
   /**
-   * Description placeholder
    *
    * @type {Validator}
    */
   validator: Validator;
   /**
-   * Description placeholder
    *
    * @type {AllowList}
    */
   allowList: AllowList;
   /**
-   * Description placeholder
    *
    * @type {Array<Incentive>}
    */
   incentives: Array<Incentive>;
   /**
-   * Description placeholder
    *
    * @type {?bigint}
    */
   protocolFee?: bigint;
   /**
-   * Description placeholder
    *
    * @type {?bigint}
    */
   referralFee?: bigint;
   /**
-   * Description placeholder
    *
    * @type {?bigint}
    */
   maxParticipants?: bigint;
   /**
-   * Description placeholder
    *
    * @type {?Address}
    */
@@ -76,7 +66,7 @@ export interface BoostPayload {
 }
 
 /**
- * Description placeholder
+ * A struct representing a single Boost. Typically you would not construct this directly, rather get an instance from `BoostCore.createBoost` or `BoostCore.getBoost`
  *
  * @export
  * @class Boost
@@ -84,70 +74,60 @@ export interface BoostPayload {
  */
 export class Boost {
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {bigint}
    */
   readonly id: bigint;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {Budget}
    */
   readonly budget: Budget;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {Action}
    */
   readonly action: Action;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {Validator}
    */
   readonly validator: Validator;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {AllowList}
    */
   readonly allowList: AllowList;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {Array<Incentive>}
    */
   readonly incentives: Array<Incentive>;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {bigint}
    */
   readonly protocolFee: bigint;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {bigint}
    */
   readonly referralFee: bigint;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {bigint}
    */
   readonly maxParticipants: bigint;
   /**
-   * Description placeholder
    *
    * @readonly
    * @type {Address}

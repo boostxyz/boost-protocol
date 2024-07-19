@@ -25,7 +25,7 @@ export type Budget = SimpleBudget | VestingBudget;
 /**
  * A map of Budget component interfaces to their constructors.
  *
- * @type {{ "0x7aded85d": VestingBudget; "0x0f2a5d52": SimpleBudget; }}
+ * @type {{ "0x7aded85d": typeof VestingBudget; "0x0f2a5d52": typeof SimpleBudget; }}
  */
 export const BudgetByComponentInterface = {
   ['0x7aded85d']: VestingBudget,

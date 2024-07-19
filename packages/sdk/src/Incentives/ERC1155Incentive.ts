@@ -36,7 +36,7 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { ERC1155IncentivePayload, ERC1155StrategyType };
 
 /**
- * Description placeholder
+ * This is currently not exported due to a mysterious abi encoding issue
  *
  * @experimental
  * @export

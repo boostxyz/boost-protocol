@@ -23,7 +23,7 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { SignerValidatorPayload, prepareSignerValidatorValidatePayload };
 
 /**
- * Description placeholder
+ *  A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
  *
  * @export
  * @class SignerValidator
@@ -50,7 +50,7 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   public static override registryType: RegistryType = RegistryType.VALIDATOR;
 
   /**
-   * Description placeholder
+   * The set of authorized signers
    *
    * @public
    * @async
@@ -71,13 +71,13 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   }
 
   /**
-   * Description placeholder
+   * Validate that the action has been completed successfully. The data payload is expected to be a tuple of (address signer, bytes32 hash, bytes signature). The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer.
    *
    * @public
    * @async
    * @param {SignerValidatorValidatePayload} payload
    * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   public async validate(
     payload: SignerValidatorValidatePayload,
@@ -87,13 +87,13 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   }
 
   /**
-   * Description placeholder
+   * Validate that the action has been completed successfully. The data payload is expected to be a tuple of (address signer, bytes32 hash, bytes signature). The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer.
    *
    * @public
    * @async
    * @param {SignerValidatorValidatePayload} payload
-   * @param {?ReadParams<typeof signerValidatorAbi, 'validate'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
+   * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   public async validateRaw(
     payload: SignerValidatorValidatePayload,
@@ -114,12 +114,12 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the authorized status of a signer
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The list of signers to update
+   * @param {boolean[]} allowed - The authorized status of each signer
    * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
    * @returns {unknown}
    */
@@ -132,12 +132,12 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   }
 
   /**
-   * Description placeholder
+   * Set the authorized status of a signer
    *
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {boolean[]} allowed
+   * @param {Address[]} addresses - The list of signers to update
+   * @param {boolean[]} allowed - The authorized status of each signer
    * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
    * @returns {unknown}
    */

@@ -6,19 +6,16 @@ import {
   erc20IncentiveAbi,
   prepareClaimPayload,
   prepareERC20IncentivePayload,
-  readCgdaIncentiveOwner,
   readErc20IncentiveAsset,
   readErc20IncentiveClaimed,
   readErc20IncentiveClaims,
   readErc20IncentiveCurrentReward,
   readErc20IncentiveEntries,
-  readErc20IncentiveGetComponentInterface,
   readErc20IncentiveIsClaimable,
   readErc20IncentiveLimit,
   readErc20IncentiveOwner,
   readErc20IncentiveReward,
   readErc20IncentiveStrategy,
-  readErc20IncentiveSupportsInterface,
   simulateErc20IncentiveClaim,
   simulateErc20IncentiveDrawRaffle,
   simulateErc20IncentiveReclaim,
@@ -38,7 +35,7 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { ERC20IncentivePayload };
 
 /**
- * Description placeholder
+ * A simple ERC20 incentive implementation that allows claiming of tokens
  *
  * @export
  * @class ERC20Incentive
@@ -65,7 +62,7 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
   /**
-   * Description placeholder
+   * The owner of the incentive
    *
    * @public
    * @async
@@ -82,12 +79,12 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Calculates the current reward based on the time since the last claim. The reward is calculated based on the time since the last claim, the available budget, and the reward parameters. It increases linearly over time in the absence of claims, with each hour adding `rewardBoost` to the current reward, up to the available budget. For example, if there is one claim in the first hour, then no claims for three hours, the claimable reward would be `initialReward - rewardDecay + (rewardBoost * 3)`
    *
    * @public
    * @async
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'currentReward'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(
     params?: ReadParams<typeof erc20IncentiveAbi, 'currentReward'>,
@@ -101,12 +98,12 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The number of claims that have been made
    *
    * @public
    * @async
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'claims'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
     return readErc20IncentiveClaims(this._config, {
@@ -118,13 +115,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * A mapping of address to claim status
    *
    * @public
    * @async
    * @param {Address} address
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'claimed'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>}
    */
   public async claimed(
     address: Address,
@@ -139,12 +136,12 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The address of the ERC20-like token
    *
    * @public
    * @async
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'asset'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address>}
    */
   public async asset(params?: ReadParams<typeof erc20IncentiveAbi, 'asset'>) {
     return readErc20IncentiveAsset(this._config, {
@@ -155,7 +152,7 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The strategy for the incentive (MINT or POOL)
    *
    * @public
    * @async
@@ -173,12 +170,12 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The reward amount issued for each claim
    *
    * @public
    * @async
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'reward'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async reward(params?: ReadParams<typeof erc20IncentiveAbi, 'reward'>) {
     return readErc20IncentiveReward(this._config, {
@@ -189,7 +186,7 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The limit (max claims, or max entries for raffles)
    *
    * @public
    * @async
@@ -205,13 +202,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The set of addresses that have claimed a slot in the incentive raffle, accessed by bigint index.
    *
    * @public
    * @async
-   * @param {bigint} i
+   * @param {bigint} i - Index of address
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'entries'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address>}
    */
   public async entries(
     i: bigint,
@@ -226,13 +223,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Claim the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   public async claim(
     payload: ClaimPayload,
@@ -242,13 +239,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Claim the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   public async claimRaw(
     payload: ClaimPayload,
@@ -269,13 +266,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaim assets from the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} -  True if the assets were successfully reclaimed
    */
   public async reclaim(
     payload: ClaimPayload,
@@ -285,13 +282,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaim assets from the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} -  True if the assets were successfully reclaimed
    */
   public async reclaimRaw(
     payload: ClaimPayload,
@@ -312,13 +309,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Check if an incentive is claimable. For the POOL strategy, the `bytes data` portion of the payload ignored. The recipient must not have already claimed the incentive.
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'isClaimable'>} [params]
-   * @returns {unknown}
+   * @returns {unknown} = True if the incentive is claimable based on the data payload
    */
   public async isClaimable(
     payload: ClaimPayload,
@@ -333,12 +330,12 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Draw a winner from the raffle. Only callable by owner. Only valid when the strategy is set to `Strategy.RAFFLE`
    *
    * @public
    * @async
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async drawRaffle(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
@@ -347,12 +344,12 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Draw a winner from the raffle. Only callable by owner. Only valid when the strategy is set to `Strategy.RAFFLE`
    *
    * @public
    * @async
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async drawRaffleRaw(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,

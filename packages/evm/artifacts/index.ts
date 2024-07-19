@@ -12,6 +12,12 @@ import {
 } from 'viem';
 import { AbiCoder } from 'ethers';
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @enum {number}
+ */
 export enum RegistryType {
   ACTION = 0,
   ALLOW_LIST = 1,
@@ -20,23 +26,51 @@ export enum RegistryType {
   VALIDATOR = 4,
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @enum {number}
+ */
 export enum StrategyType {
   POOL = 0,
   MINT = 1,
   RAFFLE = 2,
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @enum {number}
+ */
 export enum ERC1155StrategyType {
   POOL = 0,
   MINT = 1,
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {Target}
+ */
 export type Target = {
   isBase: boolean;
   instance: Address;
   parameters: Hex;
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {Target} param0
+ * @param {boolean} param0.isBase
+ * @param {Address} param0.instance
+ * @param {Hex} param0.parameters
+ * @returns {*}
+ */
 export function prepareTarget({ isBase, instance, parameters }: Target) {
   return encodeAbiParameters(
     parseAbiParameters([
@@ -47,6 +81,17 @@ export function prepareTarget({ isBase, instance, parameters }: Target) {
   );
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {ContractActionPayload} param0
+ * @param {bigint} param0.chainId
+ * @param {Address} param0.target
+ * @param {Hex} param0.selector
+ * @param {bigint} param0.value
+ * @returns {Target}
+ */
 export function contractAction({
   chainId,
   target,
@@ -65,12 +110,50 @@ export function contractAction({
   };
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ERC20IncentivePayload
+ * @typedef {ERC20IncentivePayload}
+ */
 export interface ERC20IncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {StrategyType}
+   */
   strategy: StrategyType;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   reward: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   limit: bigint;
 }
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {ERC20IncentivePayload} param0
+ * @param {Address} param0.asset
+ * @param {StrategyType} param0.strategy
+ * @param {bigint} param0.reward
+ * @param {bigint} param0.limit
+ * @returns {Target}
+ */
 export function erc20Incentive({
   asset,
   strategy,
@@ -89,12 +172,43 @@ export function erc20Incentive({
   };
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SignerValidatorValidatePayload
+ * @typedef {SignerValidatorValidatePayload}
+ */
 export interface SignerValidatorValidatePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   signer: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
   hash: Hex;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
   signature: Hex;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {SignerValidatorValidatePayload} param0
+ * @param {Address} param0.signer
+ * @param {Hex} param0.hash
+ * @param {Hex} param0.signature
+ * @returns {*}
+ */
 export const prepareSignerValidatorValidatePayload = ({
   signer, hash, signature
   }: SignerValidatorValidatePayload) => {
@@ -108,10 +222,29 @@ export const prepareSignerValidatorValidatePayload = ({
     );
   };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SignerValidatorPayload
+ * @typedef {SignerValidatorPayload}
+ */
 export interface SignerValidatorPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address[]}
+   */
   signers: Address[];
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {SignerValidatorPayload} param0
+ * @param {{}} param0.signers
+ * @returns {*}
+ */
 export const prepareSignerValidatorPayload = ({
   signers
   }: SignerValidatorPayload) => {
@@ -123,6 +256,14 @@ export const prepareSignerValidatorPayload = ({
     );
   };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {SignerValidatorPayload} param0
+ * @param {{}} param0.signers
+ * @returns {Target}
+ */
 export function signerValidator({
   signers,
 }: SignerValidatorPayload): Target {
@@ -133,11 +274,36 @@ export function signerValidator({
   };
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SimpleAllowListPayload
+ * @typedef {SimpleAllowListPayload}
+ */
 export interface SimpleAllowListPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   owner: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Address[]}
+   */
   allowed: Address[];
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {SimpleAllowListPayload} param0
+ * @param {Address} param0.owner
+ * @param {{}} param0.allowed
+ * @returns {*}
+ */
 export const prepareSimpleAllowListPayload = ({
 owner,
 allowed
@@ -151,6 +317,15 @@ allowed
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {SimpleAllowListPayload} param0
+ * @param {Address} param0.owner
+ * @param {{}} param0.allowed
+ * @returns {Target}
+ */
 export function simpleAllowList({
   owner,
   allowed,
@@ -162,11 +337,36 @@ export function simpleAllowList({
   };
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SimpleDenyListPayload
+ * @typedef {SimpleDenyListPayload}
+ */
 export interface SimpleDenyListPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   owner: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Address[]}
+   */
   denied: Address[];
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {SimpleDenyListPayload} param0
+ * @param {Address} param0.owner
+ * @param {{}} param0.denied
+ * @returns {*}
+ */
 export const prepareSimpleDenyListPayload = ({
 owner,
 denied
@@ -180,6 +380,15 @@ denied
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {SimpleDenyListPayload} param0
+ * @param {Address} param0.owner
+ * @param {{}} param0.denied
+ * @returns {Target}
+ */
 export function simpleDenyList({
   owner,
   denied,
@@ -191,18 +400,86 @@ export function simpleDenyList({
   };
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface BoostPayload
+ * @typedef {BoostPayload}
+ */
 export interface BoostPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   budget: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Target}
+   */
   action: Target;
+  /**
+   * Description placeholder
+   *
+   * @type {Target}
+   */
   validator: Target;
+  /**
+   * Description placeholder
+   *
+   * @type {Target}
+   */
   allowList: Target;
+  /**
+   * Description placeholder
+   *
+   * @type {Target[]}
+   */
   incentives: Target[];
+  /**
+   * Description placeholder
+   *
+   * @type {?bigint}
+   */
   protocolFee?: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {?bigint}
+   */
   referralFee?: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {?bigint}
+   */
   maxParticipants?: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   owner: Address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {BoostPayload} param0
+ * @param {Address} param0.budget
+ * @param {Target} param0.action
+ * @param {Target} param0.validator
+ * @param {Target} param0.allowList
+ * @param {{}} param0.incentives
+ * @param {bigint} [param0.protocolFee=0n]
+ * @param {bigint} [param0.referralFee=0n]
+ * @param {bigint} [param0.maxParticipants=0n]
+ * @param {Address} param0.owner
+ * @returns {Hex}
+ */
 export function prepareBoostPayload({
   budget,
   action,
@@ -238,11 +515,37 @@ export function prepareBoostPayload({
   ) as Hex;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ERC1155Payload
+ * @typedef {ERC1155Payload}
+ */
 export interface ERC1155Payload {
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   tokenId: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   amount: bigint;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {ERC1155Payload} param0
+ * @param {bigint} param0.tokenId
+ * @param {bigint} param0.amount
+ * @returns {*}
+ */
 export function prepareERC1155Payload({
   tokenId,
   amount,
@@ -256,13 +559,50 @@ export function prepareERC1155Payload({
   );
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface PointsIncentivePayload
+ * @typedef {PointsIncentivePayload}
+ */
 export interface PointsIncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   venue: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
   selector: Hex;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   reward: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   limit: bigint;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {PointsIncentivePayload} param0
+ * @param {Address} param0.venue
+ * @param {Hex} param0.selector
+ * @param {bigint} param0.reward
+ * @param {bigint} param0.limit
+ * @returns {*}
+ */
 export const preparePointsIncentivePayload = ({
   venue,
   selector,
@@ -283,21 +623,91 @@ export const preparePointsIncentivePayload = ({
   );
 };
 
+/**
+ * The configuration parameters for the CGDAIncentive
+ *
+ * @export
+ * @interface CGDAParameters
+ * @typedef {CGDAParameters}
+ */
 export interface CGDAParameters {
+  /**
+   * The amount to subtract from the current reward after each claim
+   *
+   * @type {bigint}
+   */
   rewardDecay: bigint;
+  /**
+   * The amount by which the reward increases for each hour without a claim (continuous linear increase)
+   *
+   * @type {bigint}
+   */
   rewardBoost: bigint;
+  /**
+   * The timestamp of the last claim
+   *
+   * @type {bigint}
+   */
   lastClaimTime: bigint;
+  /**
+   * The current reward amount
+   *
+   * @type {bigint}
+   */
   currentReward: bigint;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface CGDAIncentivePayload
+ * @typedef {CGDAIncentivePayload}
+ */
 export interface CGDAIncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   initialReward: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   rewardDecay: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   rewardBoost: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   totalBudget: bigint;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {CGDAIncentivePayload} param0
+ * @param {Address} param0.asset
+ * @param {bigint} param0.initialReward
+ * @param {bigint} param0.rewardDecay
+ * @param {bigint} param0.rewardBoost
+ * @param {bigint} param0.totalBudget
+ * @returns {*}
+ */
 export const prepareCGDAIncentivePayload = ({
   asset,
   initialReward,
@@ -321,15 +731,58 @@ export const prepareCGDAIncentivePayload = ({
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ERC1155IncentivePayload
+ * @typedef {ERC1155IncentivePayload}
+ */
 export interface ERC1155IncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {ERC1155StrategyType}
+   */
   strategy: ERC1155StrategyType;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   tokenId: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   limit: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
   extraData: Hex;
 }
 
 // TODO: there's an issue with this specific payload encoding that exists between viem and ethers
+/**
+ * Description placeholder
+ *
+ * @param {ERC1155IncentivePayload} param0
+ * @param {Address} param0.asset
+ * @param {ERC1155StrategyType} param0.strategy
+ * @param {bigint} param0.tokenId
+ * @param {bigint} param0.limit
+ * @param {Hex} param0.extraData
+ * @returns {Hex}
+ */
 export const prepareERC1155IncentivePayload = ({
   asset,
   strategy,
@@ -351,11 +804,36 @@ export const prepareERC1155IncentivePayload = ({
     zeroHash]) as Hex
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface AllowListIncentivePayload
+ * @typedef {AllowListIncentivePayload}
+ */
 export interface AllowListIncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   allowList: Address
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   limit: bigint
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {AllowListIncentivePayload} param0
+ * @param {Address} param0.allowList
+ * @param {bigint} param0.limit
+ * @returns {*}
+ */
 export const prepareAllowListIncentivePayload = ({
   allowList,
   limit
@@ -371,13 +849,50 @@ export const prepareAllowListIncentivePayload = ({
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ERC20IncentivePayload
+ * @typedef {ERC20IncentivePayload}
+ */
 export interface ERC20IncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {StrategyType}
+   */
   strategy: StrategyType;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   reward: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   limit: bigint;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {ERC20IncentivePayload} param0
+ * @param {Address} param0.asset
+ * @param {StrategyType} param0.strategy
+ * @param {bigint} param0.reward
+ * @param {bigint} param0.limit
+ * @returns {*}
+ */
 export const prepareERC20IncentivePayload = ({
   asset,
   strategy,
@@ -395,20 +910,78 @@ export const prepareERC20IncentivePayload = ({
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ContractActionPayload
+ * @typedef {ContractActionPayload}
+ */
 export interface ContractActionPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   chainId: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   target: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
   selector: Hex;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   value: bigint;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @typedef {ERC721MintActionPayload}
+ */
 export type ERC721MintActionPayload = ContractActionPayload
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SimpleBudgetPayload
+ * @typedef {SimpleBudgetPayload}
+ */
 export interface SimpleBudgetPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   owner: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Address[]}
+   */
   authorized: Address[];
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {SimpleBudgetPayload} param0
+ * @param {Address} param0.owner
+ * @param {{}} param0.authorized
+ * @returns {*}
+ */
 export const prepareSimpleBudgetPayload = ({
   owner,
   authorized,
@@ -422,14 +995,57 @@ export const prepareSimpleBudgetPayload = ({
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface VestingBudgetPayload
+ * @typedef {VestingBudgetPayload}
+ */
 export interface VestingBudgetPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   owner: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Address[]}
+   */
   authorized: Address[];
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   start: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   duration: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   cliff: bigint;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {VestingBudgetPayload} param0
+ * @param {Address} param0.owner
+ * @param {{}} param0.authorized
+ * @param {bigint} param0.start
+ * @param {bigint} param0.duration
+ * @param {bigint} param0.cliff
+ * @returns {*}
+ */
 export const prepareVestingBudgetPayload = ({
   owner,
   authorized,
@@ -446,6 +1062,16 @@ export const prepareVestingBudgetPayload = ({
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @param {ContractActionPayload} param0
+ * @param {bigint} param0.chainId
+ * @param {Address} param0.target
+ * @param {Hex} param0.selector
+ * @param {bigint} param0.value
+ * @returns {*}
+ */
 export const prepareContractActionPayload = ({
   chainId,
   target,
@@ -461,6 +1087,16 @@ export const prepareContractActionPayload = ({
   );
 };
 
+/**
+ * Description placeholder
+ *
+ * @param {ContractActionPayload} param0
+ * @param {bigint} param0.chainId
+ * @param {Address} param0.target
+ * @param {Hex} param0.selector
+ * @param {bigint} param0.value
+ * @returns {*}
+ */
 export const prepareERC721MintActionPayload = ({
   chainId,
   target,
@@ -470,8 +1106,33 @@ export const prepareERC721MintActionPayload = ({
   return prepareContractActionPayload({ chainId, target, selector, value });
 };
 
-export interface ClaimPayload { target: Address, data?: Hex}
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ClaimPayload
+ * @typedef {ClaimPayload}
+ */
+export interface ClaimPayload { /**
+ * Description placeholder
+ *
+ * @type {Address}
+ */
+target: Address, /**
+ * Description placeholder
+ *
+ * @type {?Hex}
+ */
+data?: Hex}
 
+/**
+ * Description placeholder
+ *
+ * @param {ClaimPayload} param0
+ * @param {Address} param0.target
+ * @param {Hex} [param0.data=zeroHash]
+ * @returns {*}
+ */
 export const prepareClaimPayload = ({ target, data = zeroHash }: ClaimPayload) => {
   return encodeAbiParameters(
     [
@@ -486,19 +1147,62 @@ export const prepareClaimPayload = ({ target, data = zeroHash }: ClaimPayload) =
 * Transfer Payloads
 */
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @enum {number}
+ */
 export enum AssetType {
   ETH,
   ERC20,
   ERC1155
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface TransferPayload
+ * @typedef {TransferPayload}
+ */
 export interface TransferPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {AssetType}
+   */
   assetType: AssetType
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   address: Address
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   target: Address
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
   data: Hex
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {TransferPayload} param0
+ * @param {AssetType} param0.assetType
+ * @param {Address} param0.address
+ * @param {Address} param0.target
+ * @param {Hex} param0.data
+ * @returns {*}
+ */
 export const prepareTransferPayload =({ assetType, address, target, data }: TransferPayload)  => {
   return encodeAbiParameters(
     [
@@ -511,13 +1215,51 @@ export const prepareTransferPayload =({ assetType, address, target, data }: Tran
   )
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ERC1155TransferPayload
+ * @typedef {ERC1155TransferPayload}
+ */
 export interface ERC1155TransferPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   tokenId: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   amount: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   target: Address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {ERC1155TransferPayload} param0
+ * @param {bigint} param0.tokenId
+ * @param {bigint} param0.amount
+ * @param {Address} param0.asset
+ * @param {Address} param0.target
+ * @returns {*}
+ */
 export function prepareERC1155Transfer({
   tokenId,
   amount,
@@ -540,8 +1282,28 @@ export function prepareERC1155Transfer({
   );
 }
 
-export interface FungiblePayload { amount: bigint }
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface FungiblePayload
+ * @typedef {FungiblePayload}
+ */
+export interface FungiblePayload { /**
+ * Description placeholder
+ *
+ * @type {bigint}
+ */
+amount: bigint }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {FungiblePayload} param0
+ * @param {bigint} param0.amount
+ * @returns {*}
+ */
 export function prepareFungiblePayload({ amount }: FungiblePayload) {
   return encodeAbiParameters(
     parseAbiParameters([
@@ -552,12 +1314,44 @@ export function prepareFungiblePayload({ amount }: FungiblePayload) {
   );
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface FungibleTransferPayload
+ * @typedef {FungibleTransferPayload}
+ */
 export interface FungibleTransferPayload {
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
   amount: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
   target: Address;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {FungibleTransferPayload} param0
+ * @param {bigint} param0.amount
+ * @param {Address} param0.asset
+ * @param {Address} param0.target
+ * @returns {*}
+ */
 export function prepareFungibleTransfer({
   amount,
   asset,
@@ -579,6 +1373,14 @@ export function prepareFungibleTransfer({
   );
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {Address} holder
+ * @param {bigint} payload
+ * @returns {*}
+ */
 export function prepareERC721MintActionValidate(holder: Address, payload: bigint) {
   return encodeAbiParameters(
     [

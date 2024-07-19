@@ -8,7 +8,7 @@ import { SignerValidator } from './SignerValidator';
 export { SignerValidator };
 
 /**
- * Description placeholder
+ * A union type representing all valid protocol Validator implementations
  *
  * @export
  * @typedef {Validator}
@@ -16,7 +16,7 @@ export { SignerValidator };
 export type Validator = SignerValidator;
 
 /**
- * Description placeholder
+ * A map of Validator component interfaces to their constructors.
  *
  * @type {{ "0xd8725ea2": typeof SignerValidator; }}
  */
@@ -25,13 +25,14 @@ export const ValidatorByComponentInterface = {
 };
 
 /**
- * Description placeholder
+ * A function that will read a contract's component interface using `getComponentInterface` and return the correct instantiated instance.
  *
  * @export
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
  * @returns {unknown}
+ * @throws {@link InvalidComponentInterfaceError}
  */
 export async function validatorFromAddress(
   options: DeployableOptions,

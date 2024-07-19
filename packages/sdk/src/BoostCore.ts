@@ -21,7 +21,6 @@ import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
   type Hex,
-  parseEther,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -87,13 +86,13 @@ import {
   BoostCoreNoIdentifierEmitted,
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
-  IncentiveNotCloneableError,
   NoContractAddressUponReceiptError,
 } from './errors';
 import type { ReadParams, WriteParams } from './utils';
 
 /**
- * Description placeholder
+ * The fixed address for the deployed Boost Core.
+ * By default, `new BoostCore` will use this address if not otherwise provided.
  *
  * @type {Address}
  */
@@ -101,14 +100,7 @@ export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
 
 /**
- * Description placeholder
- *
- * @type {*}
- */
-export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
-
-/**
- * Description placeholder
+ * Boost Core instantiation options for a custom deployed instance.
  *
  * @export
  * @interface BoostCoreDeployedOptions
@@ -117,7 +109,7 @@ export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
  */
 export interface BoostCoreDeployedOptions extends DeployableOptions {
   /**
-   * Description placeholder
+   * The address of a deployed, custom Boost Core contract.
    *
    * @type {?Address}
    */
@@ -125,7 +117,7 @@ export interface BoostCoreDeployedOptions extends DeployableOptions {
 }
 
 /**
- * Description placeholder
+ * Typeguard to determine if a user is supplying a custom address for a Boost Core contract.
  *
  * @param {*} opts
  * @returns {opts is BoostCoreDeployedOptions}
@@ -136,7 +128,7 @@ function isBoostCoreDeployed(opts: any): opts is BoostCoreDeployedOptions {
 }
 
 /**
- * Description placeholder
+ * Boost Core instantiation options when a user intends to deploy a new instance of Boost Core, setting their own registry address and protocol fee receiver.
  *
  * @export
  * @interface BoostCoreOptionsWithPayload
@@ -145,13 +137,13 @@ function isBoostCoreDeployed(opts: any): opts is BoostCoreDeployedOptions {
  */
 export interface BoostCoreOptionsWithPayload extends DeployableOptions {
   /**
-   * Description placeholder
+   * The address of a deployed Boost Registry contract.
    *
    * @type {Address}
    */
   registryAddress: Address;
   /**
-   * Description placeholder
+   * The address to send fees.
    *
    * @type {Address}
    */
@@ -159,7 +151,7 @@ export interface BoostCoreOptionsWithPayload extends DeployableOptions {
 }
 
 /**
- * Description placeholder
+ * Typeguard to determine if a user is intending to deploy a new instance of the Boost Core contracts with {@link BoostCoreOptionsWithPayload}.
  *
  * @param {*} opts
  * @returns {opts is BoostCoreOptionsWithPayload}
@@ -170,7 +162,7 @@ function isBoostCoreDeployable(opts: any): opts is BoostCoreOptionsWithPayload {
 }
 
 /**
- * Description placeholder
+ * A union representing both of the valid Boost Core instantiation parameters.
  *
  * @export
  * @typedef {BoostCoreConfig}
@@ -180,7 +172,7 @@ export type BoostCoreConfig =
   | BoostCoreOptionsWithPayload;
 
 /**
- * Description placeholder
+ * The interface required to create a new Boost.
  *
  * @export
  * @typedef {CreateBoostPayload}
@@ -198,7 +190,7 @@ export type CreateBoostPayload = {
 };
 
 /**
- * Description placeholder
+ * The core contract for the Boost protocol. Used to create and retrieve deployed Boosts.
  *
  * @export
  * @class BoostCore
@@ -228,7 +220,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
     }
   }
   /**
-   * Description placeholder
+   * Create a new Boost.
    *
    * @public
    * @async
@@ -452,14 +444,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Claim an incentive for a Boost
    *
    * @public
    * @async
-   * @param {bigint} boostId
-   * @param {bigint} incentiveId
-   * @param {Address} address
-   * @param {Hex} data
+   * @param {bigint} boostId - The ID of the Boost
+   * @param {bigint} incentiveId - The ID of the Incentive
+   * @param {Address} address - The address of the referrer (if any)
+   * @param {Hex} data- The data for the claim
    * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
    * @returns {unknown}
    */
@@ -485,7 +477,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Get a Boost by index, will return the raw on chain representation of a Boost.
    *
    * @public
    * @async
@@ -507,7 +499,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Get a Boost by index, will return a new {@link Boost} with correct target implementations instantiated, ie `(await core.getBoost(0n)).allowList instanceof SimpleAllowList` vs `SimpleDenyList`
    *
    * @public
    * @async
@@ -561,7 +553,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Get the number of Boosts
    *
    * @public
    * @async
@@ -581,7 +573,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Get the protocol fee.
    *
    * @public
    * @async
@@ -601,7 +593,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Get the protocol fee receiver.
    *
    * @public
    * @async
@@ -621,7 +613,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Set the protocol fee receiver address. This function is only callable by the owner.
    *
    * @public
    * @async
@@ -637,7 +629,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Set the protocol fee receiver address. This function is only callable by the owner.
    *
    * @public
    * @async
@@ -667,7 +659,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Get the claim fee.
    *
    * @public
    * @async
@@ -685,7 +677,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Sets the claim fee.
    *
    * @public
    * @async
@@ -701,7 +693,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Sets the claim fee.
    *
    * @public
    * @async
@@ -728,8 +720,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Bound {@link ContractAction} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const action = core.ContractAction('0x') // is roughly equivalent to
+   * const action = new ContractAction({ config: core._config, account: core._account }, '0x')
+   * ```
    * @param {DeployablePayloadOrAddress<ContractActionPayload>} options
    * @param {?boolean} [isBase]
    * @returns {ContractAction}
@@ -745,8 +742,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link ERC721MintAction} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const action = core.ERC721MintAction('0x') // is roughly equivalent to
+   * const action = new ERC721MintAction({ config: core._config, account: core._account }, '0x')
+   * ```
    * @param {DeployablePayloadOrAddress<ERC721MintActionPayload>} options
    * @param {?boolean} [isBase]
    * @returns {ERC721MintAction}
@@ -762,8 +764,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link SimpleAllowList} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const list = core.SimpleAllowList('0x') // is roughly equivalent to
+   * const list = new SimpleAllowList({ config: core._config, account: core._account }, '0x')
+   * ```
    * @param {DeployablePayloadOrAddress<SimpleAllowListPayload>} options
    * @param {?boolean} [isBase]
    * @returns {SimpleAllowList}
@@ -779,8 +786,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link SimpleDenyList} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const list = core.SimpleDenyList('0x') // is roughly equivalent to
+   * const list = new SimpleDenyList({ config: core._config, account: core._account }, '0x')
+   * ```
    * @param {DeployablePayloadOrAddress<SimpleDenyListPayload>} options
    * @param {?boolean} [isBase]
    * @returns {SimpleDenyList}
@@ -796,8 +808,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link SimpleBudget} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const budget = core.SimpleBudget('0x') // is roughly equivalent to
+   * const budget = new SimpleBudget({ config: core._config, account: core._account }, '0x')
+   * ```
    * @param {DeployablePayloadOrAddress<SimpleBudgetPayload>} options
    * @returns {SimpleBudget}
    */
@@ -808,8 +825,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link VestingBudget} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const budget = core.VestingBudget('0x') // is roughly equivalent to
+   * const budget = new VestingBudget({ config: core._config, account: core._account }, '0x')
+   * ```
    * @param {DeployablePayloadOrAddress<VestingBudgetPayload>} options
    * @returns {VestingBudget}
    */
@@ -820,10 +842,15 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link AllowListIncentive} constructor that reuses the same configuration as the Boost Core instance.
    *
-   * @param {AllowListIncentivePayload} options
-   * @returns {AllowListIncentive}
+   * @example
+   * ```ts
+   * const incentive = core.AllowListIncentive({ ... }) // is roughly equivalent to
+   * const incentive = new AllowListIncentive({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<VestingBudgetPayload>} options
+   * @returns {VestingBudget}
    */
   AllowListIncentive(options: AllowListIncentivePayload) {
     return new AllowListIncentive(
@@ -832,8 +859,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link CGDAIncentive} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const incentive = core.CGDAIncentive({ ... }) // is roughly equivalent to
+   * const incentive = new CGDAIncentive({ config: core._config, account: core._account }, { ... })
+   * ```
    * @param {CGDAIncentivePayload} options
    * @returns {CGDAIncentive}
    */
@@ -844,8 +876,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link ERC20Incentive} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const incentive = core.ERC20Incentive({ ... }) // is roughly equivalent to
+   * const incentive = new ERC20Incentive({ config: core._config, account: core._account }, { ... })
+   * ```
    * @param {ERC20IncentivePayload} options
    * @returns {ERC20Incentive}
    */
@@ -856,20 +893,32 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Temporarily disabled until low level ABI encoding bugs are resolved
+   * Bound {@link ERC1155Incentive} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @experimental
+   * @example
+   * ```ts
+   * const incentive = core.ERC1155Incentive({ ... }) // is roughly equivalent to
+   * const incentive = new ERC1155Incentive({ config: core._config, account: core._account }, { ... })
+   * ```
    * @param {ERC1155IncentivePayload} options
    * @returns {ERC1155Incentive}
    */
-  ERC1155Incentive(options: ERC1155IncentivePayload) {
+  private ERC1155Incentive(options: ERC1155IncentivePayload) {
     return new ERC1155Incentive(
       { config: this._config, account: this._account },
       options,
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link PointsIncentive} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const incentive = core.PointsIncentive({ ... }) // is roughly equivalent to
+   * const incentive = new PointsIncentive({ config: core._config, account: core._account }, { ... })
+   * ```
    * @param {PointsIncentivePayload} options
    * @returns {PointsIncentive}
    */
@@ -880,8 +929,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
     );
   }
   /**
-   * Description placeholder
+   * Bound {@link SignerValidator} constructor that reuses the same configuration as the Boost Core instance.
    *
+   * @example
+   * ```ts
+   * const validator = core.SignerValidator({ ... }) // is roughly equivalent to
+   * const validator = new SignerValidator({ config: core._config, account: core._account }, { ... })
+   * ```
    * @param {DeployablePayloadOrAddress<SignerValidatorPayload>} options
    * @param {?boolean} [isBase]
    * @returns {SignerValidator}

@@ -30,7 +30,12 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { PointsIncentivePayload };
 
 /**
- * Description placeholder
+ * A simple on-chain points incentive implementation that allows claiming of soulbound tokens.
+ *
+ * In order for any claim to be successful:
+ * - The claimer must not have already claimed the incentive; and
+ * - The maximum number of claims must not have been reached; and
+ * - This contract must be authorized to operate the points contract's issuance function
  *
  * @export
  * @class PointsIncentive
@@ -57,12 +62,12 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
   /**
-   * Description placeholder
+   * The number of claims that have been made
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'claims'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'claims'>} [params]
+   * @returns {Promise<bigint>}
    */
   public async claims(
     params?: ReadParams<typeof pointsIncentiveAbi, 'claims'>,
@@ -76,12 +81,12 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The current reward
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'currentReward'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams<typeof erc20IncentiveAbi, 'currentReward'>} [params]
+   * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(
     params?: ReadParams<typeof pointsIncentiveAbi, 'currentReward'>,
@@ -95,7 +100,7 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The reward amount issued for each claim
    *
    * @public
    * @async
@@ -114,7 +119,7 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * A mapping of address to claim status
    *
    * @public
    * @async
@@ -135,7 +140,7 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The address of the points contract
    *
    * @public
    * @async
@@ -151,12 +156,12 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The maximum number of claims that can be made (one per address)
    *
    * @public
    * @async
    * @param {?ReadParams<typeof pointsIncentiveAbi, 'limit'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async limit(params?: ReadParams<typeof pointsIncentiveAbi, 'limit'>) {
     return readPointsIncentiveLimit(this._config, {
@@ -167,12 +172,12 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The selector for the issuance function on the points contract
    *
    * @public
    * @async
    * @param {?ReadParams<typeof pointsIncentiveAbi, 'selector'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Hex>}
    */
   public async selector(
     params?: ReadParams<typeof pointsIncentiveAbi, 'selector'>,
@@ -185,13 +190,13 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Claim the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} -  True if the incentive was successfully claimed
    */
   public async claim(
     payload: ClaimPayload,
@@ -201,13 +206,13 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Claim the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} -  True if the incentive was successfully claimed
    */
   public async claimRaw(
     payload: ClaimPayload,
@@ -228,13 +233,15 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Check if an incentive is claimable.
+   * For the POOL strategy, the `bytes data` portion of the payload ignored.
+   * The recipient must not have already claimed the incentive.
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?ReadParams<typeof pointsIncentiveAbi, 'isClaimable'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} -  True if the incentive is claimable based on the data payload
    */
   public async isClaimable(
     payload: ClaimPayload,

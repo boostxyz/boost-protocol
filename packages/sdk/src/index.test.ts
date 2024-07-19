@@ -17,7 +17,7 @@ describe('sdk exports', () => {
     expect(SDK.AllowListIncentive).toBeDefined();
     expect(SDK.CGDAIncentive).toBeDefined();
     expect(SDK.ERC20Incentive).toBeDefined();
-    expect(SDK.ERC1155Incentive).toBeDefined();
+    // expect(SDK.ERC1155Incentive).toBeDefined();
     expect(SDK.PointsIncentive).toBeDefined();
     expect(SDK.SignerValidator).toBeDefined();
 

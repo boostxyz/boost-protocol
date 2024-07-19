@@ -11,11 +11,9 @@ import {
   readCgdaIncentiveClaimed,
   readCgdaIncentiveClaims,
   readCgdaIncentiveCurrentReward,
-  readCgdaIncentiveGetComponentInterface,
   readCgdaIncentiveIsClaimable,
   readCgdaIncentiveOwner,
   readCgdaIncentiveReward,
-  readCgdaIncentiveSupportsInterface,
   readCgdaIncentiveTotalBudget,
   simulateCgdaIncentiveClaim,
   simulateCgdaIncentiveReclaim,
@@ -34,7 +32,8 @@ import type { ReadParams, WriteParams } from '../utils';
 export type { CGDAIncentivePayload };
 
 /**
- * Description placeholder
+ * Continuous Gradual Dutch Auction Incentive.
+ * An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
  *
  * @export
  * @class CGDAIncentive
@@ -61,7 +60,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   public static override registryType: RegistryType = RegistryType.INCENTIVE;
 
   /**
-   * Description placeholder
+   * The incentive's owner.
    *
    * @public
    * @async
@@ -78,12 +77,12 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The number of claims that have been made
    *
    * @public
    * @async
    * @param {?ReadParams<typeof cgdaIncentiveAbi, 'claims'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async claims(params?: ReadParams<typeof cgdaIncentiveAbi, 'claims'>) {
     return readCgdaIncentiveClaims(this._config, {
@@ -95,12 +94,12 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The reward amount issued for each claim
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'reward'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams<typeof allowListIncentiveAbi, 'reward'>} [params]
+   * @returns {Promise<bigint>}
    */
   public async reward(params?: ReadParams<typeof cgdaIncentiveAbi, 'reward'>) {
     return readCgdaIncentiveReward(this._config, {
@@ -112,13 +111,13 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Get the claim status for a user
    *
    * @public
    * @async
    * @param {Address} address
    * @param {?ReadParams<typeof cgdaIncentiveAbi, 'claimed'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>}
    */
   public async claimed(
     address: Address,
@@ -133,7 +132,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The ERC20-like token used for the incentive
    *
    * @public
    * @async
@@ -149,7 +148,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The configuration parameters for the CGDAIncentive
    *
    * @public
    * @async
@@ -174,12 +173,12 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * The total budget of the incentive
    *
    * @public
    * @async
    * @param {?ReadParams<typeof cgdaIncentiveAbi, 'totalBudget'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async totalBudget(
     params?: ReadParams<typeof cgdaIncentiveAbi, 'totalBudget'>,
@@ -192,13 +191,13 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Claim the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   public async claim(
     payload: ClaimPayload,
@@ -208,13 +207,13 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Claim the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   public async claimRaw(
     payload: ClaimPayload,
@@ -232,13 +231,13 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaim assets from the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} -  True if the assets were successfully reclaimed
    */
   public async reclaim(
     payload: ClaimPayload,
@@ -248,13 +247,13 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Reclaim assets from the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof cgdaIncentiveAbi, 'reclaim'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} -  True if the assets were successfully reclaimed
    */
   public async reclaimRaw(
     payload: ClaimPayload,
@@ -275,13 +274,13 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Check if an incentive is claimable
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
    * @param {?ReadParams<typeof cgdaIncentiveAbi, 'isClaimable'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>} - True if the incentive is claimable based on the data payload
    */
   public async isClaimable(
     payload: ClaimPayload,
@@ -296,12 +295,14 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * Description placeholder
+   * Calculates the current reward based on the time since the last claim.
+   * The reward is calculated based on the time since the last claim, the available budget, and the reward parameters. It increases linearly over time in the absence of claims, with each hour adding `rewardBoost` to the current reward, up to the available budget.
+   * For example, if there is one claim in the first hour, then no claims for three hours, the claimable reward would be `initialReward - rewardDecay + (rewardBoost * 3)`
    *
    * @public
    * @async
    * @param {?ReadParams<typeof cgdaIncentiveAbi, 'currentReward'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(
     params?: ReadParams<typeof cgdaIncentiveAbi, 'currentReward'>,

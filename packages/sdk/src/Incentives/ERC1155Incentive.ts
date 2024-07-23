@@ -11,14 +11,12 @@ import {
   readErc1155IncentiveClaimed,
   readErc1155IncentiveClaims,
   readErc1155IncentiveExtraData,
-  readErc1155IncentiveGetComponentInterface,
   readErc1155IncentiveIsClaimable,
   readErc1155IncentiveLimit,
   readErc1155IncentivePreflight,
   readErc1155IncentiveReward,
   readErc1155IncentiveStrategy,
   readErc1155IncentiveTokenId,
-  readErc1155SupportsInterface,
   simulateErc1155IncentiveClaim,
   simulateErc1155IncentiveReclaim,
   writeErc1155IncentiveClaim,
@@ -352,6 +350,7 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
       _payload,
       _options,
     );
+    console.log(prepareERC1155IncentivePayload(payload));
     return {
       abi: erc1155IncentiveAbi,
       bytecode: bytecode as Hex,

@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { BoostRegistry$Type } from "./BoostRegistry";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["BoostRegistry"]: BoostRegistry$Type;
     ["contracts/BoostRegistry.sol:BoostRegistry"]: BoostRegistry$Type;
+  }
+
+  interface ContractTypesMap {
+    ["BoostRegistry"]: GetContractReturnType<BoostRegistry$Type["abi"]>;
+    ["contracts/BoostRegistry.sol:BoostRegistry"]: GetContractReturnType<BoostRegistry$Type["abi"]>;
   }
 }

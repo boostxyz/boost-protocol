@@ -136,6 +136,19 @@ export interface AllowList$Type {
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getComponentInterface",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes",

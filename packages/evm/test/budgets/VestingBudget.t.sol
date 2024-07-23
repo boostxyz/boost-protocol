@@ -621,6 +621,15 @@ contract VestingBudgetTest is Test {
         assertTrue(vestingBudget.isAuthorized(address(this)));
     }
 
+    ////////////////////////////////////
+    // VestingBudget.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Ensure the contract supports the Budget interface
+        console.logBytes4(vestingBudget.getComponentInterface());
+    }
+
     /////////////////////////////////////
     // VestingBudget.supportsInterface //
     /////////////////////////////////////

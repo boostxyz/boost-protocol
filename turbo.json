@@ -11,6 +11,7 @@
       "outputs": ["coverage/**"]
     },
     "typedoc": {
+      "dependsOn": ["^build"],
       "inputs": ["src"],
       "outputs": ["docs/**"]
     },

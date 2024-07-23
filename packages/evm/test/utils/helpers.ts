@@ -1,58 +1,104 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
-import { expect } from "chai";
-import { viem } from "hardhat";
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+import { expect } from 'chai';
+import { viem } from 'hardhat';
 import {
-  Address,
-  encodeAbiParameters,
-  GetContractReturnType,
-  Hex,
-  parseAbiParameters,
+  type Address,
+  type GetContractReturnType,
   parseEther,
   zeroAddress,
-  zeroHash,
-} from "viem";
-import { SimpleBudget$Type } from "../../artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget";
-import { MockERC20$Type } from "../../artifacts/contracts/shared/Mocks.sol/MockERC20";
-import { MockERC1155$Type } from "../../artifacts/contracts/shared/Mocks.sol/MockERC1155";
+} from 'viem';
+import {
+  RegistryType,
+  StrategyType,
+  contractAction,
+  erc20Incentive,
+  prepareBoostPayload,
+  prepareERC1155Transfer,
+  prepareFungibleTransfer,
+  prepareSimpleBudgetPayload,
+} from '../../artifacts';
+import type { BoostCore$Type } from '../../artifacts/contracts/BoostCore.sol/BoostCore';
+import type { BoostRegistry$Type } from '../../artifacts/contracts/BoostRegistry.sol/BoostRegistry';
 
-export enum RegistryType {
-  ACTION = 0,
-  ALLOW_LIST = 1,
-  BUDGET = 2,
-  INCENTIVE = 3,
-  VALIDATOR = 4,
-}
-
-export const freshBudget = async () => {
-  const { registry } = await loadFixture(_deployRegistry);
+export async function freshBudget() {
+  const { registry, core } = await loadFixture(coreAndRegistry);
   const [ownerClient] = await viem.getWalletClients();
 
   const base = await registry.read.getBaseImplementation([
-    await registry.read.getIdentifier([RegistryType.BUDGET, "SimpleBudget"]),
+    await registry.read.getIdentifier([RegistryType.BUDGET, 'SimpleBudget']),
+  ]);
+
+  const cloneId = await registry.read.getCloneIdentifier([
+    RegistryType.BUDGET,
+    base,
+    ownerClient?.account.address,
+    'My Simple Budget',
   ]);
 
   await registry.write.deployClone([
     RegistryType.BUDGET,
     base,
-    "My Simple Budget",
+    'My Simple Budget',
     prepareSimpleBudgetPayload({
-      owner: ownerClient!.account.address,
-      authorized: [ownerClient!.account.address],
+      owner: ownerClient?.account.address,
+      authorized: [ownerClient?.account.address, core.address],
     }),
   ]);
 
-  const [log] = await registry.getEvents.Deployed({
-    registryType: RegistryType.BUDGET,
-  });
+  const { instance } = await registry.read.getClone([cloneId]);
 
-  return viem.getContractAt("SimpleBudget", log!.args.deployedInstance!);
-};
+  return viem.getContractAt('SimpleBudget', instance);
+}
 
-export const fundedBudget = async (): Promise<{
-  budget: GetContractReturnType<SimpleBudget$Type["abi"]>;
-  erc20: GetContractReturnType<MockERC20$Type["abi"]>;
-  erc1155: GetContractReturnType<MockERC1155$Type["abi"]>;
-}> => {
+export async function freshBoost(ownerAddress: Address = zeroAddress) {
+  const { bases, core } = await loadFixture(coreAndRegistry);
+  const { budget, erc20 } = await loadFixture(fundedBudget);
+  const [creator] = await viem.getWalletClients();
+
+  if (ownerAddress == zeroAddress) {
+    ownerAddress = creator?.account.address;
+  }
+
+  await core.write.createBoost([
+    prepareBoostPayload({
+      budget: budget.address,
+      owner: ownerAddress,
+      action: {
+        ...contractAction({
+          chainId: BigInt(creator?.chain.id ?? 31337),
+          target: core.address,
+          value: 0n,
+          selector: '0xdeadbeef',
+        }),
+        instance: bases.find((b) => b.name === 'ContractAction')?.base.address,
+      },
+      validator: {
+        ...signerValidator({ signers: [ownerAddress] }),
+        instance: bases.find((b) => b.name === 'SignerValidator')?.base.address,
+      },
+      allowList: {
+        ...simpleAllowList({ owner: ownerAddress, allowed: [ownerAddress] }),
+        instance: bases.find((b) => b.name === 'SimpleAllowList')?.base.address,
+      },
+      incentives: [
+        {
+          ...erc20Incentive({
+            asset: erc20.address,
+            reward: parseEther('1'),
+            limit: 100n,
+            strategy: StrategyType.POOL,
+          }),
+          instance: bases.find((b) => b.name === 'ERC20Incentive')?.base
+            .address,
+        },
+      ],
+    }),
+  ]);
+
+  return true;
+}
+
+export async function fundedBudget() {
   const [ownerClient] = await viem.getWalletClients();
   const budget = await loadFixture(freshBudget);
   const erc20 = await loadFixture(mockERC20);
@@ -61,22 +107,22 @@ export const fundedBudget = async (): Promise<{
   await budget.write.allocate(
     [
       prepareFungibleTransfer({
-        amount: parseEther("1.0"),
+        amount: parseEther('1.0'),
         asset: zeroAddress,
-        target: ownerClient!.account.address,
+        target: ownerClient?.account.address,
       }),
     ],
     {
-      value: parseEther("1.0"),
-    }
+      value: parseEther('1.0'),
+    },
   );
 
-  await erc20.write.approve([budget.address, parseEther("100")]);
+  await erc20.write.approve([budget.address, parseEther('100')]);
   await budget.write.allocate([
     prepareFungibleTransfer({
-      amount: parseEther("100"),
+      amount: parseEther('100'),
       asset: erc20.address,
-      target: ownerClient!.account.address,
+      target: ownerClient?.account.address,
     }),
   ]);
 
@@ -86,172 +132,116 @@ export const fundedBudget = async (): Promise<{
       tokenId: 1n,
       amount: 100n,
       asset: erc1155.address,
-      target: ownerClient!.account.address,
+      target: ownerClient?.account.address,
     }),
   ]);
 
   return { budget, erc20, erc1155 };
-};
-
-export const prepareERC20IncentivePayload = ({
-  asset,
-  strategy,
-  reward,
-  limit,
-}: {
-  asset: Address;
-  strategy: number;
-  reward: bigint;
-  limit: bigint;
-}) => {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      "ERC20IncentivePayload payload",
-      "struct ERC20IncentivePayload { address asset; uint8 strategy; uint256 reward; uint256 limit; }",
-    ]),
-    [{ asset, strategy, reward, limit }]
-  );
-};
-
-export interface ContractActionPayload {
-  chainId: bigint;
-  target: Address;
-  selector: Hex;
-  value: bigint;
 }
 
-export const prepareSimpleBudgetPayload = ({
-  owner,
-  authorized,
-}: {
-  owner: Address;
-  authorized: Address[];
-}) => {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      "SimpleBudgetPayload payload",
-      "struct SimpleBudgetPayload { address owner; address[] authorized; }",
-    ]),
-    [{ owner, authorized }]
-  );
-};
-
-export const prepareContractActionPayload = ({
-  chainId,
-  target,
-  selector,
-  value,
-}: ContractActionPayload) => {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      "ContractActionPayload payload",
-      "struct ContractActionPayload { uint256 chainId; address target; bytes4 selector; uint256 value; }",
-    ]),
-    [{ chainId, target, selector, value }]
-  );
-};
-
-export const prepareERC721MintActionPayload = ({
-  chainId,
-  target,
-  selector,
-  value,
-}: ContractActionPayload) => {
-  return prepareContractActionPayload({ chainId, target, selector, value });
-};
-
-export const mockERC20 = async (
+export async function mockERC20(
   funded?: Address[],
-  amount = parseEther("1000")
-) => {
+  amount = parseEther('1000'),
+) {
   const [ownerClient] = await viem.getWalletClients();
-  const token = await viem.deployContract("MockERC20");
+  const token = await viem.deployContract('MockERC20');
 
-  for (const address of [ownerClient!.account.address, ...(funded ?? [])]) {
-    await token.write.mint([address, amount]);
-    expect(await token.read.balanceOf([address])).to.equal(amount);
+  for (const address of [ownerClient?.account.address, ...(funded ?? [])]) {
+    await token.write.mint([address!, amount]);
+    expect(await token.read.balanceOf([address!])).to.equal(amount);
   }
 
   return token;
-};
+}
 
-export const mockERC1155 = async (tokenId = 1n, amount = 100n) => {
+export async function mockERC1155(tokenId = 1n, amount = 100n) {
   const [ownerClient] = await viem.getWalletClients();
-  const token = await viem.deployContract("MockERC1155");
+  const token = await viem.deployContract('MockERC1155');
 
   await token.write.mint([ownerClient!.account.address, tokenId, amount]);
   expect(
-    await token.read.balanceOf([ownerClient!.account.address, tokenId])
+    await token.read.balanceOf([ownerClient!.account.address, tokenId]),
   ).to.equal(amount);
 
   return token;
+}
+
+export type Base = {
+  type: RegistryType;
+  name: string;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  base: GetContractReturnType<any>;
 };
 
-const _deployRegistry = async () => {
+export async function coreAndRegistry(): Promise<{
+  bases: Base[];
+  core: GetContractReturnType<BoostCore$Type['abi']>;
+  registry: GetContractReturnType<BoostRegistry$Type['abi']>;
+}> {
   const [ownerClient] = await viem.getWalletClients();
-  const registry = await viem.deployContract("BoostRegistry");
+  const registry = await viem.deployContract('BoostRegistry');
 
   // Deploy the base implementations
   const bases = [
     {
       type: RegistryType.ACTION,
-      name: "ContractAction",
-      base: await viem.deployContract("ContractAction"),
+      name: 'ContractAction',
+      base: await viem.deployContract('ContractAction'),
     },
     {
       type: RegistryType.ACTION,
-      name: "ERC721MintAction",
-      base: await viem.deployContract("ERC721MintAction"),
+      name: 'ERC721MintAction',
+      base: await viem.deployContract('ERC721MintAction'),
     },
     {
       type: RegistryType.ALLOW_LIST,
-      name: "SimpleAllowList",
-      base: await viem.deployContract("SimpleAllowList"),
+      name: 'SimpleAllowList',
+      base: await viem.deployContract('SimpleAllowList'),
     },
     {
       type: RegistryType.ALLOW_LIST,
-      name: "SimpleDenyList",
-      base: await viem.deployContract("SimpleDenyList"),
+      name: 'SimpleDenyList',
+      base: await viem.deployContract('SimpleDenyList'),
     },
     {
       type: RegistryType.BUDGET,
-      name: "SimpleBudget",
-      base: await viem.deployContract("SimpleBudget"),
+      name: 'SimpleBudget',
+      base: await viem.deployContract('SimpleBudget'),
     },
     {
       type: RegistryType.BUDGET,
-      name: "VestingBudget",
-      base: await viem.deployContract("VestingBudget"),
+      name: 'VestingBudget',
+      base: await viem.deployContract('VestingBudget'),
     },
     {
       type: RegistryType.INCENTIVE,
-      name: "AllowListIncentive",
-      base: await viem.deployContract("AllowListIncentive"),
+      name: 'AllowListIncentive',
+      base: await viem.deployContract('AllowListIncentive'),
     },
     {
       type: RegistryType.INCENTIVE,
-      name: "CGDAIncentive",
-      base: await viem.deployContract("CGDAIncentive"),
+      name: 'CGDAIncentive',
+      base: await viem.deployContract('CGDAIncentive'),
     },
     {
       type: RegistryType.INCENTIVE,
-      name: "ERC20Incentive",
-      base: await viem.deployContract("ERC20Incentive"),
+      name: 'ERC20Incentive',
+      base: await viem.deployContract('ERC20Incentive'),
     },
     {
       type: RegistryType.INCENTIVE,
-      name: "ERC1155Incentive",
-      base: await viem.deployContract("ERC1155Incentive"),
+      name: 'ERC1155Incentive',
+      base: await viem.deployContract('ERC1155Incentive'),
     },
     {
       type: RegistryType.INCENTIVE,
-      name: "PointsIncentive",
-      base: await viem.deployContract("PointsIncentive"),
+      name: 'PointsIncentive',
+      base: await viem.deployContract('PointsIncentive'),
     },
     {
       type: RegistryType.VALIDATOR,
-      name: "SignerValidator",
-      base: await viem.deployContract("SignerValidator"),
+      name: 'SignerValidator',
+      base: await viem.deployContract('SignerValidator'),
     },
   ];
 
@@ -261,88 +251,10 @@ const _deployRegistry = async () => {
   }
 
   // Deploy the Core
-  const core = await viem.deployContract("BoostCore", [
+  const core = (await viem.deployContract('BoostCore', [
     registry.address,
     ownerClient!.account.address,
-  ]);
+  ])) as GetContractReturnType<BoostCore$Type['abi']>;
 
   return { bases, core, registry };
-};
-
-export function prepareERC1155Payload({
-  tokenId,
-  amount,
-}: {
-  tokenId: bigint;
-  amount: bigint;
-}) {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      "ERC1155Payload payload",
-      "struct ERC1155Payload { uint256 tokenId; uint256 amount; bytes data; }",
-    ]),
-    [{ tokenId, amount, data: zeroHash }]
-  );
-}
-
-export function prepareERC1155Transfer({
-  tokenId,
-  amount,
-  asset,
-  target,
-}: {
-  tokenId: bigint;
-  amount: bigint;
-  asset: Address;
-  target: Address;
-}) {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      "Transfer request",
-      "struct Transfer { uint8 assetType; address asset; address target; bytes data; }",
-    ]),
-    [
-      {
-        assetType: 2,
-        asset,
-        data: prepareERC1155Payload({ tokenId, amount }),
-        target,
-      },
-    ]
-  );
-}
-
-export function prepareFungiblePayload({ amount }: { amount: bigint }) {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      "FungiblePayload payload",
-      "struct FungiblePayload { uint256 amount; }",
-    ]),
-    [{ amount }]
-  );
-}
-
-export function prepareFungibleTransfer({
-  amount,
-  asset,
-  target,
-}: {
-  amount: bigint;
-  asset: Address;
-  target: Address;
-}) {
-  return encodeAbiParameters(
-    parseAbiParameters([
-      "Transfer request",
-      "struct Transfer { uint8 assetType; address asset; address target; bytes data; }",
-    ]),
-    [
-      {
-        assetType: asset == zeroAddress ? 0 : 1,
-        asset,
-        data: prepareFungiblePayload({ amount }),
-        target,
-      },
-    ]
-  );
 }

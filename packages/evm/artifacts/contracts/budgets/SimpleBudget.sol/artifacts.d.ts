@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { SimpleBudget$Type } from "./SimpleBudget";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["SimpleBudget"]: SimpleBudget$Type;
     ["contracts/budgets/SimpleBudget.sol:SimpleBudget"]: SimpleBudget$Type;
+  }
+
+  interface ContractTypesMap {
+    ["SimpleBudget"]: GetContractReturnType<SimpleBudget$Type["abi"]>;
+    ["contracts/budgets/SimpleBudget.sol:SimpleBudget"]: GetContractReturnType<SimpleBudget$Type["abi"]>;
   }
 }

@@ -154,6 +154,15 @@ contract ERC721MintActionTest is Test {
         assertFalse(action.validated(1));
     }
 
+    ////////////////////////////////////
+    // ERC721MintAction.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(action.getComponentInterface());
+    }
+
     ////////////////////////////////////////
     // ERC721MintAction.supportsInterface //
     ////////////////////////////////////////

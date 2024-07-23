@@ -76,11 +76,6 @@ export interface Budget$Type {
     },
     {
       "inputs": [],
-      "name": "LengthMismatch",
-      "type": "error"
-    },
-    {
-      "inputs": [],
       "name": "NewOwnerIsZeroAddress",
       "type": "error"
     },
@@ -342,6 +337,19 @@ export interface Budget$Type {
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getComponentInterface",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes",
@@ -466,7 +474,7 @@ export interface Budget$Type {
         },
         {
           "internalType": "bool[]",
-          "name": "isAuthorized_",
+          "name": "authorized_",
           "type": "bool[]"
         }
       ],

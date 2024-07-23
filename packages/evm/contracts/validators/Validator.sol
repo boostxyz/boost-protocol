@@ -32,7 +32,8 @@ abstract contract Validator is Ownable, Cloneable {
         return interfaceId == type(Validator).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function getComponentInterface() public pure virtual returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(Validator).interfaceId;
-    } 
+    }
 }

@@ -19,11 +19,6 @@ export interface Action$Type {
     },
     {
       "inputs": [],
-      "name": "ExecuteNotImplemented",
-      "type": "error"
-    },
-    {
-      "inputs": [],
       "name": "InitializerNotImplemented",
       "type": "error"
     },
@@ -146,6 +141,19 @@ export interface Action$Type {
         }
       ],
       "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getComponentInterface",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "pure",
       "type": "function"
     },
     {

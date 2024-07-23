@@ -1,11 +1,11 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src"],
+  "include": ["vite-env.d.ts", "src"],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "dist"
   },
-  "exclude": ["dist", "build", "node_modules"],
+  "exclude": ["dist", "build", "node_modules", "src/**/*.test.ts"],
   "references": [
     {
       "path": "../evm"

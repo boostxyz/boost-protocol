@@ -6,12 +6,2982 @@ import {
 } from 'wagmi/codegen'
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AAllowListIncentive
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aAllowListIncentiveAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'ClaimFailed' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotClaimable' },
+  { type: 'error', inputs: [], name: 'NotImplemented' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Reentrancy' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'recipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Claimed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'allowList',
+    outputs: [
+      { name: '', internalType: 'contract SimpleAllowList', type: 'address' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'claim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'claimed',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'claims',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'isClaimable',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'limit',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    name: 'preflight',
+    outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    name: 'reclaim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ACGDAIncentive
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const acgdaIncentiveAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'ClaimFailed' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotClaimable' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Reentrancy' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'recipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Claimed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'asset',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cgdaParams',
+    outputs: [
+      { name: 'rewardDecay', internalType: 'uint256', type: 'uint256' },
+      { name: 'rewardBoost', internalType: 'uint256', type: 'uint256' },
+      { name: 'lastClaimTime', internalType: 'uint256', type: 'uint256' },
+      { name: 'currentReward', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'claim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'claimed',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'claims',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'isClaimable',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'preflight',
+    outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'reclaim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'totalBudget',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AContractAction
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aContractActionAbi = [
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'targetChainId', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'TargetChainUnsupported',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'executor',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'caller',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      { name: 'success', internalType: 'bool', type: 'bool', indexed: false },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'ActionExecuted',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'isValidated',
+        internalType: 'bool',
+        type: 'bool',
+        indexed: false,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'ActionValidated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'VALIDATOR',
+    outputs: [
+      { name: '', internalType: 'contract Validator', type: 'address' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'chainId',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'execute',
+    outputs: [
+      { name: '', internalType: 'bool', type: 'bool' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'prepare',
+    outputs: [{ name: 'bytes_', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'selector',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'target',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'value',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AERC1155Incentive
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aerc1155IncentiveAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'ClaimFailed' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'caller', internalType: 'address', type: 'address' },
+      { name: 'data', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'ClaimFailed',
+  },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotClaimable' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Reentrancy' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'recipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Claimed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'asset',
+    outputs: [{ name: '', internalType: 'contract IERC1155', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'claim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'claimed',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'claims',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'extraData',
+    outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'isClaimable',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'limit',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'onERC1155BatchReceived',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'onERC1155Received',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'preflight',
+    outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'reclaim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'strategy',
+    outputs: [
+      {
+        name: '',
+        internalType: 'enum AERC1155Incentive.Strategy',
+        type: 'uint8',
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'tokenId',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AERC20Incentive
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aerc20IncentiveAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'ClaimFailed' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'caller', internalType: 'address', type: 'address' },
+      { name: 'data', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'ClaimFailed',
+  },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotClaimable' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Reentrancy' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'recipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Claimed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'entry',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'Entry',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'asset',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'claim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'claimed',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'claims',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'drawRaffle',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    name: 'entries',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'isClaimable',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'limit',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'preflight',
+    outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'reclaim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'strategy',
+    outputs: [
+      {
+        name: '',
+        internalType: 'enum AERC20Incentive.Strategy',
+        type: 'uint8',
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AERC721MintAction
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aerc721MintActionAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotImplemented' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'targetChainId', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'TargetChainUnsupported',
+  },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'executor',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'caller',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      { name: 'success', internalType: 'bool', type: 'bool', indexed: false },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'ActionExecuted',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'isValidated',
+        internalType: 'bool',
+        type: 'bool',
+        indexed: false,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'ActionValidated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'VALIDATOR',
+    outputs: [
+      { name: '', internalType: 'contract Validator', type: 'address' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'chainId',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'execute',
+    outputs: [
+      { name: 'success', internalType: 'bool', type: 'bool' },
+      { name: 'returnData', internalType: 'bytes', type: 'bytes' },
+    ],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'prepare',
+    outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'selector',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'target',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'validate',
+    outputs: [{ name: 'success', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    name: 'validated',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'value',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// APointsIncentive
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aPointsIncentiveAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'ClaimFailed' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotClaimable' },
+  { type: 'error', inputs: [], name: 'NotImplemented' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Reentrancy' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'recipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Claimed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'claim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'claimed',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'claims',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'isClaimable',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'limit',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    name: 'preflight',
+    outputs: [{ name: 'budgetData', internalType: 'bytes', type: 'bytes' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    name: 'reclaim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'selector',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'venue',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ASignerValidator
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aSignerValidatorAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'LengthMismatch' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'signer', internalType: 'address', type: 'address' },
+      { name: 'hash', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'signature', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'Replayed',
+  },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'signers_', internalType: 'address[]', type: 'address[]' },
+      { name: 'authorized_', internalType: 'bool[]', type: 'bool[]' },
+    ],
+    name: 'setAuthorized',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'signers',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'validate',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ASimpleAllowList
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aSimpleAllowListAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'LengthMismatch' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'roles',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+    ],
+    name: 'RolesUpdated',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'LIST_MANAGER_ROLE',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address' },
+      { name: 'roles', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'grantRoles',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address' },
+      { name: 'roles', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'hasAllRoles',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address' },
+      { name: 'roles', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'hasAnyRole',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'user_', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'isAllowed',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'roles', internalType: 'uint256', type: 'uint256' }],
+    name: 'renounceRoles',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'user', internalType: 'address', type: 'address' },
+      { name: 'roles', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'revokeRoles',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'user', internalType: 'address', type: 'address' }],
+    name: 'rolesOf',
+    outputs: [{ name: 'roles', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'users_', internalType: 'address[]', type: 'address[]' },
+      { name: 'allowed_', internalType: 'bool[]', type: 'bool[]' },
+    ],
+    name: 'setAllowed',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ASimpleBudget
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aSimpleBudgetAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'asset', internalType: 'address', type: 'address' },
+      { name: 'available', internalType: 'uint256', type: 'uint256' },
+      { name: 'required', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'InsufficientFunds',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'asset', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'InvalidAllocation',
+  },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'LengthMismatch' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Reentrancy' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'asset', internalType: 'address', type: 'address' },
+      { name: 'to', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'TransferFailed',
+  },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'isAuthorized',
+        internalType: 'bool',
+        type: 'bool',
+        indexed: false,
+      },
+    ],
+    name: 'Authorized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'asset',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'to', internalType: 'address', type: 'address', indexed: false },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Distributed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  { type: 'fallback', stateMutability: 'payable' },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'allocate',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'asset_', internalType: 'address', type: 'address' }],
+    name: 'available',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'asset_', internalType: 'address', type: 'address' },
+      { name: 'tokenId_', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'available',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'disburse',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes[]', type: 'bytes[]' }],
+    name: 'disburseBatch',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'asset_', internalType: 'address', type: 'address' }],
+    name: 'distributed',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'asset_', internalType: 'address', type: 'address' },
+      { name: 'tokenId_', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'distributed',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'account_', internalType: 'address', type: 'address' }],
+    name: 'isAuthorized',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'onERC1155BatchReceived',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'onERC1155Received',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'reclaim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    name: 'reconcile',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'account_', internalType: 'address[]', type: 'address[]' },
+      { name: 'authorized_', internalType: 'bool[]', type: 'bool[]' },
+    ],
+    name: 'setAuthorized',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'asset_', internalType: 'address', type: 'address' }],
+    name: 'total',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'asset_', internalType: 'address', type: 'address' },
+      { name: 'tokenId_', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'total',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  { type: 'receive', stateMutability: 'payable' },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ASimpleDenyList
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aSimpleDenyListAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'LengthMismatch' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'user_', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'isAllowed',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'users_', internalType: 'address[]', type: 'address[]' },
+      { name: 'denied_', internalType: 'bool[]', type: 'bool[]' },
+    ],
+    name: 'setDenied',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AVestingBudget
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const aVestingBudgetAbi = [
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'asset', internalType: 'address', type: 'address' },
+      { name: 'available', internalType: 'uint256', type: 'uint256' },
+      { name: 'required', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'InsufficientFunds',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'asset', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'InvalidAllocation',
+  },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidInitializationData' },
+  { type: 'error', inputs: [], name: 'LengthMismatch' },
+  { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
+  { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'Reentrancy' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'asset', internalType: 'address', type: 'address' },
+      { name: 'to', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'TransferFailed',
+  },
+  { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'isAuthorized',
+        internalType: 'bool',
+        type: 'bool',
+        indexed: false,
+      },
+    ],
+    name: 'Authorized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'asset',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'to', internalType: 'address', type: 'address', indexed: false },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Distributed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverCanceled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipHandoverRequested',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'oldOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  { type: 'fallback', stateMutability: 'payable' },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'allocate',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'asset_', internalType: 'address', type: 'address' }],
+    name: 'available',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cancelOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'cliff',
+    outputs: [{ name: '', internalType: 'uint64', type: 'uint64' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'completeOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'disburse',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes[]', type: 'bytes[]' }],
+    name: 'disburseBatch',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'asset_', internalType: 'address', type: 'address' }],
+    name: 'distributed',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'duration',
+    outputs: [{ name: '', internalType: 'uint64', type: 'uint64' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'end',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'account_', internalType: 'address', type: 'address' }],
+    name: 'isAuthorized',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: 'result', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'pendingOwner', internalType: 'address', type: 'address' },
+    ],
+    name: 'ownershipHandoverExpiresAt',
+    outputs: [{ name: 'result', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
+    name: 'reclaim',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
+    name: 'reconcile',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'requestOwnershipHandover',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'account_', internalType: 'address[]', type: 'address[]' },
+      { name: 'authorized_', internalType: 'bool[]', type: 'bool[]' },
+    ],
+    name: 'setAuthorized',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'start',
+    outputs: [{ name: '', internalType: 'uint64', type: 'uint64' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'asset_', internalType: 'address', type: 'address' }],
+    name: 'total',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  { type: 'receive', stateMutability: 'payable' },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Action
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export const actionAbi = [
   { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
-  { type: 'error', inputs: [], name: 'ExecuteNotImplemented' },
   { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
   { type: 'error', inputs: [], name: 'InvalidInitialization' },
   { type: 'error', inputs: [], name: 'InvalidInitializationData' },
@@ -83,6 +3053,13 @@ export const actionAbi = [
       { name: '', internalType: 'bytes', type: 'bytes' },
     ],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -194,6 +3171,13 @@ export const allowListAbi = [
     name: 'completeOwnershipHandover',
     outputs: [],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -397,6 +3381,20 @@ export const allowListIncentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -459,6 +3457,13 @@ export const allowListIncentiveAbi = [
     name: 'requestOwnershipHandover',
     outputs: [],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -528,6 +3533,49 @@ export const boostCoreAbi = [
   { type: 'error', inputs: [], name: 'Reentrancy' },
   { type: 'error', inputs: [], name: 'Unauthorized' },
   { type: 'error', inputs: [], name: 'Unauthorized' },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'boostIndex',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'owner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'action',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'validator',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'allowList',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'budget',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'BoostCreated',
+  },
   {
     type: 'event',
     anonymous: false,
@@ -1069,7 +4117,6 @@ export const budgetAbi = [
   },
   { type: 'error', inputs: [], name: 'InvalidInitialization' },
   { type: 'error', inputs: [], name: 'InvalidInitializationData' },
-  { type: 'error', inputs: [], name: 'LengthMismatch' },
   { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
   { type: 'error', inputs: [], name: 'NoHandoverRequest' },
   { type: 'error', inputs: [], name: 'NotInitializing' },
@@ -1234,6 +4281,13 @@ export const budgetAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -1294,7 +4348,7 @@ export const budgetAbi = [
     type: 'function',
     inputs: [
       { name: 'accounts_', internalType: 'address[]', type: 'address[]' },
-      { name: 'isAuthorized_', internalType: 'bool[]', type: 'bool[]' },
+      { name: 'authorized_', internalType: 'bool[]', type: 'bool[]' },
     ],
     name: 'setAuthorized',
     outputs: [],
@@ -1489,6 +4543,13 @@ export const cgdaIncentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -1547,6 +4608,13 @@ export const cgdaIncentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
     name: 'supportsInterface',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -1593,6 +4661,13 @@ export const cloneableAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -1614,7 +4689,6 @@ export const cloneableAbi = [
 export const contractActionAbi = [
   { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
   { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
-  { type: 'error', inputs: [], name: 'ExecuteNotImplemented' },
   { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
   { type: 'error', inputs: [], name: 'InvalidInitialization' },
   { type: 'error', inputs: [], name: 'InvalidInitializationData' },
@@ -1700,6 +4774,13 @@ export const contractActionAbi = [
       { name: '', internalType: 'bytes', type: 'bytes' },
     ],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -2112,9 +5193,23 @@ export const erc1155IncentiveAbi = [
   {
     type: 'function',
     inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
     name: 'extraData',
     outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
     stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -2210,11 +5305,18 @@ export const erc1155IncentiveAbi = [
   {
     type: 'function',
     inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
     name: 'strategy',
     outputs: [
       {
         name: '',
-        internalType: 'enum ERC1155Incentive.Strategy',
+        internalType: 'enum AERC1155Incentive.Strategy',
         type: 'uint8',
       },
     ],
@@ -2586,6 +5688,13 @@ export const erc20IncentiveAbi = [
   {
     type: 'function',
     inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
     name: 'drawRaffle',
     outputs: [],
     stateMutability: 'nonpayable',
@@ -2596,6 +5705,13 @@ export const erc20IncentiveAbi = [
     name: 'entries',
     outputs: [{ name: '', internalType: 'address', type: 'address' }],
     stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -2674,7 +5790,11 @@ export const erc20IncentiveAbi = [
     inputs: [],
     name: 'strategy',
     outputs: [
-      { name: '', internalType: 'enum ERC20Incentive.Strategy', type: 'uint8' },
+      {
+        name: '',
+        internalType: 'enum AERC20Incentive.Strategy',
+        type: 'uint8',
+      },
     ],
     stateMutability: 'view',
   },
@@ -2885,12 +6005,12 @@ export const erc721MintActionAbi = [
   { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
   { type: 'error', inputs: [], name: 'AlreadyInitialized' },
   { type: 'error', inputs: [], name: 'CloneAlreadyInitialized' },
-  { type: 'error', inputs: [], name: 'ExecuteNotImplemented' },
   { type: 'error', inputs: [], name: 'InitializerNotImplemented' },
   { type: 'error', inputs: [], name: 'InvalidInitialization' },
   { type: 'error', inputs: [], name: 'InvalidInitializationData' },
   { type: 'error', inputs: [], name: 'NewOwnerIsZeroAddress' },
   { type: 'error', inputs: [], name: 'NoHandoverRequest' },
+  { type: 'error', inputs: [], name: 'NotImplemented' },
   { type: 'error', inputs: [], name: 'NotInitializing' },
   {
     type: 'error',
@@ -3035,6 +6155,13 @@ export const erc721MintActionAbi = [
       { name: 'returnData', internalType: 'bytes', type: 'bytes' },
     ],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -3805,6 +6932,20 @@ export const incentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -3860,6 +7001,13 @@ export const incentiveAbi = [
     name: 'requestOwnershipHandover',
     outputs: [],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -5229,6 +8377,20 @@ export const pointsIncentiveAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'currentReward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -5273,13 +8435,6 @@ export const pointsIncentiveAbi = [
   },
   {
     type: 'function',
-    inputs: [],
-    name: 'quantity',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
     inputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
     name: 'reclaim',
     outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -5298,6 +8453,13 @@ export const pointsIncentiveAbi = [
     name: 'requestOwnershipHandover',
     outputs: [],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'reward',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -5494,6 +8656,13 @@ export const signerValidatorAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -5679,6 +8848,13 @@ export const simpleAllowListAbi = [
     name: 'completeOwnershipHandover',
     outputs: [],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -6021,6 +9197,13 @@ export const simpleBudgetAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -6239,6 +9422,13 @@ export const simpleDenyListAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -6397,6 +9587,13 @@ export const validatorAbi = [
     name: 'completeOwnershipHandover',
     outputs: [],
     stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -6673,6 +9870,13 @@ export const vestingBudgetAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'getComponentInterface',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'data_', internalType: 'bytes', type: 'bytes' }],
     name: 'initialize',
     outputs: [],
@@ -6775,6 +9979,3698 @@ export const vestingBudgetAbi = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__
+ */
+export const readAAllowListIncentive = /*#__PURE__*/ createReadContract({
+  abi: aAllowListIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"allowList"`
+ */
+export const readAAllowListIncentiveAllowList =
+  /*#__PURE__*/ createReadContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'allowList',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"claimed"`
+ */
+export const readAAllowListIncentiveClaimed = /*#__PURE__*/ createReadContract({
+  abi: aAllowListIncentiveAbi,
+  functionName: 'claimed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"claims"`
+ */
+export const readAAllowListIncentiveClaims = /*#__PURE__*/ createReadContract({
+  abi: aAllowListIncentiveAbi,
+  functionName: 'claims',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readAAllowListIncentiveCurrentReward =
+  /*#__PURE__*/ createReadContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'currentReward',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAAllowListIncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"isClaimable"`
+ */
+export const readAAllowListIncentiveIsClaimable =
+  /*#__PURE__*/ createReadContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'isClaimable',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"limit"`
+ */
+export const readAAllowListIncentiveLimit = /*#__PURE__*/ createReadContract({
+  abi: aAllowListIncentiveAbi,
+  functionName: 'limit',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"owner"`
+ */
+export const readAAllowListIncentiveOwner = /*#__PURE__*/ createReadContract({
+  abi: aAllowListIncentiveAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readAAllowListIncentiveOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"preflight"`
+ */
+export const readAAllowListIncentivePreflight =
+  /*#__PURE__*/ createReadContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'preflight',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const readAAllowListIncentiveReclaim = /*#__PURE__*/ createReadContract({
+  abi: aAllowListIncentiveAbi,
+  functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readAAllowListIncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: aAllowListIncentiveAbi,
+  functionName: 'reward',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAAllowListIncentiveSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__
+ */
+export const writeAAllowListIncentive = /*#__PURE__*/ createWriteContract({
+  abi: aAllowListIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeAAllowListIncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const writeAAllowListIncentiveClaim = /*#__PURE__*/ createWriteContract({
+  abi: aAllowListIncentiveAbi,
+  functionName: 'claim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeAAllowListIncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAAllowListIncentiveInitialize =
+  /*#__PURE__*/ createWriteContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeAAllowListIncentiveRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeAAllowListIncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeAAllowListIncentiveTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__
+ */
+export const simulateAAllowListIncentive = /*#__PURE__*/ createSimulateContract(
+  { abi: aAllowListIncentiveAbi },
+)
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateAAllowListIncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const simulateAAllowListIncentiveClaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'claim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateAAllowListIncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAAllowListIncentiveInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateAAllowListIncentiveRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateAAllowListIncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateAAllowListIncentiveTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aAllowListIncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aAllowListIncentiveAbi}__
+ */
+export const watchAAllowListIncentiveEvent =
+  /*#__PURE__*/ createWatchContractEvent({ abi: aAllowListIncentiveAbi })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `eventName` set to `"Claimed"`
+ */
+export const watchAAllowListIncentiveClaimedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aAllowListIncentiveAbi,
+    eventName: 'Claimed',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAAllowListIncentiveInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aAllowListIncentiveAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchAAllowListIncentiveOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aAllowListIncentiveAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchAAllowListIncentiveOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aAllowListIncentiveAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aAllowListIncentiveAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchAAllowListIncentiveOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aAllowListIncentiveAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__
+ */
+export const readAcgdaIncentive = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"asset"`
+ */
+export const readAcgdaIncentiveAsset = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'asset',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"cgdaParams"`
+ */
+export const readAcgdaIncentiveCgdaParams = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'cgdaParams',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"claimed"`
+ */
+export const readAcgdaIncentiveClaimed = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'claimed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"claims"`
+ */
+export const readAcgdaIncentiveClaims = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'claims',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readAcgdaIncentiveCurrentReward = /*#__PURE__*/ createReadContract(
+  { abi: acgdaIncentiveAbi, functionName: 'currentReward' },
+)
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAcgdaIncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"isClaimable"`
+ */
+export const readAcgdaIncentiveIsClaimable = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'isClaimable',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"owner"`
+ */
+export const readAcgdaIncentiveOwner = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readAcgdaIncentiveOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"preflight"`
+ */
+export const readAcgdaIncentivePreflight = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'preflight',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readAcgdaIncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'reward',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAcgdaIncentiveSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"totalBudget"`
+ */
+export const readAcgdaIncentiveTotalBudget = /*#__PURE__*/ createReadContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'totalBudget',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__
+ */
+export const writeAcgdaIncentive = /*#__PURE__*/ createWriteContract({
+  abi: acgdaIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeAcgdaIncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const writeAcgdaIncentiveClaim = /*#__PURE__*/ createWriteContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'claim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeAcgdaIncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAcgdaIncentiveInitialize = /*#__PURE__*/ createWriteContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'initialize',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const writeAcgdaIncentiveReclaim = /*#__PURE__*/ createWriteContract({
+  abi: acgdaIncentiveAbi,
+  functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeAcgdaIncentiveRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeAcgdaIncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeAcgdaIncentiveTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__
+ */
+export const simulateAcgdaIncentive = /*#__PURE__*/ createSimulateContract({
+  abi: acgdaIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateAcgdaIncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const simulateAcgdaIncentiveClaim = /*#__PURE__*/ createSimulateContract(
+  { abi: acgdaIncentiveAbi, functionName: 'claim' },
+)
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateAcgdaIncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAcgdaIncentiveInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const simulateAcgdaIncentiveReclaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'reclaim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateAcgdaIncentiveRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateAcgdaIncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateAcgdaIncentiveTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: acgdaIncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link acgdaIncentiveAbi}__
+ */
+export const watchAcgdaIncentiveEvent = /*#__PURE__*/ createWatchContractEvent({
+  abi: acgdaIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `eventName` set to `"Claimed"`
+ */
+export const watchAcgdaIncentiveClaimedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: acgdaIncentiveAbi,
+    eventName: 'Claimed',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAcgdaIncentiveInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: acgdaIncentiveAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchAcgdaIncentiveOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: acgdaIncentiveAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchAcgdaIncentiveOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: acgdaIncentiveAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link acgdaIncentiveAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchAcgdaIncentiveOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: acgdaIncentiveAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__
+ */
+export const readAContractAction = /*#__PURE__*/ createReadContract({
+  abi: aContractActionAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"VALIDATOR"`
+ */
+export const readAContractActionValidator = /*#__PURE__*/ createReadContract({
+  abi: aContractActionAbi,
+  functionName: 'VALIDATOR',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"chainId"`
+ */
+export const readAContractActionChainId = /*#__PURE__*/ createReadContract({
+  abi: aContractActionAbi,
+  functionName: 'chainId',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAContractActionGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aContractActionAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"prepare"`
+ */
+export const readAContractActionPrepare = /*#__PURE__*/ createReadContract({
+  abi: aContractActionAbi,
+  functionName: 'prepare',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"selector"`
+ */
+export const readAContractActionSelector = /*#__PURE__*/ createReadContract({
+  abi: aContractActionAbi,
+  functionName: 'selector',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAContractActionSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aContractActionAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"target"`
+ */
+export const readAContractActionTarget = /*#__PURE__*/ createReadContract({
+  abi: aContractActionAbi,
+  functionName: 'target',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"value"`
+ */
+export const readAContractActionValue = /*#__PURE__*/ createReadContract({
+  abi: aContractActionAbi,
+  functionName: 'value',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aContractActionAbi}__
+ */
+export const writeAContractAction = /*#__PURE__*/ createWriteContract({
+  abi: aContractActionAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"execute"`
+ */
+export const writeAContractActionExecute = /*#__PURE__*/ createWriteContract({
+  abi: aContractActionAbi,
+  functionName: 'execute',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAContractActionInitialize = /*#__PURE__*/ createWriteContract(
+  { abi: aContractActionAbi, functionName: 'initialize' },
+)
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aContractActionAbi}__
+ */
+export const simulateAContractAction = /*#__PURE__*/ createSimulateContract({
+  abi: aContractActionAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"execute"`
+ */
+export const simulateAContractActionExecute =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aContractActionAbi,
+    functionName: 'execute',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aContractActionAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAContractActionInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aContractActionAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aContractActionAbi}__
+ */
+export const watchAContractActionEvent = /*#__PURE__*/ createWatchContractEvent(
+  { abi: aContractActionAbi },
+)
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aContractActionAbi}__ and `eventName` set to `"ActionExecuted"`
+ */
+export const watchAContractActionActionExecutedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aContractActionAbi,
+    eventName: 'ActionExecuted',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aContractActionAbi}__ and `eventName` set to `"ActionValidated"`
+ */
+export const watchAContractActionActionValidatedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aContractActionAbi,
+    eventName: 'ActionValidated',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aContractActionAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAContractActionInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aContractActionAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__
+ */
+export const readAerc1155Incentive = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"asset"`
+ */
+export const readAerc1155IncentiveAsset = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'asset',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"claimed"`
+ */
+export const readAerc1155IncentiveClaimed = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'claimed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"claims"`
+ */
+export const readAerc1155IncentiveClaims = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'claims',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readAerc1155IncentiveCurrentReward =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'currentReward',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"extraData"`
+ */
+export const readAerc1155IncentiveExtraData = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'extraData',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAerc1155IncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"isClaimable"`
+ */
+export const readAerc1155IncentiveIsClaimable =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'isClaimable',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"limit"`
+ */
+export const readAerc1155IncentiveLimit = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'limit',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"onERC1155BatchReceived"`
+ */
+export const readAerc1155IncentiveOnErc1155BatchReceived =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'onERC1155BatchReceived',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"onERC1155Received"`
+ */
+export const readAerc1155IncentiveOnErc1155Received =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'onERC1155Received',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"owner"`
+ */
+export const readAerc1155IncentiveOwner = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readAerc1155IncentiveOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"preflight"`
+ */
+export const readAerc1155IncentivePreflight = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'preflight',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readAerc1155IncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'reward',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"strategy"`
+ */
+export const readAerc1155IncentiveStrategy = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'strategy',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAerc1155IncentiveSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"tokenId"`
+ */
+export const readAerc1155IncentiveTokenId = /*#__PURE__*/ createReadContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'tokenId',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__
+ */
+export const writeAerc1155Incentive = /*#__PURE__*/ createWriteContract({
+  abi: aerc1155IncentiveAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeAerc1155IncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const writeAerc1155IncentiveClaim = /*#__PURE__*/ createWriteContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'claim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeAerc1155IncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAerc1155IncentiveInitialize =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const writeAerc1155IncentiveReclaim = /*#__PURE__*/ createWriteContract({
+  abi: aerc1155IncentiveAbi,
+  functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeAerc1155IncentiveRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeAerc1155IncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeAerc1155IncentiveTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__
+ */
+export const simulateAerc1155Incentive = /*#__PURE__*/ createSimulateContract({
+  abi: aerc1155IncentiveAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateAerc1155IncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const simulateAerc1155IncentiveClaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'claim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateAerc1155IncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAerc1155IncentiveInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const simulateAerc1155IncentiveReclaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'reclaim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateAerc1155IncentiveRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateAerc1155IncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateAerc1155IncentiveTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc1155IncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc1155IncentiveAbi}__
+ */
+export const watchAerc1155IncentiveEvent =
+  /*#__PURE__*/ createWatchContractEvent({ abi: aerc1155IncentiveAbi })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `eventName` set to `"Claimed"`
+ */
+export const watchAerc1155IncentiveClaimedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc1155IncentiveAbi,
+    eventName: 'Claimed',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAerc1155IncentiveInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc1155IncentiveAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchAerc1155IncentiveOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc1155IncentiveAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchAerc1155IncentiveOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc1155IncentiveAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc1155IncentiveAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchAerc1155IncentiveOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc1155IncentiveAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__
+ */
+export const readAerc20Incentive = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"asset"`
+ */
+export const readAerc20IncentiveAsset = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'asset',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"claimed"`
+ */
+export const readAerc20IncentiveClaimed = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'claimed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"claims"`
+ */
+export const readAerc20IncentiveClaims = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'claims',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readAerc20IncentiveCurrentReward =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'currentReward',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"entries"`
+ */
+export const readAerc20IncentiveEntries = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'entries',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAerc20IncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"isClaimable"`
+ */
+export const readAerc20IncentiveIsClaimable = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'isClaimable',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"limit"`
+ */
+export const readAerc20IncentiveLimit = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'limit',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"owner"`
+ */
+export const readAerc20IncentiveOwner = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readAerc20IncentiveOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"preflight"`
+ */
+export const readAerc20IncentivePreflight = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'preflight',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readAerc20IncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'reward',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"strategy"`
+ */
+export const readAerc20IncentiveStrategy = /*#__PURE__*/ createReadContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'strategy',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAerc20IncentiveSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__
+ */
+export const writeAerc20Incentive = /*#__PURE__*/ createWriteContract({
+  abi: aerc20IncentiveAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeAerc20IncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const writeAerc20IncentiveClaim = /*#__PURE__*/ createWriteContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'claim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeAerc20IncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"drawRaffle"`
+ */
+export const writeAerc20IncentiveDrawRaffle = /*#__PURE__*/ createWriteContract(
+  { abi: aerc20IncentiveAbi, functionName: 'drawRaffle' },
+)
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAerc20IncentiveInitialize = /*#__PURE__*/ createWriteContract(
+  { abi: aerc20IncentiveAbi, functionName: 'initialize' },
+)
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const writeAerc20IncentiveReclaim = /*#__PURE__*/ createWriteContract({
+  abi: aerc20IncentiveAbi,
+  functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeAerc20IncentiveRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeAerc20IncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeAerc20IncentiveTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__
+ */
+export const simulateAerc20Incentive = /*#__PURE__*/ createSimulateContract({
+  abi: aerc20IncentiveAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateAerc20IncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const simulateAerc20IncentiveClaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'claim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateAerc20IncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"drawRaffle"`
+ */
+export const simulateAerc20IncentiveDrawRaffle =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'drawRaffle',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAerc20IncentiveInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const simulateAerc20IncentiveReclaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'reclaim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateAerc20IncentiveRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateAerc20IncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateAerc20IncentiveTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc20IncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc20IncentiveAbi}__
+ */
+export const watchAerc20IncentiveEvent = /*#__PURE__*/ createWatchContractEvent(
+  { abi: aerc20IncentiveAbi },
+)
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `eventName` set to `"Claimed"`
+ */
+export const watchAerc20IncentiveClaimedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc20IncentiveAbi,
+    eventName: 'Claimed',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `eventName` set to `"Entry"`
+ */
+export const watchAerc20IncentiveEntryEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc20IncentiveAbi,
+    eventName: 'Entry',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAerc20IncentiveInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc20IncentiveAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchAerc20IncentiveOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc20IncentiveAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchAerc20IncentiveOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc20IncentiveAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc20IncentiveAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchAerc20IncentiveOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc20IncentiveAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__
+ */
+export const readAerc721MintAction = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"VALIDATOR"`
+ */
+export const readAerc721MintActionValidator = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'VALIDATOR',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"chainId"`
+ */
+export const readAerc721MintActionChainId = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'chainId',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAerc721MintActionGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"owner"`
+ */
+export const readAerc721MintActionOwner = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readAerc721MintActionOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"prepare"`
+ */
+export const readAerc721MintActionPrepare = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'prepare',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"selector"`
+ */
+export const readAerc721MintActionSelector = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'selector',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAerc721MintActionSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"target"`
+ */
+export const readAerc721MintActionTarget = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'target',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"validated"`
+ */
+export const readAerc721MintActionValidated = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'validated',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"value"`
+ */
+export const readAerc721MintActionValue = /*#__PURE__*/ createReadContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'value',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__
+ */
+export const writeAerc721MintAction = /*#__PURE__*/ createWriteContract({
+  abi: aerc721MintActionAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeAerc721MintActionCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeAerc721MintActionCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"execute"`
+ */
+export const writeAerc721MintActionExecute = /*#__PURE__*/ createWriteContract({
+  abi: aerc721MintActionAbi,
+  functionName: 'execute',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAerc721MintActionInitialize =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeAerc721MintActionRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeAerc721MintActionRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeAerc721MintActionTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"validate"`
+ */
+export const writeAerc721MintActionValidate = /*#__PURE__*/ createWriteContract(
+  { abi: aerc721MintActionAbi, functionName: 'validate' },
+)
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__
+ */
+export const simulateAerc721MintAction = /*#__PURE__*/ createSimulateContract({
+  abi: aerc721MintActionAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateAerc721MintActionCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateAerc721MintActionCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"execute"`
+ */
+export const simulateAerc721MintActionExecute =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'execute',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAerc721MintActionInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateAerc721MintActionRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateAerc721MintActionRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateAerc721MintActionTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `functionName` set to `"validate"`
+ */
+export const simulateAerc721MintActionValidate =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aerc721MintActionAbi,
+    functionName: 'validate',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc721MintActionAbi}__
+ */
+export const watchAerc721MintActionEvent =
+  /*#__PURE__*/ createWatchContractEvent({ abi: aerc721MintActionAbi })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `eventName` set to `"ActionExecuted"`
+ */
+export const watchAerc721MintActionActionExecutedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc721MintActionAbi,
+    eventName: 'ActionExecuted',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `eventName` set to `"ActionValidated"`
+ */
+export const watchAerc721MintActionActionValidatedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc721MintActionAbi,
+    eventName: 'ActionValidated',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAerc721MintActionInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc721MintActionAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchAerc721MintActionOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc721MintActionAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchAerc721MintActionOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc721MintActionAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aerc721MintActionAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchAerc721MintActionOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aerc721MintActionAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__
+ */
+export const readAPointsIncentive = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"claimed"`
+ */
+export const readAPointsIncentiveClaimed = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'claimed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"claims"`
+ */
+export const readAPointsIncentiveClaims = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'claims',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readAPointsIncentiveCurrentReward =
+  /*#__PURE__*/ createReadContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'currentReward',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAPointsIncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"isClaimable"`
+ */
+export const readAPointsIncentiveIsClaimable = /*#__PURE__*/ createReadContract(
+  { abi: aPointsIncentiveAbi, functionName: 'isClaimable' },
+)
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"limit"`
+ */
+export const readAPointsIncentiveLimit = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'limit',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"owner"`
+ */
+export const readAPointsIncentiveOwner = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readAPointsIncentiveOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"preflight"`
+ */
+export const readAPointsIncentivePreflight = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'preflight',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const readAPointsIncentiveReclaim = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readAPointsIncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'reward',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"selector"`
+ */
+export const readAPointsIncentiveSelector = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'selector',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAPointsIncentiveSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"venue"`
+ */
+export const readAPointsIncentiveVenue = /*#__PURE__*/ createReadContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'venue',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__
+ */
+export const writeAPointsIncentive = /*#__PURE__*/ createWriteContract({
+  abi: aPointsIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeAPointsIncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const writeAPointsIncentiveClaim = /*#__PURE__*/ createWriteContract({
+  abi: aPointsIncentiveAbi,
+  functionName: 'claim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeAPointsIncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAPointsIncentiveInitialize =
+  /*#__PURE__*/ createWriteContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeAPointsIncentiveRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeAPointsIncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeAPointsIncentiveTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__
+ */
+export const simulateAPointsIncentive = /*#__PURE__*/ createSimulateContract({
+  abi: aPointsIncentiveAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateAPointsIncentiveCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"claim"`
+ */
+export const simulateAPointsIncentiveClaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'claim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateAPointsIncentiveCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAPointsIncentiveInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateAPointsIncentiveRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateAPointsIncentiveRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateAPointsIncentiveTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aPointsIncentiveAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aPointsIncentiveAbi}__
+ */
+export const watchAPointsIncentiveEvent =
+  /*#__PURE__*/ createWatchContractEvent({ abi: aPointsIncentiveAbi })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `eventName` set to `"Claimed"`
+ */
+export const watchAPointsIncentiveClaimedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aPointsIncentiveAbi,
+    eventName: 'Claimed',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAPointsIncentiveInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aPointsIncentiveAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchAPointsIncentiveOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aPointsIncentiveAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchAPointsIncentiveOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aPointsIncentiveAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aPointsIncentiveAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchAPointsIncentiveOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aPointsIncentiveAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSignerValidatorAbi}__
+ */
+export const readASignerValidator = /*#__PURE__*/ createReadContract({
+  abi: aSignerValidatorAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readASignerValidatorGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"owner"`
+ */
+export const readASignerValidatorOwner = /*#__PURE__*/ createReadContract({
+  abi: aSignerValidatorAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readASignerValidatorOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"signers"`
+ */
+export const readASignerValidatorSigners = /*#__PURE__*/ createReadContract({
+  abi: aSignerValidatorAbi,
+  functionName: 'signers',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readASignerValidatorSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__
+ */
+export const writeASignerValidator = /*#__PURE__*/ createWriteContract({
+  abi: aSignerValidatorAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeASignerValidatorCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeASignerValidatorCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeASignerValidatorInitialize =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeASignerValidatorRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeASignerValidatorRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"setAuthorized"`
+ */
+export const writeASignerValidatorSetAuthorized =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'setAuthorized',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeASignerValidatorTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"validate"`
+ */
+export const writeASignerValidatorValidate = /*#__PURE__*/ createWriteContract({
+  abi: aSignerValidatorAbi,
+  functionName: 'validate',
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__
+ */
+export const simulateASignerValidator = /*#__PURE__*/ createSimulateContract({
+  abi: aSignerValidatorAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateASignerValidatorCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateASignerValidatorCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateASignerValidatorInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateASignerValidatorRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateASignerValidatorRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"setAuthorized"`
+ */
+export const simulateASignerValidatorSetAuthorized =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'setAuthorized',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateASignerValidatorTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `functionName` set to `"validate"`
+ */
+export const simulateASignerValidatorValidate =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSignerValidatorAbi,
+    functionName: 'validate',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSignerValidatorAbi}__
+ */
+export const watchASignerValidatorEvent =
+  /*#__PURE__*/ createWatchContractEvent({ abi: aSignerValidatorAbi })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchASignerValidatorInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSignerValidatorAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchASignerValidatorOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSignerValidatorAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchASignerValidatorOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSignerValidatorAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSignerValidatorAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchASignerValidatorOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSignerValidatorAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__
+ */
+export const readASimpleAllowList = /*#__PURE__*/ createReadContract({
+  abi: aSimpleAllowListAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"LIST_MANAGER_ROLE"`
+ */
+export const readASimpleAllowListListManagerRole =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'LIST_MANAGER_ROLE',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readASimpleAllowListGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"hasAllRoles"`
+ */
+export const readASimpleAllowListHasAllRoles = /*#__PURE__*/ createReadContract(
+  { abi: aSimpleAllowListAbi, functionName: 'hasAllRoles' },
+)
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"hasAnyRole"`
+ */
+export const readASimpleAllowListHasAnyRole = /*#__PURE__*/ createReadContract({
+  abi: aSimpleAllowListAbi,
+  functionName: 'hasAnyRole',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"isAllowed"`
+ */
+export const readASimpleAllowListIsAllowed = /*#__PURE__*/ createReadContract({
+  abi: aSimpleAllowListAbi,
+  functionName: 'isAllowed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"owner"`
+ */
+export const readASimpleAllowListOwner = /*#__PURE__*/ createReadContract({
+  abi: aSimpleAllowListAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readASimpleAllowListOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"rolesOf"`
+ */
+export const readASimpleAllowListRolesOf = /*#__PURE__*/ createReadContract({
+  abi: aSimpleAllowListAbi,
+  functionName: 'rolesOf',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readASimpleAllowListSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__
+ */
+export const writeASimpleAllowList = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleAllowListAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeASimpleAllowListCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeASimpleAllowListCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"grantRoles"`
+ */
+export const writeASimpleAllowListGrantRoles =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'grantRoles',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeASimpleAllowListInitialize =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeASimpleAllowListRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"renounceRoles"`
+ */
+export const writeASimpleAllowListRenounceRoles =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'renounceRoles',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeASimpleAllowListRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"revokeRoles"`
+ */
+export const writeASimpleAllowListRevokeRoles =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'revokeRoles',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"setAllowed"`
+ */
+export const writeASimpleAllowListSetAllowed =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'setAllowed',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeASimpleAllowListTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__
+ */
+export const simulateASimpleAllowList = /*#__PURE__*/ createSimulateContract({
+  abi: aSimpleAllowListAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateASimpleAllowListCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateASimpleAllowListCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"grantRoles"`
+ */
+export const simulateASimpleAllowListGrantRoles =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'grantRoles',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateASimpleAllowListInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateASimpleAllowListRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"renounceRoles"`
+ */
+export const simulateASimpleAllowListRenounceRoles =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'renounceRoles',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateASimpleAllowListRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"revokeRoles"`
+ */
+export const simulateASimpleAllowListRevokeRoles =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'revokeRoles',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"setAllowed"`
+ */
+export const simulateASimpleAllowListSetAllowed =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'setAllowed',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateASimpleAllowListTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleAllowListAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleAllowListAbi}__
+ */
+export const watchASimpleAllowListEvent =
+  /*#__PURE__*/ createWatchContractEvent({ abi: aSimpleAllowListAbi })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchASimpleAllowListInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleAllowListAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchASimpleAllowListOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleAllowListAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchASimpleAllowListOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleAllowListAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchASimpleAllowListOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleAllowListAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleAllowListAbi}__ and `eventName` set to `"RolesUpdated"`
+ */
+export const watchASimpleAllowListRolesUpdatedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleAllowListAbi,
+    eventName: 'RolesUpdated',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__
+ */
+export const readASimpleBudget = /*#__PURE__*/ createReadContract({
+  abi: aSimpleBudgetAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"available"`
+ */
+export const readASimpleBudgetAvailable = /*#__PURE__*/ createReadContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'available',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"distributed"`
+ */
+export const readASimpleBudgetDistributed = /*#__PURE__*/ createReadContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'distributed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readASimpleBudgetGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"isAuthorized"`
+ */
+export const readASimpleBudgetIsAuthorized = /*#__PURE__*/ createReadContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'isAuthorized',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"onERC1155BatchReceived"`
+ */
+export const readASimpleBudgetOnErc1155BatchReceived =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'onERC1155BatchReceived',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"onERC1155Received"`
+ */
+export const readASimpleBudgetOnErc1155Received =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'onERC1155Received',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"owner"`
+ */
+export const readASimpleBudgetOwner = /*#__PURE__*/ createReadContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readASimpleBudgetOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readASimpleBudgetSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"total"`
+ */
+export const readASimpleBudgetTotal = /*#__PURE__*/ createReadContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'total',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__
+ */
+export const writeASimpleBudget = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleBudgetAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"allocate"`
+ */
+export const writeASimpleBudgetAllocate = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'allocate',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeASimpleBudgetCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeASimpleBudgetCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"disburse"`
+ */
+export const writeASimpleBudgetDisburse = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'disburse',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"disburseBatch"`
+ */
+export const writeASimpleBudgetDisburseBatch =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'disburseBatch',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeASimpleBudgetInitialize = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'initialize',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const writeASimpleBudgetReclaim = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"reconcile"`
+ */
+export const writeASimpleBudgetReconcile = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleBudgetAbi,
+  functionName: 'reconcile',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeASimpleBudgetRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeASimpleBudgetRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"setAuthorized"`
+ */
+export const writeASimpleBudgetSetAuthorized =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'setAuthorized',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeASimpleBudgetTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__
+ */
+export const simulateASimpleBudget = /*#__PURE__*/ createSimulateContract({
+  abi: aSimpleBudgetAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"allocate"`
+ */
+export const simulateASimpleBudgetAllocate =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'allocate',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateASimpleBudgetCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateASimpleBudgetCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"disburse"`
+ */
+export const simulateASimpleBudgetDisburse =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'disburse',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"disburseBatch"`
+ */
+export const simulateASimpleBudgetDisburseBatch =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'disburseBatch',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateASimpleBudgetInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const simulateASimpleBudgetReclaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'reclaim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"reconcile"`
+ */
+export const simulateASimpleBudgetReconcile =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'reconcile',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateASimpleBudgetRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateASimpleBudgetRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"setAuthorized"`
+ */
+export const simulateASimpleBudgetSetAuthorized =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'setAuthorized',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateASimpleBudgetTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleBudgetAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleBudgetAbi}__
+ */
+export const watchASimpleBudgetEvent = /*#__PURE__*/ createWatchContractEvent({
+  abi: aSimpleBudgetAbi,
+})
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `eventName` set to `"Authorized"`
+ */
+export const watchASimpleBudgetAuthorizedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleBudgetAbi,
+    eventName: 'Authorized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `eventName` set to `"Distributed"`
+ */
+export const watchASimpleBudgetDistributedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleBudgetAbi,
+    eventName: 'Distributed',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchASimpleBudgetInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleBudgetAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchASimpleBudgetOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleBudgetAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchASimpleBudgetOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleBudgetAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleBudgetAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchASimpleBudgetOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleBudgetAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__
+ */
+export const readASimpleDenyList = /*#__PURE__*/ createReadContract({
+  abi: aSimpleDenyListAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readASimpleDenyListGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"isAllowed"`
+ */
+export const readASimpleDenyListIsAllowed = /*#__PURE__*/ createReadContract({
+  abi: aSimpleDenyListAbi,
+  functionName: 'isAllowed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"owner"`
+ */
+export const readASimpleDenyListOwner = /*#__PURE__*/ createReadContract({
+  abi: aSimpleDenyListAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readASimpleDenyListOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readASimpleDenyListSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__
+ */
+export const writeASimpleDenyList = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleDenyListAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeASimpleDenyListCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeASimpleDenyListCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeASimpleDenyListInitialize = /*#__PURE__*/ createWriteContract(
+  { abi: aSimpleDenyListAbi, functionName: 'initialize' },
+)
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeASimpleDenyListRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeASimpleDenyListRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"setDenied"`
+ */
+export const writeASimpleDenyListSetDenied = /*#__PURE__*/ createWriteContract({
+  abi: aSimpleDenyListAbi,
+  functionName: 'setDenied',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeASimpleDenyListTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__
+ */
+export const simulateASimpleDenyList = /*#__PURE__*/ createSimulateContract({
+  abi: aSimpleDenyListAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateASimpleDenyListCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateASimpleDenyListCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateASimpleDenyListInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateASimpleDenyListRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateASimpleDenyListRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"setDenied"`
+ */
+export const simulateASimpleDenyListSetDenied =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'setDenied',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateASimpleDenyListTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aSimpleDenyListAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleDenyListAbi}__
+ */
+export const watchASimpleDenyListEvent = /*#__PURE__*/ createWatchContractEvent(
+  { abi: aSimpleDenyListAbi },
+)
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchASimpleDenyListInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleDenyListAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchASimpleDenyListOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleDenyListAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchASimpleDenyListOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleDenyListAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aSimpleDenyListAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchASimpleDenyListOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aSimpleDenyListAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__
+ */
+export const readAVestingBudget = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"available"`
+ */
+export const readAVestingBudgetAvailable = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'available',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"cliff"`
+ */
+export const readAVestingBudgetCliff = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'cliff',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"distributed"`
+ */
+export const readAVestingBudgetDistributed = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'distributed',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"duration"`
+ */
+export const readAVestingBudgetDuration = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'duration',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"end"`
+ */
+export const readAVestingBudgetEnd = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'end',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAVestingBudgetGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"isAuthorized"`
+ */
+export const readAVestingBudgetIsAuthorized = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'isAuthorized',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"owner"`
+ */
+export const readAVestingBudgetOwner = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"ownershipHandoverExpiresAt"`
+ */
+export const readAVestingBudgetOwnershipHandoverExpiresAt =
+  /*#__PURE__*/ createReadContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'ownershipHandoverExpiresAt',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"start"`
+ */
+export const readAVestingBudgetStart = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'start',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"supportsInterface"`
+ */
+export const readAVestingBudgetSupportsInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'supportsInterface',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"total"`
+ */
+export const readAVestingBudgetTotal = /*#__PURE__*/ createReadContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'total',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__
+ */
+export const writeAVestingBudget = /*#__PURE__*/ createWriteContract({
+  abi: aVestingBudgetAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"allocate"`
+ */
+export const writeAVestingBudgetAllocate = /*#__PURE__*/ createWriteContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'allocate',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const writeAVestingBudgetCancelOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const writeAVestingBudgetCompleteOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"disburse"`
+ */
+export const writeAVestingBudgetDisburse = /*#__PURE__*/ createWriteContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'disburse',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"disburseBatch"`
+ */
+export const writeAVestingBudgetDisburseBatch =
+  /*#__PURE__*/ createWriteContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'disburseBatch',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeAVestingBudgetInitialize = /*#__PURE__*/ createWriteContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'initialize',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const writeAVestingBudgetReclaim = /*#__PURE__*/ createWriteContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"reconcile"`
+ */
+export const writeAVestingBudgetReconcile = /*#__PURE__*/ createWriteContract({
+  abi: aVestingBudgetAbi,
+  functionName: 'reconcile',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeAVestingBudgetRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const writeAVestingBudgetRequestOwnershipHandover =
+  /*#__PURE__*/ createWriteContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"setAuthorized"`
+ */
+export const writeAVestingBudgetSetAuthorized =
+  /*#__PURE__*/ createWriteContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'setAuthorized',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeAVestingBudgetTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__
+ */
+export const simulateAVestingBudget = /*#__PURE__*/ createSimulateContract({
+  abi: aVestingBudgetAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"allocate"`
+ */
+export const simulateAVestingBudgetAllocate =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'allocate',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"cancelOwnershipHandover"`
+ */
+export const simulateAVestingBudgetCancelOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'cancelOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"completeOwnershipHandover"`
+ */
+export const simulateAVestingBudgetCompleteOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'completeOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"disburse"`
+ */
+export const simulateAVestingBudgetDisburse =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'disburse',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"disburseBatch"`
+ */
+export const simulateAVestingBudgetDisburseBatch =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'disburseBatch',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateAVestingBudgetInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"reclaim"`
+ */
+export const simulateAVestingBudgetReclaim =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'reclaim',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"reconcile"`
+ */
+export const simulateAVestingBudgetReconcile =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'reconcile',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateAVestingBudgetRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"requestOwnershipHandover"`
+ */
+export const simulateAVestingBudgetRequestOwnershipHandover =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'requestOwnershipHandover',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"setAuthorized"`
+ */
+export const simulateAVestingBudgetSetAuthorized =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'setAuthorized',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateAVestingBudgetTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: aVestingBudgetAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aVestingBudgetAbi}__
+ */
+export const watchAVestingBudgetEvent = /*#__PURE__*/ createWatchContractEvent({
+  abi: aVestingBudgetAbi,
+})
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `eventName` set to `"Authorized"`
+ */
+export const watchAVestingBudgetAuthorizedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aVestingBudgetAbi,
+    eventName: 'Authorized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `eventName` set to `"Distributed"`
+ */
+export const watchAVestingBudgetDistributedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aVestingBudgetAbi,
+    eventName: 'Distributed',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchAVestingBudgetInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aVestingBudgetAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
+ */
+export const watchAVestingBudgetOwnershipHandoverCanceledEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aVestingBudgetAbi,
+    eventName: 'OwnershipHandoverCanceled',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `eventName` set to `"OwnershipHandoverRequested"`
+ */
+export const watchAVestingBudgetOwnershipHandoverRequestedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aVestingBudgetAbi,
+    eventName: 'OwnershipHandoverRequested',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link aVestingBudgetAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchAVestingBudgetOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: aVestingBudgetAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link actionAbi}__
  */
 export const readAction = /*#__PURE__*/ createReadContract({ abi: actionAbi })
@@ -6786,6 +13682,13 @@ export const readActionValidator = /*#__PURE__*/ createReadContract({
   abi: actionAbi,
   functionName: 'VALIDATOR',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link actionAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readActionGetComponentInterface = /*#__PURE__*/ createReadContract(
+  { abi: actionAbi, functionName: 'getComponentInterface' },
+)
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link actionAbi}__ and `functionName` set to `"supportsInterface"`
@@ -6895,6 +13798,15 @@ export const watchActionInitializedEvent =
 export const readAllowList = /*#__PURE__*/ createReadContract({
   abi: allowListAbi,
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link allowListAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAllowListGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: allowListAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link allowListAbi}__ and `functionName` set to `"isAllowed"`
@@ -7122,6 +14034,24 @@ export const readAllowListIncentiveClaims = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link allowListIncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readAllowListIncentiveCurrentReward =
+  /*#__PURE__*/ createReadContract({
+    abi: allowListIncentiveAbi,
+    functionName: 'currentReward',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link allowListIncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readAllowListIncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: allowListIncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link allowListIncentiveAbi}__ and `functionName` set to `"isClaimable"`
  */
 export const readAllowListIncentiveIsClaimable =
@@ -7168,6 +14098,14 @@ export const readAllowListIncentivePreflight = /*#__PURE__*/ createReadContract(
 export const readAllowListIncentiveReclaim = /*#__PURE__*/ createReadContract({
   abi: allowListIncentiveAbi,
   functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link allowListIncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readAllowListIncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: allowListIncentiveAbi,
+  functionName: 'reward',
 })
 
 /**
@@ -7639,6 +14577,15 @@ export const watchBoostCoreEvent = /*#__PURE__*/ createWatchContractEvent({
 })
 
 /**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link boostCoreAbi}__ and `eventName` set to `"BoostCreated"`
+ */
+export const watchBoostCoreBoostCreatedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: boostCoreAbi,
+    eventName: 'BoostCreated',
+  })
+
+/**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link boostCoreAbi}__ and `eventName` set to `"OwnershipHandoverCanceled"`
  */
 export const watchBoostCoreOwnershipHandoverCanceledEvent =
@@ -7816,6 +14763,13 @@ export const readBudgetDistributed = /*#__PURE__*/ createReadContract({
   abi: budgetAbi,
   functionName: 'distributed',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link budgetAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readBudgetGetComponentInterface = /*#__PURE__*/ createReadContract(
+  { abi: budgetAbi, functionName: 'getComponentInterface' },
+)
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link budgetAbi}__ and `functionName` set to `"isAuthorized"`
@@ -8177,6 +15131,15 @@ export const readCgdaIncentiveCurrentReward = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link cgdaIncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readCgdaIncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: cgdaIncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link cgdaIncentiveAbi}__ and `functionName` set to `"isClaimable"`
  */
 export const readCgdaIncentiveIsClaimable = /*#__PURE__*/ createReadContract({
@@ -8207,6 +15170,14 @@ export const readCgdaIncentiveOwnershipHandoverExpiresAt =
 export const readCgdaIncentivePreflight = /*#__PURE__*/ createReadContract({
   abi: cgdaIncentiveAbi,
   functionName: 'preflight',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link cgdaIncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readCgdaIncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: cgdaIncentiveAbi,
+  functionName: 'reward',
 })
 
 /**
@@ -8440,6 +15411,15 @@ export const readCloneable = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link cloneableAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readCloneableGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: cloneableAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link cloneableAbi}__ and `functionName` set to `"supportsInterface"`
  */
 export const readCloneableSupportsInterface = /*#__PURE__*/ createReadContract({
@@ -8514,6 +15494,15 @@ export const readContractActionChainId = /*#__PURE__*/ createReadContract({
   abi: contractActionAbi,
   functionName: 'chainId',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link contractActionAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readContractActionGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: contractActionAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link contractActionAbi}__ and `functionName` set to `"prepare"`
@@ -8823,12 +15812,30 @@ export const readErc1155IncentiveClaims = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc1155IncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readErc1155IncentiveCurrentReward =
+  /*#__PURE__*/ createReadContract({
+    abi: erc1155IncentiveAbi,
+    functionName: 'currentReward',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc1155IncentiveAbi}__ and `functionName` set to `"extraData"`
  */
 export const readErc1155IncentiveExtraData = /*#__PURE__*/ createReadContract({
   abi: erc1155IncentiveAbi,
   functionName: 'extraData',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc1155IncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readErc1155IncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: erc1155IncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc1155IncentiveAbi}__ and `functionName` set to `"isClaimable"`
@@ -8886,6 +15893,14 @@ export const readErc1155IncentiveOwnershipHandoverExpiresAt =
 export const readErc1155IncentivePreflight = /*#__PURE__*/ createReadContract({
   abi: erc1155IncentiveAbi,
   functionName: 'preflight',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc1155IncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readErc1155IncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: erc1155IncentiveAbi,
+  functionName: 'reward',
 })
 
 /**
@@ -9333,12 +16348,28 @@ export const readErc20IncentiveClaims = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc20IncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readErc20IncentiveCurrentReward = /*#__PURE__*/ createReadContract(
+  { abi: erc20IncentiveAbi, functionName: 'currentReward' },
+)
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc20IncentiveAbi}__ and `functionName` set to `"entries"`
  */
 export const readErc20IncentiveEntries = /*#__PURE__*/ createReadContract({
   abi: erc20IncentiveAbi,
   functionName: 'entries',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc20IncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readErc20IncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: erc20IncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc20IncentiveAbi}__ and `functionName` set to `"isClaimable"`
@@ -9838,6 +16869,15 @@ export const readErc721MintActionChainId = /*#__PURE__*/ createReadContract({
   abi: erc721MintActionAbi,
   functionName: 'chainId',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link erc721MintActionAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readErc721MintActionGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: erc721MintActionAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc721MintActionAbi}__ and `functionName` set to `"owner"`
@@ -10546,6 +17586,23 @@ export const readIncentiveClaims = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link incentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readIncentiveCurrentReward = /*#__PURE__*/ createReadContract({
+  abi: incentiveAbi,
+  functionName: 'currentReward',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link incentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readIncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: incentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link incentiveAbi}__ and `functionName` set to `"isClaimable"`
  */
 export const readIncentiveIsClaimable = /*#__PURE__*/ createReadContract({
@@ -10576,6 +17633,14 @@ export const readIncentiveOwnershipHandoverExpiresAt =
 export const readIncentivePreflight = /*#__PURE__*/ createReadContract({
   abi: incentiveAbi,
   functionName: 'preflight',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link incentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readIncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: incentiveAbi,
+  functionName: 'reward',
 })
 
 /**
@@ -12119,6 +19184,24 @@ export const readPointsIncentiveClaims = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"currentReward"`
+ */
+export const readPointsIncentiveCurrentReward =
+  /*#__PURE__*/ createReadContract({
+    abi: pointsIncentiveAbi,
+    functionName: 'currentReward',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readPointsIncentiveGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: pointsIncentiveAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"isClaimable"`
  */
 export const readPointsIncentiveIsClaimable = /*#__PURE__*/ createReadContract({
@@ -12160,19 +19243,19 @@ export const readPointsIncentivePreflight = /*#__PURE__*/ createReadContract({
 })
 
 /**
- * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"quantity"`
- */
-export const readPointsIncentiveQuantity = /*#__PURE__*/ createReadContract({
-  abi: pointsIncentiveAbi,
-  functionName: 'quantity',
-})
-
-/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"reclaim"`
  */
 export const readPointsIncentiveReclaim = /*#__PURE__*/ createReadContract({
   abi: pointsIncentiveAbi,
   functionName: 'reclaim',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link pointsIncentiveAbi}__ and `functionName` set to `"reward"`
+ */
+export const readPointsIncentiveReward = /*#__PURE__*/ createReadContract({
+  abi: pointsIncentiveAbi,
+  functionName: 'reward',
 })
 
 /**
@@ -12395,6 +19478,15 @@ export const watchPointsIncentiveOwnershipTransferredEvent =
 export const readSignerValidator = /*#__PURE__*/ createReadContract({
   abi: signerValidatorAbi,
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link signerValidatorAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readSignerValidatorGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: signerValidatorAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link signerValidatorAbi}__ and `functionName` set to `"owner"`
@@ -12642,6 +19734,15 @@ export const readSimpleAllowListListManagerRole =
   /*#__PURE__*/ createReadContract({
     abi: simpleAllowListAbi,
     functionName: 'LIST_MANAGER_ROLE',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link simpleAllowListAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readSimpleAllowListGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: simpleAllowListAbi,
+    functionName: 'getComponentInterface',
   })
 
 /**
@@ -12964,6 +20065,15 @@ export const readSimpleBudgetDistributed = /*#__PURE__*/ createReadContract({
   abi: simpleBudgetAbi,
   functionName: 'distributed',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link simpleBudgetAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readSimpleBudgetGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: simpleBudgetAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link simpleBudgetAbi}__ and `functionName` set to `"isAuthorized"`
@@ -13313,6 +20423,15 @@ export const readSimpleDenyList = /*#__PURE__*/ createReadContract({
 })
 
 /**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link simpleDenyListAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readSimpleDenyListGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: simpleDenyListAbi,
+    functionName: 'getComponentInterface',
+  })
+
+/**
  * Wraps __{@link readContract}__ with `abi` set to __{@link simpleDenyListAbi}__ and `functionName` set to `"isAllowed"`
  */
 export const readSimpleDenyListIsAllowed = /*#__PURE__*/ createReadContract({
@@ -13533,6 +20652,15 @@ export const watchSimpleDenyListOwnershipTransferredEvent =
 export const readValidator = /*#__PURE__*/ createReadContract({
   abi: validatorAbi,
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link validatorAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readValidatorGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: validatorAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link validatorAbi}__ and `functionName` set to `"owner"`
@@ -13783,6 +20911,15 @@ export const readVestingBudgetEnd = /*#__PURE__*/ createReadContract({
   abi: vestingBudgetAbi,
   functionName: 'end',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link vestingBudgetAbi}__ and `functionName` set to `"getComponentInterface"`
+ */
+export const readVestingBudgetGetComponentInterface =
+  /*#__PURE__*/ createReadContract({
+    abi: vestingBudgetAbi,
+    functionName: 'getComponentInterface',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link vestingBudgetAbi}__ and `functionName` set to `"isAuthorized"`

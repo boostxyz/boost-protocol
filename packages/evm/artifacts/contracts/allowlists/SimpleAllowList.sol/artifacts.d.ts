@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { SimpleAllowList$Type } from "./SimpleAllowList";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["SimpleAllowList"]: SimpleAllowList$Type;
     ["contracts/allowlists/SimpleAllowList.sol:SimpleAllowList"]: SimpleAllowList$Type;
+  }
+
+  interface ContractTypesMap {
+    ["SimpleAllowList"]: GetContractReturnType<SimpleAllowList$Type["abi"]>;
+    ["contracts/allowlists/SimpleAllowList.sol:SimpleAllowList"]: GetContractReturnType<SimpleAllowList$Type["abi"]>;
   }
 }

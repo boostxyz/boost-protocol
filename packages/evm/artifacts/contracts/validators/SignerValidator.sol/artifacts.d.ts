@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { SignerValidator$Type } from "./SignerValidator";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["SignerValidator"]: SignerValidator$Type;
     ["contracts/validators/SignerValidator.sol:SignerValidator"]: SignerValidator$Type;
+  }
+
+  interface ContractTypesMap {
+    ["SignerValidator"]: GetContractReturnType<SignerValidator$Type["abi"]>;
+    ["contracts/validators/SignerValidator.sol:SignerValidator"]: GetContractReturnType<SignerValidator$Type["abi"]>;
   }
 }

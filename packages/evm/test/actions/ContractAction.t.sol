@@ -6,7 +6,9 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
+import {Action} from "contracts/actions/Action.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
+import {AContractAction} from "contracts/actions/AContractAction.sol";
 
 // contract TargetContract {
 //     event Called(address indexed sender, bytes message, uint256 count);
@@ -84,7 +86,7 @@ contract ContractActionTest is Test {
 
     function testExecute_DifferentChainId() public {
         // Target chain is different from the current context => revert
-        vm.expectRevert(abi.encodeWithSelector(ContractAction.TargetChainUnsupported.selector, block.chainid + 1));
+        vm.expectRevert(abi.encodeWithSelector(AContractAction.TargetChainUnsupported.selector, block.chainid + 1));
         (bool success,) = otherChainAction.execute{value: 0.1 ether}(abi.encode(address(0xdeadbeef), 100 ether));
         assertFalse(success);
     }
@@ -98,5 +100,23 @@ contract ContractActionTest is Test {
             action.prepare(abi.encode(address(0xdeadbeef), 100 ether)),
             abi.encodeWithSelector(target.mintPayable.selector, address(0xdeadbeef), 100 ether)
         );
+    }
+
+    ////////////////////////////////////
+    // ContractAction.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(action.getComponentInterface());
+    }
+
+    ////////////////////////////////////
+    // ContractAction.supportsInterface //
+    ////////////////////////////////////
+
+    function testSupportsActionInterface() public {
+        // Ensure the contract supports the Budget interface
+        assertTrue(action.supportsInterface(type(Action).interfaceId));
     }
 }

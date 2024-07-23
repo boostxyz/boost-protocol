@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
@@ -11,9 +12,9 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {MockERC20, MockERC1155} from "contracts/shared/Mocks.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
-import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 
 contract SimpleBudgetTest is Test, IERC1155Receiver {
     MockERC20 mockERC20;
@@ -756,6 +757,15 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     }
 
     ////////////////////////////////////
+    // SimpleBudget.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Ensure the contract supports the Budget interface
+        console.logBytes4(simpleBudget.getComponentInterface());
+    }
+
+    ////////////////////////////////////
     // SimpleBudget.supportsInterface //
     ////////////////////////////////////
 
@@ -764,9 +774,14 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertTrue(simpleBudget.supportsInterface(type(Budget).interfaceId));
     }
 
-    function testSupportsSimpleBudgetInterface() public {
+    function testSupportsERC1155Receiver() public {
         // Ensure the contract supports the Budget interface
-        assertTrue(simpleBudget.supportsInterface(type(ASimpleBudget).interfaceId));
+        assertTrue(simpleBudget.supportsInterface(type(IERC1155Receiver).interfaceId));
+    }
+
+    function testSupportsERC165() public {
+        // Ensure the contract supports the Budget interface
+        assertTrue(simpleBudget.supportsInterface(type(IERC165).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public {

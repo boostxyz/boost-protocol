@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "isolatedModules": true,
+    "experimentalDecorators": true,
     "lib": ["es2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleDetection": "force",
@@ -20,7 +21,8 @@
     "target": "es2022",
     "noImplicitOverride": true,
     "paths": {
-      "@boostxyz/evm": ["./packages/evm/artifacts/generated.ts"]
+      "@boostxyz/evm": ["./packages/evm/artifacts/index.ts"],
+      "@boostxyz/evm/artifacts/*": ["./packages/evm/artifacts/*"]
     }
   },
   "exclude": ["node_modules", "**/*/dist"]

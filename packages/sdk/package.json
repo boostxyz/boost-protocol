@@ -1,18 +1,38 @@
 {
   "name": "@boostxyz/sdk",
-  "version": "0.0.0-alpha.0",
+  "version": "0.0.0-alpha.1",
   "private": true,
   "type": "module",
   "files": ["dist"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
-    ".": {
-      "require": "./dist/index.cjs",
-      "import": "./src/index.ts",
-      "node": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+    ".": "./src/index.ts",
+    "./utils": "./src/utils.ts",
+    "./errors": "./src/errors.ts",
+    "./Boost": "./src/Boost.ts",
+    "./BoostRegistry": "./src/BoostRegistry.ts",
+    "./BoostCore": "./src/BoostCore.ts",
+    "./Deployable/Deployable": "./src/Deployable/Deployable.ts",
+    "./Deployable/DeployableTarget": "./src/Deployable/DeployableTarget.ts",
+    "./Deployable/Contract": "./src/Deployable/Contract.ts",
+    "./Actions/Action": "./src/Actions/Action.ts",
+    "./Actions/ContractAction": "./src/Actions/ContractAction.ts",
+    "./Actions/ERC721MintAction": "./src/Actions/ERC721MintAction.ts",
+    "./AllowLists/AllowList": "./src/AllowLists/AllowList.ts",
+    "./AllowLists/SimpleAllowList": "./src/AllowLists/SimpleAllowList.ts",
+    "./AllowLists/SimpleDenyList": "./src/AllowLists/SimpleDenyList.ts",
+    "./Budgets/Budget": "./src/Budgets/Budget.ts",
+    "./Budgets/SimpleBudget": "./src/Budgets/SimpleBudget.ts",
+    "./Budgets/VestingBudget": "./src/Budgets/VestingBudget.ts",
+    "./Incentives/AllowListIncentive": "./src/Incentives/AllowListIncentive.ts",
+    "./Incentives/CGDAIncentive": "./src/Incentives/CGDAIncentive.ts",
+    "./Incentives/ERC20Incentive": "./src/Incentives/ERC20Incentive.ts",
+    "./Incentives/ERC1155Incentive": "./src/Incentives/ERC1155Incentive.ts",
+    "./Incentives/Incentive": "./src/Incentives/Incentive.ts",
+    "./Incentives/PointsIncentive": "./src/Incentives/PointsIncentive.ts",
+    "./Validators/Validator": "./src/Validators/Validator.ts",
+    "./Validators/SignerValidator": "./src/Validators/SignerValidator.ts"
   },
   "publishConfig": {
     "exports": {
@@ -21,6 +41,156 @@
         "import": "./dist/index.js",
         "node": "./dist/index.js",
         "types": "./dist/index.d.ts"
+      },
+      "./errors": {
+        "require": "./dist/errors.cjs",
+        "import": "./dist/errors.js",
+        "node": "./dist/errors.js",
+        "types": "./dist/errors.d.ts"
+      },
+      "./utils": {
+        "require": "./dist/utils.cjs",
+        "import": "./dist/utils.js",
+        "node": "./dist/utils.js",
+        "types": "./dist/utils.d.ts"
+      },
+      "./Boost": {
+        "require": "./dist/Boost.cjs",
+        "import": "./dist/Boost.js",
+        "node": "./dist/Boost.js",
+        "types": "./dist/Boost.d.ts"
+      },
+      "./BoostRegistry": {
+        "require": "./dist/BoostRegistry.cjs",
+        "import": "./dist/BoostRegistry.js",
+        "node": "./dist/BoostRegistry.js",
+        "types": "./dist/BoostRegistry.d.ts"
+      },
+      "./BoostCore": {
+        "require": "./dist/BoostCore.cjs",
+        "import": "./dist/BoostCore.js",
+        "node": "./dist/BoostCore.js",
+        "types": "./dist/BoostCore.d.ts"
+      },
+      "./Deployable/Deployable": {
+        "require": "./dist/Deployable/Deployable.cjs",
+        "import": "./dist/Deployable/Deployable.js",
+        "node": "./dist/Deployable/Deployable.js",
+        "types": "./dist/Deployable/Deployable.d.ts"
+      },
+      "./Deployable/DeployableTarget": {
+        "require": "./dist/Deployable/DeployableTarget.cjs",
+        "import": "./dist/Deployable/DeployableTarget.js",
+        "node": "./dist/Deployable/DeployableTarget.js",
+        "types": "./dist/Deployable/DeployableTarget.d.ts"
+      },
+      "./Deployable/Contract": {
+        "require": "./dist/Deployable/Contract.cjs",
+        "import": "./dist/Deployable/Contract.js",
+        "node": "./dist/Deployable/Contract.js",
+        "types": "./dist/Deployable/Contract.d.ts"
+      },
+      "./Actions/Action": {
+        "require": "./dist/Actions/Action.cjs",
+        "import": "./dist/Actions/Action.js",
+        "node": "./dist/Actions/Action.js",
+        "types": "./dist/Actions/Action.d.ts"
+      },
+      "./Actions/ContractAction": {
+        "require": "./dist/Actions/ContractAction.cjs",
+        "import": "./dist/Actions/ContractAction.js",
+        "node": "./dist/Actions/ContractAction.js",
+        "types": "./dist/Actions/ContractAction.d.ts"
+      },
+      "./Actions/ERC721MintAction": {
+        "require": "./dist/Actions/ERC721MintAction.cjs",
+        "import": "./dist/Actions/ERC721MintAction.js",
+        "node": "./dist/Actions/ERC721MintAction.js",
+        "types": "./dist/Actions/ERC721MintAction.d.ts"
+      },
+      "./AllowLists/AllowList": {
+        "require": "./dist/AllowLists/AllowList.cjs",
+        "import": "./dist/AllowLists/AllowList.js",
+        "node": "./dist/AllowLists/AllowList.js",
+        "types": "./dist/AllowLists/AllowList.d.ts"
+      },
+      "./AllowLists/SimpleAllowList": {
+        "require": "./dist/AllowLists/SimpleAllowList.cjs",
+        "import": "./dist/AllowLists/SimpleAllowList.js",
+        "node": "./dist/AllowLists/SimpleAllowList.js",
+        "types": "./dist/AllowLists/SimpleAllowList.d.ts"
+      },
+      "./AllowLists/SimpleDenyList": {
+        "require": "./dist/AllowLists/SimpleDenyList.cjs",
+        "import": "./dist/AllowLists/SimpleDenyList.js",
+        "node": "./dist/AllowLists/SimpleDenyList.js",
+        "types": "./dist/AllowLists/SimpleDenyList.d.ts"
+      },
+      "./Budgets/Budget": {
+        "require": "./dist/Budgets/Budget.cjs",
+        "import": "./dist/Budgets/Budget.js",
+        "node": "./dist/Budgets/Budget.js",
+        "types": "./dist/Budgets/Budget.d.ts"
+      },
+      "./Budgets/SimpleBudget": {
+        "require": "./dist/Budgets/SimpleBudget.cjs",
+        "import": "./dist/Budgets/SimpleBudget.js",
+        "node": "./dist/Budgets/SimpleBudget.js",
+        "types": "./dist/Budgets/SimpleBudget.d.ts"
+      },
+      "./Budgets/VestingBudget": {
+        "require": "./dist/Budgets/VestingBudget.cjs",
+        "import": "./dist/Budgets/VestingBudget.js",
+        "node": "./dist/Budgets/VestingBudget.js",
+        "types": "./dist/Budgets/VestingBudget.d.ts"
+      },
+      "./Incentives/AllowListIncentive": {
+        "require": "./dist/Incentives/AllowListIncentive.cjs",
+        "import": "./dist/Incentives/AllowListIncentive.js",
+        "node": "./dist/Incentives/AllowListIncentive.js",
+        "types": "./dist/Incentives/AllowListIncentive.d.ts"
+      },
+      "./Incentives/CGDAIncentive": {
+        "require": "./dist/Incentives/CGDAIncentive.cjs",
+        "import": "./dist/Incentives/CGDAIncentive.js",
+        "node": "./dist/Incentives/CGDAIncentive.js",
+        "types": "./dist/Incentives/CGDAIncentive.d.ts"
+      },
+      "./Incentives/ERC20Incentive": {
+        "require": "./dist/Incentives/ERC20Incentive.cjs",
+        "import": "./dist/Incentives/ERC20Incentive.js",
+        "node": "./dist/Incentives/ERC20Incentive.js",
+        "types": "./dist/Incentives/ERC20Incentive.d.ts"
+      },
+      "./Incentives/ERC1155Incentive": {
+        "require": "./dist/Incentives/ERC1155Incentive.cjs",
+        "import": "./dist/Incentives/ERC1155Incentive.js",
+        "node": "./dist/Incentives/ERC1155Incentive.js",
+        "types": "./dist/Incentives/ERC1155Incentive.d.ts"
+      },
+      "./Incentives/Incentive": {
+        "require": "./dist/Incentives/Incentive.cjs",
+        "import": "./dist/Incentives/Incentive.js",
+        "node": "./dist/Incentives/Incentive.js",
+        "types": "./dist/Incentives/Incentive.d.ts"
+      },
+      "./Incentives/PointsIncentive": {
+        "require": "./dist/Incentives/PointsIncentive.cjs",
+        "import": "./dist/Incentives/PointsIncentive.js",
+        "node": "./dist/Incentives/PointsIncentive.js",
+        "types": "./dist/Incentives/PointsIncentive.d.ts"
+      },
+      "./Validators/Validator": {
+        "require": "./dist/Validators/Validator.cjs",
+        "import": "./dist/Validators/Validator.js",
+        "node": "./dist/Validators/Validator.js",
+        "types": "./dist/Validators/Validator.d.ts"
+      },
+      "./Validators/SignerValidator": {
+        "require": "./dist/Validators/SignerValidator.cjs",
+        "import": "./dist/Validators/SignerValidator.js",
+        "node": "./dist/Validators/SignerValidator.js",
+        "types": "./dist/Validators/SignerValidator.d.ts"
       }
     }
   },
@@ -39,5 +209,9 @@
   },
   "devDependencies": {
     "@boostxyz/evm": "workspace:*"
+  },
+  "peerDependencies": {
+    "@wagmi/core": "^2.11.2",
+    "viem": "^2.9.9"
   }
 }

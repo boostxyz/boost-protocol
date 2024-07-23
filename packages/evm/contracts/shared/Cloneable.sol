@@ -32,6 +32,13 @@ abstract contract Cloneable is Initializable, ERC165 {
         revert InitializerNotImplemented();
     }
 
+    /// @notice
+    /// @param - Return a cloneable's unique identifier for downstream consumers to differentiate various targets
+    /// @dev All implementations must override this function
+    function getComponentInterface() public pure virtual returns (bytes4) {
+        return type(Cloneable).interfaceId;
+    }
+
     /// @inheritdoc ERC165
     /// @notice Check if the contract supports the given interface
     /// @param interfaceId The interface identifier

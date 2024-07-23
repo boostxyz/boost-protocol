@@ -18,8 +18,6 @@ import {Cloneable} from "contracts/shared/Cloneable.sol";
 abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
     using SafeTransferLib for address;
 
-    
-
     /// @dev The total amount of each fungible asset distributed from the budget
     mapping(address => uint256) private _distributedFungible;
 
@@ -37,10 +35,9 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override{
+    function initialize(bytes calldata data_) public virtual override {
         revert NotInitializing();
     }
-
 
     /// @inheritdoc Budget
     /// @notice Allocates assets to the budget
@@ -303,10 +300,12 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
 
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Budget, IERC165) returns (bool) {
-        return interfaceId == type(ASimpleBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId || interfaceId == type(IERC165).interfaceId || Budget.supportsInterface(interfaceId);
+        return interfaceId == type(ASimpleBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
+            || interfaceId == type(IERC165).interfaceId || Budget.supportsInterface(interfaceId);
     }
 
+    /// @inheritdoc Cloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(ASimpleBudget).interfaceId;
-    } 
+    }
 }

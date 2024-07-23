@@ -3,41 +3,33 @@
   "version": "0.0.0-alpha.0",
   "description": "",
   "private": true,
-  "type": "module",
   "files": ["dist", "artifacts", "contracts"],
+  "type": "module",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
     ".": {
-      "require": "./dist/generated.cjs",
-      "import": "./artifacts/generated.ts",
-      "node": "./dist/generated.js",
-      "types": "./dist/generated.d.ts"
-    }
+      "require": "./dist/index.cjs",
+      "import": "./artifacts/index.ts",
+      "node": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./artifacts/contracts/*.json": "./artifacts/contracts/*.json"
   },
-  "publishConfig": {
-    "exports": {
-      ".": {
-        "require": "./dist/generated.cjs",
-        "import": "./dist/generated.js",
-        "node": "./dist/generated.js",
-        "types": "./dist/generated.d.ts"
-      }
-    }
-  },
-  "main": "./dist/generated.cjs",
-  "module": "./dist/generated.js",
-  "types": "./dist/generated.d.ts",
-  "typings": "./dist/generated.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
   "scripts": {
     "build": "forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
-    "test": "forge test -vvv && hardhat test",
-    "test:ci": "forge test --summary --detailed -vvv && hardhat test"
+    "test": "forge test -vvv && npx hardhat test",
+    "test:ci": "forge test --summary --detailed -vvv && npx hardhat test"
   },
   "keywords": [],
   "license": "ISC",
   "dependencies": {
     "@wagmi/core": "^2.11.2",
+    "ethers": "^6.13.1",
     "wagmi": "^2.10.2"
   },
   "devDependencies": {
@@ -53,7 +45,7 @@
     "@wagmi/cli": "^2.1.4",
     "abitype": "^1.0.2",
     "chai": "4",
-    "hardhat": "^2.22.3",
+    "hardhat": "^2.22.5",
     "solady": "^0.0.208",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",

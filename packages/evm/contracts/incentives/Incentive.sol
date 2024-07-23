@@ -65,18 +65,17 @@ abstract contract Incentive is Ownable, Cloneable, ReentrancyGuard {
     function preflight(bytes calldata data_) external view virtual returns (bytes memory);
 
     /// @return The current reward
-    function currentReward() public view virtual returns (uint256)
-    {
+    function currentReward() public view virtual returns (uint256) {
         return reward;
     }
-
 
     /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Incentive).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function getComponentInterface() public pure virtual returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(Incentive).interfaceId;
-    } 
+    }
 }

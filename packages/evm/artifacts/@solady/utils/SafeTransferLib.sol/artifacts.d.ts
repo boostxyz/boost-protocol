@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { SafeTransferLib$Type } from "./SafeTransferLib";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["SafeTransferLib"]: SafeTransferLib$Type;
     ["@solady/utils/SafeTransferLib.sol:SafeTransferLib"]: SafeTransferLib$Type;
+  }
+
+  interface ContractTypesMap {
+    ["SafeTransferLib"]: GetContractReturnType<SafeTransferLib$Type["abi"]>;
+    ["@solady/utils/SafeTransferLib.sol:SafeTransferLib"]: GetContractReturnType<SafeTransferLib$Type["abi"]>;
   }
 }

@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { Initializable$Type } from "./Initializable";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["Initializable"]: Initializable$Type;
     ["@solady/utils/Initializable.sol:Initializable"]: Initializable$Type;
+  }
+
+  interface ContractTypesMap {
+    ["Initializable"]: GetContractReturnType<Initializable$Type["abi"]>;
+    ["@solady/utils/Initializable.sol:Initializable"]: GetContractReturnType<Initializable$Type["abi"]>;
   }
 }

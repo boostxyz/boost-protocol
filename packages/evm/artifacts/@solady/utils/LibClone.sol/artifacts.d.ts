@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { LibClone$Type } from "./LibClone";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["LibClone"]: LibClone$Type;
     ["@solady/utils/LibClone.sol:LibClone"]: LibClone$Type;
+  }
+
+  interface ContractTypesMap {
+    ["LibClone"]: GetContractReturnType<LibClone$Type["abi"]>;
+    ["@solady/utils/LibClone.sol:LibClone"]: GetContractReturnType<LibClone$Type["abi"]>;
   }
 }

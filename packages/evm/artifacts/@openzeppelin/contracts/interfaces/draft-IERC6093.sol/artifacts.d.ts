@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { IERC1155Errors$Type } from "./IERC1155Errors";
 import { IERC20Errors$Type } from "./IERC20Errors";
@@ -17,5 +18,14 @@ declare module "hardhat/types/artifacts" {
     ["@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC1155Errors"]: IERC1155Errors$Type;
     ["@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC20Errors"]: IERC20Errors$Type;
     ["@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC721Errors"]: IERC721Errors$Type;
+  }
+
+  interface ContractTypesMap {
+    ["IERC1155Errors"]: GetContractReturnType<IERC1155Errors$Type["abi"]>;
+    ["IERC20Errors"]: GetContractReturnType<IERC20Errors$Type["abi"]>;
+    ["IERC721Errors"]: GetContractReturnType<IERC721Errors$Type["abi"]>;
+    ["@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC1155Errors"]: GetContractReturnType<IERC1155Errors$Type["abi"]>;
+    ["@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC20Errors"]: GetContractReturnType<IERC20Errors$Type["abi"]>;
+    ["@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC721Errors"]: GetContractReturnType<IERC721Errors$Type["abi"]>;
   }
 }

@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { ERC1155$Type } from "./ERC1155";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["ERC1155"]: ERC1155$Type;
     ["@openzeppelin/contracts/token/ERC1155/ERC1155.sol:ERC1155"]: ERC1155$Type;
+  }
+
+  interface ContractTypesMap {
+    ["ERC1155"]: GetContractReturnType<ERC1155$Type["abi"]>;
+    ["@openzeppelin/contracts/token/ERC1155/ERC1155.sol:ERC1155"]: GetContractReturnType<ERC1155$Type["abi"]>;
   }
 }

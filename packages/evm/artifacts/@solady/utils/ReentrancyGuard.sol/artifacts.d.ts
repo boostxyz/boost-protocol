@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { ReentrancyGuard$Type } from "./ReentrancyGuard";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["ReentrancyGuard"]: ReentrancyGuard$Type;
     ["@solady/utils/ReentrancyGuard.sol:ReentrancyGuard"]: ReentrancyGuard$Type;
+  }
+
+  interface ContractTypesMap {
+    ["ReentrancyGuard"]: GetContractReturnType<ReentrancyGuard$Type["abi"]>;
+    ["@solady/utils/ReentrancyGuard.sol:ReentrancyGuard"]: GetContractReturnType<ReentrancyGuard$Type["abi"]>;
   }
 }

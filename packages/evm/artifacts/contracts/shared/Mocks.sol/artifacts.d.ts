@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { MockERC1155$Type } from "./MockERC1155";
 import { MockERC20$Type } from "./MockERC20";
@@ -17,5 +18,14 @@ declare module "hardhat/types/artifacts" {
     ["contracts/shared/Mocks.sol:MockERC1155"]: MockERC1155$Type;
     ["contracts/shared/Mocks.sol:MockERC20"]: MockERC20$Type;
     ["contracts/shared/Mocks.sol:MockERC721"]: MockERC721$Type;
+  }
+
+  interface ContractTypesMap {
+    ["MockERC1155"]: GetContractReturnType<MockERC1155$Type["abi"]>;
+    ["MockERC20"]: GetContractReturnType<MockERC20$Type["abi"]>;
+    ["MockERC721"]: GetContractReturnType<MockERC721$Type["abi"]>;
+    ["contracts/shared/Mocks.sol:MockERC1155"]: GetContractReturnType<MockERC1155$Type["abi"]>;
+    ["contracts/shared/Mocks.sol:MockERC20"]: GetContractReturnType<MockERC20$Type["abi"]>;
+    ["contracts/shared/Mocks.sol:MockERC721"]: GetContractReturnType<MockERC721$Type["abi"]>;
   }
 }

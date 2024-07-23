@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { Ownable$Type } from "./Ownable";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["Ownable"]: Ownable$Type;
     ["@solady/auth/Ownable.sol:Ownable"]: Ownable$Type;
+  }
+
+  interface ContractTypesMap {
+    ["Ownable"]: GetContractReturnType<Ownable$Type["abi"]>;
+    ["@solady/auth/Ownable.sol:Ownable"]: GetContractReturnType<Ownable$Type["abi"]>;
   }
 }

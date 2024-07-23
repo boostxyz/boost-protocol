@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { Receiver$Type } from "./Receiver";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["Receiver"]: Receiver$Type;
     ["@solady/accounts/Receiver.sol:Receiver"]: Receiver$Type;
+  }
+
+  interface ContractTypesMap {
+    ["Receiver"]: GetContractReturnType<Receiver$Type["abi"]>;
+    ["@solady/accounts/Receiver.sol:Receiver"]: GetContractReturnType<Receiver$Type["abi"]>;
   }
 }

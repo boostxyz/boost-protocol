@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { SignatureCheckerLib$Type } from "./SignatureCheckerLib";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["SignatureCheckerLib"]: SignatureCheckerLib$Type;
     ["@solady/utils/SignatureCheckerLib.sol:SignatureCheckerLib"]: SignatureCheckerLib$Type;
+  }
+
+  interface ContractTypesMap {
+    ["SignatureCheckerLib"]: GetContractReturnType<SignatureCheckerLib$Type["abi"]>;
+    ["@solady/utils/SignatureCheckerLib.sol:SignatureCheckerLib"]: GetContractReturnType<SignatureCheckerLib$Type["abi"]>;
   }
 }

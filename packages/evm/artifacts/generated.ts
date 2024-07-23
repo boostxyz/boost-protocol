@@ -6675,23 +6675,6 @@ export const ierc1155ReceiverAbi = [
 ] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// IERC1271
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const ierc1271Abi = [
-  {
-    type: 'function',
-    inputs: [
-      { name: 'hash', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'signature', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'isValidSignature',
-    outputs: [{ name: 'magicValue', internalType: 'bytes4', type: 'bytes4' }],
-    stateMutability: 'view',
-  },
-] as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IERC165
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -17533,21 +17516,6 @@ export const simulateIerc1155ReceiverOnErc1155Received =
     abi: ierc1155ReceiverAbi,
     functionName: 'onERC1155Received',
   })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ierc1271Abi}__
- */
-export const readIerc1271 = /*#__PURE__*/ createReadContract({
-  abi: ierc1271Abi,
-})
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ierc1271Abi}__ and `functionName` set to `"isValidSignature"`
- */
-export const readIerc1271IsValidSignature = /*#__PURE__*/ createReadContract({
-  abi: ierc1271Abi,
-  functionName: 'isValidSignature',
-})
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link ierc165Abi}__

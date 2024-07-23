@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { StorageSlot$Type } from "./StorageSlot";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["StorageSlot"]: StorageSlot$Type;
     ["@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot"]: StorageSlot$Type;
+  }
+
+  interface ContractTypesMap {
+    ["StorageSlot"]: GetContractReturnType<StorageSlot$Type["abi"]>;
+    ["@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot"]: GetContractReturnType<StorageSlot$Type["abi"]>;
   }
 }

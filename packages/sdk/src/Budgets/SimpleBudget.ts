@@ -70,7 +70,7 @@ export function isERC1155TransferPayload(
 }
 
 /**
- * Given either a fungible transfer, or erc1155 transfer, will properly encode parameters for transfers, claims, disbursements, allocations, etc.
+ * Given either a Fungible transfer, or ERC1155 transfer, will properly encode parameters for transfers, claims, disbursements, allocations, etc.
  *
  * @export
  * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer

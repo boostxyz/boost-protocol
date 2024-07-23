@@ -141,6 +141,9 @@ importers:
       '@wagmi/core':
         specifier: ^2.11.2
         version: 2.11.2(react@18.3.1)(typescript@5.3.3)(viem@2.9.9)
+      solady:
+        specifier: ^0.0.208
+        version: 0.0.208
       viem:
         specifier: ^2.9.9
         version: 2.9.9(typescript@5.3.3)(zod@3.22.4)
@@ -10971,7 +10974,6 @@ packages:
 
   /solady@0.0.208:
     resolution: {integrity: sha512-JuSgLFa7yR1l6pneJjO6h37ITPYQjN/ExATLgJemWQVwd+th4fBUXFLFUX2KIAdAw/UPrhob7ksVhDETkw7MhA==}
-    dev: true
 
   /solc@0.7.3(debug@4.3.4):
     resolution: {integrity: sha512-GAsWNAjGzIDg7VxzP6mPjdurby3IkGCjQcM8GFYZT6RyaoUZKmMU6Y7YwG+tFGhv7dwZ8rmR4iwFDrrD99JwqA==}

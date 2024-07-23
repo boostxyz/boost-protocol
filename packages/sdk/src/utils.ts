@@ -1,13 +1,35 @@
 import { type Config, waitForTransactionReceipt } from '@wagmi/core';
+import { LibZip } from 'solady';
 import type {
   Abi,
+  Address,
   ContractFunctionName,
   Hash,
   Hex,
   WaitForTransactionReceiptParameters,
 } from 'viem';
-import { isHex, keccak256, slice, toHex } from 'viem';
+import {
+  encodeAbiParameters,
+  isHex,
+  keccak256,
+  parseAbiParameters,
+  slice,
+  toHex,
+  zeroAddress,
+  zeroHash,
+} from 'viem';
 import type { WriteContractParameters } from 'viem/actions';
+import { SimpleBudget } from './../../evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.d';
+import { ContractAction } from './Actions/ContractAction';
+import { ERC721MintAction } from './Actions/ERC721MintAction';
+import {
+  LIST_MANAGER_ROLE,
+  SimpleAllowList,
+} from './AllowLists/SimpleAllowList';
+import { SimpleDenyList } from './AllowLists/SimpleDenyList';
+import { VestingBudget } from './Budgets/VestingBudget';
+import type { ERC1155Incentive } from './Incentives/ERC1155Incentive';
+import { SignerValidator } from './Validators/SignerValidator';
 import { NoContractAddressUponReceiptError } from './errors';
 
 /**
@@ -115,4 +137,1255 @@ export async function awaitResult<Result = unknown>(
     hash,
   });
   return result;
+}
+
+/**
+ * Enum encapsulating all the different types of targets used in the Boost V2 Protocol.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum RegistryType {
+  ACTION = 0,
+  ALLOW_LIST = 1,
+  BUDGET = 2,
+  INCENTIVE = 3,
+  VALIDATOR = 4,
+}
+
+/**
+ * Enum representing incentive disbursement strategies.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum StrategyType {
+  POOL = 0,
+  MINT = 1,
+  RAFFLE = 2,
+}
+
+/**
+ * Enum representing inventive disbursement strategies for {@link ERC1155Incentive}
+ *
+ * @export
+ * @enum {number}
+ */
+export enum ERC1155StrategyType {
+  POOL = 0,
+  MINT = 1,
+}
+
+/**
+ * Object representation of `BoostLib.Target` struct. Used for low level Boost creation operations.
+ * This is used to pass the base contract and its initialization parameters in an efficient manner
+ *
+ * @export
+ * @typedef {Target}
+ */
+export type Target = {
+  isBase: boolean;
+  instance: Address;
+  parameters: Hex;
+};
+
+/**
+ * Object representation of the `ERC20Incentive.InitPayload`.
+ *
+ * @export
+ * @interface ERC20IncentivePayload
+ * @typedef {ERC20IncentivePayload}
+ */
+export interface ERC20IncentivePayload {
+  /**
+   * The address of the incentivized asset.
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
+   *
+   * @type {StrategyType}
+   */
+  strategy: StrategyType;
+  /**
+   * The amount of the asset to distribute.
+   *
+   * @type {bigint}
+   */
+  reward: bigint;
+  /**
+   * How many times can this incentive be claimed.
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
+
+/**
+ * Object representing the payload for a validation.
+ *
+ * @export
+ * @interface SignerValidatorValidatePayload
+ * @typedef {SignerValidatorValidatePayload}
+ */
+export interface SignerValidatorValidatePayload {
+  /**
+   * The address of the signer with which to validate.
+   *
+   * @type {Address}
+   */
+  signer: Address;
+  /**
+   * The transaction hash to associate with the validation.
+   *
+   * @type {Hex}
+   */
+  hash: Hex;
+  /**
+   * The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
+   *
+   * @type {Hex}
+   */
+  signature: Hex;
+}
+
+/**
+ * Function to properly encode a validation payload.
+ *
+ * @param {SignerValidatorValidatePayload} param0
+ * @param {Address} param0.signer - The address of the signer with which to validate.
+ * @param {Hex} param0.hash - The transaction hash to associate with the validation.
+ * @param {Hex} param0.signature - The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
+ * @returns {*}
+ */
+export const prepareSignerValidatorValidatePayload = ({
+  signer,
+  hash,
+  signature,
+}: SignerValidatorValidatePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'signer_' },
+      { type: 'bytes32', name: 'hash_' },
+      { type: 'bytes', name: 'signature_' },
+    ],
+    [signer, hash, signature],
+  );
+};
+
+/**
+ * Object reprentation of a {@link SignerValidator} initialization payload
+ *
+ * @export
+ * @interface SignerValidatorPayload
+ * @typedef {SignerValidatorPayload}
+ */
+export interface SignerValidatorPayload {
+  /**
+   * The list of authorized signers. The first address in the list will be the initial owner of the contract.
+   *
+   * @type {Address[]}
+   */
+  signers: Address[];
+}
+
+/**
+ * Given a {@link SignerValidatorPayload}, properly encode the initialization payload.
+ *
+ * @param {SignerValidatorPayload} param0
+ * @param {Address[]} param0.signers
+ * @returns {Hex}
+ */
+export const prepareSignerValidatorPayload = ({
+  signers,
+}: SignerValidatorPayload) => {
+  return encodeAbiParameters(
+    [{ type: 'address[]', name: 'signers' }],
+    [signers],
+  );
+};
+
+/**
+ * Object representation of a {@link SimpleAllowList} initialization payload.
+ *
+ * @export
+ * @interface SimpleAllowListPayload
+ * @typedef {SimpleAllowListPayload}
+ */
+export interface SimpleAllowListPayload {
+  /**
+   * The allow list's owner, given the {@link LIST_MANAGER_ROLE} role.
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of allowed addresses.
+   *
+   * @type {Address[]}
+   */
+  allowed: Address[];
+}
+
+/**
+ * Given a {@link SimpleAllowListPayload}, properly encode the initialization payload.
+ *
+ * @param {SimpleAllowListPayload} param0
+ * @param {Address} param0.owner - The allow list's owner, given the {@link LIST_MANAGER_ROLE} role.
+ * @param {Address[]} param0.allowed - List of allowed addresses.
+ * @returns {Hex}
+ */
+export const prepareSimpleAllowListPayload = ({
+  owner,
+  allowed,
+}: SimpleAllowListPayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'owner' },
+      { type: 'address[]', name: 'allowed' },
+    ],
+    [owner, allowed],
+  );
+};
+
+/**
+ * Object representation of a {@link SimpleDenyList} initialization payload.
+ *
+ * @export
+ * @interface SimpleDenyListPayload
+ * @typedef {SimpleDenyListPayload}
+ */
+export interface SimpleDenyListPayload {
+  /**
+   * The allow list's owner
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of denied addresses.
+   *
+   * @type {Address[]}
+   */
+  denied: Address[];
+}
+
+/**
+ * Given a {@link SimpleDenyListPayload}, properly encode the initialization payload.
+ *
+ * @param {SimpleDenyListPayload} param0
+ * @param {Address} param0.owner - The allow list's owner
+ * @param {Address[]} param0.denied - List of denied addresses.
+ * @returns {Hex}
+ */
+export const prepareSimpleDenyListPayload = ({
+  owner,
+  denied,
+}: SimpleDenyListPayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'owner' },
+      { type: 'address[]', name: 'denied' },
+    ],
+    [owner, denied],
+  );
+};
+
+/**
+ * Object representation of `BoostCore.InitPayload` struct.
+ *
+ * @export
+ * @interface BoostPayload
+ * @typedef {BoostPayload}
+ */
+export interface BoostPayload {
+  /**
+   * Address to valid budget.
+   *
+   * @type {Address}
+   */
+  budget: Address;
+  /**
+   * Target for existing action, or base with initialization payload.
+   *
+   * @type {Target}
+   */
+  action: Target;
+  /**
+   * Target for existing validator, or base with initialization payload.
+   *
+   * @type {Target}
+   */
+  validator: Target;
+  /**
+   * Target for existing allowList, or base with initialization payload.
+   *
+   * @type {Target}
+   */
+  allowList: Target;
+  /**
+   * Targets for new incentives, with initialization payloads.
+   *
+   * @type {Target[]}
+   */
+  incentives: Target[];
+  /**
+   * The base protocol fee (in bps)
+   *
+   * @type {?bigint}
+   */
+  protocolFee?: bigint;
+  /**
+   * The base referral fee (in bps)
+   *
+   * @type {?bigint}
+   */
+  referralFee?: bigint;
+  /**
+   * Optional maximum amount of participants in the Boost.
+   *
+   * @type {?bigint}
+   */
+  maxParticipants?: bigint;
+  /**
+   * The owner of the Boost.
+   *
+   * @type {Address}
+   */
+  owner: Address;
+}
+
+/**
+ * Given a valid {@link BoostPayload}, properly encode and compress the payload for use with `createBoost`
+ *
+ * @export
+ * @param {BoostPayload} param0
+ * @param {Address} param0.budget - Address to valid budget.
+ * @param {Target} param0.action - Target for existing action, or base with initialization payload.
+ * @param {Target} param0.validator - Target for existing validator, or base with initialization payload.
+ * @param {Target} param0.allowList - Target for existing allowList, or base with initialization payload.
+ * @param {Target[]} param0.incentives - Targets for new incentives, with initialization payloads.
+ * @param {bigint} [param0.protocolFee=0n] - The base protocol fee (in bps)
+ * @param {bigint} [param0.referralFee=0n] - The base referral fee (in bps)
+ * @param {bigint} [param0.maxParticipants=0n] - Optional maximum amount of participants in the Boost.
+ * @param {Address} param0.owner - The owner of the Boost.
+ * @returns {Hex}
+ */
+export function prepareBoostPayload({
+  budget,
+  action,
+  validator,
+  allowList,
+  incentives,
+  protocolFee = 0n,
+  referralFee = 0n,
+  maxParticipants = 0n,
+  owner,
+}: BoostPayload): Hex {
+  return LibZip.cdCompress(
+    encodeAbiParameters(
+      parseAbiParameters([
+        'BoostPayload payload',
+        'struct BoostPayload { address budget; Target action; Target validator; Target allowList; Target[] incentives; uint64 protocolFee; uint64 referralFee; uint256 maxParticipants; address owner; }',
+        'struct Target { bool isBase; address instance; bytes parameters; }',
+      ]),
+      [
+        {
+          budget,
+          action,
+          validator,
+          allowList,
+          incentives,
+          protocolFee,
+          referralFee,
+          maxParticipants,
+          owner,
+        },
+      ],
+    ),
+  ) as Hex;
+}
+
+/**
+ * Object representation of
+ *
+ * @export
+ * @interface ERC1155Payload
+ * @typedef {ERC1155Payload}
+ */
+export interface ERC1155Payload {
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  tokenId: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  amount: bigint;
+}
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {ERC1155Payload} param0
+ * @param {bigint} param0.tokenId
+ * @param {bigint} param0.amount
+ * @returns {*}
+ */
+export function prepareERC1155Payload({ tokenId, amount }: ERC1155Payload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'ERC1155Payload payload',
+      'struct ERC1155Payload { uint256 tokenId; uint256 amount; bytes data; }',
+    ]),
+    [{ tokenId, amount, data: '0x' }],
+  );
+}
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface PointsIncentivePayload
+ * @typedef {PointsIncentivePayload}
+ */
+export interface PointsIncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
+  venue: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
+  selector: Hex;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  reward: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
+
+/**
+ * Description placeholder
+ *
+ * @param {PointsIncentivePayload} param0
+ * @param {Address} param0.venue
+ * @param {Hex} param0.selector
+ * @param {bigint} param0.reward
+ * @param {bigint} param0.limit
+ * @returns {*}
+ */
+export const preparePointsIncentivePayload = ({
+  venue,
+  selector,
+  reward,
+  limit,
+}: PointsIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'venue' },
+      { type: 'bytes4', name: 'selector' },
+      { type: 'uint256', name: 'reward' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [venue, selector, reward, limit],
+  );
+};
+
+/**
+ * The configuration parameters for the CGDAIncentive
+ *
+ * @export
+ * @interface CGDAParameters
+ * @typedef {CGDAParameters}
+ */
+export interface CGDAParameters {
+  /**
+   * The amount to subtract from the current reward after each claim
+   *
+   * @type {bigint}
+   */
+  rewardDecay: bigint;
+  /**
+   * The amount by which the reward increases for each hour without a claim (continuous linear increase)
+   *
+   * @type {bigint}
+   */
+  rewardBoost: bigint;
+  /**
+   * The timestamp of the last claim
+   *
+   * @type {bigint}
+   */
+  lastClaimTime: bigint;
+  /**
+   * The current reward amount
+   *
+   * @type {bigint}
+   */
+  currentReward: bigint;
+}
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface CGDAIncentivePayload
+ * @typedef {CGDAIncentivePayload}
+ */
+export interface CGDAIncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  initialReward: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  rewardDecay: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  rewardBoost: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  totalBudget: bigint;
+}
+
+/**
+ * Description placeholder
+ *
+ * @param {CGDAIncentivePayload} param0
+ * @param {Address} param0.asset
+ * @param {bigint} param0.initialReward
+ * @param {bigint} param0.rewardDecay
+ * @param {bigint} param0.rewardBoost
+ * @param {bigint} param0.totalBudget
+ * @returns {*}
+ */
+export const prepareCGDAIncentivePayload = ({
+  asset,
+  initialReward,
+  rewardDecay,
+  rewardBoost,
+  totalBudget,
+}: CGDAIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint256', name: 'initialReward' },
+      { type: 'uint256', name: 'rewardDecay' },
+      { type: 'uint256', name: 'rewardBoost' },
+      { type: 'uint256', name: 'totalBudget' },
+    ],
+    [asset, initialReward, rewardDecay, rewardBoost, totalBudget],
+  );
+};
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ERC1155IncentivePayload
+ * @typedef {ERC1155IncentivePayload}
+ */
+export interface ERC1155IncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {ERC1155StrategyType}
+   */
+  strategy: ERC1155StrategyType;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  tokenId: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
+  extraData: Hex;
+}
+
+// TODO: there's an issue with this specific payload encoding that exists between viem and ethers
+/**
+ * Description placeholder
+ *
+ * @param {ERC1155IncentivePayload} param0
+ * @param {Address} param0.asset
+ * @param {ERC1155StrategyType} param0.strategy
+ * @param {bigint} param0.tokenId
+ * @param {bigint} param0.limit
+ * @param {Hex} param0.extraData
+ * @returns {Hex}
+ */
+export const prepareERC1155IncentivePayload = ({
+  asset,
+  strategy,
+  tokenId,
+  limit,
+  extraData,
+}: ERC1155IncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint8', name: 'strategy' },
+      { type: 'uint256', name: 'tokenId' },
+      { type: 'uint256', name: 'limit' },
+      { type: 'bytes', name: 'extraData' },
+    ],
+    [asset, strategy, tokenId, limit, extraData],
+  );
+};
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface AllowListIncentivePayload
+ * @typedef {AllowListIncentivePayload}
+ */
+export interface AllowListIncentivePayload {
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
+  allowList: Address;
+  /**
+   * Description placeholder
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
+
+/**
+ * Description placeholder
+ *
+ * @param {AllowListIncentivePayload} param0
+ * @param {Address} param0.allowList
+ * @param {bigint} param0.limit
+ * @returns {*}
+ */
+export const prepareAllowListIncentivePayload = ({
+  allowList,
+  limit,
+}: AllowListIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'allowList' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [allowList, limit],
+  );
+};
+
+/**
+ * The object representation of a `ERC20Incentive.InitPayload`
+ *
+ * @export
+ * @interface ERC20IncentivePayload
+ * @typedef {ERC20IncentivePayload}
+ */
+export interface ERC20IncentivePayload {
+  /**
+   * The address of the incentivized asset.
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
+   *
+   * @type {StrategyType}
+   */
+  strategy: StrategyType;
+  /**
+   * The amount of the asset to distribute.
+   *
+   * @type {bigint}
+   */
+  reward: bigint;
+  /**
+   * How many times can this incentive be claimed.
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
+
+/**
+ * Given a {@link ERC20IncentivePayload}, properly encode a `ERC20Incentive.InitPayload` for use with {@link ERC20Incentive} initialization.
+ *
+ * @param {ERC20IncentivePayload} param0
+ * @param {Address} param0.asset - The address of the incentivized asset.
+ * @param {StrategyType} param0.strategy - The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
+ * @param {bigint} param0.reward - The amount of the asset to distribute.
+ * @param {bigint} param0.limit - How many times can this incentive be claimed.
+ * @returns {*}
+ */
+export const prepareERC20IncentivePayload = ({
+  asset,
+  strategy,
+  reward,
+  limit,
+}: ERC20IncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint8', name: 'strategy' },
+      { type: 'uint256', name: 'reward' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [asset, strategy, reward, limit],
+  );
+};
+
+/**
+ * The object representation of a `ContractAction.InitPayload`
+ *
+ * @export
+ * @interface ContractActionPayload
+ * @typedef {ContractActionPayload}
+ */
+export interface ContractActionPayload {
+  /**
+   * The chain ID on which the target exists
+   *
+   * @type {bigint}
+   */
+  chainId: bigint;
+  /**
+   * The target contract address
+   *
+   * @type {Address}
+   */
+  target: Address;
+  /**
+   * The selector for the function to be called
+   *
+   * @type {Hex}
+   */
+  selector: Hex;
+  /**
+   * The native token value to send with the function call
+   *
+   * @type {bigint}
+   */
+  value: bigint;
+}
+
+/**
+ * `ERC721MintActionPayload` is a re-exported `ContractActionPayload`
+ *
+ * @export
+ * @typedef {ERC721MintActionPayload}
+ */
+export type ERC721MintActionPayload = ContractActionPayload;
+
+/**
+ * The object representation of a `SimpleBudgetPayload.InitPayload`
+ *
+ * @export
+ * @interface SimpleBudgetPayload
+ * @typedef {SimpleBudgetPayload}
+ */
+export interface SimpleBudgetPayload {
+  /**
+   * The budget's owner
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+   *
+   * @type {Address[]}
+   */
+  authorized: Address[];
+}
+
+/**
+ * Given a {@link SimpleBudgetPayload}, properly encode a `SimpleBudget.InitPayload` for use with {@link SimpleBudget} initialization.
+ *
+ * @param {SimpleBudgetPayload} param0
+ * @param {Address} param0.owner - The budget's owner
+ * @param {{}} param0.authorized - List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+ * @returns {*}
+ */
+export const prepareSimpleBudgetPayload = ({
+  owner,
+  authorized,
+}: SimpleBudgetPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'SimpleBudgetPayload payload',
+      'struct SimpleBudgetPayload { address owner; address[] authorized; }',
+    ]),
+    [{ owner, authorized }],
+  );
+};
+
+/**
+ * The object representation of a `VestingBudget.InitPayload`
+ *
+ * @export
+ * @interface VestingBudgetPayload
+ * @typedef {VestingBudgetPayload}
+ */
+export interface VestingBudgetPayload {
+  /**
+   * The budget's owner.
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+   *
+   * @type {Address[]}
+   */
+  authorized: Address[];
+  /**
+   * The timestamp at which the vesting schedule begins
+   *
+   * @type {bigint}
+   */
+  start: bigint;
+  /**
+   * The duration of the vesting schedule (in seconds)
+   *
+   * @type {bigint}
+   */
+  duration: bigint;
+  /**
+   * The duration of the cliff period (in seconds)
+   *
+   * @type {bigint}
+   */
+  cliff: bigint;
+}
+
+/**
+ * Given a {@link VestingBudgetPayload}, properly encode a `VestingBudget.InitPayload` for use with {@link VestingBudget} initialization.
+ *
+ * @param {VestingBudgetPayload} param0
+ * @param {Address} param0.owner - The budget's owner.
+ * @param {{}} param0.authorized - List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+ * @param {bigint} param0.start - The timestamp at which the vesting schedule begins
+ * @param {bigint} param0.duration - The duration of the vesting schedule (in seconds)
+ * @param {bigint} param0.cliff - The duration of the cliff period (in seconds)
+ * @returns {Hex}
+ */
+export const prepareVestingBudgetPayload = ({
+  owner,
+  authorized,
+  start,
+  duration,
+  cliff,
+}: VestingBudgetPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'VestingBudgetPayload payload',
+      'struct VestingBudgetPayload { address owner; address[] authorized; uint64 start; uint64 duration; uint64 cliff; }',
+    ]),
+    [{ owner, authorized, start, duration, cliff }],
+  );
+};
+
+/**
+ * Given a {@link ContractActionPayload}, properly encode a `ContractAction.InitPayload` for use with {@link ContractAction} initialization.
+ *
+ * @param {ContractActionPayload} param0
+ * @param {bigint} param0.chainId - The chain ID on which the target exists
+ * @param {Address} param0.target - The target contract address
+ * @param {Hex} param0.selector - The selector for the function to be called
+ * @param {bigint} param0.value - The native token value to send with the function call
+ * @returns {Hex}
+ */
+export const prepareContractActionPayload = ({
+  chainId,
+  target,
+  selector,
+  value,
+}: ContractActionPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'ContractActionPayload payload',
+      'struct ContractActionPayload { uint256 chainId; address target; bytes4 selector; uint256 value; }',
+    ]),
+    [{ chainId, target, selector, value }],
+  );
+};
+
+/**
+ * Given a {@link ContractActionPayload}, properly encode a `ContractAction.InitPayload` for use with {@link ERC721MintAction} initialization.
+ *
+ * @param {ContractActionPayload} param0
+ * @param {bigint} param0.chainId - The chain ID on which the target exists
+ * @param {Address} param0.target - The target contract address
+ * @param {Hex} param0.selector - The selector for the function to be called
+ * @param {bigint} param0.value - The native token value to send with the function call
+ * @returns {*}
+ */
+export const prepareERC721MintActionPayload = ({
+  chainId,
+  target,
+  selector,
+  value,
+}: ContractActionPayload) => {
+  return prepareContractActionPayload({ chainId, target, selector, value });
+};
+
+/**
+ * The object representation of an `Incentive.ClaimPayload`
+ *
+ * @export
+ * @interface ClaimPayload
+ * @typedef {ClaimPayload}
+ */
+export interface ClaimPayload {
+  /**
+   * The address of the recipient
+   *
+   * @type {Address}
+   */
+  target: Address;
+  /**
+   * The implementation-specific data for the claim, if needed
+   *
+   * @type {?Hex}
+   */
+  data?: Hex;
+}
+
+/**
+ * Given a valid {@link ClaimPayload}, encode the payload for use with Incentive operations.
+ *
+ * @param {ClaimPayload} param0
+ * @param {Address} param0.target - The address of the recipient
+ * @param {Hex} [param0.data=zeroHash] - The implementation-specific data for the claim, if needed
+ * @returns {*}
+ */
+export const prepareClaimPayload = ({
+  target,
+  data = zeroHash,
+}: ClaimPayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'target' },
+      { type: 'bytes', name: 'data' },
+    ],
+    [target, data],
+  );
+};
+
+/*
+ * Transfer Payloads
+ */
+
+/**
+ * The various types of assets supported in Budgets and Incentives.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum AssetType {
+  ETH,
+  ERC20,
+  ERC1155,
+}
+
+/**
+ * Object representation of a generic `Transfer` struct.
+ *
+ * @export
+ * @interface TransferPayload
+ * @typedef {TransferPayload}
+ */
+export interface TransferPayload {
+  /**
+   * The type of the asset being transferred.
+   *
+   * @type {AssetType}
+   */
+  assetType: AssetType;
+  /**
+   * The address of the asset to transfer, zero address for ETH.
+   *
+   * @type {Address}
+   */
+  address: Address;
+  /**
+   * The account from which to transfer the assets.
+   *
+   * @type {Address}
+   */
+  target: Address;
+  /**
+   * An encoded {@link FungiblePayload}, use {@link prepareFungiblePayload} to construct.
+   *
+   * @type {Hex}
+   */
+  data: Hex;
+}
+
+/**
+ * Encodes parameters for transferring the transfer of Fungible and ERC1155 assets, used for {@link Budget} operations.
+ * Typically you'd use {@link prepareFungibleTransfer} or {@link prepareERC1155Transfer}
+ *
+ * @param {TransferPayload} param0
+ * @param {AssetType} param0.assetType - The asset type being transferred.
+ * @param {Address} param0.address - The address of the asset, use zero address for ETH transfers.
+ * @param {Address} param0.target - The address of the account being transferred from
+ * @param {Hex} param0.data - Use {@link prepareFungiblePayload} to properly encode an amount to transfer
+ * @returns {Hex}
+ */
+export const prepareTransferPayload = ({
+  assetType,
+  address,
+  target,
+  data,
+}: TransferPayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'uint8', name: 'assetType' },
+      { type: 'address', name: 'asset' },
+      { type: 'address', name: 'target' },
+      { type: 'bytes', name: 'data' },
+    ],
+    [assetType, address, target, data],
+  );
+};
+
+/**
+ * An object representation of the `Budget.Transfer` contract struct for transfers of ERC1155 assets.
+ *
+ * @export
+ * @interface ERC1155TransferPayload
+ * @typedef {ERC1155TransferPayload}
+ */
+export interface ERC1155TransferPayload {
+  /**
+   * The token ID to transfer
+   *
+   * @type {bigint}
+   */
+  tokenId: bigint;
+  /**
+   * The amount to transfer
+   *
+   * @type {bigint}
+   */
+  amount: bigint;
+  /**
+   * The address of the asset to target
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The account to transfer from
+   *
+   * @type {Address}
+   */
+  target: Address;
+}
+
+/**
+ * Encodes parameters for transferring the transfer of ERC1155 assets, used for {@link Budget} operations.
+ * The caller must have already approved the contract to transfer the asset.
+ *
+ * @export
+ * @param {ERC1155TransferPayload} param0
+ * @param {bigint} param0.tokenId - The token ID to transfer
+ * @param {bigint} param0.amount - The amount to transfer
+ * @param {Address} param0.asset - The address of the asset to target
+ * @param {Address} param0.target - The account to transfer from
+ * @returns {Hex}
+ */
+export function prepareERC1155Transfer({
+  tokenId,
+  amount,
+  asset,
+  target,
+}: ERC1155TransferPayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'Transfer request',
+      'struct Transfer { uint8 assetType; address asset; address target; bytes data; }',
+    ]),
+    [
+      {
+        assetType: AssetType.ERC1155,
+        asset,
+        data: prepareERC1155Payload({ tokenId, amount }),
+        target,
+      },
+    ],
+  );
+}
+
+/**
+ * An object representation of the `FungiblePayload` struct
+ *
+ * @export
+ * @interface FungiblePayload
+ * @typedef {FungiblePayload}
+ */
+export interface FungiblePayload {
+  /**
+   * The amount being transferred
+   *
+   * @type {bigint}
+   */
+  amount: bigint;
+}
+
+/**
+ * Encodes an amount for the `FungiblePayload` struct
+ *
+ * @export
+ * @param {FungiblePayload} param0
+ * @param {bigint} param0.amount - The amount being transferred
+ * @returns {*}
+ */
+export function prepareFungiblePayload({ amount }: FungiblePayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'FungiblePayload payload',
+      'struct FungiblePayload { uint256 amount; }',
+    ]),
+    [{ amount }],
+  );
+}
+
+/**
+ * An object representation of the `Budget.Transfer` contract struct for transfers of fungible assets.
+ *
+ * @export
+ * @interface FungibleTransferPayload
+ * @typedef {FungibleTransferPayload}
+ */
+export interface FungibleTransferPayload {
+  /**
+   * The amount to transfer
+   *
+   * @type {bigint}
+   */
+  amount: bigint;
+  /**
+   * The address of the asset. Use zero address for ETH transfers.
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The account to transfer from
+   *
+   * @type {Address}
+   */
+  target: Address;
+}
+
+/**
+ * Encodes parameters for a Fungible transfer, used for Budget allocations.
+ * The caller must have already approved the contract to transfer the asset.
+ *
+ * @export
+ * @param {FungibleTransferPayload} param0
+ * @param {bigint} param0.amount - The amount to transfer
+ * @param {Address} param0.asset - The address of the asset. Use zero address for ETH transfers.
+ * @param {Address} param0.target - The account to transfer from
+ * @returns {Hex}
+ */
+export function prepareFungibleTransfer({
+  amount,
+  asset,
+  target,
+}: FungibleTransferPayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'Transfer request',
+      'struct Transfer { uint8 assetType; address asset; address target; bytes data; }',
+    ]),
+    [
+      {
+        assetType: asset == zeroAddress ? AssetType.ETH : AssetType.ERC20,
+        asset,
+        data: prepareFungiblePayload({ amount }),
+        target,
+      },
+    ],
+  );
+}
+
+/**
+ * Encodes a payload to validate that an action has been completed successfully.
+ *
+ *
+ * @export
+ * @param {Address} holder - The holder address
+ * @param {bigint} payload - The token ID
+ * @returns {Hex} - The first 20 bytes of the payload will be the holder address and the remaining bytes must be an encoded token ID (uint256)
+ */
+export function prepareERC721MintActionValidate(
+  holder: Address,
+  payload: bigint,
+) {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'holder' },
+      { type: 'bytes', name: 'payload' },
+    ],
+    [holder, toHex(payload)],
+  );
 }

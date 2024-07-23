@@ -9,17 +9,17 @@
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
     ".": {
-      "require": "./dist/index.cjs",
-      "import": "./artifacts/index.ts",
-      "node": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/generated.cjs",
+      "import": "./artifacts/generated.ts",
+      "node": "./dist/generated.js",
+      "types": "./dist/generated.d.ts"
     },
     "./artifacts/contracts/*.json": "./artifacts/contracts/*.json"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "typings": "./dist/index.d.ts",
+  "main": "./dist/generated.cjs",
+  "module": "./dist/generated.js",
+  "types": "./dist/generated.d.ts",
+  "typings": "./dist/generated.d.ts",
   "scripts": {
     "build": "forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
     "test": "forge test -vvv && npx hardhat test",
@@ -29,7 +29,6 @@
   "license": "ISC",
   "dependencies": {
     "@wagmi/core": "^2.11.2",
-    "ethers": "^6.13.1",
     "wagmi": "^2.10.2"
   },
   "devDependencies": {

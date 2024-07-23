@@ -5,7 +5,7 @@ export default {
       external: [/wagmi/],
     },
     lib: {
-      entry: ['artifacts/index.ts'],
+      entry: ['artifacts/generated.ts'],
       emptyOutDir: false,
       name: 'BoostEVM',
       fileName: (module, name) => {

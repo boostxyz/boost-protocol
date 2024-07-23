@@ -213,5 +213,8 @@
   "peerDependencies": {
     "@wagmi/core": "^2.11.2",
     "viem": "^2.9.9"
+  },
+  "dependencies": {
+    "solady": "^0.0.208"
   }
 }

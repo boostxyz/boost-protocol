@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { LibString$Type } from "./LibString";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["LibString"]: LibString$Type;
     ["@solady/utils/LibString.sol:LibString"]: LibString$Type;
+  }
+
+  interface ContractTypesMap {
+    ["LibString"]: GetContractReturnType<LibString$Type["abi"]>;
+    ["@solady/utils/LibString.sol:LibString"]: GetContractReturnType<LibString$Type["abi"]>;
   }
 }

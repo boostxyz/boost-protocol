@@ -1,19 +1,12 @@
 import {
-  type ClaimPayload,
-  type PointsIncentivePayload,
-  RegistryType,
   pointsIncentiveAbi,
-  prepareClaimPayload,
-  preparePointsIncentivePayload,
   readPointsIncentiveClaimed,
   readPointsIncentiveClaims,
   readPointsIncentiveCurrentReward,
-  readPointsIncentiveGetComponentInterface,
   readPointsIncentiveIsClaimable,
   readPointsIncentiveLimit,
   readPointsIncentiveReward,
   readPointsIncentiveSelector,
-  readPointsIncentiveSupportsInterface,
   readPointsIncentiveVenue,
   simulatePointsIncentiveClaim,
   writePointsIncentiveClaim,
@@ -25,7 +18,15 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type ClaimPayload,
+  type PointsIncentivePayload,
+  type ReadParams,
+  RegistryType,
+  type WriteParams,
+  prepareClaimPayload,
+  preparePointsIncentivePayload,
+} from '../utils';
 
 export type { PointsIncentivePayload };
 

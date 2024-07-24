@@ -1,5 +1,4 @@
 import {
-  RegistryType,
   type cloneableAbi,
   readCloneableGetComponentInterface,
   readCloneableSupportsInterface,
@@ -13,7 +12,7 @@ import {
   zeroAddress,
 } from 'viem';
 import { DeployableAlreadyDeployedError } from '../errors';
-import type { ReadParams } from '../utils';
+import { type ReadParams, RegistryType } from '../utils';
 import {
   Deployable,
   type DeployableOptions,

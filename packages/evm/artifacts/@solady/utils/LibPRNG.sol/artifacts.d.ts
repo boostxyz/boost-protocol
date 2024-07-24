@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { LibPRNG$Type } from "./LibPRNG";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["LibPRNG"]: LibPRNG$Type;
     ["@solady/utils/LibPRNG.sol:LibPRNG"]: LibPRNG$Type;
+  }
+
+  interface ContractTypesMap {
+    ["LibPRNG"]: GetContractReturnType<LibPRNG$Type["abi"]>;
+    ["@solady/utils/LibPRNG.sol:LibPRNG"]: GetContractReturnType<LibPRNG$Type["abi"]>;
   }
 }

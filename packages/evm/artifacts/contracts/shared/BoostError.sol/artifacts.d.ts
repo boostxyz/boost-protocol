@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { BoostError$Type } from "./BoostError";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["BoostError"]: BoostError$Type;
     ["contracts/shared/BoostError.sol:BoostError"]: BoostError$Type;
+  }
+
+  interface ContractTypesMap {
+    ["BoostError"]: GetContractReturnType<BoostError$Type["abi"]>;
+    ["contracts/shared/BoostError.sol:BoostError"]: GetContractReturnType<BoostError$Type["abi"]>;
   }
 }

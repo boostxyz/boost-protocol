@@ -1,8 +1,5 @@
 import {
-  type BoostPayload as OnChainBoostPayload,
-  type Target,
   boostCoreAbi,
-  prepareBoostPayload,
   readBoostCoreClaimFee,
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
@@ -88,7 +85,13 @@ import {
   DeployableUnknownOwnerProvidedError,
   NoContractAddressUponReceiptError,
 } from './errors';
-import type { ReadParams, WriteParams } from './utils';
+import {
+  type BoostPayload as OnChainBoostPayload,
+  type ReadParams,
+  type Target,
+  type WriteParams,
+  prepareBoostPayload,
+} from './utils';
 
 /**
  * The fixed address for the deployed Boost Core.

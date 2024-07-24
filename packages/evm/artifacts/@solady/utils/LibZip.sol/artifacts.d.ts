@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { LibZip$Type } from "./LibZip";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["LibZip"]: LibZip$Type;
     ["@solady/utils/LibZip.sol:LibZip"]: LibZip$Type;
+  }
+
+  interface ContractTypesMap {
+    ["LibZip"]: GetContractReturnType<LibZip$Type["abi"]>;
+    ["@solady/utils/LibZip.sol:LibZip"]: GetContractReturnType<LibZip$Type["abi"]>;
   }
 }

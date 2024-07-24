@@ -77,9 +77,6 @@ importers:
       '@wagmi/core':
         specifier: ^2.11.2
         version: 2.11.2(react@18.3.1)(typescript@5.3.3)(viem@2.9.9)
-      ethers:
-        specifier: ^6.13.1
-        version: 6.13.1
       wagmi:
         specifier: ^2.10.2
         version: 2.10.2(@tanstack/react-query@5.45.0)(react-i18next@13.5.0)(react-native@0.74.2)(react@18.3.1)(typescript@5.3.3)(viem@2.9.9)
@@ -141,6 +138,9 @@ importers:
       '@wagmi/core':
         specifier: ^2.11.2
         version: 2.11.2(react@18.3.1)(typescript@5.3.3)(viem@2.9.9)
+      solady:
+        specifier: ^0.0.208
+        version: 0.0.208
       viem:
         specifier: ^2.9.9
         version: 2.9.9(typescript@5.3.3)(zod@3.22.4)
@@ -156,6 +156,7 @@ packages:
 
   /@adraffy/ens-normalize@1.10.1:
     resolution: {integrity: sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==}
+    dev: true
 
   /@ampproject/remapping@2.3.0:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -5677,6 +5678,7 @@ packages:
 
   /aes-js@4.0.0-beta.5:
     resolution: {integrity: sha512-G965FqalsNyrPqgEGON7nIx1e/OVENSgiEIzyC63haUMuvNnwIgIjMs52hlTCKhkBny7A2ORNlfY9Zu+jmGk1Q==}
+    dev: true
 
   /agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
@@ -7355,6 +7357,7 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    dev: true
 
   /ethjs-unit@0.1.6:
     resolution: {integrity: sha512-/Sn9Y0oKl0uqQuvgFk/zQgR7aw1g36qX/jzSQ5lSwlO0GigPymk4eGQfeNTD03w1dPOqfz8V77Cy43jH56pagw==}
@@ -10971,7 +10974,6 @@ packages:
 
   /solady@0.0.208:
     resolution: {integrity: sha512-JuSgLFa7yR1l6pneJjO6h37ITPYQjN/ExATLgJemWQVwd+th4fBUXFLFUX2KIAdAw/UPrhob7ksVhDETkw7MhA==}
-    dev: true
 
   /solc@0.7.3(debug@4.3.4):
     resolution: {integrity: sha512-GAsWNAjGzIDg7VxzP6mPjdurby3IkGCjQcM8GFYZT6RyaoUZKmMU6Y7YwG+tFGhv7dwZ8rmR4iwFDrrD99JwqA==}
@@ -11496,6 +11498,7 @@ packages:
 
   /tslib@2.4.0:
     resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
+    dev: true
 
   /tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
@@ -12331,6 +12334,7 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+    dev: true
 
   /xmlhttprequest-ssl@2.0.0:
     resolution: {integrity: sha512-QKxVRxiRACQcVuQEYFsI1hhkrMlrXHPegbbd1yn9UHOmRxY+si12nQYzri3vbzt8VdTTRviqcKxcyllFas5z2A==}

@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { Panic$Type } from "./Panic";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["Panic"]: Panic$Type;
     ["@openzeppelin/contracts/utils/Panic.sol:Panic"]: Panic$Type;
+  }
+
+  interface ContractTypesMap {
+    ["Panic"]: GetContractReturnType<Panic$Type["abi"]>;
+    ["@openzeppelin/contracts/utils/Panic.sol:Panic"]: GetContractReturnType<Panic$Type["abi"]>;
   }
 }

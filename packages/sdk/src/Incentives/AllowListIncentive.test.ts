@@ -1,7 +1,4 @@
-import {
-  prepareSignerValidatorValidatePayload,
-  writePointsGrantRoles,
-} from '@boostxyz/evm';
+import { writePointsGrantRoles } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
 import {
@@ -20,7 +17,7 @@ import {
   freshBoost,
 } from '../../test/helpers';
 import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
-import { bytes4 } from '../utils';
+import { bytes4, prepareSignerValidatorValidatePayload } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures;

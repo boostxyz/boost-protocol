@@ -48,6 +48,7 @@ contract ERC1155Incentive is AERC1155Incentive {
         tokenId = init_.tokenId;
         limit = init_.limit;
         extraData = init_.extraData;
+
         _initializeOwner(msg.sender);
     }
 

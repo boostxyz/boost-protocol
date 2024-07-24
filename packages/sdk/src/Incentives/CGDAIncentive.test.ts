@@ -1,17 +1,7 @@
-import {
-  StrategyType,
-  prepareSignerValidatorValidatePayload,
-  readMockErc20BalanceOf,
-} from '@boostxyz/evm';
+import { readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
-import {
-  encodePacked,
-  isAddress,
-  keccak256,
-  parseEther,
-  zeroAddress,
-} from 'viem';
+import { encodePacked, isAddress, keccak256, parseEther } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -22,6 +12,7 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
+import { prepareSignerValidatorValidatePayload } from '../utils';
 import { CGDAIncentive } from './CGDAIncentive';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;

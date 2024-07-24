@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { Arrays$Type } from "./Arrays";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["Arrays"]: Arrays$Type;
     ["@openzeppelin/contracts/utils/Arrays.sol:Arrays"]: Arrays$Type;
+  }
+
+  interface ContractTypesMap {
+    ["Arrays"]: GetContractReturnType<Arrays$Type["abi"]>;
+    ["@openzeppelin/contracts/utils/Arrays.sol:Arrays"]: GetContractReturnType<Arrays$Type["abi"]>;
   }
 }

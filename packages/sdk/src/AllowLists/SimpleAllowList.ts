@@ -1,7 +1,4 @@
 import {
-  RegistryType,
-  type SimpleAllowListPayload,
-  prepareSimpleAllowListPayload,
   readSimpleAllowListIsAllowed,
   simpleAllowListAbi,
   simulateSimpleAllowListGrantRoles,
@@ -18,9 +15,13 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
-import type { ReadParams } from '../utils';
+import {
+  type ReadParams,
+  RegistryType,
+  type SimpleAllowListPayload,
+  prepareSimpleAllowListPayload,
+} from '../utils';
 
-export { prepareSimpleAllowListPayload };
 export type { SimpleAllowListPayload };
 
 /**

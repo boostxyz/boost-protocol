@@ -7,7 +7,7 @@ src = 'contracts'
 test = 'test'
 cache_path  = 'cache_forge'
 libs = ['node_modules', 'lib']
-solc_version = '0.8.25'
+solc_version = '0.8.26'
 evm_version = 'cancun'
 
 remappings=[

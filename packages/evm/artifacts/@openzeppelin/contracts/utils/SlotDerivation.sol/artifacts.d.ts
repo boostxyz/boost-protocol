@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { SlotDerivation$Type } from "./SlotDerivation";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["SlotDerivation"]: SlotDerivation$Type;
     ["@openzeppelin/contracts/utils/SlotDerivation.sol:SlotDerivation"]: SlotDerivation$Type;
+  }
+
+  interface ContractTypesMap {
+    ["SlotDerivation"]: GetContractReturnType<SlotDerivation$Type["abi"]>;
+    ["@openzeppelin/contracts/utils/SlotDerivation.sol:SlotDerivation"]: GetContractReturnType<SlotDerivation$Type["abi"]>;
   }
 }

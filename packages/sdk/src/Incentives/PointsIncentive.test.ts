@@ -1,8 +1,4 @@
-import {
-  prepareSignerValidatorValidatePayload,
-  readPointsBalanceOf,
-  writePointsGrantRoles,
-} from '@boostxyz/evm';
+import { readPointsBalanceOf, writePointsGrantRoles } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
 import {
@@ -22,7 +18,7 @@ import {
   freshBoost,
   freshPoints,
 } from '../../test/helpers';
-import { bytes4 } from '../utils';
+import { bytes4, prepareSignerValidatorValidatePayload } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures, points: MockPoints;

@@ -1,11 +1,4 @@
 import {
-  type ERC1155TransferPayload,
-  type FungibleTransferPayload,
-  RegistryType,
-  type SimpleBudgetPayload,
-  prepareERC1155Transfer,
-  prepareFungibleTransfer,
-  prepareSimpleBudgetPayload,
   readSimpleBudgetAvailable,
   readSimpleBudgetDistributed,
   readSimpleBudgetIsAuthorized,
@@ -35,7 +28,17 @@ import {
   DeployableUnknownOwnerProvidedError,
   UnknownTransferPayloadSupplied,
 } from '../errors';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type ERC1155TransferPayload,
+  type FungibleTransferPayload,
+  type ReadParams,
+  RegistryType,
+  type SimpleBudgetPayload,
+  type WriteParams,
+  prepareERC1155Transfer,
+  prepareFungibleTransfer,
+  prepareSimpleBudgetPayload,
+} from '../utils';
 
 export type {
   ERC1155TransferPayload,
@@ -70,7 +73,7 @@ export function isERC1155TransferPayload(
 }
 
 /**
- * Given either a fungible transfer, or erc1155 transfer, will properly encode parameters for transfers, claims, disbursements, allocations, etc.
+ * Given either a Fungible transfer, or ERC1155 transfer, will properly encode parameters for transfers, claims, disbursements, allocations, etc.
  *
  * @export
  * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer

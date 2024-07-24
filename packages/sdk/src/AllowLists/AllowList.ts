@@ -6,7 +6,7 @@ import { InvalidComponentInterfaceError } from '../errors';
 import { SimpleAllowList } from './SimpleAllowList';
 import { SimpleDenyList } from './SimpleDenyList';
 
-export { SimpleDenyList, SimpleAllowList };
+export { SimpleAllowList, SimpleDenyList };
 
 /**
  * A union type representing all valid protocol AllowList implementations

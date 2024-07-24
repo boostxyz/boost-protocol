@@ -1,5 +1,4 @@
 import {
-  type RegistryType,
   boostRegistryAbi,
   readBoostRegistryGetBaseImplementation,
   readBoostRegistryGetCloneIdentifier,
@@ -17,7 +16,12 @@ import {
   type GenericDeployableParams,
 } from './Deployable/Deployable';
 import type { DeployableTarget } from './Deployable/DeployableTarget';
-import type { HashAndSimulatedResult, ReadParams, WriteParams } from './utils';
+import {
+  type HashAndSimulatedResult,
+  type ReadParams,
+  RegistryType,
+  type WriteParams,
+} from './utils';
 
 export { RegistryType };
 

@@ -4,6 +4,7 @@
 // eslint-disable
 
 import "hardhat/types/artifacts";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types";
 
 import { SafeCast$Type } from "./SafeCast";
 
@@ -11,5 +12,10 @@ declare module "hardhat/types/artifacts" {
   interface ArtifactsMap {
     ["SafeCast"]: SafeCast$Type;
     ["@openzeppelin/contracts/utils/math/SafeCast.sol:SafeCast"]: SafeCast$Type;
+  }
+
+  interface ContractTypesMap {
+    ["SafeCast"]: GetContractReturnType<SafeCast$Type["abi"]>;
+    ["@openzeppelin/contracts/utils/math/SafeCast.sol:SafeCast"]: GetContractReturnType<SafeCast$Type["abi"]>;
   }
 }

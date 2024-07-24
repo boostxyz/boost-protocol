@@ -1,12 +1,11 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, zeroAddress } from 'viem';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { beforeAll, describe, expect, test } from 'vitest';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
 } from '../../test/helpers';
-import { SimpleAllowList } from './SimpleAllowList';
 import { SimpleDenyList } from './SimpleDenyList';
 
 let fixtures: Fixtures;

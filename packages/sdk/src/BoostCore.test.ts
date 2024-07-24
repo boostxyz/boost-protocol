@@ -1,8 +1,3 @@
-import {
-  ERC1155StrategyType,
-  StrategyType,
-  writePointsGrantRoles,
-} from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
@@ -16,7 +11,7 @@ import {
 import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { IncentiveNotCloneableError } from './errors';
-import { bytes4 } from './utils';
+import { StrategyType, bytes4 } from './utils';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 

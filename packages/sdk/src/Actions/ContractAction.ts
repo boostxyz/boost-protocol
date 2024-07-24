@@ -1,13 +1,8 @@
 import {
-  type ContractActionPayload,
-  RegistryType,
   contractActionAbi,
-  prepareContractActionPayload,
   readContractActionChainId,
-  readContractActionGetComponentInterface,
   readContractActionPrepare,
   readContractActionSelector,
-  readContractActionSupportsInterface,
   readContractActionTarget,
   readContractActionValue,
   simulateContractActionExecute,
@@ -20,10 +15,15 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type ContractActionPayload,
+  type ReadParams,
+  RegistryType,
+  type WriteParams,
+  prepareContractActionPayload,
+} from '../utils';
 
 export type { ContractActionPayload };
-export { prepareContractActionPayload };
 
 /**
  * A generic contract action
@@ -126,7 +126,7 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   }
 
   /**
-   * Description placeholder
+   * Executes a prepared contract action
    *
    * @public
    * @async
@@ -142,7 +142,7 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   }
 
   /**
-   * Description placeholder
+   * Executes a prepared contract action
    *
    * @public
    * @async
@@ -173,17 +173,17 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
    *
    * @public
    * @async
-   * @param {Hex} data
+   * @param {Hex} calldata
    * @param {?ReadParams<typeof contractActionAbi, 'prepare'>} [params]
    * @returns {unknown}
    */
   public async prepare(
-    data: Hex,
+    calldata: Hex,
     params?: ReadParams<typeof contractActionAbi, 'prepare'>,
   ) {
     return readContractActionPrepare(this._config, {
       address: this.assertValidAddress(),
-      args: [data],
+      args: [calldata],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),

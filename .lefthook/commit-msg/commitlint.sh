@@ -1,1 +1,5 @@
-[[ -z "${RELEASING}" ]] && echo $(head -n1 $1) | npx commitlint --color || echo $(head -n1 $1)
+if [[ -z "${RELEASING}" ]]; then
+  echo $(head -n1 $1) | npx commitlint --color
+else
+  echo $(head -n1 $1)
+fi

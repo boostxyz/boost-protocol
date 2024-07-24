@@ -1,43 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
-import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
-import {BoostError} from "contracts/shared/BoostError.sol";
-import {Validator} from "contracts/validators/Validator.sol";
-import {SignerValidator} from "contracts/validators/Validator.sol";
+import {AActionEventValidator} from "contracts/validators/AActionEventValidator.sol";
 
-// Define Enums
-enum FilterType {
-    EQUAL,
-    NOT_EQUAL,
-    GREATER_THAN,
-    LESS_THAN
-}
-
-enum PrimitiveType {
-    UINT,
-    ADDRESS,
-    BYTES,
-    STRING
-}
-
-// Define Structs
-struct Criteria {
-    FilterType filterType;
-    PrimitiveType fieldType;
-    bytes filterData;
-}
-
-struct ActionEvent {
-    bytes4 eventSignature;
-    uint8 actionType;
-    Criteria[4] actionParameters;
-}
-
-contract ActionEventValidator is SignerValidator {
-    ActionEvent private actionEvent;
-
+contract ActionEventValidator is AActionEventValidator {
     event ActionEventInitialized(bytes4 indexed eventSignature, uint8 actionType, Criteria[4] actionParameters);
 
     /// @notice Initialize the contract with the list of authorized signers and the ActionEvent
@@ -57,9 +23,5 @@ contract ActionEventValidator is SignerValidator {
         actionEvent = actionEvent_;
 
         emit ActionEventInitialized(actionEvent.eventSignature, actionEvent.actionType, actionEvent.actionParameters);
-    }
-
-    function getActionEvent() public view returns (ActionEvent memory) {
-        return actionEvent;
     }
 }

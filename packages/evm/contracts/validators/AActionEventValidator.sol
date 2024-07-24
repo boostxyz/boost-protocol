@@ -12,7 +12,6 @@ import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
 import {Validator} from "contracts/validators/Validator.sol";
 
-
 contract AActionEventValidator is SignerValidator {
     ActionEvent internal actionEvent;
 
@@ -54,7 +53,13 @@ contract AActionEventValidator is SignerValidator {
     }
 
     /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ASignerValidator, Validator) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ASignerValidator, Validator)
+        returns (bool)
+    {
         return interfaceId == type(AActionEventValidator).interfaceId || super.supportsInterface(interfaceId);
     }
 }

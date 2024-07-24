@@ -1,10 +1,5 @@
 import {
-  type AllowListIncentivePayload,
-  type ClaimPayload,
-  RegistryType,
   allowListIncentiveAbi,
-  prepareAllowListIncentivePayload,
-  prepareClaimPayload,
   readAllowListIncentiveAllowList,
   readAllowListIncentiveClaimed,
   readAllowListIncentiveClaims,
@@ -23,9 +18,16 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type AllowListIncentivePayload,
+  type ClaimPayload,
+  type ReadParams,
+  RegistryType,
+  type WriteParams,
+  prepareAllowListIncentivePayload,
+  prepareClaimPayload,
+} from '../utils';
 
-export { prepareAllowListIncentivePayload };
 export type { AllowListIncentivePayload };
 
 /**

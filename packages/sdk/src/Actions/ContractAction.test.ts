@@ -5,7 +5,6 @@ import {
   ContractFunctionExecutionError,
   encodeAbiParameters,
   encodeFunctionData,
-  getFunctionSelector,
   isAddress,
   parseEther,
   toFunctionSelector,
@@ -138,42 +137,30 @@ describe('ContractAction', () => {
     );
   });
 
-  // TODO figure this out
-  test.skip('payable execute', async () => {
+  test('payable execute', async () => {
     const action = await loadFixture(payableContractAction(fixtures, erc20));
     const { account } = accounts.at(1)!;
-    const payload = await action.prepare(
+    await action.execute(
       encodeAbiParameters(
         [
           { type: 'address', name: 'to' },
           { type: 'uint256', name: 'amount' },
         ],
-        [account, parseEther('100')],
+        [account, parseEther('0.1')],
       ),
+      { value: parseEther('0.1') },
     );
-    await call(getClient(defaultOptions.config)!, {
-      to: erc20.assertValidAddress(),
-      account: defaultOptions.account.address,
-      data: payload,
-      value: parseEther('1'),
-    });
     expect(
       await readMockErc20BalanceOf(defaultOptions.config, {
         address: erc20.assertValidAddress(),
         args: [account],
       }),
-    ).toBe(parseEther('100'));
+    ).toBe(parseEther('0.1'));
   });
 
   test('nonpayable execute', async () => {
     const action = await loadFixture(nonPayableAction(fixtures, erc20));
     const { account } = accounts.at(1)!;
-    console.log(
-      await readMockErc20BalanceOf(defaultOptions.config, {
-        address: erc20.assertValidAddress(),
-        args: [account],
-      }),
-    );
     const [success] = await action.execute(
       encodeAbiParameters(
         [

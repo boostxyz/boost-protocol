@@ -21,7 +21,8 @@
   "types": "./dist/generated.d.ts",
   "typings": "./dist/generated.d.ts",
   "scripts": {
-    "build": "forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "build": "npm run clean && forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "clean": "forge clean && hardhat clean && rm -rf cache",
     "test": "forge test -vvv && npx hardhat test",
     "test:ci": "forge test --summary --detailed -vvv && npx hardhat test"
   },

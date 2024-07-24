@@ -1,9 +1,5 @@
 import {
-  type ERC721MintActionPayload,
-  RegistryType,
   erc721MintActionAbi,
-  prepareERC721MintActionPayload,
-  prepareERC721MintActionValidate,
   readErc721MintActionPrepare,
   readErc721MintActionValidated,
   simulateErc721MintActionExecute,
@@ -17,11 +13,18 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type ERC721MintActionPayload,
+  type ReadParams,
+  RegistryType,
+  type WriteParams,
+  prepareERC721MintActionPayload,
+  prepareERC721MintActionValidate,
+} from '../utils';
 import { ContractAction } from './ContractAction';
 
-export type { ERC721MintActionPayload };
 export { prepareERC721MintActionPayload };
+export type { ERC721MintActionPayload };
 
 /**
  * A primitive action to mint and/or validate that an ERC721 token has been minted

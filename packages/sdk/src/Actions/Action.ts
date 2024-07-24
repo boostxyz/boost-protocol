@@ -1,5 +1,5 @@
 import { actionAbi } from '@boostxyz/evm';
-import { type Config, readContract } from '@wagmi/core';
+import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';

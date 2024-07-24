@@ -2,7 +2,6 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '../../test/MockERC20';
-import type { MockERC1155 } from '../../test/MockERC1155';
 import {
   type Fixtures,
   defaultOptions,

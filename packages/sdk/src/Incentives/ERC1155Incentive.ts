@@ -1,24 +1,15 @@
 import {
-  type ClaimPayload,
-  type ERC1155IncentivePayload,
-  type ERC1155StrategyType,
-  RegistryType,
-  type StrategyType,
   erc1155IncentiveAbi,
-  prepareClaimPayload,
-  prepareERC1155IncentivePayload,
   readErc1155IncentiveAsset,
   readErc1155IncentiveClaimed,
   readErc1155IncentiveClaims,
   readErc1155IncentiveExtraData,
-  readErc1155IncentiveGetComponentInterface,
   readErc1155IncentiveIsClaimable,
   readErc1155IncentiveLimit,
   readErc1155IncentivePreflight,
   readErc1155IncentiveReward,
   readErc1155IncentiveStrategy,
   readErc1155IncentiveTokenId,
-  readErc1155SupportsInterface,
   simulateErc1155IncentiveClaim,
   simulateErc1155IncentiveReclaim,
   writeErc1155IncentiveClaim,
@@ -31,9 +22,20 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type ClaimPayload,
+  type ERC1155IncentivePayload,
+  ERC1155StrategyType,
+  type ReadParams,
+  RegistryType,
+  type StrategyType,
+  type WriteParams,
+  prepareClaimPayload,
+  prepareERC1155IncentivePayload,
+} from '../utils';
 
-export type { ERC1155IncentivePayload, ERC1155StrategyType };
+export { ERC1155StrategyType };
+export type { ERC1155IncentivePayload };
 
 /**
  * This is currently not exported due to a mysterious abi encoding issue

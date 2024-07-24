@@ -1,10 +1,5 @@
 import {
-  RegistryType,
-  type SimpleDenyListPayload,
-  prepareSimpleDenyListPayload,
-  readSimpleDenyListGetComponentInterface,
   readSimpleDenyListIsAllowed,
-  readSimpleDenyListSupportsInterface,
   simpleDenyListAbi,
   simulateSimpleDenyListSetDenied,
   writeSimpleDenyListSetDenied,
@@ -18,10 +13,15 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type ReadParams,
+  RegistryType,
+  type SimpleDenyListPayload,
+  type WriteParams,
+  prepareSimpleDenyListPayload,
+} from '../utils';
 
 export type { SimpleDenyListPayload };
-export { prepareSimpleDenyListPayload };
 
 /**
  * A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list

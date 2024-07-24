@@ -19,7 +19,6 @@ import {
   zeroHash,
 } from 'viem';
 import type { WriteContractParameters } from 'viem/actions';
-import { SimpleBudget } from './../../evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.d';
 import { ContractAction } from './Actions/ContractAction';
 import { ERC721MintAction } from './Actions/ERC721MintAction';
 import {
@@ -517,13 +516,13 @@ export function prepareBoostPayload({
  */
 export interface ERC1155Payload {
   /**
-   * Description placeholder
+   * The ERC1155 token ID for the incentive
    *
    * @type {bigint}
    */
   tokenId: bigint;
   /**
-   * Description placeholder
+   * The amount to transfer
    *
    * @type {bigint}
    */
@@ -531,13 +530,13 @@ export interface ERC1155Payload {
 }
 
 /**
- * Description placeholder
+ * Given a token ID and amount, properly encode a `ERC1155Incentive.ERC1155Payload` for use with {@link ERC1155Incentive} initialization.
  *
  * @export
  * @param {ERC1155Payload} param0
- * @param {bigint} param0.tokenId
- * @param {bigint} param0.amount
- * @returns {*}
+ * @param {bigint} param0.tokenId - The ERC1155 token ID for the incentive
+ * @param {bigint} param0.amount - The amount to transfer
+ * @returns {Hex}
  */
 export function prepareERC1155Payload({ tokenId, amount }: ERC1155Payload) {
   return encodeAbiParameters(
@@ -550,7 +549,7 @@ export function prepareERC1155Payload({ tokenId, amount }: ERC1155Payload) {
 }
 
 /**
- * Description placeholder
+ * The object representation of a `PointsIncentive.InitPayload`
  *
  * @export
  * @interface PointsIncentivePayload
@@ -558,25 +557,25 @@ export function prepareERC1155Payload({ tokenId, amount }: ERC1155Payload) {
  */
 export interface PointsIncentivePayload {
   /**
-   * Description placeholder
+   * The address of the points contract
    *
    * @type {Address}
    */
   venue: Address;
   /**
-   * Description placeholder
+   * The selector for the issuance function on the points contract
    *
    * @type {Hex}
    */
   selector: Hex;
   /**
-   * Description placeholder
+   * The reward amount issued for each claim
    *
    * @type {bigint}
    */
   reward: bigint;
   /**
-   * Description placeholder
+   *  The maximum number of claims that can be made (one per address)
    *
    * @type {bigint}
    */
@@ -584,13 +583,13 @@ export interface PointsIncentivePayload {
 }
 
 /**
- * Description placeholder
+ * Given a {@link PointsIncentivePayload}, properly encode a `PointsIncentive.InitPayload` for use with {@link PointsIncentive} initialization.
  *
  * @param {PointsIncentivePayload} param0
- * @param {Address} param0.venue
- * @param {Hex} param0.selector
- * @param {bigint} param0.reward
- * @param {bigint} param0.limit
+ * @param {Address} param0.venue - The address of the points contract
+ * @param {Hex} param0.selector - The selector for the issuance function on the points contract
+ * @param {bigint} param0.reward - The reward amount issued for each claim
+ * @param {bigint} param0.limit -  The maximum number of claims that can be made (one per address)
  * @returns {*}
  */
 export const preparePointsIncentivePayload = ({
@@ -611,7 +610,7 @@ export const preparePointsIncentivePayload = ({
 };
 
 /**
- * The configuration parameters for the CGDAIncentive
+ *  The configuration parameters for the CGDAIncentive
  *
  * @export
  * @interface CGDAParameters
@@ -645,7 +644,7 @@ export interface CGDAParameters {
 }
 
 /**
- * Description placeholder
+ * The object representation of a `CGDAIncentive.InitPayload`
  *
  * @export
  * @interface CGDAIncentivePayload
@@ -653,31 +652,31 @@ export interface CGDAParameters {
  */
 export interface CGDAIncentivePayload {
   /**
-   * Description placeholder
+   * The address of the ERC20-like token
    *
    * @type {Address}
    */
   asset: Address;
   /**
-   * Description placeholder
+   * The initial reward amount
    *
    * @type {bigint}
    */
   initialReward: bigint;
   /**
-   * Description placeholder
+   * The amount to subtract from the current reward after each claim
    *
    * @type {bigint}
    */
   rewardDecay: bigint;
   /**
-   * Description placeholder
+   * The amount by which the reward increases for each hour without a claim (continuous linear increase)
    *
    * @type {bigint}
    */
   rewardBoost: bigint;
   /**
-   * Description placeholder
+   * The total budget for the incentive
    *
    * @type {bigint}
    */
@@ -685,15 +684,15 @@ export interface CGDAIncentivePayload {
 }
 
 /**
- * Description placeholder
+ * Given a {@link CGDAIncentivePayload}, properly encode a `CGDAIncentive.InitPayload` for use with {@link CGDAIncentive} initialization.
  *
  * @param {CGDAIncentivePayload} param0
- * @param {Address} param0.asset
- * @param {bigint} param0.initialReward
- * @param {bigint} param0.rewardDecay
- * @param {bigint} param0.rewardBoost
- * @param {bigint} param0.totalBudget
- * @returns {*}
+ * @param {Address} param0.asset - The address of the ERC20-like token
+ * @param {bigint} param0.initialReward - The initial reward amount
+ * @param {bigint} param0.rewardDecay - The amount to subtract from the current reward after each claim
+ * @param {bigint} param0.rewardBoost - The amount by which the reward increases for each hour without a claim (continuous linear increase)
+ * @param {bigint} param0.totalBudget - The total budget for the incentive
+ * @returns {Hex}
  */
 export const prepareCGDAIncentivePayload = ({
   asset,
@@ -715,7 +714,7 @@ export const prepareCGDAIncentivePayload = ({
 };
 
 /**
- * Description placeholder
+ * The object representation of a `ERC1155Incentive.InitPayload`
  *
  * @export
  * @interface ERC1155IncentivePayload
@@ -723,47 +722,46 @@ export const prepareCGDAIncentivePayload = ({
  */
 export interface ERC1155IncentivePayload {
   /**
-   * Description placeholder
+   * The address of the `ERC1155` asset
    *
    * @type {Address}
    */
   asset: Address;
   /**
-   * Description placeholder
+   * Should be `Strategy.POOL`
    *
    * @type {ERC1155StrategyType}
    */
   strategy: ERC1155StrategyType;
   /**
-   * Description placeholder
+   * The token ID to target
    *
    * @type {bigint}
    */
   tokenId: bigint;
   /**
-   * Description placeholder
+   *  The maximum number of claims that can be made (one per address)
    *
    * @type {bigint}
    */
   limit: bigint;
   /**
-   * Description placeholder
+   *  Any extra data to accompany the claim, if applicable.
    *
    * @type {Hex}
    */
   extraData: Hex;
 }
 
-// TODO: there's an issue with this specific payload encoding that exists between viem and ethers
 /**
- * Description placeholder
+ * Given a {@link ERC1155IncentivePayload}, properly encode a `ERC1155Incentive.InitPayload` for use with {@link ERC1155Incentive} initialization.
  *
  * @param {ERC1155IncentivePayload} param0
- * @param {Address} param0.asset
- * @param {ERC1155StrategyType} param0.strategy
- * @param {bigint} param0.tokenId
- * @param {bigint} param0.limit
- * @param {Hex} param0.extraData
+ * @param {Address} param0.asset - The address of the `ERC1155` asset
+ * @param {ERC1155StrategyType} param0.strategy - Should be `Strategy.POOL`
+ * @param {bigint} param0.tokenId - The token ID to target
+ * @param {bigint} param0.limit -  The maximum number of claims that can be made (one per address)
+ * @param {Hex} param0.extraData - Any extra data to accompany the claim, if applicable.
  * @returns {Hex}
  */
 export const prepareERC1155IncentivePayload = ({
@@ -774,19 +772,26 @@ export const prepareERC1155IncentivePayload = ({
   extraData,
 }: ERC1155IncentivePayload) => {
   return encodeAbiParameters(
-    [
-      { type: 'address', name: 'asset' },
-      { type: 'uint8', name: 'strategy' },
-      { type: 'uint256', name: 'tokenId' },
-      { type: 'uint256', name: 'limit' },
-      { type: 'bytes', name: 'extraData' },
-    ],
-    [asset, strategy, tokenId, limit, extraData],
+    parseAbiParameters([
+      'InitPayload payload',
+      'struct InitPayload { address asset; uint8 strategy; uint256 tokenId; uint256 limit; bytes extraData; }',
+    ]),
+    [{ asset, strategy, tokenId, limit, extraData }],
   );
+  // return encodeAbiParameters(
+  //   [
+  //     { type: 'address', name: 'asset' },
+  //     { type: 'uint8', name: 'strategy' },
+  //     { type: 'uint256', name: 'tokenId' },
+  //     { type: 'uint256', name: 'limit' },
+  //     { type: 'bytes', name: 'extraData' },
+  //   ],
+  //   [asset, strategy, tokenId, limit, extraData],
+  // );
 };
 
 /**
- * Description placeholder
+ * The object representation of a `AllowListIncentive.InitPayload`
  *
  * @export
  * @interface AllowListIncentivePayload
@@ -794,13 +799,13 @@ export const prepareERC1155IncentivePayload = ({
  */
 export interface AllowListIncentivePayload {
   /**
-   * Description placeholder
+   * The address to the allowlist to add claimers to.
    *
    * @type {Address}
    */
   allowList: Address;
   /**
-   * Description placeholder
+   *  The maximum number of claims that can be made (one per address)
    *
    * @type {bigint}
    */
@@ -808,12 +813,12 @@ export interface AllowListIncentivePayload {
 }
 
 /**
- * Description placeholder
+ * Given a {@link AllowListIncentivePayload}, properly encode a `AllowListIncentive.InitPayload` for use with {@link AllowListIncentive} initialization.
  *
  * @param {AllowListIncentivePayload} param0
- * @param {Address} param0.allowList
- * @param {bigint} param0.limit
- * @returns {*}
+ * @param {Address} param0.allowList - The address to the allowlist to add claimers to.
+ * @param {bigint} param0.limit -  The maximum number of claims that can be made (one per address)
+ * @returns {Hex}
  */
 export const prepareAllowListIncentivePayload = ({
   allowList,

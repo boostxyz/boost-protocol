@@ -1,8 +1,4 @@
-import {
-  StrategyType,
-  prepareSignerValidatorValidatePayload,
-  readMockErc20BalanceOf,
-} from '@boostxyz/evm';
+import { readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
 import {
@@ -22,6 +18,7 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
+import { StrategyType, prepareSignerValidatorValidatePayload } from '../utils';
 import { ERC20Incentive } from './ERC20Incentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');

@@ -1,4 +1,4 @@
-import { type Address, type Hex, zeroAddress } from 'viem';
+import { type Address, zeroAddress } from 'viem';
 import type { Action } from './Actions/Action';
 import type { AllowList } from './AllowLists/AllowList';
 import type { Budget } from './Budgets/Budget';
@@ -12,7 +12,7 @@ import type { Validator } from './Validators/Validator';
  * @interface BoostPayload
  * @typedef {BoostPayload}
  */
-export interface BoostPayload {
+export interface BoostConfig {
   /**
    *
    * @type {bigint}
@@ -138,18 +138,18 @@ export class Boost {
    * Creates an instance of Boost.
    *
    * @constructor
-   * @param {BoostPayload} payload
+   * @param {BoostConfig} config
    */
-  constructor(payload: BoostPayload) {
-    this.id = payload.id;
-    this.budget = payload.budget;
-    this.action = payload.action;
-    this.validator = payload.validator;
-    this.allowList = payload.allowList;
-    this.incentives = payload.incentives;
-    this.protocolFee = payload.protocolFee || 0n;
-    this.referralFee = payload.referralFee || 0n;
-    this.maxParticipants = payload.maxParticipants || 0n;
-    this.owner = payload.owner || zeroAddress;
+  constructor(config: BoostConfig) {
+    this.id = config.id;
+    this.budget = config.budget;
+    this.action = config.action;
+    this.validator = config.validator;
+    this.allowList = config.allowList;
+    this.incentives = config.incentives;
+    this.protocolFee = config.protocolFee || 0n;
+    this.referralFee = config.referralFee || 0n;
+    this.maxParticipants = config.maxParticipants || 0n;
+    this.owner = config.owner || zeroAddress;
   }
 }

@@ -1,9 +1,4 @@
 import {
-  RegistryType,
-  type SignerValidatorPayload,
-  type SignerValidatorValidatePayload,
-  prepareSignerValidatorPayload,
-  prepareSignerValidatorValidatePayload,
   readSignerValidatorSigners,
   signerValidatorAbi,
   simulateSignerValidatorSetAuthorized,
@@ -18,9 +13,17 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
-import type { ReadParams, WriteParams } from '../utils';
+import {
+  type ReadParams,
+  RegistryType,
+  type SignerValidatorPayload,
+  type SignerValidatorValidatePayload,
+  type WriteParams,
+  prepareSignerValidatorPayload,
+  prepareSignerValidatorValidatePayload,
+} from '../utils';
 
-export type { SignerValidatorPayload, prepareSignerValidatorValidatePayload };
+export type { SignerValidatorPayload };
 
 /**
  *  A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers

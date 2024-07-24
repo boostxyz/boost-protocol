@@ -37,17 +37,17 @@ contract ERC1155Incentive is AERC1155Incentive {
         if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
         if (init_.limit == 0) revert BoostError.InvalidInitialization();
 
-        asset = init_.asset;
-        strategy = init_.strategy;
-        tokenId = init_.tokenId;
-        limit = init_.limit;
-        extraData = init_.extraData;
-
         // Ensure the maximum reward amount has been allocated
         uint256 available = init_.asset.balanceOf(address(this), init_.tokenId);
         if (available < init_.limit) {
             revert BoostError.InsufficientFunds(address(init_.asset), available, init_.limit);
         }
+
+        asset = init_.asset;
+        strategy = init_.strategy;
+        tokenId = init_.tokenId;
+        limit = init_.limit;
+        extraData = init_.extraData;
 
         _initializeOwner(msg.sender);
     }

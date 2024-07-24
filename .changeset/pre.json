@@ -5,5 +5,9 @@
     "@boostxyz/evm": "0.0.0-alpha.0",
     "@boostxyz/sdk": "0.0.0-alpha.0"
   },
-  "changesets": ["polite-jars-lie"]
+  "changesets": [
+    "mighty-pans-provide",
+    "polite-jars-lie",
+    "silent-ants-impress"
+  ]
 }

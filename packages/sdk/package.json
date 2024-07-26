@@ -35,6 +35,7 @@
     "./Validators/SignerValidator": "./src/Validators/SignerValidator.ts"
   },
   "publishConfig": {
+    "access": "public",
     "exports": {
       ".": {
         "require": "./dist/index.cjs",
@@ -203,18 +204,16 @@
     "bench": "vitest bench",
     "bench:ci": "CI=true vitest bench",
     "clean": "rm -rf dist",
+    "dev": "vite build --watch",
     "test": "vitest dev",
     "test:ci": "CI=true vitest --coverage",
     "typedoc": "npx typedoc"
   },
-  "devDependencies": {
+  "optionalDependencies": {
     "@boostxyz/evm": "workspace:*"
   },
   "peerDependencies": {
     "@wagmi/core": "^2.11.2",
     "viem": "^2.9.9"
-  },
-  "dependencies": {
-    "solady": "^0.0.208"
   }
 }

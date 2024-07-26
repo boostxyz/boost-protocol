@@ -1,23 +1,13 @@
 import {
   pointsAbi,
-  simulateMockErc20Approve,
-  simulateMockErc20Mint,
-  simulateMockErc20MintPayable,
   simulatePointsApprove,
   simulatePointsIssue,
-  writeMockErc20Approve,
-  writeMockErc20Mint,
-  writeMockErc20MintPayable,
   writePointsApprove,
   writePointsIssue,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/tokens/Points.sol/Points.json';
 import type { Address, Hex } from 'viem';
-import {
-  Deployable,
-  type DeployableOptions,
-  type GenericDeployableParams,
-} from '../src';
+import type { DeployableOptions, GenericDeployableParams } from '../src';
 import type { WriteParams } from './../src/utils';
 import { MockERC20 } from './MockERC20';
 

@@ -11,7 +11,7 @@ import {
 import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { IncentiveNotCloneableError } from './errors';
-import { StrategyType, bytes4 } from './utils';
+import { ERC1155StrategyType, StrategyType, bytes4 } from './utils';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -152,58 +152,6 @@ describe('BoostCore', () => {
     expect(await incentive.currentReward()).toBe(parseEther('1'));
     expect(await incentive.limit()).toBe(100n);
     expect(await incentive.claims()).toBe(0n);
-  });
-
-  test('can read the raw on chain representation of a boost', async () => {
-    const { core, bases } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
-    const { budget, erc20 } = budgets;
-    const _boost = await client.createBoost({
-      protocolFee: 1n,
-      referralFee: 2n,
-      maxParticipants: 100n,
-      budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
-      validator: new bases.SignerValidator(defaultOptions, {
-        signers: [defaultOptions.account.address],
-      }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
-        owner: defaultOptions.account.address,
-        allowed: [defaultOptions.account.address],
-      }),
-      incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
-          asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
-          limit: 100n,
-          strategy: StrategyType.POOL,
-        }),
-      ],
-    });
-    const boost = await client.readBoost(_boost.id);
-    expect(boost.protocolFee).toBe(1001n);
-    expect(boost.referralFee).toBe(1002n);
-    expect(boost.maxParticipants).toBe(100n);
-    expect(boost.budget).toBe(_boost.budget.assertValidAddress());
-    expect(boost.action).toBe(_boost.action.assertValidAddress());
-    expect(boost.validator).toBe(_boost.validator.assertValidAddress());
-    expect(boost.allowList).toBe(_boost.allowList.assertValidAddress());
-    expect(boost.incentives.at(0)).toBe(
-      _boost.incentives.at(0)?.assertValidAddress(),
-    );
   });
 
   test('can read the raw on chain representation of a boost', async () => {
@@ -561,7 +509,7 @@ describe('BoostCore', () => {
     // that are preconfigured with the dynamic base addresses generated at test time.
     // normally you would use the follow api for brevity
     // budget: client.SimpleBudget({} | '0xaddress')
-    const { budget, erc20, points } = budgets;
+    const { budget, erc20, points, erc1155 } = budgets;
     const allowList = await registry.clone(
       'SharedAllowList',
       new bases.SimpleAllowList(defaultOptions, {
@@ -576,13 +524,13 @@ describe('BoostCore', () => {
       limit: 10n,
       strategy: StrategyType.POOL,
     });
-    // const erc1155Incentive = new bases.ERC1155Incentive(defaultOptions, {
-    //   asset: erc1155.assertValidAddress(),
-    //   strategy: ERC1155StrategyType.POOL,
-    //   limit: 1n,
-    //   tokenId: 1n,
-    //   extraData: '0x',
-    // });
+    const erc1155Incentive = new bases.ERC1155Incentive(defaultOptions, {
+      asset: erc1155.assertValidAddress(),
+      strategy: ERC1155StrategyType.POOL,
+      limit: 1n,
+      tokenId: 1n,
+      extraData: '0x',
+    });
     const cgdaIncentive = new bases.CGDAIncentive(defaultOptions, {
       asset: erc20.assertValidAddress(),
       initialReward: 1n,
@@ -621,7 +569,7 @@ describe('BoostCore', () => {
         false,
       ),
       incentives: [
-        // erc1155Incentive,
+        erc1155Incentive,
         erc20Incentive,
         cgdaIncentive,
         allowListIncentive,

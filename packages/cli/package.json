@@ -19,6 +19,7 @@
     "./cli": "./src/cli.ts",
     "./commands/deploy": "./src/commands/deploy.ts"
   },
+  "license": "GPL-3.0-or-later",
   "publishConfig": {
     "access": "public",
     "exports": {

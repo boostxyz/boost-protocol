@@ -30,7 +30,7 @@
     "test:ci": "forge test --summary --detailed -vvv && npx hardhat test"
   },
   "keywords": [],
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "dependencies": {
     "@wagmi/core": "^2.11.5",
     "wagmi": "^2.10.2"

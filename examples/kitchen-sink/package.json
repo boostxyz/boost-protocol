@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "dependencies": {
     "@boostxyz/sdk": "workspace:*",
     "@boostxyz/evm": "workspace:*",

@@ -9,6 +9,7 @@
     - [Prerequisites](#prerequisites)
     - [Getting Started](#getting-started)
     - [Solidity Development](#solidity-development)
+    - [Developing with the SDK](#developing-with-the-sdk)
     - [Changesets \& Publishing](#changesets--publishing)
 
 [![Documentation](https://img.shields.io/badge/documentation-gh--pages-blue)](https://rabbitholegg.github.io/boost-protocol/index.html)
@@ -105,6 +106,56 @@ If using vscode, install this repository's recommended extensions, which depend 
 - [Wake](https://marketplace.visualstudio.com/items?itemName=AckeeBlockchain.tools-for-solidity)
 - [Hardhat Solidity](https://arc.net/l/quote/odxovcyb)
 - [Slither](https://marketplace.visualstudio.com/items?itemName=trailofbits.slither-vscode)
+
+### Developing with the SDK
+
+The build step for `@boostxyz/sdk` requires the following deployed contract address environment variables to exist in either a global context, or set in `/packages/sdk/.env`
+
+```sh
+VITE_BOOST_CORE_ADDRESS=
+VITE_BOOST_REGISTRY_ADDRESS=
+VITE_CONTRACT_ACTION_BASE=
+VITE_ERC721_MINT_ACTION_BASE=
+VITE_SIMPLE_ALLOWLIST_BASE=
+VITE_SIMPLE_DENYLIST_BASE=
+VITE_SIMPLE_BUDGET_BASE=
+VITE_VESTING_BUDGET_BASE=
+VITE_ALLOWLIST_INCENTIVE_BASE=
+VITE_CGDA_INCENTIVE_BASE=
+VITE_ERC20_INCENTIVE_BASE=
+VITE_ERC1155_INCENTIVE_BASE=
+VITE_POINTS_INCENTIVE_BASE=
+VITE_SIGNER_VALIDATOR_BASE=
+```
+
+Where each these values will be different depending on what chain the protocol is deployed to, but public mainline releases of `@boostxyz/sdk` should always have the correct Boost Network environment variables injected at build time during CI.
+
+As an example, to use `@boost/sdk` against a local hardhat node, you could use the following flow.
+
+```sh
+# if not already running a local node
+cd packages/sdk && npx hardhat --node --verbose
+
+# deploy protocol contracts to local hardhat node
+# keep in mind these values will be different each time the node is restarted
+npx boost deploy --chain hardhat --privateKey 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 >> packages/sdk/.env && sed -i '' 's/^/VITE_/' packages/sdk/.env
+
+# to bypass the deploy cache, you can run the deployment command with the --force flag
+npx boost deploy --force ...
+
+# build artifacts, with sdk now configured to reference deployed contracts
+npx turbo build
+
+# from some location if different than this repo...
+pnpm link PATH/TO/packages/sdk
+```
+
+Then you should be able to access the compiled SDK wherever your heart desires:
+
+```ts
+import { BoostCore } from '@boostxyz/sdk'
+// etc
+```
 
 ### Changesets & Publishing
 

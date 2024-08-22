@@ -6,9 +6,13 @@ import {
   writePointsIssue,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/tokens/Points.sol/Points.json';
+import {
+  Deployable,
+  type DeployableOptions,
+  type GenericDeployableParams,
+  type WriteParams,
+} from '@boostxyz/sdk';
 import type { Address, Hex } from 'viem';
-import type { DeployableOptions, GenericDeployableParams } from '../src';
-import type { WriteParams } from './../src/utils';
 import { MockERC20 } from './MockERC20';
 
 export class MockPoints extends MockERC20 {

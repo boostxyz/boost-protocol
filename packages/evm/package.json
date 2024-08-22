@@ -3,6 +3,9 @@
   "version": "0.0.0-alpha.0",
   "description": "",
   "private": true,
+  "publishConfig": {
+    "access": "restricted"
+  },
   "files": ["dist", "artifacts", "contracts"],
   "type": "module",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
@@ -27,9 +30,9 @@
     "test:ci": "forge test --summary --detailed -vvv && npx hardhat test"
   },
   "keywords": [],
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@wagmi/core": "^2.11.2",
+    "@wagmi/core": "^2.11.5",
     "wagmi": "^2.10.2"
   },
   "devDependencies": {
@@ -39,12 +42,8 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "@nomicfoundation/hardhat-viem": "^2.0.2",
-    "@types/chai": "4",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.24",
     "@wagmi/cli": "^2.1.4",
     "abitype": "^1.0.2",
-    "chai": "4",
     "hardhat": "^2.22.5",
     "solady": "^0.0.208",
     "ts-node": "^10.9.2",

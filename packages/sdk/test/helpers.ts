@@ -3,7 +3,6 @@ import {
   readMockErc721BalanceOf,
   readMockErc721MintPrice,
   readMockErc1155BalanceOf,
-  writeMockErc20Approve,
   writeMockErc1155SetApprovalForAll,
   writePointsInitialize,
 } from '@boostxyz/evm';

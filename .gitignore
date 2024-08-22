@@ -11,3 +11,4 @@ docs
 !.env.sample
 cache
 docs
+.boost

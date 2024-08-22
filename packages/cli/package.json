@@ -1,0 +1,55 @@
+{
+  "name": "@boostxyz/cli",
+  "version": "0.0.0-alpha.0",
+  "description": "A repository of useful scripts to interact with the protocol",
+  "repository": "https://github.com/rabbitholegg/boost-protocol",
+  "private": true,
+  "author": "Boost Team<boost-team@boost.xyz>",
+  "type": "module",
+  "files": ["dist"],
+  "main": "dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
+  "bin": {
+    "boost": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./cli": "./src/cli.ts",
+    "./commands/deploy": "./src/commands/deploy.ts"
+  },
+  "license": "GPL-3.0-or-later",
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "require": "./dist/index.cjs",
+        "import": "./dist/index.js",
+        "node": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      },
+      "./cli": {
+        "require": "./dist/cli.cjs",
+        "import": "./dist/cli.js",
+        "node": "./dist/cli.js",
+        "types": "./dist/cli.d.ts"
+      },
+      "./commands/deploy": {
+        "require": "./dist/commands/deploy.cjs",
+        "import": "./dist/commands/deploy.js",
+        "node": "./dist/commands/deploy.js",
+        "types": "./dist/commands/deploy.d.ts"
+      }
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "dev": "vite build --watch",
+    "clean": "rm -rf dist"
+  },
+  "optionalDependencies": {
+    "@boostxyz/sdk": "workspace:*",
+    "@boostxyz/evm": "workspace:*"
+  }
+}

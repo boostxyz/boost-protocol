@@ -145,8 +145,8 @@ importers:
         specifier: ^2.1.4
         version: 2.1.4(typescript@5.3.3)
       abitype:
-        specifier: ^1.0.2
-        version: 1.0.2(typescript@5.3.3)
+        specifier: ^1.0.6
+        version: 1.0.6(typescript@5.3.3)
       hardhat:
         specifier: ^2.22.5
         version: 2.22.5(ts-node@10.9.2)(typescript@5.3.3)
@@ -5583,8 +5583,8 @@ packages:
       typescript: 5.3.3
       zod: 3.22.4
 
-  /abitype@1.0.2(typescript@5.3.3):
-    resolution: {integrity: sha512-aFt4k2H+eiAKy/zxtnORa9iIb10BMBeWL18l8v4+QuwYEBXPxxjSB1bFZCzQmKPoj8m7j68K705l3uY+E2gAjg==}
+  /abitype@1.0.6(typescript@5.3.3):
+    resolution: {integrity: sha512-MMSqYh4+C/aVqI2RQaWqbvI4Kxo5cQV40WQ4QFtDnNzCkqChm8MuENhElmynZlO0qUy/ObkEUaXtKqYnx1Kp3A==}
     peerDependencies:
       typescript: '>=5.0.4'
       zod: ^3 >=3.22.0
@@ -7200,6 +7200,7 @@ packages:
 
   /ethereum-bloom-filters@1.1.0:
     resolution: {integrity: sha512-J1gDRkLpuGNvWYzWslBQR9cDV4nd4kfvVTE/Wy4Kkm4yb3EYRSlyi0eB/inTsSTTVyA0+HyzHgbr95Fn/Z1fSw==}
+    deprecated: do not use this package use package versions above as this can miss some topics
     dependencies:
       '@noble/hashes': 1.4.0
     dev: true

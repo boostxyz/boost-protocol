@@ -2,7 +2,7 @@
 export default {
   build: {
     rollupOptions: {
-      external: [/wagmi/],
+      external: [/^viem/, /^@wagmi(?!.*\/codegen)/],
     },
     lib: {
       entry: ['artifacts/generated.ts'],

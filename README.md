@@ -159,7 +159,7 @@ cd packages/sdk && npx hardhat node --verbose
 
 # deploy protocol contracts to local hardhat node
 # keep in mind these values will be different each time the node is restarted
-npx boost deploy --chain hardhat --privateKey 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 >> packages/sdk/.env && sed -i '' 's/^/VITE_/' packages/sdk/.env
+npx boost deploy --chain hardhat --privateKey 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 > packages/sdk/.env && sed -i '' 's/^/VITE_/' packages/sdk/.env
 
 # to bypass the deploy cache, you can run the deployment command with the --force flag
 npx boost deploy --force ...

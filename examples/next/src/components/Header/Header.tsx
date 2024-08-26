@@ -7,8 +7,7 @@ import Image from 'next/image';
 
 import { useWindowSize } from '@/hooks/useWindowSize';
 
-import logo from '../../../public/img/logo_transparent.png';
-import { DarkModeButton } from '../DarkModeButton';
+import logo from '../../../public/img/boost-logo.png';
 
 const Header: FC = () => {
   const { isTablet } = useWindowSize();
@@ -23,17 +22,16 @@ const Header: FC = () => {
       justifyContent={'space-between'}
     >
       <HStack>
-        <Image src={logo.src} alt="logo" width={45} height={45} />
+        <Image src={logo.src} alt="logo" width={160} height={45} />
         {!isTablet && (
           <Heading as="h1" fontSize={'1.5rem'} className="text-shadow">
-            Next-Web3-Boilerplate
+            Example
           </Heading>
         )}
       </HStack>
 
       <HStack>
         <ConnectButton />
-        <DarkModeButton />
       </HStack>
     </HStack>
   );

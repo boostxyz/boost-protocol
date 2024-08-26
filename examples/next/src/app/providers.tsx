@@ -7,6 +7,7 @@ import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 
+import { BoostProvider } from '@/components/BoostContext';
 import { wagmiConfig } from '@/wagmi';
 
 export function Providers({ children }: Readonly<{ children: ReactNode }>) {
@@ -31,7 +32,7 @@ export function Providers({ children }: Readonly<{ children: ReactNode }>) {
         <CacheProvider>
           <ChakraProvider resetCSS theme={theme}>
             <RainbowKitProvider coolMode appInfo={appInfo}>
-              {mounted && children}
+              <BoostProvider>{mounted && children}</BoostProvider>
             </RainbowKitProvider>
           </ChakraProvider>
         </CacheProvider>

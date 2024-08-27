@@ -4,6 +4,7 @@
   "type": "module",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
+  "license": "GPL-3.0-or-later",
   "workspaces": ["packages/*"],
   "packageManager": "pnpm@8.15.8",
   "engines": {

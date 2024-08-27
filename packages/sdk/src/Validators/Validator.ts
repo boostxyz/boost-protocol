@@ -1,4 +1,4 @@
-import { validatorAbi } from '@boostxyz/evm';
+import { aValidatorAbi } from '@boostxyz/evm';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -39,7 +39,7 @@ export async function validatorFromAddress(
   address: Address,
 ) {
   const interfaceId = (await readContract(options.config, {
-    abi: validatorAbi,
+    abi: aValidatorAbi,
     functionName: 'getComponentInterface',
     address,
   })) as keyof typeof ValidatorByComponentInterface;

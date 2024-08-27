@@ -9,7 +9,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {Action} from "contracts/actions/Action.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 
 import {MockERC721} from "contracts/shared/Mocks.sol";
 
@@ -88,7 +88,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(abi.encode(address(this), abi.encode(1))));
+        assertTrue(action.validate(0, 0, address(0), abi.encode(address(this), abi.encode(1))));
     }
 
     function testValidate_WrongHolder() public {
@@ -100,7 +100,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action with an invalid holder
-        assertFalse(action.validate(abi.encode(address(0xdeadbeef), abi.encode(1))));
+        assertFalse(action.validate(0, 0, address(0), abi.encode(address(0xdeadbeef), abi.encode(1))));
     }
 
     function testValidate_AlreadyValidated() public {
@@ -112,10 +112,10 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(abi.encode(address(this), abi.encode(1))));
+        assertTrue(action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1))));
 
         // Validate the action again => false
-        assertFalse(action.validate(abi.encode(address(this), abi.encode(1))));
+        assertFalse(action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1))));
     }
 
     function testValidate_NonExistentToken() public {
@@ -124,7 +124,7 @@ contract ERC721MintActionTest is Test {
 
         // Validate the action with a non-existent token
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        action.validate(abi.encode(address(this), abi.encode(1)));
+        action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1)));
     }
 
     ////////////////////////////////
@@ -140,7 +140,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(abi.encode(address(this), abi.encode(1))));
+        assertTrue(action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1))));
 
         // Check the validation status of the token
         assertTrue(action.validated(1));
@@ -173,7 +173,7 @@ contract ERC721MintActionTest is Test {
 
         // Check the interface support
         assertTrue(action.supportsInterface(type(Action).interfaceId));
-        assertTrue(action.supportsInterface(type(Validator).interfaceId));
+        assertTrue(action.supportsInterface(type(AValidator).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public {

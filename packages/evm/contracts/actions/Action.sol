@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Cloneable} from "contracts/shared/Cloneable.sol";
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 
 /// @title Boost Action
 /// @notice Abstract contract for a generic Action within the Boost protocol
@@ -17,7 +17,7 @@ abstract contract Action is Cloneable {
     event ActionValidated(address indexed user, bool isValidated, bytes data);
 
     /// @notice The validator for the action (which may be the action itself where appropriate)
-    Validator public immutable VALIDATOR;
+    AValidator public immutable VALIDATOR;
 
     /// @notice Execute the action
     /// @param data_ The data payload for the action

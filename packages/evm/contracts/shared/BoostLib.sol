@@ -9,7 +9,7 @@ import {AllowList} from "contracts/allowlists/AllowList.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 
 library BoostLib {
     using LibClone for address;
@@ -18,7 +18,7 @@ library BoostLib {
     /// @notice A struct representing a single Boost
     struct Boost {
         Action action;
-        Validator validator;
+        AValidator validator;
         AllowList allowList;
         Budget budget;
         Incentive[] incentives;

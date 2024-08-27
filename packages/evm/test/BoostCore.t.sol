@@ -26,7 +26,7 @@ import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 
 // Validators
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 
 // Core and Shared
@@ -84,11 +84,11 @@ contract BoostCoreTest is Test {
     // BoostCore Initial State //
     /////////////////////////////
 
-    function testInitialOwner() public {
+    function testInitialOwner() public view {
         assertEq(address(this), boostCore.owner());
     }
 
-    function testInitialBoostCount() public {
+    function testInitialBoostCount() public view {
         assertEq(0, boostCore.getBoostCount());
     }
 
@@ -140,7 +140,7 @@ contract BoostCoreTest is Test {
         assertEq(_incentive.claims(), 0);
 
         // Check the Validator (which should be the Action)
-        assertTrue(boost.validator.supportsInterface(type(Validator).interfaceId));
+        assertTrue(boost.validator.supportsInterface(type(AValidator).interfaceId));
         assertEq(address(boost.validator), address(boost.action));
     }
 

@@ -16,7 +16,7 @@ import {Action} from "contracts/actions/Action.sol";
 import {AllowList} from "contracts/allowlists/AllowList.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
@@ -110,10 +110,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
         boost.action = Action(_makeTarget(type(Action).interfaceId, payload_.action, true));
         boost.allowList = AllowList(_makeTarget(type(AllowList).interfaceId, payload_.allowList, true));
         boost.incentives = _makeIncentives(payload_.incentives, payload_.budget);
-        boost.validator = Validator(
+        boost.validator = AValidator(
             payload_.validator.instance == address(0)
-                ? boost.action.supportsInterface(type(Validator).interfaceId) ? address(boost.action) : address(0)
-                : _makeTarget(type(Validator).interfaceId, payload_.validator, true)
+                ? boost.action.supportsInterface(type(AValidator).interfaceId) ? address(boost.action) : address(0)
+                : _makeTarget(type(AValidator).interfaceId, payload_.validator, true)
         );
         emit BoostCreated(
             _boosts.length - 1,

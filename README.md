@@ -134,7 +134,7 @@ As an example, to use `@boost/sdk` against a local hardhat node, you could use t
 
 ```sh
 # if not already running a local node
-cd packages/sdk && npx hardhat --node --verbose
+cd packages/sdk && npx hardhat node --verbose
 
 # deploy protocol contracts to local hardhat node
 # keep in mind these values will be different each time the node is restarted

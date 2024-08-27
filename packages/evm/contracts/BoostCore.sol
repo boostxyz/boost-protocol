@@ -16,8 +16,7 @@ import {Action} from "contracts/actions/Action.sol";
 import {AllowList} from "contracts/allowlists/AllowList.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
-import {Validator} from "contracts/validators/Validator.sol";
-import {IAuth} from "contracts/auth/IAuth.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol

@@ -10,7 +10,7 @@ import {Validator} from "contracts/validators/Validator.sol";
 
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
-abstract contract ASignerValidator is Validator {
+abstract contract ASignerValidator is AValidator {
     using SignatureCheckerLib for address;
 
     /// @dev The set of authorized signers

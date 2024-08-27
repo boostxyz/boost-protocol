@@ -12,7 +12,7 @@ import {MockERC1271Malicious} from "lib/solady/test/utils/mocks/MockERC1271Malic
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 
 contract SignerValidatorTest is Test {
@@ -98,10 +98,10 @@ contract SignerValidatorTest is Test {
     //////////////////////////////
 
     function testValidate() public {
-        assertTrue(validator.validate(PACKED_EOA_SIGNATURE));
+        assertTrue(validator.validate(0,0, address(0),PACKED_EOA_SIGNATURE));
 
         vm.expectRevert(BoostError.Unauthorized.selector);
-        validator.validate(PACKED_UNTRUSTED_SIGNATURE);
+        validator.validate(0,0, address(0),PACKED_UNTRUSTED_SIGNATURE);
     }
 
     function testValidate_UnauthorizedSigner() public {
@@ -109,31 +109,31 @@ contract SignerValidatorTest is Test {
         bytes memory signature = _signHash(hash, fakeSignerKey);
         bytes memory data = abi.encode(fakeSigner, hash, signature);
         vm.expectRevert(BoostError.Unauthorized.selector);
-        validator.validate(data);
+        validator.validate(0,0, address(0),data);
     }
 
     function testValidate_ReplayedSignature() public {
         // First validation should pass
-        assertTrue(validator.validate(PACKED_EOA_SIGNATURE));
+        assertTrue(validator.validate(0,0, address(0),PACKED_EOA_SIGNATURE));
 
         // Second (replayed) validation should revert
         vm.expectRevert(
             abi.encodeWithSelector(BoostError.Replayed.selector, testSigner, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE)
         );
-        validator.validate(PACKED_EOA_SIGNATURE);
+        validator.validate(0,0, address(0),PACKED_EOA_SIGNATURE);
     }
 
     function testValidate_SmartContractSigner() public {
-        assertTrue(validator.validate(PACKED_1271_SIGNATURE));
+        assertTrue(validator.validate(0,0, address(0), PACKED_1271_SIGNATURE));
     }
 
     function testValidate_SmartContractSigner_WrongSigner() public {
-        assertFalse(validator.validate(PACKED_WRONG_SIGNATURE));
+        assertFalse(validator.validate(0,0, address(0),PACKED_WRONG_SIGNATURE));
     }
 
     function testValidate_SmartContractSigner_Malicious() public {
         vm.expectRevert(BoostError.Unauthorized.selector);
-        validator.validate(PACKED_MALICIOUS_SIGNATURE);
+        validator.validate(0,0, address(0),PACKED_MALICIOUS_SIGNATURE);
     }
 
     ///////////////////////////////////

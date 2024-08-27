@@ -18,7 +18,7 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
 export default {
   build: {
     rollupOptions: {
-      external: [/wagmi/, /viem/],
+      external: [/^viem/, /^@wagmi(?!.*\/codegen)/],
     },
     lib: {
       entry: Object.values(packageJson.exports),

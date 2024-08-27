@@ -13,7 +13,7 @@
   "exports": {
     ".": {
       "require": "./dist/generated.cjs",
-      "import": "./artifacts/generated.ts",
+      "import": "./dist/generated.js",
       "node": "./dist/generated.js",
       "types": "./dist/generated.d.ts"
     },

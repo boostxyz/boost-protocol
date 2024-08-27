@@ -70,7 +70,7 @@ abstract contract AEventAction is Action {
 
     /// @inheritdoc Action
     function getComponentInterface() public pure virtual override(Action) returns (bytes4) {
-        return type(Action).interfaceId;
+        return type(AEventAction).interfaceId;
     }
 
     function getActionEventsCount() public view virtual returns (uint256) {

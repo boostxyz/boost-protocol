@@ -1,4 +1,4 @@
-import { type Config, deployContract } from '@wagmi/core';
+import { deployContract } from '@wagmi/core';
 import type {
   Account,
   Address,
@@ -12,7 +12,7 @@ import {
   DeployableMissingPayloadError,
   DeployableWagmiConfigurationRequiredError,
 } from '../errors';
-import { getDeployedContractAddress } from '../utils';
+import { type WagmiConfig, getDeployedContractAddress } from '../utils';
 import { Contract } from './Contract';
 
 /**
@@ -48,12 +48,12 @@ export interface DeployableOptions {
   /**
    * [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
    *
-   * @see {@link Config}
-   * @type {Config}
+   * @see {@link WagmiConfig}
+   * @type {WagmiConfig}
    */
-  config: Config;
+  config: WagmiConfig;
   /**
-   * [Viem Local Account](https://viem.sh/docs/accounts/local), if in a Node environment
+   * [Viem Local Account](https://viem.sh/docs/accounts/local), required if in a Node environment
    *
    * @see {@link Account}
    * @type {?Account}
@@ -90,7 +90,7 @@ export class Deployable<Payload = unknown> extends Contract {
    *
    * @constructor
    * @param {DeployableOptions} param0
-   * @param {Account} param0.account
+   * @param {?Account} [param0.account]
    * @param {Config} param0.config
    * @param {DeployablePayloadOrAddress<Payload>} payload
    */

@@ -1,7 +1,11 @@
 import type { Config } from '@wagmi/core';
 import type { Address, WaitForTransactionReceiptParameters } from 'viem';
 import { ContractAddressRequiredError } from '../errors';
-import { type HashAndSimulatedResult, awaitResult } from '../utils';
+import {
+  type HashAndSimulatedResult,
+  type WagmiConfig,
+  awaitResult,
+} from '../utils';
 
 /**
  * A basic Contract class to encapsulate configuration and a potential address
@@ -12,11 +16,11 @@ import { type HashAndSimulatedResult, awaitResult } from '../utils';
  */
 export class Contract {
   /**
-   * @see [Wagmi Configuration](https://en.wikipedia.org/wiki/Factorial)
+   * @see [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
    * @protected
-   * @type {Config}
+   * @type {WagmiConfig}
    */
-  protected _config: Config;
+  protected _config: WagmiConfig;
   /**
    * The internally managed address for this contract
    *

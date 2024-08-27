@@ -32,22 +32,21 @@
   "keywords": [],
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@wagmi/core": "^2.11.5",
-    "wagmi": "^2.10.2"
+    "wagmi": "^2.12.7"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.2",
-    "@nomicfoundation/hardhat-ignition": "^0.15.0",
+    "@nomicfoundation/hardhat-ignition": "^0.15.2",
     "@nomicfoundation/hardhat-ignition-viem": "^0.15.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "@nomicfoundation/hardhat-viem": "^2.0.2",
-    "@wagmi/cli": "^2.1.4",
+    "@wagmi/cli": "^2.1.15",
     "abitype": "^1.0.2",
-    "hardhat": "^2.22.5",
+    "hardhat": "^2.22.9",
     "solady": "^0.0.208",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
-    "viem": "^2.9.9"
+    "viem": "^2.20.1"
   }
 }

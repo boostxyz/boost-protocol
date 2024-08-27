@@ -32,6 +32,17 @@ import { SignerValidator } from './Validators/SignerValidator';
 import { NoContractAddressUponReceiptError } from './errors';
 
 /**
+ * `WagmiConfig` - any valid 2.x Wagmi configuration.
+ * We rexport this as `any` to simplfy discrepencies in `@wagmi/core.Config` interfaces between 2.x versions.
+ * It is left to the user to use compatible versions of `viem` and `wagmi`, as we only require them as peers.
+ * @see [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
+ * @export
+ * @typedef {Config}
+biome-ignore lint/suspicious/noExplicitAny: ^
+ */
+export type WagmiConfig = any;
+
+/**
  * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
  * See (writeContract)[https://viem.sh/docs/contract/writeContract]
  *

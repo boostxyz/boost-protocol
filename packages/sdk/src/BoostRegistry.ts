@@ -130,7 +130,7 @@ export class BoostRegistry extends Deployable<never[]> {
    * @constructor
    * @param {BoostRegistryConfig} param0
    * @param {Config} param0.config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
-   * @param {Account} param0.account - [Viem Local Account](https://viem.sh/docs/accounts/local)
+   * @param {?Account} [param0.account] - [Viem Local Account](https://viem.sh/docs/accounts/local)
    * @param {({ address?: Address; } | {})} param0....options
    */
   constructor({ config, account, ...options }: BoostRegistryConfig) {

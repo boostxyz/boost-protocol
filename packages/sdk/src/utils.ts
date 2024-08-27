@@ -1,4 +1,4 @@
-import { type Config, waitForTransactionReceipt } from '@wagmi/core';
+import { waitForTransactionReceipt } from '@wagmi/core';
 import { LibZip } from 'solady';
 import type {
   Abi,
@@ -37,7 +37,7 @@ import { NoContractAddressUponReceiptError } from './errors';
  * It is left to the user to use compatible versions of `viem` and `wagmi`, as we only require them as peers.
  * @see [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
  * @export
- * @typedef {Config}
+ * @typedef {WagmiConfig}
 biome-ignore lint/suspicious/noExplicitAny: ^
  */
 export type WagmiConfig = any;
@@ -96,14 +96,14 @@ export function bytes4(input: string) {
  *
  * @export
  * @async
- * @param {Config} config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
+ * @param {WagmiConfig} config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
  * @param {Promise<Hash>} hash - A transaction hash promise
  * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams] - @see {@link WaitForTransactionReceiptParameters}
  * @returns {unknown}
  * @throws {@link NoContractAddressUponReceiptError} if no `contractAddress` exists after the transaction has been received
  */
 export async function getDeployedContractAddress(
-  config: Config,
+  config: WagmiConfig,
   hash: Promise<Hash>,
   waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
 ) {
@@ -131,13 +131,13 @@ export type HashAndSimulatedResult<T = unknown> = { hash: Hash; result: T };
  * @export
  * @async
  * @template [Result=unknown]
- * @param {Config} config
+ * @param {WagmiConfig} config
  * @param {Promise<HashAndSimulatedResult<Result>>} hashPromise
  * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
  * @returns {Promise<Result>}
  */
 export async function awaitResult<Result = unknown>(
-  config: Config,
+  config: WagmiConfig,
   hashPromise: Promise<HashAndSimulatedResult<Result>>,
   waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
 ): Promise<Result> {

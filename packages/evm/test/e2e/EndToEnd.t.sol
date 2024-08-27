@@ -29,7 +29,7 @@ import {Incentive} from "contracts/incentives/Incentive.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 
 /**
  * @title EndToEnd
@@ -116,7 +116,7 @@ contract EndToEnd is Test {
 
         // - Action == Validator
         assertEq(boost.action.supportsInterface(type(Action).interfaceId), true);
-        assertEq(boost.action.supportsInterface(type(Validator).interfaceId), true);
+        assertEq(boost.action.supportsInterface(type(AValidator).interfaceId), true);
         assertEq(address(boost.validator), address(boost.action));
 
         // - Action == ERC721MintAction

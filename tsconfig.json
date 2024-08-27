@@ -18,12 +18,11 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "es2022",
+    "target": "es2021",
     "noImplicitOverride": true,
     "paths": {
       "@boostxyz/evm": ["./packages/evm/artifacts/generated.ts"],
-      "@boostxyz/evm/artifacts/*": ["./packages/evm/artifacts/*"],
-      "@boostxyz/sdk": ["./packages/sdk/src/index.ts"]
+      "@boostxyz/evm/artifacts/*": ["./packages/evm/artifacts/*"]
     }
   },
   "exclude": ["node_modules", "**/*/dist"]

@@ -11,6 +11,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
+  "sideEffects": false,
   "bin": {
     "boost": "dist/cli.js"
   },

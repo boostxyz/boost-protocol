@@ -19,6 +19,7 @@
     "VITE_SIGNER_VALIDATOR_BASE"
   ],
   "globalPassThroughEnv": [
+    "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID",
     "VITE_BOOST_CORE_ADDRESS",
     "VITE_BOOST_REGISTRY_ADDRESS",
     "VITE_CONTRACT_ACTION_BASE",
@@ -37,10 +38,11 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "artifacts/**", "out/**", "cache/**"]
+      "outputs": ["dist/**", "artifacts/**", "out/**", "cache/**", ".next/**"]
     },
     "test": {},
     "test:ci": {
+      "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
     "typedoc": {
@@ -49,6 +51,7 @@
       "outputs": ["docs/**"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     }

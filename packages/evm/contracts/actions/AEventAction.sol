@@ -43,7 +43,8 @@ abstract contract AEventAction is Action {
     struct ActionEvent {
         bytes4 eventSignature;
         uint8 actionType;
-        Criteria actionParameters;
+        Address targetContract;
+        Criteria actionParameter;
     }
 
     /// @inheritdoc Cloneable

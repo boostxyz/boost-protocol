@@ -31,6 +31,7 @@ contract EventActionTest is Test {
         actionEventOne = AEventAction.ActionEvent({
             eventSignature: bytes4(keccak256("Transfer(address,address,uint256)")),
             actionType: 0,
+            targetContract: Address(mockAsset),
             actionParameters: criteria
         });
 

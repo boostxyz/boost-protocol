@@ -12,7 +12,11 @@ import {
   DeployableMissingPayloadError,
   DeployableWagmiConfigurationRequiredError,
 } from '../errors';
-import { type WagmiConfig, getDeployedContractAddress } from '../utils';
+import {
+  type ViemLocalAccount,
+  type WagmiConfig,
+  getDeployedContractAddress,
+} from '../utils';
 import { Contract } from './Contract';
 
 /**
@@ -23,9 +27,10 @@ import { Contract } from './Contract';
  */
 export type GenericDeployableParams = Omit<
   Parameters<typeof deployContract>[1],
-  'args'
+  'args' | 'account'
 > & {
   args: [Hex, ...Array<Hex>];
+  account?: ViemLocalAccount;
 };
 
 /**
@@ -55,10 +60,10 @@ export interface DeployableOptions {
   /**
    * [Viem Local Account](https://viem.sh/docs/accounts/local), required if in a Node environment
    *
-   * @see {@link Account}
-   * @type {?Account}
+   * @see {@link ViemLocalAccount}
+   * @type {?ViemLocalAccount}
    */
-  account?: Account;
+  account?: ViemLocalAccount;
 }
 /**
  * Description placeholder
@@ -185,10 +190,10 @@ export class Deployable<Payload = unknown> extends Contract {
    * Internal function to attach the connected account to write methods to avoid manually passing in an account each call.
    *
    * @protected
-   * @param {?Account} [account]
-   * @returns {({ account: Account; } | { account?: undefined; })}
+   * @param {?ViemLocalAccount} [account]
+   * @returns {({ account: ViemLocalAccount; } | { account?: undefined; })}
    */
-  protected optionallyAttachAccount(account?: Account) {
+  protected optionallyAttachAccount(account?: ViemLocalAccount) {
     if (account) return { account };
     return this._account ? { account: this._account } : {};
   }

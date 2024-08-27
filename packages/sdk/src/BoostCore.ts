@@ -628,7 +628,11 @@ export class BoostCore extends Deployable<[Address, Address]> {
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
-    return this.awaitResult(this.setProcolFeeReceiverRaw(address, params));
+    return this.awaitResult(
+      this.setProcolFeeReceiverRaw(address, {
+        ...params,
+      }),
+    );
   }
 
   /**

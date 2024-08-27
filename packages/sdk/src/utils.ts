@@ -33,14 +33,24 @@ import { NoContractAddressUponReceiptError } from './errors';
 
 /**
  * `WagmiConfig` - any valid 2.x Wagmi configuration.
- * We rexport this as `any` to simplfy discrepencies in `@wagmi/core.Config` interfaces between 2.x versions.
+ * Exported as `any` to simplfy low-level discrepencies in `@wagmi/core.Config` interfaces between 2.x versions.
  * It is left to the user to use compatible versions of `viem` and `wagmi`, as we only require them as peers.
  * @see [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
  * @export
  * @typedef {WagmiConfig}
-biome-ignore lint/suspicious/noExplicitAny: ^
+ * biome-ignore lint/suspicious/noExplicitAny: ^
  */
 export type WagmiConfig = any;
+
+/**
+ * `ViemLocalAccount` - any valid 2.x Viem local account.
+ * Exported as any to simplfy minor low-level deviations between accounts that extend `viem.LocalAccount`, like `viem.PrivateKeyAccount`, and `viem.HDAccount` don't fully intersect.
+ * @see [Viem Local Accounts](https://viem.sh/docs/accounts/local)
+ * @export
+ * @typedef {ViemLocalAccount}
+ * biome-ignore lint/suspicious/noExplicitAny: ^
+ */
+export type ViemLocalAccount = any;
 
 /**
  * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
@@ -85,7 +95,7 @@ export type ReadParams<
  *
  * @export
  * @param {string} input
- * @returns {*}
+ * @returns {Hex}
  */
 export function bytes4(input: string) {
   return slice(isHex(input) ? keccak256(input) : keccak256(toHex(input)), 0, 4);

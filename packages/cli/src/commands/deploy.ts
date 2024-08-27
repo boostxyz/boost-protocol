@@ -1,6 +1,6 @@
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import EventActionArtifcat from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
+import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
@@ -181,8 +181,8 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
   const eventActionBase = await getDeployedContractAddress(
     config,
     deployContract(config, {
-      abi: EventActionArtifcat.abi,
-      bytecode: EventActionArtifcat.bytecode as Hex,
+      abi: EventActionArtifact.abi,
+      bytecode: EventActionArtifact.bytecode as Hex,
       account,
     }),
   );

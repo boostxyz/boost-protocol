@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test} from "lib/forge-std/src/Test.sol";
+import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {MockERC721} from "contracts/shared/Mocks.sol";
@@ -79,6 +79,14 @@ contract EventActionTest is Test {
         assertEq(retrievedEvent.eventSignature, bytes4(keccak256("Transfer(address,address,uint256)")));
     }
 
+    ////////////////////////////////////
+    // EventAction.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        // Retrieve the component interface
+        console.logBytes4(action.getComponentInterface());
+    }
     ////////////////////////////////////
     // EventAction.supportsInterface //
     ////////////////////////////////////

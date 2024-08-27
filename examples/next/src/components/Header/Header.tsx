@@ -25,7 +25,7 @@ const Header: FC = () => {
         <Image src={logo.src} alt="logo" width={160} height={45} />
         {!isTablet && (
           <Heading as="h1" fontSize={'1.5rem'} className="text-shadow">
-            Example
+            Inspector
           </Heading>
         )}
       </HStack>

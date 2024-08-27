@@ -8,13 +8,13 @@ import {
   writeMockErc20MintPayable,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC20.json';
-import type { Address, Hex } from 'viem';
 import {
   Deployable,
   type DeployableOptions,
   type GenericDeployableParams,
-} from '../src';
-import type { WriteParams } from './../src/utils';
+  type WriteParams,
+} from '@boostxyz/sdk';
+import type { Address, Hex } from 'viem';
 
 export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
   public async approve(

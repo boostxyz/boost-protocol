@@ -6,7 +6,7 @@ import { useAccount, useConfig } from 'wagmi';
 import { Box, Divider, Flex, Heading } from '@chakra-ui/react';
 import { useAccount } from 'wagmi';
 
-import styles from '@/styles/mainPane.module.css';
+import styles from './mainPane.module.css';
 
 import {
   Address,

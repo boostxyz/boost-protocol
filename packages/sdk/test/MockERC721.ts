@@ -8,13 +8,13 @@ import {
   writeMockErc721TransferFrom,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC721.json';
-import type { Address, Hex } from 'viem';
 import {
   Deployable,
   type DeployableOptions,
   type GenericDeployableParams,
-} from '../src';
-import type { WriteParams } from '../src/utils';
+  type WriteParams,
+} from '@boostxyz/sdk';
+import type { Address, Hex } from 'viem';
 
 export class MockERC721 extends Deployable<unknown, typeof mockErc721Abi> {
   public async approve(

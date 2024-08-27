@@ -6,13 +6,13 @@ import {
   writeMockErc1155Mint,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC1155.json';
-import type { Address, Hex } from 'viem';
 import {
   Deployable,
   type DeployableOptions,
   type GenericDeployableParams,
-} from '../src';
-import type { WriteParams } from './../src/utils';
+  type WriteParams,
+} from '@boostxyz/sdk';
+import type { Address, Hex } from 'viem';
 
 export class MockERC1155 extends Deployable<unknown, typeof mockErc1155Abi> {
   public async mint(

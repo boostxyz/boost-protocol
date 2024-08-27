@@ -1,5 +1,5 @@
 {
-  "name": "examples-kitchen-sink",
+  "name": "@boostxyz/extra",
   "private": true,
   "publishConfig": {
     "access": "restricted"
@@ -10,6 +10,9 @@
   "keywords": [],
   "author": "",
   "license": "GPL-3.0-or-later",
+  "main": "src/index.ts",
+  "type": "module",
+  "module": "src/index.ts",
   "dependencies": {
     "@boostxyz/sdk": "workspace:*",
     "@boostxyz/evm": "workspace:*",

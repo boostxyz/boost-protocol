@@ -21,6 +21,7 @@
     "target": "es2021",
     "noImplicitOverride": true,
     "paths": {
+      "@boostxyz/extra": ["./packages/extra/src/index.ts"],
       "@boostxyz/evm": ["./packages/evm/artifacts/generated.ts"],
       "@boostxyz/evm/artifacts/*": ["./packages/evm/artifacts/*"]
     }

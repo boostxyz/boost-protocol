@@ -1,7 +1,7 @@
 'use client';
 import { Box, Flex } from '@chakra-ui/react';
 
-import { Footer, Header, MainPane } from '@/components';
+import { BoostList, Header, MainPane } from '@/components';
 
 export default function Home() {
   return (
@@ -10,9 +10,8 @@ export default function Home() {
 
       <Box as="main" flex={1} p={4}>
         <MainPane />
+        <BoostList />
       </Box>
-
-      <Footer />
     </Flex>
   );
 }

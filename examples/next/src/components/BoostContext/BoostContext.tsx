@@ -1,3 +1,4 @@
+import { wagmiConfig } from '@/wagmi';
 import {
   BoostCore,
   type BoostCoreConfig,
@@ -12,7 +13,10 @@ export interface IBoostContext {
   core: BoostCore;
 }
 
-export const BoostContext = createContext<IBoostContext | undefined>(undefined);
+export const BoostContext = createContext<IBoostContext>({
+  core: new BoostCore({ config: wagmiConfig }),
+  registry: new BoostRegistry({ config: wagmiConfig }),
+});
 
 export type BoostProviderProps = {
   core?: Omit<BoostCoreConfig, 'config'>;

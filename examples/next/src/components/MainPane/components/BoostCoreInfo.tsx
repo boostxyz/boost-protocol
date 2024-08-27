@@ -2,35 +2,34 @@ import type { FC } from 'react';
 
 import { InfoText } from '@/components';
 import { useBoost } from '@/components/BoostContext';
+import { useBoostCount } from '@/hooks/useBoostCount';
 import { useQuery } from '@tanstack/react-query';
+import { zeroAddress } from 'viem';
 
 const BoostCoreInfo: FC = (): JSX.Element => {
   const { core } = useBoost();
-  const { data: count } = useQuery({
-    queryKey: ['getBoostCount'],
-    queryFn: async () => {
-      return await core?.getBoostCount();
-    },
-  });
 
-  const { data: protocolFee } = useQuery({
-    queryKey: ['protocolFee'],
-    queryFn: async () => {
-      return await core?.protocolFee();
+  const { data: count } = useBoostCount();
+  const {
+    data: { protocolFee, protocolFeeReceiver, claimFee },
+  } = useQuery({
+    queryKey: ['getBoostInfo'],
+    initialData: {
+      protocolFee: 0n,
+      protocolFeeReceiver: zeroAddress,
+      claimFee: 0n,
     },
-  });
-
-  const { data: protocolFeeReceiver } = useQuery({
-    queryKey: ['protocolFeeReceiver'],
     queryFn: async () => {
-      return await core?.protocolFeeReceiver();
-    },
-  });
-
-  const { data: claimFee } = useQuery({
-    queryKey: ['claimFee'],
-    queryFn: async () => {
-      return await core?.claimFee();
+      const [protocolFee, protocolFeeReceiver, claimFee] = await Promise.all([
+        core.protocolFee(),
+        core.protocolFeeReceiver(),
+        core.claimFee(),
+      ]);
+      return {
+        protocolFee,
+        protocolFeeReceiver,
+        claimFee,
+      };
     },
   });
 

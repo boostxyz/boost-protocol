@@ -1,9 +1,7 @@
+import { MockERC20 } from '@boostxyz/extra';
 import {
   BoostCore,
   BoostRegistry,
-  ERC20Incentive,
-  SimpleAllowList,
-  SimpleDenyList,
   StrategyType,
   prepareSignerValidatorValidatePayload,
 } from '@boostxyz/sdk';
@@ -19,7 +17,6 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { hardhat } from 'viem/chains';
-import { MockERC20 } from './MockERC20';
 
 // Use a local test account
 const key =

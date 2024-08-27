@@ -1,8 +1,8 @@
 import { readPointsBalanceOf, writePointsGrantRoles } from '@boostxyz/evm';
+import type { MockPoints } from '@boostxyz/extra';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockPoints } from '../../test/MockPoints';
 import { accounts } from '../../test/accounts';
 import {
   type Fixtures,

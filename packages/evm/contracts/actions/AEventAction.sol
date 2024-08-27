@@ -43,7 +43,7 @@ abstract contract AEventAction is Action {
     struct ActionEvent {
         bytes4 eventSignature;
         uint8 actionType;
-        Address targetContract;
+        address targetContract;
         Criteria actionParameter;
     }
 

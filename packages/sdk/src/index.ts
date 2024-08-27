@@ -9,6 +9,7 @@ export * from './utils';
 export * from './Actions/Action';
 export * from './Actions/ContractAction';
 export * from './Actions/ERC721MintAction';
+export * from './Actions/EventAction';
 
 // AllowLists
 

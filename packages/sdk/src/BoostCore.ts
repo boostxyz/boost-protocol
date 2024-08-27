@@ -31,6 +31,7 @@ import {
   ERC721MintAction,
   type ERC721MintActionPayload,
 } from './Actions/ERC721MintAction';
+import { EventAction } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
 import {
   SimpleAllowList,
@@ -86,6 +87,7 @@ import {
   NoContractAddressUponReceiptError,
 } from './errors';
 import {
+  type EventActionPayload,
   type BoostPayload as OnChainBoostPayload,
   type ReadParams,
   type Target,
@@ -743,6 +745,25 @@ export class BoostCore extends Deployable<[Address, Address]> {
     isBase?: boolean,
   ) {
     return new ContractAction(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
+
+  /**
+   * Bound {@link EventAction} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const action = core.EventAction('0x') // is roughly equivalent to
+   * const action = new EventAction({ config: core._config, account: core._account }, '0x')
+   */
+  EventAction(
+    options: DeployablePayloadOrAddress<EventActionPayload>,
+    isBase?: boolean,
+  ) {
+    return new EventAction(
       { config: this._config, account: this._account },
       options,
       isBase,

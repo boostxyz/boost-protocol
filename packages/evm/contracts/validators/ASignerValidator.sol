@@ -6,11 +6,11 @@ import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {Validator} from "contracts/validators/Validator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
-abstract contract ASignerValidator is Validator {
+abstract contract ASignerValidator is AValidator {
     using SignatureCheckerLib for address;
 
     /// @dev The set of authorized signers
@@ -49,12 +49,12 @@ abstract contract ASignerValidator is Validator {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Validator) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(AValidator) returns (bytes4) {
         return type(ASignerValidator).interfaceId;
     }
 
     /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Validator) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AValidator) returns (bool) {
         return interfaceId == type(ASignerValidator).interfaceId || super.supportsInterface(interfaceId);
     }
 }

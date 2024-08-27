@@ -4,7 +4,9 @@
   "license": "GPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "access": "public",
@@ -92,6 +94,12 @@
       "import": "./dist/Actions/ERC721MintAction.js",
       "node": "./dist/Actions/ERC721MintAction.js",
       "types": "./dist/Actions/ERC721MintAction.d.ts"
+    },
+    "./Actions/EventAction": {
+      "require": "./dist/Actions/EventAction.cjs",
+      "import": "./dist/Actions/EventAction.js",
+      "node": "./dist/Actions/EventAction.js",
+      "types": "./dist/Actions/EventAction.d.ts"
     },
     "./AllowLists/AllowList": {
       "require": "./dist/AllowLists/AllowList.cjs",

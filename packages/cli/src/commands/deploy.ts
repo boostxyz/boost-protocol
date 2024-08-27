@@ -1,5 +1,6 @@
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
+import EventActionArtifcat from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
@@ -20,6 +21,7 @@ import {
   ERC20Incentive,
   ERC721MintAction,
   ERC1155Incentive,
+  EventAction,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
@@ -41,6 +43,7 @@ export type DeployResult = {
   BOOST_CORE_ADDRESS: string;
   BOOST_REGISTRY_ADDRESS: string;
   CONTRACT_ACTION_BASE: string;
+  EVENT_ACTION_BASE: string;
   ERC721_MINT_ACTION_BASE: string;
   SIMPLE_ALLOWLIST_BASE: string;
   SIMPLE_DENYLIST_BASE: string;
@@ -175,6 +178,15 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     }),
   );
 
+  const eventActionBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: EventActionArtifcat.abi,
+      bytecode: EventActionArtifcat.bytecode as Hex,
+      account,
+    }),
+  );
+
   const pointsIncentiveBase = await getDeployedContractAddress(
     config,
     deployContract(config, {
@@ -199,6 +211,9 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     },
     ERC721MintAction: class TERC721MintAction extends ERC721MintAction {
       public static override base = erc721MintActionBase;
+    },
+    EventAction: class TEventAction extends EventAction {
+      public static override base = eventActionBase;
     },
     SimpleAllowList: class TSimpleAllowList extends SimpleAllowList {
       public static override base = simpleAllowListBase;
@@ -240,6 +255,7 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     BOOST_CORE_ADDRESS: core.assertValidAddress(),
     BOOST_REGISTRY_ADDRESS: registry.assertValidAddress(),
     CONTRACT_ACTION_BASE: contractActionBase,
+    EVENT_ACTION_BASE: eventActionBase,
     ERC721_MINT_ACTION_BASE: erc721MintActionBase,
     SIMPLE_ALLOWLIST_BASE: simpleAllowListBase,
     SIMPLE_DENYLIST_BASE: simpleDenyListBase,

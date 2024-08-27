@@ -19,6 +19,7 @@
     "./Deployable/Contract": "./src/Deployable/Contract.ts",
     "./Actions/Action": "./src/Actions/Action.ts",
     "./Actions/ContractAction": "./src/Actions/ContractAction.ts",
+    "./Actions/EventAction": "./src/Actions/EventAction.ts",
     "./Actions/ERC721MintAction": "./src/Actions/ERC721MintAction.ts",
     "./AllowLists/AllowList": "./src/AllowLists/AllowList.ts",
     "./AllowLists/SimpleAllowList": "./src/AllowLists/SimpleAllowList.ts",
@@ -103,6 +104,12 @@
         "import": "./dist/Actions/ContractAction.js",
         "node": "./dist/Actions/ContractAction.js",
         "types": "./dist/Actions/ContractAction.d.ts"
+      },
+      "./Actions/EventAction": {
+        "require": "./dist/Actions/EventAction.cjs",
+        "import": "./dist/Actions/EventAction.js",
+        "node": "./dist/Actions/EventAction.js",
+        "types": "./dist/Actions/EventAction.d.ts"
       },
       "./Actions/ERC721MintAction": {
         "require": "./dist/Actions/ERC721MintAction.cjs",

@@ -188,6 +188,238 @@ export type Target = {
   parameters: Hex;
 };
 
+/*
+ * Action Event Payloads
+ */
+
+/**
+ * Filter types used to determine how criteria are evaluated.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum FilterType {
+  EQUAL = 0,
+  NOT_EQUAL = 1,
+  GREATER_THAN = 2,
+  LESS_THAN = 3,
+  CONTAINS = 4,
+}
+
+/**
+ * The primitive types supported for filtering.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum PrimitiveType {
+  UINT = 0,
+  ADDRESS = 1,
+  BYTES = 2,
+  STRING = 3,
+}
+
+/**
+ * Object representation of a `Criteria` struct used in event actions.
+ *
+ * @export
+ * @interface Criteria
+ * @typedef {Criteria}
+ */
+export interface Criteria {
+  /**
+   * The filter type used in this criteria.
+   *
+   * @type {FilterType}
+   */
+  filterType: FilterType;
+  /**
+   * The primitive type of the field being filtered.
+   *
+   * @type {PrimitiveType}
+   */
+  fieldType: PrimitiveType;
+  /**
+   * The index in the logs argument array where the field is located.
+   *
+   * @type {number}
+   */
+  fieldIndex: number;
+  /**
+   * The filter data used for complex filtering.
+   *
+   * @type {Hex}
+   */
+  filterData: Hex;
+}
+
+/**
+ * Object representation of an `ActionEvent` struct used in event actions.
+ *
+ * @export
+ * @interface ActionEvent
+ * @typedef {ActionEvent}
+ */
+export interface ActionEvent {
+  /**
+   * The signature of the event.
+   *
+   * @type {Hex}
+   */
+  eventSignature: Hex;
+  /**
+   * The type of action being performed.
+   *
+   * @type {number}
+   */
+  actionType: number;
+  /**
+   * The address of the target contract.
+   *
+   * @type {Address}
+   */
+  targetContract: Address;
+  /**
+   * The criteria used for this action event.
+   *
+   * @type {Criteria}
+   */
+  actionParameter: Criteria;
+}
+
+/**
+ * Object representation of an `InitPayload` struct used to initialize event actions.
+ *
+ * @export
+ * @interface EventActionPayload
+ * @typedef {EventActionPayload}
+ */
+export interface EventActionPayload {
+  /**
+   * The first action event.
+   *
+   * @type {ActionEvent}
+   */
+  actionEventOne: ActionEvent;
+  /**
+   * The second action event.
+   *
+   * @type {ActionEvent}
+   */
+  actionEventTwo: ActionEvent;
+  /**
+   * The third action event.
+   *
+   * @type {ActionEvent}
+   */
+  actionEventThree: ActionEvent;
+  /**
+   * The fourth action event.
+   *
+   * @type {ActionEvent}
+   */
+  actionEventFour: ActionEvent;
+}
+
+/**
+ * Function to properly encode an event action payload.
+ *
+ * @param {InitPayload} param0
+ * @param {ActionEvent} param0.actionEventOne - The first action event to initialize.
+ * @param {ActionEvent} param0.actionEventTwo - The second action event to initialize.
+ * @param {ActionEvent} param0.actionEventThree - The third action event to initialize.
+ * @param {ActionEvent} param0.actionEventFour - The fourth action event to initialize.
+ * @returns {Hex}
+ */
+export const prepareEventActionPayload = ({
+  actionEventOne,
+  actionEventTwo,
+  actionEventThree,
+  actionEventFour,
+}: EventActionPayload) => {
+  return encodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'actionEventOne',
+        components: [
+          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'uint8', name: 'actionType' },
+          { type: 'address', name: 'targetContract' },
+          {
+            type: 'tuple',
+            name: 'actionParameter',
+            components: [
+              { type: 'uint8', name: 'filterType' },
+              { type: 'uint8', name: 'fieldType' },
+              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'bytes', name: 'filterData' },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: 'actionEventTwo',
+        components: [
+          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'uint8', name: 'actionType' },
+          { type: 'address', name: 'targetContract' },
+          {
+            type: 'tuple',
+            name: 'actionParameter',
+            components: [
+              { type: 'uint8', name: 'filterType' },
+              { type: 'uint8', name: 'fieldType' },
+              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'bytes', name: 'filterData' },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: 'actionEventThree',
+        components: [
+          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'uint8', name: 'actionType' },
+          { type: 'address', name: 'targetContract' },
+          {
+            type: 'tuple',
+            name: 'actionParameter',
+            components: [
+              { type: 'uint8', name: 'filterType' },
+              { type: 'uint8', name: 'fieldType' },
+              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'bytes', name: 'filterData' },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'tuple',
+        name: 'actionEventFour',
+        components: [
+          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'uint8', name: 'actionType' },
+          { type: 'address', name: 'targetContract' },
+          {
+            type: 'tuple',
+            name: 'actionParameter',
+            components: [
+              { type: 'uint8', name: 'filterType' },
+              { type: 'uint8', name: 'fieldType' },
+              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'bytes', name: 'filterData' },
+            ],
+          },
+        ],
+      },
+    ],
+    [actionEventOne, actionEventTwo, actionEventThree, actionEventFour],
+  );
+};
+
 /**
  * Object representation of the `ERC20Incentive.InitPayload`.
  *

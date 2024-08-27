@@ -41,6 +41,7 @@
     },
     "test": {},
     "test:ci": {
+      "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
     "typedoc": {

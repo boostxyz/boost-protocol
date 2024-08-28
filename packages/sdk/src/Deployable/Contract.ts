@@ -1,11 +1,7 @@
 import type { Config } from '@wagmi/core';
 import type { Address, WaitForTransactionReceiptParameters } from 'viem';
 import { ContractAddressRequiredError } from '../errors';
-import {
-  type HashAndSimulatedResult,
-  type WagmiConfig,
-  awaitResult,
-} from '../utils';
+import { type HashAndSimulatedResult, awaitResult } from '../utils';
 
 /**
  * A basic Contract class to encapsulate configuration and a potential address
@@ -20,7 +16,7 @@ export class Contract {
    * @protected
    * @type {WagmiConfig}
    */
-  protected _config: WagmiConfig;
+  protected _config: Config;
   /**
    * The internally managed address for this contract
    *
@@ -35,6 +31,7 @@ export class Contract {
    * @constructor
    * @param {Config} config
    * @param {(Address | undefined)} address
+   * biome-ignore lint/suspicious/noExplicitAny: ^
    */
   constructor(config: Config, address: Address | undefined) {
     this._config = config;

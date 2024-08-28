@@ -32,8 +32,8 @@
     "react-dom": "18.3.0",
     "react-jazzicon": "1.0.4",
     "sharp": "0.33.3",
-    "viem": "2.9.27",
-    "wagmi": "2.5.22"
+    "viem": "^2.9.27",
+    "wagmi": "^2.5.22"
   },
   "devDependencies": {
     "@types/node": "20.12.7",

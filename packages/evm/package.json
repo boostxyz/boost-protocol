@@ -32,7 +32,7 @@
   "keywords": [],
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "wagmi": "^2.12.7"
+    "@wagmi/core": "2"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.2",

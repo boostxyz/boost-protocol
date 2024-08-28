@@ -1,4 +1,4 @@
-import { waitForTransactionReceipt } from '@wagmi/core';
+import { type Config, waitForTransactionReceipt } from '@wagmi/core';
 import { LibZip } from 'solady';
 import type {
   Abi,
@@ -30,27 +30,6 @@ import { VestingBudget } from './Budgets/VestingBudget';
 import type { ERC1155Incentive } from './Incentives/ERC1155Incentive';
 import { SignerValidator } from './Validators/SignerValidator';
 import { NoContractAddressUponReceiptError } from './errors';
-
-/**
- * `WagmiConfig` - any valid 2.x Wagmi configuration.
- * Exported as `any` to simplfy low-level discrepencies in `@wagmi/core.Config` interfaces between 2.x versions.
- * It is left to the user to use compatible versions of `viem` and `wagmi`, as we only require them as peers.
- * @see [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
- * @export
- * @typedef {WagmiConfig}
- * biome-ignore lint/suspicious/noExplicitAny: ^
- */
-export type WagmiConfig = any;
-
-/**
- * `ViemLocalAccount` - any valid 2.x Viem local account.
- * Exported as any to simplfy minor low-level deviations between accounts that extend `viem.LocalAccount`, like `viem.PrivateKeyAccount`, and `viem.HDAccount` don't fully intersect.
- * @see [Viem Local Accounts](https://viem.sh/docs/accounts/local)
- * @export
- * @typedef {ViemLocalAccount}
- * biome-ignore lint/suspicious/noExplicitAny: ^
- */
-export type ViemLocalAccount = any;
 
 /**
  * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
@@ -113,7 +92,7 @@ export function bytes4(input: string) {
  * @throws {@link NoContractAddressUponReceiptError} if no `contractAddress` exists after the transaction has been received
  */
 export async function getDeployedContractAddress(
-  config: WagmiConfig,
+  config: Config,
   hash: Promise<Hash>,
   waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
 ) {
@@ -147,7 +126,7 @@ export type HashAndSimulatedResult<T = unknown> = { hash: Hash; result: T };
  * @returns {Promise<Result>}
  */
 export async function awaitResult<Result = unknown>(
-  config: WagmiConfig,
+  config: Config,
   hashPromise: Promise<HashAndSimulatedResult<Result>>,
   waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
 ): Promise<Result> {

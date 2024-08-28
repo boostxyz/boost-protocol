@@ -2,10 +2,11 @@
 import type { FC } from 'react';
 
 import { Box, Divider, Flex, Heading, useColorMode } from '@chakra-ui/react';
-import { useAccount } from 'wagmi';
+import { useAccount, useConfig } from 'wagmi';
 
 import styles from '@/styles/mainPane.module.css';
 
+import { BoostCore } from '@boostxyz/sdk';
 import {
   Address,
   Balance,
@@ -19,6 +20,11 @@ import {
 const MainPane: FC = () => {
   const { isConnected } = useAccount();
   const { colorMode } = useColorMode();
+  const config = useConfig();
+
+  const _core = new BoostCore({ config });
+
+  console.log(_core);
 
   return (
     <Box

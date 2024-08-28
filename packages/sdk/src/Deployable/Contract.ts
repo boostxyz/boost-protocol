@@ -12,9 +12,9 @@ import { type HashAndSimulatedResult, awaitResult } from '../utils';
  */
 export class Contract {
   /**
-   * @see [Wagmi Configuration](https://en.wikipedia.org/wiki/Factorial)
+   * @see [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
    * @protected
-   * @type {Config}
+   * @type {WagmiConfig}
    */
   protected _config: Config;
   /**
@@ -31,6 +31,7 @@ export class Contract {
    * @constructor
    * @param {Config} config
    * @param {(Address | undefined)} address
+   * biome-ignore lint/suspicious/noExplicitAny: ^
    */
   constructor(config: Config, address: Address | undefined) {
     this._config = config;

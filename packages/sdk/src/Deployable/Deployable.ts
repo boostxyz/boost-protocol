@@ -23,9 +23,10 @@ import { Contract } from './Contract';
  */
 export type GenericDeployableParams = Omit<
   Parameters<typeof deployContract>[1],
-  'args'
+  'args' | 'account'
 > & {
   args: [Hex, ...Array<Hex>];
+  account?: Account;
 };
 
 /**
@@ -53,7 +54,7 @@ export interface DeployableOptions {
    */
   config: Config;
   /**
-   * [Viem Local Account](https://viem.sh/docs/accounts/local), if in a Node environment
+   * [Viem Local Account](https://viem.sh/docs/accounts/local), required if in a Node environment
    *
    * @see {@link Account}
    * @type {?Account}
@@ -90,7 +91,7 @@ export class Deployable<Payload = unknown> extends Contract {
    *
    * @constructor
    * @param {DeployableOptions} param0
-   * @param {Account} param0.account
+   * @param {?Account} [param0.account]
    * @param {Config} param0.config
    * @param {DeployablePayloadOrAddress<Payload>} payload
    */

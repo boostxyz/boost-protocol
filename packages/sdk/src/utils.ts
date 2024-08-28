@@ -74,7 +74,7 @@ export type ReadParams<
  *
  * @export
  * @param {string} input
- * @returns {*}
+ * @returns {Hex}
  */
 export function bytes4(input: string) {
   return slice(isHex(input) ? keccak256(input) : keccak256(toHex(input)), 0, 4);
@@ -85,7 +85,7 @@ export function bytes4(input: string) {
  *
  * @export
  * @async
- * @param {Config} config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
+ * @param {WagmiConfig} config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
  * @param {Promise<Hash>} hash - A transaction hash promise
  * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams] - @see {@link WaitForTransactionReceiptParameters}
  * @returns {unknown}
@@ -120,7 +120,7 @@ export type HashAndSimulatedResult<T = unknown> = { hash: Hash; result: T };
  * @export
  * @async
  * @template [Result=unknown]
- * @param {Config} config
+ * @param {WagmiConfig} config
  * @param {Promise<HashAndSimulatedResult<Result>>} hashPromise
  * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
  * @returns {Promise<Result>}

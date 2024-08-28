@@ -207,7 +207,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
    * @constructor
    * @param {BoostCoreConfig} param0
    * @param {Config} param0.config
-   * @param {Account} param0.account
+   * @param {?Account} [param0.account]
    * @param {({ address?: Address; } | { registryAddress: Address; protocolFeeReceiver: Address; })} param0....options
    */
   constructor({ config, account, ...options }: BoostCoreConfig) {
@@ -229,7 +229,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
    * @async
    * @param {CreateBoostPayload} _boostPayload
    * @param {?DeployableOptions} [_options]
-   * @returns {unknown}
+   * @returns {Boost}
    */
   public async createBoost(
     _boostPayload: CreateBoostPayload,
@@ -628,7 +628,11 @@ export class BoostCore extends Deployable<[Address, Address]> {
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
-    return this.awaitResult(this.setProcolFeeReceiverRaw(address, params));
+    return this.awaitResult(
+      this.setProcolFeeReceiverRaw(address, {
+        ...params,
+      }),
+    );
   }
 
   /**

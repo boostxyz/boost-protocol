@@ -10,6 +10,7 @@ import {Budget} from "contracts/budgets/Budget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @title ERC20 Incentive with Variable Rewards
 /// @notice A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
+
 contract ERC20VariableIncentive is Incentive {
     using SafeTransferLib for address;
 

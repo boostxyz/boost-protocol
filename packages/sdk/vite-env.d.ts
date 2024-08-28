@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { Address } from 'viem';
+import type { AbiEvent, Address } from 'viem';
 
 interface ImportMetaEnv {
   readonly VITE_BOOST_REGISTRY_ADDRESS: Address;
@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_ERC1155_INCENTIVE_BASE: Address;
   readonly VITE_POINTS_INCENTIVE_BASE: Address;
   readonly VITE_SIGNER_VALIDATOR_BASE: Address;
+
+  readonly BoostCoreEvents: AbiEvent;
 }
 
 interface ImportMeta {

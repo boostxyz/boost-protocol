@@ -1,9 +1,18 @@
-import { type Config, waitForTransactionReceipt } from '@wagmi/core';
+import {
+  type Config,
+  type ReadContractParameters,
+  type WatchContractEventParameters,
+  type WriteContractParameters,
+  waitForTransactionReceipt,
+} from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
 import { LibZip } from 'solady';
 import type {
   Abi,
   Address,
+  ContractEventName,
   ContractFunctionName,
+  GetLogsParameters,
   Hash,
   Hex,
   WaitForTransactionReceiptParameters,
@@ -18,7 +27,6 @@ import {
   zeroAddress,
   zeroHash,
 } from 'viem';
-import type { WriteContractParameters } from 'viem/actions';
 import { ContractAction } from './Actions/ContractAction';
 import { ERC721MintAction } from './Actions/ERC721MintAction';
 import {
@@ -32,7 +40,7 @@ import { SignerValidator } from './Validators/SignerValidator';
 import { NoContractAddressUponReceiptError } from './errors';
 
 /**
- * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
+ * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.
  * See (writeContract)[https://viem.sh/docs/contract/writeContract]
  *
  * @export
@@ -51,7 +59,7 @@ export type WriteParams<
 >;
 
 /**
- * Helper type that encapsulates common readContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
+ * Helper type that encapsulates common readContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.
  * See (readContract)[https://viem.sh/docs/contract/readContract]
  *
  * @export
@@ -64,8 +72,53 @@ export type ReadParams<
   functionName extends ContractFunctionName<abi>,
 > = Partial<
   Omit<
-    WriteContractParameters<abi, functionName>,
+    ReadContractParameters<abi, functionName>,
     'address' | 'args' | 'functionName' | 'abi'
+  >
+>;
+
+/**
+ * Helper type that encapsulates common watchContractEvent parameters without fields like `abi` and `address` that are expected to be provided the SDK.
+ * See (readContract)[https://viem.sh/docs/contract/readContract]
+ *
+ * @export
+ * @typedef {WatchParams}
+ * @template {Abi} abi
+ * @template {ContractEventName<abi, eventName>} eventName
+ */
+export type WatchParams<
+  abi extends Abi,
+  eventName extends ContractEventName<abi> | undefined = undefined,
+> = Partial<
+  Omit<WatchContractEventParameters<abi, eventName>, 'address' | 'abi'>
+>;
+
+/**
+ * Helper type that encapsulates common getLogs parameters without fields like `abi` and `address` that are expected to be provided the SDK.
+ * See (getLogs)[https://viem.sh/docs/actions/public/getLogs]
+ *
+ * @export
+ * @typedef {GetLogsParams}
+ * @template {Abi} abi
+ * @template {ContractEventName<abi, eventName>} eventName
+ * @template {ContractEventName<abi>[]} eventNames
+ */
+export type GetLogsParams<
+  abi extends Abi,
+  eventName extends ContractEventName<abi>,
+  eventNames extends
+    | readonly ContractEventName<abi>[]
+    | readonly unknown[]
+    | undefined = eventName extends ContractEventName<abi>
+    ? [eventName]
+    : undefined,
+> = Partial<
+  Omit<
+    GetLogsParameters<
+      ExtractAbiEvent<abi, eventName>,
+      ExtractAbiEvent<abi, eventNames>
+    >,
+    'address' | 'abi'
   >
 >;
 

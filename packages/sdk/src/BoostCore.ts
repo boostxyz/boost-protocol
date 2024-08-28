@@ -13,15 +13,23 @@ import {
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
-import { getAccount, waitForTransactionReceipt } from '@wagmi/core';
+import {
+  getAccount,
+  waitForTransactionReceipt,
+  watchContractEvent,
+} from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
+import type { ExtractAbiEvent } from 'abitype';
 import {
   type Address,
+  type ContractEventName,
   type Hex,
+  type Log,
   parseEventLogs,
   zeroAddress,
   zeroHash,
 } from 'viem';
+import { getLogs } from 'viem/actions';
 import { type Action, actionFromAddress } from './Actions/Action';
 import {
   ContractAction,
@@ -88,9 +96,11 @@ import {
 } from './errors';
 import {
   type EventActionPayload,
+  type GetLogsParams,
   type BoostPayload as OnChainBoostPayload,
   type ReadParams,
   type Target,
+  type WatchParams,
   type WriteParams,
   prepareBoostPayload,
 } from './utils';
@@ -193,6 +203,28 @@ export type CreateBoostPayload = {
   maxParticipants?: bigint;
   owner?: Address;
 };
+
+type BoostCoreEvents<
+  eventName extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
+    typeof boostCoreAbi
+  >,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof boostCoreAbi, name>;
+};
+
+export const BoostCoreEvents: BoostCoreEvents = import.meta.env.BoostCoreEvents;
+
+export type BoostCoreEvent<
+  event extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
+    typeof boostCoreAbi
+  >,
+> = Log<
+  bigint,
+  number,
+  false,
+  ExtractAbiEvent<typeof boostCoreAbi, event>,
+  false
+>;
 
 /**
  * The core contract for the Boost protocol. Used to create and retrieve deployed Boosts.
@@ -728,6 +760,50 @@ export class BoostCore extends Deployable<[Address, Address]> {
     return { hash, result };
   }
 
+  public async getLogs<
+    event extends ContractEventName<typeof boostCoreAbi>,
+    events extends
+      | readonly event[]
+      | readonly unknown[]
+      | undefined = event extends ContractEventName<typeof boostCoreAbi>
+      ? [event]
+      : undefined,
+  >(
+    params?: GetLogsParams<typeof boostCoreAbi, event, events> & {
+      event?: event;
+      events?: events;
+    },
+  ) {
+    return getLogs<undefined, ExtractAbiEvent<typeof boostCoreAbi, event>>({
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      abi: boostCoreAbi,
+      address: this.assertValidAddress(),
+    }) as unknown as Array<BoostCoreEvent<event>>;
+  }
+
+  public async subscribe<event extends ContractEventName<typeof boostCoreAbi>>(
+    cb: (log: BoostCoreEvent<event>) => unknown,
+    params?: WatchParams<typeof boostCoreAbi, event> & { eventName?: event },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof boostCoreAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      abi: boostCoreAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as BoostCoreEvent<event>);
+        }
+      },
+    });
+  }
+
   /**
    * Bound {@link ContractAction} constructor that reuses the same configuration as the Boost Core instance.
    *
@@ -933,7 +1009,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
    * @param {ERC1155IncentivePayload} options
    * @returns {ERC1155Incentive}
    */
-  private ERC1155Incentive(options: ERC1155IncentivePayload) {
+  ERC1155Incentive(options: ERC1155IncentivePayload) {
     return new ERC1155Incentive(
       { config: this._config, account: this._account },
       options,

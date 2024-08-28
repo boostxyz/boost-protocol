@@ -128,7 +128,7 @@ export async function deployFixtures(
     config,
     deployContract(config, {
       abi: EventActionArtifact.abi,
-      bytecode: ContractActionArtifact.bytecode as Hex,
+      bytecode: EventActionArtifact.bytecode as Hex,
       account,
     }),
   );

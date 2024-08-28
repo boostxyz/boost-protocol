@@ -3,14 +3,20 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {MockERC20, MockERC721} from "contracts/shared/Mocks.sol";
+import {MockAuth} from "contracts/shared/Mocks.sol"; // Add this import at the top with the others
 
 contract MocksTest is Test {
     MockERC20 mockERC20;
     MockERC721 mockERC721;
+    MockAuth mockAuth;
+    address[] mockAddresses;
+    address authorizedBoostCreator = makeAddr("authorizedBoostCreator");
 
     function setUp() public {
         mockERC20 = new MockERC20();
         mockERC721 = new MockERC721();
+        mockAddresses.push(authorizedBoostCreator);
+        mockAuth = new MockAuth(mockAddresses);
     }
 
     ///////////////
@@ -87,5 +93,16 @@ contract MocksTest is Test {
             mockERC721.tokenURI(type(uint256).max),
             "https://example.com/token/115792089237316195423570985008687907853269984665640564039457584007913129639935"
         );
+    }
+
+    //////////////
+    // MockAuth //
+    //////////////
+    function testMockAuthIsAuthorized() public {
+        assertTrue(mockAuth.isAuthorized(authorizedBoostCreator));
+    }
+
+    function testMockAuthIsNotAuthorized() public {
+        assertFalse(mockAuth.isAuthorized(address(this)));
     }
 }

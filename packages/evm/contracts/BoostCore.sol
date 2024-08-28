@@ -17,6 +17,7 @@ import {AllowList} from "contracts/allowlists/AllowList.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {Validator} from "contracts/validators/Validator.sol";
+import {IAuth} from "contracts/auth/IAuth.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
@@ -53,6 +54,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice The BoostRegistry contract
     BoostRegistry public registry;
 
+    IAuth public createBoostAuth;
+
     /// @notice The protocol fee receiver
     address public protocolFeeReceiver;
 
@@ -67,6 +70,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
     uint64 public constant FEE_DENOMINATOR = 10_000;
+
+    modifier canCreateBoost(address sender) {
+        if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
+            revert BoostError.Unauthorized();
+        }
+        _;
+    }
 
     /// @notice Constructor to initialize the owner
     constructor(BoostRegistry registry_, address protocolFeeReceiver_) {
@@ -92,7 +102,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
     ///         - `uint256` for the referralFee (added to the base referral fee)
     ///         - `uint256` for the maxParticipants
     ///         - `address` for the owner of the Boost
-    function createBoost(bytes calldata data_) external onlyOwner nonReentrant returns (BoostLib.Boost memory) {
+    function createBoost(bytes calldata data_)
+        external
+        canCreateBoost(msg.sender)
+        nonReentrant
+        returns (BoostLib.Boost memory)
+    {
         InitPayload memory payload_ = abi.decode(data_.cdDecompress(), (InitPayload));
 
         // Validate the Budget
@@ -158,6 +173,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @return The number of Boosts
     function getBoostCount() external view returns (uint256) {
         return _boosts.length;
+    }
+
+    /// @notice Set the createBoostAuth address
+    /// @param auth_ The new createBoostAuth address
+    function setCreateBoostAuth(address auth_) external onlyOwner {
+        createBoostAuth = IAuth(auth_);
     }
 
     /// @notice Set the protocol fee receiver address

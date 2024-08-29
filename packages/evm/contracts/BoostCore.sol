@@ -141,7 +141,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         _routeClaimFee(boost, referrer_);
 
         // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
-        if (!boost.validator.validate(data_)) revert BoostError.Unauthorized();
+        if (!boost.validator.validate(boostId_, incentiveId_, msg.sender, data_)) revert BoostError.Unauthorized();
         if (
             !boost.incentives[incentiveId_].claim(abi.encode(Incentive.ClaimPayload({target: msg.sender, data: data_})))
         ) revert BoostError.ClaimFailed(msg.sender, data_);

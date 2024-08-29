@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
+import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
 import {ERC721} from "@solady/tokens/ERC721.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
@@ -16,7 +17,7 @@ import {AValidator} from "contracts/validators/AValidator.sol";
 /// @dev The action is expected to be prepared with the data payload for the minting of the token
 /// @dev This a minimal generic implementation that should be extended if additional functionality or customizations are required
 /// @dev It is expected that the target contract has an externally accessible mint function whose selector
-abstract contract AERC721MintAction is ContractAction, AValidator {
+abstract contract AERC721MintAction is ContractAction, AValidator, AOwnable {
     /// @notice The set of validated tokens
     /// @dev This is intended to prevent multiple validations against the same token ID
     mapping(uint256 => bool) public validated;
@@ -49,7 +50,12 @@ abstract contract AERC721MintAction is ContractAction, AValidator {
     /// @return success True if the action has been validated for the user
     /// @dev The first 20 bytes of the payload must be the holder address and the remaining bytes must be an encoded token ID (uint256)
     /// @dev Example: `abi.encode(address(holder), abi.encode(uint256(tokenId)))`
-    function validate(bytes calldata data_, uint256 /* unused */) external virtual override returns (bool success) {
+    function validate(uint256, /*unused*/ uint256, /* unused */ address, /*unused*/ bytes calldata data_)
+        external
+        virtual
+        override
+        returns (bool success)
+    {
         (address holder, bytes memory payload) = abi.decode(data_, (address, bytes));
         uint256 tokenId = uint256(bytes32(payload));
 

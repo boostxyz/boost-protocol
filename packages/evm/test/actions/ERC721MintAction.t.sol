@@ -112,10 +112,10 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1))));
+        assertTrue(action.validate(0, 0, address(0), abi.encode(address(this), abi.encode(1))));
 
         // Validate the action again => false
-        assertFalse(action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1))));
+        assertFalse(action.validate(0, 0, address(0), abi.encode(address(this), abi.encode(1))));
     }
 
     function testValidate_NonExistentToken() public {
@@ -124,7 +124,7 @@ contract ERC721MintActionTest is Test {
 
         // Validate the action with a non-existent token
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1)));
+        action.validate(0, 0, address(0), abi.encode(address(this), abi.encode(1)));
     }
 
     ////////////////////////////////
@@ -140,7 +140,7 @@ contract ERC721MintActionTest is Test {
         assertTrue(mockAsset.ownerOf(1) == address(this));
 
         // Validate the action
-        assertTrue(action.validate(0,0, address(0), abi.encode(address(this), abi.encode(1))));
+        assertTrue(action.validate(0, 0, address(0), abi.encode(address(this), abi.encode(1))));
 
         // Check the validation status of the token
         assertTrue(action.validated(1));

@@ -42,12 +42,12 @@ export { contractActionAbi };
  * A generic `viem.Log` event with support for `ContractAction` event types.
  *
  * @export
- * @typedef {ContractActionEvent}
+ * @typedef {ContractActionLog}
  * @template {ContractEventName<typeof contractActionAbi>} [event=ContractEventName<
  *     typeof contractActionAbi
  *   >]
  */
-export type ContractActionEvent<
+export type ContractActionLog<
   event extends ContractEventName<typeof contractActionAbi> = ContractEventName<
     typeof contractActionAbi
   >,
@@ -290,7 +290,7 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof contractActionAbi>} event
-   * @param {(log: ContractActionEvent<event>) => unknown} cb
+   * @param {(log: ContractActionLog<event>) => unknown} cb
    * @param {?WatchParams<typeof contractActionAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -299,7 +299,7 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   public async subscribe<
     event extends ContractEventName<typeof contractActionAbi>,
   >(
-    cb: (log: ContractActionEvent<event>) => unknown,
+    cb: (log: ContractActionLog<event>) => unknown,
     params?: WatchParams<typeof contractActionAbi, event> & {
       eventName?: event;
     },
@@ -317,7 +317,7 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as ContractActionEvent<event>);
+          cb(l as unknown as ContractActionLog<event>);
         }
       },
     });

@@ -54,12 +54,12 @@ export { erc20IncentiveAbi };
  * A generic `viem.Log` event with support for `ERC20Incentive` event types.
  *
  * @export
- * @typedef {ERC20IncentiveEvent}
+ * @typedef {ERC20IncentiveLog}
  * @template {ContractEventName<typeof erc20IncentiveAbi>} [event=ContractEventName<
  *     typeof erc20IncentiveAbi
  *   >]
  */
-export type ERC20IncentiveEvent<
+export type ERC20IncentiveLog<
   event extends ContractEventName<typeof erc20IncentiveAbi> = ContractEventName<
     typeof erc20IncentiveAbi
   >,
@@ -470,7 +470,7 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof erc20IncentiveAbi>} event
-   * @param {(log: ERC20IncentiveEvent<event>) => unknown} cb
+   * @param {(log: ERC20IncentiveLog<event>) => unknown} cb
    * @param {?WatchParams<typeof erc20IncentiveAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -479,7 +479,7 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   public async subscribe<
     event extends ContractEventName<typeof erc20IncentiveAbi>,
   >(
-    cb: (log: ERC20IncentiveEvent<event>) => unknown,
+    cb: (log: ERC20IncentiveLog<event>) => unknown,
     params?: WatchParams<typeof erc20IncentiveAbi, event> & {
       eventName?: event;
     },
@@ -497,7 +497,7 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as ERC20IncentiveEvent<event>);
+          cb(l as unknown as ERC20IncentiveLog<event>);
         }
       },
     });

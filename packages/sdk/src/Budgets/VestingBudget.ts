@@ -58,12 +58,12 @@ export { vestingBudgetAbi };
  * A generic `viem.Log` event with support for `VestingBudget` event types.
  *
  * @export
- * @typedef {VestingBudgetEvent}
+ * @typedef {VestingBudgetLog}
  * @template {ContractEventName<typeof vestingBudgetAbi>} [event=ContractEventName<
  *     typeof vestingBudgetAbi
  *   >]
  */
-export type VestingBudgetEvent<
+export type VestingBudgetLog<
   event extends ContractEventName<typeof vestingBudgetAbi> = ContractEventName<
     typeof vestingBudgetAbi
   >,
@@ -568,7 +568,7 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof vestingBudgetAbi>} event
-   * @param {(log: VestingBudgetEvent<event>) => unknown} cb
+   * @param {(log: VestingBudgetLog<event>) => unknown} cb
    * @param {?WatchParams<typeof vestingBudgetAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -577,7 +577,7 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
   public async subscribe<
     event extends ContractEventName<typeof vestingBudgetAbi>,
   >(
-    cb: (log: VestingBudgetEvent<event>) => unknown,
+    cb: (log: VestingBudgetLog<event>) => unknown,
     params?: WatchParams<typeof vestingBudgetAbi, event> & {
       eventName?: event;
     },
@@ -595,7 +595,7 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as VestingBudgetEvent<event>);
+          cb(l as unknown as VestingBudgetLog<event>);
         }
       },
     });

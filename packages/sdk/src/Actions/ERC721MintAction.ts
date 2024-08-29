@@ -42,12 +42,12 @@ export type { ERC721MintActionPayload };
  * A generic `viem.Log` event with support for `ERC721MintAction` event types.
  *
  * @export
- * @typedef {ERC721MintActionEvent}
+ * @typedef {ERC721MintActionLog}
  * @template {ContractEventName<
  *     typeof erc721MintActionAbi
  *   >} [event=ContractEventName<typeof erc721MintActionAbi>]
  */
-export type ERC721MintActionEvent<
+export type ERC721MintActionLog<
   event extends ContractEventName<
     typeof erc721MintActionAbi
   > = ContractEventName<typeof erc721MintActionAbi>,
@@ -291,7 +291,7 @@ export class ERC721MintAction extends ContractAction {
    * @public
    * @async
    * @template {ContractEventName<typeof erc721MintActionAbi>} event
-   * @param {(log: ERC721MintActionEvent<event>) => unknown} cb
+   * @param {(log: ERC721MintActionLog<event>) => unknown} cb
    * @param {?WatchParams<typeof erc721MintActionAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -300,7 +300,7 @@ export class ERC721MintAction extends ContractAction {
   public override async subscribe<
     event extends ContractEventName<typeof erc721MintActionAbi>,
   >(
-    cb: (log: ERC721MintActionEvent<event>) => unknown,
+    cb: (log: ERC721MintActionLog<event>) => unknown,
     params?: WatchParams<typeof erc721MintActionAbi, event> & {
       eventName?: event;
     },
@@ -318,7 +318,7 @@ export class ERC721MintAction extends ContractAction {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as ERC721MintActionEvent<event>);
+          cb(l as unknown as ERC721MintActionLog<event>);
         }
       },
     });

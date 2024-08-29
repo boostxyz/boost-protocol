@@ -53,12 +53,12 @@ export type { ERC1155IncentivePayload };
  * A generic `viem.Log` event with support for `ERC1155Incentive` event types.
  *
  * @export
- * @typedef {ERC1155IncentiveEvent}
+ * @typedef {ERC1155IncentiveLog}
  * @template {ContractEventName<
  *     typeof erc1155IncentiveAbi
  *   >} [event=ContractEventName<typeof erc1155IncentiveAbi>]
  */
-export type ERC1155IncentiveEvent<
+export type ERC1155IncentiveLog<
   event extends ContractEventName<
     typeof erc1155IncentiveAbi
   > = ContractEventName<typeof erc1155IncentiveAbi>,
@@ -437,7 +437,7 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
    * @public
    * @async
    * @template {ContractEventName<typeof erc1155IncentiveAbi>} event
-   * @param {(log: ERC1155IncentiveEvent<event>) => unknown} cb
+   * @param {(log: ERC1155IncentiveLog<event>) => unknown} cb
    * @param {?WatchParams<typeof erc1155IncentiveAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -446,7 +446,7 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
   public async subscribe<
     event extends ContractEventName<typeof erc1155IncentiveAbi>,
   >(
-    cb: (log: ERC1155IncentiveEvent<event>) => unknown,
+    cb: (log: ERC1155IncentiveLog<event>) => unknown,
     params?: WatchParams<typeof erc1155IncentiveAbi, event> & {
       eventName?: event;
     },
@@ -464,7 +464,7 @@ export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> 
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as ERC1155IncentiveEvent<event>);
+          cb(l as unknown as ERC1155IncentiveLog<event>);
         }
       },
     });

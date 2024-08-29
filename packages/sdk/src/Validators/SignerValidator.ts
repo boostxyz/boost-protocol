@@ -42,12 +42,12 @@ export { signerValidatorAbi };
  * A generic `viem.Log` event with support for `BoostCore` event types.
  *
  * @export
- * @typedef {SignerValidatorEvent}
+ * @typedef {SignerValidatorLog}
  * @template {ContractEventName<
  *     typeof signerValidatorAbi
  *   >} [event=ContractEventName<typeof signerValidatorAbi>]
  */
-export type SignerValidatorEvent<
+export type SignerValidatorLog<
   event extends ContractEventName<
     typeof signerValidatorAbi
   > = ContractEventName<typeof signerValidatorAbi>,
@@ -263,7 +263,7 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof signerValidatorAbi>} event
-   * @param {(log: SignerValidatorEvent<event>) => unknown} cb
+   * @param {(log: SignerValidatorLog<event>) => unknown} cb
    * @param {?WatchParams<typeof signerValidatorAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -272,7 +272,7 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   public async subscribe<
     event extends ContractEventName<typeof signerValidatorAbi>,
   >(
-    cb: (log: SignerValidatorEvent<event>) => unknown,
+    cb: (log: SignerValidatorLog<event>) => unknown,
     params?: WatchParams<typeof signerValidatorAbi, event> & {
       eventName?: event;
     },
@@ -290,7 +290,7 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as SignerValidatorEvent<event>);
+          cb(l as unknown as SignerValidatorLog<event>);
         }
       },
     });

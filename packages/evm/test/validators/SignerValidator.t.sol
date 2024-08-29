@@ -10,10 +10,11 @@ import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 import {MockERC1271Wallet} from "lib/solady/test/utils/mocks/MockERC1271Wallet.sol";
 import {MockERC1271Malicious} from "lib/solady/test/utils/mocks/MockERC1271Malicious.sol";
 
+import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
-import {SignerValidator} from "contracts/validators/SignerValidator.sol";
+import {SignerValidator, ASignerValidator} from "contracts/validators/SignerValidator.sol";
 
 contract SignerValidatorTest is Test {
     SignerValidator baseValidator = new SignerValidator();
@@ -54,7 +55,7 @@ contract SignerValidatorTest is Test {
     // SignerValidator.initialize //
     ////////////////////////////////
 
-    function testInitialize() public {
+    function testInitialize() public view {
         // The initializer should have set 3 signers:
         assertTrue(validator.signers(address(this)));
         assertTrue(validator.signers(testSigner));
@@ -68,7 +69,7 @@ contract SignerValidatorTest is Test {
         assertEq(validator.owner(), address(this));
     }
 
-    function test_InitializerDisabled() public {
+    function test_InitializerDisabled() public view {
         // Because the slot is private, we use `vm.load` to access it then parse out the bits:
         //   - [0] is the `initializing` flag (which should be 0 == false)
         //   - [1..64] hold the `initializedVersion` (which should be 1)
@@ -86,7 +87,7 @@ contract SignerValidatorTest is Test {
     // SignerValidator.signers //
     /////////////////////////////
 
-    function testSigners() public {
+    function testSigners() public view {
         assertTrue(validator.signers(address(this)));
         assertTrue(validator.signers(testSigner));
         assertTrue(validator.signers(address(smartSignerMock)));
@@ -97,43 +98,100 @@ contract SignerValidatorTest is Test {
     // SignerValidator.validate //
     //////////////////////////////
 
-    function testValidate() public {
-        assertTrue(validator.validate(0,0, address(0),PACKED_EOA_SIGNATURE));
+    function testValidate_ValidSignature() public {
+        uint256 boostId = 5;
+        uint256 incentiveId = 1;
+        uint8 incentiveQuantity = 2;
+        address claimant = makeAddr("claimant");
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes memory signature = _signHash(msgHash, testSignerKey);
 
-        vm.expectRevert(BoostError.Unauthorized.selector);
-        validator.validate(0,0, address(0),PACKED_UNTRUSTED_SIGNATURE);
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
     function testValidate_UnauthorizedSigner() public {
-        bytes32 hash = keccak256(abi.encodePacked("test"));
-        bytes memory signature = _signHash(hash, fakeSignerKey);
-        bytes memory data = abi.encode(fakeSigner, hash, signature);
+        uint256 boostId = 5;
+        uint8 incentiveQuantity = 2;
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, address(0), incentiveData);
+        bytes memory signature = _signHash(msgHash, fakeSignerKey);
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(fakeSigner, signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+
         vm.expectRevert(BoostError.Unauthorized.selector);
-        validator.validate(0,0, address(0),data);
+        validator.validate(0, 0, address(0), claimData);
     }
 
     function testValidate_ReplayedSignature() public {
+        uint256 boostId = 0;
+        uint256 incentiveId = 0;
+        uint8 incentiveQuantity = 0;
+        address claimant = address(0);
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes memory signature = _signHash(msgHash, testSignerKey);
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
         // First validation should pass
-        assertTrue(validator.validate(0,0, address(0),PACKED_EOA_SIGNATURE));
+        assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
 
         // Second (replayed) validation should revert
-        vm.expectRevert(
-            abi.encodeWithSelector(BoostError.Replayed.selector, testSigner, MESSAGE_HASH, TRUSTED_EOA_SIGNATURE)
-        );
-        validator.validate(0,0, address(0),PACKED_EOA_SIGNATURE);
+        vm.expectRevert(abi.encodeWithSelector(BoostError.Replayed.selector, testSigner, msgHash, signature));
+        validator.validate(boostId, incentiveId, claimant, claimData);
     }
 
     function testValidate_SmartContractSigner() public {
-        assertTrue(validator.validate(0,0, address(0), PACKED_1271_SIGNATURE));
+        uint256 boostId = 5;
+        uint256 incentiveId = 1;
+        uint8 incentiveQuantity = 2;
+        address claimant = makeAddr("claimant");
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes memory signature = _signHash(msgHash, testSignerKey);
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(address(smartSignerMock), signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
     function testValidate_SmartContractSigner_WrongSigner() public {
-        assertFalse(validator.validate(0,0, address(0),PACKED_WRONG_SIGNATURE));
+        uint256 boostId = 5;
+        uint256 incentiveId = 1;
+        uint8 incentiveQuantity = 2;
+        address claimant = makeAddr("claimant");
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes memory signature = _signHash(msgHash, fakeSignerKey);
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(address(smartSignerMock), signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
     function testValidate_SmartContractSigner_Malicious() public {
+        uint256 boostId = 5;
+        uint256 incentiveId = 1;
+        uint8 incentiveQuantity = 2;
+        address claimant = makeAddr("claimant");
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes memory signature = _signHash(msgHash, fakeSignerKey);
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(address(maliciousSignerMock), signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
         vm.expectRevert(BoostError.Unauthorized.selector);
-        validator.validate(0,0, address(0),PACKED_MALICIOUS_SIGNATURE);
+        validator.validate(boostId, incentiveId, claimant, claimData);
     }
 
     ///////////////////////////////////
@@ -152,11 +210,11 @@ contract SignerValidatorTest is Test {
         assertTrue(validator.signers(fakeSigner));
     }
 
-    ////////////////////////////////////
+    /////////////////////////////////////////
     // VestingBudget.getComponentInterface //
-    ////////////////////////////////////
+    /////////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Ensure the contract supports the Budget interface
         console.logBytes4(validator.getComponentInterface());
     }
@@ -165,12 +223,12 @@ contract SignerValidatorTest is Test {
     // SignerValidator.supportsInterface //
     ///////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         assertTrue(validator.supportsInterface(type(Cloneable).interfaceId));
         assertTrue(validator.supportsInterface(type(AValidator).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         assertFalse(validator.supportsInterface(type(Test).interfaceId));
     }
 
@@ -178,8 +236,7 @@ contract SignerValidatorTest is Test {
     // Test Helpers    //
     /////////////////////
 
-    function _signHash(bytes32 msgHash, uint256 privateKey) internal pure returns (bytes memory) {
-        bytes32 digest = SignatureCheckerLib.toEthSignedMessageHash(msgHash);
+    function _signHash(bytes32 digest, uint256 privateKey) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
     }

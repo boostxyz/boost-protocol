@@ -42,12 +42,12 @@ export { simpleAllowListAbi };
  * A generic `viem.Log` event with support for `SimpleAllowList` event types.
  *
  * @export
- * @typedef {SimpleAllowListEvent}
+ * @typedef {SimpleAllowListLog}
  * @template {ContractEventName<
  *     typeof simpleAllowListAbi
  *   >} [event=ContractEventName<typeof simpleAllowListAbi>]
  */
-export type SimpleAllowListEvent<
+export type SimpleAllowListLog<
   event extends ContractEventName<
     typeof simpleAllowListAbi
   > = ContractEventName<typeof simpleAllowListAbi>,
@@ -276,7 +276,7 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof simpleAllowListAbi>} event
-   * @param {(log: SimpleAllowListEvent<event>) => unknown} cb
+   * @param {(log: SimpleAllowListLog<event>) => unknown} cb
    * @param {?WatchParams<typeof simpleAllowListAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -285,7 +285,7 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
   public async subscribe<
     event extends ContractEventName<typeof simpleAllowListAbi>,
   >(
-    cb: (log: SimpleAllowListEvent<event>) => unknown,
+    cb: (log: SimpleAllowListLog<event>) => unknown,
     params?: WatchParams<typeof simpleAllowListAbi, event> & {
       eventName?: event;
     },
@@ -303,7 +303,7 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as SimpleAllowListEvent<event>);
+          cb(l as unknown as SimpleAllowListLog<event>);
         }
       },
     });

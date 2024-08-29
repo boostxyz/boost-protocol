@@ -47,12 +47,12 @@ export { pointsIncentiveAbi };
  * A generic `viem.Log` event with support for `PointsIncentive` event types.
  *
  * @export
- * @typedef {PointsIncentiveEvent}
+ * @typedef {PointsIncentiveLog}
  * @template {ContractEventName<
  *     typeof pointsIncentiveAbi
  *   >} [event=ContractEventName<typeof pointsIncentiveAbi>]
  */
-export type PointsIncentiveEvent<
+export type PointsIncentiveLog<
   event extends ContractEventName<
     typeof pointsIncentiveAbi
   > = ContractEventName<typeof pointsIncentiveAbi>,
@@ -356,7 +356,7 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof pointsIncentiveAbi>} event
-   * @param {(log: PointsIncentiveEvent<event>) => unknown} cb
+   * @param {(log: PointsIncentiveLog<event>) => unknown} cb
    * @param {?WatchParams<typeof pointsIncentiveAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -365,7 +365,7 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   public async subscribe<
     event extends ContractEventName<typeof pointsIncentiveAbi>,
   >(
-    cb: (log: PointsIncentiveEvent<event>) => unknown,
+    cb: (log: PointsIncentiveLog<event>) => unknown,
     params?: WatchParams<typeof pointsIncentiveAbi, event> & {
       eventName?: event;
     },
@@ -383,7 +383,7 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as PointsIncentiveEvent<event>);
+          cb(l as unknown as PointsIncentiveLog<event>);
         }
       },
     });

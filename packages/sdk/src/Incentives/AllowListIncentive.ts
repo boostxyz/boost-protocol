@@ -47,12 +47,12 @@ export { allowListIncentiveAbi };
  * A generic `viem.Log` event with support for `AllowListIncentive` event types.
  *
  * @export
- * @typedef {AllowListIncentiveEvent}
+ * @typedef {AllowListIncentiveLog}
  * @template {ContractEventName<
  *     typeof allowListIncentiveAbi
  *   >} [event=ContractEventName<typeof allowListIncentiveAbi>]
  */
-export type AllowListIncentiveEvent<
+export type AllowListIncentiveLog<
   event extends ContractEventName<
     typeof allowListIncentiveAbi
   > = ContractEventName<typeof allowListIncentiveAbi>,
@@ -343,7 +343,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
    * @public
    * @async
    * @template {ContractEventName<typeof allowListIncentiveAbi>} event
-   * @param {(log: AllowListIncentiveEvent<event>) => unknown} cb
+   * @param {(log: AllowListIncentiveLog<event>) => unknown} cb
    * @param {?WatchParams<typeof allowListIncentiveAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -352,7 +352,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   public async subscribe<
     event extends ContractEventName<typeof allowListIncentiveAbi>,
   >(
-    cb: (log: AllowListIncentiveEvent<event>) => unknown,
+    cb: (log: AllowListIncentiveLog<event>) => unknown,
     params?: WatchParams<typeof allowListIncentiveAbi, event> & {
       eventName?: event;
     },
@@ -370,7 +370,7 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as AllowListIncentiveEvent<event>);
+          cb(l as unknown as AllowListIncentiveLog<event>);
         }
       },
     });

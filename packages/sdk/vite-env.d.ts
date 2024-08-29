@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AbiEvent, Address } from 'viem';
+import type { Address } from 'viem';
 
 interface ImportMetaEnv {
   readonly VITE_BOOST_REGISTRY_ADDRESS: Address;

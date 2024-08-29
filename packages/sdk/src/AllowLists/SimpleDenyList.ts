@@ -41,12 +41,12 @@ export { simpleDenyListAbi };
  * A generic `viem.Log` event with support for `SimpleDenyList` event types.
  *
  * @export
- * @typedef {SimpleDenyListEvent}
+ * @typedef {SimpleDenyListLog}
  * @template {ContractEventName<typeof simpleDenyListAbi>} [event=ContractEventName<
  *     typeof simpleDenyListAbi
  *   >]
  */
-export type SimpleDenyListEvent<
+export type SimpleDenyListLog<
   event extends ContractEventName<typeof simpleDenyListAbi> = ContractEventName<
     typeof simpleDenyListAbi
   >,
@@ -220,7 +220,7 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof simpleDenyListAbi>} event
-   * @param {(log: SimpleDenyListEvent<event>) => unknown} cb
+   * @param {(log: SimpleDenyListLog<event>) => unknown} cb
    * @param {?WatchParams<typeof simpleDenyListAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -229,7 +229,7 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
   public async subscribe<
     event extends ContractEventName<typeof simpleDenyListAbi>,
   >(
-    cb: (log: SimpleDenyListEvent<event>) => unknown,
+    cb: (log: SimpleDenyListLog<event>) => unknown,
     params?: WatchParams<typeof simpleDenyListAbi, event> & {
       eventName?: event;
     },
@@ -247,7 +247,7 @@ export class SimpleDenyList extends DeployableTarget<SimpleDenyListPayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as SimpleDenyListEvent<event>);
+          cb(l as unknown as SimpleDenyListLog<event>);
         }
       },
     });

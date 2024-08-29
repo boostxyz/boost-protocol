@@ -51,12 +51,12 @@ export const BOOST_REGISTRY_ADDRESS: Address = import.meta.env
  * A record of `BoostRegistry` event names to `AbiEvent` objects for use with `getLogs`
  *
  * @export
- * @typedef {BoostRegistryEvent}
+ * @typedef {BoostRegistryLog}
  * @template {ContractEventName<typeof boostRegistryAbi>} [event=ContractEventName<
  *     typeof boostRegistryAbi
  *   >]
  */
-export type BoostRegistryEvent<
+export type BoostRegistryLog<
   event extends ContractEventName<typeof boostRegistryAbi> = ContractEventName<
     typeof boostRegistryAbi
   >,
@@ -498,7 +498,7 @@ export class BoostRegistry extends Deployable<never[]> {
    * @public
    * @async
    * @template {ContractEventName<typeof boostRegistryAbi>} event
-   * @param {(log: BoostRegistryEvent<event>) => unknown} cb
+   * @param {(log: BoostRegistryLog<event>) => unknown} cb
    * @param {?WatchParams<typeof boostRegistryAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -507,7 +507,7 @@ export class BoostRegistry extends Deployable<never[]> {
   public async subscribe<
     event extends ContractEventName<typeof boostRegistryAbi>,
   >(
-    cb: (log: BoostRegistryEvent<event>) => unknown,
+    cb: (log: BoostRegistryLog<event>) => unknown,
     params?: WatchParams<typeof boostRegistryAbi, event> & {
       eventName?: event;
     },
@@ -525,7 +525,7 @@ export class BoostRegistry extends Deployable<never[]> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as BoostRegistryEvent<event>);
+          cb(l as unknown as BoostRegistryLog<event>);
         }
       },
     });

@@ -122,12 +122,12 @@ export const BOOST_CORE_ADDRESS: Address = import.meta.env
  * A generic `viem.Log` event with support for `BoostCore` event types.
  *
  * @export
- * @typedef {BoostCoreEvent}
+ * @typedef {BoostCoreLog}
  * @template {ContractEventName<typeof boostCoreAbi>} [event=ContractEventName<
  *     typeof boostCoreAbi
  *   >]
  */
-export type BoostCoreEvent<
+export type BoostCoreLog<
   event extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
     typeof boostCoreAbi
   >,
@@ -829,12 +829,12 @@ export class BoostCore extends Deployable<[Address, Address]> {
    * @public
    * @async
    * @template {ContractEventName<typeof boostCoreAbi>} event
-   * @param {(log: BoostCoreEvent<event>) => unknown} cb
+   * @param {(log: BoostCoreLog<event>) => unknown} cb
    * @param {?(WatchParams<typeof boostCoreAbi, event> & { eventName?: event })} [params]
    * @returns {unknown, params?: any) => unknown} Unsubscribe function
    */
   public async subscribe<event extends ContractEventName<typeof boostCoreAbi>>(
-    cb: (log: BoostCoreEvent<event>) => unknown,
+    cb: (log: BoostCoreLog<event>) => unknown,
     params?: WatchParams<typeof boostCoreAbi, event> & { eventName?: event },
   ) {
     return watchContractEvent<
@@ -850,7 +850,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as BoostCoreEvent<event>);
+          cb(l as unknown as BoostCoreLog<event>);
         }
       },
     });

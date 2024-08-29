@@ -51,12 +51,12 @@ export { cgdaIncentiveAbi };
  * A generic `viem.Log` event with support for `CGDAIncentive` event types.
  *
  * @export
- * @typedef {CGDAIncentiveEvent}
+ * @typedef {CGDAIncentiveLog}
  * @template {ContractEventName<typeof cgdaIncentiveAbi>} [event=ContractEventName<
  *     typeof cgdaIncentiveAbi
  *   >]
  */
-export type CGDAIncentiveEvent<
+export type CGDAIncentiveLog<
   event extends ContractEventName<typeof cgdaIncentiveAbi> = ContractEventName<
     typeof cgdaIncentiveAbi
   >,
@@ -417,7 +417,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof cgdaIncentiveAbi>} event
-   * @param {(log: CGDAIncentiveEvent<event>) => unknown} cb
+   * @param {(log: CGDAIncentiveLog<event>) => unknown} cb
    * @param {?WatchParams<typeof cgdaIncentiveAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -426,7 +426,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   public async subscribe<
     event extends ContractEventName<typeof cgdaIncentiveAbi>,
   >(
-    cb: (log: CGDAIncentiveEvent<event>) => unknown,
+    cb: (log: CGDAIncentiveLog<event>) => unknown,
     params?: WatchParams<typeof cgdaIncentiveAbi, event> & {
       eventName?: event;
     },
@@ -444,7 +444,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as CGDAIncentiveEvent<event>);
+          cb(l as unknown as CGDAIncentiveLog<event>);
         }
       },
     });

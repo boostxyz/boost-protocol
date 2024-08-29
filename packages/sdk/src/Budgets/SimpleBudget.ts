@@ -63,12 +63,12 @@ export { simpleBudgetAbi };
  * A generic `viem.Log` event with support for `SimpleBudget` event types.
  *
  * @export
- * @typedef {SimpleBudgetEvent}
+ * @typedef {SimpleBudgetLog}
  * @template {ContractEventName<typeof simpleBudgetAbi>} [event=ContractEventName<
  *     typeof simpleBudgetAbi
  *   >]
  */
-export type SimpleBudgetEvent<
+export type SimpleBudgetLog<
   event extends ContractEventName<typeof simpleBudgetAbi> = ContractEventName<
     typeof simpleBudgetAbi
   >,
@@ -557,7 +557,7 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
    * @public
    * @async
    * @template {ContractEventName<typeof simpleBudgetAbi>} event
-   * @param {(log: SimpleBudgetEvent<event>) => unknown} cb
+   * @param {(log: SimpleBudgetLog<event>) => unknown} cb
    * @param {?WatchParams<typeof simpleBudgetAbi, event> & {
    *       eventName?: event;
    *     }} [params]
@@ -566,7 +566,7 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   public async subscribe<
     event extends ContractEventName<typeof simpleBudgetAbi>,
   >(
-    cb: (log: SimpleBudgetEvent<event>) => unknown,
+    cb: (log: SimpleBudgetLog<event>) => unknown,
     params?: WatchParams<typeof simpleBudgetAbi, event> & {
       eventName?: event;
     },
@@ -584,7 +584,7 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
       address: this.assertValidAddress(),
       onLogs: (logs) => {
         for (let l of logs) {
-          cb(l as unknown as SimpleBudgetEvent<event>);
+          cb(l as unknown as SimpleBudgetLog<event>);
         }
       },
     });

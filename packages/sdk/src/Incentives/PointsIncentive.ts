@@ -14,12 +14,12 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import { watchContractEvent } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
-import type {
-  AbiEvent,
-  Address,
-  ContractEventName,
-  GetLogsReturnType,
-  Hex,
+import {
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  getAbiItem,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
@@ -41,31 +41,7 @@ import {
 } from '../utils';
 
 export type { PointsIncentivePayload };
-
-/**
- * A record of PointsIncentive` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {PointsIncentiveAbiEvents}
- * @template {ContractEventName<
- *     typeof pointsIncentiveAbi
- *   >} [eventName=ContractEventName<typeof pointsIncentiveAbi>]
- */
-export type PointsIncentiveAbiEvents<
-  eventName extends ContractEventName<
-    typeof pointsIncentiveAbi
-  > = ContractEventName<typeof pointsIncentiveAbi>,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof pointsIncentiveAbi, name>;
-};
-
-/**
- * A record of `PointsIncentive` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {PointsIncentiveAbiEvents}
- */
-export const PointsIncentiveAbiEvents: PointsIncentiveAbiEvents = import.meta
-  .env.PointsIncentiveAbiEvents;
+export { pointsIncentiveAbi };
 
 /**
  * A generic `viem.Log` event with support for `PointsIncentive` event types.
@@ -309,8 +285,13 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
   }
 
   /**
-   * A typed wrapper for `viem.getLogs`
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof pointsIncentiveAbi>} event
@@ -318,19 +299,14 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
    *       typeof pointsIncentiveAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof pointsIncentiveAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<
-   *       typeof pointsIncentiveAbi,
-   *       event,
-   *       abiEvent,
-   *       abiEvents
+   * @param {?Omit<
+   *       GetLogsParams<typeof pointsIncentiveAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
    *     > & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
     event extends ContractEventName<typeof pointsIncentiveAbi>,
@@ -338,24 +314,38 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
       typeof pointsIncentiveAbi,
       event
     > = ExtractAbiEvent<typeof pointsIncentiveAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<
-      typeof pointsIncentiveAbi,
-      event,
-      abiEvent,
-      abiEvents
+    params?: Omit<
+      GetLogsParams<typeof pointsIncentiveAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
     > & {
-      event?: abiEvent;
-      events?: abiEvents;
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: pointsIncentiveAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: pointsIncentiveAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

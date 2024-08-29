@@ -17,15 +17,14 @@ import {
   writeSimpleBudgetSetAuthorized,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
-import { getAccount } from '@wagmi/core';
-import { watchContractEvent } from '@wagmi/core';
+import { getAccount, watchContractEvent } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
 import {
-  type AbiEvent,
   type Address,
   type ContractEventName,
   type GetLogsReturnType,
   type Hex,
+  getAbiItem,
   zeroAddress,
 } from 'viem';
 import { getLogs } from 'viem/actions';
@@ -58,31 +57,7 @@ export type {
   FungibleTransferPayload,
   SimpleBudgetPayload,
 };
-
-/**
- * A record of `SimpleBudget` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {SimpleBudgetAbiEvents}
- * @template {ContractEventName<
- *     typeof simpleBudgetAbi
- *   >} [eventName=ContractEventName<typeof simpleBudgetAbi>]
- */
-export type SimpleBudgetAbiEvents<
-  eventName extends ContractEventName<
-    typeof simpleBudgetAbi
-  > = ContractEventName<typeof simpleBudgetAbi>,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof simpleBudgetAbi, name>;
-};
-
-/**
- * A record of `SimpleBudget` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {SimpleBudgetAbiEvents}
- */
-export const SimpleBudgetAbiEvents: SimpleBudgetAbiEvents = import.meta.env
-  .SimpleBudgetAbiEvents;
+export { simpleBudgetAbi };
 
 /**
  * A generic `viem.Log` event with support for `SimpleBudget` event types.
@@ -511,8 +486,13 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
   }
 
   /**
-   * A typed wrapper for `viem.getLogs`
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof simpleBudgetAbi>} event
@@ -520,19 +500,14 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
    *       typeof simpleBudgetAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof simpleBudgetAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<
-   *       typeof simpleBudgetAbi,
-   *       event,
-   *       abiEvent,
-   *       abiEvents
+   * @param {?Omit<
+   *       GetLogsParams<typeof simpleBudgetAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
    *     > & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
     event extends ContractEventName<typeof simpleBudgetAbi>,
@@ -540,24 +515,38 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
       typeof simpleBudgetAbi,
       event
     > = ExtractAbiEvent<typeof simpleBudgetAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<
-      typeof simpleBudgetAbi,
-      event,
-      abiEvent,
-      abiEvents
+    params?: Omit<
+      GetLogsParams<typeof simpleBudgetAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
     > & {
-      event?: abiEvent;
-      events?: abiEvents;
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: simpleBudgetAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: simpleBudgetAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

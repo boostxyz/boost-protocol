@@ -9,12 +9,12 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { watchContractEvent } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
-import type {
-  AbiEvent,
-  Address,
-  ContractEventName,
-  GetLogsReturnType,
-  Hex,
+import {
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  getAbiItem,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
@@ -36,31 +36,7 @@ import {
 } from '../utils';
 
 export type { SignerValidatorPayload };
-
-/**
- * A record of `SignerValidator` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {SignerValidatorAbiEvents}
- * @template {ContractEventName<
- *     typeof signerValidatorAbi
- *   >} [eventName=ContractEventName<typeof signerValidatorAbi>]
- */
-export type SignerValidatorAbiEvents<
-  eventName extends ContractEventName<
-    typeof signerValidatorAbi
-  > = ContractEventName<typeof signerValidatorAbi>,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof signerValidatorAbi, name>;
-};
-
-/**
- * A record of `SignerValidator` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {SignerValidatorAbiEvents}
- */
-export const SignerValidatorAbiEvents: SignerValidatorAbiEvents = import.meta
-  .env.SignerValidatorAbiEvents;
+export { signerValidatorAbi };
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.
@@ -216,8 +192,13 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
   }
 
   /**
-   * A typed wrapper for `viem.getLogs`
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof signerValidatorAbi>} event
@@ -225,19 +206,14 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
    *       typeof signerValidatorAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof signerValidatorAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<
-   *       typeof signerValidatorAbi,
-   *       event,
-   *       abiEvent,
-   *       abiEvents
+   * @param {?Omit<
+   *       GetLogsParams<typeof signerValidatorAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
    *     > & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
     event extends ContractEventName<typeof signerValidatorAbi>,
@@ -245,24 +221,38 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
       typeof signerValidatorAbi,
       event
     > = ExtractAbiEvent<typeof signerValidatorAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<
-      typeof signerValidatorAbi,
-      event,
-      abiEvent,
-      abiEvents
+    params?: Omit<
+      GetLogsParams<typeof signerValidatorAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
     > & {
-      event?: abiEvent;
-      events?: abiEvents;
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: signerValidatorAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: signerValidatorAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

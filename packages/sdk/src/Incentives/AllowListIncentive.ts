@@ -13,12 +13,12 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import { watchContractEvent } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
-import type {
-  AbiEvent,
-  Address,
-  ContractEventName,
-  GetLogsReturnType,
-  Hex,
+import {
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  getAbiItem,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import { SimpleAllowList } from '../AllowLists/AllowList';
@@ -41,31 +41,7 @@ import {
 } from '../utils';
 
 export type { AllowListIncentivePayload };
-
-/**
- * A record of `AllowListIncentive` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {AllowListIncentiveAbiEvents}
- * @template {ContractEventName<
- *     typeof allowListIncentiveAbi
- *   >} [eventName=ContractEventName<typeof allowListIncentiveAbi>]
- */
-export type AllowListIncentiveAbiEvents<
-  eventName extends ContractEventName<
-    typeof allowListIncentiveAbi
-  > = ContractEventName<typeof allowListIncentiveAbi>,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof allowListIncentiveAbi, name>;
-};
-
-/**
- * A record of `AllowListIncentive` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {AllowListIncentiveAbiEvents}
- */
-export const AllowListIncentiveAbiEvents: AllowListIncentiveAbiEvents =
-  import.meta.env.AllowListIncentiveAbiEvents;
+export { allowListIncentiveAbi };
 
 /**
  * A generic `viem.Log` event with support for `AllowListIncentive` event types.
@@ -296,8 +272,13 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
   }
 
   /**
-   * A typed wrapper for `viem.getLogs`
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof allowListIncentiveAbi>} event
@@ -305,19 +286,14 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
    *       typeof allowListIncentiveAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof allowListIncentiveAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<
-   *       typeof allowListIncentiveAbi,
-   *       event,
-   *       abiEvent,
-   *       abiEvents
+   * @param {?Omit<
+   *       GetLogsParams<typeof allowListIncentiveAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
    *     > & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
     event extends ContractEventName<typeof allowListIncentiveAbi>,
@@ -325,24 +301,38 @@ export class AllowListIncentive extends DeployableTarget<AllowListIncentivePaylo
       typeof allowListIncentiveAbi,
       event
     > = ExtractAbiEvent<typeof allowListIncentiveAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<
-      typeof allowListIncentiveAbi,
-      event,
-      abiEvent,
-      abiEvents
+    params?: Omit<
+      GetLogsParams<typeof allowListIncentiveAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
     > & {
-      event?: abiEvent;
-      events?: abiEvents;
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: allowListIncentiveAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: allowListIncentiveAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

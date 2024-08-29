@@ -10,8 +10,14 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import { watchContractEvent } from '@wagmi/core';
-import type { AbiEvent, ExtractAbiEvent } from 'abitype';
-import type { Address, ContractEventName, GetLogsReturnType, Hex } from 'viem';
+import type { ExtractAbiEvent } from 'abitype';
+import {
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  getAbiItem,
+} from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
@@ -30,31 +36,7 @@ import {
 } from '../utils';
 
 export type { ContractActionPayload };
-
-/**
- *A record of `ContractAction` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {ContractActionAbiEvents}
- * @template {ContractEventName<
- *     typeof contractActionAbi
- *   >} [eventName=ContractEventName<typeof contractActionAbi>]
- */
-export type ContractActionAbiEvents<
-  eventName extends ContractEventName<
-    typeof contractActionAbi
-  > = ContractEventName<typeof contractActionAbi>,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof contractActionAbi, name>;
-};
-
-/**
- * A record of `ContractAction` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {ContractActionAbiEvents}
- */
-export const ContractActionAbiEvents: ContractActionAbiEvents = import.meta.env
-  .ContractActionAbiEvents;
+export { contractActionAbi };
 
 /**
  * A generic `viem.Log` event with support for `ContractAction` event types.
@@ -237,8 +219,13 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
   }
 
   /**
-   * A typed wrapper for `viem.getLogs`
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof contractActionAbi>} event
@@ -246,19 +233,14 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
    *       typeof contractActionAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof contractActionAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<
-   *       typeof contractActionAbi,
-   *       event,
-   *       abiEvent,
-   *       abiEvents
+   * @param {?Omit<
+   *       GetLogsParams<typeof contractActionAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
    *     > & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
     event extends ContractEventName<typeof contractActionAbi>,
@@ -266,24 +248,38 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
       typeof contractActionAbi,
       event
     > = ExtractAbiEvent<typeof contractActionAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<
-      typeof contractActionAbi,
-      event,
-      abiEvent,
-      abiEvents
+    params?: Omit<
+      GetLogsParams<typeof contractActionAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
     > & {
-      event?: abiEvent;
-      events?: abiEvents;
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: contractActionAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: contractActionAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

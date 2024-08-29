@@ -20,12 +20,12 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import { watchContractEvent } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
-import type {
-  AbiEvent,
-  Address,
-  ContractEventName,
-  GetLogsReturnType,
-  Hex,
+import {
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  getAbiItem,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
@@ -48,31 +48,7 @@ import {
 } from '../utils';
 
 export type { ERC20IncentivePayload };
-
-/**
- * A record of `ERC20ListIncentive` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {ERC20IncentiveAbiEvents}
- * @template {ContractEventName<
- *     typeof erc20IncentiveAbi
- *   >} [eventName=ContractEventName<typeof erc20IncentiveAbi>]
- */
-export type ERC20IncentiveAbiEvents<
-  eventName extends ContractEventName<
-    typeof erc20IncentiveAbi
-  > = ContractEventName<typeof erc20IncentiveAbi>,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof erc20IncentiveAbi, name>;
-};
-
-/**
- * A record of `ERC20Incentive` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {ERC20IncentiveAbiEvents}
- */
-export const ERC20IncentiveAbiEvents: ERC20IncentiveAbiEvents = import.meta.env
-  .ERC20IncentiveAbiEvents;
+export { erc20IncentiveAbi };
 
 /**
  * A generic `viem.Log` event with support for `ERC20Incentive` event types.
@@ -423,8 +399,13 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
   }
 
   /**
-   * A typed wrapper for `viem.getLogs`
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof erc20IncentiveAbi>} event
@@ -432,19 +413,14 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
    *       typeof erc20IncentiveAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof erc20IncentiveAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<
-   *       typeof erc20IncentiveAbi,
-   *       event,
-   *       abiEvent,
-   *       abiEvents
+   * @param {?Omit<
+   *       GetLogsParams<typeof erc20IncentiveAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
    *     > & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
     event extends ContractEventName<typeof erc20IncentiveAbi>,
@@ -452,24 +428,38 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
       typeof erc20IncentiveAbi,
       event
     > = ExtractAbiEvent<typeof erc20IncentiveAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<
-      typeof erc20IncentiveAbi,
-      event,
-      abiEvent,
-      abiEvents
+    params?: Omit<
+      GetLogsParams<typeof erc20IncentiveAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
     > & {
-      event?: abiEvent;
-      events?: abiEvents;
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: erc20IncentiveAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: erc20IncentiveAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

@@ -9,7 +9,10 @@ import {
   writeContractActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import type { Address, Hex } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { AbiEvent, ExtractAbiEvent } from 'abitype';
+import type { Address, ContractEventName, GetLogsReturnType, Hex } from 'viem';
+import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -17,13 +20,56 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ContractActionPayload,
+  type GenericLog,
+  type GetLogsParams,
   type ReadParams,
   RegistryType,
+  type WatchParams,
   type WriteParams,
   prepareContractActionPayload,
 } from '../utils';
 
 export type { ContractActionPayload };
+
+/**
+ *A record of `ContractAction` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {ContractActionAbiEvents}
+ * @template {ContractEventName<
+ *     typeof contractActionAbi
+ *   >} [eventName=ContractEventName<typeof contractActionAbi>]
+ */
+export type ContractActionAbiEvents<
+  eventName extends ContractEventName<
+    typeof contractActionAbi
+  > = ContractEventName<typeof contractActionAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof contractActionAbi, name>;
+};
+
+/**
+ * A record of `ContractAction` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {ContractActionAbiEvents}
+ */
+export const ContractActionAbiEvents: ContractActionAbiEvents = import.meta.env
+  .ContractActionAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `ContractAction` event types.
+ *
+ * @export
+ * @typedef {ContractActionEvent}
+ * @template {ContractEventName<typeof contractActionAbi>} [event=ContractEventName<
+ *     typeof contractActionAbi
+ *   >]
+ */
+export type ContractActionEvent<
+  event extends ContractEventName<typeof contractActionAbi> = ContractEventName<
+    typeof contractActionAbi
+  >,
+> = GenericLog<typeof contractActionAbi, event>;
 
 /**
  * A generic contract action
@@ -187,6 +233,97 @@ export class ContractAction extends DeployableTarget<ContractActionPayload> {
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
+    });
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof contractActionAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof contractActionAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof contractActionAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof contractActionAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof contractActionAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof contractActionAbi,
+      event
+    > = ExtractAbiEvent<typeof contractActionAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof contractActionAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof contractActionAbi>} event
+   * @param {(log: ContractActionEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof contractActionAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof contractActionAbi>,
+  >(
+    cb: (log: ContractActionEvent<event>) => unknown,
+    params?: WatchParams<typeof contractActionAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof contractActionAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: contractActionAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as ContractActionEvent<event>);
+        }
+      },
     });
   }
 

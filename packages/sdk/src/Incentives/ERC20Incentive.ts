@@ -18,7 +18,16 @@ import {
   writeErc20IncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
-import type { Address, Hex } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
+import type {
+  AbiEvent,
+  Address,
+  ContractEventName,
+  GetLogsReturnType,
+  Hex,
+} from 'viem';
+import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -27,15 +36,58 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
   type ERC20IncentivePayload,
+  type GenericLog,
+  type GetLogsParams,
   type ReadParams,
   RegistryType,
   type StrategyType,
+  type WatchParams,
   type WriteParams,
   prepareClaimPayload,
   prepareERC20IncentivePayload,
 } from '../utils';
 
 export type { ERC20IncentivePayload };
+
+/**
+ * A record of `ERC20ListIncentive` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {ERC20IncentiveAbiEvents}
+ * @template {ContractEventName<
+ *     typeof erc20IncentiveAbi
+ *   >} [eventName=ContractEventName<typeof erc20IncentiveAbi>]
+ */
+export type ERC20IncentiveAbiEvents<
+  eventName extends ContractEventName<
+    typeof erc20IncentiveAbi
+  > = ContractEventName<typeof erc20IncentiveAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof erc20IncentiveAbi, name>;
+};
+
+/**
+ * A record of `ERC20Incentive` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {ERC20IncentiveAbiEvents}
+ */
+export const ERC20IncentiveAbiEvents: ERC20IncentiveAbiEvents = import.meta.env
+  .ERC20IncentiveAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `ERC20Incentive` event types.
+ *
+ * @export
+ * @typedef {ERC20IncentiveEvent}
+ * @template {ContractEventName<typeof erc20IncentiveAbi>} [event=ContractEventName<
+ *     typeof erc20IncentiveAbi
+ *   >]
+ */
+export type ERC20IncentiveEvent<
+  event extends ContractEventName<typeof erc20IncentiveAbi> = ContractEventName<
+    typeof erc20IncentiveAbi
+  >,
+> = GenericLog<typeof erc20IncentiveAbi, event>;
 
 /**
  * A simple ERC20 incentive implementation that allows claiming of tokens
@@ -368,6 +420,97 @@ export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
     );
     const hash = await writeErc20IncentiveDrawRaffle(this._config, request);
     return { hash, result };
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof erc20IncentiveAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof erc20IncentiveAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof erc20IncentiveAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof erc20IncentiveAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof erc20IncentiveAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof erc20IncentiveAbi,
+      event
+    > = ExtractAbiEvent<typeof erc20IncentiveAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof erc20IncentiveAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof erc20IncentiveAbi>} event
+   * @param {(log: ERC20IncentiveEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof erc20IncentiveAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof erc20IncentiveAbi>,
+  >(
+    cb: (log: ERC20IncentiveEvent<event>) => unknown,
+    params?: WatchParams<typeof erc20IncentiveAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof erc20IncentiveAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: erc20IncentiveAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as ERC20IncentiveEvent<event>);
+        }
+      },
+    });
   }
 
   /**

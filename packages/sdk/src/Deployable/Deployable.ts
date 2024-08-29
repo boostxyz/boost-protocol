@@ -62,7 +62,7 @@ export interface DeployableOptions {
   account?: Account;
 }
 /**
- * Description placeholder
+ * A generic deployable contract that encapsulates common operations related to contract deployment
  *
  * @export
  * @class Deployable

@@ -197,13 +197,11 @@
     "typedoc": "npx typedoc"
   },
   "optionalDependencies": {
-    "@boostxyz/evm": "workspace:*"
+    "@boostxyz/evm": "workspace:*",
+    "abitype": "1"
   },
   "peerDependencies": {
     "@wagmi/core": "2",
     "viem": "2"
-  },
-  "dependencies": {
-    "abitype": "^1.0.2"
   }
 }

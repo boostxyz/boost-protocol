@@ -15,7 +15,16 @@ import {
   writeCgdaIncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
-import type { Address, Hex } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
+import type {
+  AbiEvent,
+  Address,
+  ContractEventName,
+  GetLogsReturnType,
+  Hex,
+} from 'viem';
+import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -25,8 +34,11 @@ import {
   type CGDAIncentivePayload,
   type CGDAParameters,
   type ClaimPayload,
+  type GenericLog,
+  type GetLogsParams,
   type ReadParams,
   RegistryType,
+  type WatchParams,
   type WriteParams,
   prepareCGDAIncentivePayload,
   prepareClaimPayload,
@@ -35,8 +47,48 @@ import {
 export type { CGDAIncentivePayload };
 
 /**
+ * A record of `CGDAIncentive` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {CGDAIncentiveAbiEvents}
+ * @template {ContractEventName<
+ *     typeof cgdaIncentiveAbi
+ *   >} [eventName=ContractEventName<typeof cgdaIncentiveAbi>]
+ */
+export type CGDAIncentiveAbiEvents<
+  eventName extends ContractEventName<
+    typeof cgdaIncentiveAbi
+  > = ContractEventName<typeof cgdaIncentiveAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof cgdaIncentiveAbi, name>;
+};
+
+/**
+ * A record of `CGDAIncentive` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {CGDAIncentiveAbiEvents}
+ */
+export const CGDAIncentiveAbiEvents: CGDAIncentiveAbiEvents = import.meta.env
+  .CGDAIncentiveAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `CGDAIncentive` event types.
+ *
+ * @export
+ * @typedef {CGDAIncentiveEvent}
+ * @template {ContractEventName<typeof cgdaIncentiveAbi>} [event=ContractEventName<
+ *     typeof cgdaIncentiveAbi
+ *   >]
+ */
+export type CGDAIncentiveEvent<
+  event extends ContractEventName<typeof cgdaIncentiveAbi> = ContractEventName<
+    typeof cgdaIncentiveAbi
+  >,
+> = GenericLog<typeof cgdaIncentiveAbi, event>;
+
+/**
  * Continuous Gradual Dutch Auction Incentive.
- * An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
+ * An CGDA incentive implementation with reward amounts adjusting dynamically based on claim volume.
  *
  * @export
  * @class CGDAIncentive
@@ -135,7 +187,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * The ERC20-like token used for the incentive
+   * The CGDA-like token used for the incentive
    *
    * @public
    * @async
@@ -314,6 +366,97 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
+    });
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof cgdaIncentiveAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof cgdaIncentiveAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof cgdaIncentiveAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof cgdaIncentiveAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof cgdaIncentiveAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof cgdaIncentiveAbi,
+      event
+    > = ExtractAbiEvent<typeof cgdaIncentiveAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof cgdaIncentiveAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof cgdaIncentiveAbi>} event
+   * @param {(log: CGDAIncentiveEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof cgdaIncentiveAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof cgdaIncentiveAbi>,
+  >(
+    cb: (log: CGDAIncentiveEvent<event>) => unknown,
+    params?: WatchParams<typeof cgdaIncentiveAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof cgdaIncentiveAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: cgdaIncentiveAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as CGDAIncentiveEvent<event>);
+        }
+      },
     });
   }
 

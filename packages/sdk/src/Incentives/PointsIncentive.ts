@@ -12,7 +12,16 @@ import {
   writePointsIncentiveClaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import type { Address, Hex } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
+import type {
+  AbiEvent,
+  Address,
+  ContractEventName,
+  GetLogsReturnType,
+  Hex,
+} from 'viem';
+import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -20,15 +29,58 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
+  type GenericLog,
+  type GetLogsParams,
   type PointsIncentivePayload,
   type ReadParams,
   RegistryType,
+  type WatchParams,
   type WriteParams,
   prepareClaimPayload,
   preparePointsIncentivePayload,
 } from '../utils';
 
 export type { PointsIncentivePayload };
+
+/**
+ * A record of PointsIncentive` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {PointsIncentiveAbiEvents}
+ * @template {ContractEventName<
+ *     typeof pointsIncentiveAbi
+ *   >} [eventName=ContractEventName<typeof pointsIncentiveAbi>]
+ */
+export type PointsIncentiveAbiEvents<
+  eventName extends ContractEventName<
+    typeof pointsIncentiveAbi
+  > = ContractEventName<typeof pointsIncentiveAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof pointsIncentiveAbi, name>;
+};
+
+/**
+ * A record of `PointsIncentive` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {PointsIncentiveAbiEvents}
+ */
+export const PointsIncentiveAbiEvents: PointsIncentiveAbiEvents = import.meta
+  .env.PointsIncentiveAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `PointsIncentive` event types.
+ *
+ * @export
+ * @typedef {PointsIncentiveEvent}
+ * @template {ContractEventName<
+ *     typeof pointsIncentiveAbi
+ *   >} [event=ContractEventName<typeof pointsIncentiveAbi>]
+ */
+export type PointsIncentiveEvent<
+  event extends ContractEventName<
+    typeof pointsIncentiveAbi
+  > = ContractEventName<typeof pointsIncentiveAbi>,
+> = GenericLog<typeof pointsIncentiveAbi, event>;
 
 /**
  * A simple on-chain points incentive implementation that allows claiming of soulbound tokens.
@@ -253,6 +305,97 @@ export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
       args: [prepareClaimPayload(payload)],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
+    });
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof pointsIncentiveAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof pointsIncentiveAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof pointsIncentiveAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof pointsIncentiveAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof pointsIncentiveAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof pointsIncentiveAbi,
+      event
+    > = ExtractAbiEvent<typeof pointsIncentiveAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof pointsIncentiveAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof pointsIncentiveAbi>} event
+   * @param {(log: PointsIncentiveEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof pointsIncentiveAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof pointsIncentiveAbi>,
+  >(
+    cb: (log: PointsIncentiveEvent<event>) => unknown,
+    params?: WatchParams<typeof pointsIncentiveAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof pointsIncentiveAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: pointsIncentiveAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as PointsIncentiveEvent<event>);
+        }
+      },
     });
   }
 

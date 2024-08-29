@@ -7,23 +7,75 @@ import {
   writeSignerValidatorValidate,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
-import type { Address, Hex } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
+import type {
+  AbiEvent,
+  Address,
+  ContractEventName,
+  GetLogsReturnType,
+  Hex,
+} from 'viem';
+import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  type GenericLog,
+  type GetLogsParams,
   type ReadParams,
   RegistryType,
   type SignerValidatorPayload,
   type SignerValidatorValidatePayload,
+  type WatchParams,
   type WriteParams,
   prepareSignerValidatorPayload,
   prepareSignerValidatorValidatePayload,
 } from '../utils';
 
 export type { SignerValidatorPayload };
+
+/**
+ * A record of `SignerValidator` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {SignerValidatorAbiEvents}
+ * @template {ContractEventName<
+ *     typeof signerValidatorAbi
+ *   >} [eventName=ContractEventName<typeof signerValidatorAbi>]
+ */
+export type SignerValidatorAbiEvents<
+  eventName extends ContractEventName<
+    typeof signerValidatorAbi
+  > = ContractEventName<typeof signerValidatorAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof signerValidatorAbi, name>;
+};
+
+/**
+ * A record of `SignerValidator` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {SignerValidatorAbiEvents}
+ */
+export const SignerValidatorAbiEvents: SignerValidatorAbiEvents = import.meta
+  .env.SignerValidatorAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `BoostCore` event types.
+ *
+ * @export
+ * @typedef {SignerValidatorEvent}
+ * @template {ContractEventName<
+ *     typeof signerValidatorAbi
+ *   >} [event=ContractEventName<typeof signerValidatorAbi>]
+ */
+export type SignerValidatorEvent<
+  event extends ContractEventName<
+    typeof signerValidatorAbi
+  > = ContractEventName<typeof signerValidatorAbi>,
+> = GenericLog<typeof signerValidatorAbi, event>;
 
 /**
  *  A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
@@ -161,6 +213,97 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     );
     const hash = await writeSignerValidatorSetAuthorized(this._config, request);
     return { hash, result };
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof signerValidatorAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof signerValidatorAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof signerValidatorAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof signerValidatorAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof signerValidatorAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof signerValidatorAbi,
+      event
+    > = ExtractAbiEvent<typeof signerValidatorAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof signerValidatorAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * Subscribes to one or all events from `SignerValidator`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof signerValidatorAbi>} event
+   * @param {(log: SignerValidatorEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof signerValidatorAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof signerValidatorAbi>,
+  >(
+    cb: (log: SignerValidatorEvent<event>) => unknown,
+    params?: WatchParams<typeof signerValidatorAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof signerValidatorAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: signerValidatorAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as SignerValidatorEvent<event>);
+        }
+      },
+    });
   }
 
   /**

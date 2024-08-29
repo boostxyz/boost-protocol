@@ -21,10 +21,11 @@ import {
 import { createWriteContract } from '@wagmi/core/codegen';
 import type { ExtractAbiEvent } from 'abitype';
 import {
+  type AbiEvent,
   type Address,
   type ContractEventName,
+  type GetLogsReturnType,
   type Hex,
-  type Log,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -96,6 +97,7 @@ import {
 } from './errors';
 import {
   type EventActionPayload,
+  type GenericLog,
   type GetLogsParams,
   type BoostPayload as OnChainBoostPayload,
   type ReadParams,
@@ -113,6 +115,46 @@ import {
  */
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
+
+/**
+ * A record of `BoostCore` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {BoostCoreAbiEvents}
+ * @template {ContractEventName<typeof boostCoreAbi>} [eventName=ContractEventName<
+ *     typeof boostCoreAbi
+ *   >]
+ */
+export type BoostCoreAbiEvents<
+  eventName extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
+    typeof boostCoreAbi
+  >,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof boostCoreAbi, name>;
+};
+
+/**
+ * A record of `BoostCore` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {BoostCoreAbiEvents}
+ */
+export const BoostCoreAbiEvents: BoostCoreAbiEvents = import.meta.env
+  .BoostCoreAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `BoostCore` event types.
+ *
+ * @export
+ * @typedef {BoostCoreEvent}
+ * @template {ContractEventName<typeof boostCoreAbi>} [event=ContractEventName<
+ *     typeof boostCoreAbi
+ *   >]
+ */
+export type BoostCoreEvent<
+  event extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
+    typeof boostCoreAbi
+  >,
+> = GenericLog<typeof boostCoreAbi, event>;
 
 /**
  * Boost Core instantiation options for a custom deployed instance.
@@ -203,28 +245,6 @@ export type CreateBoostPayload = {
   maxParticipants?: bigint;
   owner?: Address;
 };
-
-type BoostCoreEvents<
-  eventName extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
-    typeof boostCoreAbi
-  >,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof boostCoreAbi, name>;
-};
-
-export const BoostCoreEvents: BoostCoreEvents = import.meta.env.BoostCoreEvents;
-
-export type BoostCoreEvent<
-  event extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
-    typeof boostCoreAbi
-  >,
-> = Log<
-  bigint,
-  number,
-  false,
-  ExtractAbiEvent<typeof boostCoreAbi, event>,
-  false
->;
 
 /**
  * The core contract for the Boost protocol. Used to create and retrieve deployed Boosts.
@@ -457,7 +477,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Claims one incentive from a given `Boost` by `boostId` and `incentiveId`
    *
    * @public
    * @async
@@ -760,28 +780,58 @@ export class BoostCore extends Deployable<[Address, Address]> {
     return { hash, result };
   }
 
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof boostCoreAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof boostCoreAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof boostCoreAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvents> & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
   public async getLogs<
     event extends ContractEventName<typeof boostCoreAbi>,
-    events extends
-      | readonly event[]
+    const abiEvent extends ExtractAbiEvent<
+      typeof boostCoreAbi,
+      event
+    > = ExtractAbiEvent<typeof boostCoreAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
       | readonly unknown[]
-      | undefined = event extends ContractEventName<typeof boostCoreAbi>
-      ? [event]
-      : undefined,
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<typeof boostCoreAbi, event, events> & {
-      event?: event;
-      events?: events;
+    params?: GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvents> & {
+      event?: abiEvent;
+      events?: abiEvents;
     },
-  ) {
-    return getLogs<undefined, ExtractAbiEvent<typeof boostCoreAbi, event>>({
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
-      abi: boostCoreAbi,
       address: this.assertValidAddress(),
-    }) as unknown as Array<BoostCoreEvent<event>>;
+    });
   }
 
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof boostCoreAbi>} event
+   * @param {(log: BoostCoreEvent<event>) => unknown} cb
+   * @param {?(WatchParams<typeof boostCoreAbi, event> & { eventName?: event })} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
   public async subscribe<event extends ContractEventName<typeof boostCoreAbi>>(
     cb: (log: BoostCoreEvent<event>) => unknown,
     params?: WatchParams<typeof boostCoreAbi, event> & { eventName?: event },
@@ -794,6 +844,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
     >(this._config, {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
+      eventName: params?.eventName,
       abi: boostCoreAbi,
       address: this.assertValidAddress(),
       onLogs: (logs) => {

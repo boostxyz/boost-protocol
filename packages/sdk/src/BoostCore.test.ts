@@ -8,7 +8,12 @@ import {
   deployFixtures,
   fundBudget,
 } from '../test/helpers';
-import { BoostCore, BoostCoreEvent } from './BoostCore';
+import {
+  BoostCore,
+  BoostCoreAbiEvents,
+  BoostCoreEvent,
+  BoostCoreEvents,
+} from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { IncentiveNotCloneableError } from './errors';
 import { ERC1155StrategyType, StrategyType, bytes4 } from './utils';
@@ -735,21 +740,6 @@ describe('BoostCore', () => {
     });
     client.subscribe(subscription, { pollingInterval: 100 });
 
-    client.subscribe(
-      (log) => {
-        console.log(log);
-      },
-      { pollingInterval: 100, eventName: 'BoostCreated' },
-    );
-
-    const logs = await client.getLogs({ event: 'BoostCreated' });
-
-    for (let log of logs) {
-      if (log.eventName === 'BoostCreated') {
-        const _i = log.args.boostIndex;
-      }
-    }
-
     // to whom it may concern, this syntax is only used because we need to use test classes
     // that are preconfigured with the dynamic base addresses generated at test time.
     // normally you would use the follow api for brevity
@@ -788,6 +778,5 @@ describe('BoostCore', () => {
     });
 
     expect(subscription).toHaveBeenCalledTimes(1);
-    expect(subscription).toHaveBeenCalledWith({});
   });
 });

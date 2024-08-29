@@ -1,9 +1,6 @@
 import { resolve } from 'node:path';
+import eventExports from './events.config';
 import packageJson from './package.json';
-
-import BoostCoreEvents from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json' assert {
-  type: 'json',
-};
 
 const moduleDirectories = Object.keys(packageJson.exports).reduce(
   (acc, path) => {
@@ -19,25 +16,10 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
   {},
 );
 
-function extractEvents(json) {
-  const { abi } = json;
-  return abi.reduce((acc, curr) => {
-    if (curr.type === 'event') {
-      acc[curr.name] = curr;
-    }
-    return acc;
-  }, {});
-}
-
-// To avoid event parsing at runtime, define at build time
-const eventsExports = {
-  'import.meta.env.BoostCoreEvents': extractEvents(BoostCoreEvents),
-};
-
 /** @type {import('vite').UserConfig} */
 export default {
   define: {
-    ...eventsExports,
+    ...eventExports,
   },
   build: {
     rollupOptions: {

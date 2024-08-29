@@ -149,17 +149,33 @@ contract BoostCore is Ownable, ReentrancyGuard {
     function claimIncentive(uint256 boostId_, uint256 incentiveId_, address referrer_, bytes calldata data_)
         external
         payable
-        nonReentrant
     {
+        claimIncentiveFor(boostId_, incentiveId_, referrer_, data_, msg.sender);
+    }
+
+    /// @notice Claim an incentive for a Boost on behalf of another user
+    /// @param boostId_ The ID of the Boost
+    /// @param incentiveId_ The ID of the Incentive
+    /// @param referrer_ The address of the referrer (if any)
+    /// @param data_ The data for the claim
+    /// @param claimant the address of the user eligible for the incentive payout
+    function claimIncentiveFor(
+        uint256 boostId_,
+        uint256 incentiveId_,
+        address referrer_,
+        bytes calldata data_,
+        address claimant
+    ) public payable nonReentrant {
         BoostLib.Boost storage boost = _boosts[boostId_];
         if (msg.value < claimFee) revert BoostError.InsufficientFunds(address(0), msg.value, claimFee);
         _routeClaimFee(boost, referrer_);
 
         // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
-        if (!boost.validator.validate(boostId_, incentiveId_, msg.sender, data_)) revert BoostError.Unauthorized();
-        if (
-            !boost.incentives[incentiveId_].claim(abi.encode(Incentive.ClaimPayload({target: msg.sender, data: data_})))
-        ) revert BoostError.ClaimFailed(msg.sender, data_);
+        if (!boost.validator.validate(boostId_, incentiveId_, claimant, data_)) revert BoostError.Unauthorized();
+        if (!boost.incentives[incentiveId_].claim(abi.encode(Incentive.ClaimPayload({target: claimant, data: data_}))))
+        {
+            revert BoostError.ClaimFailed(claimant, data_);
+        }
     }
 
     /// @notice Get a Boost by index

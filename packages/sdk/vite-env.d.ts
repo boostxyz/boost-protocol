@@ -17,20 +17,6 @@ interface ImportMetaEnv {
   readonly VITE_ERC1155_INCENTIVE_BASE: Address;
   readonly VITE_POINTS_INCENTIVE_BASE: Address;
   readonly VITE_SIGNER_VALIDATOR_BASE: Address;
-
-  readonly BoostCoreEvents: Record<string, AbiEvent>;
-  readonly ContractActionEvents: Record<string, AbiEvent>;
-  readonly ERC721MintActionEvents: Record<string, AbiEvent>;
-  readonly SimpleAllowListEvents: Record<string, AbiEvent>;
-  readonly SimpleDenyListEvents: Record<string, AbiEvent>;
-  readonly SimpleBudgetEvents: Record<string, AbiEvent>;
-  readonly VestingBudgetEvents: Record<string, AbiEvent>;
-  readonly AllowListIncentiveEvents: Record<string, AbiEvent>;
-  readonly CGDAIncentiveEvents: Record<string, AbiEvent>;
-  readonly ERC20IncentiveEvents: Record<string, AbiEvent>;
-  readonly ERC1155IncentiveEvents: Record<string, AbiEvent>;
-  readonly PointsIncentiveEvents: Record<string, AbiEvent>;
-  readonly SignerValidatorEvents: Record<string, AbiEvent>;
 }
 
 interface ImportMeta {

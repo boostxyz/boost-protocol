@@ -21,11 +21,11 @@ import {
 import { createWriteContract } from '@wagmi/core/codegen';
 import type { ExtractAbiEvent } from 'abitype';
 import {
-  type AbiEvent,
   type Address,
   type ContractEventName,
   type GetLogsReturnType,
   type Hex,
+  getAbiItem,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -107,6 +107,8 @@ import {
   prepareBoostPayload,
 } from './utils';
 
+export { boostCoreAbi };
+
 /**
  * The fixed address for the deployed Boost Core.
  * By default, `new BoostCore` will use this address if not otherwise provided.
@@ -115,31 +117,6 @@ import {
  */
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
-
-/**
- * A record of `BoostCore` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {BoostCoreAbiEvents}
- * @template {ContractEventName<typeof boostCoreAbi>} [eventName=ContractEventName<
- *     typeof boostCoreAbi
- *   >]
- */
-export type BoostCoreAbiEvents<
-  eventName extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
-    typeof boostCoreAbi
-  >,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof boostCoreAbi, name>;
-};
-
-/**
- * A record of `BoostCore` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {BoostCoreAbiEvents}
- */
-export const BoostCoreAbiEvents: BoostCoreAbiEvents = import.meta.env
-  .BoostCoreAbiEvents;
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.
@@ -781,8 +758,13 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * A typed wrapper for `viem.getLogs`
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof boostCoreAbi>} event
@@ -790,14 +772,14 @@ export class BoostCore extends Deployable<[Address, Address]> {
    *       typeof boostCoreAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof boostCoreAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvents> & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   * @param {?Omit<
+   *       GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
+   *     > & {
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
     event extends ContractEventName<typeof boostCoreAbi>,
@@ -805,19 +787,38 @@ export class BoostCore extends Deployable<[Address, Address]> {
       typeof boostCoreAbi,
       event
     > = ExtractAbiEvent<typeof boostCoreAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvents> & {
-      event?: abiEvent;
-      events?: abiEvents;
+    params?: Omit<
+      GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
+    > & {
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: boostCoreAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: boostCoreAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

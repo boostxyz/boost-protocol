@@ -1,5 +1,4 @@
 import { resolve } from 'node:path';
-import eventExports from './events.config';
 import packageJson from './package.json';
 
 const moduleDirectories = Object.keys(packageJson.exports).reduce(
@@ -18,9 +17,6 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
 
 /** @type {import('vite').UserConfig} */
 export default {
-  define: {
-    ...eventExports,
-  },
   build: {
     rollupOptions: {
       external: [/^viem/, /^@wagmi(?!.*\/codegen)/],

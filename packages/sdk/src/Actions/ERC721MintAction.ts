@@ -10,12 +10,12 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import { watchContractEvent } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
-import type {
-  AbiEvent,
-  Address,
-  ContractEventName,
-  GetLogsReturnType,
-  Hex,
+import {
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  getAbiItem,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
@@ -35,33 +35,8 @@ import {
 } from '../utils';
 import { ContractAction } from './ContractAction';
 
-export { prepareERC721MintActionPayload };
+export { prepareERC721MintActionPayload, erc721MintActionAbi };
 export type { ERC721MintActionPayload };
-
-/**
- * A record of `ERC721MintAction` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @export
- * @typedef {ERC721MintActionAbiEvents}
- * @template {ContractEventName<
- *     typeof erc721MintActionAbi
- *   >} [eventName=ContractEventName<typeof erc721MintActionAbi>]
- */
-export type ERC721MintActionAbiEvents<
-  eventName extends ContractEventName<
-    typeof erc721MintActionAbi
-  > = ContractEventName<typeof erc721MintActionAbi>,
-> = {
-  [name in eventName]: ExtractAbiEvent<typeof erc721MintActionAbi, name>;
-};
-
-/**
- * A record of `ERC721MintAction` event names to `AbiEvent` objects for use with `getLogs`
- *
- * @type {ERC721MintActionAbiEvents}
- */
-export const erc721MintActionAbiEvents: ERC721MintActionAbiEvents = import.meta
-  .env.erc721MintActionAbiEvents;
 
 /**
  * A generic `viem.Log` event with support for `ERC721MintAction` event types.
@@ -244,8 +219,13 @@ export class ERC721MintAction extends ContractAction {
   }
 
   /**
-   * @inheritdoc
-   *
+   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+   * @example
+   * ```ts
+   * const logs = contract.getLogs({ eventName: 'EventName' })
+   * const logs = contract.getLogs({ eventNames: ['EventName'] })
+   * ```
    * @public
    * @async
    * @template {ContractEventName<typeof erc721MintActionAbi>} event
@@ -253,44 +233,54 @@ export class ERC721MintAction extends ContractAction {
    *       typeof erc721MintActionAbi,
    *       event
    *     >} [abiEvent=ExtractAbiEvent<typeof erc721MintActionAbi, event>]
-   * @template {| readonly AbiEvent[]
-   *       | readonly unknown[]
-   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
-   * @param {?GetLogsParams<
-   *       typeof erc721MintActionAbi,
-   *       event,
-   *       abiEvent,
-   *       abiEvents
+   * @param {?Omit<
+   *       GetLogsParams<typeof erc721MintActionAbi, event, abiEvent, abiEvent[]>,
+   *       'event' | 'events'
    *     > & {
-   *       event?: abiEvent;
-   *       events?: abiEvents;
+   *       eventName?: event;
+   *       eventNames?: event[];
    *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
-   */
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
+   * 
+   @ts-expect-error slight params mismatch */
   public override async getLogs<
     event extends ContractEventName<typeof erc721MintActionAbi>,
     const abiEvent extends ExtractAbiEvent<
       typeof erc721MintActionAbi,
       event
     > = ExtractAbiEvent<typeof erc721MintActionAbi, event>,
-    const abiEvents extends
-      | readonly AbiEvent[]
-      | readonly unknown[]
-      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   >(
-    params?: GetLogsParams<
-      typeof erc721MintActionAbi,
-      event,
-      abiEvent,
-      abiEvents
+    params?: Omit<
+      GetLogsParams<typeof erc721MintActionAbi, event, abiEvent, abiEvent[]>,
+      'event' | 'events'
     > & {
-      event?: abiEvent;
-      events?: abiEvents;
+      eventName?: event;
+      eventNames?: event[];
     },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
     return getLogs(this._config.getClient({ chainId: params?.chainId }), {
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
       ...(params as any),
+      ...(params?.eventName
+        ? {
+            event: getAbiItem({
+              abi: erc721MintActionAbi,
+              name: params.eventName,
+              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+            } as any),
+          }
+        : {}),
+      ...(params?.eventNames
+        ? {
+            events: params.eventNames.map((name) =>
+              getAbiItem({
+                abi: erc721MintActionAbi,
+                name,
+                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+              } as any),
+            ),
+          }
+        : {}),
       address: this.assertValidAddress(),
     });
   }

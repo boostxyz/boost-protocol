@@ -18,7 +18,17 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import { getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
+import {
+  type AbiEvent,
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  zeroAddress,
+} from 'viem';
+import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -31,9 +41,12 @@ import {
 import {
   type ERC1155TransferPayload,
   type FungibleTransferPayload,
+  type GenericLog,
+  type GetLogsParams,
   type ReadParams,
   RegistryType,
   type SimpleBudgetPayload,
+  type WatchParams,
   type WriteParams,
   prepareERC1155Transfer,
   prepareFungibleTransfer,
@@ -45,6 +58,46 @@ export type {
   FungibleTransferPayload,
   SimpleBudgetPayload,
 };
+
+/**
+ * A record of `SimpleBudget` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {SimpleBudgetAbiEvents}
+ * @template {ContractEventName<
+ *     typeof simpleBudgetAbi
+ *   >} [eventName=ContractEventName<typeof simpleBudgetAbi>]
+ */
+export type SimpleBudgetAbiEvents<
+  eventName extends ContractEventName<
+    typeof simpleBudgetAbi
+  > = ContractEventName<typeof simpleBudgetAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof simpleBudgetAbi, name>;
+};
+
+/**
+ * A record of `SimpleBudget` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {SimpleBudgetAbiEvents}
+ */
+export const SimpleBudgetAbiEvents: SimpleBudgetAbiEvents = import.meta.env
+  .SimpleBudgetAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `SimpleBudget` event types.
+ *
+ * @export
+ * @typedef {SimpleBudgetEvent}
+ * @template {ContractEventName<typeof simpleBudgetAbi>} [event=ContractEventName<
+ *     typeof simpleBudgetAbi
+ *   >]
+ */
+export type SimpleBudgetEvent<
+  event extends ContractEventName<typeof simpleBudgetAbi> = ContractEventName<
+    typeof simpleBudgetAbi
+  >,
+> = GenericLog<typeof simpleBudgetAbi, event>;
 
 /**
  * Typeguard to determine if a transfer payload is a Fungible Transfer
@@ -454,6 +507,97 @@ export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
       args: tokenId ? [asset, tokenId] : [asset],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
+    });
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof simpleBudgetAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof simpleBudgetAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof simpleBudgetAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof simpleBudgetAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof simpleBudgetAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof simpleBudgetAbi,
+      event
+    > = ExtractAbiEvent<typeof simpleBudgetAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof simpleBudgetAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof simpleBudgetAbi>} event
+   * @param {(log: SimpleBudgetEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof simpleBudgetAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof simpleBudgetAbi>,
+  >(
+    cb: (log: SimpleBudgetEvent<event>) => unknown,
+    params?: WatchParams<typeof simpleBudgetAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof simpleBudgetAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: simpleBudgetAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as SimpleBudgetEvent<event>);
+        }
+      },
     });
   }
 

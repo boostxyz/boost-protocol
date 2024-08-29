@@ -9,7 +9,16 @@ import {
   writeBoostRegistryRegister,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
-import { type Address, type Hex, isAddress } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { AbiEvent, ExtractAbiEvent } from 'abitype';
+import {
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  isAddress,
+} from 'viem';
+import { getLogs } from 'viem/actions';
 import {
   Deployable,
   type DeployableOptions,
@@ -17,9 +26,12 @@ import {
 } from './Deployable/Deployable';
 import type { DeployableTarget } from './Deployable/DeployableTarget';
 import {
+  type GenericLog,
+  type GetLogsParams,
   type HashAndSimulatedResult,
   type ReadParams,
   RegistryType,
+  type WatchParams,
   type WriteParams,
 } from './utils';
 
@@ -33,6 +45,46 @@ export { RegistryType };
  */
 export const BOOST_REGISTRY_ADDRESS: Address = import.meta.env
   .VITE_BOOST_REGISTRY_ADDRESS;
+
+/**
+ * A record of `BoostRegistry` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {BoostRegistryAbiEvents}
+ * @template {ContractEventName<
+ *     typeof boostRegistryAbi
+ *   >} [eventName=ContractEventName<typeof boostRegistryAbi>]
+ */
+export type BoostRegistryAbiEvents<
+  eventName extends ContractEventName<
+    typeof boostRegistryAbi
+  > = ContractEventName<typeof boostRegistryAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof boostRegistryAbi, name>;
+};
+
+/**
+ * A record of `BoostRegistry` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {BoostRegistryAbiEvents}
+ */
+export const BoostRegistryAbiEvents: BoostRegistryAbiEvents = import.meta.env
+  .BoostCoreAbiEvents;
+
+/**
+ * A record of `BoostRegistry` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {BoostRegistryEvent}
+ * @template {ContractEventName<typeof boostRegistryAbi>} [event=ContractEventName<
+ *     typeof boostRegistryAbi
+ *   >]
+ */
+export type BoostRegistryEvent<
+  event extends ContractEventName<typeof boostRegistryAbi> = ContractEventName<
+    typeof boostRegistryAbi
+  >,
+> = GenericLog<typeof boostRegistryAbi, event>;
 
 /**
  * Instantiation options for a previously deployed Boost Registry
@@ -73,6 +125,10 @@ function isBoostRegistryDeployed(
  * @extends {DeployableOptions}
  */
 export interface BoostRegistryOptionsWithPayload extends DeployableOptions {
+  /**
+   *
+   * @type {null}
+   */
   address: null;
 }
 
@@ -391,6 +447,97 @@ export class BoostRegistry extends Deployable<never[]> {
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
+    });
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof boostRegistryAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof boostRegistryAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof boostRegistryAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof boostRegistryAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof boostRegistryAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof boostRegistryAbi,
+      event
+    > = ExtractAbiEvent<typeof boostRegistryAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof boostRegistryAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof boostRegistryAbi>} event
+   * @param {(log: BoostRegistryEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof boostRegistryAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof boostRegistryAbi>,
+  >(
+    cb: (log: BoostRegistryEvent<event>) => unknown,
+    params?: WatchParams<typeof boostRegistryAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof boostRegistryAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: boostRegistryAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as BoostRegistryEvent<event>);
+        }
+      },
     });
   }
 

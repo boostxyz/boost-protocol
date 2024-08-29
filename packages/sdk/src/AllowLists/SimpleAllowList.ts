@@ -8,7 +8,18 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import { getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
+import { watchContractEvent } from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
+import {
+  type AbiEvent,
+  type Address,
+  type ContractEventName,
+  type GetLogsReturnType,
+  type Hex,
+  zeroAddress,
+  zeroHash,
+} from 'viem';
+import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -16,13 +27,56 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
+  type GenericLog,
+  type GetLogsParams,
   type ReadParams,
   RegistryType,
   type SimpleAllowListPayload,
+  type WatchParams,
   prepareSimpleAllowListPayload,
 } from '../utils';
 
 export type { SimpleAllowListPayload };
+
+/**
+ * A record of `SimpleAllowList` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {SimpleAllowListAbiEvents}
+ * @template {ContractEventName<
+ *     typeof simpleAllowListAbi
+ *   >} [eventName=ContractEventName<typeof simpleAllowListAbi>]
+ */
+export type SimpleAllowListAbiEvents<
+  eventName extends ContractEventName<
+    typeof simpleAllowListAbi
+  > = ContractEventName<typeof simpleAllowListAbi>,
+> = {
+  [name in eventName]: ExtractAbiEvent<typeof simpleAllowListAbi, name>;
+};
+
+/**
+ * A record of `SimpleAllowList` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @type {SimpleAllowListAbiEvents}
+ */
+export const SimpleAllowListAbiEvents: SimpleAllowListAbiEvents = import.meta
+  .env.SimpleAllowListAbiEvents;
+
+/**
+ * A generic `viem.Log` event with support for `SimpleAllowList` event types.
+ *
+ * @export
+ * @typedef {SimpleAllowListEvent}
+ * @template {ContractEventName<
+ *     typeof simpleAllowListAbi
+ *   >} [event=ContractEventName<typeof simpleAllowListAbi>]
+ */
+export type SimpleAllowListEvent<
+  event extends ContractEventName<
+    typeof simpleAllowListAbi
+  > = ContractEventName<typeof simpleAllowListAbi>,
+> = GenericLog<typeof simpleAllowListAbi, event>;
 
 /**
  * A constant representing the list manager's role
@@ -173,6 +227,97 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     );
     const hash = await writeSimpleAllowListGrantRoles(this._config, request);
     return { hash, result };
+  }
+
+  /**
+   * A typed wrapper for `viem.getLogs`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof simpleAllowListAbi>} event
+   * @template {ExtractAbiEvent<
+   *       typeof simpleAllowListAbi,
+   *       event
+   *     >} [abiEvent=ExtractAbiEvent<typeof simpleAllowListAbi, event>]
+   * @template {| readonly AbiEvent[]
+   *       | readonly unknown[]
+   *       | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+   * @param {?GetLogsParams<
+   *       typeof simpleAllowListAbi,
+   *       event,
+   *       abiEvent,
+   *       abiEvents
+   *     > & {
+   *       event?: abiEvent;
+   *       events?: abiEvents;
+   *     }} [params]
+   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvents>>}
+   */
+  public async getLogs<
+    event extends ContractEventName<typeof simpleAllowListAbi>,
+    const abiEvent extends ExtractAbiEvent<
+      typeof simpleAllowListAbi,
+      event
+    > = ExtractAbiEvent<typeof simpleAllowListAbi, event>,
+    const abiEvents extends
+      | readonly AbiEvent[]
+      | readonly unknown[]
+      | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+  >(
+    params?: GetLogsParams<
+      typeof simpleAllowListAbi,
+      event,
+      abiEvent,
+      abiEvents
+    > & {
+      event?: abiEvent;
+      events?: abiEvents;
+    },
+  ): Promise<GetLogsReturnType<abiEvent, abiEvents>> {
+    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+      ...(params as any),
+      address: this.assertValidAddress(),
+    });
+  }
+
+  /**
+   * A typed wrapper for `wagmi.watchContractEvent`
+   *
+   * @public
+   * @async
+   * @template {ContractEventName<typeof simpleAllowListAbi>} event
+   * @param {(log: SimpleAllowListEvent<event>) => unknown} cb
+   * @param {?WatchParams<typeof simpleAllowListAbi, event> & {
+   *       eventName?: event;
+   *     }} [params]
+   * @returns {unknown, params?: any) => unknown} Unsubscribe function
+   */
+  public async subscribe<
+    event extends ContractEventName<typeof simpleAllowListAbi>,
+  >(
+    cb: (log: SimpleAllowListEvent<event>) => unknown,
+    params?: WatchParams<typeof simpleAllowListAbi, event> & {
+      eventName?: event;
+    },
+  ) {
+    return watchContractEvent<
+      typeof this._config,
+      (typeof this._config)['chains'][number]['id'],
+      typeof simpleAllowListAbi,
+      event
+    >(this._config, {
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      eventName: params?.eventName,
+      abi: simpleAllowListAbi,
+      address: this.assertValidAddress(),
+      onLogs: (logs) => {
+        for (let l of logs) {
+          cb(l as unknown as SimpleAllowListEvent<event>);
+        }
+      },
+    });
   }
 
   /**

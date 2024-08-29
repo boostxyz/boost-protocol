@@ -9,12 +9,14 @@ import type { ExtractAbiEvent } from 'abitype';
 import { LibZip } from 'solady';
 import type {
   Abi,
+  AbiEvent,
   Address,
   ContractEventName,
   ContractFunctionName,
   GetLogsParameters,
   Hash,
   Hex,
+  Log,
   WaitForTransactionReceiptParameters,
 } from 'viem';
 import {
@@ -78,13 +80,13 @@ export type ReadParams<
 >;
 
 /**
- * Helper type that encapsulates common watchContractEvent parameters without fields like `abi` and `address` that are expected to be provided the SDK.
- * See (readContract)[https://viem.sh/docs/contract/readContract]
+ * Helper type that encapsulates common `watchContractEvent` parameters without fields like `address`, and `abi` that are expected to be provided the SDK.
+ * See (watchContractEvent)[https://wagmi.sh/core/api/actions/watchContractEvent]
  *
  * @export
  * @typedef {WatchParams}
  * @template {Abi} abi
- * @template {ContractEventName<abi, eventName>} eventName
+ * @template {ContractEventName<abi> | undefined} [eventName=undefined]
  */
 export type WatchParams<
   abi extends Abi,
@@ -94,33 +96,42 @@ export type WatchParams<
 >;
 
 /**
- * Helper type that encapsulates common getLogs parameters without fields like `abi` and `address` that are expected to be provided the SDK.
- * See (getLogs)[https://viem.sh/docs/actions/public/getLogs]
+ * Helper type that encapsulates common `getLogs` parameters without fields like `address` that are expected to be provided the SDK.
+ * See (getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs]
  *
  * @export
  * @typedef {GetLogsParams}
  * @template {Abi} abi
- * @template {ContractEventName<abi, eventName>} eventName
- * @template {ContractEventName<abi>[]} eventNames
+ * @template {ContractEventName<abi>} event
+ * @template {ExtractAbiEvent<abi, event>} [abiEvent=ExtractAbiEvent<abi, event>]
+ * @template {| readonly AbiEvent[]
+ *     | readonly unknown[]
+ *     | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
  */
 export type GetLogsParams<
   abi extends Abi,
-  eventName extends ContractEventName<abi>,
-  eventNames extends
-    | readonly ContractEventName<abi>[]
+  event extends ContractEventName<abi>,
+  abiEvent extends ExtractAbiEvent<abi, event> = ExtractAbiEvent<abi, event>,
+  abiEvents extends
+    | readonly AbiEvent[]
     | readonly unknown[]
-    | undefined = eventName extends ContractEventName<abi>
-    ? [eventName]
-    : undefined,
-> = Partial<
-  Omit<
-    GetLogsParameters<
-      ExtractAbiEvent<abi, eventName>,
-      ExtractAbiEvent<abi, eventNames>
-    >,
-    'address' | 'abi'
-  >
->;
+    | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+> = Partial<Omit<GetLogsParameters<abiEvent, abiEvents>, 'address'>> & {
+  chainId?: number | undefined;
+};
+
+/**
+ * A generic `viem.Log` event with typed `args` support via a given `Abi` and `ContractEventName`
+ *
+ * @export
+ * @typedef {GenericLog}
+ * @template {Abi} abi
+ * @template {ContractEventName<abi>} [event=ContractEventName<abi>]
+ */
+export type GenericLog<
+  abi extends Abi,
+  event extends ContractEventName<abi> = ContractEventName<abi>,
+> = Log<bigint, number, false, ExtractAbiEvent<abi, event>, false>;
 
 /**
  * Helper utility to convert a string to a `bytes4` type

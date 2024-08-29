@@ -11,7 +11,7 @@ pre-commit:
       run: ./node_modules/@biomejs/biome/bin/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files} && git update-index --again
     forge:
       glob: "packages/evm/**/*"
-      run: forge fmt packages/evm
+      run: forge fmt packages/evm/contracts && forge fmt packages/evm/test
 
 commit-msg:
   scripts:

@@ -3,50 +3,37 @@ pragma solidity ^0.8.24;
 
 import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 
 import {Validator} from "contracts/validators/Validator.sol";
 
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
-abstract contract ASignerValidator is AValidator {
+abstract contract ASignerValidator is IBoostClaim, AValidator {
     using SignatureCheckerLib for address;
+
+    struct SignerValidatorInputParams {
+        address signer;
+        bytes signature;
+        uint8 incentiveQuantity;
+    }
+
+    struct SignerValidatorData {
+        uint8 incentiveQuantity;
+        address claimant;
+        uint256 boostId;
+        bytes incentiveData;
+    }
 
     /// @dev The set of authorized signers
     mapping(address => bool) public signers;
 
-    /// @dev The set of used hashes (for replay protection)
-    mapping(bytes32 => bool) internal _used;
-
-    /// @notice Validate that the action has been completed successfully
-    /// @param data_ The data payload for the validation check
-    /// @return True if the action has been validated based on the data payload
-    /// @dev The data payload is expected to be a tuple of (address signer, bytes32 hash, bytes signature)
-    /// @dev The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
-    function validate(bytes calldata data_) external override returns (bool) {
-        (address signer_, bytes32 hash_, bytes memory signature_) = abi.decode(data_, (address, bytes32, bytes));
-
-        if (!signers[signer_]) revert BoostError.Unauthorized();
-        if (_used[hash_]) revert BoostError.Replayed(signer_, hash_, signature_);
-
-        // Mark the hash as used to prevent replays
-        _used[hash_] = true;
-
-        // Return the result of the signature check
-        return signer_.isValidSignatureNow(SignatureCheckerLib.toEthSignedMessageHash(hash_), signature_);
-    }
-
     /// @notice Set the authorized status of a signer
     /// @param signers_ The list of signers to update
     /// @param authorized_ The authorized status of each signer
-    function setAuthorized(address[] calldata signers_, bool[] calldata authorized_) external onlyOwner {
-        if (signers_.length != authorized_.length) revert BoostError.LengthMismatch();
-
-        for (uint256 i = 0; i < signers_.length; i++) {
-            signers[signers_[i]] = authorized_[i];
-        }
-    }
+    function setAuthorized(address[] calldata signers_, bool[] calldata authorized_) external virtual;
 
     /// @inheritdoc Cloneable
     function getComponentInterface() public pure virtual override(Validator) returns (bytes4) {

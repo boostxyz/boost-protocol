@@ -2,6 +2,7 @@
 cache/
 cache_forge/
 out/
+artifacts/
 
 # Editor files
 .vscode/

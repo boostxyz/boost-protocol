@@ -5,6 +5,7 @@ import {LibString} from "@solady/utils/LibString.sol";
 import {ERC20} from "@solady/tokens/ERC20.sol";
 import {ERC721} from "@solady/tokens/ERC721.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {IAuth} from "contracts/auth/IAuth.sol";
 
 /**
  * 🚨 WARNING: The mocks in this file are for testing purposes only. DO NOT use
@@ -70,5 +71,29 @@ contract MockERC1155 is ERC1155 {
 
     function burn(address from, uint256 id, uint256 amount) public {
         _burn(from, id, amount);
+    }
+}
+
+/// @title Mock Authorization Contract
+/// @dev Mock implementation of the IAuth interface for testing purposes.
+/// Allows setting authorized addresses via the constructor.
+contract MockAuth is IAuth {
+    mapping(address => bool) private _isAuthorized;
+
+    /// @notice Initializes the contract with a list of authorized addresses.
+    /// @param authorizedAddresses An array of addresses to be marked as authorized.
+    /// @dev Addresses not included in the list will default to unauthorized.
+    constructor(address[] memory authorizedAddresses) {
+        for (uint256 i = 0; i < authorizedAddresses.length; i++) {
+            _isAuthorized[authorizedAddresses[i]] = true;
+        }
+    }
+
+    /// @notice Checks if an address is authorized.
+    /// @param addr The address to check for authorization.
+    /// @return bool Returns true if the address is authorized, false otherwise.
+    /// @dev This function overrides the isAuthorized function in the IAuth interface.
+    function isAuthorized(address addr) external view override returns (bool) {
+        return _isAuthorized[addr];
     }
 }

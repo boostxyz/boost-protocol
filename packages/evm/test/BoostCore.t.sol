@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20, MockERC721} from "contracts/shared/Mocks.sol";
+import {MockERC20, MockERC721, MockAuth} from "contracts/shared/Mocks.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
@@ -41,6 +41,8 @@ contract BoostCoreTest is Test {
 
     MockERC20 mockERC20 = new MockERC20();
     MockERC721 mockERC721 = new MockERC721();
+    MockAuth mockAuth;
+    address[] mockAddresses;
 
     BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1));
     BoostLib.Target action = _makeAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
@@ -78,6 +80,8 @@ contract BoostCoreTest is Test {
                 })
             )
         );
+        mockAddresses.push(address(this));
+        mockAuth = new MockAuth(mockAddresses);
     }
 
     /////////////////////////////
@@ -240,6 +244,42 @@ contract BoostCoreTest is Test {
             abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(Action).interfaceId, address(0))
         );
         boostCore.createBoost(invalidActionCalldata);
+    }
+
+    //////////////////////////////////
+    // BoostCore.setCreateBoostAuth //
+    /////////////////////////////////
+
+    function testSetAuthToMockAuth() public {
+        // Assuming BoostCore has a function to set the auth strategy
+        boostCore.setCreateBoostAuth(address(mockAuth));
+        assertTrue(address(boostCore.createBoostAuth()) == address(mockAuth), "Auth strategy not set correctly");
+    }
+
+    function testAuthorizedUserCanCreateBoost() public {
+        // Set the auth strategy to MockAuth
+        boostCore.setCreateBoostAuth(address(mockAuth));
+
+        // Use an authorized address (this contract)
+        boostCore.createBoost(validCreateCalldata);
+
+        // Verify the boost was created
+        assertEq(1, boostCore.getBoostCount(), "Authorized user should be able to create boost");
+    }
+
+    function testUnauthorizedUserCannotCreateBoost() public {
+        // Set the auth strategy to MockAuth
+        boostCore.setCreateBoostAuth(address(mockAuth));
+
+        // Use an unauthorized address
+        vm.prank(makeAddr("unauthorizedBoostCreator"));
+
+        // Expect a revert due to unauthorized access
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        boostCore.createBoost(validCreateCalldata);
+
+        // Verify no boost was created
+        assertEq(0, boostCore.getBoostCount(), "Unauthorized user should not be able to create boost");
     }
 
     ///////////////////////////

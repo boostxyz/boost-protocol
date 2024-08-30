@@ -5,18 +5,14 @@ import {
   writeSimpleDenyListSetDenied,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
-import { getAccount, watchContractEvent } from '@wagmi/core';
-import type { ExtractAbiEvent } from 'abitype';
+import { getAccount } from '@wagmi/core';
 import {
   type Address,
   type ContractEventName,
-  type GetLogsReturnType,
   type Hex,
-  getAbiItem,
   zeroAddress,
   zeroHash,
 } from 'viem';
-import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -25,17 +21,15 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
   type GenericLog,
-  type GetLogsParams,
   type ReadParams,
   RegistryType,
   type SimpleDenyListPayload,
-  type WatchParams,
   type WriteParams,
   prepareSimpleDenyListPayload,
 } from '../utils';
 
-export type { SimpleDenyListPayload };
 export { simpleDenyListAbi };
+export type { SimpleDenyListPayload };
 
 /**
  * A generic `viem.Log` event with support for `SimpleDenyList` event types.

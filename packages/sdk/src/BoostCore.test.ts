@@ -725,7 +725,7 @@ describe('BoostCore', () => {
     expect(signerValidator._account).toEqual(defaultOptions.account);
   });
 
-  test.only('can subscribe to contract events', async () => {
+  test('can subscribe to contract events', async () => {
     const subscription = vi.fn();
 
     const { core, bases } = fixtures;

@@ -61,7 +61,11 @@ export type SignerValidatorLog<
  * @typedef {SignerValidator}
  * @extends {DeployableTarget<SignerValidatorPayload>}
  */
-export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
+export class SignerValidator extends DeployableTarget<
+  SignerValidatorPayload,
+  typeof signerValidatorAbi
+> {
+  public override readonly abi = signerValidatorAbi;
   /**
    * @inheritdoc
    *
@@ -191,110 +195,110 @@ export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
     return { hash, result };
   }
 
-  /**
-   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-   * @example
-   * ```ts
-   * const logs = contract.getLogs({ eventName: 'EventName' })
-   * const logs = contract.getLogs({ eventNames: ['EventName'] })
-   * ```
-   * @public
-   * @async
-   * @template {ContractEventName<typeof signerValidatorAbi>} event
-   * @template {ExtractAbiEvent<
-   *       typeof signerValidatorAbi,
-   *       event
-   *     >} [abiEvent=ExtractAbiEvent<typeof signerValidatorAbi, event>]
-   * @param {?Omit<
-   *       GetLogsParams<typeof signerValidatorAbi, event, abiEvent, abiEvent[]>,
-   *       'event' | 'events'
-   *     > & {
-   *       eventName?: event;
-   *       eventNames?: event[];
-   *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-   */
-  public async getLogs<
-    event extends ContractEventName<typeof signerValidatorAbi>,
-    const abiEvent extends ExtractAbiEvent<
-      typeof signerValidatorAbi,
-      event
-    > = ExtractAbiEvent<typeof signerValidatorAbi, event>,
-  >(
-    params?: Omit<
-      GetLogsParams<typeof signerValidatorAbi, event, abiEvent, abiEvent[]>,
-      'event' | 'events'
-    > & {
-      eventName?: event;
-      eventNames?: event[];
-    },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-      ...(params as any),
-      ...(params?.eventName
-        ? {
-            event: getAbiItem({
-              abi: signerValidatorAbi,
-              name: params.eventName,
-              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-            } as any),
-          }
-        : {}),
-      ...(params?.eventNames
-        ? {
-            events: params.eventNames.map((name) =>
-              getAbiItem({
-                abi: signerValidatorAbi,
-                name,
-                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-              } as any),
-            ),
-          }
-        : {}),
-      address: this.assertValidAddress(),
-    });
-  }
+  // /**
+  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+  //  * @example
+  //  * ```ts
+  //  * const logs = contract.getLogs({ eventName: 'EventName' })
+  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
+  //  * ```
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof signerValidatorAbi>} event
+  //  * @template {ExtractAbiEvent<
+  //  *       typeof signerValidatorAbi,
+  //  *       event
+  //  *     >} [abiEvent=ExtractAbiEvent<typeof signerValidatorAbi, event>]
+  //  * @param {?Omit<
+  //  *       GetLogsParams<typeof signerValidatorAbi, event, abiEvent, abiEvent[]>,
+  //  *       'event' | 'events'
+  //  *     > & {
+  //  *       eventName?: event;
+  //  *       eventNames?: event[];
+  //  *     }} [params]
+  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
+  //  */
+  // public async getLogs<
+  //   event extends ContractEventName<typeof signerValidatorAbi>,
+  //   const abiEvent extends ExtractAbiEvent<
+  //     typeof signerValidatorAbi,
+  //     event
+  //   > = ExtractAbiEvent<typeof signerValidatorAbi, event>,
+  // >(
+  //   params?: Omit<
+  //     GetLogsParams<typeof signerValidatorAbi, event, abiEvent, abiEvent[]>,
+  //     'event' | 'events'
+  //   > & {
+  //     eventName?: event;
+  //     eventNames?: event[];
+  //   },
+  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
+  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+  //     ...(params as any),
+  //     ...(params?.eventName
+  //       ? {
+  //           event: getAbiItem({
+  //             abi: signerValidatorAbi,
+  //             name: params.eventName,
+  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //           } as any),
+  //         }
+  //       : {}),
+  //     ...(params?.eventNames
+  //       ? {
+  //           events: params.eventNames.map((name) =>
+  //             getAbiItem({
+  //               abi: signerValidatorAbi,
+  //               name,
+  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //             } as any),
+  //           ),
+  //         }
+  //       : {}),
+  //     address: this.assertValidAddress(),
+  //   });
+  // }
 
-  /**
-   * Subscribes to one or all events from `SignerValidator`
-   *
-   * @public
-   * @async
-   * @template {ContractEventName<typeof signerValidatorAbi>} event
-   * @param {(log: SignerValidatorLog<event>) => unknown} cb
-   * @param {?WatchParams<typeof signerValidatorAbi, event> & {
-   *       eventName?: event;
-   *     }} [params]
-   * @returns {unknown, params?: any) => unknown} Unsubscribe function
-   */
-  public async subscribe<
-    event extends ContractEventName<typeof signerValidatorAbi>,
-  >(
-    cb: (log: SignerValidatorLog<event>) => unknown,
-    params?: WatchParams<typeof signerValidatorAbi, event> & {
-      eventName?: event;
-    },
-  ) {
-    return watchContractEvent<
-      typeof this._config,
-      (typeof this._config)['chains'][number]['id'],
-      typeof signerValidatorAbi,
-      event
-    >(this._config, {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      eventName: params?.eventName,
-      abi: signerValidatorAbi,
-      address: this.assertValidAddress(),
-      onLogs: (logs) => {
-        for (let l of logs) {
-          cb(l as unknown as SignerValidatorLog<event>);
-        }
-      },
-    });
-  }
+  // /**
+  //  * Subscribes to one or all events from `SignerValidator`
+  //  *
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof signerValidatorAbi>} event
+  //  * @param {(log: SignerValidatorLog<event>) => unknown} cb
+  //  * @param {?WatchParams<typeof signerValidatorAbi, event> & {
+  //  *       eventName?: event;
+  //  *     }} [params]
+  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
+  //  */
+  // public async subscribe<
+  //   event extends ContractEventName<typeof signerValidatorAbi>,
+  // >(
+  //   cb: (log: SignerValidatorLog<event>) => unknown,
+  //   params?: WatchParams<typeof signerValidatorAbi, event> & {
+  //     eventName?: event;
+  //   },
+  // ) {
+  //   return watchContractEvent<
+  //     typeof this._config,
+  //     (typeof this._config)['chains'][number]['id'],
+  //     typeof signerValidatorAbi,
+  //     event
+  //   >(this._config, {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+  //     ...(params as any),
+  //     eventName: params?.eventName,
+  //     abi: signerValidatorAbi,
+  //     address: this.assertValidAddress(),
+  //     onLogs: (logs) => {
+  //       for (let l of logs) {
+  //         cb(l as unknown as SignerValidatorLog<event>);
+  //       }
+  //     },
+  //   });
+  // }
 
   /**
    * @inheritdoc

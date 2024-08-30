@@ -8,12 +8,7 @@ import {
   deployFixtures,
   fundBudget,
 } from '../test/helpers';
-import {
-  BoostCore,
-  BoostCoreAbiEvents,
-  BoostCoreEvent,
-  BoostCoreEvents,
-} from './BoostCore';
+import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { IncentiveNotCloneableError } from './errors';
 import { ERC1155StrategyType, StrategyType, bytes4 } from './utils';

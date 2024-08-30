@@ -67,7 +67,11 @@ export const LIST_MANAGER_ROLE = 2n;
  * @typedef {SimpleAllowList}
  * @extends {DeployableTarget<SimpleAllowListPayload>}
  */
-export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
+export class SimpleAllowList extends DeployableTarget<
+  SimpleAllowListPayload,
+  typeof simpleAllowListAbi
+> {
+  public override readonly abi = simpleAllowListAbi;
   /**
    * @inheritdoc
    *
@@ -204,110 +208,110 @@ export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
     return { hash, result };
   }
 
-  /**
-   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-   * @example
-   * ```ts
-   * const logs = contract.getLogs({ eventName: 'EventName' })
-   * const logs = contract.getLogs({ eventNames: ['EventName'] })
-   * ```
-   * @public
-   * @async
-   * @template {ContractEventName<typeof simpleAllowListAbi>} event
-   * @template {ExtractAbiEvent<
-   *       typeof simpleAllowListAbi,
-   *       event
-   *     >} [abiEvent=ExtractAbiEvent<typeof simpleAllowListAbi, event>]
-   * @param {?Omit<
-   *       GetLogsParams<typeof simpleAllowListAbi, event, abiEvent, abiEvent[]>,
-   *       'event' | 'events'
-   *     > & {
-   *       eventName?: event;
-   *       eventNames?: event[];
-   *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-   */
-  public async getLogs<
-    event extends ContractEventName<typeof simpleAllowListAbi>,
-    const abiEvent extends ExtractAbiEvent<
-      typeof simpleAllowListAbi,
-      event
-    > = ExtractAbiEvent<typeof simpleAllowListAbi, event>,
-  >(
-    params?: Omit<
-      GetLogsParams<typeof simpleAllowListAbi, event, abiEvent, abiEvent[]>,
-      'event' | 'events'
-    > & {
-      eventName?: event;
-      eventNames?: event[];
-    },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-      ...(params as any),
-      ...(params?.eventName
-        ? {
-            event: getAbiItem({
-              abi: simpleAllowListAbi,
-              name: params.eventName,
-              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-            } as any),
-          }
-        : {}),
-      ...(params?.eventNames
-        ? {
-            events: params.eventNames.map((name) =>
-              getAbiItem({
-                abi: simpleAllowListAbi,
-                name,
-                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-              } as any),
-            ),
-          }
-        : {}),
-      address: this.assertValidAddress(),
-    });
-  }
+  // /**
+  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+  //  * @example
+  //  * ```ts
+  //  * const logs = contract.getLogs({ eventName: 'EventName' })
+  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
+  //  * ```
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof simpleAllowListAbi>} event
+  //  * @template {ExtractAbiEvent<
+  //  *       typeof simpleAllowListAbi,
+  //  *       event
+  //  *     >} [abiEvent=ExtractAbiEvent<typeof simpleAllowListAbi, event>]
+  //  * @param {?Omit<
+  //  *       GetLogsParams<typeof simpleAllowListAbi, event, abiEvent, abiEvent[]>,
+  //  *       'event' | 'events'
+  //  *     > & {
+  //  *       eventName?: event;
+  //  *       eventNames?: event[];
+  //  *     }} [params]
+  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
+  //  */
+  // public async getLogs<
+  //   event extends ContractEventName<typeof simpleAllowListAbi>,
+  //   const abiEvent extends ExtractAbiEvent<
+  //     typeof simpleAllowListAbi,
+  //     event
+  //   > = ExtractAbiEvent<typeof simpleAllowListAbi, event>,
+  // >(
+  //   params?: Omit<
+  //     GetLogsParams<typeof simpleAllowListAbi, event, abiEvent, abiEvent[]>,
+  //     'event' | 'events'
+  //   > & {
+  //     eventName?: event;
+  //     eventNames?: event[];
+  //   },
+  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
+  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+  //     ...(params as any),
+  //     ...(params?.eventName
+  //       ? {
+  //           event: getAbiItem({
+  //             abi: simpleAllowListAbi,
+  //             name: params.eventName,
+  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //           } as any),
+  //         }
+  //       : {}),
+  //     ...(params?.eventNames
+  //       ? {
+  //           events: params.eventNames.map((name) =>
+  //             getAbiItem({
+  //               abi: simpleAllowListAbi,
+  //               name,
+  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //             } as any),
+  //           ),
+  //         }
+  //       : {}),
+  //     address: this.assertValidAddress(),
+  //   });
+  // }
 
-  /**
-   * A typed wrapper for `wagmi.watchContractEvent`
-   *
-   * @public
-   * @async
-   * @template {ContractEventName<typeof simpleAllowListAbi>} event
-   * @param {(log: SimpleAllowListLog<event>) => unknown} cb
-   * @param {?WatchParams<typeof simpleAllowListAbi, event> & {
-   *       eventName?: event;
-   *     }} [params]
-   * @returns {unknown, params?: any) => unknown} Unsubscribe function
-   */
-  public async subscribe<
-    event extends ContractEventName<typeof simpleAllowListAbi>,
-  >(
-    cb: (log: SimpleAllowListLog<event>) => unknown,
-    params?: WatchParams<typeof simpleAllowListAbi, event> & {
-      eventName?: event;
-    },
-  ) {
-    return watchContractEvent<
-      typeof this._config,
-      (typeof this._config)['chains'][number]['id'],
-      typeof simpleAllowListAbi,
-      event
-    >(this._config, {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      eventName: params?.eventName,
-      abi: simpleAllowListAbi,
-      address: this.assertValidAddress(),
-      onLogs: (logs) => {
-        for (let l of logs) {
-          cb(l as unknown as SimpleAllowListLog<event>);
-        }
-      },
-    });
-  }
+  // /**
+  //  * A typed wrapper for `wagmi.watchContractEvent`
+  //  *
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof simpleAllowListAbi>} event
+  //  * @param {(log: SimpleAllowListLog<event>) => unknown} cb
+  //  * @param {?WatchParams<typeof simpleAllowListAbi, event> & {
+  //  *       eventName?: event;
+  //  *     }} [params]
+  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
+  //  */
+  // public async subscribe<
+  //   event extends ContractEventName<typeof simpleAllowListAbi>,
+  // >(
+  //   cb: (log: SimpleAllowListLog<event>) => unknown,
+  //   params?: WatchParams<typeof simpleAllowListAbi, event> & {
+  //     eventName?: event;
+  //   },
+  // ) {
+  //   return watchContractEvent<
+  //     typeof this._config,
+  //     (typeof this._config)['chains'][number]['id'],
+  //     typeof simpleAllowListAbi,
+  //     event
+  //   >(this._config, {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+  //     ...(params as any),
+  //     eventName: params?.eventName,
+  //     abi: simpleAllowListAbi,
+  //     address: this.assertValidAddress(),
+  //     onLogs: (logs) => {
+  //       for (let l of logs) {
+  //         cb(l as unknown as SimpleAllowListLog<event>);
+  //       }
+  //     },
+  //   });
+  // }
 
   /**
    * @inheritdoc

@@ -5,7 +5,9 @@ import {
 } from '@boostxyz/evm';
 import { deployContract } from '@wagmi/core';
 import {
+  type Abi,
   type Address,
+  type ContractEventName,
   type Hash,
   type Hex,
   type WaitForTransactionReceiptParameters,
@@ -28,7 +30,10 @@ import {
  * @template [Payload=unknown]
  * @extends {Deployable<Payload>}
  */
-export class DeployableTarget<Payload = unknown> extends Deployable<Payload> {
+export class DeployableTarget<
+  Payload,
+  ContractAbi extends Abi,
+> extends Deployable<Payload, ContractAbi> {
   /**
    * A static property representing the address of the base implementation on chain, used when cloning base contracts.
    *

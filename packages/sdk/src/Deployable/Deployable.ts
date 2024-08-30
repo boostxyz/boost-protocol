@@ -1,7 +1,9 @@
 import { type Config, deployContract } from '@wagmi/core';
 import type {
+  Abi,
   Account,
   Address,
+  ContractEventName,
   Hash,
   Hex,
   WaitForTransactionReceiptParameters,
@@ -61,6 +63,7 @@ export interface DeployableOptions {
    */
   account?: Account;
 }
+
 /**
  * A generic deployable contract that encapsulates common operations related to contract deployment
  *
@@ -68,9 +71,14 @@ export interface DeployableOptions {
  * @class Deployable
  * @typedef {Deployable}
  * @template [Payload=unknown]
- * @extends {Contract}
+ * @template {Abi} [ContractAbi=[]]
+ * @template {ContractEventName<ContractAbi>} [ContractEvent=ContractEventName<ContractAbi>]
+ * @extends {Contract<ContractAbi, ContractEvent>}
  */
-export class Deployable<Payload = unknown> extends Contract {
+export class Deployable<
+  Payload,
+  ContractAbi extends Abi,
+> extends Contract<ContractAbi> {
   /**
    * The deployable payload used either for contract construction or initialization
    *

@@ -35,6 +35,10 @@ abstract contract ASignerValidator is IBoostClaim, AValidator {
     /// @param authorized_ The authorized status of each signer
     function setAuthorized(address[] calldata signers_, bool[] calldata authorized_) external virtual;
 
+    /// @notice update the authorized caller of the validator function
+    /// @param newCaller the new authorized caller of the validator function
+    function setValidatorCaller(address newCaller) external virtual;
+
     /// @inheritdoc Cloneable
     function getComponentInterface() public pure virtual override(AValidator) returns (bytes4) {
         return type(ASignerValidator).interfaceId;

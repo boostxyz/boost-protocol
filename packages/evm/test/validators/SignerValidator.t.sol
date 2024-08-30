@@ -19,6 +19,7 @@ import {SignerValidator, ASignerValidator, IncentiveBits} from "contracts/valida
 contract SignerValidatorTest is Test {
     SignerValidator baseValidator = new SignerValidator();
     SignerValidator validator;
+    address _validatorCaller;
 
     uint256 testSignerKey = uint256(vm.envUint("TEST_SIGNER_PRIVATE_KEY"));
     address testSigner = vm.addr(testSignerKey);
@@ -45,8 +46,9 @@ contract SignerValidatorTest is Test {
         signers[0] = address(this);
         signers[1] = testSigner;
         signers[2] = address(smartSignerMock);
+        _validatorCaller = address(this);
 
-        bytes memory data = abi.encode(signers);
+        bytes memory data = abi.encode(signers, _validatorCaller);
         validator = SignerValidator(LibClone.clone(address(baseValidator)));
         validator.initialize(data);
     }
@@ -111,6 +113,14 @@ contract SignerValidatorTest is Test {
             ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
         bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
         assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
+    }
+
+    function testValidate_UnauthorizerCaller() public {
+        address badCaller = makeAddr("badValidatorCaller");
+
+        hoax(badCaller);
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        validator.validate(0, 0, address(0), hex"");
     }
 
     function testValidate_UnauthorizedSigner() public {

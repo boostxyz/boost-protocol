@@ -175,9 +175,10 @@ export class EventAction extends DeployableTarget<
    * @param {?ReadParams<typeof eventActionAbi, 'getActionEvents'>} [params]
    */
   public async validateActionEvents(
-    params?: ReadParams<typeof eventActionAbi, 'getActionEvents'> & {
-      knownSignatures?: Record<Hex, AbiItem>;
-    },
+    params?: ReadParams<typeof eventActionAbi, 'getActionEvents'> &
+      GetLogsParams<Abi, ContractEventName<Abi>> & {
+        knownEvents?: Record<Hex, AbiEvent>;
+      },
   ) {
     const actionEvents = await this.getActionEvents(params);
     for (const actionEvent of actionEvents) {

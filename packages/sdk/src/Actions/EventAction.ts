@@ -31,7 +31,11 @@ export type { EventActionPayload };
  * @typedef {EventAction}
  * @extends {DeployableTarget<EventActionPayload>}
  */
-export class EventAction extends DeployableTarget<EventActionPayload> {
+export class EventAction extends DeployableTarget<
+  EventActionPayload,
+  typeof eventActionAbi
+> {
+  public override readonly abi = eventActionAbi;
   /**
    * @inheritdoc
    *

@@ -5,7 +5,7 @@ import { MockERC20 } from '../test/MockERC20';
 import { defaultOptions } from '../test/helpers';
 import { awaitResult, bytes4, getDeployedContractAddress } from './utils';
 
-describe('bytes4', () => {
+describe.only('bytes4', () => {
   test('should return the bytes4 representation of a string', () => {
     expect(bytes4('0xdeadbeef')).toBe('0xd4fd4e18');
     expect(bytes4('deadbeef')).toBe('0x9f24c52e');

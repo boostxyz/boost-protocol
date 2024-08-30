@@ -4,9 +4,7 @@
   "license": "GPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "access": "public",
@@ -195,6 +193,9 @@
     "test": "vitest dev",
     "test:ci": "CI=true vitest --coverage",
     "typedoc": "npx typedoc"
+  },
+  "dependencies": {
+    "@boostxyz/signatures": "workspace:*"
   },
   "optionalDependencies": {
     "@boostxyz/evm": "workspace:*"

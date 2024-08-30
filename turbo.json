@@ -40,6 +40,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "artifacts/**", "out/**", "cache/**", ".next/**"]
     },
+    "signatures#build": {
+      "inputs": ["manifests"],
+      "outputs": ["dist/**"]
+    },
     "test": {
       "dependsOn": ["^build"]
     },

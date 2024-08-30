@@ -31,4 +31,13 @@ library BoostError {
 
     /// @notice Thrown when the requested action is unauthorized
     error Unauthorized();
+
+    /// @notice Thrown when an incentive id exceeds the available incentives
+    error InvalidIncentive(uint8 available, uint256 id);
+
+    /// @notice thrown when an incentiveId is larger than 7
+    error IncentiveToBig(uint8 incentiveId);
+
+    /// @notice thrown when an incentiveId is already claimed against
+    error IncentiveClaimed(uint8 incentiveId);
 }

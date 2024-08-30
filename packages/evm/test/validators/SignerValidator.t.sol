@@ -14,7 +14,7 @@ import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
-import {SignerValidator, ASignerValidator} from "contracts/validators/SignerValidator.sol";
+import {SignerValidator, ASignerValidator, IncentiveBits} from "contracts/validators/SignerValidator.sol";
 
 contract SignerValidatorTest is Test {
     SignerValidator baseValidator = new SignerValidator();
@@ -131,7 +131,7 @@ contract SignerValidatorTest is Test {
     function testValidate_ReplayedSignature() public {
         uint256 boostId = 0;
         uint256 incentiveId = 0;
-        uint8 incentiveQuantity = 0;
+        uint8 incentiveQuantity = 1;
         address claimant = address(0);
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
         bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
@@ -144,7 +144,7 @@ contract SignerValidatorTest is Test {
         assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
 
         // Second (replayed) validation should revert
-        vm.expectRevert(abi.encodeWithSelector(BoostError.Replayed.selector, testSigner, msgHash, signature));
+        vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveClaimed.selector, incentiveId));
         validator.validate(boostId, incentiveId, claimant, claimData);
     }
 
@@ -239,5 +239,33 @@ contract SignerValidatorTest is Test {
     function _signHash(bytes32 digest, uint256 privateKey) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
+    }
+}
+
+contract IncentiveBitsTest is Test {
+    using IncentiveBits for IncentiveBits.IncentiveMap;
+
+    IncentiveBits.IncentiveMap _used;
+
+    bytes32 private fakeHash = hex"123abc";
+
+    function testIncentiveBitsWorks() public {
+        for (uint8 x = 0; x < 8; x++) {
+            _used.setOrThrow(fakeHash, x);
+        }
+        uint8 map = _used.map[fakeHash];
+        assertEq(type(uint8).max, map);
+    }
+
+    function testIncentiveBitsBitTooLarge(uint8 badIndex) public {
+        vm.assume(badIndex > 7);
+        vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveToBig.selector, badIndex));
+        _used.setOrThrow(fakeHash, badIndex);
+    }
+
+    function testIncentiveRevertsIfToggledAgain() public {
+        _used.setOrThrow(fakeHash, 7);
+        vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveClaimed.selector, 7));
+        _used.setOrThrow(fakeHash, 7);
     }
 }

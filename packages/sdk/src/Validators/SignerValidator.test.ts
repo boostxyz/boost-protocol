@@ -54,7 +54,7 @@ describe('SignerValidator', () => {
     // Define the input data
     const boostId = 5n;
     const incentiveQuantity = 1;
-    const incentiveId = 1n;
+    const incentiveId = 0n;
     const claimant = '0x24582544C98a86eE59687c4D5B55D78f4FffA666';
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
 
@@ -111,7 +111,7 @@ describe('SignerValidator', () => {
     // Define the input data
     const boostId = 5n;
     const incentiveQuantity = 1;
-    const incentiveId = 1n;
+    const incentiveId = 0n;
     const claimant = '0x24582544C98a86eE59687c4D5B55D78f4FffA666';
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
 

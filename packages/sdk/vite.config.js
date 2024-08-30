@@ -19,7 +19,7 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
 export default {
   build: {
     rollupOptions: {
-      external: [/^viem/, /^@wagmi(?!.*\/codegen)/, /^@boostsdk\/signatures)/],
+      external: [/^viem/, /^@wagmi(?!.*\/codegen)/, /^@boostxyz\/signatures/],
     },
     lib: {
       entry: Object.keys(packageJson.exports).map((mod) =>

@@ -8,15 +8,14 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import events from '@boostxyz/signatures/events';
-import {
-  type Abi,
-  type AbiEvent,
-  type AbiItem,
-  type Address,
-  type ContractEventName,
-  type Hex,
-  type Log,
-  getAbiItem,
+import type {
+  Abi,
+  AbiEvent,
+  AbiItem,
+  Address,
+  ContractEventName,
+  Hex,
+  Log,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {

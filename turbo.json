@@ -40,7 +40,9 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "artifacts/**", "out/**", "cache/**", ".next/**"]
     },
-    "test": {},
+    "test": {
+      "dependsOn": ["^build"]
+    },
     "test:ci": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]

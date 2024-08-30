@@ -8,16 +8,7 @@ import {
   writeErc721MintActionValidate,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import { watchContractEvent } from '@wagmi/core';
-import type { ExtractAbiEvent } from 'abitype';
-import {
-  type Address,
-  type ContractEventName,
-  type GetLogsReturnType,
-  type Hex,
-  getAbiItem,
-} from 'viem';
-import { getLogs } from 'viem/actions';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -25,17 +16,15 @@ import type {
 import {
   type ERC721MintActionPayload,
   type GenericLog,
-  type GetLogsParams,
   type ReadParams,
   RegistryType,
-  type WatchParams,
   type WriteParams,
   prepareERC721MintActionPayload,
   prepareERC721MintActionValidate,
 } from '../utils';
 import { ContractAction } from './ContractAction';
 
-export { prepareERC721MintActionPayload, erc721MintActionAbi };
+export { erc721MintActionAbi, prepareERC721MintActionPayload };
 export type { ERC721MintActionPayload };
 
 /**
@@ -222,110 +211,6 @@ export class ERC721MintAction extends ContractAction<
     const hash = await writeErc721MintActionValidate(this._config, request);
     return { hash, result };
   }
-
-  // /**
-  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-  //  * @example
-  //  * ```ts
-  //  * const logs = contract.getLogs({ eventName: 'EventName' })
-  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
-  //  * ```
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof erc721MintActionAbi>} event
-  //  * @template {ExtractAbiEvent<
-  //  *       typeof erc721MintActionAbi,
-  //  *       event
-  //  *     >} [abiEvent=ExtractAbiEvent<typeof erc721MintActionAbi, event>]
-  //  * @param {?Omit<
-  //  *       GetLogsParams<typeof erc721MintActionAbi, event, abiEvent, abiEvent[]>,
-  //  *       'event' | 'events'
-  //  *     > & {
-  //  *       eventName?: event;
-  //  *       eventNames?: event[];
-  //  *     }} [params]
-  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-  //  *
-  // public override async getLogs<
-  //   event extends ContractEventName<typeof erc721MintActionAbi>,
-  //   const abiEvent extends ExtractAbiEvent<
-  //     typeof erc721MintActionAbi,
-  //     event
-  //   > = ExtractAbiEvent<typeof erc721MintActionAbi, event>,
-  // >(
-  //   params?: Omit<
-  //     GetLogsParams<typeof erc721MintActionAbi, event, abiEvent, abiEvent[]>,
-  //     'event' | 'events'
-  //   > & {
-  //     eventName?: event;
-  //     eventNames?: event[];
-  //   },
-  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-  //     ...(params as any),
-  //     ...(params?.eventName
-  //       ? {
-  //           event: getAbiItem({
-  //             abi: erc721MintActionAbi,
-  //             name: params.eventName,
-  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //           } as any),
-  //         }
-  //       : {}),
-  //     ...(params?.eventNames
-  //       ? {
-  //           events: params.eventNames.map((name) =>
-  //             getAbiItem({
-  //               abi: erc721MintActionAbi,
-  //               name,
-  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //             } as any),
-  //           ),
-  //         }
-  //       : {}),
-  //     address: this.assertValidAddress(),
-  //   });
-  // }
-
-  // /**
-  //  * @inheritdoc
-  //  *
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof erc721MintActionAbi>} event
-  //  * @param {(log: ERC721MintActionLog<event>) => unknown} cb
-  //  * @param {?WatchParams<typeof erc721MintActionAbi, event> & {
-  //  *       eventName?: event;
-  //  *     }} [params]
-  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
-  // public override async subscribe<
-  //   event extends ContractEventName<typeof erc721MintActionAbi>,
-  // >(
-  //   cb: (log: ERC721MintActionLog<event>) => unknown,
-  //   params?: WatchParams<typeof erc721MintActionAbi, event> & {
-  //     eventName?: event;
-  //   },
-  // ) {
-  //   return watchContractEvent<
-  //     typeof this._config,
-  //     (typeof this._config)['chains'][number]['id'],
-  //     typeof erc721MintActionAbi,
-  //     event
-  //   >(this._config, {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-  //     ...(params as any),
-  //     eventName: params?.eventName,
-  //     abi: erc721MintActionAbi,
-  //     address: this.assertValidAddress(),
-  //     onLogs: (logs) => {
-  //       for (let l of logs) {
-  //         cb(l as unknown as ERC721MintActionLog<event>);
-  //       }
-  //     },
-  //   });
-  // }
 
   /**
    * @inheritdoc

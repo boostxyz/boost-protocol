@@ -6,7 +6,6 @@ import {
   type ContractEventName,
   type GetLogsReturnType,
   type WaitForTransactionReceiptParameters,
-  type WatchContractEventOnLogsFn,
   type WatchContractEventOnLogsParameter,
   getAbiItem,
 } from 'viem';

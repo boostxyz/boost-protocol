@@ -7,7 +7,6 @@ import { deployContract } from '@wagmi/core';
 import {
   type Abi,
   type Address,
-  type ContractEventName,
   type Hash,
   type Hex,
   type WaitForTransactionReceiptParameters,

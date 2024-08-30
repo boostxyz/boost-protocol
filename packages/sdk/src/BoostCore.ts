@@ -13,24 +13,16 @@ import {
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
-import {
-  getAccount,
-  waitForTransactionReceipt,
-  watchContractEvent,
-} from '@wagmi/core';
+import { getAccount, waitForTransactionReceipt } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
-import type { ExtractAbiEvent } from 'abitype';
 import {
   type Address,
   type ContractEventName,
-  type GetLogsReturnType,
   type Hex,
-  getAbiItem,
   parseEventLogs,
   zeroAddress,
   zeroHash,
 } from 'viem';
-import { getLogs } from 'viem/actions';
 import { type Action, actionFromAddress } from './Actions/Action';
 import {
   ContractAction,
@@ -98,11 +90,9 @@ import {
 import {
   type EventActionPayload,
   type GenericLog,
-  type GetLogsParams,
   type BoostPayload as OnChainBoostPayload,
   type ReadParams,
   type Target,
-  type WatchParams,
   type WriteParams,
   prepareBoostPayload,
 } from './utils';
@@ -760,105 +750,6 @@ export class BoostCore extends Deployable<
     const hash = await writeBoostCoreSetClaimFee(this._config, request);
     return { hash, result };
   }
-
-  // /**
-  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-  //  * @example
-  //  * ```ts
-  //  * const logs = contract.getLogs({ eventName: 'EventName' })
-  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
-  //  * ```
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof boostCoreAbi>} event
-  //  * @template {ExtractAbiEvent<
-  //  *       typeof boostCoreAbi,
-  //  *       event
-  //  *     >} [abiEvent=ExtractAbiEvent<typeof boostCoreAbi, event>]
-  //  * @param {?Omit<
-  //  *       GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvent[]>,
-  //  *       'event' | 'events'
-  //  *     > & {
-  //  *       eventName?: event;
-  //  *       eventNames?: event[];
-  //  *     }} [params]
-  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-  //  */
-  // public async getLogs<
-  //   event extends ContractEventName<typeof boostCoreAbi>,
-  //   const abiEvent extends ExtractAbiEvent<
-  //     typeof boostCoreAbi,
-  //     event
-  //   > = ExtractAbiEvent<typeof boostCoreAbi, event>,
-  // >(
-  //   params?: Omit<
-  //     GetLogsParams<typeof boostCoreAbi, event, abiEvent, abiEvent[]>,
-  //     'event' | 'events'
-  //   > & {
-  //     eventName?: event;
-  //     eventNames?: event[];
-  //   },
-  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-  //     ...(params as any),
-  //     ...(params?.eventName
-  //       ? {
-  //           event: getAbiItem({
-  //             abi: boostCoreAbi,
-  //             name: params.eventName,
-  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //           } as any),
-  //         }
-  //       : {}),
-  //     ...(params?.eventNames
-  //       ? {
-  //           events: params.eventNames.map((name) =>
-  //             getAbiItem({
-  //               abi: boostCoreAbi,
-  //               name,
-  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //             } as any),
-  //           ),
-  //         }
-  //       : {}),
-  //     address: this.assertValidAddress(),
-  //   });
-  // }
-
-  // /**
-  //  * A typed wrapper for `wagmi.watchContractEvent`
-  //  *
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof boostCoreAbi>} event
-  //  * @param {(log: BoostCoreLog<event>) => unknown} cb
-  //  * @param {?(WatchParams<typeof boostCoreAbi, event> & { eventName?: event })} [params]
-  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
-  //  */
-  // public async subscribe<event extends ContractEventName<typeof boostCoreAbi>>(
-  //   cb: (log: BoostCoreLog<event>) => unknown,
-  //   params?: WatchParams<typeof boostCoreAbi, event> & { eventName?: event },
-  // ) {
-  //   return watchContractEvent<
-  //     typeof this._config,
-  //     (typeof this._config)['chains'][number]['id'],
-  //     typeof boostCoreAbi,
-  //     event
-  //   >(this._config, {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-  //     ...(params as any),
-  //     eventName: params?.eventName,
-  //     abi: boostCoreAbi,
-  //     address: this.assertValidAddress(),
-  //     onLogs: (logs) => {
-  //       for (let l of logs) {
-  //         cb(l as unknown as BoostCoreLog<event>);
-  //       }
-  //     },
-  //   });
-  // }
 
   /**
    * Bound {@link ContractAction} constructor that reuses the same configuration as the Boost Core instance.

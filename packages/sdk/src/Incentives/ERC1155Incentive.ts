@@ -16,16 +16,7 @@ import {
   writeErc1155IncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
-import { watchContractEvent } from '@wagmi/core';
-import type { ExtractAbiEvent } from 'abitype';
-import {
-  type Address,
-  type ContractEventName,
-  type GetLogsReturnType,
-  type Hex,
-  getAbiItem,
-} from 'viem';
-import { getLogs } from 'viem/actions';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -36,11 +27,9 @@ import {
   type ERC1155IncentivePayload,
   ERC1155StrategyType,
   type GenericLog,
-  type GetLogsParams,
   type ReadParams,
   RegistryType,
   type StrategyType,
-  type WatchParams,
   type WriteParams,
   prepareClaimPayload,
   prepareERC1155IncentivePayload,
@@ -368,111 +357,6 @@ export class ERC1155Incentive extends DeployableTarget<
       ...(params as any),
     });
   }
-
-  // /**
-  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-  //  * @example
-  //  * ```ts
-  //  * const logs = contract.getLogs({ eventName: 'EventName' })
-  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
-  //  * ```
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof erc1155IncentiveAbi>} event
-  //  * @template {ExtractAbiEvent<
-  //  *       typeof erc1155IncentiveAbi,
-  //  *       event
-  //  *     >} [abiEvent=ExtractAbiEvent<typeof erc1155IncentiveAbi, event>]
-  //  * @param {?Omit<
-  //  *       GetLogsParams<typeof erc1155IncentiveAbi, event, abiEvent, abiEvent[]>,
-  //  *       'event' | 'events'
-  //  *     > & {
-  //  *       eventName?: event;
-  //  *       eventNames?: event[];
-  //  *     }} [params]
-  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-  //  */
-  // public async getLogs<
-  //   event extends ContractEventName<typeof erc1155IncentiveAbi>,
-  //   const abiEvent extends ExtractAbiEvent<
-  //     typeof erc1155IncentiveAbi,
-  //     event
-  //   > = ExtractAbiEvent<typeof erc1155IncentiveAbi, event>,
-  // >(
-  //   params?: Omit<
-  //     GetLogsParams<typeof erc1155IncentiveAbi, event, abiEvent, abiEvent[]>,
-  //     'event' | 'events'
-  //   > & {
-  //     eventName?: event;
-  //     eventNames?: event[];
-  //   },
-  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-  //     ...(params as any),
-  //     ...(params?.eventName
-  //       ? {
-  //           event: getAbiItem({
-  //             abi: erc1155IncentiveAbi,
-  //             name: params.eventName,
-  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //           } as any),
-  //         }
-  //       : {}),
-  //     ...(params?.eventNames
-  //       ? {
-  //           events: params.eventNames.map((name) =>
-  //             getAbiItem({
-  //               abi: erc1155IncentiveAbi,
-  //               name,
-  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //             } as any),
-  //           ),
-  //         }
-  //       : {}),
-  //     address: this.assertValidAddress(),
-  //   });
-  // }
-
-  // /**
-  //  * A typed wrapper for `wagmi.watchContractEvent`
-  //  *
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof erc1155IncentiveAbi>} event
-  //  * @param {(log: ERC1155IncentiveLog<event>) => unknown} cb
-  //  * @param {?WatchParams<typeof erc1155IncentiveAbi, event> & {
-  //  *       eventName?: event;
-  //  *     }} [params]
-  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
-  //  */
-  // public async subscribe<
-  //   event extends ContractEventName<typeof erc1155IncentiveAbi>,
-  // >(
-  //   cb: (log: ERC1155IncentiveLog<event>) => unknown,
-  //   params?: WatchParams<typeof erc1155IncentiveAbi, event> & {
-  //     eventName?: event;
-  //   },
-  // ) {
-  //   return watchContractEvent<
-  //     typeof this._config,
-  //     (typeof this._config)['chains'][number]['id'],
-  //     typeof erc1155IncentiveAbi,
-  //     event
-  //   >(this._config, {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-  //     ...(params as any),
-  //     eventName: params?.eventName,
-  //     abi: erc1155IncentiveAbi,
-  //     address: this.assertValidAddress(),
-  //     onLogs: (logs) => {
-  //       for (let l of logs) {
-  //         cb(l as unknown as ERC1155IncentiveLog<event>);
-  //       }
-  //     },
-  //   });
-  // }
 
   /**
    * @inheritdoc

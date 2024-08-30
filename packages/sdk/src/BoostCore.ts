@@ -235,7 +235,6 @@ export class BoostCore extends Deployable<
   [Address, Address],
   typeof boostCoreAbi
 > {
-  public override readonly abi = boostCoreAbi;
   /**
    * Creates an instance of BoostCore.
    *
@@ -247,7 +246,6 @@ export class BoostCore extends Deployable<
    */
   constructor({ config, account, ...options }: BoostCoreConfig) {
     if (isBoostCoreDeployed(options) && options.address) {
-      // @ts-expect-error unsure why the abi property's existence causes this throws ts(2401) here...
       super({ account, config }, options.address);
     } else if (isBoostCoreDeployable(options)) {
       super({ account, config }, [
@@ -257,8 +255,9 @@ export class BoostCore extends Deployable<
     } else {
       super({ account, config }, BOOST_CORE_ADDRESS);
     }
-  }
-  /**
+    //@ts-expect-error I can't set this property on the class because for some reason it takes super out of constructor scope?
+    this.abi = boostCoreAbi;
+  } /**
    * Create a new Boost.
    *
    * @public

@@ -16,7 +16,7 @@ import {
 } from '../src';
 import type { WriteParams } from './../src/utils';
 
-export class MockERC20 extends Deployable<never, typeof mockErc20Abi> {
+export class MockERC20 extends Deployable<{}, typeof mockErc20Abi> {
   public async approve(
     address: Address,
     value: bigint,

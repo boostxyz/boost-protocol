@@ -14,7 +14,7 @@ import {
 } from '../src';
 import type { WriteParams } from './../src/utils';
 
-export class MockERC1155 extends Deployable<never, typeof mockErc1155Abi> {
+export class MockERC1155 extends Deployable<{}, typeof mockErc1155Abi> {
   public async mint(
     address: Address,
     id: bigint,

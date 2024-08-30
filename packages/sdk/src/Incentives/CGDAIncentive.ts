@@ -71,7 +71,11 @@ export type CGDAIncentiveLog<
  * @typedef {CGDAIncentive}
  * @extends {DeployableTarget<CGDAIncentivePayload>}
  */
-export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
+export class CGDAIncentive extends DeployableTarget<
+  CGDAIncentivePayload,
+  typeof cgdaIncentiveAbi
+> {
+  public override readonly abi = cgdaIncentiveAbi;
   /**
    * @inheritdoc
    *
@@ -345,110 +349,110 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
     });
   }
 
-  /**
-   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-   * @example
-   * ```ts
-   * const logs = contract.getLogs({ eventName: 'EventName' })
-   * const logs = contract.getLogs({ eventNames: ['EventName'] })
-   * ```
-   * @public
-   * @async
-   * @template {ContractEventName<typeof cgdaIncentiveAbi>} event
-   * @template {ExtractAbiEvent<
-   *       typeof cgdaIncentiveAbi,
-   *       event
-   *     >} [abiEvent=ExtractAbiEvent<typeof cgdaIncentiveAbi, event>]
-   * @param {?Omit<
-   *       GetLogsParams<typeof cgdaIncentiveAbi, event, abiEvent, abiEvent[]>,
-   *       'event' | 'events'
-   *     > & {
-   *       eventName?: event;
-   *       eventNames?: event[];
-   *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-   */
-  public async getLogs<
-    event extends ContractEventName<typeof cgdaIncentiveAbi>,
-    const abiEvent extends ExtractAbiEvent<
-      typeof cgdaIncentiveAbi,
-      event
-    > = ExtractAbiEvent<typeof cgdaIncentiveAbi, event>,
-  >(
-    params?: Omit<
-      GetLogsParams<typeof cgdaIncentiveAbi, event, abiEvent, abiEvent[]>,
-      'event' | 'events'
-    > & {
-      eventName?: event;
-      eventNames?: event[];
-    },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-      ...(params as any),
-      ...(params?.eventName
-        ? {
-            event: getAbiItem({
-              abi: cgdaIncentiveAbi,
-              name: params.eventName,
-              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-            } as any),
-          }
-        : {}),
-      ...(params?.eventNames
-        ? {
-            events: params.eventNames.map((name) =>
-              getAbiItem({
-                abi: cgdaIncentiveAbi,
-                name,
-                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-              } as any),
-            ),
-          }
-        : {}),
-      address: this.assertValidAddress(),
-    });
-  }
+  // /**
+  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+  //  * @example
+  //  * ```ts
+  //  * const logs = contract.getLogs({ eventName: 'EventName' })
+  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
+  //  * ```
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof cgdaIncentiveAbi>} event
+  //  * @template {ExtractAbiEvent<
+  //  *       typeof cgdaIncentiveAbi,
+  //  *       event
+  //  *     >} [abiEvent=ExtractAbiEvent<typeof cgdaIncentiveAbi, event>]
+  //  * @param {?Omit<
+  //  *       GetLogsParams<typeof cgdaIncentiveAbi, event, abiEvent, abiEvent[]>,
+  //  *       'event' | 'events'
+  //  *     > & {
+  //  *       eventName?: event;
+  //  *       eventNames?: event[];
+  //  *     }} [params]
+  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
+  //  */
+  // public async getLogs<
+  //   event extends ContractEventName<typeof cgdaIncentiveAbi>,
+  //   const abiEvent extends ExtractAbiEvent<
+  //     typeof cgdaIncentiveAbi,
+  //     event
+  //   > = ExtractAbiEvent<typeof cgdaIncentiveAbi, event>,
+  // >(
+  //   params?: Omit<
+  //     GetLogsParams<typeof cgdaIncentiveAbi, event, abiEvent, abiEvent[]>,
+  //     'event' | 'events'
+  //   > & {
+  //     eventName?: event;
+  //     eventNames?: event[];
+  //   },
+  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
+  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+  //     ...(params as any),
+  //     ...(params?.eventName
+  //       ? {
+  //           event: getAbiItem({
+  //             abi: cgdaIncentiveAbi,
+  //             name: params.eventName,
+  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //           } as any),
+  //         }
+  //       : {}),
+  //     ...(params?.eventNames
+  //       ? {
+  //           events: params.eventNames.map((name) =>
+  //             getAbiItem({
+  //               abi: cgdaIncentiveAbi,
+  //               name,
+  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //             } as any),
+  //           ),
+  //         }
+  //       : {}),
+  //     address: this.assertValidAddress(),
+  //   });
+  // }
 
-  /**
-   * A typed wrapper for `wagmi.watchContractEvent`
-   *
-   * @public
-   * @async
-   * @template {ContractEventName<typeof cgdaIncentiveAbi>} event
-   * @param {(log: CGDAIncentiveLog<event>) => unknown} cb
-   * @param {?WatchParams<typeof cgdaIncentiveAbi, event> & {
-   *       eventName?: event;
-   *     }} [params]
-   * @returns {unknown, params?: any) => unknown} Unsubscribe function
-   */
-  public async subscribe<
-    event extends ContractEventName<typeof cgdaIncentiveAbi>,
-  >(
-    cb: (log: CGDAIncentiveLog<event>) => unknown,
-    params?: WatchParams<typeof cgdaIncentiveAbi, event> & {
-      eventName?: event;
-    },
-  ) {
-    return watchContractEvent<
-      typeof this._config,
-      (typeof this._config)['chains'][number]['id'],
-      typeof cgdaIncentiveAbi,
-      event
-    >(this._config, {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      eventName: params?.eventName,
-      abi: cgdaIncentiveAbi,
-      address: this.assertValidAddress(),
-      onLogs: (logs) => {
-        for (let l of logs) {
-          cb(l as unknown as CGDAIncentiveLog<event>);
-        }
-      },
-    });
-  }
+  // /**
+  //  * A typed wrapper for `wagmi.watchContractEvent`
+  //  *
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof cgdaIncentiveAbi>} event
+  //  * @param {(log: CGDAIncentiveLog<event>) => unknown} cb
+  //  * @param {?WatchParams<typeof cgdaIncentiveAbi, event> & {
+  //  *       eventName?: event;
+  //  *     }} [params]
+  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
+  //  */
+  // public async subscribe<
+  //   event extends ContractEventName<typeof cgdaIncentiveAbi>,
+  // >(
+  //   cb: (log: CGDAIncentiveLog<event>) => unknown,
+  //   params?: WatchParams<typeof cgdaIncentiveAbi, event> & {
+  //     eventName?: event;
+  //   },
+  // ) {
+  //   return watchContractEvent<
+  //     typeof this._config,
+  //     (typeof this._config)['chains'][number]['id'],
+  //     typeof cgdaIncentiveAbi,
+  //     event
+  //   >(this._config, {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+  //     ...(params as any),
+  //     eventName: params?.eventName,
+  //     abi: cgdaIncentiveAbi,
+  //     address: this.assertValidAddress(),
+  //     onLogs: (logs) => {
+  //       for (let l of logs) {
+  //         cb(l as unknown as CGDAIncentiveLog<event>);
+  //       }
+  //     },
+  //   });
+  // }
 
   /**
    * @inheritdoc

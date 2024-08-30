@@ -82,7 +82,11 @@ export type VestingBudgetLog<
  * @typedef {VestingBudget}
  * @extends {DeployableTarget<VestingBudgetPayload>}
  */
-export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
+export class VestingBudget extends DeployableTarget<
+  VestingBudgetPayload,
+  typeof vestingBudgetAbi
+> {
+  public override readonly abi = vestingBudgetAbi;
   /**
    * @inheritdoc
    *
@@ -496,110 +500,110 @@ export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
     });
   }
 
-  /**
-   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-   * @example
-   * ```ts
-   * const logs = contract.getLogs({ eventName: 'EventName' })
-   * const logs = contract.getLogs({ eventNames: ['EventName'] })
-   * ```
-   * @public
-   * @async
-   * @template {ContractEventName<typeof vestingBudgetAbi>} event
-   * @template {ExtractAbiEvent<
-   *       typeof vestingBudgetAbi,
-   *       event
-   *     >} [abiEvent=ExtractAbiEvent<typeof vestingBudgetAbi, event>]
-   * @param {?Omit<
-   *       GetLogsParams<typeof vestingBudgetAbi, event, abiEvent, abiEvent[]>,
-   *       'event' | 'events'
-   *     > & {
-   *       eventName?: event;
-   *       eventNames?: event[];
-   *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-   */
-  public async getLogs<
-    event extends ContractEventName<typeof vestingBudgetAbi>,
-    const abiEvent extends ExtractAbiEvent<
-      typeof vestingBudgetAbi,
-      event
-    > = ExtractAbiEvent<typeof vestingBudgetAbi, event>,
-  >(
-    params?: Omit<
-      GetLogsParams<typeof vestingBudgetAbi, event, abiEvent, abiEvent[]>,
-      'event' | 'events'
-    > & {
-      eventName?: event;
-      eventNames?: event[];
-    },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-      ...(params as any),
-      ...(params?.eventName
-        ? {
-            event: getAbiItem({
-              abi: vestingBudgetAbi,
-              name: params.eventName,
-              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-            } as any),
-          }
-        : {}),
-      ...(params?.eventNames
-        ? {
-            events: params.eventNames.map((name) =>
-              getAbiItem({
-                abi: vestingBudgetAbi,
-                name,
-                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-              } as any),
-            ),
-          }
-        : {}),
-      address: this.assertValidAddress(),
-    });
-  }
+  // /**
+  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+  //  * @example
+  //  * ```ts
+  //  * const logs = contract.getLogs({ eventName: 'EventName' })
+  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
+  //  * ```
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof vestingBudgetAbi>} event
+  //  * @template {ExtractAbiEvent<
+  //  *       typeof vestingBudgetAbi,
+  //  *       event
+  //  *     >} [abiEvent=ExtractAbiEvent<typeof vestingBudgetAbi, event>]
+  //  * @param {?Omit<
+  //  *       GetLogsParams<typeof vestingBudgetAbi, event, abiEvent, abiEvent[]>,
+  //  *       'event' | 'events'
+  //  *     > & {
+  //  *       eventName?: event;
+  //  *       eventNames?: event[];
+  //  *     }} [params]
+  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
+  //  */
+  // public async getLogs<
+  //   event extends ContractEventName<typeof vestingBudgetAbi>,
+  //   const abiEvent extends ExtractAbiEvent<
+  //     typeof vestingBudgetAbi,
+  //     event
+  //   > = ExtractAbiEvent<typeof vestingBudgetAbi, event>,
+  // >(
+  //   params?: Omit<
+  //     GetLogsParams<typeof vestingBudgetAbi, event, abiEvent, abiEvent[]>,
+  //     'event' | 'events'
+  //   > & {
+  //     eventName?: event;
+  //     eventNames?: event[];
+  //   },
+  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
+  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+  //     ...(params as any),
+  //     ...(params?.eventName
+  //       ? {
+  //           event: getAbiItem({
+  //             abi: vestingBudgetAbi,
+  //             name: params.eventName,
+  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //           } as any),
+  //         }
+  //       : {}),
+  //     ...(params?.eventNames
+  //       ? {
+  //           events: params.eventNames.map((name) =>
+  //             getAbiItem({
+  //               abi: vestingBudgetAbi,
+  //               name,
+  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //             } as any),
+  //           ),
+  //         }
+  //       : {}),
+  //     address: this.assertValidAddress(),
+  //   });
+  // }
 
-  /**
-   * A typed wrapper for `wagmi.watchContractEvent`
-   *
-   * @public
-   * @async
-   * @template {ContractEventName<typeof vestingBudgetAbi>} event
-   * @param {(log: VestingBudgetLog<event>) => unknown} cb
-   * @param {?WatchParams<typeof vestingBudgetAbi, event> & {
-   *       eventName?: event;
-   *     }} [params]
-   * @returns {unknown, params?: any) => unknown} Unsubscribe function
-   */
-  public async subscribe<
-    event extends ContractEventName<typeof vestingBudgetAbi>,
-  >(
-    cb: (log: VestingBudgetLog<event>) => unknown,
-    params?: WatchParams<typeof vestingBudgetAbi, event> & {
-      eventName?: event;
-    },
-  ) {
-    return watchContractEvent<
-      typeof this._config,
-      (typeof this._config)['chains'][number]['id'],
-      typeof vestingBudgetAbi,
-      event
-    >(this._config, {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      eventName: params?.eventName,
-      abi: vestingBudgetAbi,
-      address: this.assertValidAddress(),
-      onLogs: (logs) => {
-        for (let l of logs) {
-          cb(l as unknown as VestingBudgetLog<event>);
-        }
-      },
-    });
-  }
+  // /**
+  //  * A typed wrapper for `wagmi.watchContractEvent`
+  //  *
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof vestingBudgetAbi>} event
+  //  * @param {(log: VestingBudgetLog<event>) => unknown} cb
+  //  * @param {?WatchParams<typeof vestingBudgetAbi, event> & {
+  //  *       eventName?: event;
+  //  *     }} [params]
+  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
+  //  */
+  // public async subscribe<
+  //   event extends ContractEventName<typeof vestingBudgetAbi>,
+  // >(
+  //   cb: (log: VestingBudgetLog<event>) => unknown,
+  //   params?: WatchParams<typeof vestingBudgetAbi, event> & {
+  //     eventName?: event;
+  //   },
+  // ) {
+  //   return watchContractEvent<
+  //     typeof this._config,
+  //     (typeof this._config)['chains'][number]['id'],
+  //     typeof vestingBudgetAbi,
+  //     event
+  //   >(this._config, {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+  //     ...(params as any),
+  //     eventName: params?.eventName,
+  //     abi: vestingBudgetAbi,
+  //     address: this.assertValidAddress(),
+  //     onLogs: (logs) => {
+  //       for (let l of logs) {
+  //         cb(l as unknown as VestingBudgetLog<event>);
+  //       }
+  //     },
+  //   });
+  // }
 
   /**
    * @inheritdoc

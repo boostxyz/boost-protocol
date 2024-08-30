@@ -28,13 +28,9 @@ import {
  * @template {Abi} [ContractAbi=[]]
  * @template {ContractEventName<ContractAbi>} [ContractEvent=any]
  */
-export class Contract<
-  ContractAbi extends Abi = [],
-  // biome-ignore lint/suspicious/noExplicitAny: by default permit any type
-  ContractEvent extends ContractEventName<ContractAbi> = any,
-> {
+export class Contract<ContractAbi extends Abi> {
   //@ts-expect-error this should always be set by implementing contract
-  public readonly abi: ContractAbi = [];
+  public readonly abi: ContractAbi;
   /**
    * @see [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
    * @protected
@@ -55,7 +51,6 @@ export class Contract<
    * @constructor
    * @param {Config} config
    * @param {(Address | undefined)} address
-   * biome-ignore lint/suspicious/noExplicitAny: ^
    */
   constructor(config: Config, address: Address | undefined) {
     this._config = config;
@@ -135,7 +130,7 @@ export class Contract<
    * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
    */
   public async getLogs<
-    event extends ContractEvent,
+    event extends ContractEventName<ContractAbi>,
     const abiEvent extends ExtractAbiEvent<
       ContractAbi,
       event
@@ -190,7 +185,7 @@ export class Contract<
    *     }} [params]
    * @returns {unknown, params?: any) => unknown}
    */
-  public async subscribe<event extends ContractEvent>(
+  public async subscribe<event extends ContractEventName<ContractAbi>>(
     cb: (
       log: WatchContractEventOnLogsParameter<ContractAbi, event, true>[number],
     ) => unknown,

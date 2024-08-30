@@ -12,6 +12,7 @@ import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/Bo
 import { watchContractEvent } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
 import {
+  type Abi,
   type Address,
   type ContractEventName,
   type GetLogsReturnType,
@@ -154,7 +155,10 @@ export type BoostRegistryConfig =
  * @typedef {BoostRegistry}
  * @extends {Deployable<never[]>}
  */
-export class BoostRegistry extends Deployable<never[]> {
+export class BoostRegistry extends Deployable<
+  never[],
+  typeof boostRegistryAbi
+> {
   /**
    * Creates an instance of BoostRegistry.
    *
@@ -242,11 +246,13 @@ export class BoostRegistry extends Deployable<never[]> {
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
    * @returns {Target} - The provided instance, but with a new address attached.
    */
-  public async clone<Target extends DeployableTarget>(
+  public async clone<
+    Target extends DeployableTarget<any, Abi> ? infer Target : unknown,
+  >(
     displayName: string,
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
-  ) {
+  ): Target {
     const instance = await this.deployClone(displayName, target, params);
     return target.at(instance);
   }
@@ -426,110 +432,110 @@ export class BoostRegistry extends Deployable<never[]> {
     });
   }
 
-  /**
-   * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-   * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-   * @example
-   * ```ts
-   * const logs = contract.getLogs({ eventName: 'EventName' })
-   * const logs = contract.getLogs({ eventNames: ['EventName'] })
-   * ```
-   * @public
-   * @async
-   * @template {ContractEventName<typeof boostRegistryAbi>} event
-   * @template {ExtractAbiEvent<
-   *       typeof boostRegistryAbi,
-   *       event
-   *     >} [abiEvent=ExtractAbiEvent<typeof boostRegistryAbi, event>]
-   * @param {?Omit<
-   *       GetLogsParams<typeof boostRegistryAbi, event, abiEvent, abiEvent[]>,
-   *       'event' | 'events'
-   *     > & {
-   *       eventName?: event;
-   *       eventNames?: event[];
-   *     }} [params]
-   * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-   */
-  public async getLogs<
-    event extends ContractEventName<typeof boostRegistryAbi>,
-    const abiEvent extends ExtractAbiEvent<
-      typeof boostRegistryAbi,
-      event
-    > = ExtractAbiEvent<typeof boostRegistryAbi, event>,
-  >(
-    params?: Omit<
-      GetLogsParams<typeof boostRegistryAbi, event, abiEvent, abiEvent[]>,
-      'event' | 'events'
-    > & {
-      eventName?: event;
-      eventNames?: event[];
-    },
-  ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-    return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-      ...(params as any),
-      ...(params?.eventName
-        ? {
-            event: getAbiItem({
-              abi: boostRegistryAbi,
-              name: params.eventName,
-              // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-            } as any),
-          }
-        : {}),
-      ...(params?.eventNames
-        ? {
-            events: params.eventNames.map((name) =>
-              getAbiItem({
-                abi: boostRegistryAbi,
-                name,
-                // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-              } as any),
-            ),
-          }
-        : {}),
-      address: this.assertValidAddress(),
-    });
-  }
+  // /**
+  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
+  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
+  //  * @example
+  //  * ```ts
+  //  * const logs = contract.getLogs({ eventName: 'EventName' })
+  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
+  //  * ```
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof boostRegistryAbi>} event
+  //  * @template {ExtractAbiEvent<
+  //  *       typeof boostRegistryAbi,
+  //  *       event
+  //  *     >} [abiEvent=ExtractAbiEvent<typeof boostRegistryAbi, event>]
+  //  * @param {?Omit<
+  //  *       GetLogsParams<typeof boostRegistryAbi, event, abiEvent, abiEvent[]>,
+  //  *       'event' | 'events'
+  //  *     > & {
+  //  *       eventName?: event;
+  //  *       eventNames?: event[];
+  //  *     }} [params]
+  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
+  //  */
+  // public async getLogs<
+  //   event extends ContractEventName<typeof boostRegistryAbi>,
+  //   const abiEvent extends ExtractAbiEvent<
+  //     typeof boostRegistryAbi,
+  //     event
+  //   > = ExtractAbiEvent<typeof boostRegistryAbi, event>,
+  // >(
+  //   params?: Omit<
+  //     GetLogsParams<typeof boostRegistryAbi, event, abiEvent, abiEvent[]>,
+  //     'event' | 'events'
+  //   > & {
+  //     eventName?: event;
+  //     eventNames?: event[];
+  //   },
+  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
+  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
+  //     ...(params as any),
+  //     ...(params?.eventName
+  //       ? {
+  //           event: getAbiItem({
+  //             abi: boostRegistryAbi,
+  //             name: params.eventName,
+  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //           } as any),
+  //         }
+  //       : {}),
+  //     ...(params?.eventNames
+  //       ? {
+  //           events: params.eventNames.map((name) =>
+  //             getAbiItem({
+  //               abi: boostRegistryAbi,
+  //               name,
+  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
+  //             } as any),
+  //           ),
+  //         }
+  //       : {}),
+  //     address: this.assertValidAddress(),
+  //   });
+  // }
 
-  /**
-   * A typed wrapper for `wagmi.watchContractEvent`
-   *
-   * @public
-   * @async
-   * @template {ContractEventName<typeof boostRegistryAbi>} event
-   * @param {(log: BoostRegistryLog<event>) => unknown} cb
-   * @param {?WatchParams<typeof boostRegistryAbi, event> & {
-   *       eventName?: event;
-   *     }} [params]
-   * @returns {unknown, params?: any) => unknown} Unsubscribe function
-   */
-  public async subscribe<
-    event extends ContractEventName<typeof boostRegistryAbi>,
-  >(
-    cb: (log: BoostRegistryLog<event>) => unknown,
-    params?: WatchParams<typeof boostRegistryAbi, event> & {
-      eventName?: event;
-    },
-  ) {
-    return watchContractEvent<
-      typeof this._config,
-      (typeof this._config)['chains'][number]['id'],
-      typeof boostRegistryAbi,
-      event
-    >(this._config, {
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      eventName: params?.eventName,
-      abi: boostRegistryAbi,
-      address: this.assertValidAddress(),
-      onLogs: (logs) => {
-        for (let l of logs) {
-          cb(l as unknown as BoostRegistryLog<event>);
-        }
-      },
-    });
-  }
+  // /**
+  //  * A typed wrapper for `wagmi.watchContractEvent`
+  //  *
+  //  * @public
+  //  * @async
+  //  * @template {ContractEventName<typeof boostRegistryAbi>} event
+  //  * @param {(log: BoostRegistryLog<event>) => unknown} cb
+  //  * @param {?WatchParams<typeof boostRegistryAbi, event> & {
+  //  *       eventName?: event;
+  //  *     }} [params]
+  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
+  //  */
+  // public async subscribe<
+  //   event extends ContractEventName<typeof boostRegistryAbi>,
+  // >(
+  //   cb: (log: BoostRegistryLog<event>) => unknown,
+  //   params?: WatchParams<typeof boostRegistryAbi, event> & {
+  //     eventName?: event;
+  //   },
+  // ) {
+  //   return watchContractEvent<
+  //     typeof this._config,
+  //     (typeof this._config)['chains'][number]['id'],
+  //     typeof boostRegistryAbi,
+  //     event
+  //   >(this._config, {
+  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+  //     ...(params as any),
+  //     eventName: params?.eventName,
+  //     abi: boostRegistryAbi,
+  //     address: this.assertValidAddress(),
+  //     onLogs: (logs) => {
+  //       for (let l of logs) {
+  //         cb(l as unknown as BoostRegistryLog<event>);
+  //       }
+  //     },
+  //   });
+  // }
 
   /**
    * @inheritdoc

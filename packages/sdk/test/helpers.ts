@@ -7,6 +7,7 @@ import {
   writePointsInitialize,
 } from '@boostxyz/evm';
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
+import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
@@ -30,6 +31,7 @@ import {
   type CreateBoostPayload,
   ERC20Incentive,
   ERC721MintAction,
+  EventAction,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
@@ -119,6 +121,14 @@ export async function deployFixtures(
     deployContract(config, {
       abi: ContractActionArtifact.abi,
       bytecode: ContractActionArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const eventActionBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: EventActionArtifact.abi,
+      bytecode: EventActionArtifact.bytecode as Hex,
       account,
     }),
   );
@@ -219,6 +229,9 @@ export async function deployFixtures(
   const bases = {
     ContractAction: class TContractAction extends ContractAction {
       public static override base = contractActionBase;
+    },
+    EventAction: class TEventAction extends EventAction {
+      public static override base = eventActionBase;
     },
     ERC721MintAction: class TERC721MintAction extends ERC721MintAction {
       public static override base = erc721MintActionBase;

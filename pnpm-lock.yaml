@@ -233,6 +233,9 @@ importers:
       '@wagmi/core':
         specifier: 2.13.0
         version: 2.13.0(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
+      abitype:
+        specifier: '1'
+        version: 1.0.6(typescript@5.3.3)(zod@3.22.4)
       viem:
         specifier: 2.9.27
         version: 2.9.27(typescript@5.3.3)(zod@3.22.4)
@@ -7613,7 +7616,6 @@ packages:
     dependencies:
       typescript: 5.3.3
       zod: 3.22.4
-    dev: true
 
   /abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}

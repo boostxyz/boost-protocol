@@ -201,6 +201,7 @@
   },
   "peerDependencies": {
     "@wagmi/core": "2",
-    "viem": "2"
+    "viem": "2",
+    "abitype": "1"
   }
 }

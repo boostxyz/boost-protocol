@@ -12,7 +12,7 @@ import {
 } from '../src';
 import type { WriteParams } from '../src/utils';
 
-export class MockERC721 extends Deployable {
+export class MockERC721 extends Deployable<{}, typeof mockErc721Abi> {
   public async mint(
     address: Address,
     params?: WriteParams<typeof mockErc721Abi, 'mint'>,

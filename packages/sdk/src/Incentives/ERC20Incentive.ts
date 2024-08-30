@@ -18,7 +18,7 @@ import {
   writeErc20IncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
-import type { Address, Hex } from 'viem';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -27,6 +27,7 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
   type ERC20IncentivePayload,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type StrategyType,
@@ -35,7 +36,23 @@ import {
   prepareERC20IncentivePayload,
 } from '../utils';
 
+export { erc20IncentiveAbi };
 export type { ERC20IncentivePayload };
+
+/**
+ * A generic `viem.Log` event with support for `ERC20Incentive` event types.
+ *
+ * @export
+ * @typedef {ERC20IncentiveLog}
+ * @template {ContractEventName<typeof erc20IncentiveAbi>} [event=ContractEventName<
+ *     typeof erc20IncentiveAbi
+ *   >]
+ */
+export type ERC20IncentiveLog<
+  event extends ContractEventName<typeof erc20IncentiveAbi> = ContractEventName<
+    typeof erc20IncentiveAbi
+  >,
+> = GenericLog<typeof erc20IncentiveAbi, event>;
 
 /**
  * A simple ERC20 incentive implementation that allows claiming of tokens
@@ -45,7 +62,11 @@ export type { ERC20IncentivePayload };
  * @typedef {ERC20Incentive}
  * @extends {DeployableTarget<ERC20IncentivePayload>}
  */
-export class ERC20Incentive extends DeployableTarget<ERC20IncentivePayload> {
+export class ERC20Incentive extends DeployableTarget<
+  ERC20IncentivePayload,
+  typeof erc20IncentiveAbi
+> {
+  public override readonly abi = erc20IncentiveAbi;
   /**
    * @inheritdoc
    *

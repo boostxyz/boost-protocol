@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { parseEther, zeroAddress } from 'viem';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -723,5 +723,55 @@ describe('BoostCore', () => {
     const signerValidator = core.SignerValidator(zeroAddress);
     expect(signerValidator._config).toEqual(defaultOptions.config);
     expect(signerValidator._account).toEqual(defaultOptions.account);
+  });
+
+  test('can subscribe to contract events', async () => {
+    const subscription = vi.fn();
+
+    const { core, bases } = fixtures;
+    const client = new BoostCore({
+      ...defaultOptions,
+      address: core.assertValidAddress(),
+    });
+    client.subscribe(subscription, { pollingInterval: 100 });
+
+    // to whom it may concern, this syntax is only used because we need to use test classes
+    // that are preconfigured with the dynamic base addresses generated at test time.
+    // normally you would use the follow api for brevity
+    // budget: client.SimpleBudget({} | '0xaddress')
+    const { budget, erc20 } = budgets;
+    await client.createBoost({
+      protocolFee: 1n,
+      referralFee: 2n,
+      maxParticipants: 100n,
+      budget: budget,
+      action: new bases.ContractAction(defaultOptions, {
+        chainId: BigInt(31_337),
+        target: core.assertValidAddress(),
+        selector: '0xdeadbeef',
+        value: 0n,
+      }),
+      validator: new bases.SignerValidator(defaultOptions, {
+        signers: [defaultOptions.account.address],
+      }),
+      allowList: new bases.SimpleAllowList(defaultOptions, {
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        new bases.ERC20Incentive(defaultOptions, {
+          asset: erc20.assertValidAddress(),
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+      ],
+    });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+
+    expect(subscription).toHaveBeenCalledTimes(1);
   });
 });

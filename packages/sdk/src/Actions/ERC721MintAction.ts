@@ -8,13 +8,14 @@ import {
   writeErc721MintActionValidate,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
-import type { Address, Hex } from 'viem';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import {
   type ERC721MintActionPayload,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
@@ -23,8 +24,23 @@ import {
 } from '../utils';
 import { ContractAction } from './ContractAction';
 
-export { prepareERC721MintActionPayload };
+export { erc721MintActionAbi, prepareERC721MintActionPayload };
 export type { ERC721MintActionPayload };
+
+/**
+ * A generic `viem.Log` event with support for `ERC721MintAction` event types.
+ *
+ * @export
+ * @typedef {ERC721MintActionLog}
+ * @template {ContractEventName<
+ *     typeof erc721MintActionAbi
+ *   >} [event=ContractEventName<typeof erc721MintActionAbi>]
+ */
+export type ERC721MintActionLog<
+  event extends ContractEventName<
+    typeof erc721MintActionAbi
+  > = ContractEventName<typeof erc721MintActionAbi>,
+> = GenericLog<typeof erc721MintActionAbi, event>;
 
 /**
  * A primitive action to mint and/or validate that an ERC721 token has been minted
@@ -37,7 +53,12 @@ export type { ERC721MintActionPayload };
  * @typedef {ERC721MintAction}
  * @extends {ContractAction}
  */
-export class ERC721MintAction extends ContractAction {
+export class ERC721MintAction extends ContractAction<
+  typeof erc721MintActionAbi
+> {
+  //@ts-expect-error should never be constructed with variant typ
+  public override readonly abi = erc721MintActionAbi;
+
   /**
    * @inheritdoc
    *

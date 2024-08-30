@@ -433,7 +433,7 @@ export function fundErc1155(
       args: [options.account.address, tokenId],
     });
     if (balance !== amount)
-      throw new Error('Balance did not match', { cause: { balance, amount } });
+      throw new Error(`Balance did not match ${{ balance, amount }}`);
     return erc1155;
   };
 }

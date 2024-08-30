@@ -1,11 +1,22 @@
-import { type Config, waitForTransactionReceipt } from '@wagmi/core';
+import {
+  type Config,
+  type ReadContractParameters,
+  type WatchContractEventParameters,
+  type WriteContractParameters,
+  waitForTransactionReceipt,
+} from '@wagmi/core';
+import type { ExtractAbiEvent } from 'abitype';
 import { LibZip } from 'solady';
 import type {
   Abi,
+  AbiEvent,
   Address,
+  ContractEventName,
   ContractFunctionName,
+  GetLogsParameters,
   Hash,
   Hex,
+  Log,
   WaitForTransactionReceiptParameters,
 } from 'viem';
 import {
@@ -18,7 +29,6 @@ import {
   zeroAddress,
   zeroHash,
 } from 'viem';
-import type { WriteContractParameters } from 'viem/actions';
 import { ContractAction } from './Actions/ContractAction';
 import { ERC721MintAction } from './Actions/ERC721MintAction';
 import {
@@ -32,7 +42,7 @@ import { SignerValidator } from './Validators/SignerValidator';
 import { NoContractAddressUponReceiptError } from './errors';
 
 /**
- * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
+ * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.
  * See (writeContract)[https://viem.sh/docs/contract/writeContract]
  *
  * @export
@@ -51,7 +61,7 @@ export type WriteParams<
 >;
 
 /**
- * Helper type that encapsulates common readContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the API.
+ * Helper type that encapsulates common readContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.
  * See (readContract)[https://viem.sh/docs/contract/readContract]
  *
  * @export
@@ -64,10 +74,64 @@ export type ReadParams<
   functionName extends ContractFunctionName<abi>,
 > = Partial<
   Omit<
-    WriteContractParameters<abi, functionName>,
+    ReadContractParameters<abi, functionName>,
     'address' | 'args' | 'functionName' | 'abi'
   >
 >;
+
+/**
+ * Helper type that encapsulates common `watchContractEvent` parameters without fields like `address`, and `abi` that are expected to be provided the SDK.
+ * See (watchContractEvent)[https://wagmi.sh/core/api/actions/watchContractEvent]
+ *
+ * @export
+ * @typedef {WatchParams}
+ * @template {Abi} abi
+ * @template {ContractEventName<abi> | undefined} [eventName=undefined]
+ */
+export type WatchParams<
+  abi extends Abi,
+  eventName extends ContractEventName<abi> | undefined = undefined,
+> = Partial<
+  Omit<WatchContractEventParameters<abi, eventName>, 'address' | 'abi'>
+>;
+
+/**
+ * Helper type that encapsulates common `getLogs` parameters without fields like `address` that are expected to be provided the SDK.
+ * See (getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs]
+ *
+ * @export
+ * @typedef {GetLogsParams}
+ * @template {Abi} abi
+ * @template {ContractEventName<abi>} event
+ * @template {ExtractAbiEvent<abi, event>} [abiEvent=ExtractAbiEvent<abi, event>]
+ * @template {| readonly AbiEvent[]
+ *     | readonly unknown[]
+ *     | undefined} [abiEvents=abiEvent extends AbiEvent ? [abiEvent] : undefined]
+ */
+export type GetLogsParams<
+  abi extends Abi,
+  event extends ContractEventName<abi>,
+  abiEvent extends ExtractAbiEvent<abi, event> = ExtractAbiEvent<abi, event>,
+  abiEvents extends
+    | readonly AbiEvent[]
+    | readonly unknown[]
+    | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
+> = Partial<Omit<GetLogsParameters<abiEvent, abiEvents>, 'address'>> & {
+  chainId?: number | undefined;
+};
+
+/**
+ * A generic `viem.Log` event with typed `args` support via a given `Abi` and `ContractEventName`
+ *
+ * @export
+ * @typedef {GenericLog}
+ * @template {Abi} abi
+ * @template {ContractEventName<abi>} [event=ContractEventName<abi>]
+ */
+export type GenericLog<
+  abi extends Abi,
+  event extends ContractEventName<abi> = ContractEventName<abi>,
+> = Log<bigint, number, false, ExtractAbiEvent<abi, event>, false>;
 
 /**
  * Helper utility to convert a string to a `bytes4` type

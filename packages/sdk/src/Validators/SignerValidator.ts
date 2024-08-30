@@ -7,13 +7,14 @@ import {
   writeSignerValidatorValidate,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
-import type { Address, Hex } from 'viem';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type SignerValidatorPayload,
@@ -23,7 +24,23 @@ import {
   prepareSignerValidatorValidatePayload,
 } from '../utils';
 
+export { signerValidatorAbi };
 export type { SignerValidatorPayload };
+
+/**
+ * A generic `viem.Log` event with support for `BoostCore` event types.
+ *
+ * @export
+ * @typedef {SignerValidatorLog}
+ * @template {ContractEventName<
+ *     typeof signerValidatorAbi
+ *   >} [event=ContractEventName<typeof signerValidatorAbi>]
+ */
+export type SignerValidatorLog<
+  event extends ContractEventName<
+    typeof signerValidatorAbi
+  > = ContractEventName<typeof signerValidatorAbi>,
+> = GenericLog<typeof signerValidatorAbi, event>;
 
 /**
  *  A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
@@ -33,7 +50,11 @@ export type { SignerValidatorPayload };
  * @typedef {SignerValidator}
  * @extends {DeployableTarget<SignerValidatorPayload>}
  */
-export class SignerValidator extends DeployableTarget<SignerValidatorPayload> {
+export class SignerValidator extends DeployableTarget<
+  SignerValidatorPayload,
+  typeof signerValidatorAbi
+> {
+  public override readonly abi = signerValidatorAbi;
   /**
    * @inheritdoc
    *

@@ -22,7 +22,12 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
 import { getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  zeroAddress,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -31,6 +36,7 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
   type FungibleTransferPayload,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type VestingBudgetPayload,
@@ -39,7 +45,23 @@ import {
   prepareVestingBudgetPayload,
 } from '../utils';
 
+export { vestingBudgetAbi };
 export type { VestingBudgetPayload };
+
+/**
+ * A generic `viem.Log` event with support for `VestingBudget` event types.
+ *
+ * @export
+ * @typedef {VestingBudgetLog}
+ * @template {ContractEventName<typeof vestingBudgetAbi>} [event=ContractEventName<
+ *     typeof vestingBudgetAbi
+ *   >]
+ */
+export type VestingBudgetLog<
+  event extends ContractEventName<typeof vestingBudgetAbi> = ContractEventName<
+    typeof vestingBudgetAbi
+  >,
+> = GenericLog<typeof vestingBudgetAbi, event>;
 
 /**
  * A vesting-based budget implementation that allows for the distribution of assets over time
@@ -54,7 +76,11 @@ export type { VestingBudgetPayload };
  * @typedef {VestingBudget}
  * @extends {DeployableTarget<VestingBudgetPayload>}
  */
-export class VestingBudget extends DeployableTarget<VestingBudgetPayload> {
+export class VestingBudget extends DeployableTarget<
+  VestingBudgetPayload,
+  typeof vestingBudgetAbi
+> {
+  public override readonly abi = vestingBudgetAbi;
   /**
    * @inheritdoc
    *

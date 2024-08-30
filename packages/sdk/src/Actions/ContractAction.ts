@@ -9,7 +9,7 @@ import {
   writeContractActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import type { Address, Hex } from 'viem';
+import type { Abi, Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -17,13 +17,30 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ContractActionPayload,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
   prepareContractActionPayload,
 } from '../utils';
 
+export { contractActionAbi };
 export type { ContractActionPayload };
+
+/**
+ * A generic `viem.Log` event with support for `ContractAction` event types.
+ *
+ * @export
+ * @typedef {ContractActionLog}
+ * @template {ContractEventName<typeof contractActionAbi>} [event=ContractEventName<
+ *     typeof contractActionAbi
+ *   >]
+ */
+export type ContractActionLog<
+  event extends ContractEventName<typeof contractActionAbi> = ContractEventName<
+    typeof contractActionAbi
+  >,
+> = GenericLog<typeof contractActionAbi, event>;
 
 /**
  * A generic contract action
@@ -33,7 +50,12 @@ export type { ContractActionPayload };
  * @typedef {ContractAction}
  * @extends {DeployableTarget<ContractActionPayload>}
  */
-export class ContractAction extends DeployableTarget<ContractActionPayload> {
+export class ContractAction<
+  ContractActionAbi extends Abi = typeof contractActionAbi,
+> extends DeployableTarget<ContractActionPayload, ContractActionAbi> {
+  //@ts-expect-error should never be constructed with variant typ
+  public override readonly abi = contractActionAbi;
+
   /**
    * @inheritdoc
    *

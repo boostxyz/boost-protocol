@@ -12,7 +12,7 @@ import {
   writePointsIncentiveClaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import type { Address, Hex } from 'viem';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -20,6 +20,7 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
+  type GenericLog,
   type PointsIncentivePayload,
   type ReadParams,
   RegistryType,
@@ -28,7 +29,23 @@ import {
   preparePointsIncentivePayload,
 } from '../utils';
 
+export { pointsIncentiveAbi };
 export type { PointsIncentivePayload };
+
+/**
+ * A generic `viem.Log` event with support for `PointsIncentive` event types.
+ *
+ * @export
+ * @typedef {PointsIncentiveLog}
+ * @template {ContractEventName<
+ *     typeof pointsIncentiveAbi
+ *   >} [event=ContractEventName<typeof pointsIncentiveAbi>]
+ */
+export type PointsIncentiveLog<
+  event extends ContractEventName<
+    typeof pointsIncentiveAbi
+  > = ContractEventName<typeof pointsIncentiveAbi>,
+> = GenericLog<typeof pointsIncentiveAbi, event>;
 
 /**
  * A simple on-chain points incentive implementation that allows claiming of soulbound tokens.
@@ -43,7 +60,11 @@ export type { PointsIncentivePayload };
  * @typedef {PointsIncentive}
  * @extends {DeployableTarget<PointsIncentivePayload>}
  */
-export class PointsIncentive extends DeployableTarget<PointsIncentivePayload> {
+export class PointsIncentive extends DeployableTarget<
+  PointsIncentivePayload,
+  typeof pointsIncentiveAbi
+> {
+  public override readonly abi = pointsIncentiveAbi;
   /**
    * @inheritdoc
    *

@@ -11,7 +11,7 @@ import {
   writeAllowListIncentiveClaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
-import type { Address, Hex } from 'viem';
+import type { Address, ContractEventName, Hex } from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import type {
   DeployableOptions,
@@ -21,6 +21,7 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type AllowListIncentivePayload,
   type ClaimPayload,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
@@ -28,7 +29,23 @@ import {
   prepareClaimPayload,
 } from '../utils';
 
+export { allowListIncentiveAbi };
 export type { AllowListIncentivePayload };
+
+/**
+ * A generic `viem.Log` event with support for `AllowListIncentive` event types.
+ *
+ * @export
+ * @typedef {AllowListIncentiveLog}
+ * @template {ContractEventName<
+ *     typeof allowListIncentiveAbi
+ *   >} [event=ContractEventName<typeof allowListIncentiveAbi>]
+ */
+export type AllowListIncentiveLog<
+  event extends ContractEventName<
+    typeof allowListIncentiveAbi
+  > = ContractEventName<typeof allowListIncentiveAbi>,
+> = GenericLog<typeof allowListIncentiveAbi, event>;
 
 /**
  * An incentive implementation that grants the claimer a slot on an {SimpleAllowList}
@@ -42,7 +59,11 @@ export type { AllowListIncentivePayload };
  * @typedef {AllowListIncentive}
  * @extends {DeployableTarget<AllowListIncentivePayload>}
  */
-export class AllowListIncentive extends DeployableTarget<AllowListIncentivePayload> {
+export class AllowListIncentive extends DeployableTarget<
+  AllowListIncentivePayload,
+  typeof allowListIncentiveAbi
+> {
+  public override readonly abi = allowListIncentiveAbi;
   /**
    * @inheritdoc
    *

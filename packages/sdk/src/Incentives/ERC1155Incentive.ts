@@ -16,7 +16,7 @@ import {
   writeErc1155IncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
-import type { Address, Hex } from 'viem';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -26,6 +26,7 @@ import {
   type ClaimPayload,
   type ERC1155IncentivePayload,
   ERC1155StrategyType,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type StrategyType,
@@ -34,8 +35,23 @@ import {
   prepareERC1155IncentivePayload,
 } from '../utils';
 
-export { ERC1155StrategyType };
+export { ERC1155StrategyType, erc1155IncentiveAbi };
 export type { ERC1155IncentivePayload };
+
+/**
+ * A generic `viem.Log` event with support for `ERC1155Incentive` event types.
+ *
+ * @export
+ * @typedef {ERC1155IncentiveLog}
+ * @template {ContractEventName<
+ *     typeof erc1155IncentiveAbi
+ *   >} [event=ContractEventName<typeof erc1155IncentiveAbi>]
+ */
+export type ERC1155IncentiveLog<
+  event extends ContractEventName<
+    typeof erc1155IncentiveAbi
+  > = ContractEventName<typeof erc1155IncentiveAbi>,
+> = GenericLog<typeof erc1155IncentiveAbi, event>;
 
 /**
  * This is currently not exported due to a mysterious abi encoding issue
@@ -46,7 +62,11 @@ export type { ERC1155IncentivePayload };
  * @typedef {ERC1155Incentive}
  * @extends {DeployableTarget<ERC1155IncentivePayload>}
  */
-export class ERC1155Incentive extends DeployableTarget<ERC1155IncentivePayload> {
+export class ERC1155Incentive extends DeployableTarget<
+  ERC1155IncentivePayload,
+  typeof erc1155IncentiveAbi
+> {
+  public override readonly abi = erc1155IncentiveAbi;
   /**
    * @inheritdoc
    *

@@ -17,6 +17,7 @@ import { getAccount, waitForTransactionReceipt } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
+  type ContractEventName,
   type Hex,
   parseEventLogs,
   zeroAddress,
@@ -88,12 +89,15 @@ import {
 } from './errors';
 import {
   type EventActionPayload,
+  type GenericLog,
   type BoostPayload as OnChainBoostPayload,
   type ReadParams,
   type Target,
   type WriteParams,
   prepareBoostPayload,
 } from './utils';
+
+export { boostCoreAbi };
 
 /**
  * The fixed address for the deployed Boost Core.
@@ -103,6 +107,21 @@ import {
  */
 export const BOOST_CORE_ADDRESS: Address = import.meta.env
   .VITE_BOOST_CORE_ADDRESS;
+
+/**
+ * A generic `viem.Log` event with support for `BoostCore` event types.
+ *
+ * @export
+ * @typedef {BoostCoreLog}
+ * @template {ContractEventName<typeof boostCoreAbi>} [event=ContractEventName<
+ *     typeof boostCoreAbi
+ *   >]
+ */
+export type BoostCoreLog<
+  event extends ContractEventName<typeof boostCoreAbi> = ContractEventName<
+    typeof boostCoreAbi
+  >,
+> = GenericLog<typeof boostCoreAbi, event>;
 
 /**
  * Boost Core instantiation options for a custom deployed instance.
@@ -202,7 +221,10 @@ export type CreateBoostPayload = {
  * @typedef {BoostCore}
  * @extends {Deployable<[Address, Address]>}
  */
-export class BoostCore extends Deployable<[Address, Address]> {
+export class BoostCore extends Deployable<
+  [Address, Address],
+  typeof boostCoreAbi
+> {
   /**
    * Creates an instance of BoostCore.
    *
@@ -223,8 +245,9 @@ export class BoostCore extends Deployable<[Address, Address]> {
     } else {
       super({ account, config }, BOOST_CORE_ADDRESS);
     }
-  }
-  /**
+    //@ts-expect-error I can't set this property on the class because for some reason it takes super out of constructor scope?
+    this.abi = boostCoreAbi;
+  } /**
    * Create a new Boost.
    *
    * @public
@@ -425,7 +448,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
   }
 
   /**
-   * Description placeholder
+   * Claims one incentive from a given `Boost` by `boostId` and `incentiveId`
    *
    * @public
    * @async
@@ -933,7 +956,7 @@ export class BoostCore extends Deployable<[Address, Address]> {
    * @param {ERC1155IncentivePayload} options
    * @returns {ERC1155Incentive}
    */
-  private ERC1155Incentive(options: ERC1155IncentivePayload) {
+  ERC1155Incentive(options: ERC1155IncentivePayload) {
     return new ERC1155Incentive(
       { config: this._config, account: this._account },
       options,

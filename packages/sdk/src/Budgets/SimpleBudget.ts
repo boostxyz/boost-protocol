@@ -18,7 +18,12 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import { getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  zeroAddress,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -31,6 +36,7 @@ import {
 import {
   type ERC1155TransferPayload,
   type FungibleTransferPayload,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type SimpleBudgetPayload,
@@ -40,11 +46,27 @@ import {
   prepareSimpleBudgetPayload,
 } from '../utils';
 
+export { simpleBudgetAbi };
 export type {
   ERC1155TransferPayload,
   FungibleTransferPayload,
   SimpleBudgetPayload,
 };
+
+/**
+ * A generic `viem.Log` event with support for `SimpleBudget` event types.
+ *
+ * @export
+ * @typedef {SimpleBudgetLog}
+ * @template {ContractEventName<typeof simpleBudgetAbi>} [event=ContractEventName<
+ *     typeof simpleBudgetAbi
+ *   >]
+ */
+export type SimpleBudgetLog<
+  event extends ContractEventName<typeof simpleBudgetAbi> = ContractEventName<
+    typeof simpleBudgetAbi
+  >,
+> = GenericLog<typeof simpleBudgetAbi, event>;
 
 /**
  * Typeguard to determine if a transfer payload is a Fungible Transfer
@@ -99,7 +121,11 @@ export function prepareTransfer(
  * @typedef {SimpleBudget}
  * @extends {DeployableTarget<SimpleBudgetPayload>}
  */
-export class SimpleBudget extends DeployableTarget<SimpleBudgetPayload> {
+export class SimpleBudget extends DeployableTarget<
+  SimpleBudgetPayload,
+  typeof simpleBudgetAbi
+> {
+  public override readonly abi = simpleBudgetAbi;
   /**
    * @inheritdoc
    *

@@ -15,7 +15,7 @@ import {
   writeCgdaIncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
-import type { Address, Hex } from 'viem';
+import type { Address, ContractEventName, Hex } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -25,6 +25,7 @@ import {
   type CGDAIncentivePayload,
   type CGDAParameters,
   type ClaimPayload,
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
@@ -32,18 +33,38 @@ import {
   prepareClaimPayload,
 } from '../utils';
 
+export { cgdaIncentiveAbi };
 export type { CGDAIncentivePayload };
 
 /**
+ * A generic `viem.Log` event with support for `CGDAIncentive` event types.
+ *
+ * @export
+ * @typedef {CGDAIncentiveLog}
+ * @template {ContractEventName<typeof cgdaIncentiveAbi>} [event=ContractEventName<
+ *     typeof cgdaIncentiveAbi
+ *   >]
+ */
+export type CGDAIncentiveLog<
+  event extends ContractEventName<typeof cgdaIncentiveAbi> = ContractEventName<
+    typeof cgdaIncentiveAbi
+  >,
+> = GenericLog<typeof cgdaIncentiveAbi, event>;
+
+/**
  * Continuous Gradual Dutch Auction Incentive.
- * An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
+ * An CGDA incentive implementation with reward amounts adjusting dynamically based on claim volume.
  *
  * @export
  * @class CGDAIncentive
  * @typedef {CGDAIncentive}
  * @extends {DeployableTarget<CGDAIncentivePayload>}
  */
-export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
+export class CGDAIncentive extends DeployableTarget<
+  CGDAIncentivePayload,
+  typeof cgdaIncentiveAbi
+> {
+  public override readonly abi = cgdaIncentiveAbi;
   /**
    * @inheritdoc
    *
@@ -135,7 +156,7 @@ export class CGDAIncentive extends DeployableTarget<CGDAIncentivePayload> {
   }
 
   /**
-   * The ERC20-like token used for the incentive
+   * The CGDA-like token used for the incentive
    *
    * @public
    * @async

@@ -9,7 +9,12 @@ import {
   writeBoostRegistryRegister,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
-import { type Address, type Hex, isAddress } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  isAddress,
+} from 'viem';
 import {
   Deployable,
   type DeployableOptions,
@@ -17,13 +22,14 @@ import {
 } from './Deployable/Deployable';
 import type { DeployableTarget } from './Deployable/DeployableTarget';
 import {
+  type GenericLog,
   type HashAndSimulatedResult,
   type ReadParams,
   RegistryType,
   type WriteParams,
 } from './utils';
 
-export { RegistryType };
+export { RegistryType, boostRegistryAbi };
 
 /**
  * The fixed address for the Boost Registry.
@@ -33,6 +39,21 @@ export { RegistryType };
  */
 export const BOOST_REGISTRY_ADDRESS: Address = import.meta.env
   .VITE_BOOST_REGISTRY_ADDRESS;
+
+/**
+ * A record of `BoostRegistry` event names to `AbiEvent` objects for use with `getLogs`
+ *
+ * @export
+ * @typedef {BoostRegistryLog}
+ * @template {ContractEventName<typeof boostRegistryAbi>} [event=ContractEventName<
+ *     typeof boostRegistryAbi
+ *   >]
+ */
+export type BoostRegistryLog<
+  event extends ContractEventName<typeof boostRegistryAbi> = ContractEventName<
+    typeof boostRegistryAbi
+  >,
+> = GenericLog<typeof boostRegistryAbi, event>;
 
 /**
  * Instantiation options for a previously deployed Boost Registry
@@ -73,6 +94,10 @@ function isBoostRegistryDeployed(
  * @extends {DeployableOptions}
  */
 export interface BoostRegistryOptionsWithPayload extends DeployableOptions {
+  /**
+   *
+   * @type {null}
+   */
   address: null;
 }
 
@@ -122,7 +147,10 @@ export type BoostRegistryConfig =
  * @typedef {BoostRegistry}
  * @extends {Deployable<never[]>}
  */
-export class BoostRegistry extends Deployable<never[]> {
+export class BoostRegistry extends Deployable<
+  never[],
+  typeof boostRegistryAbi
+> {
   /**
    * Creates an instance of BoostRegistry.
    *
@@ -209,12 +237,13 @@ export class BoostRegistry extends Deployable<never[]> {
    * @param {Target} target - An instance of a target contract to clone and initialize
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
    * @returns {Target} - The provided instance, but with a new address attached.
+   * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
-  public async clone<Target extends DeployableTarget>(
+  public async clone<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
-  ) {
+  ): Promise<Target> {
     const instance = await this.deployClone(displayName, target, params);
     return target.at(instance);
   }
@@ -228,9 +257,10 @@ export class BoostRegistry extends Deployable<never[]> {
    * @param {string} displayName
    * @param {Target} target
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {unknown}
+   * @returns {Target}
+   * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
-  public async deployClone<Target extends DeployableTarget>(
+  public async deployClone<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
@@ -246,10 +276,11 @@ export class BoostRegistry extends Deployable<never[]> {
    * @param {DeployableTarget} target
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
    * @returns {unknown} - The transaction hash
+   * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
-  public async deployCloneRaw(
+  public async deployCloneRaw<Target extends DeployableTarget<any, any>>(
     displayName: string,
-    target: DeployableTarget,
+    target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
   ): Promise<HashAndSimulatedResult<Address>> {
     const payload = target.buildParameters(undefined, {

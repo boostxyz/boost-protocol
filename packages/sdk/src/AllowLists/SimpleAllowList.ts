@@ -8,7 +8,13 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import { getAccount } from '@wagmi/core';
-import { type Address, type Hex, zeroAddress, zeroHash } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  zeroAddress,
+  zeroHash,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -16,13 +22,30 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
+  type GenericLog,
   type ReadParams,
   RegistryType,
   type SimpleAllowListPayload,
   prepareSimpleAllowListPayload,
 } from '../utils';
 
+export { simpleAllowListAbi };
 export type { SimpleAllowListPayload };
+
+/**
+ * A generic `viem.Log` event with support for `SimpleAllowList` event types.
+ *
+ * @export
+ * @typedef {SimpleAllowListLog}
+ * @template {ContractEventName<
+ *     typeof simpleAllowListAbi
+ *   >} [event=ContractEventName<typeof simpleAllowListAbi>]
+ */
+export type SimpleAllowListLog<
+  event extends ContractEventName<
+    typeof simpleAllowListAbi
+  > = ContractEventName<typeof simpleAllowListAbi>,
+> = GenericLog<typeof simpleAllowListAbi, event>;
 
 /**
  * A constant representing the list manager's role
@@ -38,7 +61,11 @@ export const LIST_MANAGER_ROLE = 2n;
  * @typedef {SimpleAllowList}
  * @extends {DeployableTarget<SimpleAllowListPayload>}
  */
-export class SimpleAllowList extends DeployableTarget<SimpleAllowListPayload> {
+export class SimpleAllowList extends DeployableTarget<
+  SimpleAllowListPayload,
+  typeof simpleAllowListAbi
+> {
+  public override readonly abi = simpleAllowListAbi;
   /**
    * @inheritdoc
    *

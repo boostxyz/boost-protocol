@@ -21,6 +21,9 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     /// @dev track claimed incentives using this bitmap
     IncentiveBits.IncentiveMap _used;
 
+    /// @dev address allowed to call validate
+    address private _validatorCaller;
+
     bytes32 internal constant _SIGNER_VALIDATOR_TYPEHASH =
         keccak256("SignerValidatorData(uint256 boostId,uint8 incentiveQuantity,address claimant,bytes incentiveData)");
 
@@ -34,8 +37,9 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     /// @param data_ The compressed list of authorized signers
     /// @dev The first address in the list will be the initial owner of the contract
     function initialize(bytes calldata data_) public virtual override initializer {
-        (address[] memory signers_) = abi.decode(data_, (address[]));
+        (address[] memory signers_, address validatorCaller_) = abi.decode(data_, (address[], address));
         _initializeOwner(signers_[0]);
+        _validatorCaller = validatorCaller_;
         for (uint256 i = 0; i < signers_.length; i++) {
             signers[signers_[i]] = true;
         }
@@ -48,6 +52,8 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
         override
         returns (bool)
     {
+        if (msg.sender != _validatorCaller) revert BoostError.Unauthorized();
+
         (BoostClaimData memory claim) = abi.decode(claimData, (BoostClaimData));
         (SignerValidatorInputParams memory validatorData) =
             abi.decode(claim.validatorData, (SignerValidatorInputParams));
@@ -77,6 +83,11 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
         for (uint256 i = 0; i < signers_.length; i++) {
             signers[signers_[i]] = authorized_[i];
         }
+    }
+
+    /// @inheritdoc ASignerValidator
+    function setValidatorCaller(address newCaller) external override onlyOwner {
+        _validatorCaller = newCaller;
     }
 
     function hashSignerData(uint256 boostId, uint8 incentiveQuantity, address claimant, bytes memory incentiveData)

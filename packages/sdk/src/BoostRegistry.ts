@@ -245,14 +245,13 @@ export class BoostRegistry extends Deployable<
    * @param {Target} target - An instance of a target contract to clone and initialize
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
    * @returns {Target} - The provided instance, but with a new address attached.
+   * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
-  public async clone<
-    Target extends DeployableTarget<any, Abi> ? infer Target : unknown,
-  >(
+  public async clone<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
-  ): Target {
+  ): Promise<Target> {
     const instance = await this.deployClone(displayName, target, params);
     return target.at(instance);
   }
@@ -266,9 +265,10 @@ export class BoostRegistry extends Deployable<
    * @param {string} displayName
    * @param {Target} target
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {unknown}
+   * @returns {Target}
+   * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
-  public async deployClone<Target extends DeployableTarget>(
+  public async deployClone<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
@@ -284,10 +284,11 @@ export class BoostRegistry extends Deployable<
    * @param {DeployableTarget} target
    * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
    * @returns {unknown} - The transaction hash
+   * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
-  public async deployCloneRaw(
+  public async deployCloneRaw<Target extends DeployableTarget<any, any>>(
     displayName: string,
-    target: DeployableTarget,
+    target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
   ): Promise<HashAndSimulatedResult<Address>> {
     const payload = target.buildParameters(undefined, {

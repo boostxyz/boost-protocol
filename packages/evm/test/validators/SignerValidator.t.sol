@@ -24,6 +24,9 @@ contract SignerValidatorTest is Test {
     uint256 testSignerKey = uint256(vm.envUint("TEST_SIGNER_PRIVATE_KEY"));
     address testSigner = vm.addr(testSignerKey);
 
+    uint256 private _MAX_SECP256K_CURVE_VALUE =
+        115792089237316195423570985008687907852837564279074904382605163141518161494336;
+
     uint256 fakeSignerKey = uint256(0xdeadbeef);
     address fakeSigner = vm.addr(fakeSignerKey);
 
@@ -204,6 +207,54 @@ contract SignerValidatorTest is Test {
         validator.validate(boostId, incentiveId, claimant, claimData);
     }
 
+    function testValidate_FuzzValidInputs(
+        uint256 boostId,
+        uint256 incentiveId,
+        uint256 pk,
+        uint8 incentiveQuantity,
+        address claimant,
+        bytes memory incentiveData
+    ) public {
+        incentiveQuantity = uint8(bound(incentiveQuantity, 1, 7));
+        incentiveId = bound(incentiveId, 0, incentiveQuantity - 1);
+        pk = bound(pk, 1, _MAX_SECP256K_CURVE_VALUE);
+
+        bool[] memory signers_authorized = new bool[](1);
+        signers_authorized[0] = true;
+        address[] memory signers = new address[](1);
+        signers[0] = vm.addr(pk);
+
+        validator.setAuthorized(signers, signers_authorized);
+
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes memory signature = _signHash(msgHash, pk);
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(signers[0], signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+
+        validator.validate(boostId, incentiveId, claimant, claimData);
+    }
+
+    function testValidate_FuzzMaliciousSignature(
+        uint256 boostId,
+        uint256 incentiveId,
+        uint8 incentiveQuantity,
+        address claimant,
+        bytes memory incentiveData
+    ) public {
+        incentiveQuantity = uint8(bound(incentiveQuantity, 1, 7));
+        incentiveId = bound(incentiveId, 0, incentiveQuantity - 1);
+
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes memory signature = _signHash(msgHash, fakeSignerKey);
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
+    }
+
     ///////////////////////////////////
     // SignerValidator.setAuthorized //
     ///////////////////////////////////
@@ -251,6 +302,10 @@ contract SignerValidatorTest is Test {
         return abi.encodePacked(r, s, v);
     }
 }
+
+///////////////////////////////////////
+//      IncentiveBits Library        //
+///////////////////////////////////////
 
 contract IncentiveBitsTest is Test {
     using IncentiveBits for IncentiveBits.IncentiveMap;

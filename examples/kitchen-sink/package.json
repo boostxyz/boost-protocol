@@ -15,7 +15,7 @@
   "dependencies": {
     "@boostxyz/sdk": "workspace:*",
     "@boostxyz/evm": "workspace:*",
-    "@wagmi/core": "^2.11.2",
+    "@wagmi/core": "^2.13.4",
     "typescript": "^5.3.3",
     "viem": "^2.9.9",
     "vite": "^5.2.13"

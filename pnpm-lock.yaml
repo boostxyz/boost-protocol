@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@wagmi/core': 2.13.0
+  '@wagmi/core': 2.13.4
   viem: 2.9.27
 
 importers:
@@ -43,8 +43,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)
       '@wagmi/core':
-        specifier: 2.13.0
-        version: 2.13.0(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
+        specifier: 2.13.4
+        version: 2.13.4(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
       arg:
         specifier: ^5.0.2
         version: 5.0.2
@@ -94,8 +94,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       '@wagmi/core':
-        specifier: 2.13.0
-        version: 2.13.0(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
+        specifier: 2.13.4
+        version: 2.13.4(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
       typescript:
         specifier: ^5.3.3
         version: 5.3.3
@@ -185,8 +185,8 @@ importers:
   packages/evm:
     dependencies:
       '@wagmi/core':
-        specifier: 2.13.0
-        version: 2.13.0(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
+        specifier: 2.13.4
+        version: 2.13.4(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
     devDependencies:
       '@nomicfoundation/hardhat-foundry':
         specifier: ^1.1.2
@@ -231,8 +231,8 @@ importers:
   packages/sdk:
     dependencies:
       '@wagmi/core':
-        specifier: 2.13.0
-        version: 2.13.0(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
+        specifier: 2.13.4
+        version: 2.13.4(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
       abitype:
         specifier: '1'
         version: 1.0.6(typescript@5.3.3)(zod@3.22.4)
@@ -7041,10 +7041,10 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@wagmi/connectors@4.1.28(@types/react@18.3.0)(@wagmi/core@2.13.0)(react-dom@18.3.0)(react-i18next@13.5.0)(react-native@0.74.2)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27):
+  /@wagmi/connectors@4.1.28(@types/react@18.3.0)(@wagmi/core@2.13.4)(react-dom@18.3.0)(react-i18next@13.5.0)(react-native@0.74.2)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27):
     resolution: {integrity: sha512-9jk/69t6YkNJgfIGpL8cumYoSZM5t/W8YZe5R3RIcJCNjp05A1nTs1ZoOa24oQwO7wPOpeWmMJkOb55TvASJDQ==}
     peerDependencies:
-      '@wagmi/core': 2.13.0
+      '@wagmi/core': 2.13.4
       typescript: '>=5.0.4'
       viem: 2.9.27
     peerDependenciesMeta:
@@ -7055,7 +7055,7 @@ packages:
       '@metamask/sdk': 0.18.6(react-dom@18.3.0)(react-i18next@13.5.0)(react-native@0.74.2)(react@18.3.0)
       '@safe-global/safe-apps-provider': 0.18.1(typescript@5.4.5)
       '@safe-global/safe-apps-sdk': 8.1.0(typescript@5.4.5)
-      '@wagmi/core': 2.13.0(@types/react@18.3.0)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27)
+      '@wagmi/core': 2.13.4(@types/react@18.3.0)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27)
       '@walletconnect/ethereum-provider': 2.11.2(@types/react@18.3.0)(react@18.3.0)
       '@walletconnect/modal': 2.6.2(@types/react@18.3.0)(react@18.3.0)
       typescript: 5.4.5
@@ -7088,8 +7088,8 @@ packages:
       - zod
     dev: false
 
-  /@wagmi/core@2.13.0(@types/react@18.3.0)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27):
-    resolution: {integrity: sha512-44HrRbwFzPF/EZMvIzdkdIYmJM93GjG1NWxAc+eCTRMn6LwZSVkw8XSJIkHN7xqf0CzikfQW1t16miJ0T+wRpw==}
+  /@wagmi/core@2.13.4(@types/react@18.3.0)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27):
+    resolution: {integrity: sha512-J6gfxHYr8SCc/BzEa712LnI+qLFs5K2nBLupwQqQl4WiAlCu8SdcpbZokqiwfCMYhIRMj0+YFEP9qe4ypcexmw==}
     peerDependencies:
       '@tanstack/query-core': '>=5.0.0'
       typescript: '>=5.0.4'
@@ -7111,8 +7111,8 @@ packages:
       - react
     dev: false
 
-  /@wagmi/core@2.13.0(react@18.3.0)(typescript@5.3.3)(viem@2.9.27):
-    resolution: {integrity: sha512-44HrRbwFzPF/EZMvIzdkdIYmJM93GjG1NWxAc+eCTRMn6LwZSVkw8XSJIkHN7xqf0CzikfQW1t16miJ0T+wRpw==}
+  /@wagmi/core@2.13.4(react@18.3.0)(typescript@5.3.3)(viem@2.9.27):
+    resolution: {integrity: sha512-J6gfxHYr8SCc/BzEa712LnI+qLFs5K2nBLupwQqQl4WiAlCu8SdcpbZokqiwfCMYhIRMj0+YFEP9qe4ypcexmw==}
     peerDependencies:
       '@tanstack/query-core': '>=5.0.0'
       typescript: '>=5.0.4'
@@ -14877,8 +14877,8 @@ packages:
         optional: true
     dependencies:
       '@tanstack/react-query': 5.32.0(react@18.3.0)
-      '@wagmi/connectors': 4.1.28(@types/react@18.3.0)(@wagmi/core@2.13.0)(react-dom@18.3.0)(react-i18next@13.5.0)(react-native@0.74.2)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27)
-      '@wagmi/core': 2.13.0(@types/react@18.3.0)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27)
+      '@wagmi/connectors': 4.1.28(@types/react@18.3.0)(@wagmi/core@2.13.4)(react-dom@18.3.0)(react-i18next@13.5.0)(react-native@0.74.2)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27)
+      '@wagmi/core': 2.13.4(@types/react@18.3.0)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27)
       react: 18.3.0
       typescript: 5.4.5
       use-sync-external-store: 1.2.0(react@18.3.0)

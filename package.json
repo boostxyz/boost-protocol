@@ -51,7 +51,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@wagmi/core": "2.13.0",
+      "@wagmi/core": "2.13.4",
       "viem": "2.9.27"
     }
   }

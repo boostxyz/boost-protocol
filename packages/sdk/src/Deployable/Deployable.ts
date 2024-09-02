@@ -105,7 +105,7 @@ export class Deployable<
    */
   constructor(
     { account, config }: DeployableOptions,
-    payload: DeployablePayloadOrAddress<Payload>,
+    payload?: DeployablePayloadOrAddress<Payload>,
   ) {
     if (typeof payload === 'string') {
       super(config, payload as Address);
@@ -239,7 +239,6 @@ export class Deployable<
     };
     if (!options) throw new DeployableWagmiConfigurationRequiredError();
     const payload = _payload || this._payload;
-    if (!payload) throw new DeployableMissingPayloadError();
     return [payload, options] as [P, DeployableOptions];
   }
 }

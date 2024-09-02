@@ -12,7 +12,10 @@ import {
   type WaitForTransactionReceiptParameters,
   zeroAddress,
 } from 'viem';
-import { DeployableAlreadyDeployedError } from '../errors';
+import {
+  DeployableAlreadyDeployedError,
+  DeployableMissingPayloadError,
+} from '../errors';
 import { type ReadParams, RegistryType } from '../utils';
 import {
   Deployable,
@@ -182,5 +185,26 @@ export class DeployableTarget<
       ...(params as any),
       args: [],
     });
+  }
+
+  /**
+   * @inheritdoc
+   *
+   * @protected
+   * @template [P=Payload]
+   * @param {?P} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @returns {[P, DeployableOptions]}
+   */
+  protected override validateDeploymentConfig<P = Payload>(
+    _payload?: P,
+    _options?: DeployableOptions,
+  ) {
+    const payload = _payload || this._payload;
+    if (!payload) throw new DeployableMissingPayloadError();
+    return super.validateDeploymentConfig(payload, _options) as [
+      P,
+      DeployableOptions,
+    ];
   }
 }

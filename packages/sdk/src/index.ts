@@ -4,6 +4,11 @@ export * from './Boost';
 export * from './errors';
 export * from './utils';
 
+// Auth
+
+export * from './Auth/Auth';
+export * from './Auth/PassthroughAuth';
+
 // Actions
 
 export * from './Actions/Action';

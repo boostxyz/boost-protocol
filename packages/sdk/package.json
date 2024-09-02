@@ -4,9 +4,7 @@
   "license": "GPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "access": "public",
@@ -58,6 +56,18 @@
       "import": "./dist/BoostCore.js",
       "node": "./dist/BoostCore.js",
       "types": "./dist/BoostCore.d.ts"
+    },
+    "./Auth/Auth": {
+      "require": "./dist/Auth/Auth.cjs",
+      "import": "./dist/Auth/Auth.js",
+      "node": "./dist/Auth/Auth.js",
+      "types": "./dist/Auth/Auth.d.ts"
+    },
+    "./Auth/PassthroughAuth": {
+      "require": "./dist/Auth/PassthroughAuth.cjs",
+      "import": "./dist/Auth/PassthroughAuth.js",
+      "node": "./dist/Auth/PassthroughAuth.js",
+      "types": "./dist/Auth/PassthroughAuth.d.ts"
     },
     "./Deployable/Deployable": {
       "require": "./dist/Deployable/Deployable.cjs",

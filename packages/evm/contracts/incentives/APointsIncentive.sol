@@ -6,7 +6,7 @@ import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "./Incentive.sol";
-import {Points} from "../tokens/Points.sol";
+import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
 /// @title Points Incentive
 /// @notice A simple on-chain points incentive implementation that allows claiming of soulbound tokens
@@ -35,8 +35,8 @@ abstract contract APointsIncentive is Incentive {
     /// @return True if the incentive was successfully claimed
     function claim(bytes calldata data_) external override returns (bool) {
         // check ownership
-        Points points = Points(venue);
-        if (points.owner() != msg.sender && points.hasAnyRole(msg.sender, points.ISSUER_ROLE()) != true) {
+        OwnableRoles points = OwnableRoles(venue);
+        if (points.owner() != msg.sender && points.hasAnyRole(msg.sender, 1 << 1) != true) {
             revert BoostError.Unauthorized();
         }
 

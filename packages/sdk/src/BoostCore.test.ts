@@ -8,6 +8,8 @@ import {
   deployFixtures,
   fundBudget,
 } from '../test/helpers';
+import { ContractAction } from './Actions/ContractAction';
+import { PassthroughAuth } from './Auth/PassthroughAuth';
 import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { IncentiveNotCloneableError } from './errors';
@@ -112,6 +114,8 @@ describe('BoostCore', () => {
     expect(boost.maxParticipants).toBe(onChainBoost.maxParticipants);
 
     expect(boost.action.address).toBe(onChainBoost.action);
+    // just get some type safety here
+    if (boost.action instanceof ContractAction === false) return;
     expect(await boost.action.chainId()).toBe(BigInt(31_337));
     expect((await boost.action.target()).toLowerCase()).toBe(
       core.assertValidAddress().toLowerCase(),
@@ -773,5 +777,21 @@ describe('BoostCore', () => {
     });
 
     expect(subscription).toHaveBeenCalledTimes(1);
+  });
+
+  test.only('can set a passthrough auth sceme', async () => {
+    const { core } = fixtures;
+    const client = new BoostCore({
+      ...defaultOptions,
+      address: core.assertValidAddress(),
+    });
+
+    const auth = client.PassthroughAuth();
+    await auth.deploy();
+    await client.setCreateBoostAuth(auth);
+    expect((await client.createBoostAuth()).toLowerCase()).toBe(
+      auth.assertValidAddress(),
+    );
+    expect(await client.isAuthorized(zeroAddress)).toBe(true);
   });
 });

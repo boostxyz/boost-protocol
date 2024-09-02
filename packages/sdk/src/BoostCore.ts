@@ -1,15 +1,20 @@
 import {
   boostCoreAbi,
+  type iAuthAbi,
   readBoostCoreClaimFee,
+  readBoostCoreCreateBoostAuth,
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
   readBoostCoreProtocolFee,
   readBoostCoreProtocolFeeReceiver,
+  readIAuthIsAuthorized,
   simulateBoostCoreClaimIncentive,
   simulateBoostCoreSetClaimFee,
+  simulateBoostCoreSetCreateBoostAuth,
   simulateBoostCoreSetProtocolFeeReceiver,
   writeBoostCoreClaimIncentive,
   writeBoostCoreSetClaimFee,
+  writeBoostCoreSetCreateBoostAuth,
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
@@ -42,6 +47,7 @@ import {
   SimpleDenyList,
   type SimpleDenyListPayload,
 } from './AllowLists/SimpleDenyList';
+import { type Auth, PassthroughAuth } from './Auth/Auth';
 import { Boost } from './Boost';
 import { type Budget, budgetFromAddress } from './Budgets/Budget';
 import { SimpleBudget, type SimpleBudgetPayload } from './Budgets/SimpleBudget';
@@ -581,12 +587,12 @@ export class BoostCore extends Deployable<
   }
 
   /**
-   * Get the number of Boosts
+   * Retrieve the total number of deployed Boosts
    *
    * @public
    * @async
    * @param {?ReadParams<typeof boostCoreAbi, 'getBoostCount'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async getBoostCount(
     params?: ReadParams<typeof boostCoreAbi, 'getBoostCount'>,
@@ -598,6 +604,98 @@ export class BoostCore extends Deployable<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Checks if an address is authorized
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?ReadParams<typeof boostCoreAbi, 'createBoostAuth'> &
+   *       ReadParams<typeof iAuthAbi, 'isAuthorized'>} [params]
+   * @returns {Promise<boolean>}
+   */
+  public async isAuthorized(
+    address: Address,
+    params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'> &
+      ReadParams<typeof iAuthAbi, 'isAuthorized'>,
+  ) {
+    const auth = await this.createBoostAuth();
+    return readIAuthIsAuthorized(this._config, {
+      address: auth,
+      args: [address],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
+   * Retrieve the address of the current creation auth provider.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof boostCoreAbi, 'createBoostAuth'>} [params]
+   * @returns {unknown}
+   */
+  public async createBoostAuth(
+    params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'>,
+  ) {
+    return readBoostCoreCreateBoostAuth(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
+   *  Replace the current auth scheme.
+   *
+   * @public
+   * @async
+   * @param {Auth} auth
+   * @param {?WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>} [params]
+   * @returns {unknown}
+   */
+  public async setCreateBoostAuth(
+    auth: Auth,
+    params?: WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>,
+  ) {
+    return this.awaitResult(
+      this.setCreateBoostAuthRaw(auth.assertValidAddress(), {
+        ...params,
+      }),
+    );
+  }
+
+  /**
+   * Set the createBoostAuth address
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>} [params]
+   * @returns {unknown}
+   */
+  public async setCreateBoostAuthRaw(
+    address: Address,
+    params?: WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>,
+  ) {
+    const { request, result } = await simulateBoostCoreSetCreateBoostAuth(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [address],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeBoostCoreSetCreateBoostAuth(this._config, request);
+    return { hash, result };
   }
 
   /**
@@ -749,6 +847,25 @@ export class BoostCore extends Deployable<
     );
     const hash = await writeBoostCoreSetClaimFee(this._config, request);
     return { hash, result };
+  }
+
+  /**
+   * Bound {@link PassthroughAuth} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const action = core.ContractAction('0x') // is roughly equivalent to
+   * const action = new ContractAction({ config: core._config, account: core._account }, '0x')
+   * ```
+   * @param {DeployablePayloadOrAddress<{}>} options
+   * @param {?boolean} [isBase]
+   * @returns {ContractAction}
+   */
+  PassthroughAuth(address?: Address) {
+    return new PassthroughAuth(
+      { config: this._config, account: this._account },
+      address,
+    );
   }
 
   /**

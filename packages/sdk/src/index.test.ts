@@ -8,6 +8,7 @@ describe('sdk exports', () => {
     expect(SDK.Boost).toBeDefined();
 
     // interfaces
+    expect(SDK.PassthroughAuth).toBeDefined();
     expect(SDK.ContractAction).toBeDefined();
     expect(SDK.ERC721MintAction).toBeDefined();
     expect(SDK.SimpleAllowList).toBeDefined();

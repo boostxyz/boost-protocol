@@ -779,7 +779,7 @@ describe('BoostCore', () => {
     expect(subscription).toHaveBeenCalledTimes(1);
   });
 
-  test.only('can set a passthrough auth sceme', async () => {
+  test('can set a passthrough auth sceme', async () => {
     const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,

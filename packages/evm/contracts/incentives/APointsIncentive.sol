@@ -6,6 +6,7 @@ import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 import {Budget} from "contracts/budgets/Budget.sol";
 import {Incentive} from "./Incentive.sol";
+import {Points} from '../tokens/Points.sol';
 
 /// @title Points Incentive
 /// @notice A simple on-chain points incentive implementation that allows claiming of soulbound tokens
@@ -32,7 +33,13 @@ abstract contract APointsIncentive is Incentive {
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
     /// @return True if the incentive was successfully claimed
-    function claim(bytes calldata data_) external override onlyOwner returns (bool) {
+    function claim(bytes calldata data_) external override returns (bool) {
+        // check ownership
+        Points points = Points(venue);
+        if(points.owner() != msg.sender && points.hasAnyRole(msg.sender, points.ISSUER_ROLE()) != true) {
+            revert BoostError.Unauthorized();
+        }
+
         ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
         if (!_isClaimable(claim_.target)) revert NotClaimable();
 

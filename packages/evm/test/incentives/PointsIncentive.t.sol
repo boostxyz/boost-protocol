@@ -79,6 +79,15 @@ contract PointsIncentiveTest is Test {
         incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
     }
 
+    function test_claimAuthorized() public {
+        vm.expectCall(address(points), abi.encodeCall(points.issue, (address(1), 100)), 1);
+        points.grantRoles(address(0xdeadbeef), points.ISSUER_ROLE());
+
+        vm.prank(address(0xdeadbeef));
+        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+        assertEq(points.balanceOf(address(1)), 100);
+    }
+
     ////////////////////////////////////
     // PointsIncentive.getComponentInterface //
     ////////////////////////////////////

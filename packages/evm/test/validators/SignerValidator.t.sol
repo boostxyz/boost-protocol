@@ -6,6 +6,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@solady/utils/ECDSA.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {MockERC1271Wallet} from "lib/solady/test/utils/mocks/MockERC1271Wallet.sol";
 import {MockERC1271Malicious} from "lib/solady/test/utils/mocks/MockERC1271Malicious.sol";
@@ -74,7 +75,13 @@ contract SignerValidatorTest is Test {
         assertEq(validator.owner(), address(this));
     }
 
-    function test_InitializerDisabled() public view {
+    function testInitialize_InvalidData() public {
+        SignerValidator badValidator = new SignerValidator();
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        badValidator.initialize(abi.encode(address(0)));
+    }
+
+    function test_InitializerDisabled() public {
         // Because the slot is private, we use `vm.load` to access it then parse out the bits:
         //   - [0] is the `initializing` flag (which should be 0 == false)
         //   - [1..64] hold the `initializedVersion` (which should be 1)

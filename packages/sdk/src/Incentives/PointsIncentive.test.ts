@@ -17,7 +17,7 @@ import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures, points: MockPoints;
 
-describe.skip('PointsIncentive', () => {
+describe('PointsIncentive', () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures);
   });

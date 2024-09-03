@@ -64,7 +64,7 @@ describe('ERC20Incentive', () => {
 
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-    const incentiveQuantity = 0;
+    const incentiveQuantity = 1;
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
       signer: trustedSigner,
       incentiveData,
@@ -108,7 +108,7 @@ describe('ERC20Incentive', () => {
 
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-    const incentiveQuantity = 0;
+    const incentiveQuantity = 1;
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
       signer: trustedSigner,
       incentiveData,

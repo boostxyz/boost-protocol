@@ -9,6 +9,7 @@ import {Initializable} from "@solady/utils/Initializable.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 import {Points} from "contracts/tokens/Points.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
 
 contract PointsIncentiveTest is Test {
     PointsIncentive public incentive;
@@ -121,6 +122,58 @@ contract PointsIncentiveTest is Test {
 
         incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
         assertEq(points.balanceOf(address(1)), 100);
+    }
+
+    function test_claim_ClaimFailed() public {
+        // Set up a PointsIncentive with a selector that will fail
+        PointsIncentive failingIncentive = PointsIncentive(LibClone.clone(address(new PointsIncentive())));
+        failingIncentive.initialize(
+            abi.encode(
+                PointsIncentive.InitPayload({
+                    venue: address(points),
+                    selector: bytes4(keccak256("nonexistentFunction(address,uint256)")),
+                    reward: 100,
+                    limit: 10
+                })
+            )
+        );
+
+        vm.expectRevert(bytes4(keccak256("ClaimFailed()")));
+        failingIncentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+    }
+
+    ///////////////////////////////
+    // PointsIncentive.preflight //
+    ///////////////////////////////
+
+    function test_preflight() public {
+        bytes memory budgetData = incentive.preflight(new bytes(0));
+        assertEq(budgetData.length, 0);
+    }
+
+    /////////////////////////////////
+    // PointsIncentive.isClaimable //
+    /////////////////////////////////
+
+    function test_isClaimable() public {
+        // Test when the incentive is claimable
+        bytes memory claimData = abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}));
+        assertTrue(incentive.isClaimable(claimData));
+
+        // Claim the incentive
+        incentive.claim(claimData);
+
+        // Test when the incentive is not claimable
+        assertFalse(incentive.isClaimable(claimData));
+    }
+
+    /////////////////////////////
+    // PointsIncentive.reclaim //
+    /////////////////////////////
+
+    function test_reclaim() public {
+        vm.expectRevert(BoostError.NotImplemented.selector);
+        incentive.reclaim(new bytes(0));
     }
 
     ////////////////////////////////////

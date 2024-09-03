@@ -1,6 +1,5 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage } from '@wagmi/core';
-import { encodePacked, isAddress, keccak256 } from 'viem';
+import { type Address, encodeAbiParameters, isAddress, pad } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -9,6 +8,7 @@ import {
   deployFixtures,
 } from '../../test/helpers';
 import { testAccount } from '../../test/viem';
+import { prepareSignerValidatorClaimDataPayload } from '../utils';
 import { SignerValidator } from './SignerValidator';
 
 let fixtures: Fixtures;
@@ -46,56 +46,101 @@ describe('SignerValidator', () => {
 
   test('can validate hashes', async () => {
     const validator = await loadFixture(freshValidator(fixtures));
-    const message = keccak256(encodePacked(['string'], ['test']));
+
+    // Define the input data
+    const boostId = 5n;
+    const incentiveId = 1n;
+    const claimant = '0x24582544C98a86eE59687c4D5B55D78f4FffA666';
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+
     const trustedSigner = accounts.at(0)!;
-    const untrustedSigner = accounts.at(3)!;
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
+    const untrustedSigner = accounts.at(2)!;
+
+    const typeHashData = await validator.hashSignerData({
+      boostId: boostId,
+      incentiveId: incentiveId,
+      claimant: claimant,
+      incentiveData,
     });
-    const untrustedSignature = await signMessage(defaultOptions.config, {
-      account: untrustedSigner.privateKey,
-      message: { raw: message },
-    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
+    const badClaimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      untrustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
+    // Validation using trusted signer
     expect(
       await validator.validate({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
+        boostId: boostId,
+        incentiveId: incentiveId,
+        claimData: claimDataPayload,
+        claimant: claimant,
       }),
     ).toBe(true);
+
+    // Validation using untrusted signer should throw an error
     try {
       await validator.validate({
-        signer: untrustedSigner.account,
-        hash: message,
-        signature: untrustedSignature,
+        boostId: boostId,
+        incentiveId: incentiveId,
+        claimData: badClaimDataPayload,
+        claimant: claimant,
       });
     } catch (e) {
-      expect(e).instanceOf(Error);
+      expect(e).toBeInstanceOf(Error);
     }
   });
-
   test('will not revalidate the same hash', async () => {
     const validator = await loadFixture(freshValidator(fixtures));
-    const message = keccak256(encodePacked(['string'], ['test']));
+
+    // Define the input data
+    const boostId = 1n;
+    const incentiveId = 1n;
+    const claimant = accounts.at(0)!.account;
+
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+
     const trustedSigner = accounts.at(0)!;
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message,
+
+    const typeHashData = await validator.hashSignerData({
+      boostId: boostId,
+      incentiveId: incentiveId,
+      claimant: claimant,
+      incentiveData,
     });
-    await validator.validate({
-      signer: trustedSigner.account,
-      hash: message,
-      signature: trustedSignature,
-    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
+    expect(
+      await validator.validate({
+        boostId,
+        incentiveId,
+        claimant,
+        claimData: claimDataPayload,
+      }),
+    ).toBe(true);
+
+    // Attempt to validate the same hash again (should throw an error)
     try {
       await validator.validate({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
+        boostId,
+        incentiveId,
+        claimData: claimDataPayload,
+        claimant,
       });
     } catch (e) {
-      expect(e).instanceOf(Error);
+      expect(e).toBeInstanceOf(Error);
     }
   });
 

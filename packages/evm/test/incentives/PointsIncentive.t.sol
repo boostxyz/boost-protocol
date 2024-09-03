@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
@@ -54,6 +55,13 @@ contract PointsIncentiveTest is Test {
                 })
             )
         );
+    }
+
+    function test_initialize_NotInitializing() public {
+        PointsIncentive basePoints = new PointsIncentive();
+        // Ensure the initialize function reverts with NotInitializing error
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        basePoints.initialize("");
     }
 
     ///////////////////////////

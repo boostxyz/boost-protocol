@@ -17,13 +17,6 @@ abstract contract Cloneable is Initializable, ERC165 {
     /// @notice Thrown when the contract has already been initialized
     error CloneAlreadyInitialized();
 
-    /// @notice A modifier to restrict a function to only be called before initialization
-    /// @dev This is intended to enforce that a function can only be called before the contract has been initialized
-    modifier onlyBeforeInitialization() {
-        if (_getInitializedVersion() != 0) revert CloneAlreadyInitialized();
-        _;
-    }
-
     /// @notice Initialize the clone with the given arbitrary data
     /// @param - The compressed initialization data (if required)
     /// @dev The data is expected to be ABI encoded bytes compressed using {LibZip-cdCompress}

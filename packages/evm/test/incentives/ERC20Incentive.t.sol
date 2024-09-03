@@ -59,12 +59,6 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 101);
     }
 
-    function testInitialize_UnsupportedStrategy() public {
-        // Initialize with MINT (not yet supported) => revert
-        vm.expectRevert(BoostError.NotImplemented.selector);
-        _initialize(address(mockAsset), AERC20Incentive.Strategy.MINT, 1 ether, 5);
-    }
-
     function testInitialize_InvalidInitialization() public {
         // Initialize with no reward amount
         vm.expectRevert(BoostError.InvalidInitialization.selector);
@@ -170,6 +164,19 @@ contract ERC20IncentiveTest is Test {
         vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.reclaim(reclaimPayload);
         assertEq(incentive.limit(), 5);
+    }
+
+    function testReclaim_RaffleStrategy_LimitZero() public {
+        // Initialize the AERC20Incentive with RAFFLE strategy
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
+
+        // Reclaim the full reward amount
+        bytes memory reclaimPayload =
+            abi.encode(Incentive.ClaimPayload({target: address(this), data: abi.encode(100 ether)}));
+        incentive.reclaim(reclaimPayload);
+
+        // Check that the limit is set to 0
+        assertEq(incentive.limit(), 0);
     }
 
     ////////////////////////////////

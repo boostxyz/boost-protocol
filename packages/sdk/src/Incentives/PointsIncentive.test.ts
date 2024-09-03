@@ -1,13 +1,7 @@
 import { readPointsBalanceOf, writePointsGrantRoles } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
-import {
-  encodePacked,
-  isAddress,
-  keccak256,
-  parseEther,
-  zeroAddress,
-} from 'viem';
+import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockPoints } from '../../test/MockPoints';
 import { accounts } from '../../test/accounts';
@@ -18,7 +12,7 @@ import {
   freshBoost,
   freshPoints,
 } from '../../test/helpers';
-import { bytes4, prepareSignerValidatorValidatePayload } from '../utils';
+import { bytes4, prepareSignerValidatorClaimDataPayload } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures, points: MockPoints;
@@ -44,13 +38,10 @@ describe('PointsIncentive', () => {
   });
 
   test('can claim', async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!;
-    const message = keccak256(encodePacked(['string'], ['test']));
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
-    });
     const pointsIncentive = new fixtures.bases.PointsIncentive(defaultOptions, {
       venue: points.assertValidAddress(),
       selector: bytes4('issue(address,uint256)'),
@@ -60,6 +51,24 @@ describe('PointsIncentive', () => {
     const boost = await freshBoost(fixtures, {
       incentives: [pointsIncentive],
     });
+
+    const incentiveId = 0n;
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    console.log(claimant);
+    const typeHashData = await boost.validator.hashSignerData({
+      boostId: boost.id,
+      incentiveId,
+      claimant,
+      incentiveData,
+    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
     await writePointsGrantRoles(defaultOptions.config, {
       address: points.assertValidAddress(),
       args: [pointsIncentive.assertValidAddress(), 2n],
@@ -69,11 +78,7 @@ describe('PointsIncentive', () => {
       boost.id,
       0n,
       referrer,
-      prepareSignerValidatorValidatePayload({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
-      }),
+      claimDataPayload,
       { value: parseEther('0.000075') },
     );
     expect(
@@ -86,13 +91,11 @@ describe('PointsIncentive', () => {
 
   test('cannot claim twice', async () => {
     const reward = 1n;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!;
-    const message = keccak256(encodePacked(['string'], ['test']));
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
-    });
+
     const pointsIncentive = new fixtures.bases.PointsIncentive(defaultOptions, {
       venue: points.assertValidAddress(),
       selector: bytes4('issue(address,uint256)'),
@@ -102,6 +105,24 @@ describe('PointsIncentive', () => {
     const boost = await freshBoost(fixtures, {
       incentives: [pointsIncentive],
     });
+
+    const incentiveId = 0n;
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    console.log(claimant);
+    const typeHashData = await boost.validator.hashSignerData({
+      boostId: boost.id,
+      incentiveId,
+      claimant,
+      incentiveData,
+    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
     await writePointsGrantRoles(defaultOptions.config, {
       address: points.assertValidAddress(),
       args: [pointsIncentive.assertValidAddress(), 2n],
@@ -111,11 +132,7 @@ describe('PointsIncentive', () => {
       boost.id,
       0n,
       referrer,
-      prepareSignerValidatorValidatePayload({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
-      }),
+      claimDataPayload,
       { value: parseEther('0.000075') },
     );
     try {
@@ -123,11 +140,7 @@ describe('PointsIncentive', () => {
         boost.id,
         0n,
         referrer,
-        prepareSignerValidatorValidatePayload({
-          signer: trustedSigner.account,
-          hash: message,
-          signature: trustedSignature,
-        }),
+        claimDataPayload,
         { value: parseEther('0.000075') },
       );
     } catch (e) {

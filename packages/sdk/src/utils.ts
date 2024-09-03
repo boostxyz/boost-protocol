@@ -19,11 +19,9 @@ import type {
   Hex,
   Log,
   PrivateKeyAccount,
-  WaitForTransactionReceiptParameters,
 } from 'viem';
 import {
   encodeAbiParameters,
-  isHex,
   keccak256,
   parseAbiParameters,
   slice,
@@ -31,6 +29,7 @@ import {
   zeroAddress,
   zeroHash,
 } from 'viem';
+import { signTypedData } from 'viem/accounts';
 import { ContractAction } from './Actions/ContractAction';
 import { ERC721MintAction } from './Actions/ERC721MintAction';
 import {
@@ -142,7 +141,7 @@ export type GenericLog<
  * @param {string} input
  * @returns {Hex}
  */
-export function bytes4(input: string) {
+export function bytes4(input: Hex) {
   return slice(isHex(input) ? keccak256(input) : keccak256(toHex(input)), 0, 4);
 }
 
@@ -537,9 +536,9 @@ export interface SignerValidatorSignaturePayload {
   /**
    * The ID of the incentive.
    *
-   * @type {bigint}
+   * @type {number}
    */
-  incentiveId: bigint;
+  incentiveQuantity: number;
   /**
    * The address of the claimant.
    *
@@ -559,7 +558,7 @@ export interface SignerValidatorSignaturePayload {
 //  *
 //  * @param {SignerValidatorValidatePayload} param0
 //  * @param {Address} param0.signer - The address of the signer with which to validate.
-//  * @param {Hex} param0.hash - The transaction hash to associate with the validation.
+//  * @param {Hex} param0.hash - The transaction 558 to associate with the validation.
 //  * @param {Hex} param0.signature - The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
 //  * @param {Address} param0.validator - Address of the validator module.
 //  * @returns {*}
@@ -780,12 +779,43 @@ export async function prepareSignerValidatorClaimDataPayload(
     privateKey: PrivateKeyAccount;
   },
   incentiveData: Hex,
-  typeHashData: Hex,
+  chainId: number,
+  validator: Address,
+  incentiveQuantity: number,
+  claimant: Address,
+  boostId: bigint,
 ): Promise<Hex> {
   // Sign the hashed signer data
 
-  // NOTE: viem/wagmi automatically prepends message info so we need to use a custom signing process
-  const trustedSignature = await signMessage(typeHashData, signer.key);
+  const domain = {
+    name: 'SignerValidator',
+    version: '1',
+    chainId: chainId,
+    verifyingContract: validator,
+  };
+  const typedData = {
+    domain,
+    types: {
+      SignerValidatorData: [
+        { name: 'incentiveQuantity', type: 'uint8' },
+        { name: 'claimant', type: 'address' },
+        { name: 'boostId', type: 'uint256' },
+        { name: 'incentiveData', type: 'bytes' },
+      ],
+    },
+    primaryType: 'SignerValidatorData' as const,
+    message: {
+      incentiveQuantity,
+      claimant,
+      boostId,
+      incentiveData: incentiveData,
+    },
+  };
+
+  const trustedSignature = await signTypedData({
+    ...typedData,
+    privateKey: signer.key,
+  });
 
   // Prepare the claim data payload using the new helper
   const validatorData = prepareSignerValidatorInputParams({
@@ -809,31 +839,6 @@ export async function prepareSignerValidatorClaimDataPayload(
   );
 
   return boostClaimDataPayload;
-}
-
-/**
- * Signs a message using secp256k1 and returns the r, s, and v components.
- *
- * @param message - The message to sign.
- * @param privateKey - The private key to sign the message with.
- * @returns The signature as a hex string.
- */
-function signMessage(message: Hex, privateKey: string): Hex {
-  // Convert the private key to a Uint8Array
-  const privateKeyBytes = Uint8Array.from(
-    Buffer.from(privateKey.slice(2), 'hex'),
-  );
-
-  // Sign the message hash using secp256k1
-  const signature = secp256k1.sign(message.slice(2), privateKeyBytes);
-
-  // Convert the signature to a hex string
-  const r = signature.r.toString(16).padStart(64, '0');
-  const s = signature.s.toString(16).padStart(64, '0');
-  const v = signature.recovery + 27;
-
-  // Concatenate r, s, and v into a single hex string
-  return `0x${r}${s}${v.toString(16).padStart(2, '0')}`;
 }
 
 /**

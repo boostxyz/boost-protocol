@@ -33,10 +33,10 @@ abstract contract APointsIncentive is Incentive {
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
     /// @return True if the incentive was successfully claimed
-    function claim(bytes calldata data_) external override returns (bool) {
+    function claim(bytes calldata data_) external override onlyOwner returns (bool) {
         // check ownership
         OwnableRoles points = OwnableRoles(venue);
-        if (points.owner() != msg.sender && points.hasAnyRole(msg.sender, 1 << 1) != true) {
+        if (points.owner() != address(this) && points.hasAnyRole(address(this), 1 << 1) != true) {
             revert BoostError.Unauthorized();
         }
 

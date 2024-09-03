@@ -1,0 +1,38 @@
+{
+  "name": "@boostxyz/signatures",
+  "version": "0.0.0-alpha.0",
+  "description": "An offline database of builtin bytes4 selectors and their corresponding abi items",
+  "repository": "https://github.com/rabbitholegg/boost-protocol",
+  "private": true,
+  "author": "Boost Team<boost-team@boost.xyz>",
+  "type": "module",
+  "files": ["dist"],
+  "main": "dist/index.json",
+  "module": "./dist/index.json",
+  "types": "./dist/index.json",
+  "typings": "./dist/index.json",
+  "sideEffects": false,
+  "license": "GPL-3.0-or-later",
+  "access": "public",
+  "exports": {
+    ".": {
+      "require": "./dist/index.json",
+      "import": "./dist/index.json",
+      "node": "./dist/index.json"
+    },
+    "./events": {
+      "require": "./dist/events.json",
+      "import": "./dist/events.json",
+      "node": "./dist/events.json"
+    },
+    "./functions": {
+      "require": "./dist/functions.json",
+      "import": "./dist/functions.json",
+      "node": "./dist/functions.json"
+    }
+  },
+  "scripts": {
+    "build": "mkdir -p dist && node build.js",
+    "clean": "rm -rf dist"
+  }
+}

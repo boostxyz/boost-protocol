@@ -1,0 +1,4 @@
+[
+  "// Begin common builtin event signatures",
+  "Transfer(address,address,uint256)"
+]

@@ -1,5 +1,4 @@
 import { type Config, waitForTransactionReceipt } from '@wagmi/core';
-import { secp256k1 } from 'ethereum-cryptography/secp256k1';
 import { LibZip } from 'solady';
 import type {
   Abi,
@@ -14,7 +13,7 @@ import type {
 } from 'viem';
 import {
   encodeAbiParameters,
-  hashTypedData,
+  isHex,
   keccak256,
   parseAbiParameters,
   slice,
@@ -815,7 +814,7 @@ export async function prepareSignerValidatorClaimDataPayload(
   const validatorData = prepareSignerValidatorInputParams({
     signer: signer.account,
     signature: trustedSignature,
-    incentiveQuantity: 1, // Adjust incentive quantity as necessary
+    incentiveQuantity, // Adjust incentive quantity as necessary
   });
 
   const boostClaimDataPayload = encodeAbiParameters(

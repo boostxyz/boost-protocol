@@ -104,7 +104,7 @@ contract SignerValidatorTest is Test {
         uint8 incentiveQuantity = 2;
         address claimant = makeAddr("claimant");
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveId, claimant, incentiveData);
         bytes memory signature = _signHash(msgHash, testSignerKey);
 
         ASignerValidator.SignerValidatorInputParams memory validatorData =

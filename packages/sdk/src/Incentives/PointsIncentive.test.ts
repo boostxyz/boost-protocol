@@ -52,21 +52,17 @@ describe('PointsIncentive', () => {
       incentives: [pointsIncentive],
     });
 
-    const incentiveId = 0n;
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-    console.log(claimant);
-    const typeHashData = await boost.validator.hashSignerData({
-      boostId: boost.id,
-      incentiveId,
-      claimant,
-      incentiveData,
-    });
-
+    const incentiveQuantity = 0;
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
       trustedSigner,
       incentiveData,
-      typeHashData,
+      defaultOptions.config.chains[0].id,
+      boost.validator.assertValidAddress(),
+      incentiveQuantity,
+      claimant,
+      boost.id,
     );
 
     await writePointsGrantRoles(defaultOptions.config, {
@@ -106,21 +102,17 @@ describe('PointsIncentive', () => {
       incentives: [pointsIncentive],
     });
 
-    const incentiveId = 0n;
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-    console.log(claimant);
-    const typeHashData = await boost.validator.hashSignerData({
-      boostId: boost.id,
-      incentiveId,
-      claimant,
-      incentiveData,
-    });
-
+    const incentiveQuantity = 0;
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
       trustedSigner,
       incentiveData,
-      typeHashData,
+      defaultOptions.config.chains[0].id,
+      boost.validator.assertValidAddress(),
+      incentiveQuantity,
+      claimant,
+      boost.id,
     );
 
     await writePointsGrantRoles(defaultOptions.config, {

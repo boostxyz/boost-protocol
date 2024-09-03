@@ -39,9 +39,9 @@ contract ERC20VariableIncentiveTest is Test {
         );
     }
 
-    ///////////////////////////////
+    ///////////////////////////////////////
     // ERC20VariableIncentive.initialize //
-    ///////////////////////////////
+    ///////////////////////////////////////
 
     function testInitialize() public {
         // Initialize the ERC20VariableIncentive
@@ -67,9 +67,9 @@ contract ERC20VariableIncentiveTest is Test {
         _initialize(address(mockAsset), 0, 0);
     }
 
-    ////////////////////////////////
+    //////////////////////////////////
     // ERC20VariableIncentive.claim //
-    ////////////////////////////////
+    //////////////////////////////////
 
     function testClaim() public {
         // Initialize the ERC20VariableIncentive
@@ -113,9 +113,64 @@ contract ERC20VariableIncentiveTest is Test {
         assertTrue(incentive.isClaimable(claimPayload));
     }
 
-    /////////////////////////////////
+    function testClaim_NotClaimable() public {
+        // Initialize the ERC20VariableIncentive
+        _initialize(address(mockAsset), 1 ether, 1 ether);
+
+        // Claim the incentive
+        bytes memory claimPayload =
+            abi.encode(Incentive.ClaimPayload({target: CLAIM_RECIPIENT, data: abi.encode(1 ether)}));
+        incentive.claim(claimPayload);
+
+        // Attempt to claim again => revert
+        vm.expectRevert(Incentive.NotClaimable.selector);
+        incentive.claim(claimPayload);
+    }
+
+    //////////////////////////////////////
+    // ERC20VariableIncentive.preflight //
+    //////////////////////////////////////
+
+    function testPreflight() public {
+        bytes memory preflightPayload = incentive.preflight(
+            abi.encode(ERC20VariableIncentive.InitPayload({asset: address(mockAsset), reward: 1 ether, limit: 5 ether}))
+        );
+
+        Budget.Transfer memory transfer = abi.decode(preflightPayload, (Budget.Transfer));
+        assertEq(transfer.asset, address(mockAsset));
+        assertEq(transfer.target, address(incentive));
+        assertEq(abi.decode(transfer.data, (Budget.FungiblePayload)).amount, 5 ether);
+    }
+
+    ////////////////////////////////////
+    // ERC20VariableIncentive.reclaim //
+    ////////////////////////////////////
+
+    function testReclaim() public {
+        // Initialize the ERC20VariableIncentive
+        _initialize(address(mockAsset), 1 ether, 5 ether);
+
+        // Reclaim some tokens
+        bytes memory reclaimPayload =
+            abi.encode(Incentive.ClaimPayload({target: address(this), data: abi.encode(2 ether)}));
+        incentive.reclaim(reclaimPayload);
+
+        // Check the balance and limit
+        assertEq(mockAsset.balanceOf(address(this)), 2 ether);
+        assertEq(incentive.limit(), 3 ether);
+    }
+
+    //////////////////////////////////////////////////
+    // ERC20VariableIncentive.getComponentInterface //
+    //////////////////////////////////////////////////
+
+    function testGetComponentInterface() public {
+        assertEq(incentive.getComponentInterface(), type(Incentive).interfaceId);
+    }
+
+    //////////////////////////////////////////////
     // ERC20VariableIncentive.supportsInterface //
-    /////////////////////////////////
+    //////////////////////////////////////////////
 
     function testSupportsInterface() public {
         // Ensure the contract supports the Incentive interface

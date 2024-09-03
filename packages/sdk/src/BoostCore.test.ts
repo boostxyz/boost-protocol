@@ -50,6 +50,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -92,6 +93,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -183,6 +185,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -242,6 +245,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -265,6 +269,7 @@ describe('BoostCore', () => {
       ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -315,6 +320,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -391,6 +397,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -415,6 +422,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(
         defaultOptions,
@@ -472,6 +480,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,
@@ -490,6 +499,7 @@ describe('BoostCore', () => {
         }),
         validator: new bases.SignerValidator(defaultOptions, {
           signers: [defaultOptions.account.address],
+          validatorCaller: defaultOptions.account.address,
         }),
         allowList: new bases.SimpleAllowList(defaultOptions, {
           owner: defaultOptions.account.address,
@@ -566,6 +576,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(
         defaultOptions,
@@ -757,6 +768,7 @@ describe('BoostCore', () => {
       }),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: defaultOptions.account.address,

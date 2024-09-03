@@ -95,6 +95,7 @@ export async function freshBoost(
           defaultOptions.account.address,
           accounts.at(0)?.account as Address,
         ],
+        validatorCaller: accounts.at(0)?.account as Address,
       }),
     allowList:
       options.allowList ||

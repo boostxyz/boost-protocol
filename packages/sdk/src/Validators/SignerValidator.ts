@@ -3,8 +3,10 @@ import {
   readSignerValidatorSigners,
   signerValidatorAbi,
   simulateSignerValidatorSetAuthorized,
+  simulateSignerValidatorSetValidatorCaller,
   simulateSignerValidatorValidate,
   writeSignerValidatorSetAuthorized,
+  writeSignerValidatorSetValidatorCaller,
   writeSignerValidatorValidate,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
@@ -214,6 +216,34 @@ export class SignerValidator extends DeployableTarget<
     );
     const hash = await writeSignerValidatorSetAuthorized(this._config, request);
     return { hash, result };
+  }
+
+  public async setValidatorCallerRaw(
+    address: Address,
+    params?: WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>,
+  ) {
+    const { request, result } = await simulateSignerValidatorSetValidatorCaller(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [address],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeSignerValidatorSetValidatorCaller(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  public async setValidatorCaller(
+    address: Address,
+    params?: WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>,
+  ) {
+    return this.awaitResult(this.setValidatorCallerRaw(address, params));
   }
 
   /**

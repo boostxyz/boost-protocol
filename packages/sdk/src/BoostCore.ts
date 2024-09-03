@@ -101,6 +101,7 @@ import {
   type Target,
   type WriteParams,
   prepareBoostPayload,
+  prepareSignerValidatorPayload,
 } from './utils';
 
 export { boostCoreAbi };
@@ -355,12 +356,28 @@ export class BoostCore extends Deployable<
         isBase: isBase,
         instance: validator.address,
         parameters: isBase
-          ? validator.buildParameters(undefined, options).args.at(0) || zeroHash
+          ? validator
+              .buildParameters(
+                {
+                  signers: [owner],
+                  validatorCaller: coreAddress,
+                },
+                options,
+              )
+              .args.at(0) || zeroHash
           : zeroHash,
       };
     } else {
       validatorPayload.parameters =
-        validator.buildParameters(undefined, options).args.at(0) || zeroHash;
+        validator
+          .buildParameters(
+            {
+              signers: [owner],
+              validatorCaller: coreAddress,
+            },
+            options,
+          )
+          .args.at(0) || zeroHash;
       validatorPayload.instance = validator.base;
     }
 

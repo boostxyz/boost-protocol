@@ -24,12 +24,6 @@ abstract contract APointsIncentive is Incentive {
     /// @notice The selector for the issuance function on the points contract
     bytes4 public selector;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the incentive
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
     /// @return True if the incentive was successfully claimed

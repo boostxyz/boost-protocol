@@ -74,16 +74,43 @@ contract PointsIncentiveTest is Test {
     }
 
     function test_claim_notOwner() public {
-        vm.prank(address(0xdeadbeef));
+        // Setup incentive without permissions
+        PointsIncentive noPermsIncentive;
+        noPermsIncentive = PointsIncentive(LibClone.clone(address(new PointsIncentive())));
+        noPermsIncentive.initialize(
+            abi.encode(
+                PointsIncentive.InitPayload({
+                    venue: address(points),
+                    selector: bytes4(keccak256("issue(address,uint256)")),
+                    reward: 100,
+                    limit: 10
+                })
+            )
+        );
+        // Attemp unauthorized claim
+        vm.startPrank(address(0xdeadbeef777));
         vm.expectRevert(bytes4(keccak256("Unauthorized()")));
         incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+        vm.stopPrank();
     }
 
     function test_claimAuthorized() public {
-        vm.expectCall(address(points), abi.encodeCall(points.issue, (address(1), 100)), 1);
-        points.grantRoles(address(0xdeadbeef), points.ISSUER_ROLE());
+        PointsIncentive noPermsIncentive;
+        noPermsIncentive = PointsIncentive(LibClone.clone(address(new PointsIncentive())));
+        noPermsIncentive.initialize(
+            abi.encode(
+                PointsIncentive.InitPayload({
+                    venue: address(points),
+                    selector: bytes4(keccak256("issue(address,uint256)")),
+                    reward: 100,
+                    limit: 10
+                })
+            )
+        );
 
-        vm.prank(address(0xdeadbeef));
+        vm.expectCall(address(points), abi.encodeCall(points.issue, (address(1), 100)), 1);
+        points.grantRoles(address(noPermsIncentive), points.ISSUER_ROLE());
+
         incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
         assertEq(points.balanceOf(address(1)), 100);
     }

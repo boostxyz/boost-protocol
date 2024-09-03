@@ -612,6 +612,11 @@ export interface SignerValidatorPayload {
    * @type {Address[]}
    */
   signers: Address[];
+  /**
+   * The authorized caller of the {@link prepareSignerValidator} function
+   * @type {Address}
+   */
+  validatorCaller: Address;
 }
 
 /**
@@ -653,14 +658,19 @@ export interface SignerValidatorValidatePayload {
  *
  * @param {SignerValidatorPayload} param0
  * @param {Address[]} param0.signers
+ * @param {Address} param0.validatorCaller
  * @returns {Hex}
  */
 export const prepareSignerValidatorPayload = ({
   signers,
+  validatorCaller,
 }: SignerValidatorPayload) => {
   return encodeAbiParameters(
-    [{ type: 'address[]', name: 'signers' }],
-    [signers],
+    [
+      { type: 'address[]', name: 'signers' },
+      { type: 'address', name: 'validatorCaller' },
+    ],
+    [signers, validatorCaller],
   );
 };
 

@@ -78,6 +78,7 @@ describe('AllowListIncentive', () => {
       boostId: boost.id,
     });
 
+    //await boost.validator.setValidatorCaller(boost.assertValidAddress());
     await fixtures.core.claimIncentive(
       boost.id,
       0n,

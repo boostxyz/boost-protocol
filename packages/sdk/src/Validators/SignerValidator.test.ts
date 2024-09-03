@@ -21,6 +21,7 @@ function freshValidator(fixtures: Fixtures) {
       crypto.randomUUID(),
       new fixtures.bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address, account],
+        validatorCaller: testAccount.address,
       }),
     );
   };
@@ -34,6 +35,7 @@ describe('SignerValidator', () => {
   test('can successfully be deployed', async () => {
     const action = new SignerValidator(defaultOptions, {
       signers: [testAccount.address],
+      validatorCaller: testAccount.address,
     });
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);

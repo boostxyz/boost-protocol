@@ -47,6 +47,7 @@ import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
 import { MockERC1155 } from './MockERC1155';
 import { MockPoints } from './MockPoints';
+import { accounts } from './accounts';
 import { setupConfig, testAccount } from './viem';
 
 export type DeployableTestOptions = Required<DeployableOptions>;
@@ -90,7 +91,10 @@ export async function freshBoost(
     validator:
       options.validator ||
       new fixtures.bases.SignerValidator(defaultOptions, {
-        signers: [defaultOptions.account.address],
+        signers: [
+          defaultOptions.account.address,
+          accounts.at(0)?.account as Address,
+        ],
       }),
     allowList:
       options.allowList ||

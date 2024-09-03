@@ -35,8 +35,6 @@ contract ERC20Incentive is AERC20Incentive {
     function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
-        // Ensure the strategy is valid (MINT is not yet supported)
-        if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
         if (init_.reward == 0 || init_.limit == 0) revert BoostError.InvalidInitialization();
 
         // Ensure the maximum reward amount has been allocated

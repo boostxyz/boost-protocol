@@ -3,6 +3,7 @@
     "biomejs.biome",
     "trailofbits.slither-vscode",
     "NomicFoundation.hardhat-solidity",
-    "ackeeblockchain.tools-for-solidity"
+    "ackeeblockchain.tools-for-solidity",
+    "ryanluker.vscode-coverage-gutters"
   ]
 }

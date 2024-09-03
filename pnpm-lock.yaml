@@ -48,9 +48,6 @@ importers:
       arg:
         specifier: ^5.0.2
         version: 5.0.2
-      ethereum-cryptography:
-        specifier: 2.2.1
-        version: 2.2.1
       find-process:
         specifier: ^1.4.7
         version: 1.4.7

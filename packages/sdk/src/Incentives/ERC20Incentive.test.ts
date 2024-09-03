@@ -65,15 +65,15 @@ describe('ERC20Incentive', () => {
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     const incentiveQuantity = 0;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
-      trustedSigner,
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: trustedSigner,
       incentiveData,
-      defaultOptions.config.chains[0].id,
-      boost.validator.assertValidAddress(),
+      chainId: defaultOptions.config.chains[0].id,
+      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
-      boost.id,
-    );
+      boostId: boost.id,
+    });
 
     await fixtures.core.claimIncentive(
       boost.id,
@@ -109,15 +109,15 @@ describe('ERC20Incentive', () => {
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     const incentiveQuantity = 0;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
-      trustedSigner,
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: trustedSigner,
       incentiveData,
-      defaultOptions.config.chains[0].id,
-      boost.validator.assertValidAddress(),
+      chainId: defaultOptions.config.chains[0].id,
+      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
-      boost.id,
-    );
+      boostId: boost.id,
+    });
 
     await fixtures.core.claimIncentive(
       boost.id,

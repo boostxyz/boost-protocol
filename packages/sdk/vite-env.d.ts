@@ -14,6 +14,7 @@ interface ImportMetaEnv {
   readonly VITE_ALLOWLIST_INCENTIVE_BASE: Address;
   readonly VITE_CGDA_INCENTIVE_BASE: Address;
   readonly VITE_ERC20_INCENTIVE_BASE: Address;
+  readonly VITE_ERC20_VARIABLE_INCENTIVE_BASE: Address;
   readonly VITE_ERC1155_INCENTIVE_BASE: Address;
   readonly VITE_POINTS_INCENTIVE_BASE: Address;
   readonly VITE_SIGNER_VALIDATOR_BASE: Address;

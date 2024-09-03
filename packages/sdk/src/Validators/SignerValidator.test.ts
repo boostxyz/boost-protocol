@@ -63,25 +63,25 @@ describe('SignerValidator', () => {
     // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
     const untrustedSigner = accounts.at(2)!;
 
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
-      trustedSigner,
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: trustedSigner,
       incentiveData,
-      defaultOptions.config.chains[0].id,
-      validator.assertValidAddress(),
+      chainId: defaultOptions.config.chains[0].id,
+      validator: validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
-      boostId,
-    );
+      boostId: boostId,
+    });
 
-    const badClaimDataPayload = await prepareSignerValidatorClaimDataPayload(
-      untrustedSigner,
+    const badClaimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: untrustedSigner,
       incentiveData,
-      defaultOptions.config.chains[0].id,
-      validator.assertValidAddress(),
+      chainId: defaultOptions.config.chains[0].id,
+      validator: validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
-      boostId,
-    );
+      boostId: boostId,
+    });
 
     // Validation using trusted signer
     expect(
@@ -118,15 +118,15 @@ describe('SignerValidator', () => {
     // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
     const trustedSigner = accounts.at(0)!;
 
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
-      trustedSigner,
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: trustedSigner,
       incentiveData,
-      defaultOptions.config.chains[0].id,
-      validator.assertValidAddress(),
+      chainId: defaultOptions.config.chains[0].id,
+      validator: validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
-      boostId,
-    );
+      boostId: boostId,
+    });
 
     expect(
       await validator.validate({

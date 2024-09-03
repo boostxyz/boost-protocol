@@ -8,7 +8,6 @@ import {
 import type { ExtractAbiEvent } from 'abitype';
 import { LibZip } from 'solady';
 import type {
-  WaitForTransactionReceiptParameters,
   Abi,
   AbiEvent,
   Address,
@@ -19,6 +18,7 @@ import type {
   Hex,
   Log,
   PrivateKeyAccount,
+  WaitForTransactionReceiptParameters,
 } from 'viem';
 import {
   encodeAbiParameters,
@@ -798,17 +798,17 @@ export async function prepareSignerValidatorClaimDataPayload(
     domain,
     types: {
       SignerValidatorData: [
+        { name: 'boostId', type: 'uint256' },
         { name: 'incentiveQuantity', type: 'uint8' },
         { name: 'claimant', type: 'address' },
-        { name: 'boostId', type: 'uint256' },
         { name: 'incentiveData', type: 'bytes' },
       ],
     },
     primaryType: 'SignerValidatorData' as const,
     message: {
+      boostId,
       incentiveQuantity,
       claimant,
-      boostId,
       incentiveData: incentiveData,
     },
   };

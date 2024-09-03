@@ -21,7 +21,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     mapping(bytes32 => bool) internal _used;
 
     bytes32 internal constant _SIGNER_VALIDATOR_TYPEHASH =
-        keccak256("SignerValidatorData(uint8 incentiveQuantity,address claimant,uint256 boostId,bytes incentiveData)");
+        keccak256("SignerValidatorData(uint256 boostId,uint8 incentiveQuantity,address claimant,bytes incentiveData)");
 
     /// @notice Construct a new SignerValidator
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
@@ -81,7 +81,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     {
         return _hashTypedData(
             keccak256(
-                abi.encode(_SIGNER_VALIDATOR_TYPEHASH, incentiveQuantity, claimant, boostId, keccak256(incentiveData))
+                abi.encode(_SIGNER_VALIDATOR_TYPEHASH, boostId, incentiveQuantity, claimant, keccak256(incentiveData))
             )
         );
     }

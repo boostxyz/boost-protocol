@@ -5,6 +5,7 @@ import {
   encodePacked,
   isAddress,
   keccak256,
+  pad,
   parseEther,
   zeroAddress,
 } from 'viem';
@@ -17,7 +18,11 @@ import {
   freshBoost,
 } from '../../test/helpers';
 import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
-import { bytes4, prepareSignerValidatorValidatePayload } from '../utils';
+import {
+  bytes4,
+  prepareSignerValidatorClaimDataPayload,
+  prepareSignerValidatorValidatePayload,
+} from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures;
@@ -51,13 +56,10 @@ describe('AllowListIncentive', () => {
   });
 
   test('can claim', async () => {
-    const referrer = accounts.at(1)!.account!;
-    const message = keccak256(encodePacked(['string'], ['test']));
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)?.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
-    });
     const allowList = await loadFixture(freshAllowList(fixtures));
     const allowListIncentive = new fixtures.bases.AllowListIncentive(
       defaultOptions,
@@ -73,28 +75,39 @@ describe('AllowListIncentive', () => {
       allowListIncentive.assertValidAddress(),
       LIST_MANAGER_ROLE,
     );
+
+    const incentiveId = 0n;
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    console.log(claimant);
+    const typeHashData = await boost.validator.hashSignerData({
+      boostId: boost.id,
+      incentiveId,
+      claimant,
+      incentiveData,
+    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
     await fixtures.core.claimIncentive(
       boost.id,
       0n,
       referrer,
-      prepareSignerValidatorValidatePayload({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
-      }),
+      claimDataPayload,
       { value: parseEther('0.000075'), account: trustedSigner.privateKey },
     );
     expect(await allowList.isAllowed(trustedSigner.account)).toBe(true);
   });
 
   test('cannot claim twice', async () => {
-    const referrer = accounts.at(1)!.account!;
-    const message = keccak256(encodePacked(['string'], ['test']));
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)?.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
-    });
     const allowList = await loadFixture(freshAllowList(fixtures));
     const allowListIncentive = new fixtures.bases.AllowListIncentive(
       defaultOptions,
@@ -110,15 +123,28 @@ describe('AllowListIncentive', () => {
       allowListIncentive.assertValidAddress(),
       LIST_MANAGER_ROLE,
     );
+    const incentiveId = 0n;
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    console.log(claimant);
+    const typeHashData = await boost.validator.hashSignerData({
+      boostId: boost.id,
+      incentiveId,
+      claimant,
+      incentiveData,
+    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
     await fixtures.core.claimIncentive(
       boost.id,
       0n,
       referrer,
-      prepareSignerValidatorValidatePayload({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
-      }),
+      claimDataPayload,
       { value: parseEther('0.000075'), account: trustedSigner.privateKey },
     );
     try {
@@ -126,11 +152,7 @@ describe('AllowListIncentive', () => {
         boost.id,
         0n,
         referrer,
-        prepareSignerValidatorValidatePayload({
-          signer: trustedSigner.account,
-          hash: message,
-          signature: trustedSignature,
-        }),
+        claimDataPayload,
         { value: parseEther('0.000075'), account: trustedSigner.privateKey },
       );
     } catch (e) {

@@ -40,7 +40,7 @@ abstract contract ASignerValidator is IBoostClaim, AValidator {
     function setValidatorCaller(address newCaller) external virtual;
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(AValidator) returns (bytes4) {
+    function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(ASignerValidator).interfaceId;
     }
 

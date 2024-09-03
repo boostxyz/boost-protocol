@@ -6,6 +6,7 @@ import {
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
+import { secp256k1 } from 'ethereum-cryptography/secp256k1';
 import { LibZip } from 'solady';
 import type {
   Abi,
@@ -17,6 +18,7 @@ import type {
   Hash,
   Hex,
   Log,
+  PrivateKeyAccount,
   WaitForTransactionReceiptParameters,
 } from 'viem';
 import {
@@ -519,56 +521,82 @@ export interface ERC20IncentivePayload {
 }
 
 /**
- * Object representing the payload for a validation.
+ * Object representing the payload for signing before validaton.
  *
  * @export
- * @interface SignerValidatorValidatePayload
- * @typedef {SignerValidatorValidatePayload}
+ * @interface SignerValidatorSignaturePayload
+ * @typedef {SignerValidatorSignaturePayload}
  */
-export interface SignerValidatorValidatePayload {
+export interface SignerValidatorSignaturePayload {
   /**
-   * The address of the signer with which to validate.
+   * The ID of the boost.
+   *
+   * @type {bigint}
+   */
+  boostId: bigint;
+  /**
+   * The ID of the incentive.
+   *
+   * @type {bigint}
+   */
+  incentiveId: bigint;
+  /**
+   * The address of the claimant.
    *
    * @type {Address}
    */
-  signer: Address;
+  claimant: Address;
   /**
-   * The transaction hash to associate with the validation.
+   * The claim data.
    *
    * @type {Hex}
    */
-  hash: Hex;
-  /**
-   * The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
-   *
-   * @type {Hex}
-   */
-  signature: Hex;
+  incentiveData: Hex;
 }
 
-/**
- * Function to properly encode a validation payload.
- *
- * @param {SignerValidatorValidatePayload} param0
- * @param {Address} param0.signer - The address of the signer with which to validate.
- * @param {Hex} param0.hash - The transaction hash to associate with the validation.
- * @param {Hex} param0.signature - The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
- * @returns {*}
- */
-export const prepareSignerValidatorValidatePayload = ({
-  signer,
-  hash,
-  signature,
-}: SignerValidatorValidatePayload) => {
-  return encodeAbiParameters(
-    [
-      { type: 'address', name: 'signer_' },
-      { type: 'bytes32', name: 'hash_' },
-      { type: 'bytes', name: 'signature_' },
-    ],
-    [signer, hash, signature],
-  );
-};
+// /**
+//  * Function to properly encode a validation payload.
+//  *
+//  * @param {SignerValidatorValidatePayload} param0
+//  * @param {Address} param0.signer - The address of the signer with which to validate.
+//  * @param {Hex} param0.hash - The transaction hash to associate with the validation.
+//  * @param {Hex} param0.signature - The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer
+//  * @param {Address} param0.validator - Address of the validator module.
+//  * @returns {*}
+//  */
+// export const prepareSignerValidatorSignaturePayload = ({
+//   boostId,
+//   incentiveId,
+//   claimant,
+//   claimData,
+//   validator,
+//   chainId,
+// }: SignerValidatorSignaturePayload) => {
+//   const domain = {
+//     name: 'SignerValidator',
+//     version: '1',
+//     chainId: chainId,
+//     verifyingContract: validator,
+//   };
+//   return hashTypedData({
+//     domain,
+//     types: {
+//       SignerValidatorData: [
+//         { name: 'incentiveId', type: 'uint256' },
+//         { name: 'claimant', type: 'address' },
+//         { name: 'boostId', type: 'uint256' },
+//         { name: 'claimData', type: 'bytes32' },
+//       ],
+//     },
+//     primaryType: 'SignerValidatorData',
+//     message: {
+//       incentiveId,
+//       claimant,
+//       boostId,
+//       claimData,
+//     },
+//   });
+// };
 
 /**
  * Object reprentation of a {@link SignerValidator} initialization payload
@@ -586,6 +614,33 @@ export interface SignerValidatorPayload {
   signers: Address[];
 }
 
+export interface SignerValidatorValidatePayload {
+  /**
+   * The ID of the boost.
+   *
+   * @type {bigint}
+   */
+  boostId: bigint;
+  /**
+   * The ID of the incentive.
+   *
+   * @type {bigint}
+   */
+  incentiveId: bigint;
+  /**
+   * The address of the claimant.
+   *
+   * @type {Address}
+   */
+  claimant: Address;
+  /**
+   * The claim data.
+   *
+   * @type {Hex}
+   */
+  claimData: Hex;
+}
+
 /**
  * Given a {@link SignerValidatorPayload}, properly encode the initialization payload.
  *
@@ -601,6 +656,185 @@ export const prepareSignerValidatorPayload = ({
     [signers],
   );
 };
+
+/**
+ * Object representation of a {@link BoostClaimData} initialization payload
+ *
+ * @export
+ * @interface BoostClaimData
+ * @typedef {BoostClaimData}
+ */
+export interface BoostClaimData {
+  /**
+   * The validator data.
+   *
+   * @type {Hex}
+   */
+  validatorData: Hex;
+
+  /**
+   * The incentive data.
+   *
+   * @type {Hex}
+   */
+  incentiveData: Hex;
+}
+
+/**
+ * Given a {@link BoostClaimData}, properly encode the initialization payload.
+ *
+ * @param {BoostClaimData} param0
+ * @param {Hex} param0.validatorData
+ * @param {Hex} param0.incentiveData
+ * @returns {Hex}
+ */
+export const prepareBoostClaimData = ({
+  validatorData,
+  incentiveData,
+}: BoostClaimData) => {
+  return encodeAbiParameters(
+    [
+      { type: 'bytes', name: 'validatorData' },
+      { type: 'bytes', name: 'incentiveData' },
+    ],
+    [validatorData, incentiveData],
+  );
+};
+
+/**
+ * Object representation of a {@link SignerValidatorInputParams} initialization payload
+ *
+ * @export
+ * @interface SignerValidatorInputParams
+ * @typedef {SignerValidatorInputParams}
+ */
+export interface SignerValidatorInputParams {
+  /**
+   * The signer address.
+   *
+   * @type {Address}
+   */
+  signer: Address;
+
+  /**
+   * The signature data.
+   *
+   * @type {string}
+   */
+  signature: Hex;
+
+  /**
+   * The incentive quantity.
+   *
+   * @type {number}
+   */
+  incentiveQuantity: number;
+}
+
+/**
+ * Given a {@link SignerValidatorInputParams}, properly encode the initialization payload.
+ *
+ * @param {SignerValidatorInputParams} param0
+ * @param {Address} param0.signer
+ * @param {Hex} param0.signature
+ * @param {number} param0.incentiveQuantity
+ * @returns {Hex}
+ */
+export const prepareSignerValidatorInputParams = ({
+  signer,
+  signature,
+  incentiveQuantity,
+}: SignerValidatorInputParams) => {
+  return encodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'SignerValidatorInputParams',
+        components: [
+          { type: 'address', name: 'signer' },
+          { type: 'bytes', name: 'signature' },
+          { type: 'uint8', name: 'incentiveQuantity' },
+        ],
+      },
+    ],
+    [{ signer, signature, incentiveQuantity }],
+  );
+};
+
+/**
+ * @title Signer Validator Claim Data Payload Preparation
+ * @dev Prepares the claim data payload for a signer validator.
+ * @param boostId The ID of the boost.
+ * @param incentiveId The ID of the incentive.
+ * @param claimant The address of the claimant.
+ * @param validatorAddress The address of the validator.
+ * @param accounts The list of accounts, where the first account is used as the trusted signer.
+ * @param defaultOptions Configuration options including the signing configuration.
+ * @param zeroHash A predefined zero hash value to be used in the payload.
+ * @returns The encoded ABI parameters for the boost claim data payload.
+ */
+export async function prepareSignerValidatorClaimDataPayload(
+  signer: {
+    account: Address;
+    key: Hex;
+    privateKey: PrivateKeyAccount;
+  },
+  incentiveData: Hex,
+  typeHashData: Hex,
+): Promise<Hex> {
+  // Sign the hashed signer data
+
+  // NOTE: viem/wagmi automatically prepends message info so we need to use a custom signing process
+  const trustedSignature = await signMessage(typeHashData, signer.key);
+
+  // Prepare the claim data payload using the new helper
+  const validatorData = prepareSignerValidatorInputParams({
+    signer: signer.account,
+    signature: trustedSignature,
+    incentiveQuantity: 1, // Adjust incentive quantity as necessary
+  });
+
+  const boostClaimDataPayload = encodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'BoostClaimData',
+        components: [
+          { type: 'bytes', name: 'validatorData' },
+          { type: 'bytes', name: 'incentiveData' },
+        ],
+      },
+    ],
+    [{ validatorData, incentiveData }],
+  );
+
+  return boostClaimDataPayload;
+}
+
+/**
+ * Signs a message using secp256k1 and returns the r, s, and v components.
+ *
+ * @param message - The message to sign.
+ * @param privateKey - The private key to sign the message with.
+ * @returns The signature as a hex string.
+ */
+function signMessage(message: Hex, privateKey: string): Hex {
+  // Convert the private key to a Uint8Array
+  const privateKeyBytes = Uint8Array.from(
+    Buffer.from(privateKey.slice(2), 'hex'),
+  );
+
+  // Sign the message hash using secp256k1
+  const signature = secp256k1.sign(message.slice(2), privateKeyBytes);
+
+  // Convert the signature to a hex string
+  const r = signature.r.toString(16).padStart(64, '0');
+  const s = signature.s.toString(16).padStart(64, '0');
+  const v = signature.recovery + 27;
+
+  // Concatenate r, s, and v into a single hex string
+  return `0x${r}${s}${v.toString(16).padStart(2, '0')}`;
+}
 
 /**
  * Object representation of a {@link SimpleAllowList} initialization payload.

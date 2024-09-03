@@ -1,4 +1,5 @@
 import {
+  readSignerValidatorHashSignerData,
   readSignerValidatorSigners,
   signerValidatorAbi,
   simulateSignerValidatorSetAuthorized,
@@ -18,10 +19,10 @@ import {
   type ReadParams,
   RegistryType,
   type SignerValidatorPayload,
+  type SignerValidatorSignaturePayload,
   type SignerValidatorValidatePayload,
   type WriteParams,
   prepareSignerValidatorPayload,
-  prepareSignerValidatorValidatePayload,
 } from '../utils';
 
 export { signerValidatorAbi };
@@ -95,6 +96,32 @@ export class SignerValidator extends DeployableTarget<
   }
 
   /**
+   * Retrieve the hash and signer data for a given hash
+   *
+   * @public
+   * @async
+   * @param {SignerValidatorSignaturePayload} payload
+   * @param {?ReadParams<typeof signerValidatorAbi, 'hashSignerData'>} [params]
+   * @returns {unknown}
+   */
+  public async hashSignerData(
+    payload: SignerValidatorSignaturePayload,
+    params?: ReadParams<typeof signerValidatorAbi, 'hashSignerData'>,
+  ) {
+    return readSignerValidatorHashSignerData(this._config, {
+      address: this.assertValidAddress(),
+      args: [
+        payload.boostId,
+        payload.incentiveId,
+        payload.claimant,
+        payload.incentiveData,
+      ],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
    * Validate that the action has been completed successfully. The data payload is expected to be a tuple of (address signer, bytes32 hash, bytes signature). The signature is expected to be a valid ECDSA or EIP-1271 signature of a unique hash by an authorized signer.
    *
    * @public
@@ -127,7 +154,12 @@ export class SignerValidator extends DeployableTarget<
       this._config,
       {
         address: this.assertValidAddress(),
-        args: [prepareSignerValidatorValidatePayload(payload)],
+        args: [
+          payload.boostId,
+          payload.incentiveId,
+          payload.claimant,
+          payload.claimData,
+        ],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),

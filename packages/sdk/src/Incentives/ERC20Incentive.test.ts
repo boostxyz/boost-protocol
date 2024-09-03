@@ -5,6 +5,7 @@ import {
   encodePacked,
   isAddress,
   keccak256,
+  pad,
   parseEther,
   zeroAddress,
 } from 'viem';
@@ -18,7 +19,7 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { StrategyType, prepareSignerValidatorValidatePayload } from '../utils';
+import { StrategyType, prepareSignerValidatorClaimDataPayload } from '../utils';
 import { ERC20Incentive } from './ERC20Incentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
@@ -46,13 +47,10 @@ describe('ERC20Incentive', () => {
   });
 
   test('can claim', async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!,
+      // biome-ignore lint/style/noNonNullAssertion: we know this is defined
       trustedSigner = accounts.at(0)!;
-    const message = keccak256(encodePacked(['string'], ['test']));
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
-    });
     const erc20Incentive = new fixtures.bases.ERC20Incentive(defaultOptions, {
       asset: budgets.erc20.assertValidAddress(),
       strategy: StrategyType.POOL,
@@ -63,15 +61,29 @@ describe('ERC20Incentive', () => {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
+
+    const incentiveId = 0n;
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    console.log(claimant);
+    const typeHashData = await boost.validator.hashSignerData({
+      boostId: boost.id,
+      incentiveId,
+      claimant,
+      incentiveData,
+    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
     await fixtures.core.claimIncentive(
       boost.id,
       0n,
       referrer,
-      prepareSignerValidatorValidatePayload({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
-      }),
+      claimDataPayload,
       { value: BOOST_CORE_CLAIM_FEE },
     );
     expect(
@@ -83,13 +95,10 @@ describe('ERC20Incentive', () => {
   });
 
   test('cannot claim twice', async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!;
-    const message = keccak256(encodePacked(['string'], ['test']));
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
-    });
     const erc20Incentive = new fixtures.bases.ERC20Incentive(defaultOptions, {
       asset: budgets.erc20.assertValidAddress(),
       strategy: StrategyType.POOL,
@@ -100,15 +109,29 @@ describe('ERC20Incentive', () => {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
+
+    const incentiveId = 0n;
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    console.log(claimant);
+    const typeHashData = await boost.validator.hashSignerData({
+      boostId: boost.id,
+      incentiveId,
+      claimant,
+      incentiveData,
+    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
     await fixtures.core.claimIncentive(
       boost.id,
       0n,
       referrer,
-      prepareSignerValidatorValidatePayload({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
-      }),
+      claimDataPayload,
       { value: parseEther('0.000075') },
     );
     try {
@@ -116,11 +139,7 @@ describe('ERC20Incentive', () => {
         boost.id,
         0n,
         referrer,
-        prepareSignerValidatorValidatePayload({
-          signer: trustedSigner.account,
-          hash: message,
-          signature: trustedSignature,
-        }),
+        claimDataPayload,
         { value: parseEther('0.000075') },
       );
     } catch (e) {

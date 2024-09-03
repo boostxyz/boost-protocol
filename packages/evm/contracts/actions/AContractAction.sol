@@ -23,12 +23,6 @@ abstract contract AContractAction is Action {
     /// @notice The native token value to send with the function call
     uint256 public value;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     function execute(bytes calldata data_) external payable virtual override returns (bool, bytes memory) {
         if (chainId != block.chainid) revert TargetChainUnsupported(chainId);
         (bool success, bytes memory returnData) = target.call{value: value}(_buildPayload(selector, data_));

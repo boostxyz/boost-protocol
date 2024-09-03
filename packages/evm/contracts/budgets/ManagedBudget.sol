@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 /// @title Managed Budget
 /// @notice A minimal budget implementation with RBAC that simply holds and distributes tokens (ERC20-like and native)
@@ -20,7 +21,7 @@ contract ManagedBudget is AManagedBudget {
         _disableInitializers();
     }
 
-    /// @inheritdoc AManagedBudget
+    /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized, uint256[] roles)`
     function initialize(bytes calldata data_) public virtual override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));

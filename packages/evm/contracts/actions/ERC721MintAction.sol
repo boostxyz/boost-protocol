@@ -6,6 +6,7 @@ import {ERC721} from "@solady/tokens/ERC721.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 import {AERC721MintAction} from "contracts/actions/AERC721MintAction.sol";
+import {ContractAction} from "contracts/actions/ContractAction.sol";
 
 /// @title ERC721 Mint Action
 /// @notice A primitive action to mint and/or validate that an ERC721 token has been minted
@@ -18,16 +19,19 @@ contract ERC721MintAction is AERC721MintAction {
     constructor() {
         _disableInitializers();
     }
-
     /// @inheritdoc Cloneable
     /// @notice Initialize the contract with the owner and the required mint data
     /// @param data_ The data payload for the mint action `(address target, bytes4 selector, uint256 value)`
+
     function initialize(bytes calldata data_) public virtual override initializer {
         _initialize(abi.decode(data_, (InitPayload)));
     }
 
     function _initialize(InitPayload memory init_) internal override onlyInitializing {
-        super._initialize(init_);
+        chainId = init_.chainId;
+        target = init_.target;
+        selector = init_.selector;
+        value = init_.value;
         _initializeOwner(msg.sender);
     }
 }

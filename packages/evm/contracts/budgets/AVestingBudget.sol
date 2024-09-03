@@ -43,12 +43,6 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         _;
     }
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @inheritdoc Budget
     /// @notice Allocates assets to the budget
     /// @param data_ The packed data for the {Transfer} request

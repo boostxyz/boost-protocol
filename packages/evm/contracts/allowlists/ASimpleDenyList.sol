@@ -12,12 +12,6 @@ abstract contract ASimpleDenyList is AllowList {
     /// @dev An internal mapping of denied statuses
     mapping(address => bool) internal _denied;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @notice Check if a user is authorized (i.e. not denied)
     /// @param user_ The address of the user
     /// @param - The data payload for the authorization check, not used in this implementation

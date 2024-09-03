@@ -33,12 +33,6 @@ abstract contract ACGDAIncentive is Incentive {
     CGDAParameters public cgdaParams;
     uint256 public totalBudget;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the incentive
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @inheritdoc Incentive
     /// @notice Claim the incentive
     function claim(bytes calldata data_) external virtual override onlyOwner returns (bool) {

@@ -58,7 +58,7 @@ contract EventActionTest is Test {
         assertEq(action.getActionEvent(0).eventSignature, bytes4(keccak256("Transfer(address,address,uint256)")));
     }
 
-    function testInitialize_NotInitializing() public {
+    function testInitialize_InvalidInitialization() public {
         // Ensure the initialize function reverts with NotInitializing error
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         baseAction.initialize("");

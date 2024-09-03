@@ -4,21 +4,12 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
 import {Action} from "contracts/actions/Action.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
 import {AContractAction} from "contracts/actions/AContractAction.sol";
-
-// contract TargetContract {
-//     event Called(address indexed sender, bytes message, uint256 count);
-//     uint256 public callCount;
-//     function callMeMaybe(bytes calldata message) payable public returns (address, uint256, string memory, address) {
-//         // (uint256 number, string memory str, address addr) = abi.decode(message, (uint256, string, address));
-//         // emit Called(msg.sender, message, ++callCount);
-//         // return (msg.sender, number, str, addr);
-//     }
-// }
 
 contract ContractActionTest is Test {
     MockERC20 public target = new MockERC20();
@@ -64,6 +55,20 @@ contract ContractActionTest is Test {
         assertEq(action.target(), address(target));
         assertEq(action.selector(), target.mintPayable.selector);
         assertEq(action.value(), 0.1 ether);
+    }
+
+    function testInitialize_NotInitializing() public {
+        vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
+        baseAction.initialize(
+            abi.encode(
+                ContractAction.InitPayload({
+                    chainId: block.chainid,
+                    target: address(target),
+                    selector: target.mintPayable.selector,
+                    value: 0.1 ether
+                })
+            )
+        );
     }
 
     ////////////////////////////

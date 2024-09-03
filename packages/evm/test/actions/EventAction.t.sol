@@ -3,11 +3,13 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {MockERC721} from "contracts/shared/Mocks.sol";
 import {EventAction} from "contracts/actions/EventAction.sol";
 import {AEventAction} from "contracts/actions/AEventAction.sol";
 import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {BoostError} from "contracts/shared/BoostError.sol";
 
 contract EventActionTest is Test {
     MockERC721 public mockAsset = new MockERC721();
@@ -54,6 +56,32 @@ contract EventActionTest is Test {
         // Ensure the action was initialized correctly
         assertEq(action.getActionEventsCount(), 4);
         assertEq(action.getActionEvent(0).eventSignature, bytes4(keccak256("Transfer(address,address,uint256)")));
+    }
+
+    function testInitialize_NotInitializing() public {
+        // Ensure the initialize function reverts with NotInitializing error
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        baseAction.initialize("");
+    }
+
+    ///////////////////////////
+    // EventAction.prepare   //
+    ///////////////////////////
+
+    function testPrepareReverts() public {
+        // Ensure the prepare function reverts with BoostError.NotImplemented error
+        vm.expectRevert(BoostError.NotImplemented.selector);
+        action.prepare("");
+    }
+
+    ///////////////////////////
+    // EventAction.execute   //
+    ///////////////////////////
+
+    function testExecuteReverts() public {
+        // Ensure the execute function reverts with BoostError.NotImplemented error
+        vm.expectRevert(BoostError.NotImplemented.selector);
+        action.execute("");
     }
 
     ////////////////////////////

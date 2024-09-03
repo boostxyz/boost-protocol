@@ -5,6 +5,7 @@ import {
   encodePacked,
   isAddress,
   keccak256,
+  pad,
   parseEther,
   zeroAddress,
   zeroHash,
@@ -19,7 +20,7 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { prepareSignerValidatorValidatePayload } from '../utils';
+import { prepareSignerValidatorClaimDataPayload } from '../utils';
 import { ERC1155Incentive, ERC1155StrategyType } from './ERC1155Incentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
@@ -48,13 +49,10 @@ describe('ERC1155Incentive', () => {
   });
 
   test('can claim', async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!,
+      // biome-ignore lint/style/noNonNullAssertion: we know this is defined
       trustedSigner = accounts.at(0)!;
-    const message = keccak256(encodePacked(['string'], ['test']));
-    const trustedSignature = await signMessage(defaultOptions.config, {
-      account: trustedSigner.privateKey,
-      message: { raw: message },
-    });
     const erc1155Incentive = new fixtures.bases.ERC1155Incentive(
       defaultOptions,
       {
@@ -69,15 +67,29 @@ describe('ERC1155Incentive', () => {
       budget: budgets.budget,
       incentives: [erc1155Incentive],
     });
+
+    const incentiveId = 0n;
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    console.log(claimant);
+    const typeHashData = await boost.validator.hashSignerData({
+      boostId: boost.id,
+      incentiveId,
+      claimant,
+      incentiveData,
+    });
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
+      trustedSigner,
+      incentiveData,
+      typeHashData,
+    );
+
     await fixtures.core.claimIncentive(
       boost.id,
       0n,
       referrer,
-      prepareSignerValidatorValidatePayload({
-        signer: trustedSigner.account,
-        hash: message,
-        signature: trustedSignature,
-      }),
+      claimDataPayload,
       { value: BOOST_CORE_CLAIM_FEE },
     );
     expect(

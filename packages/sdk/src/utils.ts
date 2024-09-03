@@ -8,6 +8,7 @@ import {
 import type { ExtractAbiEvent } from 'abitype';
 import { LibZip } from 'solady';
 import type {
+  Abi,
   AbiEvent,
   Address,
   ContractEventName,

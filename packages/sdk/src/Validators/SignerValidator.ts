@@ -112,7 +112,7 @@ export class SignerValidator extends DeployableTarget<
       address: this.assertValidAddress(),
       args: [
         payload.boostId,
-        payload.incentiveId,
+        payload.incentiveQuantity,
         payload.claimant,
         payload.incentiveData,
       ],

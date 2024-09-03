@@ -1,14 +1,5 @@
-import { writePointsGrantRoles } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage } from '@wagmi/core';
-import {
-  encodePacked,
-  isAddress,
-  keccak256,
-  pad,
-  parseEther,
-  zeroAddress,
-} from 'viem';
+import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -18,11 +9,7 @@ import {
   freshBoost,
 } from '../../test/helpers';
 import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
-import {
-  bytes4,
-  prepareSignerValidatorClaimDataPayload,
-  prepareSignerValidatorValidatePayload,
-} from '../utils';
+import { prepareSignerValidatorClaimDataPayload } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures;
@@ -81,15 +68,15 @@ describe('AllowListIncentive', () => {
     console.log(claimant);
 
     const incentiveQuantity = 0;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
-      trustedSigner,
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: trustedSigner,
       incentiveData,
-      defaultOptions.config.chains[0].id,
-      boost.validator.assertValidAddress(),
+      chainId: defaultOptions.config.chains[0].id,
+      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
-      boost.id,
-    );
+      boostId: boost.id,
+    });
 
     await fixtures.core.claimIncentive(
       boost.id,
@@ -126,15 +113,15 @@ describe('AllowListIncentive', () => {
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     console.log(claimant);
 
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload(
-      trustedSigner,
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: trustedSigner,
       incentiveData,
-      defaultOptions.config.chains[0].id,
-      boost.validator.assertValidAddress(),
+      chainId: defaultOptions.config.chains[0].id,
+      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
-      boost.id,
-    );
+      boostId: boost.id,
+    });
 
     await fixtures.core.claimIncentive(
       boost.id,

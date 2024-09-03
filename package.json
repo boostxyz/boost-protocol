@@ -47,8 +47,7 @@
     "typescript": "^5.3.3",
     "viem": "^2.20.1",
     "vite": "^5.2.13",
-    "vitest": "^1.6.0",
-    "ethereum-cryptography": "2.2.1"
+    "vitest": "^1.6.0"
   },
   "pnpm": {
     "overrides": {

@@ -614,6 +614,13 @@ export interface SignerValidatorPayload {
   signers: Address[];
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SignerValidatorValidatePayload
+ * @typedef {SignerValidatorValidatePayload}
+ */
 export interface SignerValidatorValidatePayload {
   /**
    * The ID of the boost.
@@ -762,32 +769,89 @@ export const prepareSignerValidatorInputParams = ({
 };
 
 /**
- * @title Signer Validator Claim Data Payload Preparation
- * @dev Prepares the claim data payload for a signer validator.
- * @param boostId The ID of the boost.
- * @param incentiveId The ID of the incentive.
- * @param claimant The address of the claimant.
- * @param validatorAddress The address of the validator.
- * @param accounts The list of accounts, where the first account is used as the trusted signer.
- * @param defaultOptions Configuration options including the signing configuration.
- * @param zeroHash A predefined zero hash value to be used in the payload.
- * @returns The encoded ABI parameters for the boost claim data payload.
+ * Signer Validator Claim Data Payload
+ *
+ * @export
+ * @interface SignerValidatorClaimDataParams
+ * @typedef {SignerValidatorClaimDataParams}
  */
-export async function prepareSignerValidatorClaimDataPayload(
+export interface SignerValidatorClaimDataParams {
+  /**
+   * The signer with which to sign the input
+   *
+   * @type {{
+   *     account: Address;
+   *     key: Hex;
+   *     privateKey: PrivateKeyAccount;
+   *   }}
+   */
   signer: {
     account: Address;
     key: Hex;
     privateKey: PrivateKeyAccount;
-  },
-  incentiveData: Hex,
-  chainId: number,
-  validator: Address,
-  incentiveQuantity: number,
-  claimant: Address,
-  boostId: bigint,
-): Promise<Hex> {
-  // Sign the hashed signer data
+  };
+  /**
+   * The encoded data to provide the underlying incentive. You can use {@link prepareAllowListIncentivePayload}, {@link prepareCGDAIncentivePayload}, {@link prepareERC20IncentivePayload}, {@link prepareERC1155IncentivePayload}, or {@link preparePointsIncentivePayload}
+   *
+   * @type {Hex}
+   */
+  incentiveData: Hex;
+  /**
+   * The chain id to target
+   *
+   * @type {number}
+   */
+  chainId: number;
+  /**
+   * The address of the validator
+   *
+   * @type {Address}
+   */
+  validator: Address;
+  /**
+   * The incentive quantity.
+   *
+   * @type {number}
+   */
+  incentiveQuantity: number;
+  /**
+   * The address of the claimant
+   *
+   * @type {Address}
+   */
+  claimant: Address;
+  /**
+   * The ID of the boost
+   *
+   * @type {bigint}
+   */
+  boostId: bigint;
+}
 
+/**
+ * Signer Validator Claim Data Payload Preparation
+ *
+ * @export
+ * @async
+ * @param {SignerValidatorClaimDataParams} param0
+ * @param {{ account: Address; key: Hex; privateKey: PrivateKeyAccount; }} param0.signer
+ * @param {Hex} param0.incentiveData
+ * @param {number} param0.chainId
+ * @param {Address} param0.validator
+ * @param {number} param0.incentiveQuantity
+ * @param {Address} param0.claimant
+ * @param {bigint} param0.boostId
+ * @returns {Promise<Hex>}
+ */
+export async function prepareSignerValidatorClaimDataPayload({
+  signer,
+  incentiveData,
+  chainId,
+  validator,
+  incentiveQuantity,
+  claimant,
+  boostId,
+}: SignerValidatorClaimDataParams): Promise<Hex> {
   const domain = {
     name: 'SignerValidator',
     version: '1',

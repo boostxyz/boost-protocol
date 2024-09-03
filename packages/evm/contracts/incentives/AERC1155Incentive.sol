@@ -123,7 +123,7 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(AERC1155Incentive).interfaceId;
     }
 

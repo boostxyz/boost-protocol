@@ -128,7 +128,7 @@ abstract contract AERC20Incentive is Incentive {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(AERC20Incentive).interfaceId;
     }
 

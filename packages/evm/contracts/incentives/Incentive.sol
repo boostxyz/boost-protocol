@@ -73,9 +73,4 @@ abstract contract Incentive is Ownable, Cloneable, ReentrancyGuard {
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Incentive).interfaceId || super.supportsInterface(interfaceId);
     }
-
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
-        return type(Incentive).interfaceId;
-    }
 }

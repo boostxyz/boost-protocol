@@ -21,7 +21,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     mapping(bytes32 => bool) internal _used;
 
     bytes32 internal constant _SIGNER_VALIDATOR_TYPEHASH =
-        keccak256("SignerValidatorData(uint256 incentiveId, address claimant,uint256 boostId,bytes32 incentiveData)");
+        keccak256("SignerValidatorData(uint8 incentiveQuantity,address claimant,uint256 boostId,bytes incentiveData)");
 
     /// @notice Construct a new SignerValidator
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
@@ -51,7 +51,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
         (SignerValidatorInputParams memory validatorData) =
             abi.decode(claim.validatorData, (SignerValidatorInputParams));
 
-        bytes32 hash = hashSignerData(boostId, incentiveId, claimant, claim.incentiveData);
+        bytes32 hash = hashSignerData(boostId, validatorData.incentiveQuantity, claimant, claim.incentiveData);
         if (!signers[validatorData.signer]) revert BoostError.Unauthorized();
         if (_used[hash]) revert BoostError.Replayed(validatorData.signer, hash, validatorData.signature);
         // Mark the hash as used to prevent replays
@@ -73,13 +73,15 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
         }
     }
 
-    function hashSignerData(uint256 boostId, uint256 incentiveId, address claimant, bytes memory incentiveData)
+    function hashSignerData(uint256 boostId, uint8 incentiveQuantity, address claimant, bytes memory incentiveData)
         public
         view
         returns (bytes32 hashedSignerData)
     {
         return _hashTypedData(
-            keccak256(abi.encode(_SIGNER_VALIDATOR_TYPEHASH, incentiveId, claimant, boostId, keccak256(incentiveData)))
+            keccak256(
+                abi.encode(_SIGNER_VALIDATOR_TYPEHASH, incentiveQuantity, claimant, boostId, keccak256(incentiveData))
+            )
         );
     }
 

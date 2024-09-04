@@ -236,7 +236,7 @@ contract SignerValidatorTest is Test {
         validator.validate(boostId, incentiveId, claimant, claimData);
     }
 
-    function testValidate_FuzzMaliciousSignature(
+    function testValidate_FuzzMaliciousSigner(
         uint256 boostId,
         uint256 incentiveId,
         uint8 incentiveQuantity,
@@ -252,6 +252,23 @@ contract SignerValidatorTest is Test {
         ASignerValidator.SignerValidatorInputParams memory validatorData =
             ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
         bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
+    }
+
+    function testValidate_FuzzMaliciousSignature(uint8 v, bytes32 r, bytes32 s) public {
+        v = uint8(bound(v, 27, 28));
+        uint256 boostId = 5;
+        uint256 incentiveId = 1;
+        uint8 incentiveQuantity = 2;
+        address claimant = makeAddr("claimant");
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+
+        bytes memory signature = _packSignature(v, r, s);
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+
         assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
@@ -299,6 +316,10 @@ contract SignerValidatorTest is Test {
 
     function _signHash(bytes32 digest, uint256 privateKey) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        return _packSignature(v, r, s);
+    }
+
+    function _packSignature(uint8 v, bytes32 r, bytes32 s) internal pure returns (bytes memory) {
         return abi.encodePacked(r, s, v);
     }
 }

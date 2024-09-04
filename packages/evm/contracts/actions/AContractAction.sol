@@ -47,8 +47,8 @@ abstract contract AContractAction is Action {
         }
     }
 
-    /// @inheritdoc Action
-    function getComponentInterface() public pure virtual override(Action) returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AContractAction).interfaceId;
     }
 

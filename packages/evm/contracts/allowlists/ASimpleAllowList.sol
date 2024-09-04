@@ -39,7 +39,7 @@ abstract contract ASimpleAllowList is AllowList, OwnableRoles {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(AllowList) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(ASimpleAllowList).interfaceId;
     }
 

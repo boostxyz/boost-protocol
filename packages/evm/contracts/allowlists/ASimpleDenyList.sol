@@ -34,7 +34,7 @@ abstract contract ASimpleDenyList is AllowList {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(AllowList) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(ASimpleDenyList).interfaceId;
     }
 

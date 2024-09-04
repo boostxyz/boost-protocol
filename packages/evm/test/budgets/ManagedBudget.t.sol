@@ -1111,6 +1111,16 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertFalse(success);
     }
 
+    ////////////////////////////////
+    // ManagedBudget.fallback //
+    ////////////////////////////////
+
+    function testFallback_NotImplemented() public {
+        // Expect the fallback function to revert with BoostError.NotImplemented
+        vm.expectRevert(BoostError.NotImplemented.selector);
+        address(managedBudget).call{value: 1 ether}("0xdeadbeef");
+    }
+
     ///////////////////////////
     // ManagedBudget.receive  //
     ///////////////////////////

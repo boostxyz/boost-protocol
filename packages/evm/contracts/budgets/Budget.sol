@@ -123,11 +123,6 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     function isAuthorized(address account_) external view virtual returns (bool);
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
-        return type(Budget).interfaceId;
-    }
-
-    /// @inheritdoc Cloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(Budget).interfaceId || super.supportsInterface(interfaceId);
     }
@@ -139,6 +134,6 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
 
     /// @inheritdoc Receiver
     fallback() external payable virtual override {
-        return;
+        revert BoostError.NotImplemented();
     }
 }

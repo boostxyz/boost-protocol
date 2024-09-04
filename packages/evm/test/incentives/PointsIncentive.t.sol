@@ -137,8 +137,8 @@ contract PointsIncentiveTest is Test {
                 })
             )
         );
-
-        vm.expectRevert(bytes4(keccak256("ClaimFailed()")));
+        points.grantRoles(address(failingIncentive), points.ISSUER_ROLE());
+        vm.expectRevert(Incentive.ClaimFailed.selector);
         failingIncentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
     }
 

@@ -133,16 +133,13 @@ contract CGDAIncentiveTest is Test {
 
         address[] memory accounts = _randomAccounts(15);
         for (uint256 i = 0; i < accounts.length; i++) {
-            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")}));
-            incentive.claim(claimPayload);
+            incentive.claim(accounts[i], hex"");
         }
 
         assertEq(incentive.currentReward(), 0.25 ether);
         assertEq(asset.balanceOf(address(incentive)), 0.25 ether);
 
-        incentive.claim(
-            abi.encode(Incentive.ClaimPayload({target: makeAddr("zach zebra's zootopia"), data: bytes("")}))
-        );
+        incentive.claim(makeAddr("zach zebra's zootopia"), hex"");
 
         assertEq(incentive.currentReward(), 0 ether);
         assertEq(asset.balanceOf(address(incentive)), 0 ether);
@@ -159,9 +156,7 @@ contract CGDAIncentiveTest is Test {
         assertEq(asset.balanceOf(address(incentive)), 0 ether);
 
         vm.expectRevert(Incentive.NotClaimable.selector);
-        incentive.claim(
-            abi.encode(Incentive.ClaimPayload({target: makeAddr("sam's soggy sandwich & soup shack"), data: bytes("")}))
-        );
+        incentive.claim(makeAddr("sam's soggy sandwich & soup shack"), hex"");
 
         assertEq(incentive.currentReward(), 0 ether);
         assertEq(asset.balanceOf(address(incentive)), 0 ether);
@@ -238,8 +233,7 @@ contract CGDAIncentiveTest is Test {
     function test_reclaim() public {
         address[] memory accounts = _randomAccounts(10);
         for (uint256 i = 0; i < accounts.length; i++) {
-            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")}));
-            incentive.claim(claimPayload);
+            incentive.claim(accounts[i], hex"");
         }
 
         assertEq(incentive.currentReward(), 0.5 ether);
@@ -260,24 +254,21 @@ contract CGDAIncentiveTest is Test {
     function test_isClaimable() public {
         address[] memory accounts = _randomAccounts(15);
         for (uint256 i = 0; i < accounts.length; i++) {
-            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: accounts[i], data: bytes("")}));
-            incentive.claim(claimPayload);
+            incentive.claim(accounts[i], hex"");
         }
 
-        assertEq(incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}))), true);
+        assertEq(incentive.isClaimable(address(1), hex""), true);
 
-        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")})));
+        incentive.claim(address(1), hex"");
 
-        assertEq(
-            incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(2), data: bytes("")}))), false
-        );
+        assertEq(incentive.isClaimable(address(2), hex""), false);
     }
 
     /////////////////////////////
     // CGDAIncentive.preflight //
     /////////////////////////////
 
-    function test_preflight() public {
+    function test_preflight() public view {
         bytes memory preflightPayload = incentive.preflight(
             abi.encode(
                 CGDAIncentive.InitPayload({
@@ -301,7 +292,7 @@ contract CGDAIncentiveTest is Test {
     // CGDAIncentive.getComponentInterface //
     ////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
         console.logBytes4(incentive.getComponentInterface());
     }
@@ -310,12 +301,12 @@ contract CGDAIncentiveTest is Test {
     // CGDAIncentive.supportsInterface //
     /////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // Ensure the contract supports the Budget interface
         assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         // Ensure the contract does not support an unsupported interface
         assertFalse(incentive.supportsInterface(type(Test).interfaceId));
     }
@@ -325,8 +316,7 @@ contract CGDAIncentiveTest is Test {
     ///////////////////////////
 
     function _makeClaim(address target_) internal {
-        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: target_, data: bytes("")}));
-        incentive.claim(claimPayload);
+        incentive.claim(target_, hex"");
     }
 
     function _makeFungibleTransfer(Budget.AssetType assetType_, address asset_, address target_, uint256 value_)

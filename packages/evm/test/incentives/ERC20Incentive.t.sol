@@ -81,8 +81,7 @@ contract ERC20IncentiveTest is Test {
         emit Incentive.Claimed(address(1), abi.encodePacked(address(mockAsset), address(1), uint256(1 ether)));
 
         // Claim the incentive
-        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
-        incentive.claim(claimPayload);
+        incentive.claim(address(1), hex"");
 
         // Check the claim status
         assertTrue(incentive.claimed(address(1)));
@@ -93,12 +92,11 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Claim the incentive on behalf of address(1)
-        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
-        incentive.claim(claimPayload);
+        incentive.claim(address(1), hex"");
 
         // Attempt to claim for address(1) again => revert
         vm.expectRevert(Incentive.NotClaimable.selector);
-        incentive.claim(claimPayload);
+        incentive.claim(address(1), hex"");
     }
 
     function testClaim_RaffleStrategy() public {
@@ -106,8 +104,7 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 100 ether, 5);
 
         // Claim the incentive, which means adding the address to the entries list
-        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
-        incentive.claim(claimPayload);
+        incentive.claim(address(1), hex"");
 
         // Check that the entry was added and no tokens were transferred
         assertTrue(incentive.claimed(address(1)));
@@ -152,8 +149,7 @@ contract ERC20IncentiveTest is Test {
 
         // Claim the incentive for 1 address, adding it to the raffle entries
         // and locking in the reward since there's at least 1 potential winner
-        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
-        incentive.claim(claimPayload);
+        incentive.claim(address(1), hex"");
         assertEq(incentive.entries(0), address(1));
         assertEq(incentive.limit(), 5);
 
@@ -188,8 +184,7 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Check if the incentive is claimable
-        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
-        assertTrue(incentive.isClaimable(claimPayload));
+        assertTrue(incentive.isClaimable(address(1), hex""));
     }
 
     function testIsClaimable_AlreadyClaimed() public {
@@ -197,11 +192,10 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         // Claim the incentive on behalf of address(1)
-        bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: address(1), data: bytes("")}));
-        incentive.claim(claimPayload);
+        incentive.claim(address(1), hex"");
 
         // Check if the incentive is still claimable for address(1) => false
-        assertFalse(incentive.isClaimable(claimPayload));
+        assertFalse(incentive.isClaimable(address(1), hex""));
     }
 
     function testIsClaimable_ExceedsMaxClaims() public {
@@ -211,23 +205,21 @@ contract ERC20IncentiveTest is Test {
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(6);
         for (uint256 i = 0; i < 5; i++) {
-            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: recipients[i], data: bytes("")}));
-            incentive.claim(claimPayload);
+            incentive.claim(recipients[i], hex"");
         }
 
         // Check the claim count
         assertEq(incentive.claims(), 5);
 
         // Check if the incentive is claimable for the 6th address => false
-        bytes memory nextClaimPayload = abi.encode(Incentive.ClaimPayload({target: recipients[5], data: bytes("")}));
-        assertFalse(incentive.isClaimable(nextClaimPayload));
+        assertFalse(incentive.isClaimable(address(1), hex""));
     }
 
     //////////////////////////////
     // ERC20Incentive.preflight //
     //////////////////////////////
 
-    function testPreflight() public {
+    function testPreflight() public view {
         // Check the preflight data
         bytes memory data =
             incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5));
@@ -239,7 +231,7 @@ contract ERC20IncentiveTest is Test {
         assertEq(payload.amount, 5 ether);
     }
 
-    function testPreflight_WeirdRewards() public {
+    function testPreflight_WeirdRewards() public view {
         // Preflight with no reward amount
         bytes memory noRewards =
             incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 0 ether, 5));
@@ -255,7 +247,7 @@ contract ERC20IncentiveTest is Test {
         assertEq(payload2.amount, 0);
     }
 
-    function testPreflight_RaffleStrategy() public {
+    function testPreflight_RaffleStrategy() public view {
         // Check the preflight data for a raffle
         bytes memory data =
             incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 1 ether, 5));
@@ -278,8 +270,7 @@ contract ERC20IncentiveTest is Test {
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(5);
         for (uint256 i = 0; i < 5; i++) {
-            bytes memory claimPayload = abi.encode(Incentive.ClaimPayload({target: recipients[i], data: bytes("")}));
-            incentive.claim(claimPayload);
+            incentive.claim(recipients[i], hex"");
         }
 
         // Mock the environment so our PRNG is easily predictable
@@ -309,7 +300,7 @@ contract ERC20IncentiveTest is Test {
     // ERC20Incentive.getComponentInterface //
     ////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
         console.logBytes4(incentive.getComponentInterface());
     }
@@ -318,12 +309,12 @@ contract ERC20IncentiveTest is Test {
     // ERC20Incentive.supportsInterface //
     /////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // Ensure the contract supports the Budget interface
         assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         // Ensure the contract does not support an unsupported interface
         assertFalse(incentive.supportsInterface(type(Test).interfaceId));
     }

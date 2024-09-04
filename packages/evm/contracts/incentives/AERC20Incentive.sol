@@ -41,26 +41,25 @@ abstract contract AERC20Incentive is Incentive {
     address[] public entries;
 
     /// @notice Claim the incentive
-    /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
+    /// @param claimTarget the address receiving the claim
     /// @return True if the incentive was successfully claimed
-    function claim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        if (!_isClaimable(claim_.target)) revert NotClaimable();
+    function claim(address claimTarget, bytes calldata) external override onlyOwner returns (bool) {
+        if (!_isClaimable(claimTarget)) revert NotClaimable();
 
         if (strategy == Strategy.POOL) {
             claims++;
-            claimed[claim_.target] = true;
+            claimed[claimTarget] = true;
 
-            asset.safeTransfer(claim_.target, reward);
+            asset.safeTransfer(claimTarget, reward);
 
-            emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, reward));
+            emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, reward));
             return true;
         } else {
             claims++;
-            claimed[claim_.target] = true;
-            entries.push(claim_.target);
+            claimed[claimTarget] = true;
+            entries.push(claimTarget);
 
-            emit Entry(claim_.target);
+            emit Entry(claimTarget);
             return true;
         }
     }
@@ -88,13 +87,12 @@ abstract contract AERC20Incentive is Incentive {
     }
 
     /// @notice Check if an incentive is claimable
-    /// @param data_ The data payload for the claim check `(address recipient, bytes data)`
+    /// @param claimTarget the address that could receive the claim
     /// @return True if the incentive is claimable based on the data payload
     /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
     /// @dev The recipient must not have already claimed the incentive
-    function isClaimable(bytes calldata data_) public view override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        return _isClaimable(claim_.target);
+    function isClaimable(address claimTarget, bytes calldata) public view override returns (bool) {
+        return _isClaimable(claimTarget);
     }
 
     /// @notice Check if an incentive is claimable for a specific recipient

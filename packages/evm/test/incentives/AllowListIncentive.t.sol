@@ -27,7 +27,7 @@ contract AllowListIncentiveTest is Test {
     // Initialization //
     ////////////////////
 
-    function test_initialize() public {
+    function test_initialize() public view {
         assertEq(address(incentive.allowList()), address(allowList));
         assertEq(incentive.limit(), 10);
         assertEq(incentive.owner(), address(this));
@@ -43,53 +43,45 @@ contract AllowListIncentiveTest is Test {
     //////////////////////////////
 
     function test_claim() public {
-        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+        incentive.claim(address(1), hex"");
         assertEq(allowList.isAllowed(address(1), new bytes(0)), true);
     }
 
     function test_claim_twice() public {
-        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+        incentive.claim(address(1), hex"");
 
         vm.expectRevert(bytes4(keccak256("NotClaimable()")));
-        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+        incentive.claim(address(1), hex"");
     }
 
     function test_claim_notOwner() public {
         vm.prank(address(0xdeadbeef));
         vm.expectRevert(bytes4(keccak256("Unauthorized()")));
-        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+        incentive.claim(address(1), hex"");
     }
 
     function test_claim_maxClaims() public {
         for (uint8 i = 0; i < 10; i++) {
-            incentive.claim(
-                abi.encode(
-                    Incentive.ClaimPayload({target: makeAddr(string(abi.encodePacked("rando", i))), data: new bytes(0)})
-                )
-            );
+            incentive.claim(makeAddr(string(abi.encodePacked("rando", i))), hex"");
         }
         assertEq(incentive.claims(), 10);
 
         vm.expectRevert(bytes4(keccak256("NotClaimable()")));
-        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(11), data: new bytes(0)})));
+        incentive.claim(address(11), hex"");
     }
 
     ////////////////////////////////////
     // AllowListIncentive.isClaimable //
     ////////////////////////////////////
 
-    function test_isClaimable() public {
-        assertEq(
-            incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))), true
-        );
+    function test_isClaimable() public view {
+        assertEq(incentive.isClaimable(address(1), hex""), true);
     }
 
     function test_isClaimable_claimed() public {
-        incentive.claim(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)})));
+        incentive.claim(address(1), hex"");
 
-        assertEq(
-            incentive.isClaimable(abi.encode(Incentive.ClaimPayload({target: address(1), data: new bytes(0)}))), false
-        );
+        assertEq(incentive.isClaimable(address(1), hex""), false);
     }
 
     ////////////////////////////////
@@ -105,7 +97,7 @@ contract AllowListIncentiveTest is Test {
     // AllowListIncentive.preflight //
     //////////////////////////////////
 
-    function test_preflight() public {
+    function test_preflight() public view {
         assertEq(new bytes(0), incentive.preflight(new bytes(0)));
     }
 
@@ -113,7 +105,7 @@ contract AllowListIncentiveTest is Test {
     // AllowListIncentive.getComponentInterface //
     ////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
         console.logBytes4(incentive.getComponentInterface());
     }
@@ -122,12 +114,12 @@ contract AllowListIncentiveTest is Test {
     // AllowListIncentive.supportsInterface //
     /////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // Ensure the contract supports the Budget interface
         assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         // Ensure the contract does not support an unsupported interface
         assertFalse(incentive.supportsInterface(type(Test).interfaceId));
     }

@@ -59,11 +59,11 @@ contract ERC20VariableIncentive is Incentive {
     /// @notice Claim the incentive with variable rewards
     /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
     /// @return True if the incentive was successfully claimed
-    function claim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        uint256 signedAmount = abi.decode(claim_.data, (uint256));
+    function claim(address claimTarget, bytes calldata data_) external override onlyOwner returns (bool) {
+        BoostClaimData memory boostClaimData = abi.decode(data_, (BoostClaimData));
+        uint256 signedAmount = abi.decode(boostClaimData.incentiveData, (uint256));
         uint256 claimAmount;
-        if (!_isClaimable(claim_.target)) revert NotClaimable();
+        if (!_isClaimable(claimTarget)) revert NotClaimable();
 
         if (reward == 0) {
             claimAmount = signedAmount;
@@ -75,24 +75,22 @@ contract ERC20VariableIncentive is Incentive {
         if (totalClaimed + claimAmount > limit) revert ClaimFailed();
 
         totalClaimed += claimAmount;
-        asset.safeTransfer(claim_.target, claimAmount);
+        asset.safeTransfer(claimTarget, claimAmount);
 
-        emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, claimAmount));
+        emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, claimAmount));
         return true;
     }
 
     /// @notice Check if an incentive is claimable
-    /// @param data_ The data payload for the claim check `(address recipient, bytes data)`
+    /// @param claimTarget the potential recipient of the payout
     /// @return True if the incentive is claimable based on the data payload
-    function isClaimable(bytes calldata data_) public view override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        return _isClaimable(claim_.target);
+    function isClaimable(address claimTarget, bytes calldata) public view override returns (bool) {
+        return _isClaimable(claimTarget);
     }
 
     /// @notice Check if an incentive is claimable for a specific recipient
-    /// @param recipient_ The address of the recipient
     /// @return True if the incentive is claimable for the recipient
-    function _isClaimable(address recipient_) internal view returns (bool) {
+    function _isClaimable(address) internal view returns (bool) {
         return totalClaimed < limit;
     }
 
@@ -115,6 +113,7 @@ contract ERC20VariableIncentive is Incentive {
     /// @param data_ The data payload for the incentive `(address asset, uint256 reward, uint256 limit)`
     /// @return budgetData The {Transfer} payload to be passed to the {Budget} for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
+        // TODO: remove unused reward param
         (address asset_, uint256 reward_, uint256 limit_) = abi.decode(data_, (address, uint256, uint256));
 
         return abi.encode(

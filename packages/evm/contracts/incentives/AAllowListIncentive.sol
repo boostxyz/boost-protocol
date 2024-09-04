@@ -22,13 +22,12 @@ abstract contract AAllowListIncentive is Incentive {
 
     /// @inheritdoc Incentive
     /// @notice Claim a slot on the {SimpleAllowList}
-    /// @param data_ The claim data
-    function claim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        if (claims++ >= limit || claimed[claim_.target]) revert NotClaimable();
-        claimed[claim_.target] = true;
+    /// @param claimTarget the entity receiving the payout
+    function claim(address claimTarget, bytes calldata) external virtual override onlyOwner returns (bool) {
+        if (claims++ >= limit || claimed[claimTarget]) revert NotClaimable();
+        claimed[claimTarget] = true;
 
-        (address[] memory users, bool[] memory allowed) = _makeAllowListPayload(claim_.target);
+        (address[] memory users, bool[] memory allowed) = _makeAllowListPayload(claimTarget);
 
         allowList.setAllowed(users, allowed);
         return true;
@@ -41,9 +40,8 @@ abstract contract AAllowListIncentive is Incentive {
     }
 
     /// @inheritdoc Incentive
-    function isClaimable(bytes calldata data_) external view virtual override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        return claims < limit && !claimed[claim_.target] && !allowList.isAllowed(claim_.target, "");
+    function isClaimable(address claimTarget, bytes calldata) external view virtual override returns (bool) {
+        return claims < limit && !claimed[claimTarget] && !allowList.isAllowed(claimTarget, "");
     }
 
     /// @inheritdoc Incentive

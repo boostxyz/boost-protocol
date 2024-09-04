@@ -35,9 +35,8 @@ abstract contract ACGDAIncentive is Incentive {
 
     /// @inheritdoc Incentive
     /// @notice Claim the incentive
-    function claim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        if (!_isClaimable(claim_.target)) revert NotClaimable();
+    function claim(address claimTarget, bytes calldata) external virtual override onlyOwner returns (bool) {
+        if (!_isClaimable(claimTarget)) revert NotClaimable();
         claims++;
 
         // Calculate the current reward and update the state
@@ -47,9 +46,9 @@ abstract contract ACGDAIncentive is Incentive {
             reward > cgdaParams.rewardDecay ? reward - cgdaParams.rewardDecay : cgdaParams.rewardDecay;
 
         // Transfer the reward to the recipient
-        asset.safeTransfer(claim_.target, reward);
+        asset.safeTransfer(claimTarget, reward);
 
-        emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, reward));
+        emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, reward));
         return true;
     }
 
@@ -66,9 +65,8 @@ abstract contract ACGDAIncentive is Incentive {
     }
 
     /// @inheritdoc Incentive
-    function isClaimable(bytes calldata data_) external view virtual override returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
-        return _isClaimable(claim_.target);
+    function isClaimable(address claimTarget, bytes calldata) external view virtual override returns (bool) {
+        return _isClaimable(claimTarget);
     }
 
     /// @notice Calculates the current reward based on the time since the last claim.

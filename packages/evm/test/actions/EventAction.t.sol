@@ -59,9 +59,10 @@ contract EventActionTest is Test {
     }
 
     function testInitialize_InvalidInitialization() public {
+        EventAction newbaseAction = new EventAction();
         // Ensure the initialize function reverts with NotInitializing error
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        baseAction.initialize("");
+        newbaseAction.initialize("");
     }
 
     ///////////////////////////

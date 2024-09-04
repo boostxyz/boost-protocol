@@ -65,7 +65,7 @@ import {AValidator} from "contracts/validators/AValidator.sol";
  *     - When I complete the action
  *       - Then I can claim the rewards to my wallet
  */
-contract EndToEnd is Test {
+contract EndToEndBasic is Test {
     BoostRegistry public registry = new BoostRegistry();
     BoostCore public core = new BoostCore(registry, address(1));
 

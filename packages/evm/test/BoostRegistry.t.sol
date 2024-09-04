@@ -105,7 +105,7 @@ contract BoostRegistryTest is Test {
     // BoostRegistry.getIdentifier //
     /////////////////////////////////
 
-    function testGetIdentifier() public {
+    function testGetIdentifier() public view {
         assertEq(
             registry.getIdentifier(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList"),
             SIMPLE_ALLOW_LIST_IDENTIFIER
@@ -118,7 +118,7 @@ contract BoostRegistryTest is Test {
     // BoostRegistry.getCloneIdentifier //
     //////////////////////////////////////
 
-    function testGetCloneIdentifier() public {
+    function testGetCloneIdentifier() public view {
         bytes32 identifier = registry.getCloneIdentifier(
             BoostRegistry.RegistryType.ALLOW_LIST, address(baseAllowListImpl), address(this), "Test AllowList"
         );

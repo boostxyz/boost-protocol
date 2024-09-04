@@ -7,7 +7,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {Incentive, IBoostClaim} from "contracts/incentives/Incentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 
 import {Budget} from "contracts/budgets/Budget.sol";
@@ -79,13 +79,11 @@ contract ERC20VariableIncentiveTest is Test {
         emit Incentive.Claimed(CLAIM_RECIPIENT, abi.encodePacked(address(mockAsset), CLAIM_RECIPIENT, uint256(1 ether)));
 
         // Claim the incentive
-        bytes memory claimPayload =
-            abi.encode(Incentive.ClaimPayload({target: CLAIM_RECIPIENT, data: abi.encode(1 ether)}));
-        incentive.claim(claimPayload);
+        incentive.claim(CLAIM_RECIPIENT, _encodeBoostClaim(1 ether));
 
         // Check the claim status and balance
         assertEq(mockAsset.balanceOf(CLAIM_RECIPIENT), 1 ether);
-        assertTrue(incentive.isClaimable(claimPayload));
+        assertTrue(incentive.isClaimable(CLAIM_RECIPIENT, abi.encode(1 ether)));
     }
 
     function testClaim_ClaimFailed() public {
@@ -93,10 +91,8 @@ contract ERC20VariableIncentiveTest is Test {
         _initialize(address(mockAsset), 1 ether, 2 ether);
 
         // Attempt to claim more than the limit => revert
-        bytes memory claimPayload =
-            abi.encode(Incentive.ClaimPayload({target: EXCEEDS_LIMIT_CLAIM, data: abi.encode(3 ether)}));
         vm.expectRevert(Incentive.ClaimFailed.selector);
-        incentive.claim(claimPayload);
+        incentive.claim(CLAIM_RECIPIENT, abi.encode(IBoostClaim.BoostClaimData(hex"", abi.encode(2 ether + 1))));
     }
 
     function testClaim_VariableReward() public {
@@ -104,13 +100,11 @@ contract ERC20VariableIncentiveTest is Test {
         _initialize(address(mockAsset), 0, 5 ether);
 
         // Claim with variable reward
-        bytes memory claimPayload =
-            abi.encode(Incentive.ClaimPayload({target: VARIABLE_REWARD_CLAIM, data: abi.encode(2 ether)}));
-        incentive.claim(claimPayload);
+        incentive.claim(VARIABLE_REWARD_CLAIM, _encodeBoostClaim(2 ether));
 
         // Check the claim status and balance
         assertEq(mockAsset.balanceOf(VARIABLE_REWARD_CLAIM), 2 ether);
-        assertTrue(incentive.isClaimable(claimPayload));
+        assertTrue(incentive.isClaimable(VARIABLE_REWARD_CLAIM, _encodeBoostClaim(2 ether)));
     }
 
     function testClaim_NotClaimable() public {
@@ -118,20 +112,19 @@ contract ERC20VariableIncentiveTest is Test {
         _initialize(address(mockAsset), 1 ether, 1 ether);
 
         // Claim the incentive
-        bytes memory claimPayload =
-            abi.encode(Incentive.ClaimPayload({target: CLAIM_RECIPIENT, data: abi.encode(1 ether)}));
-        incentive.claim(claimPayload);
+        abi.encode(Incentive.ClaimPayload({target: CLAIM_RECIPIENT, data: abi.encode(1 ether)}));
+        incentive.claim(CLAIM_RECIPIENT, _encodeBoostClaim(1 ether));
 
         // Attempt to claim again => revert
         vm.expectRevert(Incentive.NotClaimable.selector);
-        incentive.claim(claimPayload);
+        incentive.claim(CLAIM_RECIPIENT, _encodeBoostClaim(1 ether));
     }
 
     //////////////////////////////////////
     // ERC20VariableIncentive.preflight //
     //////////////////////////////////////
 
-    function testPreflight() public {
+    function testPreflight() public view {
         bytes memory preflightPayload = incentive.preflight(
             abi.encode(ERC20VariableIncentive.InitPayload({asset: address(mockAsset), reward: 1 ether, limit: 5 ether}))
         );
@@ -164,7 +157,7 @@ contract ERC20VariableIncentiveTest is Test {
     // ERC20VariableIncentive.getComponentInterface //
     //////////////////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         assertEq(incentive.getComponentInterface(), type(Incentive).interfaceId);
     }
 
@@ -172,12 +165,12 @@ contract ERC20VariableIncentiveTest is Test {
     // ERC20VariableIncentive.supportsInterface //
     //////////////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // Ensure the contract supports the Incentive interface
         assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         // Ensure the contract does not support an unsupported interface
         assertFalse(incentive.supportsInterface(type(Test).interfaceId));
     }
@@ -185,6 +178,10 @@ contract ERC20VariableIncentiveTest is Test {
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////
+
+    function _encodeBoostClaim(uint256 amount) internal pure returns (bytes memory data) {
+        return abi.encode(IBoostClaim.BoostClaimData(hex"", abi.encode(amount)));
+    }
 
     function _newIncentiveClone() internal returns (ERC20VariableIncentive) {
         return ERC20VariableIncentive(LibClone.clone(address(new ERC20VariableIncentive())));

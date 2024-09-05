@@ -6,19 +6,19 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-contract NotCloneable is ERC165 {
+contract NotACloneable is ERC165 {
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId);
     }
@@ -73,13 +73,13 @@ contract BoostRegistryTest is Test {
         registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
     }
 
-    function testRegister_NotCloneable() public {
-        NotCloneable notCloneable = new NotCloneable();
+    function testRegister_NotACloneable() public {
+        NotACloneable notACloneable = new NotACloneable();
 
-        // Attempting to register a non-Cloneable implementation should revert
-        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotCloneable.selector, address(notCloneable)));
+        // Attempting to register a non-ACloneable implementation should revert
+        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotACloneable.selector, address(notACloneable)));
 
-        registry.register(BoostRegistry.RegistryType.ACTION, "NotClonable", address(notCloneable));
+        registry.register(BoostRegistry.RegistryType.ACTION, "NotClonable", address(notACloneable));
     }
 
     /////////////////////////////////////////
@@ -153,7 +153,7 @@ contract BoostRegistryTest is Test {
                 BoostRegistry.RegistryType.ALLOW_LIST, address(baseAllowListImpl), address(this), "Test AllowList"
             ),
             address(baseAllowListImpl),
-            Cloneable(predictedAddress)
+            ACloneable(predictedAddress)
         );
 
         registry.deployClone(
@@ -171,7 +171,7 @@ contract BoostRegistryTest is Test {
         authorized[0] = address(this);
 
         bytes32 salt = keccak256(
-            abi.encodePacked(BoostRegistry.RegistryType.BUDGET, baseBudgetImpl, "Testing Budget", address(this))
+            abi.encodePacked(BoostRegistry.RegistryType.BUDGET, baseBudgetImpl, "Testing ABudget", address(this))
         );
         address predictedAddress =
             LibClone.predictDeterministicAddress(address(baseBudgetImpl), salt, address(registry));
@@ -180,20 +180,20 @@ contract BoostRegistryTest is Test {
         emit BoostRegistry.Deployed(
             BoostRegistry.RegistryType.BUDGET,
             registry.getCloneIdentifier(
-                BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
+                BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing ABudget"
             ),
             address(baseBudgetImpl),
-            Cloneable(predictedAddress)
+            ACloneable(predictedAddress)
         );
 
-        Cloneable instance = registry.deployClone(
+        ACloneable instance = registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
-            "Testing Budget",
+            "Testing ABudget",
             abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
         );
 
-        assertTrue(instance.supportsInterface(type(Budget).interfaceId));
+        assertTrue(instance.supportsInterface(type(ABudget).interfaceId));
         assertEq(SimpleBudget(payable(address(instance))).owner(), address(this));
     }
 
@@ -204,7 +204,7 @@ contract BoostRegistryTest is Test {
         registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
-            "Testing Budget",
+            "Testing ABudget",
             abi.encode(
                 unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool* but not valid here... panic at the EVM disco!"
             )
@@ -219,12 +219,12 @@ contract BoostRegistryTest is Test {
         registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
 
         bytes32 cloneId = registry.getCloneIdentifier(
-            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
+            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing ABudget"
         );
         registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
-            "Testing Budget",
+            "Testing ABudget",
             abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
         );
 
@@ -232,12 +232,12 @@ contract BoostRegistryTest is Test {
 
         assertTrue(clone.baseType == BoostRegistry.RegistryType.BUDGET);
         assertEq(address(clone.deployer), address(this));
-        assertEq(clone.name, "Testing Budget");
+        assertEq(clone.name, "Testing ABudget");
     }
 
     function testGetClone_NotRegistered() public {
         bytes32 cloneId = registry.getCloneIdentifier(
-            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing Budget"
+            BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing ABudget"
         );
 
         vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotRegistered.selector, cloneId));
@@ -252,7 +252,7 @@ contract BoostRegistryTest is Test {
         _deployAllowListClone("Uno", new address[](0));
         assertEq(registry.getClones(address(this)).length, 1);
 
-        (bytes32 id, Cloneable clone) = _deployAllowListClone("Dos", new address[](0));
+        (bytes32 id, ACloneable clone) = _deployAllowListClone("Dos", new address[](0));
         assertEq(registry.getClones(address(this)).length, 2);
 
         assertEq(registry.getClones(address(this))[1], id);
@@ -266,7 +266,7 @@ contract BoostRegistryTest is Test {
 
     function _deployAllowListClone(string memory name, address[] memory signers)
         internal
-        returns (bytes32 cloneId, Cloneable clone)
+        returns (bytes32 cloneId, ACloneable clone)
     {
         bool[] memory authorized = new bool[](signers.length);
         for (uint256 i = 0; i < signers.length; i++) {

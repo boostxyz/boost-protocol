@@ -9,8 +9,8 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {VestingBudget} from "contracts/budgets/VestingBudget.sol";
 
 contract VestingBudgetTest is Test {
@@ -120,7 +120,7 @@ contract VestingBudgetTest is Test {
         mockERC20.approve(address(vestingBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         assertTrue(vestingBudget.allocate(data));
 
         // Ensure the budget has 100 tokens
@@ -129,7 +129,7 @@ contract VestingBudgetTest is Test {
 
     function testAllocate_NativeBalance() public {
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         vestingBudget.allocate{value: 100 ether}(data);
 
         // Ensure the budget has 100 tokens
@@ -138,20 +138,20 @@ contract VestingBudgetTest is Test {
 
     function testAllocate_NativeBalanceValueMismatch() public {
         // Encode an allocation of 100 ETH
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
 
         // Expect a revert due to a value mismatch (too much ETH)
-        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(0), uint256(100 ether)));
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(0), uint256(100 ether)));
         vestingBudget.allocate{value: 101 ether}(data);
 
         // Expect a revert due to a value mismatch (too little ETH)
-        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(0), uint256(100 ether)));
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(0), uint256(100 ether)));
         vestingBudget.allocate{value: 99 ether}(data);
     }
 
     function testAllocate_NoApproval() public {
         // Allocate 100 tokens to the budget without approval
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
         vestingBudget.allocate(data);
     }
@@ -161,7 +161,7 @@ contract VestingBudgetTest is Test {
         mockERC20.approve(address(vestingBudget), 100 ether);
 
         // Allocate 101 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
         vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
         vestingBudget.allocate(data);
     }
@@ -189,7 +189,7 @@ contract VestingBudgetTest is Test {
         // Reclaim 99 tokens from the budget
         assertTrue(
             vestingBudget.clawback(
-                _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 99 ether)
+                _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 99 ether)
             )
         );
 
@@ -206,7 +206,7 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Reclaim 99 ETH from the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 99 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 99 ether);
         assertTrue(vestingBudget.clawback(data));
 
         // Ensure the budget has 1 ETH left
@@ -218,7 +218,7 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Reclaim all tokens from the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 0);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 0);
         assertTrue(vestingBudget.clawback(data));
 
         // Ensure the budget has no tokens left
@@ -230,9 +230,9 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Reclaim 100 tokens from the budget to address(0)
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(0), 100 ether);
         vm.expectRevert(
-            abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC20), address(0), uint256(100 ether))
+            abi.encodeWithSelector(ABudget.TransferFailed.selector, address(mockERC20), address(0), uint256(100 ether))
         );
         vestingBudget.clawback(data);
 
@@ -245,10 +245,10 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Reclaim 101 tokens from the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Budget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
+                ABudget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
             )
         );
         vestingBudget.clawback(data);
@@ -261,7 +261,7 @@ contract VestingBudgetTest is Test {
         mockERC20.approve(address(vestingBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         vestingBudget.allocate(data);
         assertEq(vestingBudget.total(address(mockERC20)), 100 ether);
 
@@ -279,7 +279,7 @@ contract VestingBudgetTest is Test {
         vm.prank(address(1));
         vm.expectRevert();
         vestingBudget.clawback(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
     }
 
@@ -292,16 +292,16 @@ contract VestingBudgetTest is Test {
         _vestHalf();
 
         // Try to disburse 100 tokens from the budget (should fail, only 50 tokens vested)
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Budget.InsufficientFunds.selector, address(mockERC20), uint256(50 ether), uint256(100 ether)
+                ABudget.InsufficientFunds.selector, address(mockERC20), uint256(50 ether), uint256(100 ether)
             )
         );
         vestingBudget.disburse(data);
 
         // Disburse 50 tokens from the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 50 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 50 ether);
         assertTrue(vestingBudget.disburse(data));
         assertEq(mockERC20.balanceOf(address(1)), 50 ether);
 
@@ -316,10 +316,10 @@ contract VestingBudgetTest is Test {
         _vestHalf();
 
         // Try to disburse 100 ETH from the budget (should fail, only 50 ETH vested)
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 100 ether);
 
         // Disburse 50 ETH from the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 50 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 50 ether);
         assertTrue(vestingBudget.disburse(data));
         assertEq(address(1).balance, 50 ether);
 
@@ -338,8 +338,8 @@ contract VestingBudgetTest is Test {
 
         // Prepare the disbursement requests
         bytes[] memory requests = new bytes[](2);
-        requests[0] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
-        requests[1] = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(2), 25 ether);
+        requests[0] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
+        requests[1] = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(2), 25 ether);
 
         // Disburse:
         // 25 tokens to address(1); and
@@ -361,10 +361,10 @@ contract VestingBudgetTest is Test {
         _vestHalf();
 
         // Disburse 50.1 tokens from the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 50.1 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 50.1 ether);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Budget.InsufficientFunds.selector, address(mockERC20), uint256(50 ether), uint256(50.1 ether)
+                ABudget.InsufficientFunds.selector, address(mockERC20), uint256(50 ether), uint256(50.1 ether)
             )
         );
         vestingBudget.disburse(data);
@@ -386,7 +386,7 @@ contract VestingBudgetTest is Test {
 
         // Try to disburse 100 tokens from the budget as a non-owner
         bytes memory data =
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0xdeadbeef), 100 ether);
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(0xdeadbeef), 100 ether);
         vm.prank(address(0xc0ffee));
         vm.expectRevert();
         vestingBudget.disburse(data);
@@ -404,7 +404,7 @@ contract VestingBudgetTest is Test {
         );
 
         // Try to disburse 100 tokens from the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
         vm.expectRevert(SafeTransferLib.TransferFailed.selector);
         vestingBudget.disburse(data);
     }
@@ -415,9 +415,9 @@ contract VestingBudgetTest is Test {
 
         // Prepare the disbursement data
         bytes[] memory requests = new bytes[](3);
-        requests[0] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
-        requests[1] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(2), 50 ether);
-        requests[2] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(3), 10 ether);
+        requests[0] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
+        requests[1] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(2), 50 ether);
+        requests[2] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(3), 10 ether);
 
         // Mock the second ERC20 transfer to fail in an unexpected way
         vm.mockCallRevert(
@@ -462,7 +462,7 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Disburse 25 tokens from the budget
-        vestingBudget.disburse(_makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether));
+        vestingBudget.disburse(_makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 25 ether));
 
         // Allocate another 50 tokens to the budget
         _allocate(address(mockERC20), 50 ether);
@@ -498,7 +498,7 @@ contract VestingBudgetTest is Test {
 
         // Disburse 25 tokens from the budget and ensure the budget has 75 tokens available
         vestingBudget.disburse(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
         );
         assertEq(vestingBudget.available(address(mockERC20)), 75 ether);
     }
@@ -519,7 +519,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(0)), 100 ether);
 
         // Disburse 25 ETH from the budget and ensure the budget has 75 ETH available
-        vestingBudget.disburse(_makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(0xdeadbeef), 25 ether));
+        vestingBudget.disburse(_makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(0xdeadbeef), 25 ether));
         assertEq(vestingBudget.available(address(0)), 75 ether);
     }
 
@@ -542,7 +542,7 @@ contract VestingBudgetTest is Test {
 
         // Disburse 25 tokens from the budget
         vestingBudget.disburse(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
         );
 
         // Ensure the budget has 25 tokens distributed
@@ -550,7 +550,7 @@ contract VestingBudgetTest is Test {
 
         // Disburse another 25 tokens from the budget
         vestingBudget.disburse(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
         );
 
         // Ensure the budget has 50 tokens distributed
@@ -626,7 +626,7 @@ contract VestingBudgetTest is Test {
     ////////////////////////////////////
 
     function testGetComponentInterface() public {
-        // Ensure the contract supports the Budget interface
+        // Ensure the contract supports the ABudget interface
         console.logBytes4(vestingBudget.getComponentInterface());
     }
 
@@ -635,8 +635,8 @@ contract VestingBudgetTest is Test {
     /////////////////////////////////////
 
     function testSupportsInterface() public {
-        // Ensure the contract supports the Budget interface
-        assertTrue(vestingBudget.supportsInterface(type(Budget).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(vestingBudget.supportsInterface(type(ABudget).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public {
@@ -662,11 +662,11 @@ contract VestingBudgetTest is Test {
     function _allocate(address asset, uint256 value) internal returns (bool) {
         if (asset == address(0)) {
             return vestingBudget.allocate{value: value}(
-                _makeFungibleTransfer(Budget.AssetType.ETH, asset, address(this), value)
+                _makeFungibleTransfer(ABudget.AssetType.ETH, asset, address(this), value)
             );
         } else {
             mockERC20.approve(address(vestingBudget), value);
-            return vestingBudget.allocate(_makeFungibleTransfer(Budget.AssetType.ERC20, asset, address(this), value));
+            return vestingBudget.allocate(_makeFungibleTransfer(ABudget.AssetType.ERC20, asset, address(this), value));
         }
     }
 
@@ -678,17 +678,17 @@ contract VestingBudgetTest is Test {
         vm.warp(block.timestamp + vestingBudget.duration() / 2);
     }
 
-    function _makeFungibleTransfer(Budget.AssetType assetType, address asset, address target, uint256 value)
+    function _makeFungibleTransfer(ABudget.AssetType assetType, address asset, address target, uint256 value)
         internal
         pure
         returns (bytes memory)
     {
-        Budget.Transfer memory transfer;
+        ABudget.Transfer memory transfer;
         transfer.assetType = assetType;
         transfer.asset = asset;
         transfer.target = target;
-        if (assetType == Budget.AssetType.ETH || assetType == Budget.AssetType.ERC20) {
-            transfer.data = abi.encode(Budget.FungiblePayload({amount: value}));
+        if (assetType == ABudget.AssetType.ETH || assetType == ABudget.AssetType.ERC20) {
+            transfer.data = abi.encode(ABudget.FungiblePayload({amount: value}));
         }
 
         return abi.encode(transfer);

@@ -2,25 +2,25 @@
 pragma solidity ^0.8.24;
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
-/// @title SimpleAllowList Incentive
+/// @title SimpleAllowList AIncentive
 /// @notice An incentive implementation that grants the claimer a slot on an {SimpleAllowList}
 /// @dev In order for any claim to be successful:
 ///     - The claimer must not already be on the allow list; and
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to modify the allow list
-abstract contract AAllowListIncentive is Incentive {
+abstract contract AAllowListIncentive is AIncentive {
     /// @notice The SimpleAllowList contract
     SimpleAllowList public allowList;
 
     /// @notice The maximum number of claims that can be made (one per address)
     uint256 public limit;
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @notice Claim a slot on the {SimpleAllowList}
     /// @param claimTarget the entity receiving the payout
     function claim(address claimTarget, bytes calldata) external virtual override onlyOwner returns (bool) {
@@ -33,18 +33,18 @@ abstract contract AAllowListIncentive is Incentive {
         return true;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @dev Not a valid operation for this type of incentive
     function clawback(bytes calldata) external pure override returns (bool) {
         revert BoostError.NotImplemented();
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function isClaimable(address claimTarget, bytes calldata) external view virtual override returns (bool) {
         return claims < limit && !claimed[claimTarget] && !allowList.isAllowed(claimTarget, "");
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @dev No preflight approval is required for this incentive (no tokens are handled)
     function preflight(bytes calldata) external pure override returns (bytes memory) {
         return new bytes(0);
@@ -61,13 +61,13 @@ abstract contract AAllowListIncentive is Incentive {
         return (users, allowed);
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(AAllowListIncentive).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AIncentive) returns (bool) {
         return interfaceId == type(AAllowListIncentive).interfaceId || super.supportsInterface(interfaceId);
     }
 }

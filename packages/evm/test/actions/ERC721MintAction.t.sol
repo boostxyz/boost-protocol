@@ -7,7 +7,7 @@ import {ERC721} from "@solady/tokens/ERC721.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
@@ -179,7 +179,7 @@ contract ERC721MintActionTest is Test {
         _initialize(address(mockAsset), MockERC721.mint.selector, mockAsset.mintPrice());
 
         // Check the interface support
-        assertTrue(action.supportsInterface(type(Action).interfaceId));
+        assertTrue(action.supportsInterface(type(AAction).interfaceId));
         assertTrue(action.supportsInterface(type(AValidator).interfaceId));
     }
 

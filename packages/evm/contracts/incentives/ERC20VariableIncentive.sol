@@ -3,16 +3,16 @@ pragma solidity ^0.8.24;
 
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-/// @title ERC20 Incentive with Variable Rewards
+/// @title ERC20 AIncentive with Variable Rewards
 /// @notice A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
 
-contract ERC20VariableIncentive is Incentive {
+contract ERC20VariableIncentive is AIncentive {
     using SafeTransferLib for address;
 
     /// @notice The reward multiplier; if 0, the signed amount from the claim payload is used directly
@@ -94,7 +94,7 @@ contract ERC20VariableIncentive is Incentive {
         return totalClaimed < limit;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
@@ -108,31 +108,31 @@ contract ERC20VariableIncentive is Incentive {
         return true;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @notice Preflight the incentive to determine the required budget action
     /// @param data_ The data payload for the incentive `(address asset, uint256 reward, uint256 limit)`
-    /// @return budgetData The {Transfer} payload to be passed to the {Budget} for interpretation
+    /// @return budgetData The {Transfer} payload to be passed to the {ABudget} for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
         // TODO: remove unused reward param
         (address asset_, uint256 reward_, uint256 limit_) = abi.decode(data_, (address, uint256, uint256));
 
         return abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC20,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC20,
                 asset: asset_,
                 target: address(this),
-                data: abi.encode(Budget.FungiblePayload({amount: limit_}))
+                data: abi.encode(ABudget.FungiblePayload({amount: limit_}))
             })
         );
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
-        return type(Incentive).interfaceId;
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
+        return type(AIncentive).interfaceId;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(Incentive).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(AIncentive).interfaceId || super.supportsInterface(interfaceId);
     }
 }

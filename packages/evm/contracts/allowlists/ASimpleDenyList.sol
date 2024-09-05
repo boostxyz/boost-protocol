@@ -2,13 +2,13 @@
 pragma solidity ^0.8.24;
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 
 /// @title SimpleDenyList
 /// @notice A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list
-abstract contract ASimpleDenyList is AllowList {
+abstract contract ASimpleDenyList is AAllowList {
     /// @dev An internal mapping of denied statuses
     mapping(address => bool) internal _denied;
 
@@ -33,13 +33,13 @@ abstract contract ASimpleDenyList is AllowList {
         }
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(ASimpleDenyList).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AllowList) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AAllowList) returns (bool) {
         return interfaceId == type(ASimpleDenyList).interfaceId || super.supportsInterface(interfaceId);
     }
 }

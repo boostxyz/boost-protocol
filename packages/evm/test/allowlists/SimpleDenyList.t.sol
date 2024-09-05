@@ -6,8 +6,8 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
-import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 contract SimpleDenyListTest is Test {
@@ -136,8 +136,8 @@ contract SimpleDenyListTest is Test {
     ///////////////////////////////////////
 
     function testSupportsInterface() public {
-        assertTrue(denyList.supportsInterface(type(Cloneable).interfaceId));
-        assertTrue(denyList.supportsInterface(type(AllowList).interfaceId));
+        assertTrue(denyList.supportsInterface(type(ACloneable).interfaceId));
+        assertTrue(denyList.supportsInterface(type(AAllowList).interfaceId));
     }
 
     function testSupportsInterface_Unsupported() public {

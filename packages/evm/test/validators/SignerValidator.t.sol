@@ -13,7 +13,7 @@ import {MockERC1271Malicious} from "lib/solady/test/utils/mocks/MockERC1271Malic
 
 import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 import {SignerValidator, ASignerValidator, IncentiveBits} from "contracts/validators/SignerValidator.sol";
 
@@ -300,7 +300,7 @@ contract SignerValidatorTest is Test {
     /////////////////////////////////////////
 
     function testGetComponentInterface() public view {
-        // Ensure the contract supports the Budget interface
+        // Ensure the contract supports the ABudget interface
         console.logBytes4(validator.getComponentInterface());
     }
 
@@ -309,7 +309,7 @@ contract SignerValidatorTest is Test {
     ///////////////////////////////////////
 
     function testSupportsInterface() public view {
-        assertTrue(validator.supportsInterface(type(Cloneable).interfaceId));
+        assertTrue(validator.supportsInterface(type(ACloneable).interfaceId));
         assertTrue(validator.supportsInterface(type(AValidator).interfaceId));
     }
 

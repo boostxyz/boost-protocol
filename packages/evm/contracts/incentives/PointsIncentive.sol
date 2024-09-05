@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 import {APointsIncentive} from "contracts/incentives/APointsIncentive.sol";
 
-/// @title Points Incentive
+/// @title Points AIncentive
 /// @notice A simple on-chain points incentive implementation that allows claiming of soulbound tokens
 /// @dev In order for any claim to be successful:
 ///     - The claimer must not have already claimed the incentive; and

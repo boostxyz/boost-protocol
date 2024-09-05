@@ -10,12 +10,12 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {Action} from "contracts/actions/Action.sol";
-import {AllowList} from "contracts/allowlists/AllowList.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AAction} from "contracts/actions/AAction.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IAuth} from "contracts/auth/IAuth.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 
@@ -28,7 +28,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     using SafeTransferLib for address;
 
     struct InitPayload {
-        Budget budget;
+        ABudget budget;
         BoostLib.Target action;
         BoostLib.Target validator;
         BoostLib.Target allowList;
@@ -86,11 +86,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     /// @notice Create a new Boost
-    /// @param data_ The compressed data for the Boost `(Budget, Target<Action>, Target<Validator>, Target<AllowList>, Target<Incentive>[], protocolFee, referralFee, maxParticipants, owner)`
+    /// @param data_ The compressed data for the Boost `(ABudget, Target<AAction>, Target<Validator>, Target<AAllowList>, Target<AIncentive>[], protocolFee, referralFee, maxParticipants, owner)`
     /// @dev The data is expected to:
     ///     - be packed using `abi.encode()` and compressed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol)
     ///     - properly decode to the following types (in order):
-    ///         - `Budget` to be used for the Boost
+    ///         - `ABudget` to be used for the Boost
     ///         - `Target` for the action
     ///         - `Target` for the validator which is expected to be one of the following:
     ///             - The address of a base implementation to be cloned (e.g. the result of `BoostRegistry.getBaseImplementation("SignerValidator")`), along with the parameters for its initializer;
@@ -122,8 +122,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
         boost.maxParticipants = payload_.maxParticipants;
 
         // Setup the Boost components
-        boost.action = Action(_makeTarget(type(Action).interfaceId, payload_.action, true));
-        boost.allowList = AllowList(_makeTarget(type(AllowList).interfaceId, payload_.allowList, true));
+        boost.action = AAction(_makeTarget(type(AAction).interfaceId, payload_.action, true));
+        boost.allowList = AAllowList(_makeTarget(type(AAllowList).interfaceId, payload_.allowList, true));
         boost.incentives = _makeIncentives(payload_.incentives, payload_.budget);
         boost.validator = AValidator(
             payload_.validator.instance == address(0)
@@ -143,7 +143,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice Claim an incentive for a Boost
     /// @param boostId_ The ID of the Boost
-    /// @param incentiveId_ The ID of the Incentive
+    /// @param incentiveId_ The ID of the AIncentive
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     function claimIncentive(uint256 boostId_, uint256 incentiveId_, address referrer_, bytes calldata data_)
@@ -155,7 +155,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice Claim an incentive for a Boost on behalf of another user
     /// @param boostId_ The ID of the Boost
-    /// @param incentiveId_ The ID of the Incentive
+    /// @param incentiveId_ The ID of the AIncentive
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     /// @param claimant the address of the user eligible for the incentive payout
@@ -210,11 +210,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
         claimFee = claimFee_;
     }
 
-    /// @notice Check that the provided Budget is valid and that the caller is authorized to use it
-    /// @param budget_ The Budget to check
-    /// @dev This function will revert if the Budget is invalid or the caller is unauthorized
-    function _checkBudget(Budget budget_) internal view {
-        _checkTarget(type(Budget).interfaceId, address(budget_));
+    /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it
+    /// @param budget_ The ABudget to check
+    /// @dev This function will revert if the ABudget is invalid or the caller is unauthorized
+    function _checkBudget(ABudget budget_) internal view {
+        _checkTarget(type(ABudget).interfaceId, address(budget_));
         if (!budget_.isAuthorized(msg.sender)) revert BoostError.Unauthorized();
     }
 
@@ -224,7 +224,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @dev This function will revert if the Target does not implement the expected interface
     /// @dev This check costs ~376 gas, which is worth it to validate the target
     function _checkTarget(bytes4 interfaceId, address instance) internal view {
-        if (instance == address(0) || !Cloneable(instance).supportsInterface(interfaceId)) {
+        if (instance == address(0) || !ACloneable(instance).supportsInterface(interfaceId)) {
             revert BoostError.InvalidInstance(interfaceId, instance);
         }
     }
@@ -243,25 +243,25 @@ contract BoostCore is Ownable, ReentrancyGuard {
         instance = _maybeClone(target, shouldInitialize);
     }
 
-    /// @notice Configure a set of incentives for a Boost using the given Budget
-    /// @param targets_ The set of incentives {Target<Incentive>[]}
-    /// @param budget_ The Budget from which to allocate the incentives
-    /// @return incentives The set of initialized incentives {Incentive[]}
-    function _makeIncentives(BoostLib.Target[] memory targets_, Budget budget_)
+    /// @notice Configure a set of incentives for a Boost using the given ABudget
+    /// @param targets_ The set of incentives {Target<AIncentive>[]}
+    /// @param budget_ The ABudget from which to allocate the incentives
+    /// @return incentives The set of initialized incentives {AIncentive[]}
+    function _makeIncentives(BoostLib.Target[] memory targets_, ABudget budget_)
         internal
-        returns (Incentive[] memory incentives)
+        returns (AIncentive[] memory incentives)
     {
-        incentives = new Incentive[](targets_.length);
+        incentives = new AIncentive[](targets_.length);
         for (uint256 i = 0; i < targets_.length; i++) {
             // Deploy the clone, but don't initialize until it we've preflighted
-            _checkTarget(type(Incentive).interfaceId, targets_[i].instance);
+            _checkTarget(type(AIncentive).interfaceId, targets_[i].instance);
 
             // Ensure the target is a base implementation (incentive clones are not reusable)
             if (!targets_[i].isBase) {
-                revert BoostError.InvalidInstance(type(Incentive).interfaceId, targets_[i].instance);
+                revert BoostError.InvalidInstance(type(AIncentive).interfaceId, targets_[i].instance);
             }
 
-            incentives[i] = Incentive(_makeTarget(type(Incentive).interfaceId, targets_[i], false));
+            incentives[i] = AIncentive(_makeTarget(type(AIncentive).interfaceId, targets_[i], false));
 
             bytes memory preflight = incentives[i].preflight(targets_[i].parameters);
             if (preflight.length != 0) {
@@ -279,7 +279,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         instance = target_.isBase ? target_.instance.clone() : target_.instance;
         if (target_.isBase && shouldInitialize_) {
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
-            Cloneable(instance).initialize(target_.parameters);
+            ACloneable(instance).initialize(target_.parameters);
         }
     }
 

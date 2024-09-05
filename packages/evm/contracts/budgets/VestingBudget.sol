@@ -9,8 +9,8 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AVestingBudget} from "contracts/budgets/AVestingBudget.sol";
 
 /// @title Vesting Budget
@@ -36,7 +36,7 @@ contract VestingBudget is AVestingBudget {
         _disableInitializers();
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     /// @param data_ The packed init data for the budget (see {InitPayload})
     function initialize(bytes calldata data_) public virtual override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
@@ -50,4 +50,5 @@ contract VestingBudget is AVestingBudget {
             _isAuthorized[init_.authorized[i]] = true;
         }
     }
+
 }

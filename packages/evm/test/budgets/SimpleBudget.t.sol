@@ -11,8 +11,8 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {MockERC20, MockERC1155} from "contracts/shared/Mocks.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 
@@ -123,7 +123,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         assertTrue(simpleBudget.allocate(data));
 
         // Ensure the budget has 100 tokens
@@ -132,7 +132,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
     function testAllocate_NativeBalance() public {
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
 
         // Ensure the budget has 100 tokens
@@ -145,11 +145,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 of token ID 42 to the budget
         bytes memory data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
             })
         );
         assertTrue(simpleBudget.allocate(data));
@@ -160,20 +160,20 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
     function testAllocate_NativeBalanceValueMismatch() public {
         // Encode an allocation of 100 ETH
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
 
         // Expect a revert due to a value mismatch (too much ETH)
-        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(0), uint256(100 ether)));
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(0), uint256(100 ether)));
         simpleBudget.allocate{value: 101 ether}(data);
 
         // Expect a revert due to a value mismatch (too little ETH)
-        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(0), uint256(100 ether)));
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(0), uint256(100 ether)));
         simpleBudget.allocate{value: 99 ether}(data);
     }
 
     function testAllocate_NoApproval() public {
         // Allocate 100 tokens to the budget without approval
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
         simpleBudget.allocate(data);
     }
@@ -183,7 +183,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 101 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
         vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
         simpleBudget.allocate(data);
     }
@@ -209,12 +209,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
 
         // Reclaim 99 tokens from the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 99 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 99 ether);
         assertTrue(simpleBudget.clawback(data));
 
         // Ensure the budget has 1 token left
@@ -223,12 +223,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
     function testReclaim_NativeBalance() public {
         // Allocate 100 ETH to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
         assertEq(simpleBudget.available(address(0)), 100 ether);
 
         // Reclaim 99 ETH from the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 99 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 99 ether);
         assertTrue(simpleBudget.clawback(data));
 
         // Ensure the budget has 1 ETH left
@@ -241,11 +241,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 of token ID 42 to the budget
         bytes memory data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
             })
         );
         simpleBudget.allocate(data);
@@ -253,11 +253,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim 99 of token ID 42 from the budget
         data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
             })
         );
         assertTrue(simpleBudget.clawback(data));
@@ -271,12 +271,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
 
         // Reclaim all tokens from the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 0);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 0);
         assertTrue(simpleBudget.clawback(data));
 
         // Ensure the budget has no tokens left
@@ -288,14 +288,14 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
 
         // Reclaim 100 tokens from the budget to address(0)
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(0), 100 ether);
         vm.expectRevert(
-            abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC20), address(0), uint256(100 ether))
+            abi.encodeWithSelector(ABudget.TransferFailed.selector, address(mockERC20), address(0), uint256(100 ether))
         );
         simpleBudget.clawback(data);
 
@@ -308,15 +308,15 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Reclaim 101 tokens from the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 101 ether);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Budget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
+                ABudget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
             )
         );
         simpleBudget.clawback(data);
@@ -329,7 +329,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
@@ -344,7 +344,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
@@ -364,12 +364,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Disburse 100 tokens from the budget to the recipient
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
         assertTrue(simpleBudget.disburse(data));
         assertEq(mockERC20.balanceOf(address(1)), 100 ether);
 
@@ -380,11 +380,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
     function testDisburse_NativeBalance() public {
         // Allocate 100 ETH to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
 
         // Disburse 100 ETH from the budget to the recipient
-        data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 100 ether);
         assertTrue(simpleBudget.disburse(data));
         assertEq(address(1).balance, 100 ether);
 
@@ -399,11 +399,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 of token ID 42 to the budget
         bytes memory data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
             })
         );
         simpleBudget.allocate(data);
@@ -411,11 +411,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Disburse 100 of token ID 42 from the budget to the recipient
         data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(1),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
             })
         );
         assertTrue(simpleBudget.disburse(data));
@@ -433,10 +433,10 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate the assets to the budget
         simpleBudget.allocate(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
         );
         simpleBudget.allocate{value: 25 ether}(
-            _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 25 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 25 ether)
         );
         simpleBudget.allocate(_makeERC1155Transfer(address(mockERC1155), address(this), 42, 50, bytes("")));
         assertEq(simpleBudget.total(address(mockERC20)), 50 ether);
@@ -445,8 +445,8 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Prepare the disbursement requests
         bytes[] memory requests = new bytes[](3);
-        requests[0] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
-        requests[1] = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(2), 25 ether);
+        requests[0] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
+        requests[1] = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(2), 25 ether);
         requests[2] = _makeERC1155Transfer(address(mockERC1155), address(3), 42, 10, bytes(""));
 
         // Disburse:
@@ -473,15 +473,15 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Disburse 101 tokens from the budget to the recipient
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 101 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 101 ether);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Budget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
+                ABudget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
             )
         );
         simpleBudget.disburse(data);
@@ -494,7 +494,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
@@ -509,12 +509,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Try to disburse 100 tokens from the budget as a non-owner
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(0xdeadbeef), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(0xdeadbeef), 100 ether);
         vm.prank(address(0xc0ffee));
         vm.expectRevert();
         simpleBudget.disburse(data);
@@ -525,7 +525,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
@@ -537,7 +537,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         );
 
         // Try to disburse 100 tokens from the budget
-        data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
         vm.expectRevert(SafeTransferLib.TransferFailed.selector);
         simpleBudget.disburse(data);
     }
@@ -547,15 +547,15 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC20.approve(address(simpleBudget), 100 ether);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
         simpleBudget.allocate(data);
         assertEq(simpleBudget.total(address(mockERC20)), 100 ether);
 
         // Prepare the disbursement data
         bytes[] memory requests = new bytes[](3);
-        requests[0] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
-        requests[1] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(2), 50 ether);
-        requests[2] = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(3), 10 ether);
+        requests[0] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 25 ether);
+        requests[1] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(2), 50 ether);
+        requests[2] = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(3), 10 ether);
 
         // Mock the second ERC20 transfer to fail in an unexpected way
         vm.mockCallRevert(
@@ -580,7 +580,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // Allocate 100 tokens to the budget
         mockERC20.approve(address(simpleBudget), 100 ether);
         simpleBudget.allocate(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
 
         // Ensure the budget has 100 tokens
@@ -592,7 +592,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.total(address(0)), 0);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
 
         // Ensure the budget has 100 tokens
@@ -605,15 +605,15 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 50 tokens to the budget
         simpleBudget.allocate(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
         );
 
         // Disburse 25 tokens from the budget to the recipient
-        simpleBudget.disburse(_makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(1), 25 ether));
+        simpleBudget.disburse(_makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 25 ether));
 
         // Allocate another 50 tokens to the budget
         simpleBudget.allocate(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
         );
 
         // Ensure the budget has 50 - 25 + 50 = 75 tokens
@@ -637,7 +637,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // Allocate 100 tokens to the budget
         mockERC20.approve(address(simpleBudget), 100 ether);
         simpleBudget.allocate(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
 
         // Ensure the budget has 100 tokens available
@@ -649,7 +649,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(0)), 0);
 
         // Allocate 100 tokens to the budget
-        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(this), 100 ether);
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
 
         // Ensure the budget has 100 tokens available
@@ -672,12 +672,12 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // Allocate 100 tokens to the budget
         mockERC20.approve(address(simpleBudget), 100 ether);
         simpleBudget.allocate(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
 
         // Disburse 50 tokens from the budget to the recipient
         simpleBudget.disburse(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 50 ether)
         );
 
         // Ensure the budget has 50 tokens distributed
@@ -685,7 +685,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Disburse 25 more tokens from the budget to the recipient
         simpleBudget.disburse(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 25 ether)
         );
 
         // Ensure the budget has 75 tokens distributed
@@ -761,7 +761,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     ////////////////////////////////////
 
     function testGetComponentInterface() public {
-        // Ensure the contract supports the Budget interface
+        // Ensure the contract supports the ABudget interface
         console.logBytes4(simpleBudget.getComponentInterface());
     }
 
@@ -770,17 +770,17 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     ////////////////////////////////////
 
     function testSupportsBudgetInterface() public {
-        // Ensure the contract supports the Budget interface
-        assertTrue(simpleBudget.supportsInterface(type(Budget).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(simpleBudget.supportsInterface(type(ABudget).interfaceId));
     }
 
     function testSupportsERC1155Receiver() public {
-        // Ensure the contract supports the Budget interface
+        // Ensure the contract supports the ABudget interface
         assertTrue(simpleBudget.supportsInterface(type(IERC1155Receiver).interfaceId));
     }
 
     function testSupportsERC165() public {
-        // Ensure the contract supports the Budget interface
+        // Ensure the contract supports the ABudget interface
         assertTrue(simpleBudget.supportsInterface(type(IERC165).interfaceId));
     }
 
@@ -806,7 +806,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // Allocate 100 tokens to the budget
         bytes memory data = abi.encodeWithSelector(
             ASimpleBudget.allocate.selector,
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
 
         (bool success,) = payable(simpleBudget).call(data);
@@ -829,7 +829,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         (bool success,) = payable(simpleBudget).call{value: 1 ether}(
             abi.encodeWithSelector(
                 bytes4(0xdeadbeef),
-                _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
+                _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
             )
         );
         assertFalse(success);
@@ -850,20 +850,20 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     // Test Helper Functions //
     ///////////////////////////
 
-    function _makeFungibleTransfer(Budget.AssetType assetType, address asset, address target, uint256 value)
+    function _makeFungibleTransfer(ABudget.AssetType assetType, address asset, address target, uint256 value)
         internal
         pure
         returns (bytes memory)
     {
-        Budget.Transfer memory transfer;
+        ABudget.Transfer memory transfer;
         transfer.assetType = assetType;
         transfer.asset = asset;
         transfer.target = target;
-        if (assetType == Budget.AssetType.ETH || assetType == Budget.AssetType.ERC20) {
-            transfer.data = abi.encode(Budget.FungiblePayload({amount: value}));
-        } else if (assetType == Budget.AssetType.ERC1155) {
+        if (assetType == ABudget.AssetType.ETH || assetType == ABudget.AssetType.ERC20) {
+            transfer.data = abi.encode(ABudget.FungiblePayload({amount: value}));
+        } else if (assetType == ABudget.AssetType.ERC1155) {
             // we're not actually handling this case yet, so hardcoded token ID of 1 is fine
-            transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
+            transfer.data = abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
         }
 
         return abi.encode(transfer);
@@ -874,11 +874,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         pure
         returns (bytes memory)
     {
-        Budget.Transfer memory transfer;
-        transfer.assetType = Budget.AssetType.ERC1155;
+        ABudget.Transfer memory transfer;
+        transfer.assetType = ABudget.AssetType.ERC1155;
         transfer.asset = asset;
         transfer.target = target;
-        transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: value, data: data}));
+        transfer.data = abi.encode(ABudget.ERC1155Payload({tokenId: tokenId, amount: value, data: data}));
 
         return abi.encode(transfer);
     }

@@ -8,7 +8,7 @@ import {Initializable} from "@solady/utils/Initializable.sol";
 import {MockERC721} from "contracts/shared/Mocks.sol";
 import {EventAction} from "contracts/actions/EventAction.sol";
 import {AEventAction} from "contracts/actions/AEventAction.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
 contract EventActionTest is Test {
@@ -123,7 +123,7 @@ contract EventActionTest is Test {
     function testSupportsInterface() public {
         // Check the interface support
         assertTrue(action.supportsInterface(type(AEventAction).interfaceId));
-        assertTrue(action.supportsInterface(type(Cloneable).interfaceId));
+        assertTrue(action.supportsInterface(type(ACloneable).interfaceId));
     }
 
     ///////////////////////////

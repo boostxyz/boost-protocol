@@ -4,15 +4,15 @@ pragma solidity ^0.8.24;
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Incentive} from "./Incentive.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "./AIncentive.sol";
 
-/// @title ERC20 Incentive
+/// @title ERC20 AIncentive
 /// @notice A simple ERC20 incentive implementation that allows claiming of tokens
-abstract contract AERC20Incentive is Incentive {
+abstract contract AERC20Incentive is AIncentive {
     using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 
@@ -64,7 +64,7 @@ abstract contract AERC20Incentive is Incentive {
         }
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
@@ -115,13 +115,13 @@ abstract contract AERC20Incentive is Incentive {
         emit Claimed(winnerAddress, abi.encodePacked(asset, winnerAddress, reward));
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(AERC20Incentive).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AIncentive) returns (bool) {
         return interfaceId == type(AERC20Incentive).interfaceId || super.supportsInterface(interfaceId);
     }
 }

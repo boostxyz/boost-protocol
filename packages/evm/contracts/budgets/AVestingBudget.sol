@@ -9,17 +9,17 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-/// @title Vesting Budget
+/// @title Vesting ABudget
 /// @notice A vesting-based budget implementation that allows for the distribution of assets over time
 /// @dev Take note of the following when making use of this budget type:
 ///     - The budget is designed to manage native and ERC20 token balances only. Using rebasing tokens or other non-standard token types may result in unexpected behavior.
 ///     - Any assets allocated to this type of budget will follow the vesting schedule as if they were locked from the beginning, which is to say that, if the vesting has already started, some portion of the assets will be immediately available for distribution.
 ///     - A vesting budget can also act as a time-lock, unlocking all assets at a specified point in time. To release assets at a specific time rather than vesting them over time, set the `start` to the desired time and the `duration` to zero.
 ///     - This contract is {Ownable} to enable the owner to allocate to the budget, reclaim and disburse assets from the budget, and to set authorized addresses. Additionally, the owner can transfer ownership of the budget to another address. Doing so has no effect on the vesting schedule.
-abstract contract AVestingBudget is Budget, ReentrancyGuard {
+abstract contract AVestingBudget is ABudget, ReentrancyGuard {
     using SafeTransferLib for address;
 
     /// @dev The total amount of each fungible asset distributed from the budget
@@ -43,7 +43,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         _;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Allocates assets to the budget
     /// @param data_ The packed data for the {Transfer} request
     /// @return True if the allocation was successful
@@ -74,7 +74,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Reclaims assets from the budget
     /// @param data_ The packed {Transfer} request
     /// @return True if the request was successful
@@ -95,7 +95,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to a single recipient
     /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
@@ -112,7 +112,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to multiple recipients
     /// @param data_ The packed array of {Transfer} requests
     /// @return True if all disbursements were successful
@@ -124,7 +124,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     function setAuthorized(address[] calldata account_, bool[] calldata authorized_)
         external
         virtual
@@ -137,7 +137,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     function isAuthorized(address account_) public view virtual override returns (bool) {
         return _isAuthorized[account_] || account_ == owner();
     }
@@ -148,7 +148,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return start + duration;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset
     /// @return The total amount of assets
@@ -158,7 +158,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return _distributedFungible[asset_] + balance;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the amount of assets available for distribution from the budget as of the current block timestamp
     /// @param asset_ The address of the asset (or the zero address for native assets)
     /// @return The amount of assets currently available for distribution
@@ -167,7 +167,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return _vestedAllocation(asset_, uint64(block.timestamp)) - _distributedFungible[asset_];
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the amount of assets that have been distributed from the budget
     /// @param asset_ The address of the asset
     /// @return The amount of assets distributed
@@ -175,7 +175,7 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         return _distributedFungible[asset_];
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @dev This is a no-op as there is no local balance to reconcile
     function reconcile(bytes calldata) external virtual override returns (uint256) {
         return 0;
@@ -229,12 +229,12 @@ abstract contract AVestingBudget is Budget, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(AVestingBudget).interfaceId || Budget.supportsInterface(interfaceId);
+        return interfaceId == type(AVestingBudget).interfaceId || ABudget.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AVestingBudget).interfaceId;
     }

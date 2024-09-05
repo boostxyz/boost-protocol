@@ -9,13 +9,13 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-/// @title Abstract Simple Budget
+/// @title Abstract Simple ABudget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
-abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
+abstract contract ASimpleBudget is ABudget, IERC1155Receiver, ReentrancyGuard {
     using SafeTransferLib for address;
 
     /// @dev The total amount of each fungible asset distributed from the budget
@@ -33,7 +33,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         _;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Allocates assets to the budget
     /// @param data_ The packed data for the {Transfer} request
     /// @return True if the allocation was successful
@@ -74,7 +74,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Reclaims assets from the budget
     /// @param data_ The packed {Transfer} request
     /// @return True if the request was successful
@@ -104,7 +104,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to a single recipient
     /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
@@ -136,7 +136,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to multiple recipients
     /// @param data_ The packed array of {Transfer} requests
     /// @return True if all disbursements were successful
@@ -148,7 +148,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     function setAuthorized(address[] calldata account_, bool[] calldata authorized_)
         external
         virtual
@@ -161,12 +161,12 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     function isAuthorized(address account_) public view virtual override returns (bool) {
         return _isAuthorized[account_] || account_ == owner();
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset
     /// @return The total amount of assets
@@ -183,7 +183,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return IERC1155(asset_).balanceOf(address(this), tokenId_) + _distributedERC1155[asset_][tokenId_];
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the amount of assets available for distribution from the budget
     /// @param asset_ The address of the asset (or the zero address for native assets)
     /// @return The amount of assets available
@@ -201,7 +201,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return IERC1155(asset_).balanceOf(address(this), tokenId_);
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the amount of assets that have been distributed from the budget
     /// @param asset_ The address of the asset
     /// @return The amount of assets distributed
@@ -217,7 +217,7 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return _distributedERC1155[asset_][tokenId_];
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @dev This is a no-op as there is no local balance to reconcile
     function reconcile(bytes calldata) external virtual override returns (uint256) {
         return 0;
@@ -292,13 +292,13 @@ abstract contract ASimpleBudget is Budget, IERC1155Receiver, ReentrancyGuard {
         return IERC1155Receiver.onERC1155BatchReceived.selector;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Budget, IERC165) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ABudget, IERC165) returns (bool) {
         return interfaceId == type(ASimpleBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
-            || interfaceId == type(IERC165).interfaceId || Budget.supportsInterface(interfaceId);
+            || interfaceId == type(IERC165).interfaceId || ABudget.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(ASimpleBudget).interfaceId;
     }

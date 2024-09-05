@@ -3,14 +3,14 @@ pragma solidity ^0.8.24;
 
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACGDAIncentive} from "contracts/incentives/ACGDAIncentive.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
-/// @title Continuous Gradual Dutch Auction Incentive
+/// @title Continuous Gradual Dutch Auction AIncentive
 /// @notice An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
 contract CGDAIncentive is ACGDAIncentive {
     using SafeTransferLib for address;
@@ -35,7 +35,7 @@ contract CGDAIncentive is ACGDAIncentive {
         _disableInitializers();
     }
 
-    /// @notice Initialize the CGDA Incentive
+    /// @notice Initialize the CGDA AIncentive
     /// @param data_ Initialization parameters.
     function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
@@ -62,7 +62,7 @@ contract CGDAIncentive is ACGDAIncentive {
         _initializeOwner(msg.sender);
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @notice Preflight the incentive to determine the budget required for all potential claims, which in this case is the `totalBudget`
     /// @param data_ The compressed incentive parameters `(address asset, uint256 initialReward, uint256 rewardDecay, uint256 rewardBoost, uint256 totalBudget)`
     /// @return The amount of tokens required
@@ -70,11 +70,11 @@ contract CGDAIncentive is ACGDAIncentive {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         return abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC20,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC20,
                 asset: init_.asset,
                 target: address(this),
-                data: abi.encode(Budget.FungiblePayload({amount: init_.totalBudget}))
+                data: abi.encode(ABudget.FungiblePayload({amount: init_.totalBudget}))
             })
         );
     }

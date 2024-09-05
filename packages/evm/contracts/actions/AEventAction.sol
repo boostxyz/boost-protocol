@@ -4,16 +4,16 @@ pragma solidity ^0.8.24;
 import {ERC721} from "@solady/tokens/ERC721.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 
-/// @title Event Action
+/// @title Event AAction
 /// @notice A primitive action to mint and/or validate that an ERC721 token has been minted
 /// @dev The action is expected to be prepared with the data payload for the minting of the token
 /// @dev This a minimal generic implementation that should be extended if additional functionality or customizations are required
 /// @dev It is expected that the target contract has an externally accessible mint function whose selector
-abstract contract AEventAction is Action {
+abstract contract AEventAction is AAction {
     ActionEvent[] internal actionEvents;
 
     // Define Enums
@@ -63,7 +63,7 @@ abstract contract AEventAction is Action {
         //return (true, data_);
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AEventAction).interfaceId;
     }
@@ -80,8 +80,8 @@ abstract contract AEventAction is Action {
         return actionEvents;
     }
 
-    /// @inheritdoc Action
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Action) returns (bool) {
+    /// @inheritdoc AAction
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AAction) returns (bool) {
         return interfaceId == type(AEventAction).interfaceId || super.supportsInterface(interfaceId);
     }
 }

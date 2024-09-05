@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 import {Ownable} from "@solady/auth/Ownable.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 
-/// @title Boost Incentive
-/// @notice Abstract contract for a generic Incentive within the Boost protocol
-/// @dev Incentive classes are expected to decode the calldata for implementation-specific handling. If no data is required, calldata should be empty.
-abstract contract Incentive is IBoostClaim, Ownable, Cloneable, ReentrancyGuard {
+/// @title Boost AIncentive
+/// @notice Abstract contract for a generic AIncentive within the Boost protocol
+/// @dev AIncentive classes are expected to decode the calldata for implementation-specific handling. If no data is required, calldata should be empty.
+abstract contract AIncentive is IBoostClaim, Ownable, ACloneable, ReentrancyGuard {
     /// @notice Emitted when an incentive is claimed
     /// @dev The `data` field contains implementation-specific context. See the implementation's `claim` function for details.
     event Claimed(address indexed recipient, bytes data);
@@ -61,8 +61,8 @@ abstract contract Incentive is IBoostClaim, Ownable, Cloneable, ReentrancyGuard 
 
     /// @notice Get the required allowance for the incentive
     /// @param data_ The initialization payload for the incentive
-    /// @return The data payload to be passed to the {Budget} for interpretation
-    /// @dev This function is to be called by {BoostCore} before the incentive is initialized to determine the required budget allowance. It returns an ABI-encoded payload that can be passed directly to the {Budget} contract for interpretation.
+    /// @return The data payload to be passed to the {ABudget} for interpretation
+    /// @dev This function is to be called by {BoostCore} before the incentive is initialized to determine the required budget allowance. It returns an ABI-encoded payload that can be passed directly to the {ABudget} contract for interpretation.
     function preflight(bytes calldata data_) external view virtual returns (bytes memory);
 
     /// @return The current reward
@@ -70,8 +70,8 @@ abstract contract Incentive is IBoostClaim, Ownable, Cloneable, ReentrancyGuard 
         return reward;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
-        return interfaceId == type(Incentive).interfaceId || super.supportsInterface(interfaceId);
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {
+        return interfaceId == type(AIncentive).interfaceId || super.supportsInterface(interfaceId);
     }
 }

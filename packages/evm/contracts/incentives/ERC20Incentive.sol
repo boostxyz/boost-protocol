@@ -7,10 +7,10 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
 import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 
-/// @title ERC20 Incentive
+/// @title ERC20 AIncentive
 /// @notice A simple ERC20 incentive implementation that allows claiming of tokens
 contract ERC20Incentive is AERC20Incentive {
     using LibPRNG for LibPRNG.PRNG;
@@ -51,20 +51,20 @@ contract ERC20Incentive is AERC20Incentive {
         _initializeOwner(msg.sender);
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @notice Preflight the incentive to determine the required budget action
     /// @param data_ The {InitPayload} for the incentive
-    /// @return budgetData The {Transfer} payload to be passed to the {Budget} for interpretation
+    /// @return budgetData The {Transfer} payload to be passed to the {ABudget} for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
         uint256 amount = init_.strategy != Strategy.RAFFLE ? init_.reward * init_.limit : init_.reward;
 
         return abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC20,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC20,
                 asset: init_.asset,
                 target: address(this),
-                data: abi.encode(Budget.FungiblePayload({amount: amount}))
+                data: abi.encode(ABudget.FungiblePayload({amount: amount}))
             })
         );
     }

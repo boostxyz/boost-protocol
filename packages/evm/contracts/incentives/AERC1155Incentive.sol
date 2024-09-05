@@ -5,15 +5,15 @@ import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Re
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
 /// @title ERC1155Incentive
 /// @notice A simple ERC1155 incentive implementation that allows claiming of tokens
-abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
+abstract contract AERC1155Incentive is AIncentive, IERC1155Receiver {
     /// @notice The strategy for the incentive
     /// @dev The strategy determines how the incentive is disbursed:
     ///     - POOL: Transfer tokens from the pool to the recipient
@@ -60,7 +60,7 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
         return false;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
@@ -115,13 +115,13 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
         return this.onERC1155BatchReceived.selector;
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(AERC1155Incentive).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive, IERC165) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AIncentive, IERC165) returns (bool) {
         return interfaceId == type(AERC1155Incentive).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
             || super.supportsInterface(interfaceId);
     }

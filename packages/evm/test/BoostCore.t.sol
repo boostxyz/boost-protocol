@@ -8,20 +8,20 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 
 // Actions
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
 // Allowlists
-import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
 // Budgets
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
 // Incentives
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 
@@ -34,7 +34,7 @@ import {BoostCore} from "contracts/BoostCore.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 contract BoostCoreTest is Test {
     using LibClone for address;
@@ -49,7 +49,7 @@ contract BoostCoreTest is Test {
     BoostLib.Target allowList = _makeAllowList(address(this));
 
     address[] authorized = [address(boostCore)];
-    Budget budget = _makeBudget(address(this), authorized);
+    ABudget budget = _makeBudget(address(this), authorized);
 
     bytes validCreateCalldata = LibZip.cdCompress(
         abi.encode(
@@ -72,11 +72,11 @@ contract BoostCoreTest is Test {
         mockERC20.approve(address(budget), 100 ether);
         budget.allocate(
             abi.encode(
-                Budget.Transfer({
-                    assetType: Budget.AssetType.ERC20,
+                ABudget.Transfer({
+                    assetType: ABudget.AssetType.ERC20,
                     asset: address(mockERC20),
                     target: address(this),
-                    data: abi.encode(Budget.FungiblePayload({amount: 100 ether}))
+                    data: abi.encode(ABudget.FungiblePayload({amount: 100 ether}))
                 })
             )
         );
@@ -115,20 +115,20 @@ contract BoostCoreTest is Test {
         assertEq(boost.referralFee, boostCore.referralFee() + 1000);
         assertEq(boost.maxParticipants, 10_000);
 
-        // Check the Budget
+        // Check the ABudget
         assertEq(address(boost.budget), address(budget));
         assertTrue(boost.budget.isAuthorized(address(this)));
 
-        // Check the Action
+        // Check the AAction
         ERC721MintAction _action = ERC721MintAction(address(boost.action));
-        assertTrue(_action.supportsInterface(type(Action).interfaceId));
+        assertTrue(_action.supportsInterface(type(AAction).interfaceId));
         assertEq(_action.target(), address(mockERC721));
         assertEq(_action.selector(), MockERC721.mint.selector);
         assertEq(_action.value(), mockERC721.mintPrice());
 
         // Check the AllowList
         SimpleAllowList _allowList = SimpleAllowList(address(boost.allowList));
-        assertTrue(_allowList.supportsInterface(type(AllowList).interfaceId));
+        assertTrue(_allowList.supportsInterface(type(AAllowList).interfaceId));
         assertEq(_allowList.owner(), address(this));
         assertTrue(_allowList.isAllowed(address(this), bytes("")));
         assertFalse(_allowList.isAllowed(address(1), bytes("")));
@@ -136,20 +136,20 @@ contract BoostCoreTest is Test {
         // Check the Incentives
         assertEq(1, boost.incentives.length);
         ERC20Incentive _incentive = ERC20Incentive(address(boost.incentives[0]));
-        assertTrue(_incentive.supportsInterface(type(Incentive).interfaceId));
+        assertTrue(_incentive.supportsInterface(type(AIncentive).interfaceId));
         assertTrue(_incentive.strategy() == AERC20Incentive.Strategy.POOL);
         assertEq(_incentive.asset(), address(mockERC20));
         assertEq(_incentive.currentReward(), 1 ether);
         assertEq(_incentive.limit(), 100);
         assertEq(_incentive.claims(), 0);
 
-        // Check the Validator (which should be the Action)
+        // Check the Validator (which should be the AAction)
         assertTrue(boost.validator.supportsInterface(type(AValidator).interfaceId));
         assertEq(address(boost.validator), address(boost.action));
     }
 
     function testCreateBoost_NoBudget() public {
-        // Try to create a Boost without a Budget (should fail)
+        // Try to create a Boost without a ABudget (should fail)
         bytes memory invalidBudgetCalldata = LibZip.cdCompress(
             abi.encode(
                 address(0),
@@ -165,7 +165,7 @@ contract BoostCoreTest is Test {
         );
 
         vm.expectRevert(
-            abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(Budget).interfaceId, address(0))
+            abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(ABudget).interfaceId, address(0))
         );
         boostCore.createBoost(invalidBudgetCalldata);
     }
@@ -195,11 +195,11 @@ contract BoostCoreTest is Test {
     }
 
     function testCreateBoost_InvalidBudgetNoSupport() public {
-        // Try to create a Boost with an address that doesn't support the Budget interface (should fail)
+        // Try to create a Boost with an address that doesn't support the ABudget interface (should fail)
         bytes memory calldata_ = LibZip.cdCompress(
             abi.encode(
                 BoostCore.InitPayload(
-                    Budget(payable(action.instance)),
+                    ABudget(payable(action.instance)),
                     action,
                     BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList,
@@ -212,9 +212,9 @@ contract BoostCoreTest is Test {
             )
         );
 
-        // Supports ERC165, but is not a Budget => InvalidBudget
+        // Supports ERC165, but is not a ABudget => InvalidBudget
         vm.expectRevert(
-            abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(Budget).interfaceId, action.instance)
+            abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(ABudget).interfaceId, action.instance)
         );
         boostCore.createBoost(calldata_);
 
@@ -223,7 +223,7 @@ contract BoostCoreTest is Test {
     }
 
     function testCreateBoost_InvalidAction() public {
-        // Try to create a Boost with an invalid Action (should fail)
+        // Try to create a Boost with an invalid AAction (should fail)
         bytes memory invalidActionCalldata = LibZip.cdCompress(
             abi.encode(
                 BoostCore.InitPayload(
@@ -241,7 +241,7 @@ contract BoostCoreTest is Test {
         );
 
         vm.expectRevert(
-            abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(Action).interfaceId, address(0))
+            abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(AAction).interfaceId, address(0))
         );
         boostCore.createBoost(invalidActionCalldata);
     }
@@ -306,8 +306,8 @@ contract BoostCoreTest is Test {
         });
     }
 
-    function _makeBudget(address owner_, address[] memory authorized_) internal returns (Budget _budget) {
-        _budget = Budget(payable(address(new SimpleBudget()).clone()));
+    function _makeBudget(address owner_, address[] memory authorized_) internal returns (ABudget _budget) {
+        _budget = ABudget(payable(address(new SimpleBudget()).clone()));
         _budget.initialize(abi.encode(SimpleBudget.InitPayload({owner: owner_, authorized: authorized_})));
     }
 

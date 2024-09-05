@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {ERC721} from "@solady/tokens/ERC721.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 import {AContractAction} from "contracts/actions/AContractAction.sol";
 
@@ -23,7 +23,7 @@ contract ContractAction is AContractAction {
         _disableInitializers();
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     /// @notice Initialize the contract with the owner and the required data
     function initialize(bytes calldata data_) public virtual override initializer {
         _initialize(abi.decode(data_, (InitPayload)));

@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 
 import {AValidator} from "contracts/validators/AValidator.sol";
@@ -39,12 +39,12 @@ abstract contract ASignerValidator is IBoostClaim, AValidator {
     /// @param newCaller the new authorized caller of the validator function
     function setValidatorCaller(address newCaller) external virtual;
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(ASignerValidator).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(AValidator) returns (bool) {
         return interfaceId == type(ASignerValidator).interfaceId || super.supportsInterface(interfaceId);
     }

@@ -10,13 +10,13 @@ import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-/// @title Abstract Managed Budget
+/// @title Abstract Managed ABudget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
-abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, ReentrancyGuard {
+abstract contract AManagedBudget is ABudget, OwnableRoles, IERC1155Receiver, ReentrancyGuard {
     using SafeTransferLib for address;
 
     /// @notice The role for depositing funds.
@@ -30,7 +30,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
     /// @dev The total amount of each ERC1155 asset and token ID distributed from the budget
     mapping(address => mapping(uint256 => uint256)) private _distributedERC1155;
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Allocates assets to the budget
     /// @param data_ The packed data for the {Transfer} request
     /// @return True if the allocation was successful
@@ -71,7 +71,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Reclaims assets from the budget if sender is owner or admin
     /// @param data_ The packed {Transfer} request
     /// @return True if the request was successful
@@ -101,7 +101,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to a single recipient if sender is owner, admin, or manager
     /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
@@ -139,7 +139,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to multiple recipients
     /// @param data_ The packed array of {Transfer} requests
     /// @return True if all disbursements were successful
@@ -151,13 +151,13 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return true;
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @dev Checks if account has any level of authorization
     function isAuthorized(address account_) public view virtual override returns (bool) {
         return owner() == account_ || hasAnyRole(account_, MANAGER_ROLE | ADMIN_ROLE);
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @dev If authorization is true, grant manager role, otherwise revoke manager role.
     function setAuthorized(address[] calldata accounts_, bool[] calldata authorized_)
         external
@@ -210,7 +210,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         }
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset
     /// @return The total amount of assets
@@ -227,7 +227,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return IERC1155(asset_).balanceOf(address(this), tokenId_) + _distributedERC1155[asset_][tokenId_];
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the amount of assets available for distribution from the budget
     /// @param asset_ The address of the asset (or the zero address for native assets)
     /// @return The amount of assets available
@@ -245,7 +245,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return IERC1155(asset_).balanceOf(address(this), tokenId_);
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @notice Get the amount of assets that have been distributed from the budget
     /// @param asset_ The address of the asset
     /// @return The amount of assets distributed
@@ -261,7 +261,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return _distributedERC1155[asset_][tokenId_];
     }
 
-    /// @inheritdoc Budget
+    /// @inheritdoc ABudget
     /// @dev This is a no-op as there is no local balance to reconcile
     function reconcile(bytes calldata) external virtual override returns (uint256) {
         return 0;
@@ -336,13 +336,13 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
         return IERC1155Receiver.onERC1155BatchReceived.selector;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Budget, IERC165) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ABudget, IERC165) returns (bool) {
         return interfaceId == type(AManagedBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
-            || interfaceId == type(IERC165).interfaceId || Budget.supportsInterface(interfaceId);
+            || interfaceId == type(IERC165).interfaceId || ABudget.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AManagedBudget).interfaceId;
     }

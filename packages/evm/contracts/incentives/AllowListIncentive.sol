@@ -2,13 +2,13 @@
 pragma solidity ^0.8.24;
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {AAllowListIncentive} from "contracts/incentives/AAllowListIncentive.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
-/// @title SimpleAllowList Incentive
+/// @title SimpleAllowList AIncentive
 /// @notice An incentive implementation that grants the claimer a slot on an {SimpleAllowList}
 /// @dev In order for any claim to be successful:
 ///     - The claimer must not already be on the allow list; and

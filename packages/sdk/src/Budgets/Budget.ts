@@ -1,4 +1,4 @@
-import { budgetAbi } from '@boostxyz/evm';
+import { aBudgetAbi } from '@boostxyz/evm';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -43,7 +43,7 @@ export async function budgetFromAddress(
   address: Address,
 ) {
   const interfaceId = (await readContract(options.config, {
-    abi: budgetAbi,
+    abi: aBudgetAbi,
     functionName: 'getComponentInterface',
     address,
   })) as keyof typeof BudgetByComponentInterface;

@@ -10,11 +10,11 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ERC1155Incentive} from "contracts/incentives/ERC1155Incentive.sol";
 import {AERC1155Incentive} from "contracts/incentives/AERC1155Incentive.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
 contract ERC1155IncentiveTest is Test, IERC1155Receiver {
@@ -84,7 +84,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
         vm.expectEmit(true, false, false, true);
-        emit Incentive.Claimed(
+        emit AIncentive.Claimed(
             address(1), abi.encodePacked(address(mockAsset), address(1), uint256(42), uint256(1), bytes(""))
         );
 
@@ -103,7 +103,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         incentive.claim(address(1), hex"");
 
         // Attempt to claim for address(1) again => revert
-        vm.expectRevert(Incentive.NotClaimable.selector);
+        vm.expectRevert(AIncentive.NotClaimable.selector);
         incentive.claim(address(1), hex"");
     }
 
@@ -117,7 +117,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         assertEq(incentive.limit(), 100);
 
         // Reclaim 50x the reward amount
-        bytes memory reclaimPayload = abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(50)}));
+        bytes memory reclaimPayload = abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50)}));
         incentive.clawback(reclaimPayload);
         assertEq(mockAsset.balanceOf(address(1), 42), 50);
 
@@ -131,7 +131,8 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 100);
 
         // Reclaim 101 tokens => exceeds balance => revert
-        bytes memory reclaimPayload = abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(101)}));
+        bytes memory reclaimPayload =
+            abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(101)}));
         vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.clawback(reclaimPayload);
     }
@@ -183,11 +184,11 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     function testPreflight() public view {
         // Check the preflight data
         bytes memory data = incentive.preflight(_initPayload(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5));
-        Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
+        ABudget.Transfer memory budgetRequest = abi.decode(data, (ABudget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
 
-        Budget.ERC1155Payload memory payload = abi.decode(budgetRequest.data, (Budget.ERC1155Payload));
+        ABudget.ERC1155Payload memory payload = abi.decode(budgetRequest.data, (ABudget.ERC1155Payload));
         assertEq(payload.tokenId, 42);
         assertEq(payload.amount, 5);
         assertEq(payload.data, "");
@@ -196,8 +197,8 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     function testPreflight_WeirdRewards() public view {
         // Preflight with zero max claims
         bytes memory noClaims = incentive.preflight(_initPayload(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 0));
-        Budget.Transfer memory request = abi.decode(noClaims, (Budget.Transfer));
-        Budget.ERC1155Payload memory payload = abi.decode(request.data, (Budget.ERC1155Payload));
+        ABudget.Transfer memory request = abi.decode(noClaims, (ABudget.Transfer));
+        ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
         assertEq(payload.amount, 0);
     }
 
@@ -215,8 +216,8 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     /////////////////////////////////////
 
     function testSupportsInterface() public view {
-        // Ensure the contract supports the Budget interface
-        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(incentive.supportsInterface(type(AIncentive).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public view {
@@ -259,11 +260,11 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         pure
         returns (bytes memory)
     {
-        Budget.Transfer memory transfer;
-        transfer.assetType = Budget.AssetType.ERC1155;
+        ABudget.Transfer memory transfer;
+        transfer.assetType = ABudget.AssetType.ERC1155;
         transfer.asset = asset;
         transfer.target = target;
-        transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: value, data: data}));
+        transfer.data = abi.encode(ABudget.ERC1155Payload({tokenId: tokenId, amount: value, data: data}));
 
         return abi.encode(transfer);
     }

@@ -3,11 +3,11 @@ pragma solidity ^0.8.24;
 
 import {ERC721} from "@solady/tokens/ERC721.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 
-abstract contract AContractAction is Action {
+abstract contract AContractAction is AAction {
     /// @notice Thrown when execution on a given chain is not supported
     error TargetChainUnsupported(uint256 targetChainId);
 
@@ -47,13 +47,13 @@ abstract contract AContractAction is Action {
         }
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AContractAction).interfaceId;
     }
 
-    /// @inheritdoc Action
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Action) returns (bool) {
+    /// @inheritdoc AAction
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AAction) returns (bool) {
         return interfaceId == type(AContractAction).interfaceId || super.supportsInterface(interfaceId);
     }
 }

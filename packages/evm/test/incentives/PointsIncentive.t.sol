@@ -6,7 +6,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 import {Points} from "contracts/tokens/Points.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
@@ -138,7 +138,7 @@ contract PointsIncentiveTest is Test {
             )
         );
         points.grantRoles(address(failingIncentive), points.ISSUER_ROLE());
-        vm.expectRevert(Incentive.ClaimFailed.selector);
+        vm.expectRevert(AIncentive.ClaimFailed.selector);
         failingIncentive.claim(address(1), hex"");
     }
 
@@ -189,8 +189,8 @@ contract PointsIncentiveTest is Test {
     /////////////////////////////////////
 
     function testSupportsInterface() public view {
-        // Ensure the contract supports the Budget interface
-        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(incentive.supportsInterface(type(AIncentive).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public view {

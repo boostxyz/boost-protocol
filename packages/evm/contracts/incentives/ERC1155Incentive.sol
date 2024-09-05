@@ -5,9 +5,9 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AERC1155Incentive} from "contracts/incentives/AERC1155Incentive.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
 /// @title ERC1155Incentive
 /// @notice A simple ERC1155 incentive implementation that allows claiming of tokens
@@ -52,19 +52,19 @@ contract ERC1155Incentive is AERC1155Incentive {
         _initializeOwner(msg.sender);
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @notice Get the required allowance for the incentive
     /// @param data_ The initialization payload for the incentive
-    /// @return budgetData The data payload to be passed to the Budget for interpretation
+    /// @return budgetData The data payload to be passed to the ABudget for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
         return abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(init_.asset),
                 target: address(this),
                 data: abi.encode(
-                    Budget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.limit, data: init_.extraData})
+                    ABudget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.limit, data: init_.extraData})
                 )
             })
         );

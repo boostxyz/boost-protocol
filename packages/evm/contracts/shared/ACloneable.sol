@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 import {Initializable} from "@solady/utils/Initializable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-/// @title Cloneable
+/// @title ACloneable
 /// @notice A contract that can be cloned and initialized only once
-abstract contract Cloneable is Initializable, ERC165 {
+abstract contract ACloneable is Initializable, ERC165 {
     /// @notice Thrown when an inheriting contract does not implement the initializer function
     error InitializerNotImplemented();
 
@@ -35,6 +35,6 @@ abstract contract Cloneable is Initializable, ERC165 {
     /// @param interfaceId The interface identifier
     /// @return True if the contract supports the interface
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(Cloneable).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(ACloneable).interfaceId || super.supportsInterface(interfaceId);
     }
 }

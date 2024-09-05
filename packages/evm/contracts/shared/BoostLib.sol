@@ -4,11 +4,11 @@ pragma solidity ^0.8.24;
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 
-import {Action} from "contracts/actions/Action.sol";
-import {AllowList} from "contracts/allowlists/AllowList.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AAction} from "contracts/actions/AAction.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 
 library BoostLib {
@@ -17,11 +17,11 @@ library BoostLib {
 
     /// @notice A struct representing a single Boost
     struct Boost {
-        Action action;
+        AAction action;
         AValidator validator;
-        AllowList allowList;
-        Budget budget;
-        Incentive[] incentives;
+        AAllowList allowList;
+        ABudget budget;
+        AIncentive[] incentives;
         uint64 protocolFee;
         uint64 referralFee;
         uint256 maxParticipants;
@@ -44,6 +44,6 @@ library BoostLib {
     function cloneAndInitialize(address $, bytes32 salt_, bytes memory initData_) internal returns (address _clone) {
         _clone = $.cloneDeterministic(salt_);
         // wake-disable-next-line reentrancy (false positive)
-        Cloneable(_clone).initialize(initData_);
+        ACloneable(_clone).initialize(initData_);
     }
 }

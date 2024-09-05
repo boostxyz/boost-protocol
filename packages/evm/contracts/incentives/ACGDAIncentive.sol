@@ -3,16 +3,16 @@ pragma solidity ^0.8.24;
 
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 
-import {Incentive} from "./Incentive.sol";
+import {AIncentive} from "./AIncentive.sol";
 
-/// @title Continuous Gradual Dutch Auction Incentive
+/// @title Continuous Gradual Dutch Auction AIncentive
 /// @notice An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
-abstract contract ACGDAIncentive is Incentive {
+abstract contract ACGDAIncentive is AIncentive {
     using SafeTransferLib for address;
 
     /// @notice The ERC20-like token used for the incentive
@@ -33,7 +33,7 @@ abstract contract ACGDAIncentive is Incentive {
     CGDAParameters public cgdaParams;
     uint256 public totalBudget;
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @notice Claim the incentive
     function claim(address claimTarget, bytes calldata) external virtual override onlyOwner returns (bool) {
         if (!_isClaimable(claimTarget)) revert NotClaimable();
@@ -52,7 +52,7 @@ abstract contract ACGDAIncentive is Incentive {
         return true;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function clawback(bytes calldata data_) external virtual override onlyOwner returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
@@ -64,7 +64,7 @@ abstract contract ACGDAIncentive is Incentive {
         return true;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function isClaimable(address claimTarget, bytes calldata) external view virtual override returns (bool) {
         return _isClaimable(claimTarget);
     }
@@ -88,13 +88,13 @@ abstract contract ACGDAIncentive is Incentive {
         return reward > 0 && asset.balanceOf(address(this)) >= reward && !claimed[recipient_];
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(ACGDAIncentive).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AIncentive) returns (bool) {
         return interfaceId == type(ACGDAIncentive).interfaceId || super.supportsInterface(interfaceId);
     }
 }

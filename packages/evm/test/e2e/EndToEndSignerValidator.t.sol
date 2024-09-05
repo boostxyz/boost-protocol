@@ -14,22 +14,21 @@ import {BoostRegistry} from "contracts/BoostRegistry.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {AllowList} from "contracts/allowlists/AllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 import {ASignerValidator, IBoostClaim} from "contracts/validators/ASignerValidator.sol";
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 
 import {AValidator} from "contracts/validators/AValidator.sol";
@@ -39,8 +38,8 @@ contract EndToEndSigner is Test, OwnableRoles {
     address fee_recipient = address(1);
     BoostCore public core = new BoostCore(registry, fee_recipient);
 
-    address budgetManager = makeAddr("Budget Manager");
-    address budgetAdmin = makeAddr("Budget Admin");
+    address budgetManager = makeAddr("ABudget Manager");
+    address budgetAdmin = makeAddr("ABudget Admin");
 
     address validatorSigner;
     uint256 validatorSignerKey;
@@ -91,14 +90,14 @@ contract EndToEndSigner is Test, OwnableRoles {
         assertEq(boost.owner, address(1));
 
         // Let's spot check the Boost we just created
-        // - Budget == ManagedBudget
+        // - ABudget == ManagedBudget
         assertEq(address(boost.budget), address(budget));
         assertEq(boost.budget.owner(), address(this));
         assertTrue(budget.isAuthorized(address(this)));
         assertTrue(budget.isAuthorized(address(core)));
         assertFalse(budget.isAuthorized(address(0xdeadbeef)));
 
-        // - Action == ERC721MintAction
+        // - AAction == ERC721MintAction
         assertEq(ERC721MintAction(address(boost.action)).target(), address(erc721));
         assertEq(ERC721MintAction(address(boost.action)).selector(), erc721.mint.selector);
         assertEq(ERC721MintAction(address(boost.action)).value(), erc721.mintPrice());
@@ -109,11 +108,11 @@ contract EndToEndSigner is Test, OwnableRoles {
         assertTrue(boost.allowList.isAllowed(address(this), bytes("")));
 
         // - Validator == SignerValidator
-        assertEq(boost.action.supportsInterface(type(Action).interfaceId), true);
+        assertEq(boost.action.supportsInterface(type(AAction).interfaceId), true);
         assertEq(boost.action.supportsInterface(type(AValidator).interfaceId), true);
         assertEq(SignerValidator(address(boost.validator)).getComponentInterface(), type(ASignerValidator).interfaceId);
 
-        // - Incentive[0] == ERC20VariableIncentive
+        // - AIncentive[0] == ERC20VariableIncentive
         assertEq(ERC20VariableIncentive(address(boost.incentives[0])).asset(), address(erc20));
         assertEq(ERC20VariableIncentive(address(boost.incentives[0])).currentReward(), rewardAmount);
         assertEq(ERC20VariableIncentive(address(boost.incentives[0])).limit(), incentiveLimitAmount);
@@ -136,7 +135,7 @@ contract EndToEndSigner is Test, OwnableRoles {
 
         _i_can_complete_an_action(boost, claimer);
 
-        // create Incentive Payload
+        // create AIncentive Payload
         uint256 boostId = 0;
         uint256 incentiveId = 0;
         uint8 incentiveQuantity = 1;
@@ -144,7 +143,7 @@ contract EndToEndSigner is Test, OwnableRoles {
         // claim an amount of 100 tokens
         bytes memory claimBytes = abi.encode(claimAmount);
 
-        // create Validator Payload containing Incentive Payload
+        // create Validator Payload containing AIncentive Payload
         bytes32 msgHash =
             SignerValidator(address(boost.validator)).hashSignerData(boostId, incentiveQuantity, claimer, claimBytes);
 
@@ -185,7 +184,7 @@ contract EndToEndSigner is Test, OwnableRoles {
                                 registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "ManagedBudget")
                             )
                         ),
-                        "My Managed Budget",
+                        "My Managed ABudget",
                         abi.encode(
                             ManagedBudget.InitPayload({owner: address(this), authorized: authorized, roles: roles})
                         )
@@ -197,18 +196,18 @@ contract EndToEndSigner is Test, OwnableRoles {
         assertTrue(budget.isAuthorized(address(this)));
     }
 
-    function _when_I_allocate_assets_to_my_budget(Budget budget) internal {
+    function _when_I_allocate_assets_to_my_budget(ABudget budget) internal {
         // "When I allocate assets to my budget"
         // "And the asset is an ERC20 token"
         erc20.approve(address(budget), 500 ether);
         assertTrue(
             budget.allocate(
                 abi.encode(
-                    Budget.Transfer({
-                        assetType: Budget.AssetType.ERC20,
+                    ABudget.Transfer({
+                        assetType: ABudget.AssetType.ERC20,
                         asset: address(erc20),
                         target: address(this),
-                        data: abi.encode(Budget.FungiblePayload({amount: 500 ether}))
+                        data: abi.encode(ABudget.FungiblePayload({amount: 500 ether}))
                     })
                 )
             )
@@ -223,11 +222,11 @@ contract EndToEndSigner is Test, OwnableRoles {
         assertTrue(
             budget.allocate{value: 10.5 ether}(
                 abi.encode(
-                    Budget.Transfer({
-                        assetType: Budget.AssetType.ETH,
+                    ABudget.Transfer({
+                        assetType: ABudget.AssetType.ETH,
                         asset: address(0),
                         target: address(this),
-                        data: abi.encode(Budget.FungiblePayload({amount: 10.5 ether}))
+                        data: abi.encode(ABudget.FungiblePayload({amount: 10.5 ether}))
                     })
                 )
             )
@@ -238,7 +237,7 @@ contract EndToEndSigner is Test, OwnableRoles {
         assertEq(budget.available(address(0)), 10.5 ether);
     }
 
-    function _when_I_create_a_new_boost_with_my_budget(Budget budget) internal returns (BoostLib.Boost memory) {
+    function _when_I_create_a_new_boost_with_my_budget(ABudget budget) internal returns (BoostLib.Boost memory) {
         // NOTES:
         // - this looks super complicated, but the UI would handling all the encoding, registry lookups, etc.
         // - solidity stumbles on encoding array literals, so we pre-build those in memory

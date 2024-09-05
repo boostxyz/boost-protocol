@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
 import {ASimpleAllowList} from "contracts/allowlists/ASimpleAllowList.sol";

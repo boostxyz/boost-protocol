@@ -13,19 +13,19 @@ import {BoostRegistry} from "contracts/BoostRegistry.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 
@@ -108,18 +108,18 @@ contract EndToEndBasic is Test {
         assertEq(boost.owner, address(1));
 
         // Let's spot check the Boost we just created
-        // - Budget == SimpleBudget
+        // - ABudget == SimpleBudget
         assertEq(address(boost.budget), address(budget));
         assertEq(boost.budget.owner(), address(this));
         assertTrue(budget.isAuthorized(address(this)));
         assertFalse(budget.isAuthorized(address(0xdeadbeef)));
 
-        // - Action == Validator
-        assertEq(boost.action.supportsInterface(type(Action).interfaceId), true);
+        // - AAction == Validator
+        assertEq(boost.action.supportsInterface(type(AAction).interfaceId), true);
         assertEq(boost.action.supportsInterface(type(AValidator).interfaceId), true);
         assertEq(address(boost.validator), address(boost.action));
 
-        // - Action == ERC721MintAction
+        // - AAction == ERC721MintAction
         assertEq(ERC721MintAction(address(boost.action)).target(), address(erc721));
         assertEq(ERC721MintAction(address(boost.action)).selector(), erc721.mint.selector);
         assertEq(ERC721MintAction(address(boost.action)).value(), erc721.mintPrice());
@@ -129,7 +129,7 @@ contract EndToEndBasic is Test {
         assertTrue(boost.allowList.isAllowed(address(0xc0ffee), bytes("")));
         assertFalse(boost.allowList.isAllowed(address(this), bytes("")));
 
-        // - Incentive[0] == ERC20Incentive
+        // - AIncentive[0] == ERC20Incentive
         assertEq(ERC20Incentive(address(boost.incentives[0])).asset(), address(erc20));
         assertEq(ERC20Incentive(address(boost.incentives[0])).currentReward(), 100 ether);
         assertEq(ERC20Incentive(address(boost.incentives[0])).limit(), 5);
@@ -159,7 +159,7 @@ contract EndToEndBasic is Test {
 
         // "Then I can claim the rewards to my wallet"
         uint256 boostId = 0; // This is the only Boost we've created = 0
-        uint256 incentiveId = 0; // This is the only Incentive in that Boost = 0
+        uint256 incentiveId = 0; // This is the only AIncentive in that Boost = 0
         uint256 tokenId = 1; // This is the tokenId we just minted = 1
         core.claimIncentive{value: core.claimFee()}(
             boostId, incentiveId, address(0), abi.encode(address(this), abi.encode(tokenId))
@@ -187,7 +187,7 @@ contract EndToEndBasic is Test {
                                 registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget")
                             )
                         ),
-                        "My Simple Budget",
+                        "My Simple ABudget",
                         abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
                     )
                 )
@@ -197,18 +197,18 @@ contract EndToEndBasic is Test {
         assertTrue(budget.isAuthorized(address(this)));
     }
 
-    function _when_I_allocate_assets_to_my_budget(Budget budget) internal {
+    function _when_I_allocate_assets_to_my_budget(ABudget budget) internal {
         // "When I allocate assets to my budget"
         // "And the asset is an ERC20 token"
         erc20.approve(address(budget), 500 ether);
         assertTrue(
             budget.allocate(
                 abi.encode(
-                    Budget.Transfer({
-                        assetType: Budget.AssetType.ERC20,
+                    ABudget.Transfer({
+                        assetType: ABudget.AssetType.ERC20,
                         asset: address(erc20),
                         target: address(this),
-                        data: abi.encode(Budget.FungiblePayload({amount: 500 ether}))
+                        data: abi.encode(ABudget.FungiblePayload({amount: 500 ether}))
                     })
                 )
             )
@@ -223,11 +223,11 @@ contract EndToEndBasic is Test {
         assertTrue(
             budget.allocate{value: 10.5 ether}(
                 abi.encode(
-                    Budget.Transfer({
-                        assetType: Budget.AssetType.ETH,
+                    ABudget.Transfer({
+                        assetType: ABudget.AssetType.ETH,
                         asset: address(0),
                         target: address(this),
-                        data: abi.encode(Budget.FungiblePayload({amount: 10.5 ether}))
+                        data: abi.encode(ABudget.FungiblePayload({amount: 10.5 ether}))
                     })
                 )
             )
@@ -246,7 +246,7 @@ contract EndToEndBasic is Test {
     /// @notice When I create a new Boost with my budget
     /// @param budget The budget to use for the Boost
     /// @return The Boost that was created
-    function _when_I_create_a_new_boost_with_my_budget(Budget budget) internal returns (BoostLib.Boost memory) {
+    function _when_I_create_a_new_boost_with_my_budget(ABudget budget) internal returns (BoostLib.Boost memory) {
         // NOTES:
         // - this looks super complicated, but the UI would handling all the encoding, registry lookups, etc.
         // - solidity stumbles on encoding array literals, so we pre-build those in memory

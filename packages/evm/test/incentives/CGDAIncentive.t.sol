@@ -146,9 +146,12 @@ contract CGDAIncentiveTest is Test {
     }
 
     function test_claim_OutOfBudget() public {
-        incentive.reclaim(
+        incentive.clawback(
             abi.encode(
-                Incentive.ClaimPayload({target: makeAddr("weird al's wonky waffle house"), data: abi.encode(10 ether)})
+                Incentive.ClawbackPayload({
+                    target: makeAddr("weird al's wonky waffle house"),
+                    data: abi.encode(10 ether)
+                })
             )
         );
 
@@ -230,7 +233,7 @@ contract CGDAIncentiveTest is Test {
     // CGDAIncentive.reclaim //
     ///////////////////////////
 
-    function test_reclaim() public {
+    function test_clawback() public {
         address[] memory accounts = _randomAccounts(10);
         for (uint256 i = 0; i < accounts.length; i++) {
             incentive.claim(accounts[i], hex"");
@@ -240,8 +243,8 @@ contract CGDAIncentiveTest is Test {
         assertEq(asset.balanceOf(address(incentive)), 2.25 ether);
 
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClaimPayload({target: address(0xdeadbeef), data: abi.encode(2 ether)}));
-        incentive.reclaim(reclaimPayload);
+            abi.encode(Incentive.ClawbackPayload({target: address(0xdeadbeef), data: abi.encode(2 ether)}));
+        incentive.clawback(reclaimPayload);
 
         assertEq(incentive.currentReward(), 0.25 ether);
         assertEq(asset.balanceOf(address(incentive)), 0.25 ether);

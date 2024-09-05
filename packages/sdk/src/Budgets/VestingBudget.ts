@@ -9,15 +9,15 @@ import {
   readVestingBudgetStart,
   readVestingBudgetTotal,
   simulateVestingBudgetAllocate,
+  simulateVestingBudgetClawback,
   simulateVestingBudgetDisburse,
   simulateVestingBudgetDisburseBatch,
-  simulateVestingBudgetReclaim,
   simulateVestingBudgetSetAuthorized,
   vestingBudgetAbi,
   writeVestingBudgetAllocate,
+  writeVestingBudgetClawback,
   writeVestingBudgetDisburse,
   writeVestingBudgetDisburseBatch,
-  writeVestingBudgetReclaim,
   writeVestingBudgetSetAuthorized,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
@@ -69,7 +69,7 @@ export type VestingBudgetLog<
  * - The budget is designed to manage native and ERC20 token balances only. Using rebasing tokens or other non-standard token types may result in unexpected behavior.
  * - Any assets allocated to this type of budget will follow the vesting schedule as if they were locked from the beginning, which is to say that, if the vesting has already started, some portion of the assets will be immediately available for distribution.
  * - A vesting budget can also act as a time-lock, unlocking all assets at a specified point in time. To release assets at a specific time rather than vesting them over time, set the `start` to the desired time and the `duration` to zero.
- * - This contract is {Ownable} to enable the owner to allocate to the budget, reclaim and disburse assets from the budget, and to set authorized addresses. Additionally, the owner can transfer ownership of the budget to another address. Doing so has no effect on the vesting schedule.
+ * - This contract is {Ownable} to enable the owner to allocate to the budget, clawback and disburse assets from the budget, and to set authorized addresses. Additionally, the owner can transfer ownership of the budget to another address. Doing so has no effect on the vesting schedule.
  *
  * @export
  * @class VestingBudget
@@ -211,41 +211,41 @@ export class VestingBudget extends DeployableTarget<
   }
 
   /**
-   * Reclaims assets from the budget.
-   * Only the owner can directly reclaim assets from the budget
+   * Clawbacks assets from the budget.
+   * Only the owner can directly clawback assets from the budget
    * If the amount is zero, the entire balance of the asset will be transferred to the receiver
    * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'reclaim'>} [params]
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'clawback'>} [params]
    * @returns {Promise<boolean>} - True if the request was successful
    */
-  public async reclaim(
+  public async clawback(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
+    params?: WriteParams<typeof vestingBudgetAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.reclaimRaw(transfer, params));
+    return this.awaitResult(this.clawbackRaw(transfer, params));
   }
 
   /**
-   * Reclaims assets from the budget.
-   * Only the owner can directly reclaim assets from the budget
+   * Clawbacks assets from the budget.
+   * Only the owner can directly clawback assets from the budget
    * If the amount is zero, the entire balance of the asset will be transferred to the receiver
    * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'reclaim'>} [params]
+   * @param {?WriteParams<typeof vestingBudgetAbi, 'clawback'>} [params]
    * @returns {Promise<boolean>} - True if the request was successful
    */
-  public async reclaimRaw(
+  public async clawbackRaw(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'reclaim'>,
+    params?: WriteParams<typeof vestingBudgetAbi, 'clawback'>,
   ) {
-    const { request, result } = await simulateVestingBudgetReclaim(
+    const { request, result } = await simulateVestingBudgetClawback(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -255,7 +255,7 @@ export class VestingBudget extends DeployableTarget<
         ...(params as any),
       },
     );
-    const hash = await writeVestingBudgetReclaim(this._config, request);
+    const hash = await writeVestingBudgetClawback(this._config, request);
     return { hash, result };
   }
 

@@ -78,7 +78,7 @@ abstract contract AManagedBudget is Budget, OwnableRoles, IERC1155Receiver, Reen
     /// @dev Only admins can directly reclaim assets from the budget
     /// @dev If the amount is zero, the entire balance of the asset will be transferred to the receiver
     /// @dev If the asset transfer fails, the reclamation will revert
-    function reclaim(bytes calldata data_) external virtual override onlyOwnerOrRoles(ADMIN_ROLE) returns (bool) {
+    function clawback(bytes calldata data_) external virtual override onlyOwnerOrRoles(ADMIN_ROLE) returns (bool) {
         Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));

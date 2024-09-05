@@ -170,9 +170,9 @@ contract PointsIncentiveTest is Test {
     // PointsIncentive.reclaim //
     /////////////////////////////
 
-    function test_reclaim() public {
+    function test_clawback() public {
         vm.expectRevert(BoostError.NotImplemented.selector);
-        incentive.reclaim(new bytes(0));
+        incentive.clawback(new bytes(0));
     }
 
     ////////////////////////////////////

@@ -123,8 +123,8 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50 ether)}));
-        incentive.reclaim(reclaimPayload);
+            abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(50 ether)}));
+        incentive.clawback(reclaimPayload);
         assertEq(mockAsset.balanceOf(address(1)), 50 ether);
 
         // Check that enough assets remain to cover 50 more claims
@@ -138,9 +138,9 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim 50.1x => not an integer multiple of the reward amount => revert
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(50.1 ether)}));
+            abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(50.1 ether)}));
         vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
-        incentive.reclaim(reclaimPayload);
+        incentive.clawback(reclaimPayload);
     }
 
     function testReclaim_RaffleStrategy() public {
@@ -155,10 +155,10 @@ contract ERC20IncentiveTest is Test {
 
         // Attempt to reclaim the reward => revert (because the reward is now locked)
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClaimPayload({target: address(1), data: abi.encode(100 ether)}));
+            abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(100 ether)}));
 
         vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
-        incentive.reclaim(reclaimPayload);
+        incentive.clawback(reclaimPayload);
         assertEq(incentive.limit(), 5);
     }
 
@@ -168,8 +168,8 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim the full reward amount
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClaimPayload({target: address(this), data: abi.encode(100 ether)}));
-        incentive.reclaim(reclaimPayload);
+            abi.encode(Incentive.ClawbackPayload({target: address(this), data: abi.encode(100 ether)}));
+        incentive.clawback(reclaimPayload);
 
         // Check that the limit is set to 0
         assertEq(incentive.limit(), 0);

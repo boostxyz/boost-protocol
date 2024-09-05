@@ -11,11 +11,11 @@ import {
   readErc20IncentiveReward,
   readErc20IncentiveStrategy,
   simulateErc20IncentiveClaim,
+  simulateErc20IncentiveClawback,
   simulateErc20IncentiveDrawRaffle,
-  simulateErc20IncentiveReclaim,
   writeErc20IncentiveClaim,
+  writeErc20IncentiveClawback,
   writeErc20IncentiveDrawRaffle,
-  writeErc20IncentiveReclaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import type { Address, ContractEventName, Hex } from 'viem';
@@ -290,35 +290,35 @@ export class ERC20Incentive extends DeployableTarget<
   }
 
   /**
-   * Reclaim assets from the incentive
+   * Clawback assets from the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'reclaim'>} [params]
-   * @returns {Promise<boolean>} -  True if the assets were successfully reclaimed
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'clawback'>} [params]
+   * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
    */
-  public async reclaim(
+  public async clawback(
     payload: ClaimPayload,
-    params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
+    params?: WriteParams<typeof erc20IncentiveAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.reclaimRaw(payload, params));
+    return this.awaitResult(this.clawbackRaw(payload, params));
   }
 
   /**
-   * Reclaim assets from the incentive
+   * Clawback assets from the incentive
    *
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'reclaim'>} [params]
-   * @returns {Promise<boolean>} -  True if the assets were successfully reclaimed
+   * @param {?WriteParams<typeof erc20IncentiveAbi, 'clawback'>} [params]
+   * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
    */
-  public async reclaimRaw(
+  public async clawbackRaw(
     payload: ClaimPayload,
-    params?: WriteParams<typeof erc20IncentiveAbi, 'reclaim'>,
+    params?: WriteParams<typeof erc20IncentiveAbi, 'clawback'>,
   ) {
-    const { request, result } = await simulateErc20IncentiveReclaim(
+    const { request, result } = await simulateErc20IncentiveClawback(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -328,7 +328,7 @@ export class ERC20Incentive extends DeployableTarget<
         ...(params as any),
       },
     );
-    const hash = await writeErc20IncentiveReclaim(this._config, request);
+    const hash = await writeErc20IncentiveClawback(this._config, request);
     return { hash, result };
   }
 

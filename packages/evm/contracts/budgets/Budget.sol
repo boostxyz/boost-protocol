@@ -78,7 +78,7 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @notice Reclaim assets from the budget
     /// @param data_ The compressed data for the reclamation (amount, token address, token ID, etc.)
     /// @return True if the reclamation was successful
-    function reclaim(bytes calldata data_) external virtual returns (bool);
+    function clawback(bytes calldata data_) external virtual returns (bool);
 
     /// @notice Disburse assets from the budget to a single recipient
     /// @param data_ The compressed {Transfer} request

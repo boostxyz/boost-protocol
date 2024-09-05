@@ -188,7 +188,7 @@ contract VestingBudgetTest is Test {
 
         // Reclaim 99 tokens from the budget
         assertTrue(
-            vestingBudget.reclaim(
+            vestingBudget.clawback(
                 _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 99 ether)
             )
         );
@@ -207,7 +207,7 @@ contract VestingBudgetTest is Test {
 
         // Reclaim 99 ETH from the budget
         bytes memory data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 99 ether);
-        assertTrue(vestingBudget.reclaim(data));
+        assertTrue(vestingBudget.clawback(data));
 
         // Ensure the budget has 1 ETH left
         assertEq(vestingBudget.available(address(0)), 1 ether);
@@ -219,7 +219,7 @@ contract VestingBudgetTest is Test {
 
         // Reclaim all tokens from the budget
         bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 0);
-        assertTrue(vestingBudget.reclaim(data));
+        assertTrue(vestingBudget.clawback(data));
 
         // Ensure the budget has no tokens left
         assertEq(vestingBudget.available(address(mockERC20)), 0 ether);
@@ -234,7 +234,7 @@ contract VestingBudgetTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC20), address(0), uint256(100 ether))
         );
-        vestingBudget.reclaim(data);
+        vestingBudget.clawback(data);
 
         // Ensure the budget has 100 tokens
         assertEq(vestingBudget.available(address(mockERC20)), 100 ether);
@@ -251,7 +251,7 @@ contract VestingBudgetTest is Test {
                 Budget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
             )
         );
-        vestingBudget.reclaim(data);
+        vestingBudget.clawback(data);
     }
 
     function testReclaim_ImproperData() public {
@@ -268,7 +268,7 @@ contract VestingBudgetTest is Test {
         // with uncompressed but properly encoded data
         data = abi.encodePacked(mockERC20, uint256(100 ether), address(this));
         vm.expectRevert();
-        vestingBudget.reclaim(data);
+        vestingBudget.clawback(data);
     }
 
     function testReclaim_NotOwner() public {
@@ -278,7 +278,7 @@ contract VestingBudgetTest is Test {
         // We can reuse the data from above because the target is `address(this)` in both cases
         vm.prank(address(1));
         vm.expectRevert();
-        vestingBudget.reclaim(
+        vestingBudget.clawback(
             _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
     }

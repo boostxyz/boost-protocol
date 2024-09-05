@@ -20,12 +20,6 @@ abstract contract AAllowListIncentive is Incentive {
     /// @notice The maximum number of claims that can be made (one per address)
     uint256 public limit;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the allowlist
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @inheritdoc Incentive
     /// @notice Claim a slot on the {SimpleAllowList}
     /// @param data_ The claim data
@@ -70,7 +64,7 @@ abstract contract AAllowListIncentive is Incentive {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(AAllowListIncentive).interfaceId;
     }
 

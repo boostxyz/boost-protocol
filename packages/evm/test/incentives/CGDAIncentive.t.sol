@@ -68,6 +68,62 @@ contract CGDAIncentiveTest is Test {
         assertEq(incentive.owner(), address(this));
     }
 
+    function test_initialize_InsufficientFunds() public {
+        incentive = CGDAIncentive(LibClone.clone(address(new CGDAIncentive())));
+        asset.mint(address(incentive), 5 ether); // Mint less than totalBudget
+
+        vm.expectRevert(
+            abi.encodeWithSelector(BoostError.InsufficientFunds.selector, address(asset), 5 ether, 10 ether)
+        );
+        incentive.initialize(
+            abi.encode(
+                CGDAIncentive.InitPayload({
+                    asset: address(asset),
+                    initialReward: 1 ether,
+                    rewardDecay: 0.05 ether,
+                    rewardBoost: 0.1 ether,
+                    totalBudget: 10 ether
+                })
+            )
+        );
+    }
+
+    function test_initialize_InvalidInitialization_ZeroInitialReward() public {
+        incentive = CGDAIncentive(LibClone.clone(address(new CGDAIncentive())));
+        asset.mint(address(incentive), 10 ether);
+
+        vm.expectRevert(BoostError.InvalidInitialization.selector);
+        incentive.initialize(
+            abi.encode(
+                CGDAIncentive.InitPayload({
+                    asset: address(asset),
+                    initialReward: 0, // Invalid initialReward
+                    rewardDecay: 0.05 ether,
+                    rewardBoost: 0.1 ether,
+                    totalBudget: 10 ether
+                })
+            )
+        );
+    }
+
+    function test_initialize_InvalidInitialization_TotalBudgetLessThanInitialReward() public {
+        incentive = CGDAIncentive(LibClone.clone(address(new CGDAIncentive())));
+        asset.mint(address(incentive), 10 ether);
+
+        vm.expectRevert(BoostError.InvalidInitialization.selector);
+        incentive.initialize(
+            abi.encode(
+                CGDAIncentive.InitPayload({
+                    asset: address(asset),
+                    initialReward: 11 ether, // initialReward greater than totalBudget
+                    rewardDecay: 0.05 ether,
+                    rewardBoost: 0.1 ether,
+                    totalBudget: 10 ether
+                })
+            )
+        );
+    }
+
     /////////////////////////
     // CGDAIncentive.claim //
     /////////////////////////

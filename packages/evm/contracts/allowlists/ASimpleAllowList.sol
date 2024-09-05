@@ -17,12 +17,6 @@ abstract contract ASimpleAllowList is AllowList, OwnableRoles {
     /// @dev An internal mapping of allowed statuses
     mapping(address => bool) internal _allowed;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @notice Check if a user is authorized
     /// @param user_ The address of the user
     /// @param - The data payload for the authorization check, not used in this implementation
@@ -45,7 +39,7 @@ abstract contract ASimpleAllowList is AllowList, OwnableRoles {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(AllowList) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(ASimpleAllowList).interfaceId;
     }
 

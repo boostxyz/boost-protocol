@@ -24,9 +24,4 @@ abstract contract AllowList is Ownable, Cloneable {
     function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
         return interfaceId == type(AllowList).interfaceId || super.supportsInterface(interfaceId);
     }
-
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
-        return type(AllowList).interfaceId;
-    }
 }

@@ -22,9 +22,10 @@ abstract contract AERC721MintAction is ContractAction, AValidator, AOwnable {
     /// @dev This is intended to prevent multiple validations against the same token ID
     mapping(uint256 => bool) public validated;
 
-    /// @inheritdoc Cloneable
-    function initialize(bytes calldata data_) public virtual override(Cloneable, ContractAction) {
-        revert NotInitializing();
+    /// @inheritdoc ContractAction
+    /// @notice Initialize the contract with the owner and the required data
+    function initialize(bytes calldata data_) public virtual override(ContractAction, Cloneable) initializer {
+        ContractAction.initialize(data_);
     }
 
     /// @notice Execute the action (not yet implemented)

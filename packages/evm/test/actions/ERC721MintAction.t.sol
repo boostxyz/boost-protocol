@@ -5,6 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {ERC721} from "@solady/tokens/ERC721.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {Action} from "contracts/actions/Action.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
@@ -34,6 +35,12 @@ contract ERC721MintActionTest is Test {
         assertEq(action.target(), address(mockAsset));
         assertEq(action.selector(), bytes4(keccak256("mint(address)")));
         assertEq(action.value(), 0.1 ether);
+    }
+
+    function testInitialize_InvalidInitialization() public {
+        // Ensure the initialize function reverts with NotInitializing error
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        baseAction.initialize("");
     }
 
     //////////////////////////////

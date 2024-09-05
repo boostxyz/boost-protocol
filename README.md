@@ -45,6 +45,8 @@ The Boost Protocol is composed of the following components:
 
 - **Boost Incentives** are smart contracts that define the specific rewards that users can earn by participating in a Boost. Examples of Boost Incentives include earning tokens, receiving NFTs, and participating in airdrops.
 
+// TODO NOTES - Add information on how reward/limit work contextually
+
 - **Boost Validators** are smart contracts that validate user participation in a Boost and unlock access to its incentives. They are responsible for verifying that users have completed the required actions and are eligible to receive rewards. Examples of Boost Validator logic includes signature verifications, on-chain data validation, and validation of merkle and ZK proofs.
 
 - **Boost Budgets** are smart contracts that control the allocation of incentives for a Boost. Examples of Boost Budgets include simple fixed allocations, dynamic allocations based on user participation, and allocations based on vesting schedules.
@@ -106,6 +108,18 @@ If using vscode, install this repository's recommended extensions, which depend 
 - [Wake](https://marketplace.visualstudio.com/items?itemName=AckeeBlockchain.tools-for-solidity)
 - [Hardhat Solidity](https://arc.net/l/quote/odxovcyb)
 - [Slither](https://marketplace.visualstudio.com/items?itemName=trailofbits.slither-vscode)
+- [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters)
+
+## Coverage
+
+We generate coverage reports with `forge`
+
+To generate the contract coverage run:
+`cd packages/evm && pnpm run coverage`
+
+After running coverage you should have an `lcov.info` file in `/packages/evm/coverage/lcov.info` This will work with coverage gutters to show uncovered lines in testing.
+
+You may need to tweak the settings for the extention in order to help it find the coverage report.
 
 ### Developing with the SDK
 

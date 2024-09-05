@@ -33,12 +33,6 @@ abstract contract ACGDAIncentive is Incentive {
     CGDAParameters public cgdaParams;
     uint256 public totalBudget;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the incentive
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @inheritdoc Incentive
     /// @notice Claim the incentive
     function claim(bytes calldata data_) external virtual override onlyOwner returns (bool) {
@@ -97,7 +91,7 @@ abstract contract ACGDAIncentive is Incentive {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(ACGDAIncentive).interfaceId;
     }
 

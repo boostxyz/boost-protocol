@@ -47,11 +47,6 @@ abstract contract AEventAction is Action {
         Criteria actionParameter;
     }
 
-    /// @inheritdoc Cloneable
-    function initialize(bytes calldata data_) public virtual override(Cloneable) {
-        revert NotInitializing();
-    }
-
     /// @notice Prepare the action for execution and return the expected payload
     /// @param data_ The ABI-encoded payload for the target contract call
     /// @return bytes_ The encoded payload to be sent to the target contract
@@ -68,8 +63,8 @@ abstract contract AEventAction is Action {
         //return (true, data_);
     }
 
-    /// @inheritdoc Action
-    function getComponentInterface() public pure virtual override(Action) returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AEventAction).interfaceId;
     }
 

@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
@@ -126,8 +127,8 @@ contract ERC20VariableIncentive is Incentive {
         );
     }
 
-    /// @inheritdoc Incentive
-    function getComponentInterface() public pure virtual override returns (bytes4) {
+    /// @inheritdoc Cloneable
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(Incentive).interfaceId;
     }
 

@@ -16,30 +16,22 @@ abstract contract AERC20Incentive is Incentive {
     using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @notice Emitted when an entry is added to the raffle
     event Entry(address indexed entry);
 
     /// @notice The strategy for the incentive
     /// @dev The strategy determines how the incentive is disbursed:
     ///     - POOL: Users claim from a pool of rewards until the limit is reached, with each claim receiving an equal share of the total;
-    ///     - MINT: New tokens are minted and distributed to the recipient, with each claim receiving an equal amount of newly issued tokens;
     ///     - RAFFLE: Users claim a slot in a raffle, and a single winner is randomly drawn to receive the entire reward amount;
     enum Strategy {
         POOL,
-        MINT,
         RAFFLE
     }
 
     /// @notice The address of the ERC20-like token
     address public asset;
 
-    /// @notice The strategy for the incentive (MINT or POOL)
+    /// @notice The strategy for the incentive (RAFFLE or POOL)
     Strategy public strategy;
 
     /// @notice The limit (max claims, or max entries for raffles)
@@ -63,7 +55,7 @@ abstract contract AERC20Incentive is Incentive {
 
             emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, reward));
             return true;
-        } else if (strategy == Strategy.RAFFLE) {
+        } else {
             claims++;
             claimed[claim_.target] = true;
             entries.push(claim_.target);
@@ -71,8 +63,6 @@ abstract contract AERC20Incentive is Incentive {
             emit Entry(claim_.target);
             return true;
         }
-
-        return false;
     }
 
     /// @inheritdoc Incentive
@@ -128,7 +118,7 @@ abstract contract AERC20Incentive is Incentive {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(AERC20Incentive).interfaceId;
     }
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 
 /// @title Simple Budget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
@@ -19,7 +20,7 @@ contract SimpleBudget is ASimpleBudget {
         _disableInitializers();
     }
 
-    /// @inheritdoc ASimpleBudget
+    /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget `(address owner, address[] authorized)`
     function initialize(bytes calldata data_) public virtual override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));

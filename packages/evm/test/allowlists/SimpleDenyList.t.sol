@@ -64,6 +64,13 @@ contract SimpleDenyListTest is Test {
         assertNotEq(version, 0, "Version should not be 0");
     }
 
+    function testInitialize_InvalidInitialization() public {
+        SimpleDenyList newBaseDenyList = new SimpleDenyList();
+        // Ensure the initialize function reverts with InvalidInitialization error
+        vm.expectRevert(BoostError.InvalidInitialization.selector);
+        newBaseDenyList.initialize(abi.encode(address(this), new address[](0)));
+    }
+
     function testInitializer_AlreadyInitialized() public {
         vm.expectRevert(BoostError.InvalidInitialization.selector);
         denyList.initialize(abi.encode(address(this), new address[](0)));

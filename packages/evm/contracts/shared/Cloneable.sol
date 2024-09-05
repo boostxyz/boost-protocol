@@ -17,13 +17,6 @@ abstract contract Cloneable is Initializable, ERC165 {
     /// @notice Thrown when the contract has already been initialized
     error CloneAlreadyInitialized();
 
-    /// @notice A modifier to restrict a function to only be called before initialization
-    /// @dev This is intended to enforce that a function can only be called before the contract has been initialized
-    modifier onlyBeforeInitialization() {
-        if (_getInitializedVersion() != 0) revert CloneAlreadyInitialized();
-        _;
-    }
-
     /// @notice Initialize the clone with the given arbitrary data
     /// @param - The compressed initialization data (if required)
     /// @dev The data is expected to be ABI encoded bytes compressed using {LibZip-cdCompress}
@@ -35,9 +28,7 @@ abstract contract Cloneable is Initializable, ERC165 {
     /// @notice
     /// @param - Return a cloneable's unique identifier for downstream consumers to differentiate various targets
     /// @dev All implementations must override this function
-    function getComponentInterface() public pure virtual returns (bytes4) {
-        return type(Cloneable).interfaceId;
-    }
+    function getComponentInterface() public pure virtual returns (bytes4);
 
     /// @inheritdoc ERC165
     /// @notice Check if the contract supports the given interface

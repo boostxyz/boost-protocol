@@ -36,7 +36,7 @@ contract VestingBudget is AVestingBudget {
         _disableInitializers();
     }
 
-    /// @inheritdoc AVestingBudget
+    /// @inheritdoc Cloneable
     /// @param data_ The packed init data for the budget (see {InitPayload})
     function initialize(bytes calldata data_) public virtual override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));

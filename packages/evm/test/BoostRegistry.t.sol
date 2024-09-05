@@ -24,32 +24,6 @@ contract NotCloneable is ERC165 {
     }
 }
 
-contract MockAllowList is AllowList {
-    function isAllowed(address guy, bytes calldata) external view override returns (bool) {
-        return guy == owner() || guy == address(0xdeadbeef);
-    }
-}
-
-contract MockIncentive is Incentive {
-    function initialize(bytes calldata) public override initializer {}
-
-    function claim(bytes calldata) external virtual override returns (bool) {
-        return true;
-    }
-
-    function isClaimable(bytes calldata) external view virtual override returns (bool) {
-        return true;
-    }
-
-    function preflight(bytes calldata) external view virtual override returns (bytes memory) {
-        return new bytes(0);
-    }
-
-    function reclaim(bytes calldata) external virtual override returns (bool) {
-        return true;
-    }
-}
-
 contract BoostRegistryTest is Test {
     BoostRegistry registry;
 

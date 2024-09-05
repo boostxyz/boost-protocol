@@ -38,12 +38,6 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
     /// @notice Extra data to be passed to the ERC1155 contract
     bytes public extraData;
 
-    /// @inheritdoc Cloneable
-    /// @param data_ The packed init data for the incentive
-    function initialize(bytes calldata data_) public virtual override {
-        revert NotInitializing();
-    }
-
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
     /// @return True if the incentive was successfully claimed
@@ -123,7 +117,7 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
     }
 
     /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Incentive) returns (bytes4) {
+    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
         return type(AERC1155Incentive).interfaceId;
     }
 

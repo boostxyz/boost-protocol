@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 /// @title Boost Validator
 /// @notice Abstract contract for a generic Validator within the Boost protocol
 /// @dev Validator classes are expected to decode the calldata for implementation-specific handling. If no data is required, calldata should be empty.
-abstract contract AValidator is Cloneable {
+abstract contract AValidator is ACloneable {
     /// @notice Validate that a given user has completed an acction successfully
     /// @param boostId The Id from the available boosts
     /// @param incentiveId The Id from the available boost incentives to be claimed
@@ -19,13 +19,13 @@ abstract contract AValidator is Cloneable {
         virtual
         returns (bool);
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {
         return interfaceId == type(AValidator).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(AValidator).interfaceId;
     }
 }

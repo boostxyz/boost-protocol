@@ -5,14 +5,14 @@ import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
 import {ERC721} from "@solady/tokens/ERC721.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
 import {AContractAction} from "contracts/actions/AContractAction.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 
-/// @title ERC721 Mint Action
+/// @title ERC721 Mint AAction
 /// @notice A primitive action to mint and/or validate that an ERC721 token has been minted
 /// @dev The action is expected to be prepared with the data payload for the minting of the token
 /// @dev This a minimal generic implementation that should be extended if additional functionality or customizations are required
@@ -24,7 +24,7 @@ abstract contract AERC721MintAction is ContractAction, AValidator, AOwnable {
 
     /// @inheritdoc ContractAction
     /// @notice Initialize the contract with the owner and the required data
-    function initialize(bytes calldata data_) public virtual override(ContractAction, Cloneable) initializer {
+    function initialize(bytes calldata data_) public virtual override(ContractAction, ACloneable) initializer {
         ContractAction.initialize(data_);
     }
 

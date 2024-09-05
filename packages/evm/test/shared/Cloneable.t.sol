@@ -2,15 +2,15 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-contract CloneableImpl is Cloneable {
+contract ACloneableImpl is ACloneable {
     function getComponentInterface() public pure virtual override returns (bytes4) {
-        return type(Cloneable).interfaceId;
+        return type(ACloneable).interfaceId;
     }
 }
 
-contract CloneableImpl2 is Cloneable {
+contract ACloneableImpl2 is ACloneable {
     uint256 private something;
 
     function initialize(bytes calldata data_) public override initializer {
@@ -18,7 +18,7 @@ contract CloneableImpl2 is Cloneable {
     }
 
     function getComponentInterface() public pure virtual override returns (bytes4) {
-        return type(Cloneable).interfaceId;
+        return type(ACloneable).interfaceId;
     }
 
     function getSomething() external view returns (uint256) {
@@ -26,21 +26,21 @@ contract CloneableImpl2 is Cloneable {
     }
 }
 
-contract CloneableTest is Test {
-    CloneableImpl cloneable;
-    CloneableImpl2 cloneable2;
+contract ACloneableTest is Test {
+    ACloneableImpl cloneable;
+    ACloneableImpl2 cloneable2;
 
     function setUp() public {
-        cloneable = new CloneableImpl();
-        cloneable2 = new CloneableImpl2();
+        cloneable = new ACloneableImpl();
+        cloneable2 = new ACloneableImpl2();
     }
 
     /////////////////////////////////
-    // Cloneable.supportsInterface //
+    // ACloneable.supportsInterface //
     /////////////////////////////////
 
     function testSupportsInterface() public {
-        assertTrue(cloneable.supportsInterface(type(Cloneable).interfaceId));
+        assertTrue(cloneable.supportsInterface(type(ACloneable).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public {
@@ -48,7 +48,7 @@ contract CloneableTest is Test {
     }
 
     //////////////////////////
-    // Cloneable.initialize //
+    // ACloneable.initialize //
     //////////////////////////
 
     function testInitialize() public {
@@ -57,21 +57,21 @@ contract CloneableTest is Test {
     }
 
     function testInitialize_NotImplemented() public {
-        vm.expectRevert(Cloneable.InitializerNotImplemented.selector);
+        vm.expectRevert(ACloneable.InitializerNotImplemented.selector);
         cloneable.initialize(unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*");
     }
 
     //////////////////////////////////////
-    // Cloneable.getComponentInterface //
+    // ACloneable.getComponentInterface //
     //////////////////////////////////////
 
-    function testGetComponentInterface_CloneableImpl() public {
-        bytes4 expectedInterfaceId = type(Cloneable).interfaceId;
+    function testGetComponentInterface_ACloneableImpl() public {
+        bytes4 expectedInterfaceId = type(ACloneable).interfaceId;
         assertEq(cloneable.getComponentInterface(), expectedInterfaceId);
     }
 
-    function testGetComponentInterface_CloneableImpl2() public {
-        bytes4 expectedInterfaceId = type(Cloneable).interfaceId;
+    function testGetComponentInterface_ACloneableImpl2() public {
+        bytes4 expectedInterfaceId = type(ACloneable).interfaceId;
         assertEq(cloneable2.getComponentInterface(), expectedInterfaceId);
     }
 }

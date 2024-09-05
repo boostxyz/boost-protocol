@@ -6,7 +6,7 @@ import {Ownable} from "@solady/auth/Ownable.sol";
 import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 import {EIP712} from "@solady/utils/EIP712.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
 import {AValidator} from "contracts/validators/AValidator.sol";

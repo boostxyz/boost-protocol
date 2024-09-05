@@ -6,13 +6,13 @@ import {Receiver} from "@solady/accounts/Receiver.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-/// @title Boost Budget
-/// @notice Abstract contract for a generic Budget within the Boost protocol
-/// @dev Budget classes are expected to implement the allocation, reclamation, and disbursement of assets.
+/// @title Boost ABudget
+/// @notice Abstract contract for a generic ABudget within the Boost protocol
+/// @dev ABudget classes are expected to implement the allocation, reclamation, and disbursement of assets.
 /// @dev WARNING: Budgets currently support only ETH, ERC20, and ERC1155 assets. Other asset types may be added in the future.
-abstract contract Budget is Ownable, Cloneable, Receiver {
+abstract contract ABudget is Ownable, ACloneable, Receiver {
     using SafeTransferLib for address;
 
     enum AssetType {
@@ -122,9 +122,9 @@ abstract contract Budget is Ownable, Cloneable, Receiver {
     /// @dev The mechanism for checking authorization is left to the implementing contract
     function isAuthorized(address account_) external view virtual returns (bool);
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Cloneable) returns (bool) {
-        return interfaceId == type(Budget).interfaceId || super.supportsInterface(interfaceId);
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {
+        return interfaceId == type(ABudget).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc Receiver

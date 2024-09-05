@@ -3,14 +3,14 @@ pragma solidity ^0.8.24;
 
 import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
-abstract contract ASimpleAllowList is AllowList, OwnableRoles {
+abstract contract ASimpleAllowList is AAllowList, OwnableRoles {
     /// @notice The role for managing the allow list
     uint256 public constant LIST_MANAGER_ROLE = 1 << 1;
 
@@ -38,13 +38,13 @@ abstract contract ASimpleAllowList is AllowList, OwnableRoles {
         }
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(ASimpleAllowList).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AllowList) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AAllowList) returns (bool) {
         return interfaceId == type(ASimpleAllowList).interfaceId || super.supportsInterface(interfaceId);
     }
 }

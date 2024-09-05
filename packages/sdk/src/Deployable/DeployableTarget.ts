@@ -1,7 +1,7 @@
 import {
-  type cloneableAbi,
-  readCloneableGetComponentInterface,
-  readCloneableSupportsInterface,
+  type aCloneableAbi,
+  readACloneableGetComponentInterface as readACloneableGetComponentInterface,
+  readACloneableSupportsInterface,
 } from '@boostxyz/evm';
 import { deployContract } from '@wagmi/core';
 import {
@@ -155,9 +155,9 @@ export class DeployableTarget<
    */
   public async supportsInterface(
     interfaceId: Hex,
-    params?: ReadParams<typeof cloneableAbi, 'supportsInterface'>,
+    params?: ReadParams<typeof aCloneableAbi, 'supportsInterface'>,
   ) {
-    return readCloneableSupportsInterface(this._config, {
+    return readACloneableSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -176,9 +176,9 @@ export class DeployableTarget<
    * @returns {unknown}
    */
   public async getComponentInterface(
-    params?: ReadParams<typeof cloneableAbi, 'getComponentInterface'>,
+    params?: ReadParams<typeof aCloneableAbi, 'getComponentInterface'>,
   ) {
-    return readCloneableGetComponentInterface(this._config, {
+    return readACloneableGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

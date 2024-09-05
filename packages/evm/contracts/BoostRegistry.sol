@@ -6,8 +6,8 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
 import {BoostLib} from "contracts/shared/BoostLib.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
-import {AllowList} from "contracts/allowlists/AllowList.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 
 /// @title Boost Registry
 /// @notice A registry for base implementations and cloned instances
@@ -31,7 +31,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @param deployer The address of the deployer
     struct Clone {
         RegistryType baseType;
-        Cloneable instance;
+        ACloneable instance;
         address deployer;
         string name;
     }
@@ -44,7 +44,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
         RegistryType indexed registryType,
         bytes32 indexed identifier,
         address baseImplementation,
-        Cloneable deployedInstance
+        ACloneable deployedInstance
     );
 
     /// @notice Thrown when a base implementation is already registered
@@ -53,11 +53,11 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @notice Thrown when no match is found for the given identifier
     error NotRegistered(bytes32 identifier);
 
-    /// @notice Thrown when the implementation is not a valid {Cloneable} base
-    error NotCloneable(address implementation);
+    /// @notice Thrown when the implementation is not a valid {ACloneable} base
+    error NotACloneable(address implementation);
 
     /// @notice The registry of base implementations
-    mapping(bytes32 => Cloneable) private _bases;
+    mapping(bytes32 => ACloneable) private _bases;
 
     /// @notice The registry of deployed clones
     mapping(bytes32 => Clone) private _clones;
@@ -65,11 +65,11 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @notice The registry of clones created by a given deployer
     mapping(address => bytes32[]) private _deployedClones;
 
-    /// @notice A modifier to ensure the given address holds a valid {Cloneable} base
+    /// @notice A modifier to ensure the given address holds a valid {ACloneable} base
     /// @param implementation_ The address of the implementation to check
-    modifier onlyCloneables(address implementation_) {
-        if (!Cloneable(implementation_).supportsInterface(type(Cloneable).interfaceId)) {
-            revert NotCloneable(implementation_);
+    modifier onlyACloneables(address implementation_) {
+        if (!ACloneable(implementation_).supportsInterface(type(ACloneable).interfaceId)) {
+            revert NotACloneable(implementation_);
         }
         _;
     }
@@ -82,12 +82,12 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @dev The given address must implement the given type interface (See {ERC165-supportsInterface})
     function register(RegistryType type_, string calldata name_, address implementation_)
         external
-        onlyCloneables(implementation_)
+        onlyACloneables(implementation_)
     {
         bytes32 identifier = getIdentifier(type_, name_);
 
         if (address(_bases[identifier]) != address(0)) revert AlreadyRegistered(type_, identifier);
-        _bases[identifier] = Cloneable(implementation_);
+        _bases[identifier] = ACloneable(implementation_);
 
         emit Registered(type_, identifier, implementation_);
     }
@@ -102,11 +102,11 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     function deployClone(RegistryType type_, address base_, string calldata name_, bytes calldata data_)
         external
         nonReentrant
-        returns (Cloneable instance)
+        returns (ACloneable instance)
     {
         // Deploy and initialize the clone
         instance =
-            Cloneable(base_.cloneAndInitialize(keccak256(abi.encodePacked(type_, base_, name_, msg.sender)), data_));
+            ACloneable(base_.cloneAndInitialize(keccak256(abi.encodePacked(type_, base_, name_, msg.sender)), data_));
 
         // Ensure the clone's identifier is unique
         bytes32 identifier = getCloneIdentifier(type_, base_, msg.sender, name_);
@@ -123,7 +123,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @param identifier_ The unique identifier for the implementation (see {getIdentifier})
     /// @return implementation The address of the implementation
     /// @dev This function will revert if the implementation is not registered
-    function getBaseImplementation(bytes32 identifier_) public view returns (Cloneable implementation) {
+    function getBaseImplementation(bytes32 identifier_) public view returns (ACloneable implementation) {
         implementation = _bases[identifier_];
         if (address(implementation) == address(0)) revert NotRegistered(identifier_);
     }

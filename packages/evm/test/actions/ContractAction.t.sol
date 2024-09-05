@@ -7,7 +7,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
-import {Action} from "contracts/actions/Action.sol";
+import {AAction} from "contracts/actions/AAction.sol";
 import {ContractAction} from "contracts/actions/ContractAction.sol";
 import {AContractAction} from "contracts/actions/AContractAction.sol";
 
@@ -121,7 +121,7 @@ contract ContractActionTest is Test {
     ////////////////////////////////////
 
     function testSupportsActionInterface() public {
-        // Ensure the contract supports the Budget interface
-        assertTrue(action.supportsInterface(type(Action).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(action.supportsInterface(type(AAction).interfaceId));
     }
 }

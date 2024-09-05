@@ -7,7 +7,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
 contract AllowListIncentiveTest is Test {
     SimpleAllowList public allowList;
@@ -115,8 +115,8 @@ contract AllowListIncentiveTest is Test {
     /////////////////////////////////////
 
     function testSupportsInterface() public view {
-        // Ensure the contract supports the Budget interface
-        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(incentive.supportsInterface(type(AIncentive).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public view {

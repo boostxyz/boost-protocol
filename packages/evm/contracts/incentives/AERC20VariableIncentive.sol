@@ -4,15 +4,15 @@ pragma solidity ^0.8.24;
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
-import {Budget} from "contracts/budgets/Budget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title ERC20 Incentive with Variable Rewards
 /// @notice A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
-abstract contract AERC20VariableIncentive is Incentive {
+abstract contract AERC20VariableIncentive is AIncentive {
     using SafeTransferLib for address;
 
     /// @notice The address of the ERC20-like token
@@ -62,7 +62,7 @@ abstract contract AERC20VariableIncentive is Incentive {
         return totalClaimed < limit;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
@@ -76,12 +76,12 @@ abstract contract AERC20VariableIncentive is Incentive {
         return true;
     }
 
-    /// @inheritdoc Cloneable
+    /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AERC20VariableIncentive).interfaceId;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(AERC20VariableIncentive).interfaceId || super.supportsInterface(interfaceId);
     }

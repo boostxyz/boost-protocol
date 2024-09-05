@@ -8,10 +8,10 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
 contract CGDAIncentiveTest is Test {
@@ -148,7 +148,7 @@ contract CGDAIncentiveTest is Test {
     function test_claim_OutOfBudget() public {
         incentive.clawback(
             abi.encode(
-                Incentive.ClawbackPayload({
+                AIncentive.ClawbackPayload({
                     target: makeAddr("weird al's wonky waffle house"),
                     data: abi.encode(10 ether)
                 })
@@ -158,7 +158,7 @@ contract CGDAIncentiveTest is Test {
         assertEq(incentive.currentReward(), 0 ether);
         assertEq(asset.balanceOf(address(incentive)), 0 ether);
 
-        vm.expectRevert(Incentive.NotClaimable.selector);
+        vm.expectRevert(AIncentive.NotClaimable.selector);
         incentive.claim(makeAddr("sam's soggy sandwich & soup shack"), hex"");
 
         assertEq(incentive.currentReward(), 0 ether);
@@ -243,7 +243,7 @@ contract CGDAIncentiveTest is Test {
         assertEq(asset.balanceOf(address(incentive)), 2.25 ether);
 
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClawbackPayload({target: address(0xdeadbeef), data: abi.encode(2 ether)}));
+            abi.encode(AIncentive.ClawbackPayload({target: address(0xdeadbeef), data: abi.encode(2 ether)}));
         incentive.clawback(reclaimPayload);
 
         assertEq(incentive.currentReward(), 0.25 ether);
@@ -283,9 +283,9 @@ contract CGDAIncentiveTest is Test {
                 })
             )
         );
-        Budget.Transfer memory transfer = abi.decode(preflightPayload, (Budget.Transfer));
+        ABudget.Transfer memory transfer = abi.decode(preflightPayload, (ABudget.Transfer));
 
-        assertTrue(transfer.assetType == Budget.AssetType.ERC20);
+        assertTrue(transfer.assetType == ABudget.AssetType.ERC20);
         assertEq(transfer.asset, address(asset));
         assertEq(transfer.target, address(incentive));
         assertEq(abi.decode(transfer.data, (uint256)), 10 ether);
@@ -305,8 +305,8 @@ contract CGDAIncentiveTest is Test {
     /////////////////////////////////////
 
     function testSupportsInterface() public view {
-        // Ensure the contract supports the Budget interface
-        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(incentive.supportsInterface(type(AIncentive).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public view {
@@ -322,16 +322,16 @@ contract CGDAIncentiveTest is Test {
         incentive.claim(target_, hex"");
     }
 
-    function _makeFungibleTransfer(Budget.AssetType assetType_, address asset_, address target_, uint256 value_)
+    function _makeFungibleTransfer(ABudget.AssetType assetType_, address asset_, address target_, uint256 value_)
         internal
         pure
         returns (bytes memory)
     {
-        Budget.Transfer memory transfer = Budget.Transfer({
+        ABudget.Transfer memory transfer = ABudget.Transfer({
             assetType: assetType_,
             asset: asset_,
             target: target_,
-            data: abi.encode(Budget.FungiblePayload({amount: value_}))
+            data: abi.encode(ABudget.FungiblePayload({amount: value_}))
         });
 
         return abi.encode(transfer);

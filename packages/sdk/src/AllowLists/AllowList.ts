@@ -1,4 +1,4 @@
-import { allowListAbi } from '@boostxyz/evm';
+import { aAllowListAbi } from '@boostxyz/evm';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -41,7 +41,7 @@ export async function allowListFromAddress(
   address: Address,
 ) {
   const interfaceId = (await readContract(options.config, {
-    abi: allowListAbi,
+    abi: aAllowListAbi,
     functionName: 'getComponentInterface',
     address,
   })) as keyof typeof AllowListByComponentInterface;

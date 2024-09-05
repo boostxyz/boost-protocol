@@ -1,4 +1,4 @@
-import { incentiveAbi } from '@boostxyz/evm';
+import { aIncentiveAbi } from '@boostxyz/evm';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -62,7 +62,7 @@ export async function incentiveFromAddress(
   address: Address,
 ) {
   const interfaceId = (await readContract(options.config, {
-    abi: incentiveAbi,
+    abi: aIncentiveAbi,
     functionName: 'getComponentInterface',
     address,
   })) as keyof typeof IncentiveByComponentInterface;

@@ -1,4 +1,4 @@
-import { actionAbi } from '@boostxyz/evm';
+import { aActionAbi } from '@boostxyz/evm';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -43,7 +43,7 @@ export async function actionFromAddress(
   address: Address,
 ) {
   const interfaceId = (await readContract(options.config, {
-    abi: actionAbi,
+    abi: aActionAbi,
     functionName: 'getComponentInterface',
     address,
   })) as keyof typeof ActionByComponentInterface;

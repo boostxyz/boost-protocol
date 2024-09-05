@@ -8,11 +8,11 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Incentive} from "contracts/incentives/Incentive.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
 contract ERC20IncentiveTest is Test {
@@ -28,13 +28,13 @@ contract ERC20IncentiveTest is Test {
         // Preload the budget with some mock tokens
         mockAsset.mint(address(this), 100 ether);
         mockAsset.approve(address(budget), 100 ether);
-        budget.allocate(_makeFungibleTransfer(Budget.AssetType.ERC20, address(mockAsset), address(this), 100 ether));
+        budget.allocate(_makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockAsset), address(this), 100 ether));
 
         // NOTE: This would normally be handled by BoostCore during the setup
         //   process, but we do it manually here to test without spinning up
         //   the entire protocol stack. This is a _unit_ test, after all.
         budget.disburse(
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockAsset), address(incentive), 100 ether)
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockAsset), address(incentive), 100 ether)
         );
     }
 
@@ -78,7 +78,7 @@ contract ERC20IncentiveTest is Test {
         _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
 
         vm.expectEmit(true, false, false, true);
-        emit Incentive.Claimed(address(1), abi.encodePacked(address(mockAsset), address(1), uint256(1 ether)));
+        emit AIncentive.Claimed(address(1), abi.encodePacked(address(mockAsset), address(1), uint256(1 ether)));
 
         // Claim the incentive
         incentive.claim(address(1), hex"");
@@ -95,7 +95,7 @@ contract ERC20IncentiveTest is Test {
         incentive.claim(address(1), hex"");
 
         // Attempt to claim for address(1) again => revert
-        vm.expectRevert(Incentive.NotClaimable.selector);
+        vm.expectRevert(AIncentive.NotClaimable.selector);
         incentive.claim(address(1), hex"");
     }
 
@@ -123,7 +123,7 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(50 ether)}));
+            abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50 ether)}));
         incentive.clawback(reclaimPayload);
         assertEq(mockAsset.balanceOf(address(1)), 50 ether);
 
@@ -138,7 +138,7 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim 50.1x => not an integer multiple of the reward amount => revert
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(50.1 ether)}));
+            abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50.1 ether)}));
         vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.clawback(reclaimPayload);
     }
@@ -155,7 +155,7 @@ contract ERC20IncentiveTest is Test {
 
         // Attempt to reclaim the reward => revert (because the reward is now locked)
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClawbackPayload({target: address(1), data: abi.encode(100 ether)}));
+            abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(100 ether)}));
 
         vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.clawback(reclaimPayload);
@@ -168,7 +168,7 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim the full reward amount
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClawbackPayload({target: address(this), data: abi.encode(100 ether)}));
+            abi.encode(AIncentive.ClawbackPayload({target: address(this), data: abi.encode(100 ether)}));
         incentive.clawback(reclaimPayload);
 
         // Check that the limit is set to 0
@@ -223,11 +223,11 @@ contract ERC20IncentiveTest is Test {
         // Check the preflight data
         bytes memory data =
             incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5));
-        Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
+        ABudget.Transfer memory budgetRequest = abi.decode(data, (ABudget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
 
-        Budget.FungiblePayload memory payload = abi.decode(budgetRequest.data, (Budget.FungiblePayload));
+        ABudget.FungiblePayload memory payload = abi.decode(budgetRequest.data, (ABudget.FungiblePayload));
         assertEq(payload.amount, 5 ether);
     }
 
@@ -235,15 +235,15 @@ contract ERC20IncentiveTest is Test {
         // Preflight with no reward amount
         bytes memory noRewards =
             incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 0 ether, 5));
-        Budget.Transfer memory request = abi.decode(noRewards, (Budget.Transfer));
-        Budget.FungiblePayload memory payload = abi.decode(request.data, (Budget.FungiblePayload));
+        ABudget.Transfer memory request = abi.decode(noRewards, (ABudget.Transfer));
+        ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
         assertEq(payload.amount, 0);
 
         // Preflight with zero max claims
         bytes memory noClaims =
             incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 0));
-        Budget.Transfer memory request2 = abi.decode(noClaims, (Budget.Transfer));
-        Budget.FungiblePayload memory payload2 = abi.decode(request2.data, (Budget.FungiblePayload));
+        ABudget.Transfer memory request2 = abi.decode(noClaims, (ABudget.Transfer));
+        ABudget.FungiblePayload memory payload2 = abi.decode(request2.data, (ABudget.FungiblePayload));
         assertEq(payload2.amount, 0);
     }
 
@@ -251,11 +251,11 @@ contract ERC20IncentiveTest is Test {
         // Check the preflight data for a raffle
         bytes memory data =
             incentive.preflight(_initPayload(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 1 ether, 5));
-        Budget.Transfer memory budgetRequest = abi.decode(data, (Budget.Transfer));
+        ABudget.Transfer memory budgetRequest = abi.decode(data, (ABudget.Transfer));
 
         assertEq(budgetRequest.asset, address(mockAsset));
 
-        Budget.FungiblePayload memory payload = abi.decode(budgetRequest.data, (Budget.FungiblePayload));
+        ABudget.FungiblePayload memory payload = abi.decode(budgetRequest.data, (ABudget.FungiblePayload));
         assertEq(payload.amount, 1 ether);
     }
 
@@ -310,8 +310,8 @@ contract ERC20IncentiveTest is Test {
     /////////////////////////////////////
 
     function testSupportsInterface() public view {
-        // Ensure the contract supports the Budget interface
-        assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
+        // Ensure the contract supports the ABudget interface
+        assertTrue(incentive.supportsInterface(type(AIncentive).interfaceId));
     }
 
     function testSupportsInterface_NotSupported() public view {
@@ -339,20 +339,20 @@ contract ERC20IncentiveTest is Test {
         return abi.encode(ERC20Incentive.InitPayload({asset: asset, strategy: strategy, reward: reward, limit: limit}));
     }
 
-    function _makeFungibleTransfer(Budget.AssetType assetType, address asset, address target, uint256 value)
+    function _makeFungibleTransfer(ABudget.AssetType assetType, address asset, address target, uint256 value)
         internal
         pure
         returns (bytes memory)
     {
-        Budget.Transfer memory transfer;
+        ABudget.Transfer memory transfer;
         transfer.assetType = assetType;
         transfer.asset = asset;
         transfer.target = target;
-        if (assetType == Budget.AssetType.ETH || assetType == Budget.AssetType.ERC20) {
-            transfer.data = abi.encode(Budget.FungiblePayload({amount: value}));
-        } else if (assetType == Budget.AssetType.ERC1155) {
+        if (assetType == ABudget.AssetType.ETH || assetType == ABudget.AssetType.ERC20) {
+            transfer.data = abi.encode(ABudget.FungiblePayload({amount: value}));
+        } else if (assetType == ABudget.AssetType.ERC1155) {
             // we're not actually handling this case yet, so hardcoded token ID of 1 is fine
-            transfer.data = abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
+            transfer.data = abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
         }
 
         return abi.encode(transfer);

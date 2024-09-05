@@ -2,19 +2,19 @@
 pragma solidity ^0.8.24;
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {Cloneable} from "contracts/shared/Cloneable.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
 
-import {Budget} from "contracts/budgets/Budget.sol";
-import {Incentive} from "./Incentive.sol";
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "./AIncentive.sol";
 import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
-/// @title Points Incentive
+/// @title Points AIncentive
 /// @notice A simple on-chain points incentive implementation that allows claiming of soulbound tokens
 /// @dev In order for any claim to be successful:
 ///     - The claimer must not have already claimed the incentive; and
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to operate the points contract's issuance function
-abstract contract APointsIncentive is Incentive {
+abstract contract APointsIncentive is AIncentive {
     /// @notice The address of the points contract
     address public venue;
 
@@ -46,13 +46,13 @@ abstract contract APointsIncentive is Incentive {
         return true;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @dev Not a valid operation for this type of incentive
     function clawback(bytes calldata) external pure override returns (bool) {
         revert BoostError.NotImplemented();
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc AIncentive
     /// @notice No token approvals are required for this incentive
     function preflight(bytes calldata) external pure override returns (bytes memory budgetData) {
         return new bytes(0);
@@ -74,13 +74,13 @@ abstract contract APointsIncentive is Incentive {
         return !claimed[recipient_] && claims < limit;
     }
 
-    /// @inheritdoc Cloneable
-    function getComponentInterface() public pure virtual override(Cloneable) returns (bytes4) {
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(APointsIncentive).interfaceId;
     }
 
-    /// @inheritdoc Cloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Incentive) returns (bool) {
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AIncentive) returns (bool) {
         return interfaceId == type(APointsIncentive).interfaceId || super.supportsInterface(interfaceId);
     }
 }

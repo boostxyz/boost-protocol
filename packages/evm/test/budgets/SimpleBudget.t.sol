@@ -215,7 +215,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim 99 tokens from the budget
         data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 99 ether);
-        assertTrue(simpleBudget.reclaim(data));
+        assertTrue(simpleBudget.clawback(data));
 
         // Ensure the budget has 1 token left
         assertEq(simpleBudget.available(address(mockERC20)), 1 ether);
@@ -229,7 +229,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim 99 ETH from the budget
         data = _makeFungibleTransfer(Budget.AssetType.ETH, address(0), address(1), 99 ether);
-        assertTrue(simpleBudget.reclaim(data));
+        assertTrue(simpleBudget.clawback(data));
 
         // Ensure the budget has 1 ETH left
         assertEq(simpleBudget.available(address(0)), 1 ether);
@@ -260,7 +260,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
                 data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
             })
         );
-        assertTrue(simpleBudget.reclaim(data));
+        assertTrue(simpleBudget.clawback(data));
 
         // Ensure the budget has 1 of token ID 42 left
         assertEq(simpleBudget.available(address(mockERC1155), 42), 1);
@@ -277,7 +277,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim all tokens from the budget
         data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), 0);
-        assertTrue(simpleBudget.reclaim(data));
+        assertTrue(simpleBudget.clawback(data));
 
         // Ensure the budget has no tokens left
         assertEq(simpleBudget.available(address(mockERC20)), 0 ether);
@@ -297,7 +297,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         vm.expectRevert(
             abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC20), address(0), uint256(100 ether))
         );
-        simpleBudget.reclaim(data);
+        simpleBudget.clawback(data);
 
         // Ensure the budget has 100 tokens
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
@@ -319,7 +319,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
                 Budget.InsufficientFunds.selector, address(mockERC20), uint256(100 ether), uint256(101 ether)
             )
         );
-        simpleBudget.reclaim(data);
+        simpleBudget.clawback(data);
     }
 
     function testReclaim_ImproperData() public {
@@ -336,7 +336,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // with improperly encoded data
         data = abi.encodePacked(mockERC20, uint256(100 ether));
         vm.expectRevert();
-        simpleBudget.reclaim(data);
+        simpleBudget.clawback(data);
     }
 
     function testReclaim_NotOwner() public {
@@ -352,7 +352,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         // We can reuse the data from above because the target is `address(this)` in both cases
         vm.prank(address(1));
         vm.expectRevert();
-        simpleBudget.reclaim(data);
+        simpleBudget.clawback(data);
     }
 
     ///////////////////////////

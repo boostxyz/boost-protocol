@@ -61,8 +61,8 @@ abstract contract AERC1155Incentive is Incentive, IERC1155Receiver {
     }
 
     /// @inheritdoc Incentive
-    function reclaim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
+    function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
+        ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
         // Ensure the amount is valid and reduce the max claims accordingly

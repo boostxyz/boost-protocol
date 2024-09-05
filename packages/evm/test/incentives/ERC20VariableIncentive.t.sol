@@ -112,7 +112,6 @@ contract ERC20VariableIncentiveTest is Test {
         _initialize(address(mockAsset), 1 ether, 1 ether);
 
         // Claim the incentive
-        abi.encode(Incentive.ClaimPayload({target: CLAIM_RECIPIENT, data: abi.encode(1 ether)}));
         incentive.claim(CLAIM_RECIPIENT, _encodeBoostClaim(1 ether));
 
         // Attempt to claim again => revert
@@ -145,8 +144,8 @@ contract ERC20VariableIncentiveTest is Test {
 
         // Reclaim some tokens
         bytes memory reclaimPayload =
-            abi.encode(Incentive.ClaimPayload({target: address(this), data: abi.encode(2 ether)}));
-        incentive.reclaim(reclaimPayload);
+            abi.encode(Incentive.ClawbackPayload({target: address(this), data: abi.encode(2 ether)}));
+        incentive.clawback(reclaimPayload);
 
         // Check the balance and limit
         assertEq(mockAsset.balanceOf(address(this)), 2 ether);

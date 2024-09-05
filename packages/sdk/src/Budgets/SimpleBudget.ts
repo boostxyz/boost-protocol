@@ -6,14 +6,14 @@ import {
   readSimpleBudgetTotal,
   simpleBudgetAbi,
   simulateSimpleBudgetAllocate,
+  simulateSimpleBudgetClawback,
   simulateSimpleBudgetDisburse,
   simulateSimpleBudgetDisburseBatch,
-  simulateSimpleBudgetReclaim,
   simulateSimpleBudgetSetAuthorized,
   writeSimpleBudgetAllocate,
+  writeSimpleBudgetClawback,
   writeSimpleBudgetDisburse,
   writeSimpleBudgetDisburseBatch,
-  writeSimpleBudgetReclaim,
   writeSimpleBudgetSetAuthorized,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
@@ -192,41 +192,41 @@ export class SimpleBudget extends DeployableTarget<
   }
 
   /**
-   * Reclaims assets from the budget.
-   * Only the owner can directly reclaim assets from the budget
+   * Clawbacks assets from the budget.
+   * Only the owner can directly clawback assets from the budget
    * If the amount is zero, the entire balance of the asset will be transferred to the receiver
    * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof simpleBudgetAbi, 'reclaim'>} [params]
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'clawback'>} [params]
    * @returns {Promise<boolean>} - True if the request was successful
    */
-  public async reclaim(
+  public async clawback(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof simpleBudgetAbi, 'reclaim'>,
+    params?: WriteParams<typeof simpleBudgetAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.reclaimRaw(transfer, params));
+    return this.awaitResult(this.clawbackRaw(transfer, params));
   }
 
   /**
-   * Reclaims assets from the budget.
-   * Only the owner can directly reclaim assets from the budget
+   * Clawbacks assets from the budget.
+   * Only the owner can directly clawback assets from the budget
    * If the amount is zero, the entire balance of the asset will be transferred to the receiver
    * If the asset transfer fails, the reclamation will revert
    *
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof simpleBudgetAbi, 'reclaim'>} [params]
+   * @param {?WriteParams<typeof simpleBudgetAbi, 'clawback'>} [params]
    * @returns {Promise<boolean>} - True if the request was successful
    */
-  public async reclaimRaw(
+  public async clawbackRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof simpleBudgetAbi, 'reclaim'>,
+    params?: WriteParams<typeof simpleBudgetAbi, 'clawback'>,
   ) {
-    const { request, result } = await simulateSimpleBudgetReclaim(
+    const { request, result } = await simulateSimpleBudgetClawback(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -236,7 +236,7 @@ export class SimpleBudget extends DeployableTarget<
         ...(params as any),
       },
     );
-    const hash = await writeSimpleBudgetReclaim(this._config, request);
+    const hash = await writeSimpleBudgetClawback(this._config, request);
     return { hash, result };
   }
 

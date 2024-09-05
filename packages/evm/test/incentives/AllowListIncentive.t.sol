@@ -88,9 +88,9 @@ contract AllowListIncentiveTest is Test {
     // AllowListIncentive.reclaim //
     ////////////////////////////////
 
-    function test_reclaim() public {
+    function test_clawback() public {
         vm.expectRevert(bytes4(keccak256("NotImplemented()")));
-        incentive.reclaim(new bytes(0));
+        incentive.clawback(new bytes(0));
     }
 
     //////////////////////////////////

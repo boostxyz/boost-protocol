@@ -11,9 +11,9 @@ import {
   readErc1155IncentiveStrategy,
   readErc1155IncentiveTokenId,
   simulateErc1155IncentiveClaim,
-  simulateErc1155IncentiveReclaim,
+  simulateErc1155IncentiveClawback,
   writeErc1155IncentiveClaim,
-  writeErc1155IncentiveReclaim,
+  writeErc1155IncentiveClawback,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import type { Address, ContractEventName, Hex } from 'viem';
@@ -279,14 +279,14 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>} [params]
+   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'clawback'>} [params]
    * @returns {unknown}
    */
-  public async reclaim(
+  public async clawback(
     payload: ClaimPayload,
-    params?: WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>,
+    params?: WriteParams<typeof erc1155IncentiveAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.reclaimRaw(payload, params));
+    return this.awaitResult(this.clawbackRaw(payload, params));
   }
 
   /**
@@ -295,14 +295,14 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>} [params]
+   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'clawback'>} [params]
    * @returns {unknown}
    */
-  public async reclaimRaw(
+  public async clawbackRaw(
     payload: ClaimPayload,
-    params?: WriteParams<typeof erc1155IncentiveAbi, 'reclaim'>,
+    params?: WriteParams<typeof erc1155IncentiveAbi, 'clawback'>,
   ) {
-    const { request, result } = await simulateErc1155IncentiveReclaim(
+    const { request, result } = await simulateErc1155IncentiveClawback(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -312,7 +312,7 @@ export class ERC1155Incentive extends DeployableTarget<
         ...(params as any),
       },
     );
-    const hash = await writeErc1155IncentiveReclaim(this._config, request);
+    const hash = await writeErc1155IncentiveClawback(this._config, request);
     return { hash, result };
   }
 

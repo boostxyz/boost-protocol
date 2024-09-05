@@ -48,7 +48,7 @@ abstract contract APointsIncentive is Incentive {
 
     /// @inheritdoc Incentive
     /// @dev Not a valid operation for this type of incentive
-    function reclaim(bytes calldata) external pure override returns (bool) {
+    function clawback(bytes calldata) external pure override returns (bool) {
         revert BoostError.NotImplemented();
     }
 

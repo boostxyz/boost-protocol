@@ -95,8 +95,8 @@ contract ERC20VariableIncentive is Incentive {
     }
 
     /// @inheritdoc Incentive
-    function reclaim(bytes calldata data_) external override onlyOwner returns (bool) {
-        ClaimPayload memory claim_ = abi.decode(data_, (ClaimPayload));
+    function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
+        ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
         limit -= amount;

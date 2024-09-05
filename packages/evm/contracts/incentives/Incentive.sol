@@ -24,7 +24,7 @@ abstract contract Incentive is IBoostClaim, Ownable, Cloneable, ReentrancyGuard 
     /// @notice A struct representing the payload for an incentive claim
     /// @param target The address of the recipient
     /// @param data The implementation-specific data for the claim, if needed
-    struct ClaimPayload {
+    struct ClawbackPayload {
         address target;
         bytes data;
     }
@@ -52,7 +52,7 @@ abstract contract Incentive is IBoostClaim, Ownable, Cloneable, ReentrancyGuard 
     /// @notice Reclaim assets from the incentive
     /// @param data_ The data payload for the reclaim
     /// @return True if the assets were successfully reclaimed
-    function reclaim(bytes calldata data_) external virtual returns (bool);
+    function clawback(bytes calldata data_) external virtual returns (bool);
 
     /// @notice Check if an incentive is claimable
     /// @param data_ The data payload for the claim check (data, signature, etc.)

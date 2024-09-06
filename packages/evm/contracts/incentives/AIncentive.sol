@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable} from "@solady/auth/Ownable.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -10,7 +9,7 @@ import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 /// @title Boost AIncentive
 /// @notice Abstract contract for a generic AIncentive within the Boost protocol
 /// @dev AIncentive classes are expected to decode the calldata for implementation-specific handling. If no data is required, calldata should be empty.
-abstract contract AIncentive is IBoostClaim, Ownable, ACloneable, ReentrancyGuard {
+abstract contract AIncentive is IBoostClaim, ACloneable {
     /// @notice Emitted when an incentive is claimed
     /// @dev The `data` field contains implementation-specific context. See the implementation's `claim` function for details.
     event Claimed(address indexed recipient, bytes data);
@@ -37,12 +36,6 @@ abstract contract AIncentive is IBoostClaim, Ownable, ACloneable, ReentrancyGuar
 
     /// @notice A mapping of address to claim status
     mapping(address => bool) public claimed;
-
-    /// @notice Initialize the contract and set the owner
-    /// @dev The owner is set to the contract deployer
-    constructor() {
-        _initializeOwner(msg.sender);
-    }
 
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim

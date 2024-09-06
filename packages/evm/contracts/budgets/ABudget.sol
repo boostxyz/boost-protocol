@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable} from "@solady/auth/Ownable.sol";
 import {Receiver} from "@solady/accounts/Receiver.sol";
-import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -12,9 +10,7 @@ import {ACloneable} from "contracts/shared/ACloneable.sol";
 /// @notice Abstract contract for a generic ABudget within the Boost protocol
 /// @dev ABudget classes are expected to implement the allocation, reclamation, and disbursement of assets.
 /// @dev WARNING: Budgets currently support only ETH, ERC20, and ERC1155 assets. Other asset types may be added in the future.
-abstract contract ABudget is Ownable, ACloneable, Receiver {
-    using SafeTransferLib for address;
-
+abstract contract ABudget is ACloneable, Receiver {
     enum AssetType {
         ETH,
         ERC20,
@@ -63,12 +59,6 @@ abstract contract ABudget is Ownable, ACloneable, Receiver {
 
     /// @notice Thrown when a transfer fails for an unknown reason
     error TransferFailed(address asset, address to, uint256 amount);
-
-    /// @notice Initialize the budget and set the owner
-    /// @dev The owner is set to the contract deployer
-    constructor() {
-        _initializeOwner(msg.sender);
-    }
 
     /// @notice Allocate assets to the budget
     /// @param data_ The compressed data for the allocation (amount, token address, token ID, etc.)

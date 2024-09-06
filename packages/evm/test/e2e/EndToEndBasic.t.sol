@@ -22,7 +22,7 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 
 import {AAction} from "contracts/actions/AAction.sol";
-import {ContractAction} from "contracts/actions/ContractAction.sol";
+import {AContractAction, ContractAction} from "contracts/actions/ContractAction.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
@@ -110,7 +110,7 @@ contract EndToEndBasic is Test {
         // Let's spot check the Boost we just created
         // - ABudget == SimpleBudget
         assertEq(address(boost.budget), address(budget));
-        assertEq(boost.budget.owner(), address(this));
+        assertEq(SimpleBudget(payable(address(boost.budget))).owner(), address(this));
         assertTrue(budget.isAuthorized(address(this)));
         assertFalse(budget.isAuthorized(address(0xdeadbeef)));
 
@@ -288,7 +288,7 @@ contract EndToEndBasic is Test {
                                 )
                             ),
                             parameters: abi.encode(
-                                ContractAction.InitPayload({
+                                AContractAction.InitPayload({
                                     chainId: block.chainid,
                                     target: address(erc721),
                                     selector: MockERC721.mint.selector,

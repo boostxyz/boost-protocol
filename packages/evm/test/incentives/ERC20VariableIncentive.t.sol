@@ -22,11 +22,12 @@ contract ERC20VariableIncentiveTest is Test {
     address VARIABLE_REWARD_CLAIM = makeAddr("VARIABLE_REWARD_CLAIM");
 
     ERC20VariableIncentive public incentive;
-    SimpleBudget public budget = new SimpleBudget();
+    SimpleBudget public budget;
     MockERC20 public mockAsset = new MockERC20();
 
     function setUp() public {
         incentive = _newIncentiveClone();
+        budget = _newBudgetClone();
 
         // Preload the budget with some mock tokens
         mockAsset.mint(address(this), 100 ether);
@@ -186,6 +187,13 @@ contract ERC20VariableIncentiveTest is Test {
 
     function _newIncentiveClone() internal returns (ERC20VariableIncentive) {
         return ERC20VariableIncentive(LibClone.clone(address(new ERC20VariableIncentive())));
+    }
+
+    function _newBudgetClone() internal returns (SimpleBudget newBudget) {
+        address[] memory authorized = new address[](0);
+        SimpleBudget.InitPayload memory initPayload = SimpleBudget.InitPayload(address(this), authorized);
+        newBudget = SimpleBudget(payable(LibClone.clone(address(new SimpleBudget()))));
+        newBudget.initialize(abi.encode(initPayload));
     }
 
     function _initialize(address asset, uint256 reward, uint256 limit) internal {

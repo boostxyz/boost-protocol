@@ -47,37 +47,15 @@ abstract contract AEventAction is AAction {
         Criteria actionParameter;
     }
 
-    /// @notice Prepare the action for execution and return the expected payload
-    /// @param data_ The ABI-encoded payload for the target contract call
-    /// @return bytes_ The encoded payload to be sent to the target contract
-    /// @dev Note that the mint value is NOT included in the prepared payload but must be sent with the call
-    function prepare(bytes calldata data_) public view virtual override returns (bytes memory bytes_) {
-        // Since this action is marshalled off-chain we don't need to prepare the payload
-        revert BoostError.NotImplemented();
-        //return data_;
-    }
+    function getActionEventsCount() public view virtual returns (uint256);
 
-    function execute(bytes calldata data_) external payable virtual override returns (bool, bytes memory) {
-        // Since this action is marshalled off-chain we don't need to execute the payload
-        revert BoostError.NotImplemented();
-        //return (true, data_);
-    }
+    function getActionEvent(uint256 index) public view virtual returns (ActionEvent memory);
+
+    function getActionEvents() public view virtual returns (ActionEvent[] memory);
 
     /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AEventAction).interfaceId;
-    }
-
-    function getActionEventsCount() public view virtual returns (uint256) {
-        return actionEvents.length;
-    }
-
-    function getActionEvent(uint256 index) public view virtual returns (ActionEvent memory) {
-        return actionEvents[index];
-    }
-
-    function getActionEvents() public view virtual returns (ActionEvent[] memory) {
-        return actionEvents;
     }
 
     /// @inheritdoc AAction

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
+import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -12,7 +13,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @title ERC20 AIncentive with Variable Rewards
 /// @notice A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
 
-contract ERC20VariableIncentive is AIncentive {
+contract ERC20VariableIncentive is AIncentive, AOwnable {
     using SafeTransferLib for address;
 
     /// @notice The reward multiplier; if 0, the signed amount from the claim payload is used directly
@@ -35,6 +36,7 @@ contract ERC20VariableIncentive is AIncentive {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed incentive parameters `(address asset, uint256 reward, uint256 limit)`
     function initialize(bytes calldata data_) public override initializer {
+        _initializeOwner(msg.sender);
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         address asset_ = init_.asset;

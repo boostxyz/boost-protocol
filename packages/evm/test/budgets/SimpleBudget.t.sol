@@ -625,19 +625,19 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(mockERC1155.balanceOf(address(simpleBudget), tokenId), amount);
 
         // Disburse the tokens to the zero address
-        bytes memory disburseData = abi.encode(Budget.Transfer({
-            assetType: Budget.AssetType.ERC1155,
-            asset: token,
-            target: address(0),
-            data: abi.encode(Budget.ERC1155Payload({
-                tokenId: tokenId,
-                amount: amount,
-                data: ""
-            }))
-        }));
+        bytes memory disburseData = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: token,
+                target: address(0),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: amount, data: ""}))
+            })
+        );
 
         // Expect the disbursement to fail
-        vm.expectRevert(abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC1155), address(0), amount));
+        vm.expectRevert(
+            abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC1155), address(0), amount)
+        );
         simpleBudget.disburse(disburseData);
 
         // Ensure the budget still has 10 tokens
@@ -924,11 +924,11 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     function testOnERC1155Received() public view {
         // Call onERC1155Received with dummy values
         bytes4 result = simpleBudget.onERC1155Received(
-            address(0xc0ffee),   // operator
+            address(0xc0ffee), // operator
             address(0xdeadbeef), // from
-            1,                   // id
-            1,                   // amount
-            ""                   // data
+            1, // id
+            1, // amount
+            "" // data
         );
 
         // Check if it returns the correct selector
@@ -938,19 +938,15 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     function testOnERC1155BatchReceived() public view {
         // Call onERC1155BatchReceived with dummy values
         bytes4 result = simpleBudget.onERC1155BatchReceived(
-            address(0xc0ffee),   // operator
+            address(0xc0ffee), // operator
             address(0xdeadbeef), // from
-            new uint256[](1),    // ids
-            new uint256[](1),    // amounts
-            ""                   // data
+            new uint256[](1), // ids
+            new uint256[](1), // amounts
+            "" // data
         );
 
         // Check if it returns the correct selector
-        assertEq(
-            result,
-            IERC1155Receiver.onERC1155BatchReceived.selector,
-            "Should return correct selector"
-        );
+        assertEq(result, IERC1155Receiver.onERC1155BatchReceived.selector, "Should return correct selector");
     }
 
     ///////////////////////////

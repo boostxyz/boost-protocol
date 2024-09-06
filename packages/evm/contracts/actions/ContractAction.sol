@@ -8,17 +8,6 @@ import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AContractAction} from "contracts/actions/AContractAction.sol";
 
 contract ContractAction is AContractAction {
-    /// @notice The payload for initializing a ContractAction
-    /// @param target The target contract address
-    /// @param selector The selector for the function to be called
-    /// @param value The native token value to send with the function call
-    struct InitPayload {
-        uint256 chainId;
-        address target;
-        bytes4 selector;
-        uint256 value;
-    }
-
     constructor() {
         _disableInitializers();
     }

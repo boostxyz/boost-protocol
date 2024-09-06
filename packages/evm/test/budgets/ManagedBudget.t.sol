@@ -1081,7 +1081,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 tokens to the budget
         bytes memory data = abi.encodeWithSelector(
-            AManagedBudget.allocate.selector,
+            ManagedBudget.allocate.selector,
             _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
 

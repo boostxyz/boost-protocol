@@ -12,8 +12,6 @@ import {AValidator} from "contracts/validators/AValidator.sol";
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
 abstract contract ASignerValidator is IBoostClaim, AValidator {
-    using SignatureCheckerLib for address;
-
     struct SignerValidatorInputParams {
         address signer;
         bytes signature;

@@ -14,7 +14,6 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
-import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 
 contract SimpleBudgetTest is Test, IERC1155Receiver {
     MockERC20 mockERC20;
@@ -42,42 +41,42 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     // SimpleBudget initial state //
     ////////////////////////////////
 
-    function test_InitialOwner() public {
+    function test_InitialOwner() public view {
         // Ensure the budget has the correct owner
         assertEq(simpleBudget.owner(), address(this));
     }
 
-    function test_InitialDistributed() public {
+    function test_InitialDistributed() public view {
         // Ensure the budget has 0 tokens distributed
         assertEq(simpleBudget.total(address(mockERC20)), 0);
     }
 
-    function test_InitialDistributed1155() public {
+    function test_InitialDistributed1155() public view {
         // Ensure the budget has 0 of our 1155 tokens distributed
         assertEq(simpleBudget.total(address(mockERC1155), 42), 0);
     }
 
-    function test_InitialTotal() public {
+    function test_InitialTotal() public view {
         // Ensure the budget has 0 tokens allocated
         assertEq(simpleBudget.total(address(mockERC20)), 0);
     }
 
-    function test_InitialTotal1155() public {
+    function test_InitialTotal1155() public view {
         // Ensure the budget has 0 of our 1155 tokens allocated
         assertEq(simpleBudget.total(address(mockERC1155), 42), 0);
     }
 
-    function test_InitialAvailable() public {
+    function test_InitialAvailable() public view {
         // Ensure the budget has 0 tokens available
         assertEq(simpleBudget.available(address(mockERC20)), 0);
     }
 
-    function test_InitialAvailable1155() public {
+    function test_InitialAvailable1155() public view {
         // Ensure the budget has 0 of our 1155 tokens available
         assertEq(simpleBudget.available(address(mockERC1155), 42), 0);
     }
 
-    function test_InitializerDisabled() public {
+    function test_InitializerDisabled() public view {
         // Because the slot is private, we use `vm.load` to access it then parse out the bits:
         //   - [0] is the `initializing` flag (which should be 0 == false)
         //   - [1..64] hold the `initializedVersion` (which should be 1)
@@ -656,7 +655,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(0)), 100 ether);
     }
 
-    function testAvailable_NeverAllocated() public {
+    function testAvailable_NeverAllocated() public view {
         // Ensure the budget has 0 tokens available
         assertEq(simpleBudget.available(address(otherMockERC20)), 0);
     }
@@ -752,7 +751,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertFalse(simpleBudget.isAuthorized(address(0xdeadbeef)));
     }
 
-    function testIsAuthorized_Owner() public {
+    function testIsAuthorized_Owner() public view {
         assertTrue(simpleBudget.isAuthorized(address(this)));
     }
 
@@ -760,7 +759,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     // SimpleBudget.getComponentInterface //
     ////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Ensure the contract supports the ABudget interface
         console.logBytes4(simpleBudget.getComponentInterface());
     }
@@ -769,22 +768,22 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     // SimpleBudget.supportsInterface //
     ////////////////////////////////////
 
-    function testSupportsBudgetInterface() public {
+    function testSupportsBudgetInterface() public view {
         // Ensure the contract supports the ABudget interface
         assertTrue(simpleBudget.supportsInterface(type(ABudget).interfaceId));
     }
 
-    function testSupportsERC1155Receiver() public {
+    function testSupportsERC1155Receiver() public view {
         // Ensure the contract supports the ABudget interface
         assertTrue(simpleBudget.supportsInterface(type(IERC1155Receiver).interfaceId));
     }
 
-    function testSupportsERC165() public {
+    function testSupportsERC165() public view {
         // Ensure the contract supports the ABudget interface
         assertTrue(simpleBudget.supportsInterface(type(IERC165).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         // Ensure the contract does not support an unsupported interface
         assertFalse(simpleBudget.supportsInterface(type(Test).interfaceId));
     }
@@ -805,7 +804,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
 
         // Allocate 100 tokens to the budget
         bytes memory data = abi.encodeWithSelector(
-            ASimpleBudget.allocate.selector,
+            SimpleBudget.allocate.selector,
             _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
 

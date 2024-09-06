@@ -9,7 +9,7 @@ import {LibZip} from "@solady/utils/LibZip.sol";
 
 // Actions
 import {AAction} from "contracts/actions/AAction.sol";
-import {ContractAction} from "contracts/actions/ContractAction.sol";
+import {AContractAction, ContractAction} from "contracts/actions/ContractAction.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 
 // Allowlists
@@ -291,7 +291,7 @@ contract BoostCoreTest is Test {
             isBase: true,
             instance: address(new ERC721MintAction()),
             parameters: abi.encode(
-                ContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
+                AContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
             )
         });
     }

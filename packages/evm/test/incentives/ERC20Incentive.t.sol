@@ -19,11 +19,12 @@ contract ERC20IncentiveTest is Test {
     using SafeTransferLib for address;
 
     ERC20Incentive public incentive;
-    SimpleBudget public budget = new SimpleBudget();
+    SimpleBudget public budget;
     MockERC20 public mockAsset = new MockERC20();
 
     function setUp() public {
         incentive = _newIncentiveClone();
+        budget = _newBudgetClone();
 
         // Preload the budget with some mock tokens
         mockAsset.mint(address(this), 100 ether);
@@ -325,6 +326,13 @@ contract ERC20IncentiveTest is Test {
 
     function _newIncentiveClone() internal returns (ERC20Incentive) {
         return ERC20Incentive(LibClone.clone(address(new ERC20Incentive())));
+    }
+
+    function _newBudgetClone() internal returns (SimpleBudget newBudget) {
+        address[] memory authorized = new address[](0);
+        SimpleBudget.InitPayload memory initPayload = SimpleBudget.InitPayload(address(this), authorized);
+        newBudget = SimpleBudget(payable(LibClone.clone(address(new SimpleBudget()))));
+        newBudget.initialize(abi.encode(initPayload));
     }
 
     function _initialize(address asset, AERC20Incentive.Strategy strategy, uint256 reward, uint256 limit) internal {

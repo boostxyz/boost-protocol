@@ -20,7 +20,7 @@ contract ContractActionTest is Test {
 
     function setUp() public {
         action = ContractAction(LibClone.clone(address(baseAction)));
-        ContractAction.InitPayload memory payload = ContractAction.InitPayload({
+        ContractAction.InitPayload memory payload = AContractAction.InitPayload({
             chainId: block.chainid,
             target: address(target),
             selector: target.mintPayable.selector,
@@ -29,7 +29,7 @@ contract ContractActionTest is Test {
         action.initialize(abi.encode(payload));
 
         nonPayableTargetAction = ContractAction(LibClone.clone(address(baseAction)));
-        ContractAction.InitPayload memory nonPayablePayload = ContractAction.InitPayload({
+        ContractAction.InitPayload memory nonPayablePayload = AContractAction.InitPayload({
             chainId: block.chainid,
             target: address(target),
             selector: target.mint.selector,
@@ -38,7 +38,7 @@ contract ContractActionTest is Test {
         nonPayableTargetAction.initialize(abi.encode(nonPayablePayload));
 
         otherChainAction = ContractAction(LibClone.clone(address(baseAction)));
-        ContractAction.InitPayload memory otherChainPayload = ContractAction.InitPayload({
+        ContractAction.InitPayload memory otherChainPayload = AContractAction.InitPayload({
             chainId: block.chainid + 1,
             target: address(target),
             selector: target.mintPayable.selector,
@@ -61,7 +61,7 @@ contract ContractActionTest is Test {
         vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
         baseAction.initialize(
             abi.encode(
-                ContractAction.InitPayload({
+                AContractAction.InitPayload({
                     chainId: block.chainid,
                     target: address(target),
                     selector: target.mintPayable.selector,

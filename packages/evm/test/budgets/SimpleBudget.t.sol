@@ -486,6 +486,51 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         simpleBudget.disburse(data);
     }
 
+    function testDisburse_InsufficientFundsERC1155() public {
+        uint256 tokenId = 42;
+        uint256 initialAmount = 100;
+        uint256 disburseAmount = 101; // More than available
+
+        // Approve the budget to transfer tokens
+        mockERC1155.setApprovalForAll(address(simpleBudget), true);
+
+        // Allocate tokens to the budget
+        bytes memory allocateData = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: initialAmount, data: ""}))
+            })
+        );
+        simpleBudget.allocate(allocateData);
+
+        // Verify allocation
+        assertEq(mockERC1155.balanceOf(address(simpleBudget), tokenId), initialAmount);
+
+        // Attempt to disburse more than available
+        bytes memory disburseData = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(0),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: disburseAmount, data: ""}))
+            })
+        );
+
+        // Expect the InsufficientFunds revert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Budget.InsufficientFunds.selector, address(mockERC1155), initialAmount, disburseAmount
+            )
+        );
+        simpleBudget.disburse(disburseData);
+
+        // Verify balances haven't changed
+        assertEq(mockERC1155.balanceOf(address(simpleBudget), tokenId), initialAmount);
+        assertEq(mockERC1155.balanceOf(address(0xdead), tokenId), 0);
+    }
+
     function testDisburse_ImproperData() public {
         bytes memory data;
 

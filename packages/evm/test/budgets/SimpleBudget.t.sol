@@ -890,6 +890,20 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(0)), 1 ether);
     }
 
+    function testOnERC1155Received() public view {
+        // Call onERC1155Received with dummy values
+        bytes4 result = simpleBudget.onERC1155Received(
+            address(0xc0ffee),   // operator
+            address(0xdeadbeef), // from
+            1,                   // id
+            1,                   // amount
+            ""                   // data
+        );
+
+        // Check if it returns the correct selector
+        assertEq(result, IERC1155Receiver.onERC1155Received.selector, "Should return correct selector");
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

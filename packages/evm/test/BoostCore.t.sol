@@ -84,6 +84,25 @@ contract BoostCoreTest is Test {
         mockAuth = new MockAuth(mockAddresses);
     }
 
+    ///////////////////////////
+    // BoostCore.Constructor //
+    ///////////////////////////
+
+    function testConstructor() public {
+    BoostRegistry registry = new BoostRegistry();
+    address protocolFeeReceiver = address(1);
+    BoostCore boostCoreInstance = new BoostCore(registry, protocolFeeReceiver);
+
+    // Check the owner
+    assertEq(address(this), boostCoreInstance.owner());
+
+    // Check the registry
+    assertEq(address(registry), address(boostCoreInstance.registry()));
+
+    // Check the protocol fee receiver
+    assertEq(protocolFeeReceiver, boostCoreInstance.protocolFeeReceiver());
+}
+
     /////////////////////////////
     // BoostCore Initial State //
     /////////////////////////////
@@ -95,6 +114,7 @@ contract BoostCoreTest is Test {
     function testInitialBoostCount() public view {
         assertEq(0, boostCore.getBoostCount());
     }
+
 
     ///////////////////////////
     // BoostCore.createBoost //

@@ -203,10 +203,10 @@ contract VestingBudgetTest is Test {
     }
 
     ///////////////////////////
-    // VestingBudget.reclaim  //
+    // VestingBudget.clawback //
     ///////////////////////////
 
-    function testReclaim() public {
+    function testClawback() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -224,7 +224,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(mockERC20)), 1 ether);
     }
 
-    function testReclaim_NativeBalance() public {
+    function testClawback_NativeBalance() public {
         // Allocate 100 ETH to the budget
         _allocate(address(0), 100 ether);
         _vestAll();
@@ -237,7 +237,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(0)), 1 ether);
     }
 
-    function testReclaim_ZeroAmount() public {
+    function testClawback_ZeroAmount() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -249,7 +249,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(mockERC20)), 0 ether);
     }
 
-    function testReclaim_ZeroAddress() public {
+    function testClawback_ZeroAddress() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -264,7 +264,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(mockERC20)), 100 ether);
     }
 
-    function testReclaim_InsufficientFunds() public {
+    function testClawback_InsufficientFunds() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -278,7 +278,7 @@ contract VestingBudgetTest is Test {
         vestingBudget.clawback(data);
     }
 
-    function testReclaim_ImproperData() public {
+    function testClawback_ImproperData() public {
         bytes memory data;
 
         // Approve the budget to transfer tokens
@@ -295,7 +295,7 @@ contract VestingBudgetTest is Test {
         vestingBudget.clawback(data);
     }
 
-    function testReclaim_NotOwner() public {
+    function testClawback_NotOwner() public {
         _allocate(address(mockERC20), 100 ether);
 
         // Try to reclaim 100 tokens from the budget as a non-owner

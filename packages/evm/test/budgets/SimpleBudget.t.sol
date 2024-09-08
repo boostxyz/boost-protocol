@@ -513,7 +513,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
             Budget.Transfer({
                 assetType: Budget.AssetType.ERC1155,
                 asset: address(mockERC1155),
-                target: address(0),
+                target: address(0xC0ffee),
                 data: abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: disburseAmount, data: ""}))
             })
         );

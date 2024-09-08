@@ -44,7 +44,7 @@ export const IncentiveByComponentInterface = {
   ['0xd1da3349']: AllowListIncentive,
   ['0xb168aa66']: ERC1155Incentive,
   ['0x31116297']: CGDAIncentive,
-  ['0xb612d388']: ERC20VariableIncentive,
+  ['0x47319704']: ERC20VariableIncentive,
 };
 
 /**

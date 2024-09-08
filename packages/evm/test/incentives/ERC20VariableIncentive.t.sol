@@ -9,6 +9,8 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Incentive, IBoostClaim} from "contracts/incentives/Incentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
+import {AERC20VariableIncentive} from "contracts/incentives/AERC20VariableIncentive.sol";
+
 
 import {Budget} from "contracts/budgets/Budget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
@@ -157,7 +159,8 @@ contract ERC20VariableIncentiveTest is Test {
     //////////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
-        assertEq(incentive.getComponentInterface(), type(Incentive).interfaceId);
+        console.logBytes4(incentive.getComponentInterface());
+        assertEq(incentive.getComponentInterface(), type(AERC20VariableIncentive).interfaceId);
     }
 
     //////////////////////////////////////////////

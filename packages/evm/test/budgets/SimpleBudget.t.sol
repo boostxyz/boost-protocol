@@ -250,10 +250,10 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
     }
 
     ///////////////////////////
-    // SimpleBudget.reclaim  //
+    // SimpleBudget.clawback //
     ///////////////////////////
 
-    function testReclaim() public {
+    function testClawback() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
 
@@ -270,7 +270,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(mockERC20)), 1 ether);
     }
 
-    function testReclaim_NativeBalance() public {
+    function testClawback_NativeBalance() public {
         // Allocate 100 ETH to the budget
         bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         simpleBudget.allocate{value: 100 ether}(data);
@@ -284,7 +284,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(0)), 1 ether);
     }
 
-    function testReclaim_ERC1155() public {
+    function testClawback_ERC1155() public {
         // Approve the budget to transfer tokens
         mockERC1155.setApprovalForAll(address(simpleBudget), true);
 
@@ -315,7 +315,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(mockERC1155), 42), 1);
     }
 
-    function testReclaim_ZeroAmount() public {
+    function testClawback_ZeroAmount() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
 
@@ -332,7 +332,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(mockERC20)), 0 ether);
     }
 
-    function testReclaim_ZeroAddress() public {
+    function testClawback_ZeroAddress() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
 
@@ -352,7 +352,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         assertEq(simpleBudget.available(address(mockERC20)), 100 ether);
     }
 
-    function testReclaim_InsufficientFunds() public {
+    function testClawback_InsufficientFunds() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
 
@@ -371,7 +371,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         simpleBudget.clawback(data);
     }
 
-    function testReclaim_ImproperData() public {
+    function testClawback_ImproperData() public {
         bytes memory data;
 
         // Approve the budget to transfer tokens
@@ -388,7 +388,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         simpleBudget.clawback(data);
     }
 
-    function testReclaim_NotOwner() public {
+    function testClawback_NotOwner() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(simpleBudget), 100 ether);
 

@@ -31,8 +31,8 @@ contract VestingBudgetTest is Test {
                     owner: address(this),
                     authorized: new address[](0),
                     start: uint64(block.timestamp),
-                    duration: uint64(1 days),
-                    cliff: 0
+                    duration: uint64(10 days),
+                    cliff: 1 days
                 })
             )
         );

@@ -602,6 +602,17 @@ contract VestingBudgetTest is Test {
         vestingBudget.setAuthorized(accounts, authorized);
     }
 
+    ///////////////////////
+    // VestingBudget.end //
+    ///////////////////////
+
+    function testEnd() public view {
+        uint256 expectedEnd = vestingBudget.start() + vestingBudget.duration();
+        uint256 actualEnd = vestingBudget.end();
+        
+        assertEq(actualEnd, expectedEnd, "End time should equal start + duration");
+    }
+
     ////////////////////////////////
     // VestingBudget.isAuthorized //
     ////////////////////////////////

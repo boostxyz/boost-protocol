@@ -219,7 +219,6 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC20), amount));
         simpleBudget.allocate(data);
 
-        // Clear the mock to avoid affecting other tests
         vm.clearMockedCalls();
     }
 
@@ -245,7 +244,6 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC1155), initialAmount));
         simpleBudget.allocate(allocateData);
 
-        // Clear the mock to avoid affecting other tests
         vm.clearMockedCalls();
     }
 

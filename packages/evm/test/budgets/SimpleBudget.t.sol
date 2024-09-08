@@ -199,6 +199,30 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         simpleBudget.allocate(data);
     }
 
+    function testAllocate_ERC20InvalidAllocation() public {
+        uint256 amount = 100 ether;
+
+        // Approve SimpleBudget to spend tokens
+        mockERC20.approve(address(simpleBudget), amount);
+
+        // Transfer 100 tokens to the budget
+        bytes memory data = _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), amount);
+
+        // Set up the mock to manipulate the balance after transfer
+        vm.mockCall(
+            address(mockERC20),
+            abi.encodeWithSelector(mockERC20.balanceOf.selector, address(simpleBudget)),
+            abi.encode(amount - 1) // Return a balance that's 1 less than expected
+        );
+
+        // Expect revert due to InvalidAllocation
+        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC20), amount));
+        simpleBudget.allocate(data);
+
+        // Clear the mock to avoid affecting other tests
+        vm.clearMockedCalls();
+    }
+
     function testAllocate_ERC1155InvalidAllocation() public {
         uint256 tokenId = 42;
         uint256 initialAmount = 100;

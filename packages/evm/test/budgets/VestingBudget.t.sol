@@ -166,6 +166,30 @@ contract VestingBudgetTest is Test {
         vestingBudget.allocate(data);
     }
 
+    function testAllocate_ERC20InvalidAllocation() public {
+        uint256 initialAmount = 100 ether;
+
+        // Approve VestingBudget to spend tokens
+        mockERC20.approve(address(vestingBudget), initialAmount);
+
+        // Prepare allocation data
+        bytes memory allocateData =
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
+
+        // Set up the mock to manipulate the balance after transfer
+        vm.mockCall(
+            address(mockERC20),
+            abi.encodeWithSelector(mockERC20.balanceOf.selector, address(vestingBudget)),
+            abi.encode(initialAmount - 1) // Return a balance that's 1 less than expected
+        );
+
+        // Expect revert due to InvalidAllocation
+        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC20), initialAmount));
+        vestingBudget.allocate(allocateData);
+
+        vm.clearMockedCalls();
+    }
+
     function testAllocate_ImproperData() public {
         bytes memory data;
 

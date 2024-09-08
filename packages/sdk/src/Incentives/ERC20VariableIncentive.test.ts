@@ -1,4 +1,7 @@
-import { readMockErc20BalanceOf } from '@boostxyz/evm';
+import {
+  readMockErc20BalanceOf,
+  readMockErc20TotalSupply,
+} from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
 import {
@@ -10,6 +13,7 @@ import {
   parseEther,
   zeroAddress,
 } from 'viem';
+import { toHex } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -72,20 +76,16 @@ describe('ERC20VariableIncentive', () => {
     const incentiveQuantity = 1;
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
       signer: trustedSigner,
-      incentiveData: prepareClaimPayload({
-        target: claimant,
-        data: encodeAbiParameters(
-          [{ type: 'uint256', name: 'data' }],
-          [parseEther('1')],
-        ),
-      }),
+      incentiveData: encodeAbiParameters(
+        [{ name: '', type: 'uint256' }],
+        [parseEther('1')],
+      ),
       chainId: defaultOptions.config.chains[0].id,
       validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,
     });
-
     await fixtures.core.claimIncentive(
       boost.id,
       0n,
@@ -123,13 +123,10 @@ describe('ERC20VariableIncentive', () => {
     const incentiveQuantity = 1;
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
       signer: trustedSigner,
-      incentiveData: prepareClaimPayload({
-        target: claimant,
-        data: encodeAbiParameters(
-          [{ type: 'uint256', name: 'data' }],
-          [parseEther('1')],
-        ),
-      }),
+      incentiveData: encodeAbiParameters(
+        [{ name: '', type: 'uint256' }],
+        [parseEther('1')],
+      ),
       chainId: defaultOptions.config.chains[0].id,
       validator: boost.validator.assertValidAddress(),
       incentiveQuantity,

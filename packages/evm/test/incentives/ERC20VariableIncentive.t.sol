@@ -169,12 +169,7 @@ contract ERC20VariableIncentiveTest is Test {
         assertTrue(incentive.supportsInterface(type(Incentive).interfaceId));
     }
 
-<<<<<<< HEAD
     function testSupportsInterface_NotSupported() public view {
-=======
-    function testSupportsInterface_NotSupported() public {
-        console.logBytes4(incentive.getComponentInterface());
->>>>>>> a0af829 (feat(sdk): ERC20VariableIncentive sdk integration + tests)
         // Ensure the contract does not support an unsupported interface
         assertFalse(incentive.supportsInterface(type(Test).interfaceId));
     }

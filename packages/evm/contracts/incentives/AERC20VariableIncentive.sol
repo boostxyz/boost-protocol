@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
+import {Cloneable} from "contracts/shared/Cloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {Incentive} from "contracts/incentives/Incentive.sol";
 import {Budget} from "contracts/budgets/Budget.sol";
@@ -75,7 +76,7 @@ abstract contract AERC20VariableIncentive is Incentive {
         return true;
     }
 
-    /// @inheritdoc Incentive
+    /// @inheritdoc Cloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AERC20VariableIncentive).interfaceId;
     }

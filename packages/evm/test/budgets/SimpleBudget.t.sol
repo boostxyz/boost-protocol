@@ -207,13 +207,8 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         mockERC1155.setApprovalForAll(address(simpleBudget), true);
 
         // Prepare allocation data
-        bytes memory allocateData = _makeERC1155Transfer(
-            address(mockERC1155),
-            address(this),
-            tokenId,
-            initialAmount,
-            ""
-        );
+        bytes memory allocateData =
+            _makeERC1155Transfer(address(mockERC1155), address(this), tokenId, initialAmount, "");
 
         // Set up the mock to manipulate the balance after transfer
         vm.mockCall(

@@ -11,6 +11,7 @@ import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/Contr
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
+import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
 import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
@@ -34,6 +35,7 @@ import {
   ERC20VariableIncentive,
   ERC721MintAction,
   EventAction,
+  ManagedBudget,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
@@ -42,6 +44,7 @@ import {
   VestingBudget,
 } from '../src';
 import { BoostRegistry } from '../src/BoostRegistry';
+import { ManagedBudgetRoles } from '../src/Budgets/ManagedBudget';
 import { ERC1155Incentive } from '../src/Incentives/ERC1155Incentive';
 import { getDeployedContractAddress } from '../src/utils';
 import type { DeployableOptions } from './../src/Deployable/Deployable';
@@ -171,6 +174,14 @@ export async function deployFixtures(
       account,
     }),
   );
+  const managedBudgetBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: SimpleBudgetArtifact.abi,
+      bytecode: SimpleBudgetArtifact.bytecode as Hex,
+      account,
+    }),
+  );
   const vestingBudgetBase = await getDeployedContractAddress(
     config,
     deployContract(config, {
@@ -260,6 +271,9 @@ export async function deployFixtures(
     SimpleBudget: class TSimpleBudget extends SimpleBudget {
       public static override base = simpleBudgetBase;
     },
+    ManagedBudget: class TSimpleBudget extends ManagedBudget {
+      public static override base = managedBudgetBase;
+    },
     VestingBudget: class TVestingBudget extends VestingBudget {
       public static override base = vestingBudgetBase;
     },
@@ -311,6 +325,25 @@ export function freshBudget(
           options.account.address,
           fixtures.core.assertValidAddress(),
         ],
+      }),
+    );
+  };
+}
+
+export function freshManagedBudget(
+  options: DeployableTestOptions,
+  fixtures: Fixtures,
+) {
+  return async function freshBudget() {
+    return fixtures.registry.clone(
+      crypto.randomUUID(),
+      new fixtures.bases.ManagedBudget(options, {
+        owner: options.account.address,
+        authorized: [
+          options.account.address,
+          fixtures.core.assertValidAddress(),
+        ],
+        roles: [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
       }),
     );
   };
@@ -500,6 +533,57 @@ export function fundBudget(
       });
 
       return { budget, erc20, erc1155, points } as BudgetFixtures;
+    }
+  };
+}
+
+export function fundManagedBudget(
+  options: DeployableTestOptions,
+  fixtures: Fixtures,
+  budget?: ManagedBudget,
+  erc20?: MockERC20,
+  erc1155?: MockERC1155,
+  points?: MockPoints,
+) {
+  return async function fundBudget() {
+    {
+      if (!budget)
+        budget = await loadFixture(freshManagedBudget(options, fixtures));
+      if (!erc20) erc20 = await loadFixture(fundErc20(options));
+      if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
+      if (!points) points = await loadFixture(fundPoints(options));
+
+      await budget.allocate(
+        {
+          amount: parseEther('1.0'),
+          asset: zeroAddress,
+          target: options.account.address,
+        },
+        { value: parseEther('1.0') },
+      );
+
+      await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+      await budget.allocate({
+        amount: parseEther('100'),
+        asset: erc20.assertValidAddress(),
+        target: options.account.address,
+      });
+
+      await writeMockErc1155SetApprovalForAll(options.config, {
+        args: [budget.assertValidAddress(), true],
+        address: erc1155.assertValidAddress(),
+        account: options.account,
+      });
+      await budget.allocate({
+        tokenId: 1n,
+        amount: 100n,
+        asset: erc1155.assertValidAddress(),
+        target: options.account.address,
+      });
+
+      return { budget, erc20, erc1155, points } as BudgetFixtures & {
+        budget: ManagedBudget;
+      };
     }
   };
 }

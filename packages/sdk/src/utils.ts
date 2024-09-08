@@ -1642,6 +1642,57 @@ export const prepareSimpleBudgetPayload = ({
 };
 
 /**
+ * The object representation of a `ManagedBudgetPayload.InitPayload`
+ *
+ * @export
+ * @interface ManagedBudgetPayload
+ * @typedef {ManagedBudgetPayload}
+ */
+export interface ManagedBudgetPayload {
+  /**
+   * The budget's owner
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+   *
+   * @type {Address[]}
+   */
+  authorized: Address[];
+  /**
+   * List of roles to assign to the corresponding account by index.
+   *
+   * @type {bigint[]}
+   */
+  roles: bigint[];
+}
+
+/**
+ * Given a {@link ManagedBudgetPayload}, properly encode a `ManagedBudget.InitPayload` for use with {@link ManagedBudget} initialization.
+ *
+ * @param {ManagedBudgetPayload} param0
+ * @param {Address} param0.owner - The budget's owner
+ * @param {{}} param0.authorized - List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+ * @param {{}} param0.roles - List of roles to assign to the corresponding account by index.
+ * @returns {*}
+ */
+export const prepareManagedBudgetPayload = ({
+  owner,
+  authorized,
+  roles,
+}: ManagedBudgetPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'ManagedBudgetPayload payload',
+      'struct ManagedBudgetPayload { address owner; address[] authorized; uint256[] roles; }',
+    ]),
+    [{ owner, authorized, roles }],
+  );
+};
+
+/**
  * The object representation of a `VestingBudget.InitPayload`
  *
  * @export

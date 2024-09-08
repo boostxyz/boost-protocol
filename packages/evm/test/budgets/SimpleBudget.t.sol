@@ -381,9 +381,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         );
 
         // Expect the InsufficientFunds revert
-        vm.expectRevert(
-            abi.encodeWithSelector(Budget.InsufficientFunds.selector, address(mockERC1155), 100, 101)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Budget.InsufficientFunds.selector, address(mockERC1155), 100, 101));
         simpleBudget.clawback(clawbackData);
     }
 

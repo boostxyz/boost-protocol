@@ -138,7 +138,7 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Retrieves
+   * Retrieves the payload describing how claimants can be identified from logs or function calls.
    *
    * @public
    * @async

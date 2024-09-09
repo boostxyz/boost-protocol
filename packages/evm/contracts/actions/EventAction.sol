@@ -9,11 +9,14 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {AEventAction} from "contracts/actions/AEventAction.sol";
 
 contract EventAction is AEventAction {
-    /// @notice The payload for initializing a ContractAction
-    /// @param target The target contract address
-    /// @param selector The selector for the function to be called
-    /// @param value The native token value to send with the function call
+    /// @notice The payload for initializing an EventAction
+    /// @param actionClaimant The payload describing how claimants are identified
+    /// @param actionEventOne The first event criteria to validate with
+    /// @param actionEventTwo The second event criteria to validate with
+    /// @param actionEventThree The third event criteria to validate with
+    /// @param actionEventFour The fourth event criteria to validate with
     struct InitPayload {
+        ActionClaimant actionClaimant;
         ActionEvent actionEventOne;
         ActionEvent actionEventTwo;
         ActionEvent actionEventThree;
@@ -31,6 +34,7 @@ contract EventAction is AEventAction {
     }
 
     function _initialize(InitPayload memory init_) internal virtual onlyInitializing {
+        actionClaimant = init_.actionClaimant;
         actionEvents.push(init_.actionEventOne);
         actionEvents.push(init_.actionEventTwo);
         actionEvents.push(init_.actionEventThree);
@@ -60,5 +64,9 @@ contract EventAction is AEventAction {
 
     function getActionEvents() public view virtual override returns (ActionEvent[] memory) {
         return actionEvents;
+    }
+
+    function getActionClaimant() public view virtual override returns (ActionClaimant memory) {
+        return actionClaimant;
     }
 }

@@ -84,6 +84,25 @@ contract BoostCoreTest is Test {
         mockAuth = new MockAuth(mockAddresses);
     }
 
+    ///////////////////////////
+    // BoostCore.Constructor //
+    ///////////////////////////
+
+    function testConstructor() public {
+        BoostRegistry registry = new BoostRegistry();
+        address protocolFeeReceiver = address(1);
+        BoostCore boostCoreInstance = new BoostCore(registry, protocolFeeReceiver);
+
+        // Check the owner
+        assertEq(address(this), boostCoreInstance.owner());
+
+        // Check the registry
+        assertEq(address(registry), address(boostCoreInstance.registry()));
+
+        // Check the protocol fee receiver
+        assertEq(protocolFeeReceiver, boostCoreInstance.protocolFeeReceiver());
+    }
+
     /////////////////////////////
     // BoostCore Initial State //
     /////////////////////////////
@@ -280,6 +299,157 @@ contract BoostCoreTest is Test {
 
         // Verify no boost was created
         assertEq(0, boostCore.getBoostCount(), "Unauthorized user should not be able to create boost");
+    }
+
+
+    ///////////////////////////
+    // BoostCore.claimIncentive //
+    ///////////////////////////
+
+    function testClaimIncentive() public {
+        // Create a Boost first
+        boostCore.createBoost(validCreateCalldata);
+
+        // Mint an ERC721 token to the claimant (this contract)
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Prepare the data payload for validation
+        bytes memory data = abi.encode(address(this), abi.encode(tokenId));
+
+        // Claim the incentive
+        boostCore.claimIncentive{value: 0.000075 ether}(0, 0, address(0), data);
+
+        // Check the claims
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive _incentive = ERC20Incentive(address(boost.incentives[0]));
+        assertEq(_incentive.claims(), 1);
+    }
+
+    function testClaimIncentive_InsufficientFunds() public {
+        // Create a Boost first
+        boostCore.createBoost(validCreateCalldata);
+
+        // Mint an ERC721 token to the claimant (this contract)
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Prepare the data payload for validation
+        bytes memory data = abi.encode(address(this), abi.encode(tokenId));
+
+        // Try to claim the incentive with insufficient funds
+        vm.expectRevert(abi.encodeWithSelector(BoostError.InsufficientFunds.selector, 0x0000000000000000000000000000000000000000, 0, 75000000000000));
+        boostCore.claimIncentive{value: 0}(0, 0, address(0), "");
+    }
+
+    function testClaimIncentive_Unauthorized() public {
+        // Create a Boost first
+        boostCore.createBoost(validCreateCalldata);
+
+        // Mint an ERC721 token to the claimant (this contract)
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Prepare the data payload for validation
+
+        // Try to claim the incentive with an unauthorized address
+        address unauthorizedClaimant = makeAddr("unauthorizedClaimant");
+        // NOTE: this claimant can just be passed in as _anything_ - not ideal  
+        bytes memory data = abi.encode(address(unauthorizedClaimant), abi.encode(tokenId));
+        vm.deal(unauthorizedClaimant, 1 ether);
+        vm.startPrank(unauthorizedClaimant);
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        boostCore.claimIncentive{value: 0.000075 ether}(0, 0, address(0), data);
+        vm.stopPrank();
+    }
+
+    function testClaimIncentive_WithReferrer() public {
+        // Create a Boost first
+        boostCore.createBoost(validCreateCalldata);
+
+        // Mint an ERC721 token to the claimant (this contract)
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Define a referrer
+        address referrer = makeAddr("referrer");
+        vm.deal(referrer, 1 ether); // Fund the referrer for testing purposes
+
+        // Prepare the data payload for validation
+        bytes memory data = abi.encode(address(this), abi.encode(tokenId));
+
+        // Claim the incentive with a referrer
+        boostCore.claimIncentive{value: 0.000075 ether}(0, 0, referrer, data);
+
+        // Check the claims
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive _incentive = ERC20Incentive(address(boost.incentives[0]));
+        assertEq(_incentive.claims(), 1);
+
+        // Check that the claim fee was routed to the referrer
+        uint256 expectedReferrerBalance = 1 ether + (0.000075 ether * 2000 / 10000);
+        assertEq(referrer.balance, expectedReferrerBalance);
+    }
+
+    ///////////////////////////
+    // BoostCore.getBoost //
+    ///////////////////////////
+
+    function testGetBoost() public {
+        // Create a Boost first
+        boostCore.createBoost(validCreateCalldata);
+
+        // Get the Boost
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+
+        // Check the Boost details
+        assertEq(boost.owner, address(1));
+        assertEq(boost.protocolFee, boostCore.protocolFee() + 500);
+        assertEq(boost.referralFee, boostCore.referralFee() + 1000);
+        assertEq(boost.maxParticipants, 10_000);
+    }
+
+    ///////////////////////////
+    // BoostCore.getBoostCount //
+    ///////////////////////////
+
+    function testGetBoostCount() public {
+        // Initially, there should be no Boosts
+        assertEq(boostCore.getBoostCount(), 0);
+
+        // Create a Boost
+        boostCore.createBoost(validCreateCalldata);
+
+        // Now, there should be one Boost
+        assertEq(boostCore.getBoostCount(), 1);
+    }
+
+    ///////////////////////////
+    // BoostCore.setProtocolFeeReceiver //
+    ///////////////////////////
+
+    function testSetProtocolFeeReceiver() public {
+        address newReceiver = address(2);
+        boostCore.setProtocolFeeReceiver(newReceiver);
+        assertEq(boostCore.protocolFeeReceiver(), newReceiver);
+    }
+
+    ///////////////////////////
+    // BoostCore.setClaimFee //
+    ///////////////////////////
+
+    function testSetClaimFee() public {
+        uint256 newClaimFee = 0.0001 ether;
+        boostCore.setClaimFee(newClaimFee);
+        assertEq(boostCore.claimFee(), newClaimFee);
     }
 
     ///////////////////////////

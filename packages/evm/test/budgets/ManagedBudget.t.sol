@@ -212,7 +212,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Prepare allocation data
         bytes memory allocateData =
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
 
         // Set up the mock to manipulate the balance after transfer
         vm.mockCall(
@@ -222,7 +222,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         );
 
         // Expect revert due to InvalidAllocation
-        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC20), initialAmount));
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(mockERC20), initialAmount));
         managedBudget.allocate(allocateData);
 
         vm.clearMockedCalls();
@@ -247,7 +247,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         );
 
         // Expect revert due to InvalidAllocation
-        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC1155), initialAmount));
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(mockERC1155), initialAmount));
         managedBudget.allocate(allocateData);
 
         vm.clearMockedCalls();
@@ -595,7 +595,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         // Disburse 101 tokens from the budget to the recipient
         data = _makeERC1155Transfer(address(mockERC1155), address(1), 42, 101, bytes(""));
         vm.expectRevert(
-            abi.encodeWithSelector(Budget.InsufficientFunds.selector, address(mockERC1155), uint256(100), uint256(101))
+            abi.encodeWithSelector(ABudget.InsufficientFunds.selector, address(mockERC1155), uint256(100), uint256(101))
         );
         managedBudget.disburse(data);
     }
@@ -737,17 +737,17 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Disburse the tokens to the zero address
         bytes memory disburseData = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: token,
                 target: address(0),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: amount, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: tokenId, amount: amount, data: ""}))
             })
         );
 
         // Expect the disbursement to fail
         vm.expectRevert(
-            abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC1155), address(0), amount)
+            abi.encodeWithSelector(ABudget.TransferFailed.selector, address(mockERC1155), address(0), amount)
         );
         managedBudget.disburse(disburseData);
 

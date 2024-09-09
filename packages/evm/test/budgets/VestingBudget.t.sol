@@ -209,6 +209,23 @@ contract VestingBudgetTest is Test {
         vestingBudget.allocate(data);
     }
 
+    function testAllocate_UnsupportedAssetType() public {
+        bytes memory erc1155Data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            })
+        );
+
+        // Try to allocate ERC1155 tokens to budget
+        bool result = vestingBudget.allocate(erc1155Data);
+
+        // Assert that allocation fails for unsupported asset type
+        assertFalse(result, "Allocation should fail for unsupported asset type (ERC1155)");
+    }
+
     ///////////////////////////
     // VestingBudget.clawback //
     ///////////////////////////

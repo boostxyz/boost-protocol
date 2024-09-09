@@ -1505,6 +1505,58 @@ export const prepareERC20IncentivePayload = ({
 };
 
 /**
+ * The object representation of a `ERC20VariableIncentivePayload.InitPayload`
+ *
+ * @export
+ * @interface ERC20VariableIncentivePayload
+ * @typedef {ERC20VariableIncentivePayload}
+ */
+export interface ERC20VariableIncentivePayload {
+  /**
+   * The address of the incentivized asset.
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The amount of the asset to distribute.
+   *
+   * @type {bigint}
+   */
+  reward: bigint;
+  /**
+   * How many times can this incentive be claimed.
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
+
+/**
+ * Given a {@link ERC20VariableIncentivePayload}, properly encode a ` ERC20VariableIncentive.InitPayload` for use with {@link ERC20VariableIncentive} initialization.
+ *
+ * @param {ERC20VariableIncentivePayload} param0
+ * @param {Address} param0.asset - The address of the incentivized asset.
+ * @param {bigint} param0.reward - The amount of the asset to distribute.
+ * @param {bigint} param0.limit - How many times can this incentive be claimed.
+ * @returns {*}
+ */
+export const prepareERC20VariableIncentivePayload = ({
+  asset,
+  reward,
+  limit,
+}: ERC20VariableIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint256', name: 'reward' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [asset, reward, limit],
+  );
+};
+
+/**
  * The object representation of a `ContractAction.InitPayload`
  *
  * @export

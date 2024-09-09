@@ -77,7 +77,11 @@ import {
   ERC1155Incentive,
   type ERC1155IncentivePayload,
 } from './Incentives/ERC1155Incentive';
-import { type Incentive, incentiveFromAddress } from './Incentives/Incentive';
+import {
+  ERC20VariableIncentive,
+  type Incentive,
+  incentiveFromAddress,
+} from './Incentives/Incentive';
 import {
   PointsIncentive,
   type PointsIncentivePayload,
@@ -94,6 +98,7 @@ import {
   NoContractAddressUponReceiptError,
 } from './errors';
 import {
+  type ERC20VariableIncentivePayload,
   type EventActionPayload,
   type GenericLog,
   type BoostPayload as OnChainBoostPayload,
@@ -1130,6 +1135,28 @@ export class BoostCore extends Deployable<
     isBase?: boolean,
   ) {
     return new SignerValidator(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
+  /**
+   * Bound {@link ERC20VariableIncentive} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const validator = core.ERC20VariableIncentive({ ... }) // is roughly equivalent to
+   * const validator = new ERC20VariableIncentive({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<ERC20VariableIncentivePayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {ERC20VariableIncentive}
+   */
+  ERC20VariableIncentive(
+    options: DeployablePayloadOrAddress<ERC20VariableIncentivePayload>,
+    isBase?: boolean,
+  ) {
+    return new ERC20VariableIncentive(
       { config: this._config, account: this._account },
       options,
       isBase,

@@ -8,6 +8,7 @@ import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/Ves
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
+import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
@@ -19,6 +20,7 @@ import {
   ContractAction,
   type DeployableOptions,
   ERC20Incentive,
+  ERC20VariableIncentive,
   ERC721MintAction,
   ERC1155Incentive,
   EventAction,
@@ -196,6 +198,15 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     }),
   );
 
+  const erc20VariableIncentiveBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: ERC20VariableIncentiveArtifact.abi,
+      bytecode: ERC20VariableIncentiveArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
   const signerValidatorBase = await getDeployedContractAddress(
     config,
     deployContract(config, {
@@ -236,6 +247,9 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     ERC20Incentive: class TERC20Incentive extends ERC20Incentive {
       public static override base = erc20IncentiveBase;
     },
+    ERC20VariableIncentive: class TERC20VariableIncentive extends ERC20VariableIncentive {
+      public static override base = erc20VariableIncentiveBase;
+    },
     ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
       public static override base = erc1155IncentiveBase;
     },
@@ -264,6 +278,7 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     ALLOWLIST_INCENTIVE_BASE: allowListIncentiveBase,
     CGDA_INCENTIVE_BASE: cgdaIncentiveBase,
     ERC20_INCENTIVE_BASE: erc20IncentiveBase,
+    ERC20_VARIABLE_INCENTIVE_BASE: erc20VariableIncentiveBase,
     ERC1155_INCENTIVE_BASE: erc1155IncentiveBase,
     POINTS_INCENTIVE_BASE: pointsIncentiveBase,
     SIGNER_VALIDATOR_BASE: signerValidatorBase,

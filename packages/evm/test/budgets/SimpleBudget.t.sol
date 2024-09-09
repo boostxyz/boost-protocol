@@ -402,7 +402,7 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         simpleBudget.clawback(data);
     }
 
-    function testClawback_ERC1155InsufficientFunds() public {
+    function testClawback_InsufficientFundsERC1155() public {
         // Approve the budget to transfer tokens
         mockERC1155.setApprovalForAll(address(simpleBudget), true);
 

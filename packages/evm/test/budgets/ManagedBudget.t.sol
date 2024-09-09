@@ -1123,7 +1123,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
     }
 
     function testSetAuthorized_RemoveRole() public {
-        // First, grant authorization to the user
+        // Grant authorization to the user
         address user = address(0xc0ffee);
         address[] memory accounts = new address[](1);
         accounts[0] = user;
@@ -1134,7 +1134,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         // Verify that the user is authorized
         assertTrue(managedBudget.isAuthorized(user), "User should be authorized");
 
-        // Now, remove authorization from the user
+        // Remove authorization from the user
         authorizations[0] = false;
         managedBudget.setAuthorized(accounts, authorizations);
 

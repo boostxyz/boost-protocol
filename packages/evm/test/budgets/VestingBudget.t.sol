@@ -496,6 +496,23 @@ contract VestingBudgetTest is Test {
         vestingBudget.disburseBatch(requests);
     }
 
+    function testDisburse_UnsupportedAssetType() public {
+        bytes memory erc1155Data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            })
+        );
+
+        // Try to disburse ERC1155 tokens
+        bool result = vestingBudget.disburse(erc1155Data);
+
+        // Assert that disburse fails for unsupported asset type
+        assertFalse(result, "Disburse should fail for unsupported asset type (ERC1155)");
+    }
+
     /////////////////////////
     // VestingBudget.total //
     /////////////////////////

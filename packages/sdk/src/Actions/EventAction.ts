@@ -96,7 +96,7 @@ export class EventAction extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
       args: [index],
-    });
+    }) as Promise<ActionEvent>;
   }
 
   /**

@@ -320,7 +320,7 @@ export interface Criteria {
 }
 
 /**
- * Whether claimaint is inferred from event or function
+ * Whether a given signature is an event or function
  *
  * @export
  * @enum {number}

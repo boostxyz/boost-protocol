@@ -7,7 +7,9 @@ import {Initializable} from "@solady/utils/Initializable.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {MockERC20} from "contracts/shared/Mocks.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
+
+import {MockERC20, MockERC1155} from "contracts/shared/Mocks.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -16,12 +18,16 @@ import {VestingBudget} from "contracts/budgets/VestingBudget.sol";
 contract VestingBudgetTest is Test {
     MockERC20 mockERC20;
     MockERC20 otherMockERC20;
+    MockERC1155 mockERC1155;
     VestingBudget vestingBudget;
 
     function setUp() public {
         // Deploy a new ERC20 contract and mint 100 tokens
         mockERC20 = new MockERC20();
         mockERC20.mint(address(this), 100 ether);
+
+        // Deploy a new ERC1155 contract
+        mockERC1155 = new MockERC1155();
 
         // Deploy a new VestingBudget contract and initialize it
         vestingBudget = VestingBudget(payable(LibClone.clone(address(new VestingBudget()))));
@@ -31,8 +37,8 @@ contract VestingBudgetTest is Test {
                     owner: address(this),
                     authorized: new address[](0),
                     start: uint64(block.timestamp),
-                    duration: uint64(1 days),
-                    cliff: 0
+                    duration: uint64(10 days),
+                    cliff: 1 days
                 })
             )
         );
@@ -166,6 +172,30 @@ contract VestingBudgetTest is Test {
         vestingBudget.allocate(data);
     }
 
+    function testAllocate_ERC20InvalidAllocation() public {
+        uint256 initialAmount = 100 ether;
+
+        // Approve VestingBudget to spend tokens
+        mockERC20.approve(address(vestingBudget), initialAmount);
+
+        // Prepare allocation data
+        bytes memory allocateData =
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
+
+        // Set up the mock to manipulate the balance after transfer
+        vm.mockCall(
+            address(mockERC20),
+            abi.encodeWithSelector(mockERC20.balanceOf.selector, address(vestingBudget)),
+            abi.encode(initialAmount - 1) // Return a balance that's 1 less than expected
+        );
+
+        // Expect revert due to InvalidAllocation
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(mockERC20), initialAmount));
+        vestingBudget.allocate(allocateData);
+
+        vm.clearMockedCalls();
+    }
+
     function testAllocate_ImproperData() public {
         bytes memory data;
 
@@ -178,11 +208,28 @@ contract VestingBudgetTest is Test {
         vestingBudget.allocate(data);
     }
 
+    function testAllocate_UnsupportedAssetType() public {
+        bytes memory erc1155Data = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
+            })
+        );
+
+        // Try to allocate ERC1155 tokens to budget
+        bool result = vestingBudget.allocate(erc1155Data);
+
+        // Assert that allocation fails for unsupported asset type
+        assertFalse(result, "Allocation should fail for unsupported asset type (ERC1155)");
+    }
+
     ///////////////////////////
-    // VestingBudget.reclaim  //
+    // VestingBudget.clawback //
     ///////////////////////////
 
-    function testReclaim() public {
+    function testClawback() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -200,7 +247,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(mockERC20)), 1 ether);
     }
 
-    function testReclaim_NativeBalance() public {
+    function testClawback_NativeBalance() public {
         // Allocate 100 ETH to the budget
         _allocate(address(0), 100 ether);
         _vestAll();
@@ -213,7 +260,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(0)), 1 ether);
     }
 
-    function testReclaim_ZeroAmount() public {
+    function testClawback_ZeroAmount() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -225,7 +272,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(mockERC20)), 0 ether);
     }
 
-    function testReclaim_ZeroAddress() public {
+    function testClawback_ZeroAddress() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -240,7 +287,7 @@ contract VestingBudgetTest is Test {
         assertEq(vestingBudget.available(address(mockERC20)), 100 ether);
     }
 
-    function testReclaim_InsufficientFunds() public {
+    function testClawback_InsufficientFunds() public {
         _allocate(address(mockERC20), 100 ether);
         _vestAll();
 
@@ -254,7 +301,7 @@ contract VestingBudgetTest is Test {
         vestingBudget.clawback(data);
     }
 
-    function testReclaim_ImproperData() public {
+    function testClawback_ImproperData() public {
         bytes memory data;
 
         // Approve the budget to transfer tokens
@@ -271,7 +318,7 @@ contract VestingBudgetTest is Test {
         vestingBudget.clawback(data);
     }
 
-    function testReclaim_NotOwner() public {
+    function testClawback_NotOwner() public {
         _allocate(address(mockERC20), 100 ether);
 
         // Try to reclaim 100 tokens from the budget as a non-owner
@@ -281,6 +328,23 @@ contract VestingBudgetTest is Test {
         vestingBudget.clawback(
             _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether)
         );
+    }
+
+    function testClawback_UnsupportedAssetType() public {
+        bytes memory erc1155Data = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
+            })
+        );
+
+        // Try to clawback ERC1155 tokens
+        bool result = vestingBudget.clawback(erc1155Data);
+
+        // Assert that clawback fails for unsupported asset type
+        assertFalse(result, "Clawback should fail for unsupported asset type (ERC1155)");
     }
 
     ///////////////////////////
@@ -429,6 +493,23 @@ contract VestingBudgetTest is Test {
         // Try to disburse 25 tokens to address(1) and 50 tokens to address(2)
         vm.expectRevert(SafeTransferLib.TransferFailed.selector);
         vestingBudget.disburseBatch(requests);
+    }
+
+    function testDisburse_UnsupportedAssetType() public {
+        bytes memory erc1155Data = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
+            })
+        );
+
+        // Try to disburse ERC1155 tokens
+        bool result = vestingBudget.disburse(erc1155Data);
+
+        // Assert that disburse fails for unsupported asset type
+        assertFalse(result, "Disburse should fail for unsupported asset type (ERC1155)");
     }
 
     /////////////////////////
@@ -602,6 +683,17 @@ contract VestingBudgetTest is Test {
         vestingBudget.setAuthorized(accounts, authorized);
     }
 
+    ///////////////////////
+    // VestingBudget.end //
+    ///////////////////////
+
+    function testEnd() public view {
+        uint256 expectedEnd = vestingBudget.start() + vestingBudget.duration();
+        uint256 actualEnd = vestingBudget.end();
+
+        assertEq(actualEnd, expectedEnd, "End time should equal start + duration");
+    }
+
     ////////////////////////////////
     // VestingBudget.isAuthorized //
     ////////////////////////////////
@@ -692,5 +784,9 @@ contract VestingBudgetTest is Test {
         }
 
         return abi.encode(transfer);
+    }
+
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
+        return IERC1155Receiver.onERC1155Received.selector;
     }
 }

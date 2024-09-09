@@ -736,11 +736,7 @@ contract VestingBudgetTest is Test {
         return abi.encode(transfer);
     }
 
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
-        external
-        pure
-        returns (bytes4)
-    {
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
         return IERC1155Receiver.onERC1155Received.selector;
     }
 }

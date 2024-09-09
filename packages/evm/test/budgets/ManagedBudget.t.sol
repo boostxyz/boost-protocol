@@ -460,7 +460,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.allocate(data);
         assertEq(managedBudget.total(address(mockERC1155), 42), 100);
 
-        // Disburse 101 tokens from the budget to the recipient
+        // Attempt to clawback 101 tokens from the budget
         data = _makeERC1155Transfer(address(mockERC1155), address(1), 42, 101, bytes(""));
         vm.expectRevert(
             abi.encodeWithSelector(ABudget.InsufficientFunds.selector, address(mockERC1155), uint256(100), uint256(101))

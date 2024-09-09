@@ -204,6 +204,30 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.allocate(data);
     }
 
+    function testAllocate_ERC20InvalidAllocation() public {
+        uint256 initialAmount = 100 ether;
+
+        // Approve VestingBudget to spend tokens
+        mockERC20.approve(address(managedBudget), initialAmount);
+
+        // Prepare allocation data
+        bytes memory allocateData =
+            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
+
+        // Set up the mock to manipulate the balance after transfer
+        vm.mockCall(
+            address(mockERC20),
+            abi.encodeWithSelector(mockERC20.balanceOf.selector, address(managedBudget)),
+            abi.encode(initialAmount - 1) // Return a balance that's 1 less than expected
+        );
+
+        // Expect revert due to InvalidAllocation
+        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC20), initialAmount));
+        managedBudget.allocate(allocateData);
+
+        vm.clearMockedCalls();
+    }
+
     ///////////////////////////
     // ManagedBudget.reclaim  //
     ///////////////////////////

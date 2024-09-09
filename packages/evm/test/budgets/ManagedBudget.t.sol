@@ -583,6 +583,25 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.disburse(data);
     }
 
+    function testDisburse_InsufficientFunds_ERC1155() public {
+        // Approve the budget to transfer tokens
+        mockERC1155.setApprovalForAll(address(managedBudget), true);
+
+        // Allocate 100 tokens to the budget
+        bytes memory data = _makeERC1155Transfer(address(mockERC1155), address(this), 42, 100, bytes(""));
+        managedBudget.allocate(data);
+        assertEq(managedBudget.total(address(mockERC1155), 42), 100);
+
+        // Disburse 101 tokens from the budget to the recipient
+        data = _makeERC1155Transfer(address(mockERC1155), address(1), 42, 101, bytes(""));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Budget.InsufficientFunds.selector, address(mockERC1155), uint256(100), uint256(101)
+            )
+        );
+        managedBudget.disburse(data);
+    }
+
     function testDisburse_ImproperData() public {
         bytes memory data;
 

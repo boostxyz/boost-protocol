@@ -18,10 +18,10 @@ export type Validator = SignerValidator;
 /**
  * A map of Validator component interfaces to their constructors.
  *
- * @type {{ "0xd8725ea2": typeof SignerValidator; }}
+ * @type {{ "0xb8ce7b22": typeof SignerValidator; }}
  */
 export const ValidatorByComponentInterface = {
-  ['0xd8725ea2']: SignerValidator,
+  ['0xb8ce7b22']: SignerValidator,
 };
 
 /**

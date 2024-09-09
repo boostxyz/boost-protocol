@@ -19,11 +19,11 @@ export type AllowList = SimpleAllowList | SimpleDenyList;
 /**
  * A map of AllowList component interfaces to their constructors.
  *
- * @type {{ "0x2bc9016b": SimpleAllowList; "0x9d585f63": SimpleDenyList; }}
+ * @type {{ "0x6856aafa": SimpleAllowList; "0xdec7f4f2": SimpleDenyList; }}
  */
 export const AllowListByComponentInterface = {
-  ['0x2bc9016b']: SimpleAllowList,
-  ['0x9d585f63']: SimpleDenyList,
+  ['0x6856aafa']: SimpleAllowList,
+  ['0xdec7f4f2']: SimpleDenyList,
 };
 
 /**

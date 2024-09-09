@@ -446,6 +446,8 @@ export class BoostCore extends Deployable<
       owner,
     };
 
+    console.log(onChainPayload);
+
     const boostHash = await boostFactory(options.config, {
       args: [prepareBoostPayload(onChainPayload)],
       ...this.optionallyAttachAccount(options.account),

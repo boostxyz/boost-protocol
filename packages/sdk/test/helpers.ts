@@ -271,7 +271,7 @@ export async function deployFixtures(
     SimpleBudget: class TSimpleBudget extends SimpleBudget {
       public static override base = simpleBudgetBase;
     },
-    ManagedBudget: class TManagedBudget extends ManagedBudget {
+    ManagedBudget: class TSimpleBudget extends ManagedBudget {
       public static override base = managedBudgetBase;
     },
     VestingBudget: class TVestingBudget extends VestingBudget {

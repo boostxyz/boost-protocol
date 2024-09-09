@@ -204,11 +204,60 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.allocate(data);
     }
 
-    ///////////////////////////
-    // ManagedBudget.reclaim  //
-    ///////////////////////////
+    function testAllocate_ERC20InvalidAllocation() public {
+        uint256 initialAmount = 100 ether;
 
-    function testReclaim() public {
+        // Approve VestingBudget to spend tokens
+        mockERC20.approve(address(managedBudget), initialAmount);
+
+        // Prepare allocation data
+        bytes memory allocateData =
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
+
+        // Set up the mock to manipulate the balance after transfer
+        vm.mockCall(
+            address(mockERC20),
+            abi.encodeWithSelector(mockERC20.balanceOf.selector, address(managedBudget)),
+            abi.encode(initialAmount - 1) // Return a balance that's 1 less than expected
+        );
+
+        // Expect revert due to InvalidAllocation
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(mockERC20), initialAmount));
+        managedBudget.allocate(allocateData);
+
+        vm.clearMockedCalls();
+    }
+
+    function testAllocate_ERC1155InvalidAllocation() public {
+        uint256 tokenId = 42;
+        uint256 initialAmount = 100;
+
+        // Approve SimpleBudget to spend tokens
+        mockERC1155.setApprovalForAll(address(managedBudget), true);
+
+        // Prepare allocation data
+        bytes memory allocateData =
+            _makeERC1155Transfer(address(mockERC1155), address(this), tokenId, initialAmount, "");
+
+        // Set up the mock to manipulate the balance after transfer
+        vm.mockCall(
+            address(mockERC1155),
+            abi.encodeWithSelector(mockERC1155.balanceOf.selector, address(managedBudget), tokenId),
+            abi.encode(initialAmount - 1) // Return a balance that's 1 less than expected
+        );
+
+        // Expect revert due to InvalidAllocation
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(mockERC1155), initialAmount));
+        managedBudget.allocate(allocateData);
+
+        vm.clearMockedCalls();
+    }
+
+    ////////////////////////////
+    // ManagedBudget.clawback //
+    ////////////////////////////
+
+    function testClawback() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(managedBudget), 100 ether);
 
@@ -225,7 +274,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertEq(managedBudget.available(address(mockERC20)), 1 ether);
     }
 
-    function testReclaim_NativeBalance() public {
+    function testClawback_NativeBalance() public {
         // Allocate 100 ETH to the budget
         bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 100 ether);
         managedBudget.allocate{value: 100 ether}(data);
@@ -239,7 +288,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertEq(managedBudget.available(address(0)), 1 ether);
     }
 
-    function testReclaim_ERC1155() public {
+    function testClawback_ERC1155() public {
         // Approve the budget to transfer tokens
         mockERC1155.setApprovalForAll(address(managedBudget), true);
 
@@ -270,7 +319,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertEq(managedBudget.available(address(mockERC1155), 42), 1);
     }
 
-    function testReclaim_ZeroAmount() public {
+    function testClawback_ZeroAmount() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(managedBudget), 100 ether);
 
@@ -287,7 +336,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertEq(managedBudget.available(address(mockERC20)), 0 ether);
     }
 
-    function testReclaim_ZeroAddress() public {
+    function testClawback_ZeroAddress() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(managedBudget), 100 ether);
 
@@ -307,7 +356,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertEq(managedBudget.available(address(mockERC20)), 100 ether);
     }
 
-    function testReclaim_InsufficientFunds() public {
+    function testClawback_InsufficientFunds() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(managedBudget), 100 ether);
 
@@ -326,7 +375,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.clawback(data);
     }
 
-    function testReclaim_ImproperData() public {
+    function testClawback_ImproperData() public {
         bytes memory data;
 
         // Approve the budget to transfer tokens
@@ -343,7 +392,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.clawback(data);
     }
 
-    function testReclaim_NotOwner() public {
+    function testClawback_NotOwner() public {
         // Approve the budget to transfer tokens
         mockERC20.approve(address(managedBudget), 100 ether);
 
@@ -359,7 +408,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.clawback(data);
     }
 
-    function testReclaim_Manager() public {
+    function testClawback_Manager() public {
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
         accounts[0] = address(0xdeadbeef);
@@ -381,7 +430,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.clawback(data);
     }
 
-    function testReclaim_Admin() public {
+    function testClawback_Admin() public {
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
         accounts[0] = address(0xdeadbeef);
@@ -399,6 +448,23 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         // Try to reclaim 100 tokens from the budget as a non-owner
         // We can reuse the data from above because the target is `address(this)` in both cases
         vm.prank(address(0xdeadbeef));
+        managedBudget.clawback(data);
+    }
+
+    function testClawback_InsufficientFunds_ERC1155() public {
+        // Approve the budget to transfer tokens
+        mockERC1155.setApprovalForAll(address(managedBudget), true);
+
+        // Allocate 100 tokens to the budget
+        bytes memory data = _makeERC1155Transfer(address(mockERC1155), address(this), 42, 100, bytes(""));
+        managedBudget.allocate(data);
+        assertEq(managedBudget.total(address(mockERC1155), 42), 100);
+
+        // Attempt to clawback 101 tokens from the budget
+        data = _makeERC1155Transfer(address(mockERC1155), address(1), 42, 101, bytes(""));
+        vm.expectRevert(
+            abi.encodeWithSelector(ABudget.InsufficientFunds.selector, address(mockERC1155), uint256(100), uint256(101))
+        );
         managedBudget.clawback(data);
     }
 
@@ -534,6 +600,23 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.disburse(data);
     }
 
+    function testDisburse_InsufficientFunds_ERC1155() public {
+        // Approve the budget to transfer tokens
+        mockERC1155.setApprovalForAll(address(managedBudget), true);
+
+        // Allocate 100 tokens to the budget
+        bytes memory data = _makeERC1155Transfer(address(mockERC1155), address(this), 42, 100, bytes(""));
+        managedBudget.allocate(data);
+        assertEq(managedBudget.total(address(mockERC1155), 42), 100);
+
+        // Disburse 101 tokens from the budget to the recipient
+        data = _makeERC1155Transfer(address(mockERC1155), address(1), 42, 101, bytes(""));
+        vm.expectRevert(
+            abi.encodeWithSelector(ABudget.InsufficientFunds.selector, address(mockERC1155), uint256(100), uint256(101))
+        );
+        managedBudget.disburse(data);
+    }
+
     function testDisburse_ImproperData() public {
         bytes memory data;
 
@@ -656,6 +739,37 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         // Try to disburse 25 tokens to address(1) and 50 tokens to address(2)
         vm.expectRevert(SafeTransferLib.TransferFailed.selector);
         managedBudget.disburseBatch(requests);
+    }
+
+    function testDisburse_ERC1155_ToZeroAddress() public {
+        address token = address(mockERC1155);
+        uint256 tokenId = 42;
+        uint256 amount = 10;
+
+        // Transfer tokens to the ManagedBudget contract
+        mockERC1155.safeTransferFrom(address(this), address(managedBudget), tokenId, amount, "");
+
+        // Verify the transfer
+        assertEq(mockERC1155.balanceOf(address(managedBudget), tokenId), amount);
+
+        // Disburse the tokens to the zero address
+        bytes memory disburseData = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
+                asset: token,
+                target: address(0),
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: tokenId, amount: amount, data: ""}))
+            })
+        );
+
+        // Expect the disbursement to fail
+        vm.expectRevert(
+            abi.encodeWithSelector(ABudget.TransferFailed.selector, address(mockERC1155), address(0), amount)
+        );
+        managedBudget.disburse(disburseData);
+
+        // Ensure the budget still has 10 tokens
+        assertEq(mockERC1155.balanceOf(address(managedBudget), tokenId), amount);
     }
 
     ////////////////////////
@@ -1008,6 +1122,26 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.setAuthorized(accounts, authorized);
     }
 
+    function testSetAuthorized_RemoveRole() public {
+        // Grant authorization to the user
+        address user = address(0xc0ffee);
+        address[] memory accounts = new address[](1);
+        accounts[0] = user;
+        bool[] memory authorizations = new bool[](1);
+        authorizations[0] = true;
+        managedBudget.setAuthorized(accounts, authorizations);
+
+        // Verify that the user is authorized
+        assertTrue(managedBudget.isAuthorized(user), "User should be authorized");
+
+        // Remove authorization from the user
+        authorizations[0] = false;
+        managedBudget.setAuthorized(accounts, authorizations);
+
+        // Verify that the user is no longer authorized
+        assertFalse(managedBudget.isAuthorized(user), "User should not be authorized");
+    }
+
     ///////////////////////////////
     // ManagedBudget.isAuthorized //
     ///////////////////////////////
@@ -1130,6 +1264,20 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         (bool success,) = payable(managedBudget).call{value: 1 ether}("");
         assertTrue(success);
         assertEq(managedBudget.available(address(0)), 1 ether);
+    }
+
+    function testOnERC1155BatchReceived() public view {
+        // Call onERC1155BatchReceived with dummy values
+        bytes4 result = managedBudget.onERC1155BatchReceived(
+            address(0xc0ffee), // operator
+            address(0xdeadbeef), // from
+            new uint256[](1), // ids
+            new uint256[](1), // amounts
+            "" // data
+        );
+
+        // Check if it returns the correct selector
+        assertEq(result, IERC1155Receiver.onERC1155BatchReceived.selector, "Should return correct selector");
     }
 
     ///////////////////////////

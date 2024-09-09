@@ -50,6 +50,10 @@ import {
 import { type Auth, PassthroughAuth } from './Auth/Auth';
 import { Boost } from './Boost';
 import { type Budget, budgetFromAddress } from './Budgets/Budget';
+import {
+  ManagedBudget,
+  type ManagedBudgetPayload,
+} from './Budgets/ManagedBudget';
 import { SimpleBudget, type SimpleBudgetPayload } from './Budgets/SimpleBudget';
 import {
   VestingBudget,
@@ -106,7 +110,6 @@ import {
   type Target,
   type WriteParams,
   prepareBoostPayload,
-  prepareSignerValidatorPayload,
 } from './utils';
 
 export { boostCoreAbi };
@@ -1010,6 +1013,23 @@ export class BoostCore extends Deployable<
    */
   SimpleBudget(options: DeployablePayloadOrAddress<SimpleBudgetPayload>) {
     return new SimpleBudget(
+      { config: this._config, account: this._account },
+      options,
+    );
+  }
+  /**
+   * Bound {@link ManagedBudget} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const budget = core.ManagedBudget('0x') // is roughly equivalent to
+   * const budget = new ManagedBudget({ config: core._config, account: core._account }, '0x')
+   * ```
+   * @param {DeployablePayloadOrAddress<ManagedBudgetPayload>} options
+   * @returns {ManagedBudget}
+   */
+  ManagedBudget(options: DeployablePayloadOrAddress<ManagedBudgetPayload>) {
+    return new ManagedBudget(
       { config: this._config, account: this._account },
       options,
     );

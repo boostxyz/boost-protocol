@@ -9,6 +9,7 @@
     - [Prerequisites](#prerequisites)
     - [Getting Started](#getting-started)
     - [Solidity Development](#solidity-development)
+  - [Coverage](#coverage)
     - [Developing with the SDK](#developing-with-the-sdk)
     - [Changesets \& Publishing](#changesets--publishing)
 
@@ -134,6 +135,7 @@ VITE_ERC721_MINT_ACTION_BASE=
 VITE_SIMPLE_ALLOWLIST_BASE=
 VITE_SIMPLE_DENYLIST_BASE=
 VITE_SIMPLE_BUDGET_BASE=
+VITE_MANAGED_BUDGET_BASE=
 VITE_VESTING_BUDGET_BASE=
 VITE_ALLOWLIST_INCENTIVE_BASE=
 VITE_CGDA_INCENTIVE_BASE=

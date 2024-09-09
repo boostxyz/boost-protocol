@@ -14,6 +14,7 @@ import {AAction} from "contracts/actions/AAction.sol";
 /// @dev This a minimal generic implementation that should be extended if additional functionality or customizations are required
 /// @dev It is expected that the target contract has an externally accessible mint function whose selector
 abstract contract AEventAction is AAction {
+    ActionClaimant internal actionClaimant;
     ActionEvent[] internal actionEvents;
 
     // Define Enums
@@ -47,11 +48,30 @@ abstract contract AEventAction is AAction {
         Criteria actionParameter;
     }
 
+    enum SignatureType {
+        EVENT,
+        FUNC
+    }
+
+    /// @notice The payload for identifying the action's claimaint
+    /// @param signatureType Whether claimaint is inferred from event or function
+    /// @param signature The 4 byte signature of the event or function
+    /// @param fieldIndex The index corresponding to claimant.
+    /// @param targetContract The address of the target contract
+    struct ActionClaimant {
+        SignatureType signatureType;
+        bytes4 signature;
+        uint8 fieldIndex;
+        address targetContract;
+    }
+
     function getActionEventsCount() public view virtual returns (uint256);
 
     function getActionEvent(uint256 index) public view virtual returns (ActionEvent memory);
 
     function getActionEvents() public view virtual returns (ActionEvent[] memory);
+
+    function getActionClaimant() public view virtual returns (ActionClaimant memory);
 
     /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {

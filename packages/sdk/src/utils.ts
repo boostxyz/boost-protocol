@@ -320,6 +320,51 @@ export interface Criteria {
 }
 
 /**
+ * Description placeholder
+ *
+ * @export
+ * @enum {number}
+ */
+export enum SignatureType {
+  EVENT = 0,
+  FUNC = 1,
+}
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface ActionClaimant
+ * @typedef {ActionClaimant}
+ */
+export interface ActionClaimant {
+  /**
+   * Description placeholder
+   *
+   * @type {SignatureType}
+   */
+  signatureType: SignatureType;
+  /**
+   * Description placeholder
+   *
+   * @type {Hex}
+   */
+  signature: Hex;
+  /**
+   * Description placeholder
+   *
+   * @type {number}
+   */
+  fieldIndex: number;
+  /**
+   * Description placeholder
+   *
+   * @type {Address}
+   */
+  targetContract: Address;
+}
+
+/**
  * Object representation of an `ActionEvent` struct used in event actions.
  *
  * @export
@@ -362,6 +407,12 @@ export interface ActionEvent {
  */
 export interface EventActionPayload {
   /**
+   * Description placeholder
+   *
+   * @type {ActionClaimant}
+   */
+  actionClaimant: ActionClaimant;
+  /**
    * The first action event.
    *
    * @type {ActionEvent}
@@ -398,6 +449,7 @@ export interface EventActionPayload {
  * @returns {Hex}
  */
 export const prepareEventActionPayload = ({
+  actionClaimant,
   actionEventOne,
   actionEventTwo,
   actionEventThree,
@@ -405,6 +457,16 @@ export const prepareEventActionPayload = ({
 }: EventActionPayload) => {
   return encodeAbiParameters(
     [
+      {
+        type: 'tuple',
+        name: 'actionClaimant',
+        components: [
+          { type: 'uint8', name: 'signatureType' },
+          { type: 'bytes4', name: 'signature' },
+          { type: 'uint8', name: 'fieldIndex' },
+          { type: 'address', name: 'targetContract' },
+        ],
+      },
       {
         type: 'tuple',
         name: 'actionEventOne',
@@ -482,7 +544,13 @@ export const prepareEventActionPayload = ({
         ],
       },
     ],
-    [actionEventOne, actionEventTwo, actionEventThree, actionEventFour],
+    [
+      actionClaimant,
+      actionEventOne,
+      actionEventTwo,
+      actionEventThree,
+      actionEventFour,
+    ],
   );
 };
 

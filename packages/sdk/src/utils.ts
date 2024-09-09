@@ -320,6 +320,51 @@ export interface Criteria {
 }
 
 /**
+ * Whether a given signature is an event or function
+ *
+ * @export
+ * @enum {number}
+ */
+export enum SignatureType {
+  EVENT = 0,
+  FUNC = 1,
+}
+
+/**
+ *  The payload describing how claimants are identified
+ *
+ * @export
+ * @interface ActionClaimant
+ * @typedef {ActionClaimant}
+ */
+export interface ActionClaimant {
+  /**
+   * Whether claimaint is inferred from event or function
+   *
+   * @type {SignatureType}
+   */
+  signatureType: SignatureType;
+  /**
+   * The 4 byte signature of the event or function
+   *
+   * @type {Hex}
+   */
+  signature: Hex;
+  /**
+   * The index corresponding to claimant.
+   *
+   * @type {number}
+   */
+  fieldIndex: number;
+  /**
+   * The address of the target contract
+   *
+   * @type {Address}
+   */
+  targetContract: Address;
+}
+
+/**
  * Object representation of an `ActionEvent` struct used in event actions.
  *
  * @export
@@ -362,6 +407,12 @@ export interface ActionEvent {
  */
 export interface EventActionPayload {
   /**
+   *  The payload describing how claimants are identified
+   *
+   * @type {ActionClaimant}
+   */
+  actionClaimant: ActionClaimant;
+  /**
    * The first action event.
    *
    * @type {ActionEvent}
@@ -398,6 +449,7 @@ export interface EventActionPayload {
  * @returns {Hex}
  */
 export const prepareEventActionPayload = ({
+  actionClaimant,
   actionEventOne,
   actionEventTwo,
   actionEventThree,
@@ -405,6 +457,16 @@ export const prepareEventActionPayload = ({
 }: EventActionPayload) => {
   return encodeAbiParameters(
     [
+      {
+        type: 'tuple',
+        name: 'actionClaimant',
+        components: [
+          { type: 'uint8', name: 'signatureType' },
+          { type: 'bytes4', name: 'signature' },
+          { type: 'uint8', name: 'fieldIndex' },
+          { type: 'address', name: 'targetContract' },
+        ],
+      },
       {
         type: 'tuple',
         name: 'actionEventOne',
@@ -482,7 +544,13 @@ export const prepareEventActionPayload = ({
         ],
       },
     ],
-    [actionEventOne, actionEventTwo, actionEventThree, actionEventFour],
+    [
+      actionClaimant,
+      actionEventOne,
+      actionEventTwo,
+      actionEventThree,
+      actionEventFour,
+    ],
   );
 };
 

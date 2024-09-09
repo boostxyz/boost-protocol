@@ -20,8 +20,16 @@ contract EventActionTest is Test {
         action = _newActionClone();
 
         // Define the InitPayload with an ActionEvent
+        AEventAction.ActionClaimant memory claimant;
         AEventAction.Criteria memory criteria;
         AEventAction.ActionEvent memory actionEventOne;
+
+        claimant = AEventAction.ActionClaimant({
+            signatureType: AEventAction.SignatureType.EVENT,
+            signature: bytes4(keccak256("Transfer(address,address,uint256)")),
+            fieldIndex: 0,
+            targetContract: address(mockAsset)
+        });
 
         criteria = AEventAction.Criteria({
             filterType: AEventAction.FilterType.EQUAL,
@@ -38,6 +46,7 @@ contract EventActionTest is Test {
         });
 
         EventAction.InitPayload memory payload = EventAction.InitPayload({
+            actionClaimant: claimant,
             actionEventOne: actionEventOne,
             actionEventTwo: actionEventOne,
             actionEventThree: actionEventOne,
@@ -106,6 +115,19 @@ contract EventActionTest is Test {
         AEventAction.ActionEvent memory retrievedEvent = action.getActionEvent(0);
 
         assertEq(retrievedEvent.eventSignature, bytes4(keccak256("Transfer(address,address,uint256)")));
+    }
+
+    /////////////////////////////////
+    // EventAction.getActionClaimant //
+    /////////////////////////////////
+
+    function testGetActionClaimant() public {
+        // Ensure the action event is retrieved correctly
+        AEventAction.ActionClaimant memory retrievedClaimant = action.getActionClaimant();
+
+        assertEq(retrievedClaimant.fieldIndex, 0);
+        assertEq(retrievedClaimant.signature, bytes4(keccak256("Transfer(address,address,uint256)")));
+        assertEq(retrievedClaimant.targetContract, address(mockAsset));
     }
 
     ////////////////////////////////////

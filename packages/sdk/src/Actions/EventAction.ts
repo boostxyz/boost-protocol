@@ -1,5 +1,6 @@
 import {
   eventActionAbi,
+  readEventActionGetActionClaimant,
   readEventActionGetActionEvent,
   readEventActionGetActionEvents,
   readEventActionGetActionEventsCount,
@@ -24,6 +25,7 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  type ActionClaimant,
   type ActionEvent,
   type Criteria,
   type EventActionPayload,
@@ -50,6 +52,13 @@ export class EventAction extends DeployableTarget<
   EventActionPayload,
   typeof eventActionAbi
 > {
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @readonly
+   * @type {*}
+   */
   public override readonly abi = eventActionAbi;
   /**
    * @inheritdoc
@@ -87,7 +96,7 @@ export class EventAction extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
       args: [index],
-    });
+    }) as Promise<ActionEvent>;
   }
 
   /**
@@ -106,7 +115,7 @@ export class EventAction extends DeployableTarget<
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    });
+    }) as Promise<ActionEvent[]>;
   }
 
   /**
@@ -126,6 +135,25 @@ export class EventAction extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Retrieves the payload describing how claimants can be identified from logs or function calls.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof eventActionAbi, 'getActionClaimant'>} [params]
+   * @returns {Promise<ActionClaimant>}
+   */
+  public async getActionClaimant(
+    params?: ReadParams<typeof eventActionAbi, 'getActionClaimant'>,
+  ) {
+    return readEventActionGetActionClaimant(this._config, {
+      address: this.assertValidAddress(),
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    }) as Promise<ActionClaimant>;
   }
 
   /**

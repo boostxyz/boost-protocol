@@ -7,7 +7,9 @@ import {Initializable} from "@solady/utils/Initializable.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {MockERC20} from "contracts/shared/Mocks.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
+
+import {MockERC20, MockERC1155} from "contracts/shared/Mocks.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -16,12 +18,17 @@ import {VestingBudget} from "contracts/budgets/VestingBudget.sol";
 contract VestingBudgetTest is Test {
     MockERC20 mockERC20;
     MockERC20 otherMockERC20;
+    MockERC1155 mockERC1155;
     VestingBudget vestingBudget;
 
     function setUp() public {
         // Deploy a new ERC20 contract and mint 100 tokens
         mockERC20 = new MockERC20();
         mockERC20.mint(address(this), 100 ether);
+
+        // Deploy a new ERC1155 contract and mint 100 of token ID 42
+        mockERC1155 = new MockERC1155();
+        mockERC1155.mint(address(this), 42, 100);
 
         // Deploy a new VestingBudget contract and initialize it
         vestingBudget = VestingBudget(payable(LibClone.clone(address(new VestingBudget()))));
@@ -727,5 +734,13 @@ contract VestingBudgetTest is Test {
         }
 
         return abi.encode(transfer);
+    }
+
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        pure
+        returns (bytes4)
+    {
+        return IERC1155Receiver.onERC1155Received.selector;
     }
 }

@@ -180,7 +180,7 @@ contract VestingBudgetTest is Test {
 
         // Prepare allocation data
         bytes memory allocateData =
-            _makeFungibleTransfer(Budget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), initialAmount);
 
         // Set up the mock to manipulate the balance after transfer
         vm.mockCall(
@@ -190,7 +190,7 @@ contract VestingBudgetTest is Test {
         );
 
         // Expect revert due to InvalidAllocation
-        vm.expectRevert(abi.encodeWithSelector(Budget.InvalidAllocation.selector, address(mockERC20), initialAmount));
+        vm.expectRevert(abi.encodeWithSelector(ABudget.InvalidAllocation.selector, address(mockERC20), initialAmount));
         vestingBudget.allocate(allocateData);
 
         vm.clearMockedCalls();
@@ -210,11 +210,11 @@ contract VestingBudgetTest is Test {
 
     function testAllocate_UnsupportedAssetType() public {
         bytes memory erc1155Data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
             })
         );
 
@@ -332,11 +332,11 @@ contract VestingBudgetTest is Test {
 
     function testClawback_UnsupportedAssetType() public {
         bytes memory erc1155Data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
             })
         );
 
@@ -497,11 +497,11 @@ contract VestingBudgetTest is Test {
 
     function testDisburse_UnsupportedAssetType() public {
         bytes memory erc1155Data = abi.encode(
-            Budget.Transfer({
-                assetType: Budget.AssetType.ERC1155,
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC1155,
                 asset: address(mockERC1155),
                 target: address(this),
-                data: abi.encode(Budget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
+                data: abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: 1, data: ""}))
             })
         );
 

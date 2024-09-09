@@ -331,6 +331,23 @@ contract VestingBudgetTest is Test {
         );
     }
 
+    function testClawback_UnsupportedAssetType() public {
+        bytes memory erc1155Data = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: address(mockERC1155),
+                target: address(this),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: 42, amount: 100, data: ""}))
+            })
+        );
+
+        // Try to clawback ERC1155 tokens
+        bool result = vestingBudget.clawback(erc1155Data);
+
+        // Assert that clawback fails for unsupported asset type
+        assertFalse(result, "Clawback should fail for unsupported asset type (ERC1155)");
+    }
+
     ///////////////////////////
     // VestingBudget.disburse //
     ///////////////////////////

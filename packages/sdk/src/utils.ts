@@ -320,7 +320,7 @@ export interface Criteria {
 }
 
 /**
- * Description placeholder
+ * Whether claimaint is inferred from event or function
  *
  * @export
  * @enum {number}
@@ -331,7 +331,7 @@ export enum SignatureType {
 }
 
 /**
- * Description placeholder
+ *  The payload describing how claimants are identified
  *
  * @export
  * @interface ActionClaimant
@@ -339,25 +339,25 @@ export enum SignatureType {
  */
 export interface ActionClaimant {
   /**
-   * Description placeholder
+   * Whether claimaint is inferred from event or function
    *
    * @type {SignatureType}
    */
   signatureType: SignatureType;
   /**
-   * Description placeholder
+   * The 4 byte signature of the event or function
    *
    * @type {Hex}
    */
   signature: Hex;
   /**
-   * Description placeholder
+   * The index corresponding to claimant.
    *
    * @type {number}
    */
   fieldIndex: number;
   /**
-   * Description placeholder
+   * The address of the target contract
    *
    * @type {Address}
    */
@@ -407,7 +407,7 @@ export interface ActionEvent {
  */
 export interface EventActionPayload {
   /**
-   * Description placeholder
+   *  The payload describing how claimants are identified
    *
    * @type {ActionClaimant}
    */

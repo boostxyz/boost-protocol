@@ -724,6 +724,37 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.disburseBatch(requests);
     }
 
+    function testDisburse_ERC1155_ToZeroAddress() public {
+        address token = address(mockERC1155);
+        uint256 tokenId = 42;
+        uint256 amount = 10;
+
+        // Transfer tokens to the ManagedBudget contract
+        mockERC1155.safeTransferFrom(address(this), address(managedBudget), tokenId, amount, "");
+
+        // Verify the transfer
+        assertEq(mockERC1155.balanceOf(address(managedBudget), tokenId), amount);
+
+        // Disburse the tokens to the zero address
+        bytes memory disburseData = abi.encode(
+            Budget.Transfer({
+                assetType: Budget.AssetType.ERC1155,
+                asset: token,
+                target: address(0),
+                data: abi.encode(Budget.ERC1155Payload({tokenId: tokenId, amount: amount, data: ""}))
+            })
+        );
+
+        // Expect the disbursement to fail
+        vm.expectRevert(
+            abi.encodeWithSelector(Budget.TransferFailed.selector, address(mockERC1155), address(0), amount)
+        );
+        managedBudget.disburse(disburseData);
+
+        // Ensure the budget still has 10 tokens
+        assertEq(mockERC1155.balanceOf(address(managedBudget), tokenId), amount);
+    }
+
     ////////////////////////
     // ManagedBudget.total //
     ////////////////////////

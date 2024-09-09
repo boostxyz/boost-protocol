@@ -1246,6 +1246,20 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertEq(managedBudget.available(address(0)), 1 ether);
     }
 
+    function testOnERC1155BatchReceived() public view {
+        // Call onERC1155BatchReceived with dummy values
+        bytes4 result = managedBudget.onERC1155BatchReceived(
+            address(0xc0ffee), // operator
+            address(0xdeadbeef), // from
+            new uint256[](1), // ids
+            new uint256[](1), // amounts
+            "" // data
+        );
+
+        // Check if it returns the correct selector
+        assertEq(result, IERC1155Receiver.onERC1155BatchReceived.selector, "Should return correct selector");
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

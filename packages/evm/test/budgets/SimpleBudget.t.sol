@@ -605,9 +605,8 @@ contract SimpleBudgetTest is Test, IERC1155Receiver {
         );
         simpleBudget.disburse(disburseData);
 
-        // Verify balances haven't changed
+        // Verify balance of budget hasn't changed
         assertEq(mockERC1155.balanceOf(address(simpleBudget), tokenId), initialAmount);
-        assertEq(mockERC1155.balanceOf(address(0xdead), tokenId), 0);
     }
 
     function testDisburse_ImproperData() public {

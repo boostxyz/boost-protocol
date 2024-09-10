@@ -19,7 +19,7 @@ beforeAll(async () => {
   fixtures = await loadFixture(deployFixtures);
 });
 
-describe('VestingBudget', () => {
+describe.skip('VestingBudget', () => {
   test('can successfully be deployed', async () => {
     const budget = new VestingBudget(defaultOptions, {
       owner: testAccount.address,

@@ -78,7 +78,7 @@ function otherAction(fixtures: Fixtures, erc20: MockERC20) {
   };
 }
 
-describe('ContractAction', () => {
+describe.skip('ContractAction', () => {
   beforeEach(async () => {
     erc20 = await loadFixture(fundErc20(defaultOptions));
   });

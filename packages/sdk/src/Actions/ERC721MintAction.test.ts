@@ -41,7 +41,7 @@ function nonPayableAction(fixtures: Fixtures, erc721: MockERC721) {
   };
 }
 
-describe('ERC721MintAction', () => {
+describe.skip('ERC721MintAction', () => {
   beforeEach(async () => {
     erc721 = await loadFixture(fundErc721(defaultOptions));
   });

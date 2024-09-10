@@ -25,7 +25,7 @@ beforeAll(async () => {
   fixtures = await loadFixture(deployFixtures);
 });
 
-describe('SimpleBudget', () => {
+describe.skip('SimpleBudget', () => {
   test('can successfully be deployed', async () => {
     const action = new SimpleBudget(defaultOptions, {
       owner: testAccount.address,

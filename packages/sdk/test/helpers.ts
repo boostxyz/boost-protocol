@@ -46,7 +46,14 @@ import {
 import { BoostRegistry } from '../src/BoostRegistry';
 import { ManagedBudgetRoles } from '../src/Budgets/ManagedBudget';
 import { ERC1155Incentive } from '../src/Incentives/ERC1155Incentive';
-import { getDeployedContractAddress } from '../src/utils';
+import {
+  type ActionStep,
+  type EventActionPayload,
+  FilterType,
+  PrimitiveType,
+  SignatureType,
+  getDeployedContractAddress,
+} from '../src/utils';
 import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
@@ -64,7 +71,7 @@ export const defaultOptions: DeployableTestOptions = {
 
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
 export type BudgetFixtures = {
-  budget: SimpleBudget;
+  budget: ManagedBudget;
   erc20: MockERC20;
   erc1155: MockERC1155;
   points: MockPoints;
@@ -78,21 +85,23 @@ export async function freshBoost(
     ...defaultOptions,
     address: fixtures.core.assertValidAddress(),
   });
+  const { budget, erc20 } = await loadFixture(
+    fundBudget(defaultOptions, fixtures),
+  );
   return core.createBoost({
     protocolFee: options.protocolFee || 1n,
     referralFee: options.protocolFee || 2n,
     maxParticipants: options.protocolFee || 100n,
-    budget:
-      options.budget ||
-      (await loadFixture(fundBudget(defaultOptions, fixtures))).budget,
+    budget: options.budget || budget,
     action:
       options.action ||
-      new fixtures.bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      new fixtures.bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
     validator:
       options.validator ||
       new fixtures.bases.SignerValidator(defaultOptions, {
@@ -499,7 +508,8 @@ export function fundBudget(
 ) {
   return async function fundBudget() {
     {
-      if (!budget) budget = await loadFixture(freshBudget(options, fixtures));
+      if (!budget)
+        budget = await loadFixture(freshManagedBudget(options, fixtures)); // await loadFixture(freshBudget(options, fixtures));
       if (!erc20) erc20 = await loadFixture(fundErc20(options));
       if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
       if (!points) points = await loadFixture(fundPoints(options));
@@ -599,7 +609,7 @@ export function fundVestingBudget(
   return async function fundVestingBudget() {
     {
       if (!budget)
-        budget = await loadFixture(freshVestingBudget(options, fixtures));
+        budget = await loadFixture(freshManagedBudget(options, fixtures));
       if (!erc20) erc20 = await loadFixture(fundErc20(options));
       if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
       if (!points) points = await loadFixture(fundPoints(options));
@@ -620,9 +630,38 @@ export function fundVestingBudget(
         target: options.account.address,
       });
 
-      return { budget, erc20, erc1155, points } as BudgetFixtures & {
-        budget: VestingBudget;
-      };
+      return { budget, erc20, erc1155, points } as BudgetFixtures;
     }
   };
+}
+
+export function makeMockEventActionPayload(
+  coreAddress: Address,
+  erc20Address: Address,
+) {
+  const step: ActionStep = {
+    signature: '0xddf252ad',
+    signatureType: SignatureType.EVENT,
+    actionType: 0,
+    targetContract: erc20Address,
+    actionParameter: {
+      filterType: FilterType.EQUAL,
+      fieldType: PrimitiveType.ADDRESS,
+      fieldIndex: 0, // Assume the first field in the log is the 'from' address
+      filterData: coreAddress,
+    },
+  };
+
+  return {
+    actionClaimant: {
+      signatureType: SignatureType.EVENT,
+      signature: '0xddf252ad',
+      fieldIndex: 0,
+      targetContract: erc20Address,
+    },
+    actionStepOne: step,
+    actionStepTwo: step,
+    actionStepThree: step,
+    actionStepFour: step,
+  } as EventActionPayload;
 }

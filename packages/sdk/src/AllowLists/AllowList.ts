@@ -22,8 +22,8 @@ export type AllowList = SimpleAllowList | SimpleDenyList;
  * @type {{ "0x2bc9016b": SimpleAllowList; "0x9d585f63": SimpleDenyList; }}
  */
 export const AllowListByComponentInterface = {
-  ['0x2bc9016b']: SimpleAllowList,
-  ['0x9d585f63']: SimpleDenyList,
+  ['0x8ba1fc24']: SimpleAllowList,
+  ['0x3d30a22c']: SimpleDenyList,
 };
 
 /**

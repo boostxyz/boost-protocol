@@ -23,9 +23,9 @@ export type Budget = SimpleBudget | VestingBudget | ManagedBudget;
  * @type {{ "0x7aded85d": typeof VestingBudget; "0x0f2a5d52": typeof SimpleBudget; "0x0596908b": typeof SimpleBudget; }}
  */
 export const BudgetByComponentInterface = {
-  ['0x7aded85d']: VestingBudget,
-  ['0x0f2a5d52']: SimpleBudget,
-  ['0x0596908b']: ManagedBudget,
+  ['0x64683da1']: VestingBudget,
+  ['0x2929d19c']: SimpleBudget,
+  ['0xa0109882']: ManagedBudget,
 };
 
 /**

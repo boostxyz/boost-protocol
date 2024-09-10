@@ -23,9 +23,9 @@ export type Action = ContractAction | ERC721MintAction | EventAction;
  * @type {{ "0x2fae823b": ContractAction; "0xcba21e6c": ERC721MintAction; "0x916b9f6d": EventAction; }}
  */
 export const ActionByComponentInterface = {
-  ['0x2fae823b']: ContractAction,
-  ['0xcba21e6c']: ERC721MintAction,
-  ['0x916b9f6d']: EventAction,
+  ['0x6c3129aa']: ContractAction,
+  ['0x97e083eb']: ERC721MintAction,
+  ['0x7687b0ed']: EventAction,
 };
 
 /**

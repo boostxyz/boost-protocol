@@ -21,7 +21,7 @@ export type Validator = SignerValidator;
  * @type {{ "0xd8725ea2": typeof SignerValidator; }}
  */
 export const ValidatorByComponentInterface = {
-  ['0xd8725ea2']: SignerValidator,
+  ['0xb8ce7b22']: SignerValidator,
 };
 
 /**

@@ -7,13 +7,22 @@ import {
   defaultOptions,
   deployFixtures,
   fundBudget,
+  makeMockEventActionPayload,
 } from '../test/helpers';
 import { ContractAction } from './Actions/ContractAction';
 import { PassthroughAuth } from './Auth/PassthroughAuth';
 import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { IncentiveNotCloneableError } from './errors';
-import { ERC1155StrategyType, StrategyType, bytes4 } from './utils';
+import {
+  ActionStep,
+  ERC1155StrategyType,
+  FilterType,
+  PrimitiveType,
+  SignatureType,
+  StrategyType,
+  bytes4,
+} from './utils';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -42,12 +51,13 @@ describe('BoostCore', () => {
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -85,12 +95,13 @@ describe('BoostCore', () => {
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -177,12 +188,13 @@ describe('BoostCore', () => {
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -237,12 +249,13 @@ describe('BoostCore', () => {
 
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -262,10 +275,12 @@ describe('BoostCore', () => {
     });
     const boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction(
+      action: new bases.EventAction(
         defaultOptions,
-        _boost.action.assertValidAddress(),
-        false,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
       ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
@@ -312,12 +327,13 @@ describe('BoostCore', () => {
 
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -337,12 +353,13 @@ describe('BoostCore', () => {
     });
     const boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(
         defaultOptions,
         _boost.validator.assertValidAddress(),
@@ -389,12 +406,13 @@ describe('BoostCore', () => {
 
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -414,12 +432,13 @@ describe('BoostCore', () => {
     });
     const boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -472,12 +491,13 @@ describe('BoostCore', () => {
     });
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -491,12 +511,13 @@ describe('BoostCore', () => {
     try {
       await client.createBoost({
         budget: budget,
-        action: new bases.ContractAction(defaultOptions, {
-          chainId: BigInt(31_337),
-          target: core.assertValidAddress(),
-          selector: '0xdeadbeef',
-          value: 0n,
-        }),
+        action: new bases.EventAction(
+          defaultOptions,
+          makeMockEventActionPayload(
+            core.assertValidAddress(),
+            erc20.assertValidAddress(),
+          ),
+        ),
         validator: new bases.SignerValidator(defaultOptions, {
           signers: [defaultOptions.account.address],
           validatorCaller: defaultOptions.account.address,
@@ -568,12 +589,13 @@ describe('BoostCore', () => {
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
@@ -666,13 +688,17 @@ describe('BoostCore', () => {
   test('binds all actions, budgets, allowlists, incentives, and validators to reuse core options and account', async () => {
     const { core } = fixtures;
 
-    const contractAction = core.ContractAction(zeroAddress);
-    expect(contractAction._config).toEqual(defaultOptions.config);
-    expect(contractAction._account).toEqual(defaultOptions.account);
+    // const contractAction = core.ContractAction(zeroAddress);
+    // expect(contractAction._config).toEqual(defaultOptions.config);
+    // expect(contractAction._account).toEqual(defaultOptions.account);
 
-    const erc721MintAction = core.ERC721MintAction(zeroAddress);
-    expect(erc721MintAction._config).toEqual(defaultOptions.config);
-    expect(erc721MintAction._account).toEqual(defaultOptions.account);
+    // const erc721MintAction = core.ERC721MintAction(zeroAddress);
+    // expect(erc721MintAction._config).toEqual(defaultOptions.config);
+    // expect(erc721MintAction._account).toEqual(defaultOptions.account);
+
+    const eventAction = core.EventAction(zeroAddress);
+    expect(eventAction._config).toEqual(defaultOptions.config);
+    expect(eventAction._account).toEqual(defaultOptions.account);
 
     const allowList = core.SimpleAllowList(zeroAddress);
     expect(allowList._config).toEqual(defaultOptions.config);
@@ -682,13 +708,17 @@ describe('BoostCore', () => {
     expect(denyList._config).toEqual(defaultOptions.config);
     expect(denyList._account).toEqual(defaultOptions.account);
 
-    const simpleBudget = core.SimpleBudget(zeroAddress);
-    expect(simpleBudget._config).toEqual(defaultOptions.config);
-    expect(simpleBudget._account).toEqual(defaultOptions.account);
+    const managedBudget = core.ManagedBudget(zeroAddress);
+    expect(managedBudget._config).toEqual(defaultOptions.config);
+    expect(managedBudget._account).toEqual(defaultOptions.account);
 
-    const vestingBudget = core.VestingBudget(zeroAddress);
-    expect(vestingBudget._config).toEqual(defaultOptions.config);
-    expect(vestingBudget._account).toEqual(defaultOptions.account);
+    // const simpleBudget = core.SimpleBudget(zeroAddress);
+    // expect(simpleBudget._config).toEqual(defaultOptions.config);
+    // expect(simpleBudget._account).toEqual(defaultOptions.account);
+
+    // const vestingBudget = core.VestingBudget(zeroAddress);
+    // expect(vestingBudget._config).toEqual(defaultOptions.config);
+    // expect(vestingBudget._account).toEqual(defaultOptions.account);
 
     const allowListIncentive = core.AllowListIncentive({
       allowList: zeroAddress,
@@ -716,15 +746,23 @@ describe('BoostCore', () => {
     expect(erc20Incentive._config).toEqual(defaultOptions.config);
     expect(erc20Incentive._account).toEqual(defaultOptions.account);
 
-    const erc1155Incentive = core.ERC1155Incentive({
+    const erc20VariableIncentive = core.ERC20VariableIncentive({
       asset: zeroAddress,
-      strategy: 0,
-      tokenId: 1n,
+      reward: 0n,
       limit: 0n,
-      extraData: '0x',
     });
-    expect(erc1155Incentive._config).toEqual(defaultOptions.config);
-    expect(erc1155Incentive._account).toEqual(defaultOptions.account);
+    expect(erc20VariableIncentive._config).toEqual(defaultOptions.config);
+    expect(erc20VariableIncentive._account).toEqual(defaultOptions.account);
+
+    // const erc1155Incentive = core.ERC1155Incentive({
+    //   asset: zeroAddress,
+    //   strategy: 0,
+    //   tokenId: 1n,
+    //   limit: 0n,
+    //   extraData: '0x',
+    // });
+    // expect(erc1155Incentive._config).toEqual(defaultOptions.config);
+    // expect(erc1155Incentive._account).toEqual(defaultOptions.account);
 
     const pointsIncentive = core.PointsIncentive({
       venue: zeroAddress,
@@ -760,12 +798,13 @@ describe('BoostCore', () => {
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.ContractAction(defaultOptions, {
-        chainId: BigInt(31_337),
-        target: core.assertValidAddress(),
-        selector: '0xdeadbeef',
-        value: 0n,
-      }),
+      action: new bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,

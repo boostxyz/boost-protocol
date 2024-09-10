@@ -29,14 +29,6 @@ import {
   zeroHash,
 } from 'viem';
 import { type Action, actionFromAddress } from './Actions/Action';
-import {
-  ContractAction,
-  type ContractActionPayload,
-} from './Actions/ContractAction';
-import {
-  ERC721MintAction,
-  type ERC721MintActionPayload,
-} from './Actions/ERC721MintAction';
 import { EventAction } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
 import {
@@ -54,11 +46,6 @@ import {
   ManagedBudget,
   type ManagedBudgetPayload,
 } from './Budgets/ManagedBudget';
-import { SimpleBudget, type SimpleBudgetPayload } from './Budgets/SimpleBudget';
-import {
-  VestingBudget,
-  type VestingBudgetPayload,
-} from './Budgets/VestingBudget';
 import {
   Deployable,
   type DeployableOptions,
@@ -77,10 +64,6 @@ import {
   ERC20Incentive,
   type ERC20IncentivePayload,
 } from './Incentives/ERC20Incentive';
-import {
-  ERC1155Incentive,
-  type ERC1155IncentivePayload,
-} from './Incentives/ERC1155Incentive';
 import {
   ERC20VariableIncentive,
   type Incentive,
@@ -879,12 +862,12 @@ export class BoostCore extends Deployable<
    *
    * @example
    * ```ts
-   * const action = core.ContractAction('0x') // is roughly equivalent to
-   * const action = new ContractAction({ config: core._config, account: core._account }, '0x')
+   * const auth = core.PassthroughAuth('0x') // is roughly equivalent to
+   * const auth = new PassthroughAuth({ config: core._config, account: core._account }, '0x')
    * ```
    * @param {DeployablePayloadOrAddress<{}>} options
    * @param {?boolean} [isBase]
-   * @returns {ContractAction}
+   * @returns {PassthroughAuth}
    */
   PassthroughAuth(address?: Address) {
     return new PassthroughAuth(
@@ -893,28 +876,28 @@ export class BoostCore extends Deployable<
     );
   }
 
-  /**
-   * Bound {@link ContractAction} constructor that reuses the same configuration as the Boost Core instance.
-   *
-   * @example
-   * ```ts
-   * const action = core.ContractAction('0x') // is roughly equivalent to
-   * const action = new ContractAction({ config: core._config, account: core._account }, '0x')
-   * ```
-   * @param {DeployablePayloadOrAddress<ContractActionPayload>} options
-   * @param {?boolean} [isBase]
-   * @returns {ContractAction}
-   */
-  ContractAction(
-    options: DeployablePayloadOrAddress<ContractActionPayload>,
-    isBase?: boolean,
-  ) {
-    return new ContractAction(
-      { config: this._config, account: this._account },
-      options,
-      isBase,
-    );
-  }
+  // /**
+  //  * Bound {@link ContractAction} constructor that reuses the same configuration as the Boost Core instance.
+  //  *
+  //  * @example
+  //  * ```ts
+  //  * const action = core.ContractAction('0x') // is roughly equivalent to
+  //  * const action = new ContractAction({ config: core._config, account: core._account }, '0x')
+  //  * ```
+  //  * @param {DeployablePayloadOrAddress<ContractActionPayload>} options
+  //  * @param {?boolean} [isBase]
+  //  * @returns {ContractAction}
+  //  */
+  // ContractAction(
+  //   options: DeployablePayloadOrAddress<ContractActionPayload>,
+  //   isBase?: boolean,
+  // ) {
+  //   return new ContractAction(
+  //     { config: this._config, account: this._account },
+  //     options,
+  //     isBase,
+  //   );
+  // }
 
   /**
    * Bound {@link EventAction} constructor that reuses the same configuration as the Boost Core instance.
@@ -934,28 +917,28 @@ export class BoostCore extends Deployable<
       isBase,
     );
   }
-  /**
-   * Bound {@link ERC721MintAction} constructor that reuses the same configuration as the Boost Core instance.
-   *
-   * @example
-   * ```ts
-   * const action = core.ERC721MintAction('0x') // is roughly equivalent to
-   * const action = new ERC721MintAction({ config: core._config, account: core._account }, '0x')
-   * ```
-   * @param {DeployablePayloadOrAddress<ERC721MintActionPayload>} options
-   * @param {?boolean} [isBase]
-   * @returns {ERC721MintAction}
-   */
-  ERC721MintAction(
-    options: DeployablePayloadOrAddress<ERC721MintActionPayload>,
-    isBase?: boolean,
-  ) {
-    return new ERC721MintAction(
-      { config: this._config, account: this._account },
-      options,
-      isBase,
-    );
-  }
+  // /**
+  //  * Bound {@link ERC721MintAction} constructor that reuses the same configuration as the Boost Core instance.
+  //  *
+  //  * @example
+  //  * ```ts
+  //  * const action = core.ERC721MintAction('0x') // is roughly equivalent to
+  //  * const action = new ERC721MintAction({ config: core._config, account: core._account }, '0x')
+  //  * ```
+  //  * @param {DeployablePayloadOrAddress<ERC721MintActionPayload>} options
+  //  * @param {?boolean} [isBase]
+  //  * @returns {ERC721MintAction}
+  //  */
+  // ERC721MintAction(
+  //   options: DeployablePayloadOrAddress<ERC721MintActionPayload>,
+  //   isBase?: boolean,
+  // ) {
+  //   return new ERC721MintAction(
+  //     { config: this._config, account: this._account },
+  //     options,
+  //     isBase,
+  //   );
+  // }
   /**
    * Bound {@link SimpleAllowList} constructor that reuses the same configuration as the Boost Core instance.
    *
@@ -1000,23 +983,23 @@ export class BoostCore extends Deployable<
       isBase,
     );
   }
-  /**
-   * Bound {@link SimpleBudget} constructor that reuses the same configuration as the Boost Core instance.
-   *
-   * @example
-   * ```ts
-   * const budget = core.SimpleBudget('0x') // is roughly equivalent to
-   * const budget = new SimpleBudget({ config: core._config, account: core._account }, '0x')
-   * ```
-   * @param {DeployablePayloadOrAddress<SimpleBudgetPayload>} options
-   * @returns {SimpleBudget}
-   */
-  SimpleBudget(options: DeployablePayloadOrAddress<SimpleBudgetPayload>) {
-    return new SimpleBudget(
-      { config: this._config, account: this._account },
-      options,
-    );
-  }
+  // /**
+  //  * Bound {@link SimpleBudget} constructor that reuses the same configuration as the Boost Core instance.
+  //  *
+  //  * @example
+  //  * ```ts
+  //  * const budget = core.SimpleBudget('0x') // is roughly equivalent to
+  //  * const budget = new SimpleBudget({ config: core._config, account: core._account }, '0x')
+  //  * ```
+  //  * @param {DeployablePayloadOrAddress<SimpleBudgetPayload>} options
+  //  * @returns {SimpleBudget}
+  //  */
+  // SimpleBudget(options: DeployablePayloadOrAddress<SimpleBudgetPayload>) {
+  //   return new SimpleBudget(
+  //     { config: this._config, account: this._account },
+  //     options,
+  //   );
+  // }
   /**
    * Bound {@link ManagedBudget} constructor that reuses the same configuration as the Boost Core instance.
    *
@@ -1034,23 +1017,23 @@ export class BoostCore extends Deployable<
       options,
     );
   }
-  /**
-   * Bound {@link VestingBudget} constructor that reuses the same configuration as the Boost Core instance.
-   *
-   * @example
-   * ```ts
-   * const budget = core.VestingBudget('0x') // is roughly equivalent to
-   * const budget = new VestingBudget({ config: core._config, account: core._account }, '0x')
-   * ```
-   * @param {DeployablePayloadOrAddress<VestingBudgetPayload>} options
-   * @returns {VestingBudget}
-   */
-  VestingBudget(options: DeployablePayloadOrAddress<VestingBudgetPayload>) {
-    return new VestingBudget(
-      { config: this._config, account: this._account },
-      options,
-    );
-  }
+  // /**
+  //  * Bound {@link VestingBudget} constructor that reuses the same configuration as the Boost Core instance.
+  //  *
+  //  * @example
+  //  * ```ts
+  //  * const budget = core.VestingBudget('0x') // is roughly equivalent to
+  //  * const budget = new VestingBudget({ config: core._config, account: core._account }, '0x')
+  //  * ```
+  //  * @param {DeployablePayloadOrAddress<VestingBudgetPayload>} options
+  //  * @returns {VestingBudget}
+  //  */
+  // VestingBudget(options: DeployablePayloadOrAddress<VestingBudgetPayload>) {
+  //   return new VestingBudget(
+  //     { config: this._config, account: this._account },
+  //     options,
+  //   );
+  // }
   /**
    * Bound {@link AllowListIncentive} constructor that reuses the same configuration as the Boost Core instance.
    *
@@ -1102,25 +1085,25 @@ export class BoostCore extends Deployable<
       options,
     );
   }
-  /**
-   * Temporarily disabled until low level ABI encoding bugs are resolved
-   * Bound {@link ERC1155Incentive} constructor that reuses the same configuration as the Boost Core instance.
-   *
-   * @experimental
-   * @example
-   * ```ts
-   * const incentive = core.ERC1155Incentive({ ... }) // is roughly equivalent to
-   * const incentive = new ERC1155Incentive({ config: core._config, account: core._account }, { ... })
-   * ```
-   * @param {ERC1155IncentivePayload} options
-   * @returns {ERC1155Incentive}
-   */
-  ERC1155Incentive(options: ERC1155IncentivePayload) {
-    return new ERC1155Incentive(
-      { config: this._config, account: this._account },
-      options,
-    );
-  }
+  // /**
+  //  * Temporarily disabled until low level ABI encoding bugs are resolved
+  //  * Bound {@link ERC1155Incentive} constructor that reuses the same configuration as the Boost Core instance.
+  //  *
+  //  * @experimental
+  //  * @example
+  //  * ```ts
+  //  * const incentive = core.ERC1155Incentive({ ... }) // is roughly equivalent to
+  //  * const incentive = new ERC1155Incentive({ config: core._config, account: core._account }, { ... })
+  //  * ```
+  //  * @param {ERC1155IncentivePayload} options
+  //  * @returns {ERC1155Incentive}
+  //  */
+  // ERC1155Incentive(options: ERC1155IncentivePayload) {
+  //   return new ERC1155Incentive(
+  //     { config: this._config, account: this._account },
+  //     options,
+  //   );
+  // }
   /**
    * Bound {@link PointsIncentive} constructor that reuses the same configuration as the Boost Core instance.
    *

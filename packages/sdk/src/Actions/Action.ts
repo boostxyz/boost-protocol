@@ -15,16 +15,16 @@ export { ContractAction, ERC721MintAction };
  * @export
  * @typedef {Action}
  */
-export type Action = ContractAction | ERC721MintAction | EventAction;
+export type Action = EventAction; // | ContractAction | ERC721MintAction
 
 /**
  * A map of Action component interfaces to their constructors.
  *
- * @type {{ "0x2fae823b": ContractAction; "0xcba21e6c": ERC721MintAction; "0x916b9f6d": EventAction; }}
+ * @type {{ "0x7687b0ed": EventAction; }}
  */
 export const ActionByComponentInterface = {
-  ['0x6c3129aa']: ContractAction,
-  ['0x97e083eb']: ERC721MintAction,
+  // ['0x6c3129aa']: ContractAction,
+  // ['0x97e083eb']: ERC721MintAction,
   ['0x7687b0ed']: EventAction,
 };
 
@@ -35,7 +35,7 @@ export const ActionByComponentInterface = {
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
- * @returns {Promise<ContractAction | ERC721MintAction | EventAction>}
+ * @returns {Promise<EventAction>}
  * @throws {@link InvalidComponentInterfaceError}
  */
 export async function actionFromAddress(
@@ -54,8 +54,7 @@ export async function actionFromAddress(
       interfaceId,
     );
   }
-  return new Ctor(options, address) as
-    | ContractAction
-    | ERC721MintAction
-    | EventAction;
+  return new Ctor(options, address);
+  // | ContractAction
+  // | ERC721MintAction
 }

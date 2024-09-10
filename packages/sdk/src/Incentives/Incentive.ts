@@ -36,13 +36,13 @@ export type Incentive =
 /**
  * A map of Incentive component interfaces to their constructors.
  *
- * @type {{ "0x1e2e16a8": typeof PointsIncentive; "0x197d2cb3": typeof ERC20Incentive; "0xd1da3349": typeof AllowListIncentive; "0xb168aa66": typeof ERC1155Incentive; "0x31116297": typeof CGDAIncentive; }}
+ * @type {{ "0xc5b24b8e": typeof PointsIncentive; "0x8c901437": typeof ERC20Incentive; "0x0a466e6f": typeof AllowListIncentive; "0xa39e44d9": typeof CGDAIncentive; "0x6060409d": typeof ERC20VariableIncentive }}
  */
 export const IncentiveByComponentInterface = {
   ['0xc5b24b8e']: PointsIncentive,
   ['0x8c901437']: ERC20Incentive,
   ['0x0a466e6f']: AllowListIncentive,
-  ['0x6aa68002']: ERC1155Incentive,
+  // ['0x6aa68002']: ERC1155Incentive,
   ['0xa39e44d9']: CGDAIncentive,
   ['0x6060409d']: ERC20VariableIncentive,
 };

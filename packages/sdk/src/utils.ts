@@ -478,6 +478,7 @@ export const prepareEventActionPayload = ({
         name: 'actionStepOne',
         components: [
           { type: 'bytes4', name: 'signature' },
+          { type: 'uint8', name: 'signatureType' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {
@@ -497,6 +498,7 @@ export const prepareEventActionPayload = ({
         name: 'actionStepTwo',
         components: [
           { type: 'bytes4', name: 'signature' },
+          { type: 'uint8', name: 'signatureType' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {
@@ -516,6 +518,7 @@ export const prepareEventActionPayload = ({
         name: 'actionStepThree',
         components: [
           { type: 'bytes4', name: 'signature' },
+          { type: 'uint8', name: 'signatureType' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {
@@ -535,6 +538,7 @@ export const prepareEventActionPayload = ({
         name: 'actionStepFour',
         components: [
           { type: 'bytes4', name: 'signature' },
+          { type: 'uint8', name: 'signatureType' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {

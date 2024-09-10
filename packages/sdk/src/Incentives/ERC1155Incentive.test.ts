@@ -27,7 +27,7 @@ const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
-describe('ERC1155Incentive', () => {
+describe.skip('ERC1155Incentive', () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures);
   });

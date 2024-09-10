@@ -301,7 +301,6 @@ contract BoostCoreTest is Test {
         assertEq(0, boostCore.getBoostCount(), "Unauthorized user should not be able to create boost");
     }
 
-
     ///////////////////////////
     // BoostCore.claimIncentive //
     ///////////////////////////
@@ -342,7 +341,11 @@ contract BoostCoreTest is Test {
         bytes memory data = abi.encode(address(this), abi.encode(tokenId));
 
         // Try to claim the incentive with insufficient funds
-        vm.expectRevert(abi.encodeWithSelector(BoostError.InsufficientFunds.selector, 0x0000000000000000000000000000000000000000, 0, 75000000000000));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BoostError.InsufficientFunds.selector, 0x0000000000000000000000000000000000000000, 0, 75000000000000
+            )
+        );
         boostCore.claimIncentive{value: 0}(0, 0, address(0), "");
     }
 
@@ -360,7 +363,7 @@ contract BoostCoreTest is Test {
 
         // Try to claim the incentive with an unauthorized address
         address unauthorizedClaimant = makeAddr("unauthorizedClaimant");
-        // NOTE: this claimant can just be passed in as _anything_ - not ideal  
+        // NOTE: this claimant can just be passed in as _anything_ - not ideal
         bytes memory data = abi.encode(address(unauthorizedClaimant), abi.encode(tokenId));
         vm.deal(unauthorizedClaimant, 1 ether);
         vm.startPrank(unauthorizedClaimant);
@@ -450,6 +453,26 @@ contract BoostCoreTest is Test {
         uint256 newClaimFee = 0.0001 ether;
         boostCore.setClaimFee(newClaimFee);
         assertEq(boostCore.claimFee(), newClaimFee);
+    }
+
+    //////////////////////////////
+    // BoostCore.setProtocolFee //
+    //////////////////////////////
+
+    function testSetProtocolFee() public {
+        uint64 newProtocolFee = 700; // 7%
+        boostCore.setProtocolFee(newProtocolFee);
+        assertEq(boostCore.protocolFee(), newProtocolFee);
+    }
+
+    //////////////////////////////
+    // BoostCore.setReferralFee //
+    //////////////////////////////
+
+    function testSetReferralFee() public {
+        uint64 newReferralFee = 1500; // 15%
+        boostCore.setReferralFee(newReferralFee);
+        assertEq(boostCore.referralFee(), newReferralFee);
     }
 
     ///////////////////////////

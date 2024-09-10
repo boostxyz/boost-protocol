@@ -19,10 +19,10 @@ contract EventActionTest is Test {
     function setUp() public {
         action = _newActionClone();
 
-        // Define the InitPayload with an ActionEvent
+        // Define the InitPayload with an ActionStep
         AEventAction.ActionClaimant memory claimant;
         AEventAction.Criteria memory criteria;
-        AEventAction.ActionEvent memory actionEventOne;
+        AEventAction.ActionStep memory actionStepOne;
 
         claimant = AEventAction.ActionClaimant({
             signatureType: AEventAction.SignatureType.EVENT,
@@ -38,8 +38,9 @@ contract EventActionTest is Test {
             filterData: abi.encode(address(this)) // The filter checks if 'from' address equals this contract's address
         });
 
-        actionEventOne = AEventAction.ActionEvent({
-            eventSignature: bytes4(keccak256("Transfer(address,address,uint256)")),
+        actionStepOne = AEventAction.ActionStep({
+            signature: bytes4(keccak256("Transfer(address,address,uint256)")),
+            signatureType: AEventAction.SignatureType.EVENT,
             actionType: 0,
             targetContract: address(mockAsset),
             actionParameter: criteria
@@ -47,10 +48,10 @@ contract EventActionTest is Test {
 
         EventAction.InitPayload memory payload = EventAction.InitPayload({
             actionClaimant: claimant,
-            actionEventOne: actionEventOne,
-            actionEventTwo: actionEventOne,
-            actionEventThree: actionEventOne,
-            actionEventFour: actionEventOne
+            actionStepOne: actionStepOne,
+            actionStepTwo: actionStepOne,
+            actionStepThree: actionStepOne,
+            actionStepFour: actionStepOne
         });
 
         // Initialize the EventAction contract
@@ -63,8 +64,8 @@ contract EventActionTest is Test {
 
     function testInitialize() public {
         // Ensure the action was initialized correctly
-        assertEq(action.getActionEventsCount(), 4);
-        assertEq(action.getActionEvent(0).eventSignature, bytes4(keccak256("Transfer(address,address,uint256)")));
+        assertEq(action.getActionStepsCount(), 4);
+        assertEq(action.getActionStep(0).signature, bytes4(keccak256("Transfer(address,address,uint256)")));
     }
 
     function testInitialize_InvalidInitialization() public {
@@ -95,26 +96,26 @@ contract EventActionTest is Test {
     }
 
     ////////////////////////////
-    // EventAction.getActionEvents //
+    // EventAction.getActionSteps //
     ////////////////////////////
 
-    function testGetActionEvents() public {
+    function testGetActionSteps() public {
         // Ensure the action events are retrieved correctly
-        AEventAction.ActionEvent[] memory retrievedEvents = action.getActionEvents();
+        AEventAction.ActionStep[] memory retrievedEvents = action.getActionSteps();
 
         assertEq(retrievedEvents.length, 4);
-        assertEq(retrievedEvents[0].eventSignature, bytes4(keccak256("Transfer(address,address,uint256)")));
+        assertEq(retrievedEvents[0].signature, bytes4(keccak256("Transfer(address,address,uint256)")));
     }
 
     /////////////////////////////////
-    // EventAction.getActionEvent //
+    // EventAction.getActionStep //
     /////////////////////////////////
 
-    function testGetActionEvent() public {
+    function testGetActionStep() public {
         // Ensure the action event is retrieved correctly
-        AEventAction.ActionEvent memory retrievedEvent = action.getActionEvent(0);
+        AEventAction.ActionStep memory retrievedEvent = action.getActionStep(0);
 
-        assertEq(retrievedEvent.eventSignature, bytes4(keccak256("Transfer(address,address,uint256)")));
+        assertEq(retrievedEvent.signature, bytes4(keccak256("Transfer(address,address,uint256)")));
     }
 
     /////////////////////////////////

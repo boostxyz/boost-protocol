@@ -1,9 +1,9 @@
 import {
   eventActionAbi,
   readEventActionGetActionClaimant,
-  readEventActionGetActionEvent,
-  readEventActionGetActionEvents,
-  readEventActionGetActionEventsCount,
+  readEventActionGetActionStep,
+  readEventActionGetActionSteps,
+  readEventActionGetActionStepsCount,
   simulateEventActionExecute,
   writeEventActionExecute,
 } from '@boostxyz/evm';
@@ -26,7 +26,7 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ActionClaimant,
-  type ActionEvent,
+  type ActionStep,
   type Criteria,
   type EventActionPayload,
   FilterType,
@@ -83,20 +83,20 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {number} index The index of the action event to retrieve
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionEvent'>} [params]
-   * @returns {Promise<ActionEvent>}
+   * @param {?ReadParams<typeof eventActionAbi, 'getActionStep'>} [params]
+   * @returns {Promise<ActionStep>}
    */
-  public async getActionEvent(
+  public async getActionStep(
     index: number,
-    params?: ReadParams<typeof eventActionAbi, 'getActionEvent'>,
+    params?: ReadParams<typeof eventActionAbi, 'getActionStep'>,
   ) {
-    return readEventActionGetActionEvent(this._config, {
+    return readEventActionGetActionStep(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
       args: [index],
-    }) as Promise<ActionEvent>;
+    }) as Promise<ActionStep>;
   }
 
   /**
@@ -104,18 +104,18 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionEvents'>} [params]
-   * @returns {Promise<ActionEvent[]>}
+   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'>} [params]
+   * @returns {Promise<ActionStep[]>}
    */
-  public async getActionEvents(
-    params?: ReadParams<typeof eventActionAbi, 'getActionEvents'>,
+  public async getActionSteps(
+    params?: ReadParams<typeof eventActionAbi, 'getActionSteps'>,
   ) {
-    return readEventActionGetActionEvents(this._config, {
+    return readEventActionGetActionSteps(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    }) as Promise<ActionEvent[]>;
+    }) as Promise<ActionStep[]>;
   }
 
   /**
@@ -123,13 +123,13 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionEventsCount'>} [params]
+   * @param {?ReadParams<typeof eventActionAbi, 'getActionStepsCount'>} [params]
    * @returns {Promise<bigint>}
    */
-  public async getActionEventsCount(
-    params?: ReadParams<typeof eventActionAbi, 'getActionEventsCount'>,
+  public async getActionStepsCount(
+    params?: ReadParams<typeof eventActionAbi, 'getActionStepsCount'>,
   ) {
-    return readEventActionGetActionEventsCount(this._config, {
+    return readEventActionGetActionStepsCount(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -200,17 +200,17 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @returns {Promise<boolean>}
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionEvents'>} [params]
+   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'>} [params]
    */
-  public async validateActionEvents(
-    params?: ReadParams<typeof eventActionAbi, 'getActionEvents'> &
+  public async validateActionSteps(
+    params?: ReadParams<typeof eventActionAbi, 'getActionSteps'> &
       GetLogsParams<Abi, ContractEventName<Abi>> & {
         knownEvents?: Record<Hex, AbiEvent>;
       },
   ) {
-    const actionEvents = await this.getActionEvents(params);
-    for (const actionEvent of actionEvents) {
-      if (!this.isActionEventValid(actionEvent, params)) {
+    const actionSteps = await this.getActionSteps(params);
+    for (const actionStep of actionSteps) {
+      if (!this.isActionStepValid(actionStep, params)) {
         return false;
       }
     }
@@ -221,30 +221,28 @@ export class EventAction extends DeployableTarget<
    * Validates a single action event
    * @public
    * @async
-   * @param {ActionEvent} actionEvent
+   * @param {ActionStep} actionStep
    * @returns {boolean}
    */
-  public async isActionEventValid(
-    actionEvent: ActionEvent,
+  public async isActionStepValid(
+    actionStep: ActionStep,
     params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
       knownEvents?: Record<Hex, AbiEvent>;
     },
   ) {
-    const criteria = actionEvent.actionParameter;
-    const eventSignature = actionEvent.eventSignature;
+    const criteria = actionStep.actionParameter;
+    const signature = actionStep.signature;
     let event: AbiEvent;
     // Lookup ABI based on event signature
     if (params?.knownEvents) {
-      event = params.knownEvents[eventSignature] as AbiEvent;
+      event = params.knownEvents[signature] as AbiEvent;
     } else {
-      event = (events.abi as Record<Hex, AbiEvent>)[eventSignature] as AbiEvent;
+      event = (events.abi as Record<Hex, AbiEvent>)[signature] as AbiEvent;
     }
     if (!event) {
-      throw new Error(
-        `No known ABI for given event signature: ${eventSignature}`,
-      );
+      throw new Error(`No known ABI for given event signature: ${signature}`);
     }
-    const targetContract = actionEvent.targetContract;
+    const targetContract = actionStep.targetContract;
     // Get all logs matching the event signature from the target contract
     const logs = await getLogs(
       this._config.getClient({ chainId: params?.chainId }),

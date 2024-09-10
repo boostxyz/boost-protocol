@@ -15,7 +15,7 @@ import {AAction} from "contracts/actions/AAction.sol";
 /// @dev It is expected that the target contract has an externally accessible mint function whose selector
 abstract contract AEventAction is AAction {
     ActionClaimant internal actionClaimant;
-    ActionEvent[] internal actionEvents;
+    ActionStep[] internal actionSteps;
 
     // Define Enums
     enum FilterType {
@@ -41,8 +41,9 @@ abstract contract AEventAction is AAction {
         bytes filterData; // data fiels in case we need more complex filtering in the future - initially unused
     }
 
-    struct ActionEvent {
-        bytes4 eventSignature;
+    struct ActionStep {
+        bytes4 signature;
+        SignatureType signatureType;
         uint8 actionType;
         address targetContract;
         Criteria actionParameter;
@@ -65,11 +66,11 @@ abstract contract AEventAction is AAction {
         address targetContract;
     }
 
-    function getActionEventsCount() public view virtual returns (uint256);
+    function getActionStepsCount() public view virtual returns (uint256);
 
-    function getActionEvent(uint256 index) public view virtual returns (ActionEvent memory);
+    function getActionStep(uint256 index) public view virtual returns (ActionStep memory);
 
-    function getActionEvents() public view virtual returns (ActionEvent[] memory);
+    function getActionSteps() public view virtual returns (ActionStep[] memory);
 
     function getActionClaimant() public view virtual returns (ActionClaimant memory);
 

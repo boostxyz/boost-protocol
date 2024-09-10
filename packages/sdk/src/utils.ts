@@ -365,19 +365,25 @@ export interface ActionClaimant {
 }
 
 /**
- * Object representation of an `ActionEvent` struct used in event actions.
+ * Object representation of an `ActionStep` struct used in event actions.
  *
  * @export
- * @interface ActionEvent
- * @typedef {ActionEvent}
+ * @interface ActionStep
+ * @typedef {ActionStep}
  */
-export interface ActionEvent {
+export interface ActionStep {
   /**
    * The signature of the event.
    *
    * @type {Hex}
    */
-  eventSignature: Hex;
+  signature: Hex;
+  /**
+   * Whether claimaint is inferred from event or function
+   *
+   * @type {SignatureType}
+   */
+  signatureType: SignatureType;
   /**
    * The type of action being performed.
    *
@@ -415,45 +421,45 @@ export interface EventActionPayload {
   /**
    * The first action event.
    *
-   * @type {ActionEvent}
+   * @type {ActionStep}
    */
-  actionEventOne: ActionEvent;
+  actionStepOne: ActionStep;
   /**
    * The second action event.
    *
-   * @type {ActionEvent}
+   * @type {ActionStep}
    */
-  actionEventTwo: ActionEvent;
+  actionStepTwo: ActionStep;
   /**
    * The third action event.
    *
-   * @type {ActionEvent}
+   * @type {ActionStep}
    */
-  actionEventThree: ActionEvent;
+  actionStepThree: ActionStep;
   /**
    * The fourth action event.
    *
-   * @type {ActionEvent}
+   * @type {ActionStep}
    */
-  actionEventFour: ActionEvent;
+  actionStepFour: ActionStep;
 }
 
 /**
  * Function to properly encode an event action payload.
  *
  * @param {InitPayload} param0
- * @param {ActionEvent} param0.actionEventOne - The first action event to initialize.
- * @param {ActionEvent} param0.actionEventTwo - The second action event to initialize.
- * @param {ActionEvent} param0.actionEventThree - The third action event to initialize.
- * @param {ActionEvent} param0.actionEventFour - The fourth action event to initialize.
+ * @param {ActionStep} param0.actionStepOne - The first action event to initialize.
+ * @param {ActionStep} param0.actionStepTwo - The second action event to initialize.
+ * @param {ActionStep} param0.actionStepThree - The third action event to initialize.
+ * @param {ActionStep} param0.actionStepFour - The fourth action event to initialize.
  * @returns {Hex}
  */
 export const prepareEventActionPayload = ({
   actionClaimant,
-  actionEventOne,
-  actionEventTwo,
-  actionEventThree,
-  actionEventFour,
+  actionStepOne,
+  actionStepTwo,
+  actionStepThree,
+  actionStepFour,
 }: EventActionPayload) => {
   return encodeAbiParameters(
     [
@@ -469,9 +475,9 @@ export const prepareEventActionPayload = ({
       },
       {
         type: 'tuple',
-        name: 'actionEventOne',
+        name: 'actionStepOne',
         components: [
-          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'bytes4', name: 'signature' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {
@@ -488,9 +494,9 @@ export const prepareEventActionPayload = ({
       },
       {
         type: 'tuple',
-        name: 'actionEventTwo',
+        name: 'actionStepTwo',
         components: [
-          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'bytes4', name: 'signature' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {
@@ -507,9 +513,9 @@ export const prepareEventActionPayload = ({
       },
       {
         type: 'tuple',
-        name: 'actionEventThree',
+        name: 'actionStepThree',
         components: [
-          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'bytes4', name: 'signature' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {
@@ -526,9 +532,9 @@ export const prepareEventActionPayload = ({
       },
       {
         type: 'tuple',
-        name: 'actionEventFour',
+        name: 'actionStepFour',
         components: [
-          { type: 'bytes4', name: 'eventSignature' },
+          { type: 'bytes4', name: 'signature' },
           { type: 'uint8', name: 'actionType' },
           { type: 'address', name: 'targetContract' },
           {
@@ -546,10 +552,10 @@ export const prepareEventActionPayload = ({
     ],
     [
       actionClaimant,
-      actionEventOne,
-      actionEventTwo,
-      actionEventThree,
-      actionEventFour,
+      actionStepOne,
+      actionStepTwo,
+      actionStepThree,
+      actionStepFour,
     ],
   );
 };

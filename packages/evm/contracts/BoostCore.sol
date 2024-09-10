@@ -43,6 +43,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 indexed boostIndex,
         address indexed owner,
         address indexed action,
+        uint256 incentiveCount,
         address validator,
         address allowList,
         address budget
@@ -134,6 +135,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             _boosts.length - 1,
             boost.owner,
             address(boost.action),
+            boost.incentives.length,
             address(boost.validator),
             address(boost.allowList),
             address(boost.budget)

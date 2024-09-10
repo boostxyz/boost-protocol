@@ -3,7 +3,8 @@
   "tag": "alpha",
   "initialVersions": {
     "@boostxyz/evm": "0.0.0-alpha.0",
-    "@boostxyz/sdk": "0.0.0-alpha.0"
+    "@boostxyz/sdk": "0.0.0-alpha.0",
+    "@boostxyz/signatures": "0.0.0-alpha.0"
   },
   "changesets": [
     "mighty-pans-provide",

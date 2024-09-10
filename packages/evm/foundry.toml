@@ -5,11 +5,12 @@ optimizer_runs = 10_000
 out = 'out'
 src = 'contracts'
 test = 'test'
+script = 'script/solidity'
 cache_path  = 'cache_forge'
 libs = ['node_modules', 'lib']
 solc_version = '0.8.26'
 evm_version = 'cancun'
-
+fs_permissions = [{access = "write", path = "./deploys"}]
 remappings=[
   '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
   '@openzeppelin-upgrades/contracts/=lib/openzeppelin-contracts-upgradeable/contracts/',

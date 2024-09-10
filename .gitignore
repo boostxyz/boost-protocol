@@ -12,3 +12,6 @@ docs
 cache
 docs
 .boost
+
+# don't commit local testnet deploys
+packages/evm/deploys/31337.json

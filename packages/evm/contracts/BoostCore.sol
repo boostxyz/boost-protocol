@@ -212,6 +212,20 @@ contract BoostCore is Ownable, ReentrancyGuard {
         claimFee = claimFee_;
     }
 
+    /// @notice Set the protocol fee
+    /// @param protocolFee_ The new protocol fee (in bps)
+    /// @dev This function is only callable by the owner
+    function setProtocolFee(uint64 protocolFee_) external onlyOwner {
+        protocolFee = protocolFee_;
+    }
+
+    /// @notice Set the referral fee
+    /// @param referralFee_ The new referral fee (in bps)
+    /// @dev This function is only callable by the owner
+    function setReferralFee(uint64 referralFee_) external onlyOwner {
+        referralFee = referralFee_;
+    }
+
     /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it
     /// @param budget_ The ABudget to check
     /// @dev This function will revert if the ABudget is invalid or the caller is unauthorized

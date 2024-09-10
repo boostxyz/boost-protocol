@@ -11,16 +11,16 @@ import {AEventAction} from "contracts/actions/AEventAction.sol";
 contract EventAction is AEventAction {
     /// @notice The payload for initializing an EventAction
     /// @param actionClaimant The payload describing how claimants are identified
-    /// @param actionEventOne The first event criteria to validate with
-    /// @param actionEventTwo The second event criteria to validate with
-    /// @param actionEventThree The third event criteria to validate with
-    /// @param actionEventFour The fourth event criteria to validate with
+    /// @param actionStepOne The first criteria to validate with
+    /// @param actionStepTwo The second criteria to validate with
+    /// @param actionStepThree The third criteria to validate with
+    /// @param actionStepFour The fourth criteria to validate with
     struct InitPayload {
         ActionClaimant actionClaimant;
-        ActionEvent actionEventOne;
-        ActionEvent actionEventTwo;
-        ActionEvent actionEventThree;
-        ActionEvent actionEventFour;
+        ActionStep actionStepOne;
+        ActionStep actionStepTwo;
+        ActionStep actionStepThree;
+        ActionStep actionStepFour;
     }
 
     constructor() {
@@ -35,10 +35,10 @@ contract EventAction is AEventAction {
 
     function _initialize(InitPayload memory init_) internal virtual onlyInitializing {
         actionClaimant = init_.actionClaimant;
-        actionEvents.push(init_.actionEventOne);
-        actionEvents.push(init_.actionEventTwo);
-        actionEvents.push(init_.actionEventThree);
-        actionEvents.push(init_.actionEventFour);
+        actionSteps.push(init_.actionStepOne);
+        actionSteps.push(init_.actionStepTwo);
+        actionSteps.push(init_.actionStepThree);
+        actionSteps.push(init_.actionStepFour);
     }
 
     /// @notice Prepare the action for execution and return the expected payload
@@ -54,16 +54,16 @@ contract EventAction is AEventAction {
         revert BoostError.NotImplemented();
     }
 
-    function getActionEventsCount() public view virtual override returns (uint256) {
-        return actionEvents.length;
+    function getActionStepsCount() public view virtual override returns (uint256) {
+        return actionSteps.length;
     }
 
-    function getActionEvent(uint256 index) public view virtual override returns (ActionEvent memory) {
-        return actionEvents[index];
+    function getActionStep(uint256 index) public view virtual override returns (ActionStep memory) {
+        return actionSteps[index];
     }
 
-    function getActionEvents() public view virtual override returns (ActionEvent[] memory) {
-        return actionEvents;
+    function getActionSteps() public view virtual override returns (ActionStep[] memory) {
+        return actionSteps;
     }
 
     function getActionClaimant() public view virtual override returns (ActionClaimant memory) {

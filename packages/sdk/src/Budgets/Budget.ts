@@ -4,10 +4,12 @@ import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
 import { ManagedBudget } from './ManagedBudget';
-import { SimpleBudget } from './SimpleBudget';
-import { VestingBudget } from './VestingBudget';
 
-export { SimpleBudget, VestingBudget, ManagedBudget };
+export {
+  // SimpleBudget,
+  // VestingBudget,
+  ManagedBudget,
+};
 
 /**
  * A union type representing all valid protocol Budget implementations

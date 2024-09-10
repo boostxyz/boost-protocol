@@ -3,11 +3,13 @@ import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
-import { ContractAction } from './ContractAction';
-import { ERC721MintAction } from './ERC721MintAction';
 import { EventAction } from './EventAction';
 
-export { ContractAction, ERC721MintAction };
+export {
+  // ContractAction,
+  // ERC721MintAction,
+  EventAction,
+};
 
 /**
  * A union type representing all valid protocol Action implementations
@@ -55,6 +57,4 @@ export async function actionFromAddress(
     );
   }
   return new Ctor(options, address);
-  // | ContractAction
-  // | ERC721MintAction
 }

@@ -95,39 +95,13 @@ export async function freshBoost(
     budget: options.budget || budget,
     action:
       options.action ||
-      (() => {
-        const criteria = {
-          filterType: FilterType.EQUAL,
-          fieldType: PrimitiveType.ADDRESS,
-          fieldIndex: 0, // Assume the first field in the log is the 'from' address
-          filterData: core.assertValidAddress(),
-        };
-        const step: ActionStep = {
-          signature: '0xddf252ad',
-          signatureType: SignatureType.EVENT,
-          actionType: 0,
-          targetContract: erc20.assertValidAddress(),
-          actionParameter: criteria,
-        };
-        return new fixtures.bases.EventAction(defaultOptions, {
-          actionClaimant: {
-            signatureType: SignatureType.EVENT,
-            signature: '0xddf252ad',
-            fieldIndex: 0,
-            targetContract: erc20.assertValidAddress(),
-          },
-          actionStepOne: step,
-          actionStepTwo: step,
-          actionStepThree: step,
-          actionStepFour: step,
-        });
-      })(),
-    // new fixtures.bases.ContractAction(defaultOptions, {
-    //   chainId: BigInt(31_337),
-    //   target: core.assertValidAddress(),
-    //   selector: '0xdeadbeef',
-    //   value: 0n,
-    // }),
+      new fixtures.bases.EventAction(
+        defaultOptions,
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
     validator:
       options.validator ||
       new fixtures.bases.SignerValidator(defaultOptions, {

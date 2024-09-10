@@ -277,10 +277,8 @@ describe('BoostCore', () => {
       budget: budget,
       action: new bases.EventAction(
         defaultOptions,
-        makeMockEventActionPayload(
-          core.assertValidAddress(),
-          erc20.assertValidAddress(),
-        ),
+        _boost.action.assertValidAddress(),
+        false,
       ),
       validator: new bases.SignerValidator(defaultOptions, {
         signers: [defaultOptions.account.address],
@@ -830,7 +828,7 @@ describe('BoostCore', () => {
     expect(subscription).toHaveBeenCalledTimes(1);
   });
 
-  test('can set a passthrough auth sceme', async () => {
+  test('can set a passthrough auth scheme', async () => {
     const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,

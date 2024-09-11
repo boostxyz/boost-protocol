@@ -18,20 +18,15 @@ import {
   BoostCore,
   BoostRegistry,
   CGDAIncentive,
-  ContractAction,
   type DeployableOptions,
   ERC20Incentive,
   ERC20VariableIncentive,
-  ERC721MintAction,
-  ERC1155Incentive,
   EventAction,
   ManagedBudget,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
-  SimpleBudget,
   SimpleDenyList,
-  VestingBudget,
   getDeployedContractAddress,
 } from '@boostxyz/sdk';
 import { createConfig, deployContract } from '@wagmi/core';
@@ -228,12 +223,12 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
   );
 
   const bases = {
-    ContractAction: class TContractAction extends ContractAction {
-      public static override base = contractActionBase;
-    },
-    ERC721MintAction: class TERC721MintAction extends ERC721MintAction {
-      public static override base = erc721MintActionBase;
-    },
+    // ContractAction: class TContractAction extends ContractAction {
+    //   public static override base = contractActionBase;
+    // },
+    // ERC721MintAction: class TERC721MintAction extends ERC721MintAction {
+    //   public static override base = erc721MintActionBase;
+    // },
     EventAction: class TEventAction extends EventAction {
       public static override base = eventActionBase;
     },
@@ -243,15 +238,15 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
       public static override base = simpleDenyListBase;
     },
-    SimpleBudget: class TSimpleBudget extends SimpleBudget {
-      public static override base = simpleBudgetBase;
-    },
+    // SimpleBudget: class TSimpleBudget extends SimpleBudget {
+    //   public static override base = simpleBudgetBase;
+    // },
     ManagedBudget: class TSimpleBudget extends ManagedBudget {
       public static override base = managedBudgetBase;
     },
-    VestingBudget: class TVestingBudget extends VestingBudget {
-      public static override base = vestingBudgetBase;
-    },
+    // VestingBudget: class TVestingBudget extends VestingBudget {
+    //   public static override base = vestingBudgetBase;
+    // },
     AllowListIncentive: class TAllowListIncentive extends AllowListIncentive {
       public static override base = allowListIncentiveBase;
     },
@@ -264,9 +259,9 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     ERC20VariableIncentive: class TERC20VariableIncentive extends ERC20VariableIncentive {
       public static override base = erc20VariableIncentiveBase;
     },
-    ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
-      public static override base = erc1155IncentiveBase;
-    },
+    // ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
+    //   public static override base = erc1155IncentiveBase;
+    // },
     PointsIncentive: class TPointsIncentive extends PointsIncentive {
       public static override base = pointsIncentiveBase;
     },

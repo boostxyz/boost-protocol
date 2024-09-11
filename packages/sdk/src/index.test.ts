@@ -9,16 +9,17 @@ describe('sdk exports', () => {
 
     // interfaces
     expect(SDK.PassthroughAuth).toBeDefined();
-    expect(SDK.ContractAction).toBeDefined();
-    expect(SDK.ERC721MintAction).toBeDefined();
+    // expect(SDK.ContractAction).toBeDefined();
+    // expect(SDK.ERC721MintAction).toBeDefined();
     expect(SDK.SimpleAllowList).toBeDefined();
     expect(SDK.SimpleDenyList).toBeDefined();
-    expect(SDK.SimpleBudget).toBeDefined();
-    expect(SDK.VestingBudget).toBeDefined();
+    expect(SDK.ManagedBudget).toBeDefined();
+    // expect(SDK.SimpleBudget).toBeDefined();
+    // expect(SDK.VestingBudget).toBeDefined();
     expect(SDK.AllowListIncentive).toBeDefined();
     expect(SDK.CGDAIncentive).toBeDefined();
     expect(SDK.ERC20Incentive).toBeDefined();
-    expect(SDK.ERC1155Incentive).toBeDefined();
+    // expect(SDK.ERC1155Incentive).toBeDefined();
     expect(SDK.PointsIncentive).toBeDefined();
     expect(SDK.SignerValidator).toBeDefined();
 

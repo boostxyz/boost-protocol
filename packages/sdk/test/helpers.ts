@@ -29,22 +29,21 @@ import {
   BoostCore,
   type Budget,
   CGDAIncentive,
-  ContractAction,
   type CreateBoostPayload,
   ERC20Incentive,
   ERC20VariableIncentive,
-  ERC721MintAction,
   EventAction,
   ManagedBudget,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
-  SimpleBudget,
   SimpleDenyList,
-  VestingBudget,
 } from '../src';
+import { ContractAction } from '../src/Actions/ContractAction';
+import { ERC721MintAction } from '../src/Actions/ERC721MintAction';
 import { BoostRegistry } from '../src/BoostRegistry';
 import { ManagedBudgetRoles } from '../src/Budgets/ManagedBudget';
+import { VestingBudget } from '../src/Budgets/VestingBudget';
 import { ERC1155Incentive } from '../src/Incentives/ERC1155Incentive';
 import {
   type ActionStep,
@@ -54,6 +53,7 @@ import {
   SignatureType,
   getDeployedContractAddress,
 } from '../src/utils';
+import { SimpleBudget } from './../src/Budgets/SimpleBudget';
 import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
@@ -186,8 +186,8 @@ export async function deployFixtures(
   const managedBudgetBase = await getDeployedContractAddress(
     config,
     deployContract(config, {
-      abi: SimpleBudgetArtifact.abi,
-      bytecode: SimpleBudgetArtifact.bytecode as Hex,
+      abi: ManagedBudgetArtifact.abi,
+      bytecode: ManagedBudgetArtifact.bytecode as Hex,
       account,
     }),
   );

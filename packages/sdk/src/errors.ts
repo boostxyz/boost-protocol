@@ -1,9 +1,11 @@
 import {
   type Hex,
+  type Log,
   type WaitForTransactionReceiptReturnType,
   zeroHash,
 } from 'viem';
 import type { Incentive } from './Incentives/Incentive';
+import type { Criteria } from './utils';
 
 /**
  * This error is thrown during Boost creation if no `BoostCreated` event was emitted.
@@ -317,5 +319,206 @@ export class IncentiveNotCloneableError extends Error {
    */
   constructor(incentive: Incentive) {
     super(`Incentive not cloneable: ${incentive.constructor.name}`);
+  }
+}
+
+/**
+ * Thrown when encoding an EventAction payload and no action steps are provided
+ *
+ * @export
+ * @class NoEventActionStepsProvidedError
+ * @typedef {NoEventActionStepsProvidedError}
+ * @extends {Error}
+ */
+export class NoEventActionStepsProvidedError extends Error {
+  /**
+   * Creates an instance of NoEventActionStepsProvidedError.
+   *
+   * @constructor
+   */
+  constructor() {
+    super('Must supply at least one action step');
+  }
+}
+
+/**
+ * Thrown when encoding an EventAction payload and > 4 steps are provided
+ *
+ * @export
+ * @class TooManyEventActionStepsProvidedError
+ * @typedef {TooManyEventActionStepsProvidedError}
+ * @extends {Error}
+ */
+export class TooManyEventActionStepsProvidedError extends Error {
+  /**
+   * Creates an instance of TooManyEventActionStepsProvidedError.
+   *
+   * @constructor
+   */
+  constructor() {
+    super(
+      'Cannot supply more than 4 action steps with current protocol version',
+    );
+  }
+}
+
+/**
+ * Event action validation context to help debug other validation errors
+ *
+ * @interface EventActionValidationMeta
+ * @typedef {EventActionValidationMeta}
+ */
+interface EventActionValidationMeta {
+  /**
+   * The viem log being validated against
+   *
+   * @type {Log}
+   */
+  log: Log;
+  /**
+   * The value pulled off the log being validated against
+   *
+   * @type {*}
+   * biome-ignore lint/suspicious/noExplicitAny: this can be a few different types based on what the log emits
+   */
+  fieldValue: any;
+  /**
+   * The criteria being used to compare during validation
+   *
+   * @type {Criteria}
+   */
+  criteria: Criteria;
+}
+
+/**
+ * The base error thrown during event action validation extended by more specific validation errors.
+ * Instantiated with relevent context data for more in depth debugging.
+ *
+ * @export
+ * @class EventActionValidationError
+ * @typedef {EventActionValidationError}
+ * @extends {Error}
+ */
+export class EventActionValidationError extends Error {
+  /**
+   * The viem log being validated against
+   *
+   * @type {Log}
+   */
+  log: Log;
+  /**
+   * The value pulled off the log being validated against
+   *
+   * @type {*}
+   * biome-ignore lint/suspicious/noExplicitAny: this can be a few different types based on what the log emits
+   */
+  fieldValue: any;
+  /**
+   * The criteria being used to compare during validation
+   *
+   * @type {Criteria}
+   */
+  criteria: Criteria;
+  /**
+   * Creates an instance of EventActionValidationError.
+   *
+   * @constructor
+   * @param {string} message
+   * @param {EventActionValidationMeta} param0
+   * @param {*} param0.fieldValue
+   * @param {Criteria} param0.criteria
+   * @param {Log} param0.log
+   */
+  constructor(
+    message: string,
+    { fieldValue, criteria, log }: EventActionValidationMeta,
+  ) {
+    super(message);
+    this.fieldValue = fieldValue;
+    this.criteria = criteria;
+    this.log = log;
+  }
+}
+
+/**
+ * Thrown when field value on log is undefined
+ *
+ * @export
+ * @class FieldValueUndefinedError
+ * @typedef {FieldValueUndefinedError}
+ * @extends {EventActionValidationError}
+ */
+export class FieldValueUndefinedError extends EventActionValidationError {
+  /**
+   * Creates an instance of FieldValueUndefinedError.
+   *
+   * @constructor
+   * @param {EventActionValidationMeta} metadata
+   */
+  constructor(metadata: EventActionValidationMeta) {
+    super('Field value is undefined', metadata);
+  }
+}
+
+/**
+ * Thrown when a filter type is using a numerical operator but field type is not numerical
+ *
+ * @export
+ * @class InvalidNumericalCriteriaError
+ * @typedef {InvalidNumericalCriteriaError}
+ * @extends {EventActionValidationError}
+ */
+export class InvalidNumericalCriteriaError extends EventActionValidationError {
+  /**
+   * Creates an instance of InvalidNumericalCriteria.
+   *
+   * @constructor
+   * @param {EventActionValidationMeta} metadata
+   */
+  constructor(metadata: EventActionValidationMeta) {
+    super(
+      'Numerical comparisons cannot be used with non-numerical criteria',
+      metadata,
+    );
+  }
+}
+
+/**
+ * Thrown when an the log's field value is being compared a field type that isn't bytes or string during event action validation
+ *
+ * @export
+ * @class FieldValueNotComparableError
+ * @typedef {FieldValueNotComparableError}
+ * @extends {EventActionValidationError}
+ */
+export class FieldValueNotComparableError extends EventActionValidationError {
+  /**
+   * Creates an instance of FieldValueNotComparableError.
+   *
+   * @constructor
+   * @param {EventActionValidationMeta} metadata
+   */
+  constructor(metadata: EventActionValidationMeta) {
+    super('Filter can only be used with bytes or string field type', metadata);
+  }
+}
+
+/**
+ * Thrown when an invalid filter type enum was provided event action validation.
+ *
+ * @export
+ * @class UnrecognizedFilterTypeError
+ * @typedef {UnrecognizedFilterTypeError}
+ * @extends {EventActionValidationError}
+ */
+export class UnrecognizedFilterTypeError extends EventActionValidationError {
+  /**
+   * Creates an instance of UnrecognizedFilterTypeError.
+   *
+   * @constructor
+   * @param {EventActionValidationMeta} metadata
+   */
+  constructor(metadata: EventActionValidationMeta) {
+    super('Invalid FilterType provided', metadata);
   }
 }

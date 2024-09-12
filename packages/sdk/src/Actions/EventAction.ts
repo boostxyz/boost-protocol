@@ -9,15 +9,7 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import events from '@boostxyz/signatures/events';
-import type {
-  Abi,
-  AbiEvent,
-  AbiItem,
-  Address,
-  ContractEventName,
-  Hex,
-  Log,
-} from 'viem';
+import type { Abi, AbiEvent, Address, ContractEventName, Hex, Log } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
   DeployableOptions,
@@ -25,16 +17,26 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  FieldValueNotComparableError,
+  FieldValueUndefinedError,
+  InvalidNumericalCriteriaError,
+  NoEventActionStepsProvidedError,
+  TooManyEventActionStepsProvidedError,
+  UnrecognizedFilterTypeError,
+} from '../errors';
+import {
   type ActionClaimant,
   type ActionStep,
   type Criteria,
   type EventActionPayload,
+  type EventActionPayloadRaw,
   FilterType,
   type GetLogsParams,
   PrimitiveType,
   type ReadParams,
   RegistryType,
   type WriteParams,
+  isEventActionPayloadSimple,
   prepareEventActionPayload,
 } from '../utils';
 
@@ -95,7 +97,7 @@ export class EventAction extends DeployableTarget<
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-      args: [index],
+      args: [BigInt(index)],
     }) as Promise<ActionStep>;
   }
 
@@ -269,9 +271,9 @@ export class EventAction extends DeployableTarget<
    * @returns {boolean} - Returns true if the log passes the criteria, false otherwise.
    */
   public async validateLogAgainstCriteria(criteria: Criteria, log: Log) {
-    const fieldValue = log.topics[criteria.fieldIndex];
+    const fieldValue = log.topics.at(criteria.fieldIndex);
     if (fieldValue === undefined) {
-      throw new Error('Field value is undefined');
+      throw new FieldValueUndefinedError({ log, criteria, fieldValue });
     }
     // Type narrow based on criteria.filterType
     switch (criteria.filterType) {
@@ -285,17 +287,13 @@ export class EventAction extends DeployableTarget<
         if (criteria.fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) > BigInt(criteria.filterData);
         }
-        throw new Error(
-          'GREATER_THAN filter can only be used with UINT fieldType',
-        );
+        throw new InvalidNumericalCriteriaError({ log, criteria, fieldValue });
 
       case FilterType.LESS_THAN:
         if (criteria.fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) < BigInt(criteria.filterData);
         }
-        throw new Error(
-          'LESS_THAN filter can only be used with UINT fieldType',
-        );
+        throw new InvalidNumericalCriteriaError({ log, criteria, fieldValue });
 
       case FilterType.CONTAINS:
         if (
@@ -304,12 +302,10 @@ export class EventAction extends DeployableTarget<
         ) {
           return fieldValue.includes(criteria.filterData);
         }
-        throw new Error(
-          'CONTAINS filter can only be used with BYTES or STRING fieldType',
-        );
+        throw new FieldValueNotComparableError({ log, criteria, fieldValue });
 
       default:
-        throw new Error('Invalid FilterType provided');
+        throw new UnrecognizedFilterTypeError({ log, criteria, fieldValue });
     }
   }
 
@@ -329,10 +325,35 @@ export class EventAction extends DeployableTarget<
       _payload,
       _options,
     );
+    let rawPayload: EventActionPayloadRaw;
+    if (isEventActionPayloadSimple(payload)) {
+      // filter out any falsy potential values
+      let tmpSteps = payload.actionSteps.filter((step) => !!step);
+      if (tmpSteps.length === 0) {
+        throw new NoEventActionStepsProvidedError();
+      }
+      if (tmpSteps.length > 4) {
+        throw new TooManyEventActionStepsProvidedError();
+      }
+      let steps: ActionStep[] = Array.from({ length: 4 }, (_, i) => {
+        // use either the provided step at the given index, or reuse the previous step
+        // should aways exist
+        return tmpSteps.at(i)! || tmpSteps.slice(0, i).at(-1)!;
+      });
+      rawPayload = {
+        actionClaimant: payload.actionClaimant,
+        actionStepOne: steps.at(0)!,
+        actionStepTwo: steps.at(1)!,
+        actionStepThree: steps.at(2)!,
+        actionStepFour: steps.at(3)!,
+      };
+    } else {
+      rawPayload = payload;
+    }
     return {
       abi: eventActionAbi,
       bytecode: bytecode as Hex,
-      args: [prepareEventActionPayload(payload)],
+      args: [prepareEventActionPayload(rawPayload)],
       ...this.optionallyAttachAccount(options.account),
     };
   }

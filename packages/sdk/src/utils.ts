@@ -397,7 +397,7 @@ export interface ActionStep {
    */
   targetContract: Address;
   /**
-   * The criteria used for this action event.
+   * The criteria used for this action step.
    *
    * @type {Criteria}
    */
@@ -405,13 +405,53 @@ export interface ActionStep {
 }
 
 /**
+ * You can either supply a simplified version of the payload, or one that explicitly declares action steps.
+ *
+ * @export
+ * @typedef {EventActionPayload}
+ */
+export type EventActionPayload =
+  | EventActionPayloadSimple
+  | EventActionPayloadRaw;
+
+export interface EventActionPayloadSimple {
+  /**
+   *  The payload describing how claimants are identified
+   *
+   * @type {ActionClaimant}
+   */
+  actionClaimant: ActionClaimant;
+
+  /**
+   * Up to 4 action steps.
+   * If you supply less than 4, then the last step will be reused to satisfy the EventAction.InitPayload
+   * Any more than 4 will throw an error.
+   *
+   * @type {ActionStep[]}
+   */
+  actionSteps: ActionStep[];
+}
+
+/**
+ * Typeguard to determine if a user is supplying a simple or raw EventActionPayload
+ *
+ * @param {*} opts
+ * @returns {opts is EventActionPayloadSimple}
+ */
+export function isEventActionPayloadSimple(
+  opts: EventActionPayload,
+): opts is EventActionPayloadSimple {
+  return Array.isArray((opts as EventActionPayloadSimple).actionSteps);
+}
+
+/**
  * Object representation of an `InitPayload` struct used to initialize event actions.
  *
  * @export
- * @interface EventActionPayload
- * @typedef {EventActionPayload}
+ * @interface EventActionPayloadRaw
+ * @typedef {EventActionPayloadRaw}
  */
-export interface EventActionPayload {
+export interface EventActionPayloadRaw {
   /**
    *  The payload describing how claimants are identified
    *
@@ -419,25 +459,25 @@ export interface EventActionPayload {
    */
   actionClaimant: ActionClaimant;
   /**
-   * The first action event.
+   * The first action step.
    *
    * @type {ActionStep}
    */
   actionStepOne: ActionStep;
   /**
-   * The second action event.
+   * The second action step.
    *
    * @type {ActionStep}
    */
   actionStepTwo: ActionStep;
   /**
-   * The third action event.
+   * The third action step.
    *
    * @type {ActionStep}
    */
   actionStepThree: ActionStep;
   /**
-   * The fourth action event.
+   * The fourth action step.
    *
    * @type {ActionStep}
    */
@@ -448,10 +488,10 @@ export interface EventActionPayload {
  * Function to properly encode an event action payload.
  *
  * @param {InitPayload} param0
- * @param {ActionStep} param0.actionStepOne - The first action event to initialize.
- * @param {ActionStep} param0.actionStepTwo - The second action event to initialize.
- * @param {ActionStep} param0.actionStepThree - The third action event to initialize.
- * @param {ActionStep} param0.actionStepFour - The fourth action event to initialize.
+ * @param {ActionStep} param0.actionStepOne - The first action step to initialize.
+ * @param {ActionStep} param0.actionStepTwo - The second action step to initialize.
+ * @param {ActionStep} param0.actionStepThree - The third action step to initialize.
+ * @param {ActionStep} param0.actionStepFour - The fourth action step to initialize.
  * @returns {Hex}
  */
 export const prepareEventActionPayload = ({
@@ -460,7 +500,7 @@ export const prepareEventActionPayload = ({
   actionStepTwo,
   actionStepThree,
   actionStepFour,
-}: EventActionPayload) => {
+}: EventActionPayloadRaw) => {
   return encodeAbiParameters(
     [
       {

@@ -15,3 +15,5 @@ docs
 
 # don't commit local testnet deploys
 packages/evm/deploys/31337.json
+# don't commit componentInterfaces, since these are used at build time
+packages/evm/deploys/componentInterfaces.json

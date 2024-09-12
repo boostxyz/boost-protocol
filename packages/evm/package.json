@@ -24,7 +24,8 @@
   "types": "./dist/generated.d.ts",
   "typings": "./dist/generated.d.ts",
   "scripts": {
-    "build": "npm run clean && forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "build": "npm run clean && npm run build:componentInterfaces && forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "build:componentInterfaces": "forge script script/solidity/ComponentInterface.s.sol",
     "clean": "forge clean && hardhat clean && rm -rf cache",
     "test": "forge test -vvv && hardhat test",
     "test:ci": "forge test --summary --detailed -vvv && hardhat test",

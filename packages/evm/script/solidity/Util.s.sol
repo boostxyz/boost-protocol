@@ -21,7 +21,7 @@ contract ScriptUtils is Script {
         if (!success) revert("create2 failed");
     }
 
-    function _buildJsonDeployPath() internal view returns (string memory) {
+    function _buildJsonDeployPath() internal virtual view returns (string memory) {
         return string(abi.encodePacked(vm.projectRoot(), "/deploys/", vm.toString(block.chainid), ".json"));
     }
 }

@@ -21,7 +21,7 @@ export const testAccount = privateKeyToAccount(key);
 
 export const makeTestClient = () =>
   createTestClient({
-    transport: http(undefined, { retryCount: 0 }),
+    transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
     chain: hardhat,
     mode: 'hardhat',
     account: testAccount,
@@ -34,6 +34,7 @@ export type TestClient = ReturnType<typeof makeTestClient>;
 
 export function setupConfig(walletClient = makeTestClient()) {
   return createConfig({
+    ssr: true,
     chains: [hardhat],
     client: () => walletClient,
   });

@@ -9,14 +9,14 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import events from '@boostxyz/signatures/events';
-import type {
-  Abi,
-  AbiEvent,
-  AbiItem,
-  Address,
-  ContractEventName,
-  Hex,
-  Log,
+import {
+  type Abi,
+  type AbiEvent,
+  type Address,
+  type ContractEventName,
+  type Hex,
+  type Log,
+  isAddressEqual,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
@@ -25,16 +25,27 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  FieldValueNotComparableError,
+  FieldValueUndefinedError,
+  InvalidNumericalCriteriaError,
+  NoEventActionStepsProvidedError,
+  TooManyEventActionStepsProvidedError,
+  UnrecognizedFilterTypeError,
+} from '../errors';
+import {
   type ActionClaimant,
   type ActionStep,
   type Criteria,
   type EventActionPayload,
+  type EventActionPayloadRaw,
   FilterType,
   type GetLogsParams,
   PrimitiveType,
   type ReadParams,
   RegistryType,
   type WriteParams,
+  dedupeActionSteps,
+  isEventActionPayloadSimple,
   prepareEventActionPayload,
 } from '../utils';
 
@@ -90,13 +101,8 @@ export class EventAction extends DeployableTarget<
     index: number,
     params?: ReadParams<typeof eventActionAbi, 'getActionStep'>,
   ) {
-    return readEventActionGetActionStep(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-      args: [index],
-    }) as Promise<ActionStep>;
+    const steps = await this.getActionSteps(params);
+    return steps.at(index);
   }
 
   /**
@@ -110,12 +116,13 @@ export class EventAction extends DeployableTarget<
   public async getActionSteps(
     params?: ReadParams<typeof eventActionAbi, 'getActionSteps'>,
   ) {
-    return readEventActionGetActionSteps(this._config, {
+    const steps = (await readEventActionGetActionSteps(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    }) as Promise<ActionStep[]>;
+    })) as ActionStep[];
+    return dedupeActionSteps(steps);
   }
 
   /**
@@ -129,12 +136,8 @@ export class EventAction extends DeployableTarget<
   public async getActionStepsCount(
     params?: ReadParams<typeof eventActionAbi, 'getActionStepsCount'>,
   ) {
-    return readEventActionGetActionStepsCount(this._config, {
-      address: this.assertValidAddress(),
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    const steps = await this.getActionSteps(params);
+    return steps.length;
   }
 
   /**
@@ -196,21 +199,29 @@ export class EventAction extends DeployableTarget<
     return { hash, result };
   }
 
-  /** Validates all action events
+  /**
+   * Retrieves action steps, and uses them to validate against, and optionally fetch logs that match the step's signature.
+   * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
+   *
    * @public
    * @async
+   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'> &
+   *       GetLogsParams<Abi, ContractEventName<Abi>> & {
+   *         knownEvents?: Record<Hex, AbiEvent>;
+   *         logs?: Log[];
+   *       }} [params]
    * @returns {Promise<boolean>}
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'>} [params]
    */
   public async validateActionSteps(
     params?: ReadParams<typeof eventActionAbi, 'getActionSteps'> &
       GetLogsParams<Abi, ContractEventName<Abi>> & {
         knownEvents?: Record<Hex, AbiEvent>;
+        logs?: Log[];
       },
   ) {
     const actionSteps = await this.getActionSteps(params);
     for (const actionStep of actionSteps) {
-      if (!this.isActionStepValid(actionStep, params)) {
+      if (!(await this.isActionStepValid(actionStep, params))) {
         return false;
       }
     }
@@ -218,16 +229,23 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Validates a single action event
+   * Validates a single action step with a given criteria against logs.
+   * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
+   *
    * @public
    * @async
    * @param {ActionStep} actionStep
-   * @returns {boolean}
+   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
+   *       knownEvents?: Record<Hex, AbiEvent>;
+   *       logs?: Log[];
+   *     }} [params]
+   * @returns {Promise<boolean>}
    */
   public async isActionStepValid(
     actionStep: ActionStep,
     params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
       knownEvents?: Record<Hex, AbiEvent>;
+      logs?: Log[];
     },
   ) {
     const criteria = actionStep.actionParameter;
@@ -244,15 +262,15 @@ export class EventAction extends DeployableTarget<
     }
     const targetContract = actionStep.targetContract;
     // Get all logs matching the event signature from the target contract
-    const logs = await getLogs(
-      this._config.getClient({ chainId: params?.chainId }),
-      {
+    const logs =
+      params?.logs ||
+      (await getLogs(this._config.getClient({ chainId: params?.chainId }), {
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         ...(params as any),
         address: targetContract,
         event,
-      },
-    );
+      }));
+    if (!logs.length) return false;
     for (let log of logs) {
       if (!this.validateLogAgainstCriteria(criteria, log)) {
         return false;
@@ -262,20 +280,26 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Validates a Viem event log against a given criteria.
+   * Validates a {@link Log} against a given criteria.
    *
    * @param {Criteria} criteria - The criteria to validate against.
-   * @param {any[]} log - The Viem event log array.
-   * @returns {boolean} - Returns true if the log passes the criteria, false otherwise.
+   * @param {Log} log - The Viem event log.
+   * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
    */
   public async validateLogAgainstCriteria(criteria: Criteria, log: Log) {
-    const fieldValue = log.topics[criteria.fieldIndex];
+    const fieldValue = log.topics.at(criteria.fieldIndex);
     if (fieldValue === undefined) {
-      throw new Error('Field value is undefined');
+      throw new FieldValueUndefinedError({ log, criteria, fieldValue });
     }
     // Type narrow based on criteria.filterType
     switch (criteria.filterType) {
       case FilterType.EQUAL:
+        if (criteria.fieldType === PrimitiveType.ADDRESS) {
+          return isAddressEqual(
+            criteria.filterData,
+            `0x${fieldValue.slice(-40)}`,
+          );
+        }
         return fieldValue === criteria.filterData;
 
       case FilterType.NOT_EQUAL:
@@ -285,17 +309,13 @@ export class EventAction extends DeployableTarget<
         if (criteria.fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) > BigInt(criteria.filterData);
         }
-        throw new Error(
-          'GREATER_THAN filter can only be used with UINT fieldType',
-        );
+        throw new InvalidNumericalCriteriaError({ log, criteria, fieldValue });
 
       case FilterType.LESS_THAN:
         if (criteria.fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) < BigInt(criteria.filterData);
         }
-        throw new Error(
-          'LESS_THAN filter can only be used with UINT fieldType',
-        );
+        throw new InvalidNumericalCriteriaError({ log, criteria, fieldValue });
 
       case FilterType.CONTAINS:
         if (
@@ -304,12 +324,10 @@ export class EventAction extends DeployableTarget<
         ) {
           return fieldValue.includes(criteria.filterData);
         }
-        throw new Error(
-          'CONTAINS filter can only be used with BYTES or STRING fieldType',
-        );
+        throw new FieldValueNotComparableError({ log, criteria, fieldValue });
 
       default:
-        throw new Error('Invalid FilterType provided');
+        throw new UnrecognizedFilterTypeError({ log, criteria, fieldValue });
     }
   }
 
@@ -329,10 +347,35 @@ export class EventAction extends DeployableTarget<
       _payload,
       _options,
     );
+    let rawPayload: EventActionPayloadRaw;
+    if (isEventActionPayloadSimple(payload)) {
+      // filter out any falsy potential values
+      let tmpSteps = payload.actionSteps.filter((step) => !!step);
+      if (tmpSteps.length === 0) {
+        throw new NoEventActionStepsProvidedError();
+      }
+      if (tmpSteps.length > 4) {
+        throw new TooManyEventActionStepsProvidedError();
+      }
+      let steps: ActionStep[] = Array.from({ length: 4 }, (_, i) => {
+        // use either the provided step at the given index, or reuse the previous step
+        // should aways exist
+        return tmpSteps.at(i)! || tmpSteps.slice(0, i).at(-1)!;
+      });
+      rawPayload = {
+        actionClaimant: payload.actionClaimant,
+        actionStepOne: steps.at(0)!,
+        actionStepTwo: steps.at(1)!,
+        actionStepThree: steps.at(2)!,
+        actionStepFour: steps.at(3)!,
+      };
+    } else {
+      rawPayload = payload;
+    }
     return {
       abi: eventActionAbi,
       bytecode: bytecode as Hex,
-      args: [prepareEventActionPayload(payload)],
+      args: [prepareEventActionPayload(rawPayload)],
       ...this.optionallyAttachAccount(options.account),
     };
   }

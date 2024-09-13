@@ -28,7 +28,8 @@ contract EventActionTest is Test {
             signatureType: AEventAction.SignatureType.EVENT,
             signature: bytes4(keccak256("Transfer(address,address,uint256)")),
             fieldIndex: 0,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            chainid: 1
         });
 
         criteria = AEventAction.Criteria({
@@ -43,6 +44,7 @@ contract EventActionTest is Test {
             signatureType: AEventAction.SignatureType.EVENT,
             actionType: 0,
             targetContract: address(mockAsset),
+            chainid: 1,
             actionParameter: criteria
         });
 

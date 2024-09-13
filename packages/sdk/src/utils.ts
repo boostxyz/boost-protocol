@@ -2233,3 +2233,15 @@ export function prepareERC721MintActionValidate(
     [holder, toHex(payload)],
   );
 }
+
+export function dedupeActionSteps(_steps: ActionStep[]): ActionStep[] {
+  const steps: ActionStep[] = [],
+    signatures: Record<string, boolean> = {};
+  for (let step of _steps) {
+    const signature = JSON.stringify(step);
+    if (signatures[signature]) continue;
+    steps.push(step);
+    signatures[signature] = true;
+  }
+  return steps;
+}

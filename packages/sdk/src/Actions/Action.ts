@@ -22,12 +22,12 @@ export type Action = EventAction; // | ContractAction | ERC721MintAction
 /**
  * A map of Action component interfaces to their constructors.
  *
- * @type {{ "0x6c3129aa": EventAction; }}
+ * @type {{ "0x7687b0ed": EventAction; }}
  */
 export const ActionByComponentInterface = {
   // ['0x6c3129aa']: ContractAction,
   // ['0x97e083eb']: ERC721MintAction,
-  ['0x6c3129aa']: EventAction,
+  ['0x7687b0ed']: EventAction,
 };
 
 /**

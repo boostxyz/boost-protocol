@@ -1,3 +1,7 @@
+import {
+  readAActionGetComponentInterface,
+  readEventActionGetComponentInterface,
+} from '@boostxyz/evm';
 import { selectors } from '@boostxyz/signatures/events';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { type Hex, type Log, isAddress } from 'viem';
@@ -124,18 +128,6 @@ describe('EventAction', () => {
     const action = await loadFixture(cloneEventAction(fixtures, erc721));
     const count = await action.getActionStepsCount();
     expect(count).toBe(1);
-  });
-
-  test('can get the action claimant', async () => {
-    const action = await loadFixture(cloneEventAction(fixtures, erc721));
-    const claimant = await action.getActionClaimant();
-    claimant.targetContract = claimant.targetContract.toUpperCase() as Hex;
-    expect(claimant).toMatchObject({
-      signatureType: SignatureType.EVENT,
-      signature: selectors['Transfer(address,address,uint256)'] as Hex,
-      fieldIndex: 2,
-      targetContract: erc721.assertValidAddress().toUpperCase(),
-    });
   });
 
   test('can get the action claimant', async () => {

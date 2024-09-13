@@ -1,35 +1,13 @@
-import {
-  mockErc20Abi,
-  readAEventActionGetActionSteps,
-  readEventActionGetActionStepsCount,
-  readEventActionGetComponentInterface,
-  readMockErc20BalanceOf,
-  writeAEventActionPrepare,
-} from '@boostxyz/evm';
 import { selectors } from '@boostxyz/signatures/events';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { getClient } from '@wagmi/core';
-import {
-  ContractFunctionExecutionError,
-  type Hex,
-  type Log,
-  encodeAbiParameters,
-  encodeFunctionData,
-  isAddress,
-  parseEther,
-  toFunctionSelector,
-  zeroAddress,
-} from 'viem';
-import { call } from 'viem/actions';
+import { type Hex, type Log, isAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC20 } from '../../test/MockERC20';
 import type { MockERC721 } from '../../test/MockERC721';
 import { accounts } from '../../test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  fundErc20,
   fundErc721,
 } from '../../test/helpers';
 import {
@@ -85,7 +63,7 @@ function cloneEventAction(fixtures: Fixtures, erc721: MockERC721) {
   };
 }
 
-describe.only('EventAction', () => {
+describe('EventAction', () => {
   beforeEach(async () => {
     erc721 = await loadFixture(fundErc721(defaultOptions));
   });

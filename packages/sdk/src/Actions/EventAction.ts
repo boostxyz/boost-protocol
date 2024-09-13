@@ -31,7 +31,6 @@ import {
   UnrecognizedFilterTypeError,
 } from '../errors';
 import {
-  type ActionClaimant,
   type ActionStep,
   type Criteria,
   type EventActionPayload,
@@ -39,10 +38,13 @@ import {
   FilterType,
   type GetLogsParams,
   PrimitiveType,
+  type RawActionClaimant,
+  type RawActionStep,
   type ReadParams,
   RegistryType,
   type WriteParams,
   dedupeActionSteps,
+  fromRawActionStep,
   isEventActionPayloadSimple,
   prepareEventActionPayload,
 } from '../utils';
@@ -127,8 +129,8 @@ export class EventAction extends DeployableTarget<
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    })) as ActionStep[];
-    return dedupeActionSteps(steps);
+    })) as RawActionStep[];
+    return dedupeActionSteps(steps.map(fromRawActionStep));
   }
 
   /**
@@ -157,12 +159,13 @@ export class EventAction extends DeployableTarget<
   public async getActionClaimant(
     params?: ReadParams<typeof eventActionAbi, 'getActionClaimant'>,
   ) {
-    return readEventActionGetActionClaimant(this._config, {
+    const result = (await readEventActionGetActionClaimant(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    }) as Promise<ActionClaimant>;
+    })) as RawActionClaimant;
+    return fromRawActionStep(result);
   }
 
   /**

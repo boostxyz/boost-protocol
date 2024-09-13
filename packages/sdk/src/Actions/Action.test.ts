@@ -25,6 +25,7 @@ export function basicErc721TransferAction(
 ): EventActionPayloadSimple {
   return {
     actionClaimant: {
+      chainid: 31337,
       signatureType: SignatureType.EVENT,
       signature: selectors['Transfer(address,address,uint256)'] as Hex,
       fieldIndex: 2,
@@ -32,6 +33,7 @@ export function basicErc721TransferAction(
     },
     actionSteps: [
       {
+        chainid: 31337,
         signature: selectors['Transfer(address,address,uint256)'] as Hex,
         signatureType: SignatureType.EVENT,
         actionType: 0,

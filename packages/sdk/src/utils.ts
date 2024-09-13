@@ -362,6 +362,11 @@ export interface ActionClaimant {
    * @type {Address}
    */
   targetContract: Address;
+  /**
+   * The chain id of the target contract.
+   * @type {number}
+   */
+  chainid: number;
 }
 
 /**
@@ -397,11 +402,39 @@ export interface ActionStep {
    */
   targetContract: Address;
   /**
+   * The chain id of the target contract.
+   * @type {number}
+   */
+  chainid: number;
+  /**
    * The criteria used for this action step.
    *
    * @type {Criteria}
    */
   actionParameter: Criteria;
+}
+type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
+export type RawActionStep = Overwrite<ActionStep, { chainid: bigint }>;
+export type RawActionClaimant = Overwrite<ActionClaimant, { chainid: bigint }>;
+
+export function toRawActionStep<T extends ActionStep | ActionClaimant>(obj: T) {
+  return {
+    ...obj,
+    chainid: BigInt(obj.chainid),
+  };
+}
+
+export function fromRawActionStep<T extends RawActionStep | RawActionClaimant>(
+  obj: T,
+) {
+  if (obj.chainid > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('Chain ID exceeds max safe integer');
+  }
+
+  return {
+    ...obj,
+    chainid: Number(obj.chainid),
+  };
 }
 
 /**
@@ -501,6 +534,8 @@ export const prepareEventActionPayload = ({
   actionStepThree,
   actionStepFour,
 }: EventActionPayloadRaw) => {
+  // note chainIds are technically uint256 but viem treats them (safely) as numbers,
+  // so we encode them as uint32 here to avoid downcast issues
   return encodeAbiParameters(
     [
       {
@@ -515,6 +550,7 @@ export const prepareEventActionPayload = ({
               { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'fieldIndex' },
               { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
             ],
           },
           {
@@ -525,6 +561,7 @@ export const prepareEventActionPayload = ({
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
               {
                 type: 'tuple',
                 name: 'actionParameter',
@@ -545,6 +582,7 @@ export const prepareEventActionPayload = ({
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
               {
                 type: 'tuple',
                 name: 'actionParameter',
@@ -565,6 +603,7 @@ export const prepareEventActionPayload = ({
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
               {
                 type: 'tuple',
                 name: 'actionParameter',
@@ -585,6 +624,7 @@ export const prepareEventActionPayload = ({
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
               {
                 type: 'tuple',
                 name: 'actionParameter',
@@ -602,11 +642,11 @@ export const prepareEventActionPayload = ({
     ],
     [
       {
-        actionClaimant,
-        actionStepOne,
-        actionStepTwo,
-        actionStepThree,
-        actionStepFour,
+        actionClaimant: toRawActionStep(actionClaimant),
+        actionStepOne: toRawActionStep(actionStepOne),
+        actionStepTwo: toRawActionStep(actionStepTwo),
+        actionStepThree: toRawActionStep(actionStepThree),
+        actionStepFour: toRawActionStep(actionStepFour),
       },
     ],
   );

@@ -37,6 +37,7 @@ function basicErc721TransferAction(
       signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
       fieldIndex: 2,
       targetContract: erc721.assertValidAddress(),
+      chainid: defaultOptions.config.chains[0].id,
     },
     actionSteps: [
       {
@@ -44,6 +45,7 @@ function basicErc721TransferAction(
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: erc721.assertValidAddress(),
+        chainid: defaultOptions.config.chains[0].id,
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,

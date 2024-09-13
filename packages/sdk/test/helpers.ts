@@ -645,6 +645,7 @@ export function makeMockEventActionPayload(
     signatureType: SignatureType.EVENT,
     actionType: 0,
     targetContract: erc20Address,
+    chainid: 31337,
     actionParameter: {
       filterType: FilterType.EQUAL,
       fieldType: PrimitiveType.ADDRESS,
@@ -655,6 +656,7 @@ export function makeMockEventActionPayload(
 
   return {
     actionClaimant: {
+      chainid: 31337,
       signatureType: SignatureType.EVENT,
       signature:
         '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
@@ -674,6 +676,7 @@ export function makeMockFunctionActionPayload(
 ) {
   const step: ActionStep = {
     signature: '0x40c10f19',
+    chainid: 31337,
     signatureType: SignatureType.FUNC,
     actionType: 0,
     targetContract: erc20Address,
@@ -691,6 +694,7 @@ export function makeMockFunctionActionPayload(
       signature: '0x40c10f19',
       fieldIndex: 0,
       targetContract: erc20Address,
+      chainid: 31337,
     },
     actionStepOne: step,
     actionStepTwo: step,

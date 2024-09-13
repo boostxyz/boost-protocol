@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.3
+
+### Minor Changes
+
+- ba5b22f: event action hardening, alternate event action payload shape, action step deduping
+
 ## 0.0.0-alpha.2
 
 ### Minor Changes

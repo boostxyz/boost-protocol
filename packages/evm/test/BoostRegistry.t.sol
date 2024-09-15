@@ -11,7 +11,7 @@ import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
-
+import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
@@ -33,6 +33,7 @@ contract BoostRegistryTest is Test {
     );
 
     SimpleBudget baseBudgetImpl;
+    ManagedBudget baseManagedBudgetImpl;
     bytes32 constant SIMPLE_BUDGET_IDENTIFIER =
         keccak256(abi.encodePacked(BoostRegistry.RegistryType.BUDGET, keccak256(abi.encodePacked("SimpleBudget"))));
 
@@ -40,6 +41,7 @@ contract BoostRegistryTest is Test {
         registry = new BoostRegistry();
         baseAllowListImpl = new SimpleAllowList();
         baseBudgetImpl = new SimpleBudget();
+        baseManagedBudgetImpl = new ManagedBudget();
 
         // The AllowList is needed for later tests, so we register it during setup
         registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
@@ -233,6 +235,27 @@ contract BoostRegistryTest is Test {
         assertTrue(clone.baseType == BoostRegistry.RegistryType.BUDGET);
         assertEq(address(clone.deployer), address(this));
         assertEq(clone.name, "Testing ABudget");
+    }
+
+
+    function testGetCloneManagedBudget() public {
+        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(baseManagedBudgetImpl));
+
+        bytes32 cloneId = registry.getCloneIdentifier(
+            BoostRegistry.RegistryType.BUDGET, address(baseManagedBudgetImpl), address(this), "Testing AManagedBudget"
+        );
+        registry.deployClone(
+            BoostRegistry.RegistryType.BUDGET,
+            address(baseBudgetImpl),
+            "Testing AManagedBudget",
+            abi.encode(ManagedBudget.InitPayload({owner: address(this), authorized: new address[](0), roles: new uint256[](1)}))
+        );
+
+        BoostRegistry.Clone memory clone = registry.getClone(cloneId);
+
+        assertTrue(clone.baseType == BoostRegistry.RegistryType.BUDGET);
+        assertEq(address(clone.deployer), address(this));
+        assertEq(clone.name, "Testing AManagedBudget");
     }
 
     function testGetClone_NotRegistered() public {

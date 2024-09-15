@@ -237,7 +237,6 @@ contract BoostRegistryTest is Test {
         assertEq(clone.name, "Testing ABudget");
     }
 
-
     function testGetCloneManagedBudget() public {
         registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(baseManagedBudgetImpl));
 
@@ -246,9 +245,11 @@ contract BoostRegistryTest is Test {
         );
         registry.deployClone(
             BoostRegistry.RegistryType.BUDGET,
-            address(baseBudgetImpl),
+            address(baseManagedBudgetImpl),
             "Testing AManagedBudget",
-            abi.encode(ManagedBudget.InitPayload({owner: address(this), authorized: new address[](0), roles: new uint256[](1)}))
+            abi.encode(
+                ManagedBudget.InitPayload({owner: address(this), authorized: new address[](0), roles: new uint256[](1)})
+            )
         );
 
         BoostRegistry.Clone memory clone = registry.getClone(cloneId);

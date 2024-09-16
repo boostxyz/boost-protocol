@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.4
+
+### Minor Changes
+
+- bcc662c: consume component interfaces from evm in sdk to avoid magic strings
+
 ## 0.0.0-alpha.3
 
 ### Minor Changes

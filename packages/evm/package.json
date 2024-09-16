@@ -17,7 +17,8 @@
       "node": "./dist/generated.js",
       "types": "./dist/generated.d.ts"
     },
-    "./artifacts/contracts/*.json": "./artifacts/contracts/*.json"
+    "./artifacts/contracts/*.json": "./artifacts/contracts/*.json",
+    "./deploys/componentInterfaces.json": "./deploys/componentInterfaces.json"
   },
   "main": "./dist/generated.cjs",
   "module": "./dist/generated.js",

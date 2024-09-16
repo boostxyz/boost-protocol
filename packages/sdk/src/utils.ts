@@ -142,7 +142,7 @@ export type GenericLog<
  * @param {string} input
  * @returns {Hex}
  */
-export function bytes4(input: Hex) {
+export function bytes4(input: string) {
   return slice(isHex(input) ? keccak256(input) : keccak256(toHex(input)), 0, 4);
 }
 

@@ -1,7 +1,7 @@
 import { selectors } from '@boostxyz/signatures/events';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import type { Hex } from 'viem';
-import { beforeAll, beforeEach, describe, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC721 } from '../../test/MockERC721';
 import { accounts } from '../../test/accounts';
 import {
@@ -16,7 +16,7 @@ import {
   PrimitiveType,
   SignatureType,
 } from '../utils';
-import { actionFromAddress } from './Action';
+import { EventAction, actionFromAddress } from './Action';
 
 let fixtures: Fixtures, erc721: MockERC721;
 
@@ -68,12 +68,10 @@ describe('Action', () => {
     erc721 = await loadFixture(fundErc721(defaultOptions));
   });
 
-  test('can automatically instantiate EventAction given an action address', async () => {
+  test('can automatically instantiate EventAction given an address', async () => {
     const _action = await loadFixture(cloneEventAction(fixtures, erc721));
-    const action = await actionFromAddress(
-      defaultOptions,
-      _action.assertValidAddress(),
-    );
-    console.log(action);
+    expect(
+      await actionFromAddress(defaultOptions, _action.assertValidAddress()),
+    ).toBeInstanceOf(EventAction);
   });
 });

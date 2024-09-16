@@ -42,7 +42,14 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "artifacts/**", "out/**", "cache/**", ".next/**"]
+      "outputs": [
+        "dist/**",
+        "artifacts/**",
+        "out/**",
+        "cache/**",
+        ".next/**",
+        "deploys/**"
+      ]
     },
     "signatures#build": {
       "inputs": ["manifests"],

@@ -48,7 +48,8 @@ export type Incentive =
 export const IncentiveByComponentInterface = {
   [APointsIncentive as Hex]: PointsIncentive,
   [AERC20Incentive as Hex]: ERC20Incentive,
-  [AAllowListIncentive as Hex]: AllowListIncentive,
+  // TODO: figure out why evm generates bad bytes4 here
+  ['0x0a466e6f']: AllowListIncentive,
   // [APointsIncentive as Hex]: ERC1155Incentive,
   [ACGDAIncentive as Hex]: CGDAIncentive,
   [AERC20VariableIncentive as Hex]: ERC20VariableIncentive,

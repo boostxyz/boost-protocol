@@ -102,7 +102,7 @@ jobs:
           VITE_ERC20_VARIABLE_INCENTIVE_BASE: ${{ vars.VITE_ERC20_VARIABLE_INCENTIVE_BASE}}
           VITE_POINTS_INCENTIVE_BASE: ${{ vars.VITE_POINTS_INCENTIVE_BASE}}
           VITE_SIGNER_VALIDATOR_BASE: ${{ vars.VITE_SIGNER_VALIDATOR_BASE}}
-        run: npx turbo build --cache-dir=".cache" --filter="@boostxyz/sdk"
+        run: npx turbo build --cache-dir=".cache" --filter="./packages/*"
 
       - name: Create .npmrc
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc

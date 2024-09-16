@@ -7,6 +7,7 @@
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "access": "public",
+  "private": false,
   "browserslist": [
     "node >=14",
     "edge >=88",

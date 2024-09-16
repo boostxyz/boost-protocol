@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:
@@ -102,7 +102,7 @@ jobs:
           VITE_ERC20_VARIABLE_INCENTIVE_BASE: ${{ vars.VITE_ERC20_VARIABLE_INCENTIVE_BASE}}
           VITE_POINTS_INCENTIVE_BASE: ${{ vars.VITE_POINTS_INCENTIVE_BASE}}
           VITE_SIGNER_VALIDATOR_BASE: ${{ vars.VITE_SIGNER_VALIDATOR_BASE}}
-        run: npx turbo build --cache-dir=".cache"
+        run: npx turbo build --cache-dir=".cache" --filter="@boostxyz/sdk"
 
       - name: Create .npmrc
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc

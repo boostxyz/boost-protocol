@@ -1,4 +1,5 @@
 import { aBudgetAbi } from '@boostxyz/evm';
+import { AManagedBudget } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -27,7 +28,7 @@ export type Budget = ManagedBudget; // | SimpleBudget | VestingBudget
 export const BudgetByComponentInterface = {
   // ['0x64683da1']: VestingBudget,
   // ['0x2929d19c']: SimpleBudget,
-  ['0xa0109882']: ManagedBudget,
+  [AManagedBudget as Hex]: ManagedBudget,
 };
 
 /**
@@ -53,7 +54,7 @@ export async function budgetFromAddress(
   if (!Ctor) {
     throw new InvalidComponentInterfaceError(
       Object.keys(BudgetByComponentInterface) as Hex[],
-      interfaceId,
+      interfaceId as Hex,
     );
   }
   return new Ctor(options, address);

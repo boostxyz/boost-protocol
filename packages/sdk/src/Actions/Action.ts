@@ -1,4 +1,5 @@
 import { aActionAbi } from '@boostxyz/evm';
+import { AEventAction } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -27,7 +28,7 @@ export type Action = EventAction; // | ContractAction | ERC721MintAction
 export const ActionByComponentInterface = {
   // ['0x6c3129aa']: ContractAction,
   // ['0x97e083eb']: ERC721MintAction,
-  ['0x7687b0ed']: EventAction,
+  [AEventAction as Hex]: EventAction,
 };
 
 /**
@@ -53,7 +54,7 @@ export async function actionFromAddress(
   if (!Ctor) {
     throw new InvalidComponentInterfaceError(
       Object.keys(ActionByComponentInterface) as Hex[],
-      interfaceId,
+      interfaceId as Hex,
     );
   }
   return new Ctor(options, address);

@@ -1,4 +1,5 @@
 import { aValidatorAbi } from '@boostxyz/evm';
+import { ASignerValidator } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -21,7 +22,7 @@ export type Validator = SignerValidator;
  * @type {{ "0xd8725ea2": typeof SignerValidator; }}
  */
 export const ValidatorByComponentInterface = {
-  ['0xb8ce7b22']: SignerValidator,
+  [ASignerValidator as Hex]: SignerValidator,
 };
 
 /**
@@ -47,7 +48,7 @@ export async function validatorFromAddress(
   if (!Ctor) {
     throw new InvalidComponentInterfaceError(
       Object.keys(ValidatorByComponentInterface) as Hex[],
-      interfaceId,
+      interfaceId as Hex,
     );
   }
   return new Ctor(options, address);

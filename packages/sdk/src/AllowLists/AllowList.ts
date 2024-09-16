@@ -1,4 +1,8 @@
 import { aAllowListAbi } from '@boostxyz/evm';
+import {
+  ASimpleAllowList,
+  ASimpleDenyList,
+} from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -22,8 +26,8 @@ export type AllowList = SimpleAllowList | SimpleDenyList;
  * @type {{ "0x2bc9016b": SimpleAllowList; "0x9d585f63": SimpleDenyList; }}
  */
 export const AllowListByComponentInterface = {
-  ['0x8ba1fc24']: SimpleAllowList,
-  ['0x3d30a22c']: SimpleDenyList,
+  [ASimpleAllowList as Hex]: SimpleAllowList,
+  [ASimpleDenyList as Hex]: SimpleDenyList,
 };
 
 /**
@@ -49,7 +53,7 @@ export async function allowListFromAddress(
   if (!Ctor) {
     throw new InvalidComponentInterfaceError(
       Object.keys(AllowListByComponentInterface) as Hex[],
-      interfaceId,
+      interfaceId as Hex,
     );
   }
   return new Ctor(options, address);

@@ -1,4 +1,11 @@
 import { aIncentiveAbi } from '@boostxyz/evm';
+import {
+  AAllowListIncentive,
+  ACGDAIncentive,
+  AERC20Incentive,
+  AERC20VariableIncentive,
+  APointsIncentive,
+} from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
@@ -39,12 +46,12 @@ export type Incentive =
  * @type {{ "0xc5b24b8e": typeof PointsIncentive; "0x8c901437": typeof ERC20Incentive; "0x0a466e6f": typeof AllowListIncentive; "0xa39e44d9": typeof CGDAIncentive; "0x6060409d": typeof ERC20VariableIncentive }}
  */
 export const IncentiveByComponentInterface = {
-  ['0xc5b24b8e']: PointsIncentive,
-  ['0x8c901437']: ERC20Incentive,
-  ['0x0a466e6f']: AllowListIncentive,
-  // ['0x6aa68002']: ERC1155Incentive,
-  ['0xa39e44d9']: CGDAIncentive,
-  ['0x6060409d']: ERC20VariableIncentive,
+  [APointsIncentive as Hex]: PointsIncentive,
+  [AERC20Incentive as Hex]: ERC20Incentive,
+  [AAllowListIncentive as Hex]: AllowListIncentive,
+  // [APointsIncentive as Hex]: ERC1155Incentive,
+  [ACGDAIncentive as Hex]: CGDAIncentive,
+  [AERC20VariableIncentive as Hex]: ERC20VariableIncentive,
 };
 
 /**
@@ -70,7 +77,7 @@ export async function incentiveFromAddress(
   if (!Ctor) {
     throw new InvalidComponentInterfaceError(
       Object.keys(IncentiveByComponentInterface) as Hex[],
-      interfaceId,
+      interfaceId as Hex,
     );
   }
   return new Ctor(options, address);

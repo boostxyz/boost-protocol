@@ -16,6 +16,9 @@ export default defineConfig({
     hardhat({
       project: '.',
       exclude,
+      commands: {
+        build: 'hardhat --config hardhat_build.config.cjs compile',
+      },
     }),
     actions(),
   ],

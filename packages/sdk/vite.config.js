@@ -18,6 +18,7 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
 /** @type {import('vite').UserConfig} */
 export default {
   build: {
+    sourcemap: true,
     rollupOptions: {
       external: [/^viem/, /^@wagmi(?!.*\/codegen)/, /^@boostxyz\/signatures/],
     },

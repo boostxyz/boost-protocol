@@ -3,7 +3,7 @@
   "version": "0.0.0-alpha.5",
   "license": "GPL-3.0-or-later",
   "type": "module",
-  "files": ["dist"],
+  "files": ["dist", "src"],
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "access": "public",

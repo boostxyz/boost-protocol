@@ -2,8 +2,9 @@ import { selectors } from '@boostxyz/signatures/events';
 import {
   loadFixture,
   mine,
+  reset,
 } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import hre from 'hardhat';
+import dotenv from 'dotenv';
 import { type Address, type Hex, parseEther } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BoostCore } from '../src/BoostCore';
@@ -21,19 +22,27 @@ import {
   deployFixtures,
   fundBudget,
 } from './helpers';
-import { setupConfig, testAccount } from './viem';
+
+dotenv.config();
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
 describe('Boost with NFT Minting Incentive', () => {
+  if (!process.env.ALCHEMY_API_KEY) {
+    console.warn('Skipping tests: ALCHEMY_API_KEY is not defined');
+    test.skip('Skipping tests: ALCHEMY_API_KEY is not defined');
+    return;
+  }
   // We take the address of the imposter from the transaction above
   const boostImpostor = '0xE59C9Ca7FFA00471AA2ADA42C0a65C6CaabD06B8' as Address;
-
+  const BASE_CHAIN_URL =
+    'https://base-mainnet.g.alchemy.com/v2/' + process.env.ALCHEMY_API_KEY;
+  const BASE_CHAIN_BLOCK = 13300000;
   const selector = selectors[
     'Purchased(address,address,uint256,uint256,uint256)'
   ] as Hex;
   beforeAll(async () => {
-    //await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
+    await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
     fixtures = await loadFixture(deployFixtures);
   });
 

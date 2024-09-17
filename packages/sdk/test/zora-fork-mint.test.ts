@@ -4,13 +4,7 @@ import {
   mine,
 } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import hre from 'hardhat';
-import {
-  type Address,
-  type Hex,
-  type PublicClient,
-  type WalletClient,
-  parseEther,
-} from 'viem';
+import { type Address, type Hex, parseEther } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BoostCore } from '../src/BoostCore';
 import {
@@ -50,15 +44,13 @@ describe('Boost with NFT Minting Incentive', () => {
   test('should create a boost for incentivizing NFT minting', async () => {
     const { budget, erc20 } = budgets;
     const targetContract = '0xDa8dD2807A33FDA5983F56812765a88B46f0B90B';
-    const walletClient = await hre.viem.getWalletClient(testAccount.address);
 
     // This is the zora contract we're going to push a transaction against
     //const contractEntryPoint = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
     const { core, bases } = fixtures;
+
     const client = new BoostCore({
-      // biome-ignore lint/suspicious/noExplicitAny: The hardhat and wagmi wallet clients are compatible
-      config: setupConfig(walletClient as any),
-      account: testAccount,
+      ...defaultOptions,
       address: core.assertValidAddress(),
     });
     const owner = defaultOptions.account.address;

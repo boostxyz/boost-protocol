@@ -1,0 +1,12 @@
+name: "🚧 Danger"
+on:
+  pull_request:
+jobs:
+  danger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Danger
+        uses: danger/danger-js@9.1.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

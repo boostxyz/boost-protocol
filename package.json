@@ -36,6 +36,7 @@
     "@vitest/coverage-v8": "^1.6.0",
     "@wagmi/core": "^2.13.4",
     "arg": "^5.0.2",
+    "danger": "^12.3.3",
     "find-process": "^1.4.7",
     "hardhat": "^2.22.5",
     "lefthook": "^1.6.15",

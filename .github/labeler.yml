@@ -1,0 +1,8 @@
+"SDK":
+  - "packages/sdk/**/*"
+"EVM":
+  - "packages/evm/**/*"
+"examples":
+  - "packages/examples/**/*"
+"documentation":
+  - "docs/**/*"

@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.6
+
+### Patch Changes
+
+- 2225e57: configure sdk to generate sourcemaps, include src in dep bundle so as not to break "sources" field
+
 ## 0.0.0-alpha.5
 
 ### Minor Changes

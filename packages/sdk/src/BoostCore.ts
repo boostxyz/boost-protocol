@@ -9,10 +9,12 @@ import {
   readBoostCoreProtocolFeeReceiver,
   readIAuthIsAuthorized,
   simulateBoostCoreClaimIncentive,
+  simulateBoostCoreClaimIncentiveFor,
   simulateBoostCoreSetClaimFee,
   simulateBoostCoreSetCreateBoostAuth,
   simulateBoostCoreSetProtocolFeeReceiver,
   writeBoostCoreClaimIncentive,
+  writeBoostCoreClaimIncentiveFor,
   writeBoostCoreSetClaimFee,
   writeBoostCoreSetCreateBoostAuth,
   writeBoostCoreSetProtocolFeeReceiver,
@@ -515,6 +517,74 @@ export class BoostCore extends Deployable<
       },
     );
     const hash = await writeBoostCoreClaimIncentive(this._config, request);
+    return { hash, result };
+  }
+
+  /**
+   * Claims one incentive for a given `Boost` on behalf of another user by `boostId` and `incentiveId`
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId
+   * @param {bigint} incentiveId
+   * @param {Address} referrer
+   * @param {Hex} data
+   * @param {Address} claimant
+   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>} [params]
+   * @returns {unknown}
+   */
+  public async claimIncentiveFor(
+    boostId: bigint,
+    incentiveId: bigint,
+    referrer: Address,
+    data: Hex,
+    claimant: Address,
+    params?: WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>,
+  ) {
+    return this.awaitResult(
+      this.claimIncentiveForRaw(
+        boostId,
+        incentiveId,
+        referrer,
+        data,
+        claimant,
+        params,
+      ),
+    );
+  }
+
+  /**
+   * Claim an incentive for a Boost on behalf of another user
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId - The ID of the Boost
+   * @param {bigint} incentiveId - The ID of the Incentive
+   * @param {Address} referrer - The address of the referrer (if any)
+   * @param {Hex} data - The data for the claim
+   * @param {Address} claimant - The address of the user eligible for the incentive payout
+   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>} [params]
+   * @returns {unknown}
+   */
+  public async claimIncentiveForRaw(
+    boostId: bigint,
+    incentiveId: bigint,
+    referrer: Address,
+    data: Hex,
+    claimant: Address,
+    params?: WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>,
+  ) {
+    const { request, result } = await simulateBoostCoreClaimIncentiveFor(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [boostId, incentiveId, referrer, data, claimant],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeBoostCoreClaimIncentiveFor(this._config, request);
     return { hash, result };
   }
 

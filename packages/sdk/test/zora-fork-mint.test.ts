@@ -5,7 +5,17 @@ import {
   reset,
 } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import dotenv from 'dotenv';
-import { type Address, type Hex, parseEther } from 'viem';
+import {
+  http,
+  type Address,
+  type Hex,
+  createTestClient,
+  pad,
+  parseEther,
+  publicActions,
+  walletActions,
+} from 'viem';
+import { base } from 'viem/chains';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BoostCore } from '../src/BoostCore';
 import {
@@ -14,7 +24,9 @@ import {
   PrimitiveType,
   SignatureType,
   StrategyType,
+  prepareSignerValidatorClaimDataPayload,
 } from '../src/utils';
+import { accounts } from './accounts';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -34,10 +46,11 @@ describe('Boost with NFT Minting Incentive', () => {
     return;
   }
   // We take the address of the imposter from the transaction above
-  const boostImpostor = '0xE59C9Ca7FFA00471AA2ADA42C0a65C6CaabD06B8' as Address;
+  const boostImpostor = '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
+  const trustedSigner = accounts.at(0)!;
   const BASE_CHAIN_URL =
     'https://base-mainnet.g.alchemy.com/v2/' + process.env.ALCHEMY_API_KEY;
-  const BASE_CHAIN_BLOCK = 13300000;
+  const BASE_CHAIN_BLOCK = 17519193;
   const selector = selectors[
     'Purchased(address,address,uint256,uint256,uint256)'
   ] as Hex;
@@ -52,10 +65,10 @@ describe('Boost with NFT Minting Incentive', () => {
 
   test('should create a boost for incentivizing NFT minting', async () => {
     const { budget, erc20 } = budgets;
-    const targetContract = '0xDa8dD2807A33FDA5983F56812765a88B46f0B90B';
-
+    const targetContract = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
+    const inputData =
+      '0x359f130200000000000000000000000004e2516a2c207e84a1839755675dfd8ef6302f0a0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000084dc02a3b41ff6fb0b9288234b2b8051b641bf00';
     // This is the zora contract we're going to push a transaction against
-    //const contractEntryPoint = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
     const { core, bases } = fixtures;
 
     const client = new BoostCore({
@@ -101,6 +114,7 @@ describe('Boost with NFT Minting Incentive', () => {
       eventActionPayload,
     );
 
+    console.log('Event Action:', eventAction);
     // Create the boost using the custom EventAction
     await client.createBoost({
       protocolFee: 1n,
@@ -109,8 +123,8 @@ describe('Boost with NFT Minting Incentive', () => {
       budget: budget, // Use the ManagedBudget
       action: eventAction, // Pass the manually created EventAction
       validator: new bases.SignerValidator(defaultOptions, {
-        signers: [owner],
-        validatorCaller: owner,
+        signers: [owner, trustedSigner.account!],
+        validatorCaller: fixtures.core.assertValidAddress(),
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: owner,
@@ -125,6 +139,58 @@ describe('Boost with NFT Minting Incentive', () => {
         }),
       ],
     });
+
+    // Use viem to send the transaction from the impersonated account
+    const walletClient = await createTestClient({
+      transport: http('http://127.0.0.1:8545'),
+      chain: base,
+      mode: 'hardhat',
+    })
+      .extend(publicActions)
+      .extend(walletActions);
+
+    await walletClient.impersonateAccount({
+      address: boostImpostor,
+    });
+    await walletClient.setBalance({
+      address: boostImpostor,
+      value: parseEther('10'),
+    });
     expect(await client.getBoostCount()).toBe(1n);
+    const boost = await client.getBoost(0n);
+    console.log('Boost:', boost);
+    const action = boost.action;
+    expect(action).toBeDefined();
+    const testReceipt = await walletClient.sendTransaction({
+      data: inputData,
+      account: boostImpostor,
+      to: targetContract,
+      value: 29_777_000_000_000_000n,
+    });
+    const validation = await action.validateActionSteps();
+    console.log('Action:', testReceipt);
+    console.log('Validation:', validation);
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveQuantity = 1;
+    const referrer = accounts.at(1)!.account!;
+
+    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: 8453,
+      validator: boost.validator.assertValidAddress(),
+      incentiveQuantity,
+      claimant: boostImpostor,
+      boostId: boost.id,
+    });
+
+    await fixtures.core.claimIncentiveFor(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+      boostImpostor,
+      { value: parseEther('0.000075') },
+    );
   });
 });

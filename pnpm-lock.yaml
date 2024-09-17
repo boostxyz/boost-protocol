@@ -51,6 +51,9 @@ importers:
       arg:
         specifier: ^5.0.2
         version: 5.0.2
+      dotenv:
+        specifier: 16.4.5
+        version: 16.4.5
       find-process:
         specifier: ^1.4.7
         version: 1.4.7
@@ -113,7 +116,7 @@ importers:
     dependencies:
       '@boostxyz/sdk':
         specifier: '*'
-        version: link:../../packages/sdk
+        version: 0.0.0-alpha.5(@wagmi/core@2.13.0)(abitype@1.0.6)(viem@2.9.27)
       '@chakra-ui/icons':
         specifier: 2.1.1
         version: 2.1.1(@chakra-ui/system@2.6.2)(react@18.3.0)
@@ -1899,6 +1902,23 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@boostxyz/sdk@0.0.0-alpha.5(@wagmi/core@2.13.0)(abitype@1.0.6)(viem@2.9.27):
+    resolution: {integrity: sha512-HJwgkD3e9osMj14Tw2+uQG3ns3GcEBwyX1I8tJjboD86ZcJVWeUj9YdJr8ptSMve00l2QLUM2AVj/oLGO0eQXw==}
+    peerDependencies:
+      '@wagmi/core': 2.13.0
+      abitype: '1'
+      viem: 2.9.27
+    dependencies:
+      '@boostxyz/signatures': 0.0.0-alpha.0
+      '@wagmi/core': 2.13.0(@types/react@18.3.0)(react@18.3.0)(typescript@5.4.5)(viem@2.9.27)
+      abitype: 1.0.6(typescript@5.4.5)
+      viem: 2.9.27(typescript@5.4.5)
+    dev: false
+
+  /@boostxyz/signatures@0.0.0-alpha.0:
+    resolution: {integrity: sha512-mQne3yglpV5aTn78uhgxVLVcNVRvyFW2dyUxcZDvw2DMASoZ8Rcu+W/WJZGydKTx0WyOCko+V1F7WGX+xPp81Q==}
+    dev: false
 
   /@chakra-ui/accordion@2.3.1(@chakra-ui/system@2.6.2)(framer-motion@11.1.7)(react@18.3.0):
     resolution: {integrity: sha512-FSXRm8iClFyU+gVaXisOSEw0/4Q+qZbFRiuhIAkVU6Boj0FxAMrlo9a8AV5TuF77rgaHytCdHk0Ng+cyUijrag==}
@@ -7624,6 +7644,20 @@ packages:
     dependencies:
       typescript: 5.3.3
       zod: 3.22.4
+
+  /abitype@1.0.6(typescript@5.4.5):
+    resolution: {integrity: sha512-MMSqYh4+C/aVqI2RQaWqbvI4Kxo5cQV40WQ4QFtDnNzCkqChm8MuENhElmynZlO0qUy/ObkEUaXtKqYnx1Kp3A==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+      zod: ^3 >=3.22.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      zod:
+        optional: true
+    dependencies:
+      typescript: 5.4.5
+    dev: false
 
   /abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}

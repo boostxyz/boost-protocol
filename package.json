@@ -39,6 +39,7 @@
     "arg": "^5.0.2",
     "find-process": "^1.4.7",
     "hardhat": "^2.22.5",
+    "dotenv": "16.4.5",
     "lefthook": "^1.6.15",
     "prettier": "^3.2.5",
     "solady": "^0.0.208",

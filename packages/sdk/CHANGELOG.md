@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.7
+
+### Patch Changes
+
+- 34fff84: fix environment passthrough for event action base address
+
 ## 0.0.0-alpha.6
 
 ### Patch Changes

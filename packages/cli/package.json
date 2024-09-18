@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/cli",
-  "version": "0.0.0-alpha.4",
+  "version": "0.0.0-alpha.5",
   "description": "A repository of useful scripts to interact with the protocol",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "private": true,

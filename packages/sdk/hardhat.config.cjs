@@ -9,7 +9,7 @@ module.exports = {
       forking: {
         url:
           'https://base-mainnet.g.alchemy.com/v2/' +
-          process.env.ALCHEMY_API_KEY,
+          process.env.VITE_ALCHEMY_API_KEY,
       },
     },
   },

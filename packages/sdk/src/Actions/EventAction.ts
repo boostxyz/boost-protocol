@@ -1,9 +1,7 @@
 import {
   eventActionAbi,
   readEventActionGetActionClaimant,
-  readEventActionGetActionStep,
   readEventActionGetActionSteps,
-  readEventActionGetActionStepsCount,
   simulateEventActionExecute,
   writeEventActionExecute,
 } from '@boostxyz/evm';

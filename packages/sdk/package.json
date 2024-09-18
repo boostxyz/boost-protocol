@@ -179,6 +179,7 @@
     "dev": "vite build --watch",
     "test": "vitest dev",
     "test:ci": "CI=true vitest --coverage",
+    "test:delegate": "vitest test/delegate-action.test.ts",
     "typedoc": "npx typedoc"
   },
   "dependencies": {

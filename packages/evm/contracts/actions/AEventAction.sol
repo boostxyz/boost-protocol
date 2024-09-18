@@ -42,7 +42,7 @@ abstract contract AEventAction is AAction {
     }
 
     struct ActionStep {
-        bytes4 signature;
+        bytes32 signature;
         SignatureType signatureType;
         uint8 actionType;
         address targetContract;
@@ -61,7 +61,7 @@ abstract contract AEventAction is AAction {
     /// @param targetContract The address of the target contract
     struct ActionClaimant {
         SignatureType signatureType;
-        bytes4 signature;
+        bytes32 signature;
         uint8 fieldIndex;
         address targetContract;
     }

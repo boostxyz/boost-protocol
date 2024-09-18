@@ -36,32 +36,9 @@ import {
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
-describe('Boost with NFT Minting Incentive', () => {
-  if (process.env.VITE_ALCHEMY_API_KEY) {
-    console.warn('Skipping tests: VITE_ALCHEMY_API_KEY is not defined');
-    test.skip('Skipping tests: VITE_ALCHEMY_API_KEY is not defined');
-    return;
-  }
-  // We take the address of the imposter from the transaction above
-  const boostImpostor = '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
-  const trustedSigner = accounts.at(0)!;
-  const BASE_CHAIN_URL =
-    'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
-  const BASE_CHAIN_BLOCK = 17519193;
-  const selector = selectors[
-    'Purchased(address,address,uint256,uint256,uint256)'
-  ] as Hex;
-  beforeAll(async () => {
-    await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
-    fixtures = await loadFixture(deployFixtures);
-  });
-
-  beforeEach(async () => {
-    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
-  });
-
-  test('should create a boost for incentivizing NFT minting', async () => {
-    const { budget, erc20 } = budgets;
+describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
+  'Boost with NFT Minting Incentive',
+  () => {
     // This is the zora contract we're going to push a transaction against
     const targetContract = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
     // We take the raw inputData off of an existing historical transaction
@@ -74,128 +51,149 @@ describe('Boost with NFT Minting Incentive', () => {
     const incentiveQuantity = 1;
     const referrer = accounts.at(1)!.account!;
 
-    const { core, bases } = fixtures;
-
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
+    // We take the address of the imposter from the transaction above
+    const boostImpostor =
+      '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
+    const trustedSigner = accounts.at(0)!;
+    const BASE_CHAIN_URL =
+      'https://base-mainnet.g.alchemy.com/v2/' +
+      process.env.VITE_ALCHEMY_API_KEY;
+    const BASE_CHAIN_BLOCK = 17519193;
+    const selector = selectors[
+      'Purchased(address,address,uint256,uint256,uint256)'
+    ] as Hex;
+    beforeAll(async () => {
+      await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
+      fixtures = await loadFixture(deployFixtures);
     });
-    const owner = defaultOptions.account.address;
-    // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
-    await mine();
 
-    // Step defining the action for Transfer event
-    const eventActionStep: ActionStep = {
-      signature: selector, // Transfer(address,address,uint256) event signature
-      signatureType: SignatureType.EVENT, // We're working with an event
-      actionType: 0, // Custom action type (set as 0 for now)
-      targetContract: targetContract, // Address of the ERC20 contract
-      // We want to target the Minter property on the Purchase event
-      actionParameter: {
-        filterType: FilterType.EQUAL, // Filter to check for equality
-        fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
-        fieldIndex: 1, // Might need to be 2, we'll see - let's log this
-        filterData: boostImpostor, // Filtering based on the core address
-      },
-    };
+    beforeEach(async () => {
+      budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+    });
 
-    // Define EventActionPayload manually
-    const eventActionPayload = {
-      actionClaimant: {
-        signatureType: SignatureType.EVENT,
+    test('should create a boost for incentivizing NFT minting', async () => {
+      const { budget, erc20 } = budgets;
+
+      const { core, bases } = fixtures;
+
+      const client = new BoostCore({
+        ...defaultOptions,
+        address: core.assertValidAddress(),
+      });
+      const owner = defaultOptions.account.address;
+      // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
+      await mine();
+
+      // Step defining the action for Transfer event
+      const eventActionStep: ActionStep = {
         signature: selector, // Transfer(address,address,uint256) event signature
-        fieldIndex: 0, // Targeting the 'from' address
-        targetContract: boostImpostor, // The ERC20 contract we're monitoring
-      },
-      actionStepOne: eventActionStep, // Use the custom step for action
-      actionStepTwo: eventActionStep, // Repeat the action step if necessary
-      actionStepThree: eventActionStep, // You can expand for more steps if needed
-      actionStepFour: eventActionStep, // Up to 4 action steps
-    };
+        signatureType: SignatureType.EVENT, // We're working with an event
+        actionType: 0, // Custom action type (set as 0 for now)
+        targetContract: targetContract, // Address of the ERC20 contract
+        // We want to target the Minter property on the Purchase event
+        actionParameter: {
+          filterType: FilterType.EQUAL, // Filter to check for equality
+          fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
+          fieldIndex: 1, // Might need to be 2, we'll see - let's log this
+          filterData: boostImpostor, // Filtering based on the core address
+        },
+      };
 
-    // Initialize EventAction with the custom payload
-    const eventAction = new bases.EventAction(
-      defaultOptions,
-      eventActionPayload,
-    );
-
-    console.log('Event Action:', eventAction);
-    // Create the boost using the custom EventAction
-    await client.createBoost({
-      protocolFee: 1n,
-      referralFee: 2n,
-      maxParticipants: 100n,
-      budget: budget, // Use the ManagedBudget
-      action: eventAction, // Pass the manually created EventAction
-      validator: new bases.SignerValidator(defaultOptions, {
-        signers: [owner, trustedSigner.account!], // Whichever account we're going to sign with needs to be a signer
-        validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
-      }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
-        owner: owner,
-        allowed: [owner],
-      }),
-      incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
-          asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
-          limit: 100n,
-          strategy: StrategyType.POOL,
+      // Define EventActionPayload manually
+      const eventActionPayload = {
+        actionClaimant: {
+          signatureType: SignatureType.EVENT,
+          signature: selector, // Transfer(address,address,uint256) event signature
+          fieldIndex: 0, // Targeting the 'from' address
+          targetContract: boostImpostor, // The ERC20 contract we're monitoring
+        },
+        actionStepOne: eventActionStep, // Use the custom step for action
+        actionStepTwo: eventActionStep, // Repeat the action step if necessary
+        actionStepThree: eventActionStep, // You can expand for more steps if needed
+        actionStepFour: eventActionStep, // Up to 4 action steps
+      };
+      // Initialize EventAction with the custom payload
+      const eventAction = new bases.EventAction(
+        defaultOptions,
+        eventActionPayload,
+      );
+      // Create the boost using the custom EventAction
+      await client.createBoost({
+        protocolFee: 1n,
+        referralFee: 2n,
+        maxParticipants: 100n,
+        budget: budget, // Use the ManagedBudget
+        action: eventAction, // Pass the manually created EventAction
+        validator: new bases.SignerValidator(defaultOptions, {
+          signers: [owner, trustedSigner.account!], // Whichever account we're going to sign with needs to be a signer
+          validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
         }),
-      ],
-    });
+        allowList: new bases.SimpleAllowList(defaultOptions, {
+          owner: owner,
+          allowed: [owner],
+        }),
+        incentives: [
+          new bases.ERC20Incentive(defaultOptions, {
+            asset: erc20.assertValidAddress(),
+            reward: parseEther('1'),
+            limit: 100n,
+            strategy: StrategyType.POOL,
+          }),
+        ],
+      });
 
-    // Make sure the boost was created as expected
-    expect(await client.getBoostCount()).toBe(1n);
-    const boost = await client.getBoost(0n);
-    const action = boost.action;
-    expect(action).toBeDefined();
+      // Make sure the boost was created as expected
+      expect(await client.getBoostCount()).toBe(1n);
+      const boost = await client.getBoost(0n);
+      const action = boost.action;
+      expect(action).toBeDefined();
 
-    // Use viem to send the transaction from the impersonated account
-    const walletClient = await createTestClient({
-      transport: http('http://127.0.0.1:8545'),
-      chain: base,
-      mode: 'hardhat',
-    })
-      .extend(publicActions)
-      .extend(walletActions);
-    await walletClient.impersonateAccount({
-      address: boostImpostor,
-    });
-    await walletClient.setBalance({
-      address: boostImpostor,
-      value: parseEther('10'),
-    });
-    const testReceipt = await walletClient.sendTransaction({
-      data: inputData,
-      account: boostImpostor,
-      to: targetContract,
-      value: 29_777_000_000_000_000n,
-    });
+      // Use viem to send the transaction from the impersonated account
+      const walletClient = await createTestClient({
+        transport: http('http://127.0.0.1:8545'),
+        chain: base,
+        mode: 'hardhat',
+      })
+        .extend(publicActions)
+        .extend(walletActions);
+      await walletClient.impersonateAccount({
+        address: boostImpostor,
+      });
+      await walletClient.setBalance({
+        address: boostImpostor,
+        value: parseEther('10'),
+      });
+      const testReceipt = await walletClient.sendTransaction({
+        data: inputData,
+        account: boostImpostor,
+        to: targetContract,
+        value: 29_777_000_000_000_000n,
+      });
 
-    // Make sure that the transaction was sent as expected and validates the action
-    expect(testReceipt).toBeDefined();
-    const validation = await action.validateActionSteps();
-    expect(validation).toBe(true);
-    // Generate the signature using the trusted signer
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
-      signer: trustedSigner,
-      incentiveData,
-      chainId: 8453,
-      validator: boost.validator.assertValidAddress(),
-      incentiveQuantity,
-      claimant: boostImpostor,
-      boostId: boost.id,
-    });
+      // Make sure that the transaction was sent as expected and validates the action
+      expect(testReceipt).toBeDefined();
+      const validation = await action.validateActionSteps();
+      expect(validation).toBe(true);
+      // Generate the signature using the trusted signer
+      const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+        signer: trustedSigner,
+        incentiveData,
+        chainId: 8453,
+        validator: boost.validator.assertValidAddress(),
+        incentiveQuantity,
+        claimant: boostImpostor,
+        boostId: boost.id,
+      });
 
-    // Claim the incentive for the imposter
-    await fixtures.core.claimIncentiveFor(
-      boost.id,
-      0n,
-      referrer,
-      claimDataPayload,
-      boostImpostor,
-      { value: parseEther('0.000075') },
-    );
-  });
-});
+      // Claim the incentive for the imposter
+      await fixtures.core.claimIncentiveFor(
+        boost.id,
+        0n,
+        referrer,
+        claimDataPayload,
+        boostImpostor,
+        { value: parseEther('0.000075') },
+      );
+    });
+  },
+);

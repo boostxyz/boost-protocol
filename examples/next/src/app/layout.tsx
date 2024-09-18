@@ -5,17 +5,19 @@ import type { Metadata } from 'next';
 import { Noto_Sans } from 'next/font/google';
 
 import '@rainbow-me/rainbowkit/styles.css';
+import { Header } from '@/components';
+import Head from 'next/head';
 import { Providers } from './providers';
 
 const noto_sans = Noto_Sans({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Next-Web3-Boilerplate',
-  applicationName: 'Next Web3 Boilerplate',
-  description: 'Next.js Web3 boilerplate built on Wagmi, Viem, and Rainbow',
+  title: 'Boost SDK Examples',
+  applicationName: 'Boost SDK Examples',
+  description: 'Boost SDK examples using the Next.js framework',
   authors: {
-    name: 'Pedrojok01',
-    url: 'https://github.com/Pedrojok01/Next-Web3-Boilerplate',
+    name: 'Sam McCord',
+    url: 'https://github.com/rabbitholegg/boost-protocol',
   },
   icons: 'favicon.ico',
   manifest: 'site.webmanifest',
@@ -26,8 +28,26 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
+      <Head>
+        <link
+          key="matcha"
+          rel="stylesheet"
+          href="https://matcha.mizu.sh/matcha.css"
+        />
+      </Head>
       <body className={noto_sans.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <div className="layout-simple">
+            <Header />
+            <main>{children}</main>
+            <aside>
+              <nav>
+                <ul></ul>
+              </nav>
+            </aside>
+            <footer></footer>
+          </div>
+        </Providers>
       </body>
     </html>
   );

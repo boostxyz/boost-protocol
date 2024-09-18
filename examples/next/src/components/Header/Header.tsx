@@ -13,27 +13,21 @@ const Header: FC = () => {
   const { isTablet } = useWindowSize();
 
   return (
-    <HStack
-      as="header"
-      p={'1.5rem'}
-      position="sticky"
-      top={0}
-      zIndex={10}
-      justifyContent={'space-between'}
-    >
-      <HStack>
-        <Image src={logo.src} alt="logo" width={160} height={45} />
-        {!isTablet && (
-          <Heading as="h1" fontSize={'1.5rem'} className="text-shadow">
-            Inspector
-          </Heading>
-        )}
-      </HStack>
-
-      <HStack>
-        <ConnectButton />
-      </HStack>
-    </HStack>
+    <header>
+      <menu>
+        <li>
+          <Image src={logo.src} alt="logo" width={160} height={45} />{' '}
+          {!isTablet && (
+            <Heading as="h1" fontSize={'1.5rem'} className="text-shadow">
+              Inspector
+            </Heading>
+          )}
+        </li>
+        <li>
+          <ConnectButton />
+        </li>
+      </menu>
+    </header>
   );
 };
 

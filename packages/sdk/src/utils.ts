@@ -512,7 +512,7 @@ export const prepareEventActionPayload = ({
             name: 'actionClaimant',
             components: [
               { type: 'uint8', name: 'signatureType' },
-              { type: 'bytes4', name: 'signature' },
+              { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'fieldIndex' },
               { type: 'address', name: 'targetContract' },
             ],
@@ -521,7 +521,7 @@ export const prepareEventActionPayload = ({
             type: 'tuple',
             name: 'actionStepOne',
             components: [
-              { type: 'bytes4', name: 'signature' },
+              { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },
@@ -541,7 +541,7 @@ export const prepareEventActionPayload = ({
             type: 'tuple',
             name: 'actionStepTwo',
             components: [
-              { type: 'bytes4', name: 'signature' },
+              { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },
@@ -561,7 +561,7 @@ export const prepareEventActionPayload = ({
             type: 'tuple',
             name: 'actionStepThree',
             components: [
-              { type: 'bytes4', name: 'signature' },
+              { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },
@@ -581,7 +581,7 @@ export const prepareEventActionPayload = ({
             type: 'tuple',
             name: 'actionStepFour',
             components: [
-              { type: 'bytes4', name: 'signature' },
+              { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'signatureType' },
               { type: 'uint8', name: 'actionType' },
               { type: 'address', name: 'targetContract' },

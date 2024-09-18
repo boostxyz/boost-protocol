@@ -2,7 +2,7 @@ import {
   readAActionGetComponentInterface,
   readEventActionGetComponentInterface,
 } from '@boostxyz/evm';
-import { selectors } from '@boostxyz/signatures/events';
+import { selectors as eventSelectors } from '@boostxyz/signatures/events';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { type Hex, type Log, isAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
@@ -34,13 +34,13 @@ function basicErc721TransferAction(
   return {
     actionClaimant: {
       signatureType: SignatureType.EVENT,
-      signature: selectors['Transfer(address,address,uint256)'] as Hex,
+      signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
       fieldIndex: 2,
       targetContract: erc721.assertValidAddress(),
     },
     actionSteps: [
       {
-        signature: selectors['Transfer(address,address,uint256)'] as Hex,
+        signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: erc721.assertValidAddress(),
@@ -54,6 +54,35 @@ function basicErc721TransferAction(
     ],
   };
 }
+
+/*
+function basicErc721MintFuncAction(
+  erc721: MockERC721,
+): EventActionPayloadSimple {
+  return {
+    actionClaimant: {
+      signatureType: SignatureType.FUNC,
+      signature: funcSelectors['mint(address)'] as Hex,
+      fieldIndex: 0,
+      targetContract: erc721.assertValidAddress(),
+    },
+    actionSteps: [
+      {
+        signature: funcSelectors['mint(address)'] as Hex,
+        signatureType: SignatureType.FUNC,
+        actionType: 0,
+        targetContract: erc721.assertValidAddress(),
+        actionParameter: {
+          filterType: FilterType.EQUAL,
+          fieldType: PrimitiveType.ADDRESS,
+          fieldIndex: 2,
+          filterData: accounts.at(1)!.account,
+        },
+      },
+    ],
+  };
+}
+*/
 
 function cloneEventAction(fixtures: Fixtures, erc721: MockERC721) {
   return function cloneEventAction() {
@@ -89,7 +118,7 @@ describe('EventAction', () => {
     step.actionParameter.filterData =
       step.actionParameter.filterData.toUpperCase() as Hex;
     expect(step).toMatchObject({
-      signature: selectors['Transfer(address,address,uint256)'] as Hex,
+      signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
       signatureType: SignatureType.EVENT,
       actionType: 0,
       targetContract: erc721.assertValidAddress().toUpperCase(),
@@ -111,7 +140,7 @@ describe('EventAction', () => {
     step.actionParameter.filterData =
       step.actionParameter.filterData.toUpperCase() as Hex;
     expect(step).toMatchObject({
-      signature: selectors['Transfer(address,address,uint256)'] as Hex,
+      signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
       signatureType: SignatureType.EVENT,
       actionType: 0,
       targetContract: erc721.assertValidAddress().toUpperCase(),
@@ -136,7 +165,7 @@ describe('EventAction', () => {
     claimant.targetContract = claimant.targetContract.toUpperCase() as Hex;
     expect(claimant).toMatchObject({
       signatureType: SignatureType.EVENT,
-      signature: selectors['Transfer(address,address,uint256)'] as Hex,
+      signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
       fieldIndex: 2,
       targetContract: erc721.assertValidAddress().toUpperCase(),
     });

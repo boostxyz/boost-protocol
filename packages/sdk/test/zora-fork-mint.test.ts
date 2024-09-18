@@ -65,10 +65,18 @@ describe('Boost with NFT Minting Incentive', () => {
 
   test('should create a boost for incentivizing NFT minting', async () => {
     const { budget, erc20 } = budgets;
+    // This is the zora contract we're going to push a transaction against
     const targetContract = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
+    // We take the raw inputData off of an existing historical transaction
+    // https://basescan.org/tx/0x17a4d7e08acec16f385d2a038b948359919e3675eca22a09789b462a9178a769
     const inputData =
       '0x359f130200000000000000000000000004e2516a2c207e84a1839755675dfd8ef6302f0a0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000084dc02a3b41ff6fb0b9288234b2b8051b641bf00';
-    // This is the zora contract we're going to push a transaction against
+    // For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    // This is only for a single incentive boost
+    const incentiveQuantity = 1;
+    const referrer = accounts.at(1)!.account!;
+
     const { core, bases } = fixtures;
 
     const client = new BoostCore({
@@ -123,8 +131,8 @@ describe('Boost with NFT Minting Incentive', () => {
       budget: budget, // Use the ManagedBudget
       action: eventAction, // Pass the manually created EventAction
       validator: new bases.SignerValidator(defaultOptions, {
-        signers: [owner, trustedSigner.account!],
-        validatorCaller: fixtures.core.assertValidAddress(),
+        signers: [owner, trustedSigner.account!], // Whichever account we're going to sign with needs to be a signer
+        validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
       }),
       allowList: new bases.SimpleAllowList(defaultOptions, {
         owner: owner,
@@ -140,6 +148,12 @@ describe('Boost with NFT Minting Incentive', () => {
       ],
     });
 
+    // Make sure the boost was created as expected
+    expect(await client.getBoostCount()).toBe(1n);
+    const boost = await client.getBoost(0n);
+    const action = boost.action;
+    expect(action).toBeDefined();
+
     // Use viem to send the transaction from the impersonated account
     const walletClient = await createTestClient({
       transport: http('http://127.0.0.1:8545'),
@@ -148,7 +162,6 @@ describe('Boost with NFT Minting Incentive', () => {
     })
       .extend(publicActions)
       .extend(walletActions);
-
     await walletClient.impersonateAccount({
       address: boostImpostor,
     });
@@ -156,24 +169,19 @@ describe('Boost with NFT Minting Incentive', () => {
       address: boostImpostor,
       value: parseEther('10'),
     });
-    expect(await client.getBoostCount()).toBe(1n);
-    const boost = await client.getBoost(0n);
-    console.log('Boost:', boost);
-    const action = boost.action;
-    expect(action).toBeDefined();
     const testReceipt = await walletClient.sendTransaction({
       data: inputData,
       account: boostImpostor,
       to: targetContract,
       value: 29_777_000_000_000_000n,
     });
-    const validation = await action.validateActionSteps();
-    console.log('Action:', testReceipt);
-    console.log('Validation:', validation);
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-    const incentiveQuantity = 1;
-    const referrer = accounts.at(1)!.account!;
 
+    // Make sure that the transaction was sent as expected and validates the action
+    expect(testReceipt).toBeDefined();
+    const validation = await action.validateActionSteps();
+    expect(validation).toBe(true);
+
+    // Geenrate the signature using the trusted signer
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
       signer: trustedSigner,
       incentiveData,
@@ -184,6 +192,7 @@ describe('Boost with NFT Minting Incentive', () => {
       boostId: boost.id,
     });
 
+    // Claim the incentive for the imposter
     await fixtures.core.claimIncentiveFor(
       boost.id,
       0n,

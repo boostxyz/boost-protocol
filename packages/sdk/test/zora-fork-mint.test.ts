@@ -4,7 +4,6 @@ import {
   mine,
   reset,
 } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import dotenv from 'dotenv';
 import {
   http,
   type Address,
@@ -35,21 +34,19 @@ import {
   fundBudget,
 } from './helpers';
 
-dotenv.config();
-
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
 describe('Boost with NFT Minting Incentive', () => {
-  if (!process.env.ALCHEMY_API_KEY) {
-    console.warn('Skipping tests: ALCHEMY_API_KEY is not defined');
-    test.skip('Skipping tests: ALCHEMY_API_KEY is not defined');
+  if (process.env.VITE_ALCHEMY_API_KEY) {
+    console.warn('Skipping tests: VITE_ALCHEMY_API_KEY is not defined');
+    test.skip('Skipping tests: VITE_ALCHEMY_API_KEY is not defined');
     return;
   }
   // We take the address of the imposter from the transaction above
   const boostImpostor = '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
   const trustedSigner = accounts.at(0)!;
   const BASE_CHAIN_URL =
-    'https://base-mainnet.g.alchemy.com/v2/' + process.env.ALCHEMY_API_KEY;
+    'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
   const BASE_CHAIN_BLOCK = 17519193;
   const selector = selectors[
     'Purchased(address,address,uint256,uint256,uint256)'
@@ -180,8 +177,7 @@ describe('Boost with NFT Minting Incentive', () => {
     expect(testReceipt).toBeDefined();
     const validation = await action.validateActionSteps();
     expect(validation).toBe(true);
-
-    // Geenrate the signature using the trusted signer
+    // Generate the signature using the trusted signer
     const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
       signer: trustedSigner,
       incentiveData,

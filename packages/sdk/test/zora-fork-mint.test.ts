@@ -35,39 +35,34 @@ import {
 } from './helpers';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
+// This is the zora contract we're going to push a transaction against
+const targetContract = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
+// We take the raw inputData off of an existing historical transaction
+// https://basescan.org/tx/0x17a4d7e08acec16f385d2a038b948359919e3675eca22a09789b462a9178a769
+const inputData =
+  '0x359f130200000000000000000000000004e2516a2c207e84a1839755675dfd8ef6302f0a0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000084dc02a3b41ff6fb0b9288234b2b8051b641bf00';
+// For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
+const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+// This is only for a single incentive boost
+const incentiveQuantity = 1;
+const referrer = accounts.at(1)!.account!;
+
+// We take the address of the imposter from the transaction above
+const boostImpostor = '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
+const trustedSigner = accounts.at(0)!;
+const BASE_CHAIN_URL =
+  'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
+const BASE_CHAIN_BLOCK = 17519193;
+const selector = selectors[
+  'Purchased(address,address,uint256,uint256,uint256)'
+] as Hex;
 
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
   'Boost with NFT Minting Incentive',
   () => {
-    // This is the zora contract we're going to push a transaction against
-    const targetContract = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
-    // We take the raw inputData off of an existing historical transaction
-    // https://basescan.org/tx/0x17a4d7e08acec16f385d2a038b948359919e3675eca22a09789b462a9178a769
-    const inputData =
-      '0x359f130200000000000000000000000004e2516a2c207e84a1839755675dfd8ef6302f0a0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000084dc02a3b41ff6fb0b9288234b2b8051b641bf00';
-    // For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-    // This is only for a single incentive boost
-    const incentiveQuantity = 1;
-    const referrer = accounts.at(1)!.account!;
-
-    // We take the address of the imposter from the transaction above
-    const boostImpostor =
-      '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
-    const trustedSigner = accounts.at(0)!;
-    const BASE_CHAIN_URL =
-      'https://base-mainnet.g.alchemy.com/v2/' +
-      process.env.VITE_ALCHEMY_API_KEY;
-    const BASE_CHAIN_BLOCK = 17519193;
-    const selector = selectors[
-      'Purchased(address,address,uint256,uint256,uint256)'
-    ] as Hex;
     beforeAll(async () => {
       await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
       fixtures = await loadFixture(deployFixtures);
-    });
-
-    beforeEach(async () => {
       budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
     });
 

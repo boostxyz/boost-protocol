@@ -414,7 +414,7 @@ interface EventActionValidationMeta {
    *
    * @type {Log}
    */
-  log: Log;
+  log?: Log;
   /**
    * The value pulled off the log being validated against
    *

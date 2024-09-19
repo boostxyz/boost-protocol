@@ -476,7 +476,10 @@ export class EventAction extends DeployableTarget<
   ): boolean {
     const fieldValue = decodedArgs[criteria.fieldIndex];
     if (fieldValue === undefined) {
-      throw new FieldValueUndefinedError({ decodedArgs, criteria, fieldValue });
+      throw new FieldValueUndefinedError({
+        criteria,
+        fieldValue,
+      });
     }
     return this.validateFieldAgainstCriteria(criteria, fieldValue, {
       decodedArgs,

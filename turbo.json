@@ -57,6 +57,7 @@
       "inputs": ["manifests"],
       "outputs": ["dist/**"]
     },
+    "lint:ci": {},
     "test": {
       "dependsOn": ["^build"]
     },

@@ -1,11 +1,26 @@
 import type { Address, Hex, PrivateKeyAccount } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
-export const accounts: Array<{
+export type Account = {
   account: Address;
   key: Hex;
   privateKey: PrivateKeyAccount;
-}> = [
+};
+
+export type Accounts = [
+  Account,
+  Account,
+  Account,
+  Account,
+  Account,
+  Account,
+  Account,
+  Account,
+  Account,
+  Account,
+];
+
+export const accounts: Accounts = [
   {
     account: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     key: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
@@ -55,4 +70,4 @@ export const accounts: Array<{
     key: Hex;
     privateKey: PrivateKeyAccount;
   };
-});
+}) as Accounts;

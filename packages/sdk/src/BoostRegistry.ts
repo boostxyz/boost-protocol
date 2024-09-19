@@ -314,12 +314,7 @@ export class BoostRegistry extends Deployable<
       this._config,
       {
         address: this.assertValidAddress(),
-        args: [
-          target.registryType,
-          target.base,
-          displayName,
-          payload.args.at(0)!,
-        ],
+        args: [target.registryType, target.base, displayName, payload.args[0]],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),

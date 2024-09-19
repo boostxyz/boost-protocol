@@ -15,7 +15,7 @@ import {
   walletActions,
 } from 'viem';
 import { base } from 'viem/chains';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { BoostCore } from '../src/BoostCore';
 import {
   type ActionStep,
@@ -45,11 +45,11 @@ const inputData =
 const incentiveData = pad('0xdef456232173821931823712381232131391321934');
 // This is only for a single incentive boost
 const incentiveQuantity = 1;
-const referrer = accounts.at(1)!.account!;
+const referrer = accounts[1].account;
 
 // We take the address of the imposter from the transaction above
 const boostImpostor = '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
-const trustedSigner = accounts.at(0)!;
+const trustedSigner = accounts[0];
 const BASE_CHAIN_URL =
   'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
 const BASE_CHAIN_BLOCK = 17519193;
@@ -120,7 +120,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         budget: budget, // Use the ManagedBudget
         action: eventAction, // Pass the manually created EventAction
         validator: new bases.SignerValidator(defaultOptions, {
-          signers: [owner, trustedSigner.account!], // Whichever account we're going to sign with needs to be a signer
+          signers: [owner, trustedSigner.account], // Whichever account we're going to sign with needs to be a signer
           validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
         }),
         allowList: new bases.SimpleAllowList(defaultOptions, {
@@ -144,7 +144,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       expect(action).toBeDefined();
 
       // Use viem to send the transaction from the impersonated account
-      const walletClient = await createTestClient({
+      const walletClient = createTestClient({
         transport: http('http://127.0.0.1:8545'),
         chain: base,
         mode: 'hardhat',

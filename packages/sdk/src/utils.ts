@@ -465,6 +465,8 @@ export interface EventActionPayloadSimple {
   actionSteps: ActionStep[];
 }
 
+export type ActionStepTuple = [ActionStep, ActionStep, ActionStep, ActionStep];
+
 /**
  * Typeguard to determine if a user is supplying a simple or raw EventActionPayload
  *

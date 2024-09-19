@@ -33,6 +33,7 @@ import {
 import {
   type ActionClaimant,
   type ActionStep,
+  type ActionStepTuple,
   type Criteria,
   type EventActionPayload,
   type EventActionPayloadRaw,
@@ -360,24 +361,24 @@ export class EventAction extends DeployableTarget<
     let rawPayload: EventActionPayloadRaw;
     if (isEventActionPayloadSimple(payload)) {
       // filter out any falsy potential values
-      let tmpSteps = payload.actionSteps.filter((step) => !!step);
+      let tmpSteps: ActionStep[] = payload.actionSteps.filter((step) => !!step);
       if (tmpSteps.length === 0) {
         throw new NoEventActionStepsProvidedError();
       }
       if (tmpSteps.length > 4) {
         throw new TooManyEventActionStepsProvidedError();
       }
-      let steps: ActionStep[] = Array.from({ length: 4 }, (_, i) => {
+      let steps: ActionStepTuple = Array.from({ length: 4 }, (_, i) => {
         // use either the provided step at the given index, or reuse the previous step
         // should aways exist
-        return tmpSteps.at(i)! || tmpSteps.slice(0, i).at(-1)!;
-      });
+        return tmpSteps.at(i) || tmpSteps.at(-1);
+      }) as ActionStepTuple;
       rawPayload = {
         actionClaimant: payload.actionClaimant,
-        actionStepOne: steps.at(0)!,
-        actionStepTwo: steps.at(1)!,
-        actionStepThree: steps.at(2)!,
-        actionStepFour: steps.at(3)!,
+        actionStepOne: steps[0],
+        actionStepTwo: steps[1],
+        actionStepThree: steps[2],
+        actionStepFour: steps[3],
       };
     } else {
       rawPayload = payload;

@@ -270,7 +270,7 @@ export class EventAction extends DeployableTarget<
       }));
     if (!logs.length) return false;
     for (let log of logs) {
-      if (!this.validateLogAgainstCriteria(criteria, log)) {
+      if (!(await this.validateLogAgainstCriteria(criteria, log))) {
         return false;
       }
     }

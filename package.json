@@ -18,6 +18,7 @@
     "publish-packages": "pnpm changeset publish",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "lint:ci": "turbo lint:ci",
     "prepare": "lefthook install",
     "postinstall": "git submodule update --init",
     "test": "turbo run test",

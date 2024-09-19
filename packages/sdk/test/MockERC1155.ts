@@ -14,7 +14,7 @@ import {
 } from '../src';
 import type { WriteParams } from './../src/utils';
 
-export class MockERC1155 extends Deployable<{}, typeof mockErc1155Abi> {
+export class MockERC1155 extends Deployable<unknown, typeof mockErc1155Abi> {
   public async mint(
     address: Address,
     id: bigint,
@@ -68,7 +68,7 @@ export class MockERC1155 extends Deployable<{}, typeof mockErc1155Abi> {
   }
 
   public override buildParameters(
-    _payload: {} = {},
+    _payload: unknown = {},
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [{}, options] = this.validateDeploymentConfig(_payload, _options);

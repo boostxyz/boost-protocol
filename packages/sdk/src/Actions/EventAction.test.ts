@@ -78,7 +78,7 @@ function basicErc721MintFuncAction(
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
           fieldIndex: 2,
-          filterData: accounts.at(1)!.account,
+          filterData: accounts[1].account,
         },
       },
     ],
@@ -128,7 +128,7 @@ describe('EventAction', () => {
         filterType: FilterType.EQUAL,
         fieldType: PrimitiveType.ADDRESS,
         fieldIndex: 2,
-        filterData: accounts.at(1)!.account.toUpperCase(),
+        filterData: accounts[1].account.toUpperCase(),
       },
     });
   });
@@ -137,7 +137,7 @@ describe('EventAction', () => {
     const action = await loadFixture(cloneEventAction(fixtures, erc721));
     const steps = await action.getActionSteps();
     expect(steps.length).toBe(1);
-    const step = steps.at(0)!;
+    const step = steps[0];
     step.targetContract = step.targetContract.toUpperCase() as Hex;
     step.actionParameter.filterData =
       step.actionParameter.filterData.toUpperCase() as Hex;
@@ -150,7 +150,7 @@ describe('EventAction', () => {
         filterType: FilterType.EQUAL,
         fieldType: PrimitiveType.ADDRESS,
         fieldIndex: 2,
-        filterData: accounts.at(1)!.account.toUpperCase(),
+        filterData: accounts[1].account.toUpperCase(),
       },
     });
   });
@@ -180,7 +180,7 @@ describe('EventAction', () => {
 
   test('with a correct log, validates', async () => {
     const action = await loadFixture(cloneEventAction(fixtures, erc721));
-    const recipient = accounts.at(1)!.account;
+    const recipient = accounts[1].account;
     await erc721.approve(recipient, 1n);
     await erc721.transferFrom(defaultOptions.account.address, recipient, 1n);
     expect(await action.validateActionSteps()).toBe(true);

@@ -406,8 +406,10 @@ export class BoostCore extends Deployable<
             : zeroHash,
         };
       } else {
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentivesPayloads[i]!.parameters =
           incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentivesPayloads[i]!.instance = incentive.base;
       }
     }
@@ -447,6 +449,7 @@ export class BoostCore extends Deployable<
       validator: validator.at(boost.validator),
       allowList: allowList.at(boost.allowList),
       incentives: incentives.map((incentive, i) =>
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentive.at(boost.incentives.at(i)!),
       ),
       protocolFee: boost.protocolFee,
@@ -488,7 +491,7 @@ export class BoostCore extends Deployable<
    * @param {bigint} boostId - The ID of the Boost
    * @param {bigint} incentiveId - The ID of the Incentive
    * @param {Address} address - The address of the referrer (if any)
-   * @param {Hex} data- The data for the claim
+   * @param {Hex} data The data for the claim
    * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
    * @returns {unknown}
    */
@@ -928,8 +931,7 @@ export class BoostCore extends Deployable<
    * const auth = core.PassthroughAuth('0x') // is roughly equivalent to
    * const auth = new PassthroughAuth({ config: core._config, account: core._account }, '0x')
    * ```
-   * @param {DeployablePayloadOrAddress<{}>} options
-   * @param {?boolean} [isBase]
+   * @param {Address} address
    * @returns {PassthroughAuth}
    */
   PassthroughAuth(address?: Address) {

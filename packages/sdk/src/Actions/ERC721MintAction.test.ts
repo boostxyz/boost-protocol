@@ -81,7 +81,7 @@ describe.skip('ERC721MintAction', () => {
 
   test('prepare will properly encode execution payload', async () => {
     const action = await loadFixture(nonPayableAction(fixtures, erc721));
-    const { account } = accounts.at(1)!;
+    const { account } = accounts[1];
     const payload = await action.prepare(
       encodeAbiParameters([{ type: 'address', name: 'address' }], [account]),
     );
@@ -97,7 +97,7 @@ describe.skip('ERC721MintAction', () => {
   // TODO implement execute
   test.skip('nonpayable execute', async () => {
     const action = await loadFixture(nonPayableAction(fixtures, erc721));
-    const { account } = accounts.at(1)!;
+    const { account } = accounts[1];
     const [success] = await action.execute(
       encodeAbiParameters(
         [

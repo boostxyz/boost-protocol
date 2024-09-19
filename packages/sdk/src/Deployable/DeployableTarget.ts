@@ -170,7 +170,7 @@ export class DeployableTarget<
     interfaceId: Hex,
     params?: ReadParams<typeof aCloneableAbi, 'supportsInterface'>,
   ) {
-    return readACloneableSupportsInterface(this._config, {
+    return await readACloneableSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -191,7 +191,7 @@ export class DeployableTarget<
   public async getComponentInterface(
     params?: ReadParams<typeof aCloneableAbi, 'getComponentInterface'>,
   ) {
-    return readACloneableGetComponentInterface(this._config, {
+    return await readACloneableGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

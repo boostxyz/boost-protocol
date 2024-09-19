@@ -93,7 +93,7 @@ export class AllowListIncentive extends DeployableTarget<
   public async owner(
     params?: ReadParams<typeof allowListIncentiveAbi, 'owner'>,
   ) {
-    return readAllowListIncentiveOwner(this._config, {
+    return await readAllowListIncentiveOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -112,7 +112,7 @@ export class AllowListIncentive extends DeployableTarget<
   public async claims(
     params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,
   ) {
-    return readAllowListIncentiveClaims(this._config, {
+    return await readAllowListIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -131,7 +131,7 @@ export class AllowListIncentive extends DeployableTarget<
   public async reward(
     params?: ReadParams<typeof allowListIncentiveAbi, 'reward'>,
   ) {
-    return readAllowListIncentiveReward(this._config, {
+    return await readAllowListIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -152,7 +152,7 @@ export class AllowListIncentive extends DeployableTarget<
     address: Address,
     params?: ReadParams<typeof allowListIncentiveAbi, 'claimed'>,
   ) {
-    return readAllowListIncentiveClaimed(this._config, {
+    return await readAllowListIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -193,7 +193,7 @@ export class AllowListIncentive extends DeployableTarget<
   public async limit(
     params?: ReadParams<typeof allowListIncentiveAbi, 'limit'>,
   ) {
-    return readAllowListIncentiveLimit(this._config, {
+    return await readAllowListIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -213,7 +213,7 @@ export class AllowListIncentive extends DeployableTarget<
     payload: Pick<ClaimPayload, 'target'>,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(this.claimRaw(payload, params));
+    return await this.awaitResult(this.claimRaw(payload, params));
   }
 
   /**
@@ -256,7 +256,7 @@ export class AllowListIncentive extends DeployableTarget<
     payload: Pick<ClaimPayload, 'target'>,
     params?: ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>,
   ) {
-    return readAllowListIncentiveIsClaimable(this._config, {
+    return await readAllowListIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

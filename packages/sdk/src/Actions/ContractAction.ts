@@ -85,7 +85,7 @@ export class ContractAction<
   public async chainId(
     params?: ReadParams<typeof contractActionAbi, 'chainId'>,
   ) {
-    return readContractActionChainId(this._config, {
+    return await readContractActionChainId(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -102,7 +102,7 @@ export class ContractAction<
    * @returns {Promise<`0x${string}`>}
    */
   public async target(params?: ReadParams<typeof contractActionAbi, 'target'>) {
-    return readContractActionTarget(this._config, {
+    return await readContractActionTarget(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -122,7 +122,7 @@ export class ContractAction<
   public async selector(
     params?: ReadParams<typeof contractActionAbi, 'selector'>,
   ) {
-    return readContractActionSelector(this._config, {
+    return await readContractActionSelector(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -139,7 +139,7 @@ export class ContractAction<
    * @returns {Promise<bigint>}
    */
   public async value(params?: ReadParams<typeof contractActionAbi, 'value'>) {
-    return readContractActionValue(this._config, {
+    return await readContractActionValue(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -160,7 +160,7 @@ export class ContractAction<
     data: Hex,
     params?: WriteParams<typeof contractActionAbi, 'execute'>,
   ) {
-    return this.awaitResult(this.executeRaw(data, params));
+    return await this.awaitResult(this.executeRaw(data, params));
   }
 
   /**
@@ -203,7 +203,7 @@ export class ContractAction<
     calldata: Hex,
     params?: ReadParams<typeof contractActionAbi, 'prepare'>,
   ) {
-    return readContractActionPrepare(this._config, {
+    return await readContractActionPrepare(this._config, {
       address: this.assertValidAddress(),
       args: [calldata],
       ...this.optionallyAttachAccount(),

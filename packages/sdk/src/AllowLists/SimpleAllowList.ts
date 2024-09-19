@@ -123,7 +123,9 @@ export class SimpleAllowList extends DeployableTarget<
     allowed: boolean[],
     params?: WriteParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
-    return this.awaitResult(this.setAllowedRaw(addresses, allowed, params));
+    return await this.awaitResult(
+      this.setAllowedRaw(addresses, allowed, params),
+    );
   }
 
   /**
@@ -171,7 +173,7 @@ export class SimpleAllowList extends DeployableTarget<
     role: bigint,
     params?: WriteParams<typeof simpleAllowListAbi, 'grantRoles'>,
   ) {
-    return this.awaitResult(this.grantRolesRaw(address, role, params));
+    return await this.awaitResult(this.grantRolesRaw(address, role, params));
   }
 
   /**

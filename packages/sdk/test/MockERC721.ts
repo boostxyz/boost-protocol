@@ -16,13 +16,13 @@ import {
 } from '../src';
 import type { WriteParams } from '../src/utils';
 
-export class MockERC721 extends Deployable<{}, typeof mockErc721Abi> {
+export class MockERC721 extends Deployable<unknown, typeof mockErc721Abi> {
   public async approve(
     address: Address,
     amount: bigint,
     params?: WriteParams<typeof mockErc721Abi, 'approve'>,
   ) {
-    return this.awaitResult(this.approveRaw(address, amount, params));
+    return await this.awaitResult(this.approveRaw(address, amount, params));
   }
 
   public async approveRaw(
@@ -47,7 +47,7 @@ export class MockERC721 extends Deployable<{}, typeof mockErc721Abi> {
     id: bigint,
     params?: WriteParams<typeof mockErc721Abi, 'transferFrom'>,
   ) {
-    return this.awaitResult(this.transferFromRaw(from, to, id, params));
+    return await this.awaitResult(this.transferFromRaw(from, to, id, params));
   }
 
   public async transferFromRaw(
@@ -74,7 +74,7 @@ export class MockERC721 extends Deployable<{}, typeof mockErc721Abi> {
     address: Address,
     params?: WriteParams<typeof mockErc721Abi, 'mint'>,
   ) {
-    return this.awaitResult(this.mintRaw(address, params));
+    return await this.awaitResult(this.mintRaw(address, params));
   }
 
   public async mintRaw(
@@ -93,7 +93,7 @@ export class MockERC721 extends Deployable<{}, typeof mockErc721Abi> {
   }
 
   public override buildParameters(
-    _payload: {} = {},
+    _payload: unknown = {},
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [{}, options] = this.validateDeploymentConfig(_payload, _options);

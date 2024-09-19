@@ -159,7 +159,7 @@ export class SimpleBudget extends DeployableTarget<
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'allocate'>,
   ) {
-    return this.awaitResult(this.allocateRaw(transfer, params));
+    return await this.awaitResult(this.allocateRaw(transfer, params));
   }
 
   /**
@@ -207,7 +207,7 @@ export class SimpleBudget extends DeployableTarget<
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.clawbackRaw(transfer, params));
+    return await this.awaitResult(this.clawbackRaw(transfer, params));
   }
 
   /**
@@ -254,7 +254,7 @@ export class SimpleBudget extends DeployableTarget<
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof simpleBudgetAbi, 'disburse'>,
   ) {
-    return this.awaitResult(this.disburseRaw(transfer, params));
+    return await this.awaitResult(this.disburseRaw(transfer, params));
   }
 
   /**
@@ -298,7 +298,7 @@ export class SimpleBudget extends DeployableTarget<
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
     params?: WriteParams<typeof simpleBudgetAbi, 'disburseBatch'>,
   ) {
-    return this.awaitResult(this.disburseBatchRaw(transfers, params));
+    return await this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
 
   /**
@@ -344,7 +344,9 @@ export class SimpleBudget extends DeployableTarget<
     allowed: boolean[],
     params?: WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>,
   ) {
-    return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
+    return await this.awaitResult(
+      this.setAuthorizedRaw(addresses, allowed, params),
+    );
   }
 
   /**

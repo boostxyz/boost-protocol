@@ -182,7 +182,7 @@ export class EventAction extends DeployableTarget<
     data: Hex,
     params?: WriteParams<typeof eventActionAbi, 'execute'>,
   ) {
-    return this.awaitResult(this.executeRaw(data, params));
+    return await this.awaitResult(this.executeRaw(data, params));
   }
 
   /**
@@ -282,7 +282,7 @@ export class EventAction extends DeployableTarget<
       }));
     if (!logs.length) return false;
     for (let log of logs) {
-      if (!(await this.validateLogAgainstCriteria(criteria, log))) {
+      if (!this.validateLogAgainstCriteria(criteria, log)) {
         return false;
       }
     }
@@ -296,7 +296,7 @@ export class EventAction extends DeployableTarget<
    * @param {Log} log - The Viem event log.
    * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
    */
-  public async validateLogAgainstCriteria(criteria: Criteria, log: Log) {
+  public validateLogAgainstCriteria(criteria: Criteria, log: Log) {
     const fieldValue = log.topics.at(criteria.fieldIndex);
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({ log, criteria, fieldValue });

@@ -92,7 +92,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
   public async owner(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'owner'>,
   ) {
-    return readErc20VariableIncentiveOwner(this._config, {
+    return await readErc20VariableIncentiveOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -111,7 +111,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
   public async totalClaimed(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'totalClaimed'>,
   ) {
-    return readErc20VariableIncentiveTotalClaimed(this._config, {
+    return await readErc20VariableIncentiveTotalClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -130,7 +130,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
   public async currentReward(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'currentReward'>,
   ) {
-    return readErc20VariableIncentiveCurrentReward(this._config, {
+    return await readErc20VariableIncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -149,7 +149,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
   public async claims(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'claims'>,
   ) {
-    return readErc20VariableIncentiveClaims(this._config, {
+    return await readErc20VariableIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -170,7 +170,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
     address: Address,
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'claimed'>,
   ) {
-    return readErc20VariableIncentiveClaimed(this._config, {
+    return await readErc20VariableIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -189,7 +189,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
   public async asset(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'asset'>,
   ) {
-    return readErc20VariableIncentiveAsset(this._config, {
+    return await readErc20VariableIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -207,7 +207,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
   public async reward(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'reward'>,
   ) {
-    return readErc20VariableIncentiveReward(this._config, {
+    return await readErc20VariableIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -225,7 +225,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
   public async limit(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'limit'>,
   ) {
-    return readErc20VariableIncentiveLimit(this._config, {
+    return await readErc20VariableIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -245,7 +245,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(this.claimRaw(payload, params));
+    return await this.awaitResult(this.claimRaw(payload, params));
   }
 
   /**
@@ -288,7 +288,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20VariableIncentiveAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.clawbackRaw(payload, params));
+    return await this.awaitResult(this.clawbackRaw(payload, params));
   }
 
   /**
@@ -334,7 +334,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'isClaimable'>,
   ) {
-    return readErc20VariableIncentiveIsClaimable(this._config, {
+    return await readErc20VariableIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

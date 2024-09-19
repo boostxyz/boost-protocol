@@ -16,13 +16,13 @@ import {
 } from '../src';
 import type { WriteParams } from './../src/utils';
 
-export class MockERC20 extends Deployable<{}, typeof mockErc20Abi> {
+export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
   public async approve(
     address: Address,
     value: bigint,
     params?: WriteParams<typeof mockErc20Abi, 'approve'>,
   ) {
-    return this.awaitResult(this.approveRaw(address, value, params));
+    return await this.awaitResult(this.approveRaw(address, value, params));
   }
 
   public async approveRaw(
@@ -46,7 +46,7 @@ export class MockERC20 extends Deployable<{}, typeof mockErc20Abi> {
     value: bigint,
     params?: WriteParams<typeof mockErc20Abi, 'mint'>,
   ) {
-    return this.awaitResult(this.mintRaw(address, value, params));
+    return await this.awaitResult(this.mintRaw(address, value, params));
   }
 
   public async mintRaw(
@@ -70,8 +70,10 @@ export class MockERC20 extends Deployable<{}, typeof mockErc20Abi> {
     value: bigint,
     params?: WriteParams<typeof mockErc20Abi, 'mintPayable'>,
   ) {
-    // biome-ignore lint/suspicious/noExplicitAny: this is a mock contract, it's fine
-    return this.awaitResult(this.mintPayableRaw(address, value, params as any));
+    return await this.awaitResult(
+      // biome-ignore lint/suspicious/noExplicitAny: this is a mock contract, it's fine
+      this.mintPayableRaw(address, value, params as any),
+    );
   }
   public async mintPayableRaw(
     address: Address,

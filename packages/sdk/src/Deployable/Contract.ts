@@ -224,6 +224,6 @@ export class Contract<ContractAbi extends Abi> {
     hashPromise: Promise<HashAndSimulatedResult<Result>>,
     waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
   ) {
-    return awaitResult(this._config, hashPromise, waitParams);
+    return await awaitResult(this._config, hashPromise, waitParams);
   }
 }

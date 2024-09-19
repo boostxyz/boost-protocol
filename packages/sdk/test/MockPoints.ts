@@ -17,7 +17,7 @@ export class MockPoints extends MockERC20 {
     value: bigint,
     params?: WriteParams<typeof pointsAbi, 'approve'>,
   ) {
-    return this.awaitResult(this.approveRaw(address, value, params));
+    return await this.awaitResult(this.approveRaw(address, value, params));
   }
 
   public override async approveRaw(
@@ -41,7 +41,7 @@ export class MockPoints extends MockERC20 {
     value: bigint,
     params?: WriteParams<typeof pointsAbi, 'issue'>,
   ) {
-    return this.awaitResult(this.issueRaw(address, value, params));
+    return await this.awaitResult(this.issueRaw(address, value, params));
   }
 
   public async issueRaw(

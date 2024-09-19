@@ -475,7 +475,7 @@ export class BoostCore extends Deployable<
     data: Hex,
     params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.claimIncentiveRaw(boostId, incentiveId, address, data, params),
     );
   }
@@ -534,7 +534,7 @@ export class BoostCore extends Deployable<
     claimant: Address,
     params?: WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.claimIncentiveForRaw(
         boostId,
         incentiveId,
@@ -594,7 +594,7 @@ export class BoostCore extends Deployable<
     id: bigint,
     params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
   ) {
-    return readBoostCoreGetBoost(this._config, {
+    return await readBoostCoreGetBoost(this._config, {
       address: this.assertValidAddress(),
       args: [id],
       ...this.optionallyAttachAccount(),
@@ -668,7 +668,7 @@ export class BoostCore extends Deployable<
   public async getBoostCount(
     params?: ReadParams<typeof boostCoreAbi, 'getBoostCount'>,
   ) {
-    return readBoostCoreGetBoostCount(this._config, {
+    return await readBoostCoreGetBoostCount(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -713,7 +713,7 @@ export class BoostCore extends Deployable<
   public async createBoostAuth(
     params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'>,
   ) {
-    return readBoostCoreCreateBoostAuth(this._config, {
+    return await readBoostCoreCreateBoostAuth(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -735,7 +735,7 @@ export class BoostCore extends Deployable<
     auth: Auth,
     params?: WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.setCreateBoostAuthRaw(auth.assertValidAddress(), {
         ...params,
       }),
@@ -780,7 +780,7 @@ export class BoostCore extends Deployable<
   public async protocolFee(
     params?: ReadParams<typeof boostCoreAbi, 'protocolFee'>,
   ) {
-    return readBoostCoreProtocolFee(this._config, {
+    return await readBoostCoreProtocolFee(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -800,7 +800,7 @@ export class BoostCore extends Deployable<
   public async protocolFeeReceiver(
     params?: ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>,
   ) {
-    return readBoostCoreProtocolFeeReceiver(this._config, {
+    return await readBoostCoreProtocolFeeReceiver(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -822,7 +822,7 @@ export class BoostCore extends Deployable<
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.setProcolFeeReceiverRaw(address, {
         ...params,
       }),
@@ -868,7 +868,7 @@ export class BoostCore extends Deployable<
    * @returns {unknown}
    */
   public async claimFee(params?: ReadParams<typeof boostCoreAbi, 'claimFee'>) {
-    return readBoostCoreClaimFee(this._config, {
+    return await readBoostCoreClaimFee(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -890,7 +890,7 @@ export class BoostCore extends Deployable<
     claimFee: bigint,
     params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
   ) {
-    return this.awaitResult(this.setClaimFeeRaw(claimFee, params));
+    return await this.awaitResult(this.setClaimFeeRaw(claimFee, params));
   }
 
   /**

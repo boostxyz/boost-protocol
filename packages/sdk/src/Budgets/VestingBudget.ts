@@ -178,7 +178,7 @@ export class VestingBudget extends DeployableTarget<
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
   ) {
-    return this.awaitResult(this.allocateRaw(transfer, params));
+    return await this.awaitResult(this.allocateRaw(transfer, params));
   }
 
   /**
@@ -226,7 +226,7 @@ export class VestingBudget extends DeployableTarget<
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.clawbackRaw(transfer, params));
+    return await this.awaitResult(this.clawbackRaw(transfer, params));
   }
 
   /**
@@ -273,7 +273,7 @@ export class VestingBudget extends DeployableTarget<
     transfer: FungibleTransferPayload,
     params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
   ) {
-    return this.awaitResult(this.disburseRaw(transfer, params));
+    return await this.awaitResult(this.disburseRaw(transfer, params));
   }
 
   /**
@@ -317,7 +317,7 @@ export class VestingBudget extends DeployableTarget<
     transfers: FungibleTransferPayload[],
     params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
   ) {
-    return this.awaitResult(this.disburseBatchRaw(transfers, params));
+    return await this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
 
   /**
@@ -363,7 +363,9 @@ export class VestingBudget extends DeployableTarget<
     allowed: boolean[],
     params?: WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>,
   ) {
-    return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
+    return await this.awaitResult(
+      this.setAuthorizedRaw(addresses, allowed, params),
+    );
   }
 
   /**

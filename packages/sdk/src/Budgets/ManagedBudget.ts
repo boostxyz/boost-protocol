@@ -185,7 +185,7 @@ export class ManagedBudget extends DeployableTarget<
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof managedBudgetAbi, 'allocate'>,
   ) {
-    return this.awaitResult(this.allocateRaw(transfer, params));
+    return await this.awaitResult(this.allocateRaw(transfer, params));
   }
 
   /**
@@ -233,7 +233,7 @@ export class ManagedBudget extends DeployableTarget<
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof managedBudgetAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.clawbackRaw(transfer, params));
+    return await this.awaitResult(this.clawbackRaw(transfer, params));
   }
 
   /**
@@ -280,7 +280,7 @@ export class ManagedBudget extends DeployableTarget<
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
     params?: WriteParams<typeof managedBudgetAbi, 'disburse'>,
   ) {
-    return this.awaitResult(this.disburseRaw(transfer, params));
+    return await this.awaitResult(this.disburseRaw(transfer, params));
   }
 
   /**
@@ -324,7 +324,7 @@ export class ManagedBudget extends DeployableTarget<
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
     params?: WriteParams<typeof managedBudgetAbi, 'disburseBatch'>,
   ) {
-    return this.awaitResult(this.disburseBatchRaw(transfers, params));
+    return await this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
 
   /**
@@ -370,7 +370,9 @@ export class ManagedBudget extends DeployableTarget<
     allowed: boolean[],
     params?: WriteParams<typeof managedBudgetAbi, 'setAuthorized'>,
   ) {
-    return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
+    return await this.awaitResult(
+      this.setAuthorizedRaw(addresses, allowed, params),
+    );
   }
 
   /**
@@ -422,7 +424,7 @@ export class ManagedBudget extends DeployableTarget<
     roles: bigint[],
     params?: WriteParams<typeof managedBudgetAbi, 'grantRoles'>,
   ) {
-    return this.awaitResult(this.grantRolesRaw(addresses, roles, params));
+    return await this.awaitResult(this.grantRolesRaw(addresses, roles, params));
   }
 
   /**
@@ -481,7 +483,9 @@ export class ManagedBudget extends DeployableTarget<
     roles: bigint[],
     params?: WriteParams<typeof managedBudgetAbi, 'revokeRoles'>,
   ) {
-    return this.awaitResult(this.revokeRolesRaw(addresses, roles, params));
+    return await this.awaitResult(
+      this.revokeRolesRaw(addresses, roles, params),
+    );
   }
 
   /**

@@ -91,7 +91,7 @@ export class ERC721MintAction extends ContractAction<
     token: bigint,
     params?: ReadParams<typeof erc721MintActionAbi, 'validated'>,
   ) {
-    return readErc721MintActionValidated(this._config, {
+    return await readErc721MintActionValidated(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -113,7 +113,7 @@ export class ERC721MintAction extends ContractAction<
     data: Hex,
     params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
   ) {
-    return this.awaitResult(this.executeRaw(data, params));
+    return await this.awaitResult(this.executeRaw(data, params));
   }
 
   /**
@@ -156,7 +156,7 @@ export class ERC721MintAction extends ContractAction<
     data: Hex,
     params?: ReadParams<typeof erc721MintActionAbi, 'prepare'>,
   ) {
-    return readErc721MintActionPrepare(this._config, {
+    return await readErc721MintActionPrepare(this._config, {
       address: this.assertValidAddress(),
       args: [data],
       ...this.optionallyAttachAccount(),
@@ -180,7 +180,7 @@ export class ERC721MintAction extends ContractAction<
     tokenId: bigint,
     params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
   ) {
-    return this.awaitResult(this.validateRaw(holder, tokenId, params));
+    return await this.awaitResult(this.validateRaw(holder, tokenId, params));
   }
 
   /**

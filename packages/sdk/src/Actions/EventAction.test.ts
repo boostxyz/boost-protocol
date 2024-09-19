@@ -50,7 +50,7 @@ function basicErc721TransferAction(
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
           fieldIndex: 2,
-          filterData: accounts.at(1)!.account,
+          filterData: accounts[1].account,
         },
       },
     ],

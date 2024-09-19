@@ -192,7 +192,7 @@ export class BoostRegistry extends Deployable<
     implementation: Address,
     params?: WriteParams<typeof boostRegistryAbi, 'register'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.registerRaw(registryType, name, implementation, params),
     );
   }
@@ -240,7 +240,7 @@ export class BoostRegistry extends Deployable<
    * @returns {Target} - The provided instance, but with a new address attached.
    * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
-  public async initialize<Target extends DeployableTarget<any, any>>(
+  public initialize<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
@@ -286,7 +286,9 @@ export class BoostRegistry extends Deployable<
     target: Target,
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
   ): Promise<Address> {
-    return this.awaitResult(this.deployCloneRaw(displayName, target, params));
+    return await this.awaitResult(
+      this.deployCloneRaw(displayName, target, params),
+    );
   }
 
   /**
@@ -341,7 +343,7 @@ export class BoostRegistry extends Deployable<
     identifier: Hex,
     params?: ReadParams<typeof boostRegistryAbi, 'getBaseImplementation'>,
   ) {
-    return readBoostRegistryGetBaseImplementation(this._config, {
+    return await readBoostRegistryGetBaseImplementation(this._config, {
       address: this.assertValidAddress(),
       args: [identifier],
       ...this.optionallyAttachAccount(),
@@ -363,7 +365,7 @@ export class BoostRegistry extends Deployable<
     identifier: Hex,
     params?: ReadParams<typeof boostRegistryAbi, 'getClone'>,
   ) {
-    return readBoostRegistryGetBaseImplementation(this._config, {
+    return await readBoostRegistryGetBaseImplementation(this._config, {
       address: this.assertValidAddress(),
       args: [identifier],
       ...this.optionallyAttachAccount(),
@@ -385,7 +387,7 @@ export class BoostRegistry extends Deployable<
     deployer: Address,
     params?: ReadParams<typeof boostRegistryAbi, 'getClones'>,
   ) {
-    return readBoostRegistryGetClones(this._config, {
+    return await readBoostRegistryGetClones(this._config, {
       address: this.assertValidAddress(),
       args: [deployer],
       ...this.optionallyAttachAccount(),
@@ -413,7 +415,7 @@ export class BoostRegistry extends Deployable<
     displayName: string,
     params?: ReadParams<typeof boostRegistryAbi, 'getCloneIdentifier'>,
   ) {
-    return readBoostRegistryGetCloneIdentifier(this._config, {
+    return await readBoostRegistryGetCloneIdentifier(this._config, {
       address: this.assertValidAddress(),
       args: [registryType, base, deployer, displayName],
       ...this.optionallyAttachAccount(),
@@ -437,7 +439,7 @@ export class BoostRegistry extends Deployable<
     displayName: string,
     params?: ReadParams<typeof boostRegistryAbi, 'getIdentifier'>,
   ) {
-    return readBoostRegistryGetCloneIdentifier(this._config, {
+    return await readBoostRegistryGetCloneIdentifier(this._config, {
       address: this.assertValidAddress(),
       args: [registryType, displayName],
       ...this.optionallyAttachAccount(),

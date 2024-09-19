@@ -94,7 +94,7 @@ export class PointsIncentive extends DeployableTarget<
   public async claims(
     params?: ReadParams<typeof pointsIncentiveAbi, 'claims'>,
   ) {
-    return readPointsIncentiveClaims(this._config, {
+    return await readPointsIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -113,7 +113,7 @@ export class PointsIncentive extends DeployableTarget<
   public async currentReward(
     params?: ReadParams<typeof pointsIncentiveAbi, 'currentReward'>,
   ) {
-    return readPointsIncentiveCurrentReward(this._config, {
+    return await readPointsIncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -132,7 +132,7 @@ export class PointsIncentive extends DeployableTarget<
   public async reward(
     params?: ReadParams<typeof pointsIncentiveAbi, 'reward'>,
   ) {
-    return readPointsIncentiveReward(this._config, {
+    return await readPointsIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -153,7 +153,7 @@ export class PointsIncentive extends DeployableTarget<
     address: Address,
     params?: ReadParams<typeof pointsIncentiveAbi, 'claimed'>,
   ) {
-    return readPointsIncentiveClaimed(this._config, {
+    return await readPointsIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -170,7 +170,7 @@ export class PointsIncentive extends DeployableTarget<
    * @returns {unknown}
    */
   public async venue(params?: ReadParams<typeof pointsIncentiveAbi, 'venue'>) {
-    return readPointsIncentiveVenue(this._config, {
+    return await readPointsIncentiveVenue(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -186,7 +186,7 @@ export class PointsIncentive extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async limit(params?: ReadParams<typeof pointsIncentiveAbi, 'limit'>) {
-    return readPointsIncentiveLimit(this._config, {
+    return await readPointsIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -204,7 +204,7 @@ export class PointsIncentive extends DeployableTarget<
   public async selector(
     params?: ReadParams<typeof pointsIncentiveAbi, 'selector'>,
   ) {
-    return readPointsIncentiveSelector(this._config, {
+    return await readPointsIncentiveSelector(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -224,7 +224,7 @@ export class PointsIncentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(this.claimRaw(payload, params));
+    return await this.awaitResult(this.claimRaw(payload, params));
   }
 
   /**
@@ -269,7 +269,7 @@ export class PointsIncentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: ReadParams<typeof pointsIncentiveAbi, 'isClaimable'>,
   ) {
-    return readPointsIncentiveIsClaimable(this._config, {
+    return await readPointsIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

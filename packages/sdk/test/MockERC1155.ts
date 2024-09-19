@@ -21,7 +21,7 @@ export class MockERC1155 extends Deployable<{}, typeof mockErc1155Abi> {
     amount: bigint,
     params: WriteParams<typeof mockErc1155Abi, 'mint'> = {},
   ) {
-    return this.awaitResult(this.mintRaw(address, id, amount, params));
+    return await this.awaitResult(this.mintRaw(address, id, amount, params));
   }
 
   public async mintRaw(
@@ -47,7 +47,7 @@ export class MockERC1155 extends Deployable<{}, typeof mockErc1155Abi> {
     amount: bigint,
     params: WriteParams<typeof mockErc1155Abi, 'burn'> = {},
   ) {
-    return this.awaitResult(this.burnRaw(address, id, amount, params));
+    return await this.awaitResult(this.burnRaw(address, id, amount, params));
   }
 
   public async burnRaw(

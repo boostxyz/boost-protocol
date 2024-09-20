@@ -83,16 +83,22 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
 
   const options: DeployableOptions = { config, account };
 
-  const registry = await new BoostRegistry({
-    address: null,
-    ...options,
-  }).deploy();
+  const registry = await (
+    new BoostRegistry({
+      address: null,
+      ...options,
+      // biome-ignore lint/suspicious/noExplicitAny: we know what we're doing
+    }) as any
+  ).deploy();
 
-  const core = await new BoostCore({
-    ...options,
-    registryAddress: registry.assertValidAddress(),
-    protocolFeeReceiver: account.address,
-  }).deploy();
+  const core = await (
+    new BoostCore({
+      ...options,
+      registryAddress: registry.assertValidAddress(),
+      protocolFeeReceiver: account.address,
+      // biome-ignore lint/suspicious/noExplicitAny: we know what we're doing
+    }) as any
+  ).deploy();
 
   const contractActionBase = await getDeployedContractAddress(
     config,

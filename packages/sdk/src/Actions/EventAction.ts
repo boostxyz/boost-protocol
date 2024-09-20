@@ -31,6 +31,7 @@ import {
   UnrecognizedFilterTypeError,
 } from '../errors';
 import {
+  type ActionClaimant,
   type ActionStep,
   type Criteria,
   type EventActionPayload,

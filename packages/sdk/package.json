@@ -180,7 +180,7 @@
     "dev": "vite build --watch",
     "test": "vitest dev",
     "test:ci": "CI=true vitest --coverage",
-    "typedoc": "npx typedoc"
+    "typedoc": "npx typedoc --sort required-first --sort visibility --sort kind"
   },
   "dependencies": {
     "@boostxyz/signatures": "workspace:*"

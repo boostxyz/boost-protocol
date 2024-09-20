@@ -228,6 +228,27 @@ export class BoostRegistry extends Deployable<
   }
 
   /**
+   * Initialize a new instance of a registered base implementation, returning the provided target with a new address set on it.
+   * This method is the same as `clone`, but serves to make its function more obvious as to why you'd need to use it.
+   *
+   * @public
+   * @async
+   * @template {DeployableTarget} Target
+   * @param {string} displayName - The display name for the clone
+   * @param {Target} target - An instance of a target contract to clone and initialize
+   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
+   * @returns {Target} - The provided instance, but with a new address attached.
+   * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
+   */
+  public async initialize<Target extends DeployableTarget<any, any>>(
+    displayName: string,
+    target: Target,
+    params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
+  ): Promise<Target> {
+    return this.clone(displayName, target, params);
+  }
+
+  /**
    * Deploy a new instance of a registered base implementation, returning the provided target with a new address set on it.
    *
    * @public

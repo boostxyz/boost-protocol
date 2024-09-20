@@ -46,8 +46,16 @@ import {
   isEventActionPayloadSimple,
   prepareEventActionPayload,
 } from '../utils';
+import type { SignatureType } from './../utils';
 
-export type { EventActionPayload };
+export type {
+  EventActionPayload,
+  ActionStep,
+  ActionClaimant,
+  SignatureType,
+  FilterType,
+  PrimitiveType,
+};
 
 /**
  * A generic event action

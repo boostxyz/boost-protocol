@@ -84,6 +84,7 @@ import {
   BoostCoreNoIdentifierEmitted,
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
+  IncentiveNotCloneableError,
   NoContractAddressUponReceiptError,
 } from './errors';
 import {
@@ -247,7 +248,8 @@ export class BoostCore extends Deployable<
     }
     //@ts-expect-error I can't set this property on the class because for some reason it takes super out of constructor scope?
     this.abi = boostCoreAbi;
-  } /**
+  }
+  /**
    * Create a new Boost.
    *
    * @public
@@ -404,6 +406,7 @@ export class BoostCore extends Deployable<
       const incentive = incentives.at(i)!;
       if (incentive.address) {
         const isBase = incentive.address === incentive.base || incentive.isBase;
+        if (!isBase) throw new IncentiveNotCloneableError(incentive);
         incentivesPayloads[i] = {
           isBase: isBase,
           instance: incentive.address,

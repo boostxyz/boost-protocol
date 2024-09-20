@@ -140,6 +140,9 @@ export class Deployable<
 
   /**
    * High level deployment function to deploy and await the contract address.
+   * This is mainly a convenience method to easily deploy a contract, but will not initialize a `Cloneable`,
+   * which makes it useless for Boost components.
+   * Obviously you can ignore the TS warnings and use this, but you shouldn't in most all cases.
    *
    * @public
    * @async
@@ -148,7 +151,7 @@ export class Deployable<
    * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams] - See [viem.WaitForTransactionReceipt](https://v1.viem.sh/docs/actions/public/waitForTransactionReceipt.html#waitfortransactionreceipt)
    * @returns {unknown}
    */
-  public async deploy(
+  protected async deploy(
     _payload?: Payload,
     _options?: DeployableOptions,
     waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
@@ -165,6 +168,9 @@ export class Deployable<
 
   /**
    * The lower level contract deployment function that does not await for the transaction receipt.
+   * This is mainly a convenience method to easily deploy a contract, but will not initialize a `Cloneable`,
+   * which makes it useless for Boost components.
+   * Obviously you can ignore the TS warnings and use this, but you shouldn't in most all cases.
    *
    * @public
    * @async
@@ -175,7 +181,7 @@ export class Deployable<
    * @throws {@link DeployableWagmiConfigurationRequiredError}
    * @throws {@link DeployableMissingPayloadError}
    */
-  public async deployRaw(
+  protected async deployRaw(
     _payload?: Payload,
     _options?: DeployableOptions,
   ): Promise<Hash> {

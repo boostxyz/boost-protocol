@@ -295,7 +295,7 @@ export class EventAction extends DeployableTarget<
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {Log} log - The Viem event log.
-   * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
+   * @returns {boolean} - Returns true if the log passes the criteria, false otherwise.
    */
   public validateLogAgainstCriteria(criteria: Criteria, log: Log) {
     const fieldValue = log.topics.at(criteria.fieldIndex);

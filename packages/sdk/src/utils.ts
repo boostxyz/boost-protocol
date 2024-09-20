@@ -385,11 +385,11 @@ export interface ActionStep {
    */
   signatureType: SignatureType;
   /**
-   * The type of action being performed.
+   * Optional. The type of action being performed. Unused in protocol currently, but included as placeholder for future functionality.
    *
    * @type {number}
    */
-  actionType: number;
+  actionType?: number;
   /**
    * The address of the target contract.
    *
@@ -603,10 +603,22 @@ export const prepareEventActionPayload = ({
     [
       {
         actionClaimant,
-        actionStepOne,
-        actionStepTwo,
-        actionStepThree,
-        actionStepFour,
+        actionStepOne: {
+          ...actionStepOne,
+          actionType: actionStepOne.actionType || 0,
+        },
+        actionStepTwo: {
+          ...actionStepTwo,
+          actionType: actionStepTwo.actionType || 0,
+        },
+        actionStepThree: {
+          ...actionStepThree,
+          actionType: actionStepThree.actionType || 0,
+        },
+        actionStepFour: {
+          ...actionStepFour,
+          actionType: actionStepFour.actionType || 0,
+        },
       },
     ],
   );

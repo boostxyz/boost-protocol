@@ -287,6 +287,12 @@ export class BoostRegistry extends Deployable<
       config: this._config,
       account: this._account,
     });
+    console.log([
+      target.registryType,
+      target.base,
+      displayName,
+      payload.args.at(0)!,
+    ]);
     const { request, result } = await simulateBoostRegistryDeployClone(
       this._config,
       {
@@ -330,7 +336,7 @@ export class BoostRegistry extends Deployable<
   }
 
   /**
-   * Get the address of a deployed clone by its identifier (index in incentives array)
+   * Get the address of a deployed clone by its identifier
    *
    * @public
    * @async

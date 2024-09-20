@@ -85,6 +85,7 @@ import {
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
   IncentiveNotCloneableError,
+  MustInitializeBudgetError,
   NoContractAddressUponReceiptError,
 } from './errors';
 import {
@@ -304,18 +305,7 @@ export class BoostCore extends Deployable<
         throw new BudgetMustAuthorizeBoostCore(coreAddress);
       }
     } else {
-      // budgets are either instantiated with an address or payload, so in this branch payload will exist
-      const authorized = budget.payload?.authorized || [];
-      if (!authorized.includes(coreAddress)) {
-        throw new BudgetMustAuthorizeBoostCore(coreAddress);
-      }
-      const budgetHash = await budget.deployRaw(undefined, options);
-      const receipt = await waitForTransactionReceipt(options.config, {
-        hash: budgetHash,
-      });
-      if (!receipt.contractAddress)
-        throw new NoContractAddressUponReceiptError(receipt);
-      budgetPayload = receipt.contractAddress;
+      throw new MustInitializeBudgetError();
     }
 
     // if we're supplying an address, it could be a pre-initialized target

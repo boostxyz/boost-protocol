@@ -1,5 +1,7 @@
 # @boostxyz/cli
 
+## 0.0.0-alpha.6
+
 ## 0.0.0-alpha.5
 
 ## 0.0.0-alpha.4

@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.8
+
+### Minor Changes
+
+- 15f71e8: add `BoostRegistry.initialize` as more obvious alternative name for `.clone`, make `.deploy` protected for Boost targets, await valid action steps, better `isBase` defaults, update comments
+
 ## 0.0.0-alpha.7
 
 ### Patch Changes

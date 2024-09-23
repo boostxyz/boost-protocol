@@ -23,7 +23,8 @@ abstract contract AEventAction is AAction {
         NOT_EQUAL,
         GREATER_THAN,
         LESS_THAN,
-        CONTAINS
+        CONTAINS,
+        REGEX
     }
 
     enum PrimitiveType {
@@ -37,8 +38,10 @@ abstract contract AEventAction is AAction {
     struct Criteria {
         FilterType filterType;
         PrimitiveType fieldType;
-        uint8 fieldIndex; // Where in the logs arg array the field is located
-        bytes filterData; // data fiels in case we need more complex filtering in the future - initially unused
+        // the parameter index in the event or function
+        uint8 fieldIndex;
+        // data fields in case we need more complex filtering; used with regex filters
+        bytes filterData;
     }
 
     struct ActionStep {

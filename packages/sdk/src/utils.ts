@@ -270,6 +270,7 @@ export enum FilterType {
   GREATER_THAN = 2,
   LESS_THAN = 3,
   CONTAINS = 4,
+  REGEX = 5,
 }
 
 /**

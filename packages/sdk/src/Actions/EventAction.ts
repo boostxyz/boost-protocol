@@ -19,6 +19,7 @@ import {
   type Log,
   type PublicClient,
   decodeFunctionData,
+  fromHex,
   isAddressEqual,
 } from 'viem';
 import { getLogs } from 'viem/actions';
@@ -188,6 +189,7 @@ export class EventAction extends DeployableTarget<
       ...this.optionallyAttachAccount(),
       ...params,
     })) as RawActionClaimant;
+    console.log({ result });
     return fromRawActionStep(result);
   }
 
@@ -305,8 +307,10 @@ export class EventAction extends DeployableTarget<
         address: targetContract,
         event,
       }));
+    console.log({ logs });
     if (!logs.length) return false;
     for (let log of logs) {
+      console.log({ log });
       if (!this.validateLogAgainstCriteria(criteria, log)) {
         return false;
       }
@@ -422,6 +426,21 @@ export class EventAction extends DeployableTarget<
           criteria,
           fieldValue,
         });
+
+      case FilterType.REGEX:
+        if (typeof fieldValue !== 'string') {
+          throw new FieldValueNotComparableError({
+            ...input,
+            criteria,
+            fieldValue,
+          });
+        }
+        if (criteria.fieldType === PrimitiveType.STRING) {
+          const param = fromHex(fieldValue as Hex, 'string');
+          const regexString = fromHex(criteria.filterData, 'string');
+          console.log({ fieldValue, param, regexString });
+          return new RegExp(regexString).test(param);
+        }
 
       default:
         throw new UnrecognizedFilterTypeError({

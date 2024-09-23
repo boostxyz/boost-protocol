@@ -3,5 +3,6 @@
   "Transfer(address,address,uint256)",
   "Purchased(address,address,uint256,uint256,uint256)",
   "// Test signatures",
-  "Test(string)"
+  "Info(bytes)",
+  "Info(string indexed emittedInfo)"
 ]

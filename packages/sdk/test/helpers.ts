@@ -22,7 +22,7 @@ import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentiv
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { deployContract } from '@wagmi/core';
+import { deployContract, simulateContract, writeContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
   AllowListIncentive,
@@ -70,6 +70,9 @@ export const defaultOptions: DeployableTestOptions = {
 };
 
 export type Fixtures = Awaited<ReturnType<typeof deployFixtures>>;
+export type StringEmitterFixtures = Awaited<
+  ReturnType<typeof deployStringEmitterMock>
+>;
 export type BudgetFixtures = {
   budget: ManagedBudget;
   erc20: MockERC20;
@@ -318,6 +321,71 @@ export async function deployFixtures(
     registry,
     core,
     bases,
+  };
+}
+
+export async function deployStringEmitterMock(
+  options: DeployableTestOptions = defaultOptions,
+) {
+  const { config, account } = options;
+  const stringEmitterAbi = [
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'string',
+          name: 'emittedInfo',
+          type: 'string',
+        },
+      ],
+      name: 'Info',
+      type: 'event',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'infoToEmit',
+          type: 'string',
+        },
+      ],
+      name: 'store',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
+  ];
+
+  // from sourcecode here: https://gist.github.com/topocount/f1bf0f53c41e53fd0824b250a92cfad7
+  const stringEmitterBytecode =
+    '0x6080604052348015600e575f80fd5b506101cf8061001c5f395ff3fe608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063131a06801461002d575b5f80fd5b610047600480360381019061004291906100fa565b610049565b005b8181604051610059929190610181565b60405180910390207f6d128f203c67be3b2d9bf1612fd59bdd6ae01f4f0d2ffedd05e76ab2a09b7f8a60405160405180910390a25050565b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f8083601f8401126100ba576100b9610099565b5b8235905067ffffffffffffffff8111156100d7576100d661009d565b5b6020830191508360018202830111156100f3576100f26100a1565b5b9250929050565b5f80602083850312156101105761010f610091565b5b5f83013567ffffffffffffffff81111561012d5761012c610095565b5b610139858286016100a5565b92509250509250929050565b5f81905092915050565b828183375f83830152505050565b5f6101688385610145565b935061017583858461014f565b82840190509392505050565b5f61018d82848661015d565b9150819050939250505056fea264697066735822122078b2f20733c3e7365d624d4e4b056202633440be09d47a294bad7c236c6d2a0c64736f6c634300081a0033';
+
+  const stringEmitterAddress = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: stringEmitterAbi,
+      bytecode: stringEmitterBytecode,
+      account,
+    }),
+  );
+
+  async function emitString(infoToEmit: string) {
+    const { request } = await simulateContract(config, {
+      address: stringEmitterAddress,
+      abi: stringEmitterAbi,
+      functionName: 'store',
+      args: [infoToEmit],
+      account,
+    });
+    return writeContract(config, request);
+  }
+
+  console.log('StringEmitter', stringEmitterAddress);
+  return {
+    address: stringEmitterAddress,
+    abi: stringEmitterAbi,
+    emitString,
   };
 }
 

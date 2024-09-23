@@ -4,7 +4,6 @@ import {
   mine,
   reset,
 } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { parseAbiItem } from 'abitype';
 import {
   http,
   type Address,
@@ -168,7 +167,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
 
       const logs = await sepoliaClient.getLogs({
         address: targetContract as Address,
-        fromBlock: BigInt(6717979), // Adjust this to an appropriate starting block
+        fromBlock: BigInt(6717979), // target the exact block of the transaction
         toBlock: BigInt(6717979),
       });
 

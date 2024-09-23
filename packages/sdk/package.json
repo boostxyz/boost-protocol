@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/sdk",
-  "version": "0.0.0-alpha.7",
+  "version": "0.0.0-alpha.8",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "files": ["dist", "src"],
@@ -174,13 +174,15 @@
   },
   "scripts": {
     "build": "vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "lint:ci": "npx biome ci",
+    "lint": "npx biome check",
     "bench": "vitest bench",
     "bench:ci": "CI=true vitest bench",
     "clean": "rm -rf dist",
     "dev": "vite build --watch",
     "test": "vitest dev",
     "test:ci": "CI=true vitest --coverage",
-    "typedoc": "npx typedoc"
+    "typedoc": "npx typedoc --sort required-first --sort visibility --sort kind"
   },
   "dependencies": {
     "@boostxyz/signatures": "workspace:*"

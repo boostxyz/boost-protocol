@@ -89,7 +89,7 @@ export class SignerValidator extends DeployableTarget<
     address: Address,
     params?: ReadParams<typeof signerValidatorAbi, 'signers'>,
   ) {
-    return readSignerValidatorSigners(this._config, {
+    return await readSignerValidatorSigners(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -110,7 +110,7 @@ export class SignerValidator extends DeployableTarget<
     payload: SignerValidatorSignaturePayload,
     params?: ReadParams<typeof signerValidatorAbi, 'hashSignerData'>,
   ) {
-    return readSignerValidatorHashSignerData(this._config, {
+    return await readSignerValidatorHashSignerData(this._config, {
       address: this.assertValidAddress(),
       args: [
         payload.boostId,
@@ -136,7 +136,7 @@ export class SignerValidator extends DeployableTarget<
     payload: SignerValidatorValidatePayload,
     params?: WriteParams<typeof signerValidatorAbi, 'validate'>,
   ) {
-    return this.awaitResult(this.validateRaw(payload, params));
+    return await this.awaitResult(this.validateRaw(payload, params));
   }
 
   /**
@@ -186,7 +186,9 @@ export class SignerValidator extends DeployableTarget<
     allowed: boolean[],
     params?: WriteParams<typeof signerValidatorAbi, 'setAuthorized'>,
   ) {
-    return this.awaitResult(this.setAuthorizedRaw(addresses, allowed, params));
+    return await this.awaitResult(
+      this.setAuthorizedRaw(addresses, allowed, params),
+    );
   }
 
   /**
@@ -243,7 +245,7 @@ export class SignerValidator extends DeployableTarget<
     address: Address,
     params?: WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>,
   ) {
-    return this.awaitResult(this.setValidatorCallerRaw(address, params));
+    return await this.awaitResult(this.setValidatorCallerRaw(address, params));
   }
 
   /**

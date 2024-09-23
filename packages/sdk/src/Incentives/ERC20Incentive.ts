@@ -94,7 +94,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @returns {unknown}
    */
   public async owner(params?: ReadParams<typeof erc20IncentiveAbi, 'owner'>) {
-    return readErc20IncentiveOwner(this._config, {
+    return await readErc20IncentiveOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -113,7 +113,7 @@ export class ERC20Incentive extends DeployableTarget<
   public async currentReward(
     params?: ReadParams<typeof erc20IncentiveAbi, 'currentReward'>,
   ) {
-    return readErc20IncentiveCurrentReward(this._config, {
+    return await readErc20IncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -130,7 +130,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
-    return readErc20IncentiveClaims(this._config, {
+    return await readErc20IncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -151,7 +151,7 @@ export class ERC20Incentive extends DeployableTarget<
     address: Address,
     params?: ReadParams<typeof erc20IncentiveAbi, 'claimed'>,
   ) {
-    return readErc20IncentiveClaimed(this._config, {
+    return await readErc20IncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -168,7 +168,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @returns {Promise<Address>}
    */
   public async asset(params?: ReadParams<typeof erc20IncentiveAbi, 'asset'>) {
-    return readErc20IncentiveAsset(this._config, {
+    return await readErc20IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -183,7 +183,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams<typeof erc20IncentiveAbi, 'strategy'>} [params]
    * @returns {Promise<StrategyType>}
    */
-  public async strategy(
+  public strategy(
     params?: ReadParams<typeof erc20IncentiveAbi, 'strategy'>,
   ): Promise<StrategyType> {
     return readErc20IncentiveStrategy(this._config, {
@@ -202,7 +202,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async reward(params?: ReadParams<typeof erc20IncentiveAbi, 'reward'>) {
-    return readErc20IncentiveReward(this._config, {
+    return await readErc20IncentiveReward(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -218,7 +218,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @returns {unknown}
    */
   public async limit(params?: ReadParams<typeof erc20IncentiveAbi, 'limit'>) {
-    return readErc20IncentiveLimit(this._config, {
+    return await readErc20IncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -238,7 +238,7 @@ export class ERC20Incentive extends DeployableTarget<
     i: bigint,
     params?: ReadParams<typeof erc20IncentiveAbi, 'entries'>,
   ) {
-    return readErc20IncentiveEntries(this._config, {
+    return await readErc20IncentiveEntries(this._config, {
       address: this.assertValidAddress(),
       args: [i],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -259,7 +259,7 @@ export class ERC20Incentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
   ) {
-    return this.awaitResult(this.claimRaw(payload, params));
+    return await this.awaitResult(this.claimRaw(payload, params));
   }
 
   /**
@@ -302,7 +302,7 @@ export class ERC20Incentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'clawback'>,
   ) {
-    return this.awaitResult(this.clawbackRaw(payload, params));
+    return await this.awaitResult(this.clawbackRaw(payload, params));
   }
 
   /**
@@ -345,7 +345,7 @@ export class ERC20Incentive extends DeployableTarget<
     payload: ClaimPayload,
     params?: ReadParams<typeof erc20IncentiveAbi, 'isClaimable'>,
   ) {
-    return readErc20IncentiveIsClaimable(this._config, {
+    return await readErc20IncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -364,7 +364,7 @@ export class ERC20Incentive extends DeployableTarget<
   public async drawRaffle(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
   ) {
-    return this.awaitResult(this.drawRaffleRaw(params));
+    return await this.awaitResult(this.drawRaffleRaw(params));
   }
 
   /**

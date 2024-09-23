@@ -114,7 +114,9 @@ export class SimpleDenyList extends DeployableTarget<
     allowed: boolean[],
     params?: WriteParams<typeof simpleDenyListAbi, 'setDenied'>,
   ) {
-    return this.awaitResult(this.setDeniedRaw(addresses, allowed, params));
+    return await this.awaitResult(
+      this.setDeniedRaw(addresses, allowed, params),
+    );
   }
 
   /**

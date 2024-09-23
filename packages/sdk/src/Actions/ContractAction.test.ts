@@ -1,6 +1,5 @@
 import { mockErc20Abi, readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { getClient } from '@wagmi/core';
 import {
   ContractFunctionExecutionError,
   encodeAbiParameters,
@@ -10,7 +9,6 @@ import {
   toFunctionSelector,
   zeroAddress,
 } from 'viem';
-import { call } from 'viem/actions';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '../../test/MockERC20';
 import { accounts } from '../../test/accounts';
@@ -118,7 +116,7 @@ describe.skip('ContractAction', () => {
 
   test('prepare will properly encode execution payload', async () => {
     const action = await loadFixture(payableContractAction(fixtures, erc20));
-    const { account } = accounts.at(1)!;
+    const { account } = accounts[1];
     const payload = await action.prepare(
       encodeAbiParameters(
         [
@@ -139,7 +137,7 @@ describe.skip('ContractAction', () => {
 
   test('payable execute', async () => {
     const action = await loadFixture(payableContractAction(fixtures, erc20));
-    const { account } = accounts.at(1)!;
+    const { account } = accounts[1];
     await action.execute(
       encodeAbiParameters(
         [
@@ -160,7 +158,7 @@ describe.skip('ContractAction', () => {
 
   test('nonpayable execute', async () => {
     const action = await loadFixture(nonPayableAction(fixtures, erc20));
-    const { account } = accounts.at(1)!;
+    const { account } = accounts[1];
     const [success] = await action.execute(
       encodeAbiParameters(
         [
@@ -181,7 +179,7 @@ describe.skip('ContractAction', () => {
 
   test('different chain id should throw', async () => {
     const action = await loadFixture(otherAction(fixtures, erc20));
-    const { account } = accounts.at(1)!;
+    const { account } = accounts[1];
     try {
       await action.execute(
         encodeAbiParameters(

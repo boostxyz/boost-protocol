@@ -84,6 +84,8 @@ import {
   BoostCoreNoIdentifierEmitted,
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
+  IncentiveNotCloneableError,
+  MustInitializeBudgetError,
   NoContractAddressUponReceiptError,
 } from './errors';
 import {
@@ -247,7 +249,8 @@ export class BoostCore extends Deployable<
     }
     //@ts-expect-error I can't set this property on the class because for some reason it takes super out of constructor scope?
     this.abi = boostCoreAbi;
-  } /**
+  }
+  /**
    * Create a new Boost.
    *
    * @public
@@ -302,18 +305,7 @@ export class BoostCore extends Deployable<
         throw new BudgetMustAuthorizeBoostCore(coreAddress);
       }
     } else {
-      // budgets are either instantiated with an address or payload, so in this branch payload will exist
-      const authorized = budget.payload?.authorized || [];
-      if (!authorized.includes(coreAddress)) {
-        throw new BudgetMustAuthorizeBoostCore(coreAddress);
-      }
-      const budgetHash = await budget.deployRaw(undefined, options);
-      const receipt = await waitForTransactionReceipt(options.config, {
-        hash: budgetHash,
-      });
-      if (!receipt.contractAddress)
-        throw new NoContractAddressUponReceiptError(receipt);
-      budgetPayload = receipt.contractAddress;
+      throw new MustInitializeBudgetError();
     }
 
     // if we're supplying an address, it could be a pre-initialized target
@@ -404,6 +396,7 @@ export class BoostCore extends Deployable<
       const incentive = incentives.at(i)!;
       if (incentive.address) {
         const isBase = incentive.address === incentive.base || incentive.isBase;
+        if (!isBase) throw new IncentiveNotCloneableError(incentive);
         incentivesPayloads[i] = {
           isBase: isBase,
           instance: incentive.address,
@@ -413,8 +406,10 @@ export class BoostCore extends Deployable<
             : zeroHash,
         };
       } else {
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentivesPayloads[i]!.parameters =
           incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentivesPayloads[i]!.instance = incentive.base;
       }
     }
@@ -454,6 +449,7 @@ export class BoostCore extends Deployable<
       validator: validator.at(boost.validator),
       allowList: allowList.at(boost.allowList),
       incentives: incentives.map((incentive, i) =>
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentive.at(boost.incentives.at(i)!),
       ),
       protocolFee: boost.protocolFee,
@@ -482,7 +478,7 @@ export class BoostCore extends Deployable<
     data: Hex,
     params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.claimIncentiveRaw(boostId, incentiveId, address, data, params),
     );
   }
@@ -495,7 +491,7 @@ export class BoostCore extends Deployable<
    * @param {bigint} boostId - The ID of the Boost
    * @param {bigint} incentiveId - The ID of the Incentive
    * @param {Address} address - The address of the referrer (if any)
-   * @param {Hex} data- The data for the claim
+   * @param {Hex} data The data for the claim
    * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
    * @returns {unknown}
    */
@@ -541,7 +537,7 @@ export class BoostCore extends Deployable<
     claimant: Address,
     params?: WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.claimIncentiveForRaw(
         boostId,
         incentiveId,
@@ -601,7 +597,7 @@ export class BoostCore extends Deployable<
     id: bigint,
     params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
   ) {
-    return readBoostCoreGetBoost(this._config, {
+    return await readBoostCoreGetBoost(this._config, {
       address: this.assertValidAddress(),
       args: [id],
       ...this.optionallyAttachAccount(),
@@ -675,7 +671,7 @@ export class BoostCore extends Deployable<
   public async getBoostCount(
     params?: ReadParams<typeof boostCoreAbi, 'getBoostCount'>,
   ) {
-    return readBoostCoreGetBoostCount(this._config, {
+    return await readBoostCoreGetBoostCount(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -720,7 +716,7 @@ export class BoostCore extends Deployable<
   public async createBoostAuth(
     params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'>,
   ) {
-    return readBoostCoreCreateBoostAuth(this._config, {
+    return await readBoostCoreCreateBoostAuth(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -742,7 +738,7 @@ export class BoostCore extends Deployable<
     auth: Auth,
     params?: WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.setCreateBoostAuthRaw(auth.assertValidAddress(), {
         ...params,
       }),
@@ -787,7 +783,7 @@ export class BoostCore extends Deployable<
   public async protocolFee(
     params?: ReadParams<typeof boostCoreAbi, 'protocolFee'>,
   ) {
-    return readBoostCoreProtocolFee(this._config, {
+    return await readBoostCoreProtocolFee(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -807,7 +803,7 @@ export class BoostCore extends Deployable<
   public async protocolFeeReceiver(
     params?: ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>,
   ) {
-    return readBoostCoreProtocolFeeReceiver(this._config, {
+    return await readBoostCoreProtocolFeeReceiver(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -829,7 +825,7 @@ export class BoostCore extends Deployable<
     address: Address,
     params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
   ) {
-    return this.awaitResult(
+    return await this.awaitResult(
       this.setProcolFeeReceiverRaw(address, {
         ...params,
       }),
@@ -875,7 +871,7 @@ export class BoostCore extends Deployable<
    * @returns {unknown}
    */
   public async claimFee(params?: ReadParams<typeof boostCoreAbi, 'claimFee'>) {
-    return readBoostCoreClaimFee(this._config, {
+    return await readBoostCoreClaimFee(this._config, {
       address: this.assertValidAddress(),
       args: [],
       ...this.optionallyAttachAccount(),
@@ -897,7 +893,7 @@ export class BoostCore extends Deployable<
     claimFee: bigint,
     params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
   ) {
-    return this.awaitResult(this.setClaimFeeRaw(claimFee, params));
+    return await this.awaitResult(this.setClaimFeeRaw(claimFee, params));
   }
 
   /**
@@ -935,8 +931,7 @@ export class BoostCore extends Deployable<
    * const auth = core.PassthroughAuth('0x') // is roughly equivalent to
    * const auth = new PassthroughAuth({ config: core._config, account: core._account }, '0x')
    * ```
-   * @param {DeployablePayloadOrAddress<{}>} options
-   * @param {?boolean} [isBase]
+   * @param {Address} address
    * @returns {PassthroughAuth}
    */
   PassthroughAuth(address?: Address) {

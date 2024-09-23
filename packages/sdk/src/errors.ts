@@ -4,6 +4,7 @@ import {
   type WaitForTransactionReceiptReturnType,
   zeroHash,
 } from 'viem';
+import type { BoostRegistry } from './BoostRegistry';
 import type { Incentive } from './Incentives/Incentive';
 import type { Criteria } from './utils';
 
@@ -298,6 +299,23 @@ export class BudgetMustAuthorizeBoostCore extends Error {
     super(
       `Budget needs to explicitly authorize ${boostCoreAddress}. You can retrieve this value from BoostCore.address`,
     );
+  }
+}
+
+/**
+ * Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {@link BoostRegistry}
+ *
+ * @export
+ * @class MustInitializeBudgetError
+ * @typedef {MustInitializeBudgetError}
+ * @extends {Error}
+ */
+export class MustInitializeBudgetError extends Error {
+  /**
+   * Creates an instance of MustInitializeBudgetError.
+   */
+  constructor() {
+    super(`Budgets must be preinitialized before being used with a new Boost`);
   }
 }
 

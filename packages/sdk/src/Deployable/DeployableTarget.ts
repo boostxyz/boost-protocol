@@ -10,6 +10,7 @@ import {
   type Hash,
   type Hex,
   type WaitForTransactionReceiptParameters,
+  isAddress,
   zeroAddress,
 } from 'viem';
 import {
@@ -58,7 +59,11 @@ export class DeployableTarget<
    * @readonly
    * @type {boolean}
    */
-  readonly isBase: boolean = true;
+  protected _isBase = true;
+  get isBase() {
+    if (!!this.address && this.address !== this.base) return false;
+    return this._isBase;
+  }
 
   /**
    * Creates an instance of DeployableTarget.
@@ -74,7 +79,15 @@ export class DeployableTarget<
     isBase?: boolean,
   ) {
     super(options, payload);
-    if (isBase !== undefined) this.isBase = isBase;
+    // if supplying a custom address, safe enough to assume it is not a base address which makes reusing contracts like budgets easier
+    if (
+      typeof payload === 'string' &&
+      isAddress(payload) &&
+      payload !== this.base &&
+      payload !== zeroAddress
+    )
+      isBase = false;
+    if (isBase !== undefined) this._isBase = isBase;
   }
 
   /**
@@ -109,7 +122,7 @@ export class DeployableTarget<
    * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
    * @returns {unknown}
    */
-  public override async deploy(
+  protected override async deploy(
     payload?: Payload,
     options?: DeployableOptions,
     waitParams?: Omit<WaitForTransactionReceiptParameters, 'hash'>,
@@ -128,7 +141,7 @@ export class DeployableTarget<
    * @param {?DeployableOptions} [_options]
    * @returns {Promise<Hash>}
    */
-  public override async deployRaw(
+  protected override async deployRaw(
     _payload?: Payload,
     _options?: DeployableOptions,
   ): Promise<Hash> {
@@ -157,7 +170,7 @@ export class DeployableTarget<
     interfaceId: Hex,
     params?: ReadParams<typeof aCloneableAbi, 'supportsInterface'>,
   ) {
-    return readACloneableSupportsInterface(this._config, {
+    return await readACloneableSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -178,7 +191,7 @@ export class DeployableTarget<
   public async getComponentInterface(
     params?: ReadParams<typeof aCloneableAbi, 'getComponentInterface'>,
   ) {
-    return readACloneableGetComponentInterface(this._config, {
+    return await readACloneableGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

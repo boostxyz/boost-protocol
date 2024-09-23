@@ -326,7 +326,7 @@ export function freshBudget(
   fixtures: Fixtures,
 ) {
   return async function freshBudget() {
-    return fixtures.registry.clone(
+    return await fixtures.registry.clone(
       crypto.randomUUID(),
       new fixtures.bases.SimpleBudget(options, {
         owner: options.account.address,
@@ -344,7 +344,7 @@ export function freshManagedBudget(
   fixtures: Fixtures,
 ) {
   return async function freshBudget() {
-    return fixtures.registry.clone(
+    return await fixtures.registry.clone(
       crypto.randomUUID(),
       new fixtures.bases.ManagedBudget(options, {
         owner: options.account.address,
@@ -363,7 +363,7 @@ export function freshVestingBudget(
   fixtures: Fixtures,
 ) {
   return async function freshVestingBudget() {
-    return fixtures.registry.clone(
+    return await fixtures.registry.clone(
       crypto.randomUUID(),
       new fixtures.bases.VestingBudget(options, {
         owner: options.account.address,
@@ -640,8 +640,44 @@ export function makeMockEventActionPayload(
   erc20Address: Address,
 ) {
   const step: ActionStep = {
-    signature: '0xddf252ad',
+    signature:
+      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
     signatureType: SignatureType.EVENT,
+    actionType: 0,
+    targetContract: erc20Address,
+    chainid: 31337,
+    actionParameter: {
+      filterType: FilterType.EQUAL,
+      fieldType: PrimitiveType.ADDRESS,
+      fieldIndex: 0, // Assume the first field in the log is the 'from' address
+      filterData: coreAddress,
+    },
+  };
+
+  return {
+    actionClaimant: {
+      chainid: 31337,
+      signatureType: SignatureType.EVENT,
+      signature:
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      fieldIndex: 0,
+      targetContract: erc20Address,
+    },
+    actionStepOne: step,
+    actionStepTwo: step,
+    actionStepThree: step,
+    actionStepFour: step,
+  } as EventActionPayload;
+}
+
+export function makeMockFunctionActionPayload(
+  coreAddress: Address,
+  erc20Address: Address,
+) {
+  const step: ActionStep = {
+    signature: '0x40c10f19',
+    chainid: 31337,
+    signatureType: SignatureType.FUNC,
     actionType: 0,
     targetContract: erc20Address,
     actionParameter: {
@@ -654,10 +690,11 @@ export function makeMockEventActionPayload(
 
   return {
     actionClaimant: {
-      signatureType: SignatureType.EVENT,
-      signature: '0xddf252ad',
+      signatureType: SignatureType.FUNC,
+      signature: '0x40c10f19',
       fieldIndex: 0,
       targetContract: erc20Address,
+      chainid: 31337,
     },
     actionStepOne: step,
     actionStepTwo: step,

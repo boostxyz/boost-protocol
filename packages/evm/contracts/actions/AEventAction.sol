@@ -42,10 +42,11 @@ abstract contract AEventAction is AAction {
     }
 
     struct ActionStep {
-        bytes4 signature;
+        bytes32 signature;
         SignatureType signatureType;
         uint8 actionType;
         address targetContract;
+        uint256 chainid;
         Criteria actionParameter;
     }
 
@@ -59,11 +60,13 @@ abstract contract AEventAction is AAction {
     /// @param signature The 4 byte signature of the event or function
     /// @param fieldIndex The index corresponding to claimant.
     /// @param targetContract The address of the target contract
+    /// @param chainId The id of the evm chain the Event was emitted from
     struct ActionClaimant {
         SignatureType signatureType;
-        bytes4 signature;
+        bytes32 signature;
         uint8 fieldIndex;
         address targetContract;
+        uint256 chainid;
     }
 
     function getActionStepsCount() public view virtual returns (uint256);

@@ -1,13 +1,6 @@
 export * from './BoostRegistry';
 export * from './BoostCore';
 export * from './Boost';
-export * from './errors';
-export * from './utils';
-
-// Auth
-
-export * from './Auth/Auth';
-export * from './Auth/PassthroughAuth';
 
 // Actions
 
@@ -48,3 +41,13 @@ export * from './Incentives/PointsIncentive';
 
 export * from './Validators/SignerValidator';
 export * from './Validators/Validator';
+
+// Extra
+
+export * from './errors';
+export * from './utils';
+
+// Auth
+
+export * from './Auth/Auth';
+export * from './Auth/PassthroughAuth';

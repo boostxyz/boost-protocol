@@ -2,9 +2,14 @@
   "$schema": "https://biomejs.dev/schemas/1.8.0/schema.json",
   "formatter": {
     "ignore": [
-      "packages/evm/lib/**/*",
-      "packages/evm/artifacts/**/*",
-      "**/dist"
+      "packages/evm/lib",
+      "packages/evm/artifacts",
+      "packages/evm/out",
+      "packages/evm/cache",
+      "packages/evm/cache_forge",
+      "dist",
+      ".next",
+      ".turbo"
     ],
     "enabled": true,
     "formatWithErrors": false,
@@ -17,9 +22,14 @@
   "organizeImports": { "enabled": true },
   "files": {
     "ignore": [
-      "packages/evm/lib/**/*",
-      "packages/evm/artifacts/**/*",
-      "**/dist"
+      "packages/evm/lib",
+      "packages/evm/artifacts",
+      "packages/evm/out",
+      "packages/evm/cache",
+      "packages/evm/cache_forge",
+      "dist",
+      ".next",
+      ".turbo"
     ]
   },
   "linter": {
@@ -50,13 +60,19 @@
         "noExplicitAny": "error",
         "noExtraNonNullAssertion": "error",
         "noMisleadingInstantiator": "error",
-        "useNamespaceKeyword": "error"
+        "useNamespaceKeyword": "error",
+        "useAwait": "error"
       }
     },
     "ignore": [
-      "packages/evm/lib/**/*",
-      "packages/evm/artifacts/**/*",
-      "**/dist"
+      "packages/evm/lib",
+      "packages/evm/artifacts",
+      "packages/evm/out",
+      "packages/evm/cache",
+      "packages/evm/cache_forge",
+      "dist",
+      ".next",
+      ".turbo"
     ]
   },
   "javascript": {

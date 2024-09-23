@@ -48,7 +48,7 @@ export class PassthroughAuth extends Deployable<
     address: Address,
     params?: ReadParams<typeof passthroughAuthAbi, 'isAuthorized'>,
   ) {
-    return readPassthroughAuthIsAuthorized(this._config, {
+    return await readPassthroughAuthIsAuthorized(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

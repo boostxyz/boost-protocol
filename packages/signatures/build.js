@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { parseAbiItem, toFunctionSelector } from 'viem';
+import { parseAbiItem, toEventSelector, toFunctionSelector } from 'viem';
 import events from './manifests/events.json' with { type: 'json' };
 import functions from './manifests/functions.json' with { type: 'json' };
 
@@ -21,9 +21,20 @@ function addToIndex(type, signature, target) {
     ? signature.split(type).at(1).trim()
     : signature;
   const itemString = `${type} ${signatureWithoutType}`;
-  const selector = toFunctionSelector(signature);
+  const selector = generateSelector(type, signature);
   target.abi[selector] = parseAbiItem(itemString);
   target.selectors[signatureWithoutType] = selector;
+}
+
+function generateSelector(type, signature) {
+  switch (type) {
+    case 'event':
+      return toEventSelector(signature);
+    case 'function':
+      return toFunctionSelector(signature);
+    default:
+      throw new Error(`Invalid type: ${type}`);
+  }
 }
 
 for (let signature of events) {

@@ -33,21 +33,33 @@ import {
 import {
   type ActionClaimant,
   type ActionStep,
+  type ActionStepTuple,
   type Criteria,
   type EventActionPayload,
   type EventActionPayloadRaw,
   FilterType,
   type GetLogsParams,
   PrimitiveType,
+  type RawActionClaimant,
+  type RawActionStep,
   type ReadParams,
   RegistryType,
   type WriteParams,
   dedupeActionSteps,
+  fromRawActionStep,
   isEventActionPayloadSimple,
   prepareEventActionPayload,
 } from '../utils';
+import type { SignatureType } from './../utils';
 
-export type { EventActionPayload };
+export type {
+  EventActionPayload,
+  ActionStep,
+  ActionClaimant,
+  SignatureType,
+  FilterType,
+  PrimitiveType,
+};
 
 /**
  * A generic event action
@@ -119,8 +131,8 @@ export class EventAction extends DeployableTarget<
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    })) as ActionStep[];
-    return dedupeActionSteps(steps);
+    })) as RawActionStep[];
+    return dedupeActionSteps(steps.map(fromRawActionStep));
   }
 
   /**
@@ -149,12 +161,13 @@ export class EventAction extends DeployableTarget<
   public async getActionClaimant(
     params?: ReadParams<typeof eventActionAbi, 'getActionClaimant'>,
   ) {
-    return readEventActionGetActionClaimant(this._config, {
+    const result = (await readEventActionGetActionClaimant(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
-    }) as Promise<ActionClaimant>;
+    })) as RawActionClaimant;
+    return fromRawActionStep(result);
   }
 
   /**
@@ -170,7 +183,7 @@ export class EventAction extends DeployableTarget<
     data: Hex,
     params?: WriteParams<typeof eventActionAbi, 'execute'>,
   ) {
-    return this.awaitResult(this.executeRaw(data, params));
+    return await this.awaitResult(this.executeRaw(data, params));
   }
 
   /**
@@ -270,7 +283,7 @@ export class EventAction extends DeployableTarget<
       }));
     if (!logs.length) return false;
     for (let log of logs) {
-      if (!(await this.validateLogAgainstCriteria(criteria, log))) {
+      if (!this.validateLogAgainstCriteria(criteria, log)) {
         return false;
       }
     }
@@ -282,9 +295,9 @@ export class EventAction extends DeployableTarget<
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {Log} log - The Viem event log.
-   * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
+   * @returns {boolean} - Returns true if the log passes the criteria, false otherwise.
    */
-  public async validateLogAgainstCriteria(criteria: Criteria, log: Log) {
+  public validateLogAgainstCriteria(criteria: Criteria, log: Log) {
     const fieldValue = log.topics.at(criteria.fieldIndex);
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({ log, criteria, fieldValue });
@@ -348,24 +361,24 @@ export class EventAction extends DeployableTarget<
     let rawPayload: EventActionPayloadRaw;
     if (isEventActionPayloadSimple(payload)) {
       // filter out any falsy potential values
-      let tmpSteps = payload.actionSteps.filter((step) => !!step);
+      let tmpSteps: ActionStep[] = payload.actionSteps.filter((step) => !!step);
       if (tmpSteps.length === 0) {
         throw new NoEventActionStepsProvidedError();
       }
       if (tmpSteps.length > 4) {
         throw new TooManyEventActionStepsProvidedError();
       }
-      let steps: ActionStep[] = Array.from({ length: 4 }, (_, i) => {
+      let steps: ActionStepTuple = Array.from({ length: 4 }, (_, i) => {
         // use either the provided step at the given index, or reuse the previous step
         // should aways exist
-        return tmpSteps.at(i)! || tmpSteps.slice(0, i).at(-1)!;
-      });
+        return tmpSteps.at(i) || tmpSteps.at(-1);
+      }) as ActionStepTuple;
       rawPayload = {
         actionClaimant: payload.actionClaimant,
-        actionStepOne: steps.at(0)!,
-        actionStepTwo: steps.at(1)!,
-        actionStepThree: steps.at(2)!,
-        actionStepFour: steps.at(3)!,
+        actionStepOne: steps[0],
+        actionStepTwo: steps[1],
+        actionStepThree: steps[2],
+        actionStepFour: steps[3],
       };
     } else {
       rawPayload = payload;

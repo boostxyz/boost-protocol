@@ -26,6 +26,7 @@ import {
   type ReadParams,
   RegistryType,
   type SimpleAllowListPayload,
+  type WriteParams,
   prepareSimpleAllowListPayload,
 } from '../utils';
 
@@ -120,9 +121,11 @@ export class SimpleAllowList extends DeployableTarget<
   public async setAllowed(
     addresses: Address[],
     allowed: boolean[],
-    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
+    params?: WriteParams<typeof simpleAllowListAbi, 'setAllowed'>,
   ) {
-    return this.awaitResult(this.setAllowedRaw(addresses, allowed, params));
+    return await this.awaitResult(
+      this.setAllowedRaw(addresses, allowed, params),
+    );
   }
 
   /**
@@ -168,9 +171,9 @@ export class SimpleAllowList extends DeployableTarget<
   public async grantRoles(
     address: Address,
     role: bigint,
-    params?: ReadParams<typeof simpleAllowListAbi, 'grantRoles'>,
+    params?: WriteParams<typeof simpleAllowListAbi, 'grantRoles'>,
   ) {
-    return this.awaitResult(this.grantRolesRaw(address, role, params));
+    return await this.awaitResult(this.grantRolesRaw(address, role, params));
   }
 
   /**

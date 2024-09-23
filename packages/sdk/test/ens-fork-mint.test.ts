@@ -53,7 +53,7 @@ const boostImpostor = '0xd11dD72b7555205746fa537928D87DeC6bD26275' as Address;
 const trustedSigner = accounts[0];
 const CHAIN_URL =
   'https://eth-sepolia.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
-const CHAIN_BLOCK = 6717978;
+const CHAIN_BLOCK = 6717979;
 const selector = selectors[
   'NameRegistered(string,bytes32,address,uint256,uint256,uint256)'
 ] as Hex;
@@ -167,8 +167,8 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
 
       const logs = await sepoliaClient.getLogs({
         address: targetContract as Address,
-        fromBlock: BigInt(6717979), // target the exact block of the transaction
-        toBlock: BigInt(6717979),
+        fromBlock: BigInt(CHAIN_BLOCK), // target the exact block of the transaction
+        toBlock: BigInt(CHAIN_BLOCK),
       });
 
       const validation = await action.validateActionSteps({ logs });

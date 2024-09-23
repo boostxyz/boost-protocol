@@ -4,6 +4,8 @@
   "Purchased(address,address,uint256,uint256,uint256)",
   "NameRegistered(string,bytes32,address,uint256,uint256,uint256)",
   "DelegateChanged(address,address,address)",
+  "VoteCast(address,uint256,uint8,uint256,string)",
+  "VoteCastWithParams(address,uint256,uint8,uint256,string,bytes)",
   "// Test signatures",
   "Test(string)"
 ]

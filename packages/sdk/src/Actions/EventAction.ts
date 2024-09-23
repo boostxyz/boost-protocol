@@ -14,6 +14,7 @@ import {
   type AbiFunction,
   type Address,
   type ContractEventName,
+  type ContractFunctionName,
   type Hex,
   type Log,
   type PublicClient,
@@ -65,6 +66,23 @@ export type {
   PrimitiveType,
 };
 
+type ReadEventActionParams<
+  fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
+> = ReadParams<typeof eventActionAbi, fnName>;
+
+type LogParams = GetLogsParams<Abi, ContractEventName<Abi>> & {
+  knownEvents?: Record<Hex, AbiEvent>;
+  logs?: Log[];
+  txHash?: Hex;
+};
+
+type validateInputParams<
+  fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
+> = {
+  getterParams?: ReadEventActionParams<fnName>;
+  logParams?: LogParams;
+};
+
 /**
  * A generic event action
  *
@@ -108,12 +126,12 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {number} index The index of the action event to retrieve
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionStep'>} [params]
+   * @param {?ReadEventActionParams<'getActionStep'>} [params]
    * @returns {Promise<ActionStep>}
    */
   public async getActionStep(
     index: number,
-    params?: ReadParams<typeof eventActionAbi, 'getActionStep'>,
+    params?: ReadEventActionParams<'getActionStep'>,
   ) {
     const steps = await this.getActionSteps(params);
     return steps.at(index);
@@ -124,11 +142,11 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'>} [params]
+   * @param {?ReadEventActionParams<'getActionSteps'>} [params]
    * @returns {Promise<ActionStep[]>}
    */
   public async getActionSteps(
-    params?: ReadParams<typeof eventActionAbi, 'getActionSteps'>,
+    params?: ReadEventActionParams<'getActionSteps'>,
   ) {
     const steps = (await readEventActionGetActionSteps(this._config, {
       address: this.assertValidAddress(),
@@ -144,11 +162,11 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionStepsCount'>} [params]
+   * @param {?ReadEventActionParams<'getActionStepsCount'>} [params]
    * @returns {Promise<bigint>}
    */
   public async getActionStepsCount(
-    params?: ReadParams<typeof eventActionAbi, 'getActionStepsCount'>,
+    params?: ReadEventActionParams<'getActionStepsCount'>,
   ) {
     const steps = await this.getActionSteps(params);
     return steps.length;
@@ -159,17 +177,16 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionClaimant'>} [params]
+   * @param {?ReadEventActionParams<'getActionClaimant'>} [params]
    * @returns {Promise<ActionClaimant>}
    */
   public async getActionClaimant(
-    params?: ReadParams<typeof eventActionAbi, 'getActionClaimant'>,
+    params?: ReadEventActionParams<'getActionClaimant'>,
   ) {
     const result = (await readEventActionGetActionClaimant(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
+      ...params,
     })) as RawActionClaimant;
     return fromRawActionStep(result);
   }
@@ -220,23 +237,15 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'> &
-   *       GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *         knownEvents?: Record<Hex, AbiEvent>;
-   *         logs?: Log[];
-   *       }} [params]
+   * @param {?validateInputParams<'getActionSteps'>} [params]
    * @returns {Promise<boolean>}
    */
   public async validateActionSteps(
-    params?: ReadParams<typeof eventActionAbi, 'getActionSteps'> &
-      GetLogsParams<Abi, ContractEventName<Abi>> & {
-        knownEvents?: Record<Hex, AbiEvent>;
-        logs?: Log[];
-      },
+    params?: validateInputParams<'getActionSteps'>,
   ) {
-    const actionSteps = await this.getActionSteps(params);
+    const actionSteps = await this.getActionSteps(params?.getterParams);
     for (const actionStep of actionSteps) {
-      if (!(await this.isActionStepValid(actionStep, params))) {
+      if (!(await this.isActionStepValid(actionStep, params?.logParams))) {
         return false;
       }
     }
@@ -250,20 +259,10 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {ActionStep} actionStep
-   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *       knownEvents?: Record<Hex, AbiEvent>;
-   *       logs?: Log[];
-   *     }} [params]
+   * @param {?LogParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async isActionStepValid(
-    actionStep: ActionStep,
-    params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
-      knownEvents?: Record<Hex, AbiEvent>;
-      logs?: Log[];
-      txHash?: Hex;
-    },
-  ) {
+  public async isActionStepValid(actionStep: ActionStep, params?: LogParams) {
     if (actionStep.signatureType === SignatureType.EVENT) {
       return await this.isActionEventValid(actionStep, params);
     }
@@ -280,19 +279,10 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {ActionStep} actionStep
-   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *       knownEvents?: Record<Hex, AbiEvent>;
-   *       logs?: Log[];
-   *     }} [params]
+   * @param {?LogParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async isActionEventValid(
-    actionStep: ActionStep,
-    params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
-      knownEvents?: Record<Hex, AbiEvent>;
-      logs?: Log[];
-    },
-  ) {
+  public async isActionEventValid(actionStep: ActionStep, params?: LogParams) {
     const criteria = actionStep.actionParameter;
     const signature = actionStep.signature;
     let event: AbiEvent;
@@ -330,18 +320,12 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {ActionStep} actionStep
-   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *       knownEvents?: Record<Hex, AbiEvent>;
-   *       txHash?: Hex;
-   *     }} [params]
+   * @param {?LogParams} [params]
    * @returns {Promise<boolean>}
    */
   public async isActionFunctionValid(
     actionStep: ActionStep,
-    params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
-      knownEvents?: Record<Hex, AbiEvent>;
-      txHash?: Hex;
-    },
+    params?: LogParams,
   ) {
     const criteria = actionStep.actionParameter;
     const signature = actionStep.signature;

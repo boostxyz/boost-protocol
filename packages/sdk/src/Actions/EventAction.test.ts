@@ -208,6 +208,8 @@ describe('EventAction', () => {
       transactionIndex: 0,
     } as Log;
     const action = await loadFixture(cloneEventAction(fixtures, erc721));
-    expect(await action.validateActionSteps({ logs: [log] })).toBe(true);
+    expect(
+      await action.validateActionSteps({ logParams: { logs: [log] } }),
+    ).toBe(true);
   });
 });

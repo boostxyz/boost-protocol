@@ -4,10 +4,12 @@ import {
   mine,
   reset,
 } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+import { parseAbiItem } from 'abitype';
 import {
   http,
   type Address,
   type Hex,
+  createPublicClient,
   createTestClient,
   pad,
   parseEther,
@@ -39,11 +41,6 @@ let budgets: BudgetFixtures;
 
 // This is the ens register controller contract
 const targetContract = '0xFED6a969AaA60E4961FCD3EBF1A2e8913ac65B72';
-
-// We take the raw inputData off of an existing historical transaction
-// https://sepolia.etherscan.io/tx/0xe527caab33384a58780aa12218c159c0b1910921aca0bc311a9dd7c39efb3316
-const inputData =
-  '0x74694a2b0000000000000000000000000000000000000000000000000000000000000100000000000000000000000000d11dd72b7555205746fa537928d87dec6bd262750000000000000000000000000000000000000000000000000000000007861f809923eb9400000003d38704f2585fb75b2bf96a1c277a5cee490aadc929f777b50000000000000000000000008fade66b79cc9f707ab26799354482eb93a5b7dd000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000430303030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a48b95dd719506df1a6b44c5457e2eff373a7bfa88acc5f9788983f78b6ee96c989d53193c000000000000000000000000000000000000000000000000000000000000003c00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000014d11dd72b7555205746fa537928d87dec6bd2627500000000000000000000000000000000000000000000000000000000000000000000000000000000';
 
 // For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
 const incentiveData = pad('0xdef456232173821931823712381232131391321934');
@@ -127,9 +124,9 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           signers: [owner, trustedSigner.account],
           validatorCaller: fixtures.core.assertValidAddress(), // only core should be calling into the validate otherwise it's possible to burn signatures
         }),
-        allowList: new bases.SimpleAllowList(defaultOptions, {
+        allowList: new bases.SimpleDenyList(defaultOptions, {
           owner: owner,
-          allowed: [owner],
+          denied: [],
         }),
         incentives: [
           new bases.ERC20Incentive(defaultOptions, {
@@ -163,17 +160,20 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         value: parseEther('10'),
       });
 
-      const testReceipt = await walletClient.sendTransaction({
-        data: inputData,
-        account: boostImpostor,
-        to: targetContract,
-        value: 408279452054767655n,
+      // Fetch logs for historic transaction
+      const sepoliaClient = createPublicClient({
+        chain: sepolia,
+        transport: http(CHAIN_URL),
       });
 
-      // Make sure that the transaction was sent as expected and validates the action
-      expect(testReceipt).toBeDefined();
-      const validation = await action.validateActionSteps();
-      expect(validation).toBe(false);
+      const logs = await sepoliaClient.getLogs({
+        address: targetContract as Address,
+        fromBlock: BigInt(6717979), // Adjust this to an appropriate starting block
+        toBlock: BigInt(6717979),
+      });
+
+      const validation = await action.validateActionSteps({ logs });
+      expect(validation).toBe(true);
       // Generate the signature using the trusted signer
       const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
         signer: trustedSigner,

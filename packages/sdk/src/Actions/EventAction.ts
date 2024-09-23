@@ -21,6 +21,7 @@ import {
   type PublicClient,
   decodeFunctionData,
   encodeAbiParameters,
+  fromHex,
   isAddressEqual,
   trim,
 } from 'viem';
@@ -63,6 +64,7 @@ export enum FilterType {
   GREATER_THAN = 2,
   LESS_THAN = 3,
   CONTAINS = 4,
+  REGEX = 5,
 }
 
 /**
@@ -633,7 +635,6 @@ export class EventAction extends DeployableTarget<
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {string | bigint} fieldValue - The field value to validate.
-   * @param {Log} log - Optional, for error handling context.
    * @returns {Promise<boolean>} - Returns true if the field passes the criteria, false otherwise.
    */
   public validateFieldAgainstCriteria(
@@ -693,6 +694,20 @@ export class EventAction extends DeployableTarget<
           criteria,
           fieldValue,
         });
+
+      case FilterType.REGEX:
+        if (typeof fieldValue !== 'string') {
+          throw new FieldValueNotComparableError({
+            ...input,
+            criteria,
+            fieldValue,
+          });
+        }
+        if (criteria.fieldType === PrimitiveType.STRING) {
+          const param = fromHex(fieldValue as Hex, 'string');
+          const regexString = fromHex(criteria.filterData, 'string');
+          return new RegExp(regexString).test(param);
+        }
 
       default:
         throw new UnrecognizedFilterTypeError({

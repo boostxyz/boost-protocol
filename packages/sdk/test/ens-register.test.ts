@@ -9,11 +9,8 @@ import {
   type Address,
   type Hex,
   createPublicClient,
-  createTestClient,
   pad,
   parseEther,
-  publicActions,
-  walletActions,
 } from 'viem';
 import { sepolia } from 'viem/chains';
 import { beforeAll, describe, expect, test } from 'vitest';
@@ -142,22 +139,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const boost = await client.getBoost(0n);
       const action = boost.action;
       expect(action).toBeDefined();
-
-      // Use viem to send the transaction from the impersonated account
-      const walletClient = createTestClient({
-        transport: http('http://127.0.0.1:8545'),
-        chain: sepolia,
-        mode: 'hardhat',
-      })
-        .extend(publicActions)
-        .extend(walletActions);
-      await walletClient.impersonateAccount({
-        address: boostImpostor,
-      });
-      await walletClient.setBalance({
-        address: boostImpostor,
-        value: parseEther('10'),
-      });
 
       // Fetch logs for historic transaction
       const sepoliaClient = createPublicClient({

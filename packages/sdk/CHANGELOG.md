@@ -1,5 +1,18 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.9
+
+### Minor Changes
+
+- 1dc5168: refactor utils, put interfaces and encoding functions with their respective consuming classes
+- 19744b8: add viability test for delegation action
+- d44954a: make `actionType` optional in event action steps, default to 0 if not provided
+
+### Patch Changes
+
+- Updated dependencies [19744b8]
+  - @boostxyz/signatures@0.0.0-alpha.1
+
 ## 0.0.0-alpha.8
 
 ### Minor Changes

@@ -104,10 +104,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           fieldIndex: 0, // Targeting the 'from' address
           targetContract: boostImpostor, // The ERC20 contract we're monitoring
         },
-        actionStepOne: eventActionStep, // Use the custom step for action
-        actionStepTwo: eventActionStep, // Repeat the action step if necessary
-        actionStepThree: eventActionStep, // You can expand for more steps if needed
-        actionStepFour: eventActionStep, // Up to 4 action steps
+        actionSteps: [eventActionStep],
       };
       // Initialize EventAction with the custom payload
       const eventAction = new bases.EventAction(

@@ -1,9 +1,5 @@
 import { selectors } from '@boostxyz/signatures/events';
-import {
-  loadFixture,
-  mine,
-  reset,
-} from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import {
   http,
   type Address,
@@ -12,7 +8,6 @@ import {
   pad,
   parseEther,
   publicActions,
-  rpcSchema,
   toHex,
   walletActions,
 } from 'viem';
@@ -62,8 +57,21 @@ const selector = selectors[
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
   'Boost with Voting Incentive',
   () => {
+    const walletClient = createTestClient({
+      transport: http('http://127.0.0.1:8545'),
+      chain: optimism,
+      mode: 'hardhat',
+    })
+      .extend(publicActions)
+      .extend(walletActions);
+
     beforeAll(async () => {
-      await reset(RPC_URL, OPT_CHAIN_BLOCK - 1n);
+      await walletClient.reset({
+        jsonRpcUrl: RPC_URL,
+        // jsonRpcUrl: 'http://127.0.0.1:8545', // getting timeout when requesting eth_chainId
+        blockNumber: OPT_CHAIN_BLOCK - 1n,
+      });
+
       fixtures = await loadFixture(deployFixtures);
       budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
     });
@@ -78,8 +86,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         address: core.assertValidAddress(),
       });
       const owner = defaultOptions.account.address;
-      // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
-      await mine();
 
       // Step defining the action for VoteCast event
       const eventActionStep: ActionStep = {
@@ -89,11 +95,13 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         targetContract: targetContract, // Address of the ERC20 contract
         // We want to target the ProposalId property on the VoteCast event
         actionParameter: {
-          filterType: FilterType.NOT_EQUAL, // Filter to check for equality
+          filterType: FilterType.EQUAL, // Filter to check for equality
           fieldType: PrimitiveType.UINT, // The field we're filtering is a uint
-          fieldIndex: 0, // Might need to be 1, we'll see - let's log this
+          fieldIndex: 1, // Targeting the 'proposalId' uint
           filterData: toHex(
-            '54194543592303757979358957212312678549449891089859364558242427871997305750980',
+            BigInt(
+              '54194543592303757979358957212312678549449891089859364558242427871997305750980',
+            ),
           ), // Filtering based on the proposal id
         },
         chainid: optimism.id,
@@ -106,7 +114,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         actionClaimant: {
           signatureType: SignatureType.EVENT,
           signature: selector, // VoteCast(address,uint256,uint8,uint256,string) event signature
-          fieldIndex: 0, // Targeting the 'proposalId' uint
+          fieldIndex: 1, // Targeting the 'proposalId' uint
           targetContract: targetContract, // The ERC20 contract we're monitoring
           chainid: optimism.id,
         },
@@ -144,7 +152,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           }),
         ],
       });
-      console.log('boost created');
 
       // Make sure the boost was created as expected
       expect(await client.getBoostCount()).toBe(1n);
@@ -152,38 +159,14 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const action = boost.action;
       expect(action).toBeDefined();
 
-      const actionSteps = await action.getActionSteps();
-      console.log(action.address);
-      console.log({ actionSteps });
-
-      const isActionStepValid = await action.isActionStepValid(actionSteps[0]);
-      console.log({ isActionStepValid });
-
       // Use viem to send the transaction from the impersonated account
-      const walletClient = createTestClient({
-        transport: http('http://127.0.0.1:8545'),
-        chain: optimism,
-        mode: 'hardhat',
-      })
-        .extend(publicActions)
-        .extend(walletActions);
-      console.log('created test client walletClient');
-
-      await walletClient.reset({
-        jsonRpcUrl: RPC_URL,
-        // jsonRpcUrl: 'http://127.0.0.1:8545', // getting timeout when requesting eth_chainId
-        blockNumber: OPT_CHAIN_BLOCK - 1n,
-      });
-      console.log('walletClient reset');
       await walletClient.impersonateAccount({
         address: boostImpostor,
       });
-      console.log('impersonateAccount');
       await walletClient.setBalance({
         address: boostImpostor,
         value: parseEther('10'),
       });
-      console.log('setBalance');
       const testReceipt = await walletClient.sendTransaction({
         data: inputData,
         account: boostImpostor,
@@ -194,13 +177,12 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         hash: testReceipt,
       });
       const logs = transaction.logs;
-      console.log(transaction.logs);
 
       // Make sure that the transaction was sent as expected and validates the action
       expect(testReceipt).toBeDefined();
       const validation = await action.validateActionSteps({
         logs, // do we need to pass the logs in, in order to validate them?
-      }); // this doesn't work for some reason
+      });
       expect(validation).toBe(true);
       // Generate the signature using the trusted signer
       const claimDataPayload = await prepareSignerValidatorClaimDataPayload({

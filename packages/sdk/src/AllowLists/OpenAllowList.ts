@@ -1,11 +1,10 @@
 import { simpleDenyListAbi } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
-import { type Address, type Hex, zeroAddress } from 'viem';
+import { type Hex, zeroAddress } from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { RegistryType } from '../utils';
 import {
   SimpleDenyList,
   type SimpleDenyListPayload,
@@ -23,25 +22,6 @@ export const openAllowListAbi = simpleDenyListAbi;
  * @extends {DeployableTarget<OpenAllowListPayload>}
  */
 export class OpenAllowList extends SimpleDenyList<undefined> {
-  public override readonly abi = openAllowListAbi;
-  /**
-   * @inheritdoc
-   *
-   * @public
-   * @static
-   * @type {Address}
-   */
-  public static override base: Address = import.meta.env
-    .VITE_SIMPLE_DENYLIST_BASE;
-  /**
-   * @inheritdoc
-   *
-   * @public
-   * @static
-   * @type {RegistryType}
-   */
-  public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
-
   /**
    * @inheritdoc
    *

@@ -164,7 +164,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         data: inputData,
         account: boostImpostor,
         to: targetContract,
-        value: 29_777_000_000_000_000n,
+        value: parseEther('0.029777'),
       });
 
       // Make sure that the transaction was sent as expected and validates the action

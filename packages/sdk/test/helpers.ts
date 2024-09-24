@@ -25,6 +25,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpe
 import { deployContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
+  type ActionStep,
   AllowListIncentive,
   BoostCore,
   type Budget,
@@ -636,7 +637,7 @@ export function makeMockEventActionPayload(
   coreAddress: Address,
   erc20Address: Address,
 ) {
-  const step: ActionType = {
+  const step: ActionStep = {
     signature:
       '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
     signatureType: SignatureType.EVENT,

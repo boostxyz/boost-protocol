@@ -4,5 +4,5 @@
   "mintPayable(address to, uint256 amount)",
   "// Test function signatures",
   "mint(address)",
-  "execute(bytes commands,bytes[] inputs,uint256 deadline)"
+  "execute(bytes commands, bytes[] inputs, uint256 deadline)"
 ]

@@ -54,7 +54,7 @@ const RPC_URL =
   'https://opt-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
 const OPTIMISM_CHAIN_BLOCK = 125763452;
 const selector = selectors[
-  'execute(bytes commands,bytes[] inputs,uint256 deadline)'
+  'execute(bytes commands, bytes[] inputs, uint256 deadline)'
 ] as Hex;
 
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(

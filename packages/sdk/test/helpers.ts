@@ -387,7 +387,7 @@ export async function deployFixtures(
       );
     }
     SimpleBudget(options: DeployablePayloadOrAddress<SimpleBudgetPayload>) {
-      return new SimpleBudget(
+      return new bases.SimpleBudget(
         { config: this._config, account: this._account },
         options,
       );
@@ -401,7 +401,7 @@ export async function deployFixtures(
       );
     }
     VestingBudget(options: DeployablePayloadOrAddress<VestingBudgetPayload>) {
-      return new VestingBudget(
+      return new bases.VestingBudget(
         { config: this._config, account: this._account },
         options,
       );
@@ -425,7 +425,7 @@ export async function deployFixtures(
       );
     }
     ERC1155Incentive(options: ERC1155IncentivePayload) {
-      return new ERC1155Incentive(
+      return new bases.ERC1155Incentive(
         { config: this._config, account: this._account },
         options,
       );

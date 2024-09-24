@@ -480,7 +480,7 @@ describe('BoostCore', () => {
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-    const { budget, erc20, points } = budgets;
+    const { budget, erc20, points, erc1155 } = budgets;
     const allowList = await registry.initialize(
       'SharedAllowList',
       core.SimpleAllowList({
@@ -495,13 +495,13 @@ describe('BoostCore', () => {
       limit: 10n,
       strategy: StrategyType.POOL,
     });
-    // const erc1155Incentive = core.ERC1155Incentive({
-    // 	asset: erc1155.assertValidAddress(),
-    // 	strategy: ERC1155StrategyType.POOL,
-    // 	limit: 1n,
-    // 	tokenId: 1n,
-    // 	extraData: "0x",
-    // });
+    const erc1155Incentive = core.ERC1155Incentive({
+      asset: erc1155.assertValidAddress(),
+      strategy: ERC1155StrategyType.POOL,
+      limit: 1n,
+      tokenId: 1n,
+      extraData: '0x',
+    });
     const cgdaIncentive = core.CGDAIncentive({
       asset: erc20.assertValidAddress(),
       initialReward: 1n,
@@ -537,7 +537,7 @@ describe('BoostCore', () => {
       }),
       allowList: core.SimpleAllowList(allowList.assertValidAddress()),
       incentives: [
-        // erc1155Incentive,
+        erc1155Incentive,
         erc20Incentive,
         cgdaIncentive,
         allowListIncentive,

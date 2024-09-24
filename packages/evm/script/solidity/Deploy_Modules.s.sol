@@ -19,6 +19,8 @@ import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
+import {SignerValidator} from "contracts/validators/SignerValidator.sol";
+
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
     using stdJson for string;
@@ -45,6 +47,9 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployCGDAIncentive(registry);
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
+        _deploySignerValidator(registry);
+        _deploySimpleAllowList(registry);
+        _deploySimpleDenyList(registry);
 
         _saveJson();
     }
@@ -67,68 +72,87 @@ contract ModuleBaseDeployer is ScriptUtils {
         managedBudget = _getCreate2Address(initCode, "");
         console.log("ManagedBudget: ", managedBudget);
         deployJson = deployJsonKey.serialize("ManagedBudget", managedBudget);
-        _deploy2(initCode, "");
-        vm.broadcast();
-        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", managedBudget);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "ManagedBudget", managedBudget, registry, BoostRegistry.RegistryType.BUDGET);
     }
-
+    
     function _deployEventAction(BoostRegistry registry) internal returns (address eventAction) {
         bytes memory initCode = type(EventAction).creationCode;
         eventAction = _getCreate2Address(initCode, "");
         console.log("EventAction: ", eventAction);
         deployJson = deployJsonKey.serialize("EventAction", eventAction);
-        _deploy2(initCode, "");
-        vm.broadcast();
-        registry.register(BoostRegistry.RegistryType.ACTION, "EventAction", eventAction);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "EventAction", eventAction, registry, BoostRegistry.RegistryType.ACTION);
     }
-
+    
     function _deployERC20Incentive(BoostRegistry registry) internal returns (address erc20Incentive) {
         bytes memory initCode = type(ERC20Incentive).creationCode;
         erc20Incentive = _getCreate2Address(initCode, "");
         console.log("ERC20Incentive: ", erc20Incentive);
         deployJson = deployJsonKey.serialize("ERC20Incentive", erc20Incentive);
-        _deploy2(initCode, "");
-        vm.broadcast();
-        registry.register(BoostRegistry.RegistryType.INCENTIVE, "ERC20Incentive", erc20Incentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "ERC20Incentive", erc20Incentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
-
+    
     function _deployERC20VariableIncentive(BoostRegistry registry) internal returns (address erc20VariableIncentive) {
         bytes memory initCode = type(ERC20VariableIncentive).creationCode;
         erc20VariableIncentive = _getCreate2Address(initCode, "");
         console.log("ERC20VariableIncentive: ", erc20VariableIncentive);
         deployJson = deployJsonKey.serialize("ERC20VariableIncentive", erc20VariableIncentive);
-        _deploy2(initCode, "");
-        vm.broadcast();
-        registry.register(BoostRegistry.RegistryType.INCENTIVE, "ERC20VariableIncentive", erc20VariableIncentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "ERC20VariableIncentive", erc20VariableIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
-
+    
     function _deployCGDAIncentive(BoostRegistry registry) internal returns (address cgdaIncentive) {
         bytes memory initCode = type(CGDAIncentive).creationCode;
         cgdaIncentive = _getCreate2Address(initCode, "");
         console.log("CGDAIncentive: ", cgdaIncentive);
         deployJson = deployJsonKey.serialize("CGDAIncentive", cgdaIncentive);
-        _deploy2(initCode, "");
-        vm.broadcast();
-        registry.register(BoostRegistry.RegistryType.INCENTIVE, "CGDAIncentive", cgdaIncentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "CGDAIncentive", cgdaIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
-
+    
     function _deployPointsIncentive(BoostRegistry registry) internal returns (address pointsIncentive) {
         bytes memory initCode = type(PointsIncentive).creationCode;
         pointsIncentive = _getCreate2Address(initCode, "");
         console.log("PointsIncentive: ", pointsIncentive);
         deployJson = deployJsonKey.serialize("PointsIncentive", pointsIncentive);
-        _deploy2(initCode, "");
-        vm.broadcast();
-        registry.register(BoostRegistry.RegistryType.INCENTIVE, "PointsIncentive", pointsIncentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "PointsIncentive", pointsIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
-
+    
     function _deployAllowListIncentive(BoostRegistry registry) internal returns (address allowListIncentive) {
         bytes memory initCode = type(AllowListIncentive).creationCode;
         allowListIncentive = _getCreate2Address(initCode, "");
         console.log("AllowListIncentive: ", allowListIncentive);
         deployJson = deployJsonKey.serialize("AllowListIncentive", allowListIncentive);
-        _deploy2(initCode, "");
-        vm.broadcast();
-        registry.register(BoostRegistry.RegistryType.INCENTIVE, "AllowListIncentive", allowListIncentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "AllowListIncentive", allowListIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
-}
+    
+    function _deploySignerValidator(BoostRegistry registry) internal returns (address signerValidator) {
+        bytes memory initCode = type(SignerValidator).creationCode;
+        signerValidator = _getCreate2Address(initCode, "");
+        console.log("SignerValidator: ", signerValidator);
+        deployJson = deployJsonKey.serialize("SignerValidator", signerValidator);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "SignerValidator", signerValidator, registry, BoostRegistry.RegistryType.VALIDATOR);
+    }
+    
+    function _deploySimpleAllowList(BoostRegistry registry) internal returns (address simpleAllowList) {
+        bytes memory initCode = type(SimpleAllowList).creationCode;
+        simpleAllowList = _getCreate2Address(initCode, "");
+        console.log("SimpleAllowList: ", simpleAllowList);
+        deployJson = deployJsonKey.serialize("SimpleAllowList", simpleAllowList);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "SimpleAllowList", simpleAllowList, registry, BoostRegistry.RegistryType.ALLOW_LIST);
+    }
+    
+    function _deploySimpleDenyList(BoostRegistry registry) internal returns (address simpleDenyList) {
+        bytes memory initCode = type(SimpleDenyList).creationCode;
+        simpleDenyList = _getCreate2Address(initCode, "");
+        console.log("SimpleDenyList: ", simpleDenyList);
+        deployJson = deployJsonKey.serialize("SimpleDenyList", simpleDenyList);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "SimpleDenyList", simpleDenyList, registry, BoostRegistry.RegistryType.ALLOW_LIST);
+    }}

@@ -14,6 +14,7 @@ import {
   type ContractEventName,
   type Hex,
   type Log,
+  encodeAbiParameters,
   isAddressEqual,
 } from 'viem';
 import { getLogs } from 'viem/actions';
@@ -31,35 +32,253 @@ import {
   UnrecognizedFilterTypeError,
 } from '../errors';
 import {
-  type ActionClaimant,
-  type ActionStep,
-  type ActionStepTuple,
-  type Criteria,
-  type EventActionPayload,
-  type EventActionPayloadRaw,
-  FilterType,
   type GetLogsParams,
-  PrimitiveType,
-  type RawActionClaimant,
-  type RawActionStep,
+  type Overwrite,
   type ReadParams,
   RegistryType,
   type WriteParams,
-  dedupeActionSteps,
-  fromRawActionStep,
-  isEventActionPayloadSimple,
-  prepareEventActionPayload,
 } from '../utils';
-import type { SignatureType } from './../utils';
 
-export type {
-  EventActionPayload,
-  ActionStep,
-  ActionClaimant,
-  SignatureType,
-  FilterType,
-  PrimitiveType,
-};
+/*
+ * Action Event Payloads
+ */
+
+/**
+ * Filter types used to determine how criteria are evaluated.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum FilterType {
+  EQUAL = 0,
+  NOT_EQUAL = 1,
+  GREATER_THAN = 2,
+  LESS_THAN = 3,
+  CONTAINS = 4,
+}
+
+/**
+ * The primitive types supported for filtering.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum PrimitiveType {
+  UINT = 0,
+  ADDRESS = 1,
+  BYTES = 2,
+  STRING = 3,
+}
+
+/**
+ * Object representation of a `Criteria` struct used in event actions.
+ *
+ * @export
+ * @interface Criteria
+ * @typedef {Criteria}
+ */
+export interface Criteria {
+  /**
+   * The filter type used in this criteria.
+   *
+   * @type {FilterType}
+   */
+  filterType: FilterType;
+  /**
+   * The primitive type of the field being filtered.
+   *
+   * @type {PrimitiveType}
+   */
+  fieldType: PrimitiveType;
+  /**
+   * The index in the logs argument array where the field is located.
+   *
+   * @type {number}
+   */
+  fieldIndex: number;
+  /**
+   * The filter data used for complex filtering.
+   *
+   * @type {Hex}
+   */
+  filterData: Hex;
+}
+
+/**
+ * Whether a given signature is an event or function
+ *
+ * @export
+ * @enum {number}
+ */
+export enum SignatureType {
+  EVENT = 0,
+  FUNC = 1,
+}
+
+/**
+ *  The payload describing how claimants are identified
+ *
+ * @export
+ * @interface ActionClaimant
+ * @typedef {ActionClaimant}
+ */
+export interface ActionClaimant {
+  /**
+   * Whether claimaint is inferred from event or function
+   *
+   * @type {SignatureType}
+   */
+  signatureType: SignatureType;
+  /**
+   * The 4 byte signature of the event or function
+   *
+   * @type {Hex}
+   */
+  signature: Hex;
+  /**
+   * The index corresponding to claimant.
+   *
+   * @type {number}
+   */
+  fieldIndex: number;
+  /**
+   * The address of the target contract
+   *
+   * @type {Address}
+   */
+  targetContract: Address;
+  /**
+   * The chain id of the target contract.
+   * @type {number}
+   */
+  chainid: number;
+}
+
+/**
+ * Object representation of an `ActionStep` struct used in event actions.
+ *
+ * @export
+ * @interface ActionStep
+ * @typedef {ActionStep}
+ */
+export interface ActionStep {
+  /**
+   * The signature of the event.
+   *
+   * @type {Hex}
+   */
+  signature: Hex;
+  /**
+   * Whether claimaint is inferred from event or function
+   *
+   * @type {SignatureType}
+   */
+  signatureType: SignatureType;
+  /**
+   * The type of action being performed.
+   *
+   * @type {number}
+   */
+  actionType?: number;
+  /**
+   * The address of the target contract.
+   *
+   * @type {Address}
+   */
+  targetContract: Address;
+  /**
+   * The chain id of the target contract.
+   * @type {number}
+   */
+  chainid: number;
+  /**
+   * The criteria used for this action step.
+   *
+   * @type {Criteria}
+   */
+  actionParameter: Criteria;
+}
+/**
+ * You can either supply a simplified version of the payload, or one that explicitly declares action steps.
+ *
+ * @export
+ * @typedef {EventActionPayload}
+ */
+export type EventActionPayload =
+  | EventActionPayloadSimple
+  | EventActionPayloadRaw;
+
+export interface EventActionPayloadSimple {
+  /**
+   *  The payload describing how claimants are identified
+   *
+   * @type {ActionClaimant}
+   */
+  actionClaimant: ActionClaimant;
+
+  /**
+   * Up to 4 action steps.
+   * If you supply less than 4, then the last step will be reused to satisfy the EventAction.InitPayload
+   * Any more than 4 will throw an error.
+   *
+   * @type {ActionStep[]}
+   */
+  actionSteps: ActionStep[];
+}
+
+export type ActionStepTuple = [ActionStep, ActionStep, ActionStep, ActionStep];
+
+/**
+ * Typeguard to determine if a user is supplying a simple or raw EventActionPayload
+ *
+ * @param {*} opts
+ * @returns {opts is EventActionPayloadSimple}
+ */
+export function isEventActionPayloadSimple(
+  opts: EventActionPayload,
+): opts is EventActionPayloadSimple {
+  return Array.isArray((opts as EventActionPayloadSimple).actionSteps);
+}
+
+/**
+ * Object representation of an `InitPayload` struct used to initialize event actions.
+ *
+ * @export
+ * @interface EventActionPayloadRaw
+ * @typedef {EventActionPayloadRaw}
+ */
+export interface EventActionPayloadRaw {
+  /**
+   *  The payload describing how claimants are identified
+   *
+   * @type {ActionClaimant}
+   */
+  actionClaimant: ActionClaimant;
+  /**
+   * The first action step.
+   *
+   * @type {ActionStep}
+   */
+  actionStepOne: ActionStep;
+  /**
+   * The second action step.
+   *
+   * @type {ActionStep}
+   */
+  actionStepTwo: ActionStep;
+  /**
+   * The third action step.
+   *
+   * @type {ActionStep}
+   */
+  actionStepThree: ActionStep;
+  /**
+   * The fourth action step.
+   *
+   * @type {ActionStep}
+   */
+  actionStepFour: ActionStep;
+}
 
 /**
  * A generic event action
@@ -132,7 +351,7 @@ export class EventAction extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     })) as RawActionStep[];
-    return dedupeActionSteps(steps.map(fromRawActionStep));
+    return _dedupeActionSteps(steps.map(_fromRawActionStep));
   }
 
   /**
@@ -167,7 +386,7 @@ export class EventAction extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     })) as RawActionClaimant;
-    return fromRawActionStep(result);
+    return _fromRawActionStep(result);
   }
 
   /**
@@ -390,4 +609,197 @@ export class EventAction extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+function _dedupeActionSteps(_steps: ActionStep[]): ActionStep[] {
+  const steps: ActionStep[] = [],
+    signatures: Record<string, boolean> = {};
+  for (let step of _steps) {
+    const signature = JSON.stringify(step);
+    if (signatures[signature]) continue;
+    steps.push(step);
+    signatures[signature] = true;
+  }
+  return steps;
+}
+type RawActionStep = Overwrite<ActionStep, { chainid: bigint }>;
+type RawActionClaimant = Overwrite<ActionClaimant, { chainid: bigint }>;
+
+function _toRawActionStep<T extends ActionStep | ActionClaimant>(obj: T) {
+  return {
+    ...obj,
+    chainid: BigInt(obj.chainid),
+  };
+}
+
+function _fromRawActionStep<T extends RawActionStep | RawActionClaimant>(
+  obj: T,
+) {
+  if (obj.chainid > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('Chain ID exceeds max safe integer');
+  }
+
+  return {
+    ...obj,
+    chainid: Number(obj.chainid),
+  };
+}
+
+/**
+ * Typeguard to determine if a user is supplying a simple or raw EventActionPayload
+ *
+ * @param {*} opts
+ * @returns {opts is EventActionPayloadSimple}
+ */
+function _isEventActionPayloadSimple(
+  opts: EventActionPayload,
+): opts is EventActionPayloadSimple {
+  return Array.isArray((opts as EventActionPayloadSimple).actionSteps);
+}
+
+/**
+ * Function to properly encode an event action payload.
+ *
+ * @param {InitPayload} param0
+ * @param {ActionStep} param0.actionStepOne - The first action step to initialize.
+ * @param {ActionStep} param0.actionStepTwo - The second action step to initialize.
+ * @param {ActionStep} param0.actionStepThree - The third action step to initialize.
+ * @param {ActionStep} param0.actionStepFour - The fourth action step to initialize.
+ * @returns {Hex}
+ */
+export function prepareEventActionPayload({
+  actionClaimant,
+  actionStepOne,
+  actionStepTwo,
+  actionStepThree,
+  actionStepFour,
+}: EventActionPayloadRaw) {
+  // note chainIds are technically uint256 but viem treats them (safely) as numbers,
+  // so we encode them as uint32 here to avoid downcast issues
+  return encodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'initPayload',
+        components: [
+          {
+            type: 'tuple',
+            name: 'actionClaimant',
+            components: [
+              { type: 'uint8', name: 'signatureType' },
+              { type: 'bytes32', name: 'signature' },
+              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
+            ],
+          },
+          {
+            type: 'tuple',
+            name: 'actionStepOne',
+            components: [
+              { type: 'bytes32', name: 'signature' },
+              { type: 'uint8', name: 'signatureType' },
+              { type: 'uint8', name: 'actionType' },
+              { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
+              {
+                type: 'tuple',
+                name: 'actionParameter',
+                components: [
+                  { type: 'uint8', name: 'filterType' },
+                  { type: 'uint8', name: 'fieldType' },
+                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'bytes', name: 'filterData' },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'tuple',
+            name: 'actionStepTwo',
+            components: [
+              { type: 'bytes32', name: 'signature' },
+              { type: 'uint8', name: 'signatureType' },
+              { type: 'uint8', name: 'actionType' },
+              { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
+              {
+                type: 'tuple',
+                name: 'actionParameter',
+                components: [
+                  { type: 'uint8', name: 'filterType' },
+                  { type: 'uint8', name: 'fieldType' },
+                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'bytes', name: 'filterData' },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'tuple',
+            name: 'actionStepThree',
+            components: [
+              { type: 'bytes32', name: 'signature' },
+              { type: 'uint8', name: 'signatureType' },
+              { type: 'uint8', name: 'actionType' },
+              { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
+              {
+                type: 'tuple',
+                name: 'actionParameter',
+                components: [
+                  { type: 'uint8', name: 'filterType' },
+                  { type: 'uint8', name: 'fieldType' },
+                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'bytes', name: 'filterData' },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'tuple',
+            name: 'actionStepFour',
+            components: [
+              { type: 'bytes32', name: 'signature' },
+              { type: 'uint8', name: 'signatureType' },
+              { type: 'uint8', name: 'actionType' },
+              { type: 'address', name: 'targetContract' },
+              { type: 'uint256', name: 'chainid' },
+              {
+                type: 'tuple',
+                name: 'actionParameter',
+                components: [
+                  { type: 'uint8', name: 'filterType' },
+                  { type: 'uint8', name: 'fieldType' },
+                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'bytes', name: 'filterData' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      {
+        actionClaimant: _toRawActionStep(actionClaimant),
+        actionStepOne: {
+          ..._toRawActionStep(actionStepOne),
+          actionType: actionStepOne.actionType || 0,
+        },
+        actionStepTwo: {
+          ..._toRawActionStep(actionStepTwo),
+          actionType: actionStepTwo.actionType || 0,
+        },
+        actionStepThree: {
+          ..._toRawActionStep(actionStepThree),
+          actionType: actionStepThree.actionType || 0,
+        },
+        actionStepFour: {
+          ..._toRawActionStep(actionStepFour),
+          actionType: actionStepFour.actionType || 0,
+        },
+      },
+    ],
+  );
 }

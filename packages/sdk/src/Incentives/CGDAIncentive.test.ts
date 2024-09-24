@@ -1,7 +1,6 @@
 import { readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage } from '@wagmi/core';
-import { encodePacked, isAddress, keccak256, pad, parseEther } from 'viem';
+import { isAddress, pad, parseEther } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -12,7 +11,6 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { prepareSignerValidatorClaimDataPayload } from '../utils';
 import { CGDAIncentive } from './CGDAIncentive';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
@@ -59,11 +57,10 @@ describe('CGDAIncentive', () => {
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
 
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,
@@ -104,11 +101,10 @@ describe('CGDAIncentive', () => {
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,

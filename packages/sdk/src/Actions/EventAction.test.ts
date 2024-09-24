@@ -1,7 +1,3 @@
-import {
-  readAActionGetComponentInterface,
-  readEventActionGetComponentInterface,
-} from '@boostxyz/evm';
 import { selectors as eventSelectors } from '@boostxyz/signatures/events';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { type Hex, type Log, isAddress } from 'viem';
@@ -15,12 +11,12 @@ import {
   fundErc721,
 } from '../../test/helpers';
 import {
+  EventAction,
   type EventActionPayloadSimple,
   FilterType,
   PrimitiveType,
   SignatureType,
-} from '../utils';
-import { EventAction } from './EventAction';
+} from './EventAction';
 
 let fixtures: Fixtures, erc721: MockERC721;
 
@@ -43,7 +39,6 @@ function basicErc721TransferAction(
       {
         signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
         signatureType: SignatureType.EVENT,
-        actionType: 0,
         targetContract: erc721.assertValidAddress(),
         chainid: defaultOptions.config.chains[0].id,
         actionParameter: {
@@ -137,7 +132,7 @@ describe('EventAction', () => {
     const action = await loadFixture(cloneEventAction(fixtures, erc721));
     const steps = await action.getActionSteps();
     expect(steps.length).toBe(1);
-    const step = steps[0];
+    const step = steps[0]!;
     step.targetContract = step.targetContract.toUpperCase() as Hex;
     step.actionParameter.filterData =
       step.actionParameter.filterData.toUpperCase() as Hex;

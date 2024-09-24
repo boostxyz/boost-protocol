@@ -1,6 +1,5 @@
 import { readPointsBalanceOf, writePointsGrantRoles } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage } from '@wagmi/core';
 import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockPoints } from '../../test/MockPoints';
@@ -12,7 +11,7 @@ import {
   freshBoost,
   freshPoints,
 } from '../../test/helpers';
-import { bytes4, prepareSignerValidatorClaimDataPayload } from '../utils';
+import { bytes4 } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures, points: MockPoints;
@@ -55,11 +54,10 @@ describe('PointsIncentive', () => {
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,
@@ -105,11 +103,10 @@ describe('PointsIncentive', () => {
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,

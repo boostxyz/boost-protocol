@@ -16,15 +16,14 @@ import {
 } from 'viem';
 import { base } from 'viem/chains';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { BoostCore } from '../src/BoostCore';
 import {
   type ActionStep,
   FilterType,
   PrimitiveType,
   SignatureType,
-  StrategyType,
-  prepareSignerValidatorClaimDataPayload,
-} from '../src/utils';
+} from '../src';
+import { BoostCore } from '../src/BoostCore';
+import { StrategyType } from '../src/claiming';
 import { accounts } from './accounts';
 import {
   type BudgetFixtures,
@@ -168,11 +167,10 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const validation = await action.validateActionSteps();
       expect(validation).toBe(true);
       // Generate the signature using the trusted signer
-      const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      const claimDataPayload = await boost.validator.encodeClaimData({
         signer: trustedSigner,
         incentiveData,
         chainId: base.id,
-        validator: boost.validator.assertValidAddress(),
         incentiveQuantity,
         claimant: boostImpostor,
         boostId: boost.id,

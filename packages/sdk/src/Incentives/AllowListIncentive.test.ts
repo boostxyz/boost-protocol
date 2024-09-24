@@ -1,7 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { prepareSignerValidatorClaimDataPayload } from '../../dist';
 import { accounts } from '../../test/accounts';
 import {
   type Fixtures,
@@ -68,11 +67,10 @@ describe('AllowListIncentive', () => {
     console.log(claimant);
 
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,
@@ -114,11 +112,10 @@ describe('AllowListIncentive', () => {
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     console.log(claimant);
 
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,

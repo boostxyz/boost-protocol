@@ -8,10 +8,7 @@ import {
   deployFixtures,
 } from '../../test/helpers';
 import { testAccount } from '../../test/viem';
-import {
-  SignerValidator,
-  prepareSignerValidatorClaimDataPayload,
-} from './SignerValidator';
+import { SignerValidator } from './SignerValidator';
 
 let fixtures: Fixtures;
 
@@ -67,7 +64,7 @@ describe('SignerValidator', () => {
     // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
     const untrustedSigner = accounts.at(2)!;
 
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
@@ -77,7 +74,7 @@ describe('SignerValidator', () => {
       boostId: boostId,
     });
 
-    const badClaimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const badClaimDataPayload = await boost.validator.encodeClaimData({
       signer: untrustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
@@ -122,7 +119,7 @@ describe('SignerValidator', () => {
     // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
     const trustedSigner = accounts.at(0)!;
 
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,

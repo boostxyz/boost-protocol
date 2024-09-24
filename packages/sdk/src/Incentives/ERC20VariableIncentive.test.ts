@@ -11,7 +11,6 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { prepareSignerValidatorClaimDataPayload } from '../Validators/SignerValidator';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
@@ -57,14 +56,13 @@ describe('ERC20VariableIncentive', () => {
 
     const claimant = trustedSigner.account;
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData: encodeAbiParameters(
         [{ name: '', type: 'uint256' }],
         [parseEther('1')],
       ),
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,
@@ -104,14 +102,13 @@ describe('ERC20VariableIncentive', () => {
 
     const claimant = trustedSigner.account;
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData: encodeAbiParameters(
         [{ name: '', type: 'uint256' }],
         [parseEther('1')],
       ),
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,

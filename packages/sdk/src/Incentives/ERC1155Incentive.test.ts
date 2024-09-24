@@ -11,7 +11,6 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { prepareSignerValidatorClaimDataPayload } from '../Validators/SignerValidator';
 import { ERC1155Incentive, ERC1155StrategyType } from './ERC1155Incentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
@@ -62,11 +61,10 @@ describe.skip('ERC1155Incentive', () => {
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,

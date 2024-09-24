@@ -26,6 +26,7 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  parseEther,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -96,6 +97,13 @@ import {
 import type { GenericLog, ReadParams, WriteParams } from './utils';
 
 export { boostCoreAbi };
+
+/**
+ * The fee (in wei) required to claim each incentive, must be provided for the `claimIncentive` transaction
+ *
+ * @type {bigint}
+ */
+export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 /**
  * The fixed address for the deployed Boost Core.

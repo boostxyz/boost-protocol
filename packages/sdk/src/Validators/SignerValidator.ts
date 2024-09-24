@@ -510,7 +510,7 @@ export class SignerValidator extends DeployableTarget<
   }
 
   /**
-   * Encodes
+   * Properly encodes the data needed to claim
    *
    * @public
    * @async
@@ -520,7 +520,7 @@ export class SignerValidator extends DeployableTarget<
   public async encodeClaimData(
     params: Omit<SignerValidatorClaimDataParams, 'validator'>,
   ): Promise<Hex> {
-    return prepareSignerValidatorClaimDataPayload({
+    return await prepareSignerValidatorClaimDataPayload({
       ...params,
       validator: this.assertValidAddress(),
     });

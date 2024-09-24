@@ -39,7 +39,6 @@ function basicErc721TransferAction(
       {
         signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
         signatureType: SignatureType.EVENT,
-        actionType: 0,
         targetContract: erc721.assertValidAddress(),
         chainid: defaultOptions.config.chains[0].id,
         actionParameter: {
@@ -133,7 +132,7 @@ describe('EventAction', () => {
     const action = await loadFixture(cloneEventAction(fixtures, erc721));
     const steps = await action.getActionSteps();
     expect(steps.length).toBe(1);
-    const step = steps[0];
+    const step = steps[0]!;
     step.targetContract = step.targetContract.toUpperCase() as Hex;
     step.actionParameter.filterData =
       step.actionParameter.filterData.toUpperCase() as Hex;

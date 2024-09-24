@@ -82,7 +82,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         chainid: base.id,
         signature: selector, // DelegateChanged(address,address,address)
         signatureType: SignatureType.EVENT, // We're working with an event
-        actionType: 0, // Custom action type (set as 0 for now)
         targetContract: targetContract, // Address of the ERC20 contract
         // We want to target the toDelegate property on the DelegateChanged event
         actionParameter: {

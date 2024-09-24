@@ -36,7 +36,6 @@ export function basicErc721TransferAction(
         chainid: 31337,
         signature: selectors['Transfer(address,address,uint256)'] as Hex,
         signatureType: SignatureType.EVENT,
-        actionType: 0,
         targetContract: erc721.assertValidAddress(),
         actionParameter: {
           filterType: FilterType.EQUAL,

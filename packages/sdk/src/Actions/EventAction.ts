@@ -179,7 +179,7 @@ export interface ActionStep {
    *
    * @type {number}
    */
-  actionType: number;
+  actionType?: number;
   /**
    * The address of the target contract.
    *
@@ -783,10 +783,22 @@ export function prepareEventActionPayload({
     [
       {
         actionClaimant: _toRawActionStep(actionClaimant),
-        actionStepOne: _toRawActionStep(actionStepOne),
-        actionStepTwo: _toRawActionStep(actionStepTwo),
-        actionStepThree: _toRawActionStep(actionStepThree),
-        actionStepFour: _toRawActionStep(actionStepFour),
+        actionStepOne: {
+          ..._toRawActionStep(actionStepOne),
+          actionType: actionStepOne.actionType || 0,
+        },
+        actionStepTwo: {
+          ..._toRawActionStep(actionStepTwo),
+          actionType: actionStepTwo.actionType || 0,
+        },
+        actionStepThree: {
+          ..._toRawActionStep(actionStepThree),
+          actionType: actionStepThree.actionType || 0,
+        },
+        actionStepFour: {
+          ..._toRawActionStep(actionStepFour),
+          actionType: actionStepFour.actionType || 0,
+        },
       },
     ],
   );

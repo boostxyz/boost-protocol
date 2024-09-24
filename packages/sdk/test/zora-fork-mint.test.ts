@@ -83,7 +83,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         chainid: base.id,
         signature: selector, // Transfer(address,address,uint256) event signature
         signatureType: SignatureType.EVENT, // We're working with an event
-        actionType: 0, // Custom action type (set as 0 for now)
         targetContract: targetContract, // Address of the ERC20 contract
         // We want to target the Minter property on the Purchase event
         actionParameter: {

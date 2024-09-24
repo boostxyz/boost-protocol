@@ -14,11 +14,29 @@ contract ScriptUtils is Script {
 
     function _deploy2(bytes memory deployCode, bytes memory args) internal {
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
-        bytes memory payload = abi.encodePacked(salt, deployCode, args);
-        // deploy using address configured at the CLI level
-        vm.broadcast();
-        (bool success,) = CREATE2_FACTORY.call(payload);
-        if (!success) revert("create2 failed");
+        bytes32 bytecodeHash = keccak256(abi.encodePacked(deployCode, args));
+        address computedAddress = address(uint160(uint256(keccak256(abi.encodePacked(
+            bytes1(0xff),
+            CREATE2_FACTORY,
+            salt,
+            bytecodeHash
+        )))));
+
+        // Check if the address already has code deployed
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(computedAddress)
+        }
+
+        if (codeSize == 0) {
+            bytes memory payload = abi.encodePacked(salt, deployCode, args);
+            // deploy using address configured at the CLI level
+            vm.broadcast();
+            (bool success,) = CREATE2_FACTORY.call(payload);
+            if (!success) revert("create2 failed");
+        } else {
+            console.log("Address already deployed at: ", computedAddress);
+        }
     }
 
     function _buildJsonDeployPath() internal virtual view returns (string memory) {

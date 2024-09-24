@@ -31,7 +31,7 @@ function nonPayableAction(fixtures: Fixtures, erc721: MockERC721) {
   return function nonPayableAction() {
     return fixtures.registry.clone(
       crypto.randomUUID(),
-      new fixtures.bases.ERC721MintAction(defaultOptions, {
+      fixtures.core.ERC721MintAction({
         chainId: BigInt(31_337),
         target: erc721.assertValidAddress(),
         selector: mintSelector,

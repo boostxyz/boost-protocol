@@ -21,7 +21,7 @@ function freshAllowList(fixtures: Fixtures) {
   return function freshAllowList() {
     return fixtures.registry.clone(
       crypto.randomUUID(),
-      new fixtures.bases.SimpleAllowList(defaultOptions, {
+      fixtures.core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
@@ -33,7 +33,7 @@ function freshDenyList(fixtures: Fixtures) {
   return function freshDenyList() {
     return fixtures.registry.clone(
       crypto.randomUUID(),
-      new fixtures.bases.SimpleDenyList(defaultOptions, {
+      fixtures.core.SimpleDenyList({
         owner: defaultOptions.account.address,
         denied: [defaultOptions.account.address],
       }),

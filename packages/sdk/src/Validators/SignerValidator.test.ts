@@ -18,7 +18,7 @@ function freshValidator(fixtures: Fixtures) {
     const account = accounts.at(1)!.account;
     return fixtures.registry.clone(
       crypto.randomUUID(),
-      new fixtures.bases.SignerValidator(defaultOptions, {
+      fixtures.core.SignerValidator({
         signers: [defaultOptions.account.address, account],
         validatorCaller: testAccount.address,
       }),

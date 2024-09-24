@@ -68,7 +68,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
     test('should create a boost for incentivizing NFT minting', async () => {
       const { budget, erc20 } = budgets;
 
-      const { core, bases } = fixtures;
+      const { core } = fixtures;
 
       const client = new BoostCore({
         ...defaultOptions,
@@ -108,10 +108,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         actionStepFour: eventActionStep, // Up to 4 action steps
       };
       // Initialize EventAction with the custom payload
-      const eventAction = new bases.EventAction(
-        defaultOptions,
-        eventActionPayload,
-      );
+      const eventAction = core.EventAction(eventActionPayload);
       // Create the boost using the custom EventAction
       await client.createBoost({
         protocolFee: 1n,
@@ -119,16 +116,16 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         maxParticipants: 100n,
         budget: budget, // Use the ManagedBudget
         action: eventAction, // Pass the manually created EventAction
-        validator: new bases.SignerValidator(defaultOptions, {
+        validator: core.SignerValidator({
           signers: [owner, trustedSigner.account], // Whichever account we're going to sign with needs to be a signer
           validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
         }),
-        allowList: new bases.SimpleAllowList(defaultOptions, {
+        allowList: core.SimpleAllowList({
           owner: owner,
           allowed: [owner],
         }),
         incentives: [
-          new bases.ERC20Incentive(defaultOptions, {
+          core.ERC20Incentive({
             asset: erc20.assertValidAddress(),
             reward: parseEther('1'),
             limit: 100n,

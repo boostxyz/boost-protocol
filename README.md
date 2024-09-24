@@ -180,3 +180,17 @@ import { BoostCore } from '@boostxyz/sdk'
 In order to publish you need to make sure that the pull request you're submitting has a changeset. If you don't want to publish this isn't needed. In order to generate a changeset run `pnpm changeset`, select a change type [major,minor,patch], and draft a small summary of the changeset. Select version based on [semantic versioning](https://semver.org/).
 
 After this all you need to do is push and merge the pull request and the Github Action will handle the process of versioning, and publishing.
+
+### Contract Deployment
+
+To deploy the contracts, you can use the provided scripts. Make sure to replace any sensitive information such as private keys with your own secure values.
+
+Deploy Core Contracts
+To deploy the core contracts to the Sepolia testnet, use the following command:
+`forge script script/solidity/Deploy.s.sol:CoreDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"`
+
+In order to deploy to another network simply switch the RPC you're broadcasting against.
+
+Deploy Module Contracts
+To deploy the module contracts to the Sepolia testnet, use the following command:
+`forge script script/solidity/Deploy_Modules.s.sol:ModuleBaseDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"`

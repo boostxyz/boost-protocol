@@ -15,15 +15,15 @@ import {
 } from 'viem';
 import { sepolia } from 'viem/chains';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { BoostCore } from '../src/BoostCore';
 import {
   type ActionStep,
   FilterType,
   PrimitiveType,
   SignatureType,
-  StrategyType,
   prepareSignerValidatorClaimDataPayload,
-} from '../src/utils';
+} from '../src';
+import { BoostCore } from '../src/BoostCore';
+import { StrategyType } from '../src/claiming';
 import { accounts } from './accounts';
 import {
   type BudgetFixtures,

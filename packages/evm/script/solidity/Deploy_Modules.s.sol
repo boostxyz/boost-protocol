@@ -73,10 +73,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ManagedBudget: ", managedBudget);
         deployJson = deployJsonKey.serialize("ManagedBudget", managedBudget);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", managedBudget);
-        }
+        _registerIfNew(newDeploy, "ManagedBudget", managedBudget, registry, BoostRegistry.RegistryType.BUDGET);
     }
     
     function _deployEventAction(BoostRegistry registry) internal returns (address eventAction) {
@@ -85,10 +82,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("EventAction: ", eventAction);
         deployJson = deployJsonKey.serialize("EventAction", eventAction);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.ACTION, "EventAction", eventAction);
-        }
+        _registerIfNew(newDeploy, "EventAction", eventAction, registry, BoostRegistry.RegistryType.ACTION);
     }
     
     function _deployERC20Incentive(BoostRegistry registry) internal returns (address erc20Incentive) {
@@ -97,10 +91,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ERC20Incentive: ", erc20Incentive);
         deployJson = deployJsonKey.serialize("ERC20Incentive", erc20Incentive);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.INCENTIVE, "ERC20Incentive", erc20Incentive);
-        }
+        _registerIfNew(newDeploy, "ERC20Incentive", erc20Incentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
     
     function _deployERC20VariableIncentive(BoostRegistry registry) internal returns (address erc20VariableIncentive) {
@@ -109,10 +100,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ERC20VariableIncentive: ", erc20VariableIncentive);
         deployJson = deployJsonKey.serialize("ERC20VariableIncentive", erc20VariableIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.INCENTIVE, "ERC20VariableIncentive", erc20VariableIncentive);
-        }
+        _registerIfNew(newDeploy, "ERC20VariableIncentive", erc20VariableIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
     
     function _deployCGDAIncentive(BoostRegistry registry) internal returns (address cgdaIncentive) {
@@ -121,10 +109,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("CGDAIncentive: ", cgdaIncentive);
         deployJson = deployJsonKey.serialize("CGDAIncentive", cgdaIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.INCENTIVE, "CGDAIncentive", cgdaIncentive);
-        }
+        _registerIfNew(newDeploy, "CGDAIncentive", cgdaIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
     
     function _deployPointsIncentive(BoostRegistry registry) internal returns (address pointsIncentive) {
@@ -133,10 +118,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("PointsIncentive: ", pointsIncentive);
         deployJson = deployJsonKey.serialize("PointsIncentive", pointsIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.INCENTIVE, "PointsIncentive", pointsIncentive);
-        }
+        _registerIfNew(newDeploy, "PointsIncentive", pointsIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
     
     function _deployAllowListIncentive(BoostRegistry registry) internal returns (address allowListIncentive) {
@@ -145,10 +127,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("AllowListIncentive: ", allowListIncentive);
         deployJson = deployJsonKey.serialize("AllowListIncentive", allowListIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.INCENTIVE, "AllowListIncentive", allowListIncentive);
-        }
+        _registerIfNew(newDeploy, "AllowListIncentive", allowListIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
     
     function _deploySignerValidator(BoostRegistry registry) internal returns (address signerValidator) {
@@ -157,10 +136,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("SignerValidator: ", signerValidator);
         deployJson = deployJsonKey.serialize("SignerValidator", signerValidator);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.VALIDATOR, "SignerValidator", signerValidator);
-        }
+        _registerIfNew(newDeploy, "SignerValidator", signerValidator, registry, BoostRegistry.RegistryType.VALIDATOR);
     }
     
     function _deploySimpleAllowList(BoostRegistry registry) internal returns (address simpleAllowList) {
@@ -169,10 +145,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("SimpleAllowList: ", simpleAllowList);
         deployJson = deployJsonKey.serialize("SimpleAllowList", simpleAllowList);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", simpleAllowList);
-        }
+        _registerIfNew(newDeploy, "SimpleAllowList", simpleAllowList, registry, BoostRegistry.RegistryType.ALLOW_LIST);
     }
     
     function _deploySimpleDenyList(BoostRegistry registry) internal returns (address simpleDenyList) {
@@ -181,9 +154,5 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("SimpleDenyList: ", simpleDenyList);
         deployJson = deployJsonKey.serialize("SimpleDenyList", simpleDenyList);
         bool newDeploy = _deploy2(initCode, "");
-        if (newDeploy) {
-            vm.broadcast();
-            registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList", simpleDenyList);
-        }
-    }
-}
+        _registerIfNew(newDeploy, "SimpleDenyList", simpleDenyList, registry, BoostRegistry.RegistryType.ALLOW_LIST);
+    }}

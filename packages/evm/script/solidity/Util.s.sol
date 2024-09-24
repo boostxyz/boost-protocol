@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
+import {BoostRegistry} from "contracts/BoostRegistry.sol";
 
 contract ScriptUtils is Script {
     using stdJson for string;
@@ -43,5 +44,12 @@ contract ScriptUtils is Script {
 
     function _buildJsonDeployPath() internal virtual view returns (string memory) {
         return string(abi.encodePacked(vm.projectRoot(), "/deploys/", vm.toString(block.chainid), ".json"));
+    }
+
+    function _registerIfNew(bool isNew, string memory contractName, address deployedAddress, BoostRegistry registry, BoostRegistry.RegistryType registryType) internal {
+        if(isNew) {
+            vm.broadcast();
+            registry.register(registryType, contractName, deployedAddress);
+        }
     }
 }

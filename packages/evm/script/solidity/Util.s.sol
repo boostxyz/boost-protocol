@@ -12,7 +12,7 @@ contract ScriptUtils is Script {
         return vm.computeCreate2Address(salt, codeHash);
     }
 
-    function _deploy2(bytes memory deployCode, bytes memory args) internal {
+    function _deploy2(bytes memory deployCode, bytes memory args) internal returns (bool) {
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
         bytes32 bytecodeHash = keccak256(abi.encodePacked(deployCode, args));
         address computedAddress = address(uint160(uint256(keccak256(abi.encodePacked(
@@ -34,8 +34,10 @@ contract ScriptUtils is Script {
             vm.broadcast();
             (bool success,) = CREATE2_FACTORY.call(payload);
             if (!success) revert("create2 failed");
+            return true;
         } else {
             console.log("Address already deployed at: ", computedAddress);
+            return false;
         }
     }
 

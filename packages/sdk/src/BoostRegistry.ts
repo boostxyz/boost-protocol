@@ -21,15 +21,15 @@ import {
   type GenericDeployableParams,
 } from './Deployable/Deployable';
 import type { DeployableTarget } from './Deployable/DeployableTarget';
-import {
-  type GenericLog,
-  type HashAndSimulatedResult,
-  type ReadParams,
+import type {
+  GenericLog,
+  HashAndSimulatedResult,
+  ReadParams,
   RegistryType,
-  type WriteParams,
+  WriteParams,
 } from './utils';
 
-export { RegistryType, boostRegistryAbi };
+export { boostRegistryAbi };
 
 /**
  * The fixed address for the Boost Registry.
@@ -348,7 +348,7 @@ export class BoostRegistry extends Deployable<
   }
 
   /**
-   * Get the address of a deployed clone by its identifier (index in incentives array)
+   * Get the address of a deployed clone by its identifier
    *
    * @public
    * @async
@@ -376,7 +376,7 @@ export class BoostRegistry extends Deployable<
    * @async
    * @param {Address} deployer - The address of the deployer
    * @param {?ReadParams<typeof boostRegistryAbi, 'getClones'>} [params]
-   * @returns {Promise<Address[]>} - The list of deployed clones for the given deployer
+   * @returns {Promise<Hex[]>} - The list of deployed clones for the given deployer
    */
   public async getClones(
     deployer: Address,

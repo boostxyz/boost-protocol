@@ -10,7 +10,14 @@ import {
   writeSignerValidatorValidate,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
-import type { Address, ContractEventName, Hex } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  type PrivateKeyAccount,
+  encodeAbiParameters,
+} from 'viem';
+import { signTypedData } from 'viem/accounts';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -20,15 +27,244 @@ import {
   type GenericLog,
   type ReadParams,
   RegistryType,
-  type SignerValidatorPayload,
-  type SignerValidatorSignaturePayload,
-  type SignerValidatorValidatePayload,
   type WriteParams,
-  prepareSignerValidatorPayload,
 } from '../utils';
 
 export { signerValidatorAbi };
-export type { SignerValidatorPayload };
+
+/**
+ * Object reprentation of a {@link SignerValidator} initialization payload
+ *
+ * @export
+ * @interface SignerValidatorPayload
+ * @typedef {SignerValidatorPayload}
+ */
+export interface SignerValidatorPayload {
+  /**
+   * The list of authorized signers. The first address in the list will be the initial owner of the contract.
+   *
+   * @type {Address[]}
+   */
+  signers: Address[];
+  /**
+   * The authorized caller of the {@link prepareSignerValidator} function
+   * @type {Address}
+   */
+  validatorCaller: Address;
+}
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SignerValidatorValidatePayload
+ * @typedef {SignerValidatorValidatePayload}
+ */
+export interface SignerValidatorValidatePayload {
+  /**
+   * The ID of the boost.
+   *
+   * @type {bigint}
+   */
+  boostId: bigint;
+  /**
+   * The ID of the incentive.
+   *
+   * @type {bigint}
+   */
+  incentiveId: bigint;
+  /**
+   * The address of the claimant.
+   *
+   * @type {Address}
+   */
+  claimant: Address;
+  /**
+   * The claim data.
+   *
+   * @type {Hex}
+   */
+  claimData: Hex;
+}
+
+/**
+ * Object reprentation of a {@link SignerValidator} initialization payload
+ *
+ * @export
+ * @interface SignerValidatorPayload
+ * @typedef {SignerValidatorPayload}
+ */
+export interface SignerValidatorPayload {
+  /**
+   * The list of authorized signers. The first address in the list will be the initial owner of the contract.
+   *
+   * @type {Address[]}
+   */
+  signers: Address[];
+  /**
+   * The authorized caller of the {@link prepareSignerValidator} function
+   * @type {Address}
+   */
+  validatorCaller: Address;
+}
+
+/**
+ * Description placeholder
+ *
+ * @export
+ * @interface SignerValidatorValidatePayload
+ * @typedef {SignerValidatorValidatePayload}
+ */
+export interface SignerValidatorValidatePayload {
+  /**
+   * The ID of the boost.
+   *
+   * @type {bigint}
+   */
+  boostId: bigint;
+  /**
+   * The ID of the incentive.
+   *
+   * @type {bigint}
+   */
+  incentiveId: bigint;
+  /**
+   * The address of the claimant.
+   *
+   * @type {Address}
+   */
+  claimant: Address;
+  /**
+   * The claim data.
+   *
+   * @type {Hex}
+   */
+  claimData: Hex;
+}
+
+/**
+ * Signer Validator Claim Data Payload
+ *
+ * @export
+ * @interface SignerValidatorClaimDataParams
+ * @typedef {SignerValidatorClaimDataParams}
+ */
+export interface SignerValidatorClaimDataParams {
+  /**
+   * The signer with which to sign the input
+   *
+   * @type {{
+   *     account: Address;
+   *     key: Hex;
+   *     privateKey: PrivateKeyAccount;
+   *   }}
+   */
+  signer: {
+    account: Address;
+    key: Hex;
+    privateKey: PrivateKeyAccount;
+  };
+  /**
+   * The encoded data to provide the underlying incentive. You can use {@link prepareAllowListIncentivePayload}, {@link prepareCGDAIncentivePayload}, {@link prepareERC20IncentivePayload}, {@link prepareERC1155IncentivePayload}, or {@link preparePointsIncentivePayload}
+   *
+   * @type {Hex}
+   */
+  incentiveData: Hex;
+  /**
+   * The chain id to target
+   *
+   * @type {number}
+   */
+  chainId: number;
+  /**
+   * The address of the validator
+   *
+   * @type {Address}
+   */
+  validator: Address;
+  /**
+   * The incentive quantity.
+   *
+   * @type {number}
+   */
+  incentiveQuantity: number;
+  /**
+   * The address of the claimant
+   *
+   * @type {Address}
+   */
+  claimant: Address;
+  /**
+   * The ID of the boost
+   *
+   * @type {bigint}
+   */
+  boostId: bigint;
+}
+
+/**
+ * Object representation of a {@link SignerValidatorInputParams} initialization payload
+ *
+ * @export
+ * @interface SignerValidatorInputParams
+ * @typedef {SignerValidatorInputParams}
+ */
+export interface SignerValidatorInputParams {
+  /**
+   * The signer address.
+   *
+   * @type {Address}
+   */
+  signer: Address;
+
+  /**
+   * The signature data.
+   *
+   * @type {string}
+   */
+  signature: Hex;
+
+  /**
+   * The incentive quantity.
+   *
+   * @type {number}
+   */
+  incentiveQuantity: number;
+}
+
+/**
+ * Object representing the payload for signing before validaton.
+ *
+ * @export
+ * @interface SignerValidatorSignaturePayload
+ * @typedef {SignerValidatorSignaturePayload}
+ */
+export interface SignerValidatorSignaturePayload {
+  /**
+   * The ID of the boost.
+   *
+   * @type {bigint}
+   */
+  boostId: bigint;
+  /**
+   * The ID of the incentive.
+   *
+   * @type {number}
+   */
+  incentiveQuantity: number;
+  /**
+   * The address of the claimant.
+   *
+   * @type {Address}
+   */
+  claimant: Address;
+  /**
+   * The claim data.
+   *
+   * @type {Hex}
+   */
+  incentiveData: Hex;
+}
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.
@@ -57,6 +293,13 @@ export class SignerValidator extends DeployableTarget<
   SignerValidatorPayload,
   typeof signerValidatorAbi
 > {
+  /**
+   * @inheritdoc
+   *
+   * @public
+   * @readonly
+   * @type {*}
+   */
   public override readonly abi = signerValidatorAbi;
   /**
    * @inheritdoc
@@ -132,7 +375,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
-  public async validate(
+  protected async validate(
     payload: SignerValidatorValidatePayload,
     params?: WriteParams<typeof signerValidatorAbi, 'validate'>,
   ) {
@@ -148,7 +391,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
-  public async validateRaw(
+  protected async validateRaw(
     payload: SignerValidatorValidatePayload,
     params?: ReadParams<typeof signerValidatorAbi, 'validate'>,
   ) {
@@ -220,6 +463,15 @@ export class SignerValidator extends DeployableTarget<
     return { hash, result };
   }
 
+  /**
+   * Update the authorized caller of the validator function
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
+   * @returns {unknown}
+   */
   public async setValidatorCallerRaw(
     address: Address,
     params?: WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>,
@@ -241,11 +493,37 @@ export class SignerValidator extends DeployableTarget<
     return { hash, result };
   }
 
+  /**
+   * Update the authorized caller of the validator function
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
+   * @returns {unknown}
+   */
   public async setValidatorCaller(
     address: Address,
     params?: WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>,
   ) {
     return await this.awaitResult(this.setValidatorCallerRaw(address, params));
+  }
+
+  /**
+   * Encodes
+   *
+   * @public
+   * @async
+   * @param {SignerValidatorClaimDataParams} params
+   * @returns {Promise<Hex>}
+   */
+  public async encodeClaimData(
+    params: Omit<SignerValidatorClaimDataParams, 'validator'>,
+  ): Promise<Hex> {
+    return prepareSignerValidatorClaimDataPayload({
+      ...params,
+      validator: this.assertValidAddress(),
+    });
   }
 
   /**
@@ -271,4 +549,133 @@ export class SignerValidator extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Signer Validator Claim Data Payload Preparation
+ *
+ * @export
+ * @async
+ * @param {SignerValidatorClaimDataParams} param0
+ * @param {{ account: Address; key: Hex; privateKey: PrivateKeyAccount; }} param0.signer
+ * @param {Hex} param0.incentiveData
+ * @param {number} param0.chainId
+ * @param {Address} param0.validator
+ * @param {number} param0.incentiveQuantity
+ * @param {Address} param0.claimant
+ * @param {bigint} param0.boostId
+ * @returns {Promise<Hex>}
+ */
+export async function prepareSignerValidatorClaimDataPayload({
+  signer,
+  incentiveData,
+  chainId,
+  validator,
+  incentiveQuantity,
+  claimant,
+  boostId,
+}: SignerValidatorClaimDataParams): Promise<Hex> {
+  const domain = {
+    name: 'SignerValidator',
+    version: '1',
+    chainId: chainId,
+    verifyingContract: validator,
+  };
+  const typedData = {
+    domain,
+    types: {
+      SignerValidatorData: [
+        { name: 'boostId', type: 'uint256' },
+        { name: 'incentiveQuantity', type: 'uint8' },
+        { name: 'claimant', type: 'address' },
+        { name: 'incentiveData', type: 'bytes' },
+      ],
+    },
+    primaryType: 'SignerValidatorData' as const,
+    message: {
+      boostId,
+      incentiveQuantity,
+      claimant,
+      incentiveData: incentiveData,
+    },
+  };
+
+  const trustedSignature = await signTypedData({
+    ...typedData,
+    privateKey: signer.key,
+  });
+
+  // Prepare the claim data payload using the new helper
+  const validatorData = prepareSignerValidatorInputParams({
+    signer: signer.account,
+    signature: trustedSignature,
+    incentiveQuantity, // Adjust incentive quantity as necessary
+  });
+
+  const boostClaimDataPayload = encodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'BoostClaimData',
+        components: [
+          { type: 'bytes', name: 'validatorData' },
+          { type: 'bytes', name: 'incentiveData' },
+        ],
+      },
+    ],
+    [{ validatorData, incentiveData }],
+  );
+
+  return boostClaimDataPayload;
+}
+
+/**
+ * Given a {@link SignerValidatorInputParams}, properly encode the initialization payload.
+ *
+ * @param {SignerValidatorInputParams} param0
+ * @param {Address} param0.signer
+ * @param {Hex} param0.signature
+ * @param {number} param0.incentiveQuantity
+ * @returns {Hex}
+ */
+export function prepareSignerValidatorInputParams({
+  signer,
+  signature,
+  incentiveQuantity,
+}: SignerValidatorInputParams) {
+  return encodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'SignerValidatorInputParams',
+        components: [
+          { type: 'address', name: 'signer' },
+          { type: 'bytes', name: 'signature' },
+          { type: 'uint8', name: 'incentiveQuantity' },
+        ],
+      },
+    ],
+    [{ signer, signature, incentiveQuantity }],
+  );
+}
+
+/**
+ * Given a {@link SignerValidatorPayload}, properly encode the initialization payload.
+ *
+ * @param {SignerValidatorPayload} param0
+ * @param {Address[]} param0.signers
+ * @param {Address} param0.validatorCaller
+ * @returns {Hex}
+ */
+export function prepareSignerValidatorPayload({
+  signers,
+  validatorCaller,
+}: SignerValidatorPayload) {
+  return encodeAbiParameters(
+    [
+      { type: 'address[]', name: 'signers' },
+      { type: 'address', name: 'validatorCaller' },
+    ],
+    [signers, validatorCaller],
+  );
 }

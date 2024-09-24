@@ -3,6 +3,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { signMessage } from '@wagmi/core';
 import { encodePacked, isAddress, keccak256, pad, parseEther } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { prepareSignerValidatorClaimDataPayload } from '../../dist';
 import { accounts } from '../../test/accounts';
 import {
   type BudgetFixtures,
@@ -12,7 +13,6 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { prepareSignerValidatorClaimDataPayload } from '../utils';
 import { CGDAIncentive } from './CGDAIncentive';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;

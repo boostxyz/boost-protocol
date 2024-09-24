@@ -12,25 +12,60 @@ import {
   writePointsIncentiveClaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
-import type { Address, ContractEventName, Hex } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  encodeAbiParameters,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { type ClaimPayload, prepareClaimPayload } from '../claiming';
 import {
-  type ClaimPayload,
   type GenericLog,
-  type PointsIncentivePayload,
   type ReadParams,
   RegistryType,
   type WriteParams,
-  prepareClaimPayload,
-  preparePointsIncentivePayload,
 } from '../utils';
 
 export { pointsIncentiveAbi };
-export type { PointsIncentivePayload };
+
+/**
+ * The object representation of a `PointsIncentive.InitPayload`
+ *
+ * @export
+ * @interface PointsIncentivePayload
+ * @typedef {PointsIncentivePayload}
+ */
+export interface PointsIncentivePayload {
+  /**
+   * The address of the points contract
+   *
+   * @type {Address}
+   */
+  venue: Address;
+  /**
+   * The selector for the issuance function on the points contract
+   *
+   * @type {Hex}
+   */
+  selector: Hex;
+  /**
+   * The reward amount issued for each claim
+   *
+   * @type {bigint}
+   */
+  reward: bigint;
+  /**
+   *  The maximum number of claims that can be made (one per address)
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
 
 /**
  * A generic `viem.Log` event with support for `PointsIncentive` event types.
@@ -220,7 +255,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} -  True if the incentive was successfully claimed
    */
-  public async claim(
+  protected async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
   ) {
@@ -236,7 +271,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} -  True if the incentive was successfully claimed
    */
-  public async claimRaw(
+  protected async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
   ) {
@@ -301,3 +336,30 @@ export class PointsIncentive extends DeployableTarget<
     };
   }
 }
+
+/**
+ * Given a {@link PointsIncentivePayload}, properly encode a `PointsIncentive.InitPayload` for use with {@link PointsIncentive} initialization.
+ *
+ * @param {PointsIncentivePayload} param0
+ * @param {Address} param0.venue - The address of the points contract
+ * @param {Hex} param0.selector - The selector for the issuance function on the points contract
+ * @param {bigint} param0.reward - The reward amount issued for each claim
+ * @param {bigint} param0.limit -  The maximum number of claims that can be made (one per address)
+ * @returns {*}
+ */
+export const preparePointsIncentivePayload = ({
+  venue,
+  selector,
+  reward,
+  limit,
+}: PointsIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'venue' },
+      { type: 'bytes4', name: 'selector' },
+      { type: 'uint256', name: 'reward' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [venue, selector, reward, limit],
+  );
+};

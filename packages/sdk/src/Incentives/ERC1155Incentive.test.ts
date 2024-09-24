@@ -1,15 +1,6 @@
 import { readMockErc1155BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage } from '@wagmi/core';
-import {
-  encodePacked,
-  isAddress,
-  keccak256,
-  pad,
-  parseEther,
-  zeroAddress,
-  zeroHash,
-} from 'viem';
+import { isAddress, pad, parseEther, zeroAddress, zeroHash } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -20,7 +11,7 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { prepareSignerValidatorClaimDataPayload } from '../utils';
+import { prepareSignerValidatorClaimDataPayload } from '../Validators/SignerValidator';
 import { ERC1155Incentive, ERC1155StrategyType } from './ERC1155Incentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');

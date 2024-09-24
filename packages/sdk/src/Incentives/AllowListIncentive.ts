@@ -11,26 +11,49 @@ import {
   writeAllowListIncentiveClaim,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
-import type { Address, ContractEventName, Hex } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  encodeAbiParameters,
+} from 'viem';
 import { SimpleAllowList } from '../AllowLists/AllowList';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { type ClaimPayload, prepareClaimPayload } from '../claiming';
 import {
-  type AllowListIncentivePayload,
-  type ClaimPayload,
   type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
-  prepareAllowListIncentivePayload,
-  prepareClaimPayload,
 } from '../utils';
 
 export { allowListIncentiveAbi };
-export type { AllowListIncentivePayload };
+
+/**
+ * The object representation of a `AllowListIncentive.InitPayload`
+ *
+ * @export
+ * @interface AllowListIncentivePayload
+ * @typedef {AllowListIncentivePayload}
+ */
+export interface AllowListIncentivePayload {
+  /**
+   * The address to the allowlist to add claimers to.
+   *
+   * @type {Address}
+   */
+  allowList: Address;
+  /**
+   *  The maximum number of claims that can be made (one per address)
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
 
 /**
  * A generic `viem.Log` event with support for `AllowListIncentive` event types.
@@ -209,7 +232,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<true>} - return true if successful, otherwise revert
    */
-  public async claim(
+  protected async claim(
     payload: Pick<ClaimPayload, 'target'>,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
@@ -225,7 +248,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<true>} - return true if successful, otherwise revert
    */
-  public async claimRaw(
+  protected async claimRaw(
     payload: Pick<ClaimPayload, 'target'>,
     params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
   ) {
@@ -288,3 +311,24 @@ export class AllowListIncentive extends DeployableTarget<
     };
   }
 }
+
+/**
+ * Given a {@link AllowListIncentivePayload}, properly encode a `AllowListIncentive.InitPayload` for use with {@link AllowListIncentive} initialization.
+ *
+ * @param {AllowListIncentivePayload} param0
+ * @param {Address} param0.allowList - The address to the allowlist to add claimers to.
+ * @param {bigint} param0.limit -  The maximum number of claims that can be made (one per address)
+ * @returns {Hex}
+ */
+export const prepareAllowListIncentivePayload = ({
+  allowList,
+  limit,
+}: AllowListIncentivePayload) => {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'allowList' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [allowList, limit],
+  );
+};

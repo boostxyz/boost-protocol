@@ -19,7 +19,8 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { StrategyType, prepareSignerValidatorClaimDataPayload } from '../utils';
+import { prepareSignerValidatorClaimDataPayload } from '../Validators/SignerValidator';
+import { StrategyType } from '../claiming';
 import { ERC20Incentive } from './ERC20Incentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');

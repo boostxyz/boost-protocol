@@ -16,15 +16,14 @@ import {
 } from 'viem';
 import { base } from 'viem/chains';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { BoostCore } from '../src/BoostCore';
 import {
   type ActionStep,
   FilterType,
   PrimitiveType,
   SignatureType,
-  StrategyType,
-  prepareSignerValidatorClaimDataPayload,
-} from '../src/utils';
+} from '../src';
+import { BoostCore } from '../src/BoostCore';
+import { StrategyType } from '../src/claiming';
 import { accounts } from './accounts';
 import {
   type BudgetFixtures,
@@ -81,6 +80,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
 
       // Step defining the action for Transfer event
       const eventActionStep: ActionStep = {
+        chainid: base.id,
         signature: selector, // Transfer(address,address,uint256) event signature
         signatureType: SignatureType.EVENT, // We're working with an event
         actionType: 0, // Custom action type (set as 0 for now)
@@ -97,6 +97,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // Define EventActionPayload manually
       const eventActionPayload = {
         actionClaimant: {
+          chainid: base.id,
           signatureType: SignatureType.EVENT,
           signature: selector, // Transfer(address,address,uint256) event signature
           fieldIndex: 0, // Targeting the 'from' address
@@ -170,11 +171,10 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const validation = await action.validateActionSteps();
       expect(validation).toBe(true);
       // Generate the signature using the trusted signer
-      const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      const claimDataPayload = await boost.validator.encodeClaimData({
         signer: trustedSigner,
         incentiveData,
         chainId: 8453,
-        validator: boost.validator.assertValidAddress(),
         incentiveQuantity,
         claimant: boostImpostor,
         boostId: boost.id,

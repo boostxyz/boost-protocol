@@ -12,6 +12,7 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodeAbiParameters,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -25,13 +26,32 @@ import {
   type GenericLog,
   type ReadParams,
   RegistryType,
-  type SimpleAllowListPayload,
   type WriteParams,
-  prepareSimpleAllowListPayload,
 } from '../utils';
 
 export { simpleAllowListAbi };
-export type { SimpleAllowListPayload };
+
+/**
+ * Object representation of a {@link SimpleAllowList} initialization payload.
+ *
+ * @export
+ * @interface SimpleAllowListPayload
+ * @typedef {SimpleAllowListPayload}
+ */
+export interface SimpleAllowListPayload {
+  /**
+   * The allow list's owner, given the {@link LIST_MANAGER_ROLE} role.
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of allowed addresses.
+   *
+   * @type {Address[]}
+   */
+  allowed: Address[];
+}
 
 /**
  * A generic `viem.Log` event with support for `SimpleAllowList` event types.
@@ -240,4 +260,25 @@ export class SimpleAllowList extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Given a {@link SimpleAllowListPayload}, properly encode the initialization payload.
+ *
+ * @param {SimpleAllowListPayload} param0
+ * @param {Address} param0.owner - The allow list's owner, given the {@link LIST_MANAGER_ROLE} role.
+ * @param {Address[]} param0.allowed - List of allowed addresses.
+ * @returns {Hex}
+ */
+export function prepareSimpleAllowListPayload({
+  owner,
+  allowed,
+}: SimpleAllowListPayload) {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'owner' },
+      { type: 'address[]', name: 'allowed' },
+    ],
+    [owner, allowed],
+  );
 }

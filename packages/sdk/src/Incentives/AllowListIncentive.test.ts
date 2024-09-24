@@ -1,6 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
+import { prepareSignerValidatorClaimDataPayload } from '../../dist';
 import { accounts } from '../../test/accounts';
 import {
   type Fixtures,
@@ -9,7 +10,6 @@ import {
   freshBoost,
 } from '../../test/helpers';
 import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
-import { prepareSignerValidatorClaimDataPayload } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures;

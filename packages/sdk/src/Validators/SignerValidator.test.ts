@@ -8,8 +8,10 @@ import {
   deployFixtures,
 } from '../../test/helpers';
 import { testAccount } from '../../test/viem';
-import { prepareSignerValidatorClaimDataPayload } from '../utils';
-import { SignerValidator } from './SignerValidator';
+import {
+  SignerValidator,
+  prepareSignerValidatorClaimDataPayload,
+} from './SignerValidator';
 
 let fixtures: Fixtures;
 

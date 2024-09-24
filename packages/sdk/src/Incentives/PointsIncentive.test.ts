@@ -12,7 +12,8 @@ import {
   freshBoost,
   freshPoints,
 } from '../../test/helpers';
-import { bytes4, prepareSignerValidatorClaimDataPayload } from '../utils';
+import { prepareSignerValidatorClaimDataPayload } from '../Validators/SignerValidator';
+import { bytes4 } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
 let fixtures: Fixtures, points: MockPoints;

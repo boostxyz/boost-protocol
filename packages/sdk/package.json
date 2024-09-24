@@ -39,6 +39,18 @@
       "node": "./dist/utils.js",
       "types": "./dist/utils.d.ts"
     },
+    "./claiming": {
+      "require": "./dist/claiming.cjs",
+      "import": "./dist/claiming.js",
+      "node": "./dist/claiming.js",
+      "types": "./dist/claiming.d.ts"
+    },
+    "./transfers": {
+      "require": "./dist/transfers.cjs",
+      "import": "./dist/transfers.js",
+      "node": "./dist/transfers.js",
+      "types": "./dist/transfers.d.ts"
+    },
     "./Boost": {
       "require": "./dist/Boost.cjs",
       "import": "./dist/Boost.js",

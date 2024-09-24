@@ -33,8 +33,12 @@ import {
   ERC20Incentive,
   ERC20VariableIncentive,
   EventAction,
+  type EventActionPayload,
+  FilterType,
   ManagedBudget,
   PointsIncentive,
+  PrimitiveType,
+  SignatureType,
   SignerValidator,
   SimpleAllowList,
   SimpleDenyList,
@@ -45,14 +49,7 @@ import { BoostRegistry } from '../src/BoostRegistry';
 import { ManagedBudgetRoles } from '../src/Budgets/ManagedBudget';
 import { VestingBudget } from '../src/Budgets/VestingBudget';
 import { ERC1155Incentive } from '../src/Incentives/ERC1155Incentive';
-import {
-  type ActionStep,
-  type EventActionPayload,
-  FilterType,
-  PrimitiveType,
-  SignatureType,
-  getDeployedContractAddress,
-} from '../src/utils';
+import { getDeployedContractAddress } from '../src/utils';
 import { SimpleBudget } from './../src/Budgets/SimpleBudget';
 import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';
@@ -639,7 +636,7 @@ export function makeMockEventActionPayload(
   coreAddress: Address,
   erc20Address: Address,
 ) {
-  const step: ActionStep = {
+  const step: ActionType = {
     signature:
       '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
     signatureType: SignatureType.EVENT,

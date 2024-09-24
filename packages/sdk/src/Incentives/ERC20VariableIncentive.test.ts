@@ -1,19 +1,6 @@
-import {
-  readMockErc20BalanceOf,
-  readMockErc20TotalSupply,
-} from '@boostxyz/evm';
+import { readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage } from '@wagmi/core';
-import {
-  encodeAbiParameters,
-  encodePacked,
-  isAddress,
-  keccak256,
-  pad,
-  parseEther,
-  zeroAddress,
-} from 'viem';
-import { toHex } from 'viem';
+import { encodeAbiParameters, isAddress, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -24,11 +11,7 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import {
-  StrategyType,
-  prepareClaimPayload,
-  prepareSignerValidatorClaimDataPayload,
-} from '../utils';
+import { prepareSignerValidatorClaimDataPayload } from '../Validators/SignerValidator';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');

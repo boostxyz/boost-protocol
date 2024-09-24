@@ -10,13 +10,13 @@ import {
   deployFixtures,
   fundErc721,
 } from '../../test/helpers';
+import { EventAction, actionFromAddress } from './Action';
 import {
   type EventActionPayloadSimple,
   FilterType,
   PrimitiveType,
   SignatureType,
-} from '../utils';
-import { EventAction, actionFromAddress } from './Action';
+} from './EventAction';
 
 let fixtures: Fixtures, erc721: MockERC721;
 

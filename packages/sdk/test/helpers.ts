@@ -40,6 +40,7 @@ import {
   type EventActionPayload,
   FilterType,
   ManagedBudget,
+  OpenAllowList,
   PointsIncentive,
   type PointsIncentivePayload,
   PrimitiveType,
@@ -297,6 +298,9 @@ export async function deployFixtures(
       public static override base = simpleAllowListBase;
     },
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
+      public static override base = simpleDenyListBase;
+    },
+    OpenAllowList: class TOpenAllowList extends OpenAllowList {
       public static override base = simpleDenyListBase;
     },
     SimpleBudget: class TSimpleBudget extends SimpleBudget {

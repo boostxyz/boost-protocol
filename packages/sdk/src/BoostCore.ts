@@ -26,12 +26,13 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  parseEther,
   parseEventLogs,
   zeroAddress,
   zeroHash,
 } from 'viem';
 import { type Action, actionFromAddress } from './Actions/Action';
-import { EventAction } from './Actions/EventAction';
+import { EventAction, type EventActionPayload } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
 import {
   SimpleAllowList,
@@ -42,7 +43,12 @@ import {
   type SimpleDenyListPayload,
 } from './AllowLists/SimpleDenyList';
 import { type Auth, PassthroughAuth } from './Auth/Auth';
-import { Boost } from './Boost';
+import {
+  Boost,
+  type BoostPayload,
+  type Target,
+  prepareBoostPayload,
+} from './Boost';
 import { type Budget, budgetFromAddress } from './Budgets/Budget';
 import {
   ManagedBudget,
@@ -66,6 +72,7 @@ import {
   ERC20Incentive,
   type ERC20IncentivePayload,
 } from './Incentives/ERC20Incentive';
+import type { ERC20VariableIncentivePayload } from './Incentives/ERC20VariableIncentive';
 import {
   ERC20VariableIncentive,
   type Incentive,
@@ -86,20 +93,17 @@ import {
   DeployableUnknownOwnerProvidedError,
   IncentiveNotCloneableError,
   MustInitializeBudgetError,
-  NoContractAddressUponReceiptError,
 } from './errors';
-import {
-  type ERC20VariableIncentivePayload,
-  type EventActionPayload,
-  type GenericLog,
-  type BoostPayload as OnChainBoostPayload,
-  type ReadParams,
-  type Target,
-  type WriteParams,
-  prepareBoostPayload,
-} from './utils';
+import type { GenericLog, ReadParams, WriteParams } from './utils';
 
 export { boostCoreAbi };
+
+/**
+ * The fee (in wei) required to claim each incentive, must be provided for the `claimIncentive` transaction
+ *
+ * @type {bigint}
+ */
+export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 /**
  * The fixed address for the deployed Boost Core.
@@ -298,7 +302,7 @@ export class BoostCore extends Deployable<
       }
     }
 
-    let budgetPayload: OnChainBoostPayload['budget'] = zeroAddress;
+    let budgetPayload: BoostPayload['budget'] = zeroAddress;
     if (budget.address) {
       budgetPayload = budget.address;
       if (!(await budget.isAuthorized(coreAddress))) {
@@ -310,7 +314,7 @@ export class BoostCore extends Deployable<
 
     // if we're supplying an address, it could be a pre-initialized target
     // if base is explicitly set to false, then it will not be initialized, and it will be referenced as is if it implements interface correctly
-    let actionPayload: OnChainBoostPayload['action'] = {
+    let actionPayload: BoostPayload['action'] = {
       instance: zeroAddress,
       isBase: true,
       parameters: zeroHash,
@@ -330,7 +334,7 @@ export class BoostCore extends Deployable<
       actionPayload.instance = action.base;
     }
 
-    let validatorPayload: OnChainBoostPayload['validator'] = {
+    let validatorPayload: BoostPayload['validator'] = {
       instance: zeroAddress,
       isBase: true,
       parameters: zeroHash,
@@ -366,7 +370,7 @@ export class BoostCore extends Deployable<
       validatorPayload.instance = validator.base;
     }
 
-    let allowListPayload: OnChainBoostPayload['allowList'] = {
+    let allowListPayload: BoostPayload['allowList'] = {
       instance: zeroAddress,
       isBase: true,
       parameters: zeroHash,
@@ -490,15 +494,15 @@ export class BoostCore extends Deployable<
    * @async
    * @param {bigint} boostId - The ID of the Boost
    * @param {bigint} incentiveId - The ID of the Incentive
-   * @param {Address} address - The address of the referrer (if any)
-   * @param {Hex} data The data for the claim
+   * @param {Address} referrer - The address of the referrer (if any)
+   * @param {Hex} data- The data for the claim
    * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
    * @returns {unknown}
    */
   public async claimIncentiveRaw(
     boostId: bigint,
     incentiveId: bigint,
-    address: Address,
+    referrer: Address,
     data: Hex,
     params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
   ) {
@@ -506,7 +510,7 @@ export class BoostCore extends Deployable<
       this._config,
       {
         address: this.assertValidAddress(),
-        args: [boostId, incentiveId, address, data],
+        args: [boostId, incentiveId, referrer, data],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),

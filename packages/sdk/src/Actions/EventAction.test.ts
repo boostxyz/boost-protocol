@@ -1,7 +1,3 @@
-import {
-  readAActionGetComponentInterface,
-  readEventActionGetComponentInterface,
-} from '@boostxyz/evm';
 import { selectors as eventSelectors } from '@boostxyz/signatures/events';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { type Hex, type Log, isAddress } from 'viem';
@@ -15,12 +11,12 @@ import {
   fundErc721,
 } from '../../test/helpers';
 import {
+  EventAction,
   type EventActionPayloadSimple,
   FilterType,
   PrimitiveType,
   SignatureType,
-} from '../utils';
-import { EventAction } from './EventAction';
+} from './EventAction';
 
 let fixtures: Fixtures, erc721: MockERC721;
 

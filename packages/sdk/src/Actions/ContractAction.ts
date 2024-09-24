@@ -9,23 +9,61 @@ import {
   writeContractActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import type { Abi, Address, ContractEventName, Hex } from 'viem';
+import {
+  type Abi,
+  type Address,
+  type ContractEventName,
+  type Hex,
+  encodeAbiParameters,
+  parseAbiParameters,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
-  type ContractActionPayload,
   type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
-  prepareContractActionPayload,
 } from '../utils';
 
 export { contractActionAbi };
-export type { ContractActionPayload };
+
+/**
+ * The object representation of a `ContractAction.InitPayload`
+ *
+ * @export
+ * @interface ContractActionPayload
+ * @typedef {ContractActionPayload}
+ */
+export interface ContractActionPayload {
+  /**
+   * The chain ID on which the target exists
+   *
+   * @type {bigint}
+   */
+  chainId: bigint;
+  /**
+   * The target contract address
+   *
+   * @type {Address}
+   */
+  target: Address;
+  /**
+   * The selector for the function to be called
+   *
+   * @type {Hex}
+   */
+  selector: Hex;
+  /**
+   * The native token value to send with the function call
+   *
+   * @type {bigint}
+   */
+  value: bigint;
+}
 
 /**
  * A generic `viem.Log` event with support for `ContractAction` event types.
@@ -235,4 +273,29 @@ export class ContractAction<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Given a {@link ContractActionPayload}, properly encode a `ContractAction.InitPayload` for use with {@link ContractAction} initialization.
+ *
+ * @param {ContractActionPayload} param0
+ * @param {bigint} param0.chainId - The chain ID on which the target exists
+ * @param {Address} param0.target - The target contract address
+ * @param {Hex} param0.selector - The selector for the function to be called
+ * @param {bigint} param0.value - The native token value to send with the function call
+ * @returns {Hex}
+ */
+export function prepareContractActionPayload({
+  chainId,
+  target,
+  selector,
+  value,
+}: ContractActionPayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'ContractActionPayload payload',
+      'struct ContractActionPayload { uint256 chainId; address target; bytes4 selector; uint256 value; }',
+    ]),
+    [{ chainId, target, selector, value }],
+  );
 }

@@ -25,6 +25,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpe
 import { deployContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
+  type ActionStep,
   AllowListIncentive,
   BoostCore,
   type Budget,
@@ -33,8 +34,12 @@ import {
   ERC20Incentive,
   ERC20VariableIncentive,
   EventAction,
+  type EventActionPayload,
+  FilterType,
   ManagedBudget,
   PointsIncentive,
+  PrimitiveType,
+  SignatureType,
   SignerValidator,
   SimpleAllowList,
   SimpleDenyList,
@@ -45,14 +50,7 @@ import { BoostRegistry } from '../src/BoostRegistry';
 import { ManagedBudgetRoles } from '../src/Budgets/ManagedBudget';
 import { VestingBudget } from '../src/Budgets/VestingBudget';
 import { ERC1155Incentive } from '../src/Incentives/ERC1155Incentive';
-import {
-  type ActionStep,
-  type EventActionPayload,
-  FilterType,
-  PrimitiveType,
-  SignatureType,
-  getDeployedContractAddress,
-} from '../src/utils';
+import { getDeployedContractAddress } from '../src/utils';
 import { SimpleBudget } from './../src/Budgets/SimpleBudget';
 import type { DeployableOptions } from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';

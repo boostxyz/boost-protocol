@@ -15,26 +15,100 @@ import {
   writeCgdaIncentiveClawback,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
-import type { Address, ContractEventName, Hex } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  encodeAbiParameters,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { type ClaimPayload, prepareClaimPayload } from '../claiming';
 import {
-  type CGDAIncentivePayload,
-  type CGDAParameters,
-  type ClaimPayload,
   type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
-  prepareCGDAIncentivePayload,
-  prepareClaimPayload,
 } from '../utils';
 
 export { cgdaIncentiveAbi };
-export type { CGDAIncentivePayload };
+
+/**
+ * The object representation of a `CGDAIncentive.InitPayload`
+ *
+ * @export
+ * @interface CGDAIncentivePayload
+ * @typedef {CGDAIncentivePayload}
+ */
+export interface CGDAIncentivePayload {
+  /**
+   * The address of the ERC20-like token
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The initial reward amount
+   *
+   * @type {bigint}
+   */
+  initialReward: bigint;
+  /**
+   * The amount to subtract from the current reward after each claim
+   *
+   * @type {bigint}
+   */
+  rewardDecay: bigint;
+  /**
+   * The amount by which the reward increases for each hour without a claim (continuous linear increase)
+   *
+   * @type {bigint}
+   */
+  rewardBoost: bigint;
+  /**
+   * The total budget for the incentive
+   *
+   * @type {bigint}
+   */
+  totalBudget: bigint;
+}
+
+/**
+ *  The configuration parameters for the CGDAIncentive
+ *
+ * @export
+ * @interface CGDAParameters
+ * @typedef {CGDAParameters}
+ */
+export interface CGDAParameters {
+  /**
+   * The amount to subtract from the current reward after each claim
+   *
+   * @type {bigint}
+   */
+  rewardDecay: bigint;
+  /**
+   * The amount by which the reward increases for each hour without a claim (continuous linear increase)
+   *
+   * @type {bigint}
+   */
+  rewardBoost: bigint;
+  /**
+   * The timestamp of the last claim
+   *
+   * @type {bigint}
+   */
+  lastClaimTime: bigint;
+  /**
+   * The current reward amount
+   *
+   * @type {bigint}
+   */
+  currentReward: bigint;
+}
 
 /**
  * A generic `viem.Log` event with support for `CGDAIncentive` event types.
@@ -223,7 +297,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
-  public async claim(
+  protected async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
   ) {
@@ -239,7 +313,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
-  public async claimRaw(
+  protected async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof cgdaIncentiveAbi, 'claim'>,
   ) {
@@ -361,4 +435,34 @@ export class CGDAIncentive extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Given a {@link CGDAIncentivePayload}, properly encode a `CGDAIncentive.InitPayload` for use with {@link CGDAIncentive} initialization.
+ *
+ * @param {CGDAIncentivePayload} param0
+ * @param {Address} param0.asset - The address of the ERC20-like token
+ * @param {bigint} param0.initialReward - The initial reward amount
+ * @param {bigint} param0.rewardDecay - The amount to subtract from the current reward after each claim
+ * @param {bigint} param0.rewardBoost - The amount by which the reward increases for each hour without a claim (continuous linear increase)
+ * @param {bigint} param0.totalBudget - The total budget for the incentive
+ * @returns {Hex}
+ */
+export function prepareCGDAIncentivePayload({
+  asset,
+  initialReward,
+  rewardDecay,
+  rewardBoost,
+  totalBudget,
+}: CGDAIncentivePayload) {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint256', name: 'initialReward' },
+      { type: 'uint256', name: 'rewardDecay' },
+      { type: 'uint256', name: 'rewardBoost' },
+      { type: 'uint256', name: 'totalBudget' },
+    ],
+    [asset, initialReward, rewardDecay, rewardBoost, totalBudget],
+  );
 }

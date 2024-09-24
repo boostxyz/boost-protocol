@@ -81,6 +81,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
 
       // Step defining the action for Purchased event
       const eventActionStep: ActionStep = {
+        chainid: base.id,
         signature: selector, // Purchased(address,address,uint256,uint256,uint256) event
         signatureType: SignatureType.EVENT, // We're working with an event
         actionType: 0, // Custom action type (set as 0 for now)
@@ -97,6 +98,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // Define EventActionPayload manually
       const eventActionPayload = {
         actionClaimant: {
+          chainid: base.id,
           signatureType: SignatureType.EVENT,
           signature: selector, // Purchased(address,address,uint256,uint256,uint256) event
           fieldIndex: 0, // Targeting the 'from' address
@@ -173,7 +175,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
         signer: trustedSigner,
         incentiveData,
-        chainId: 8453,
+        chainId: base.id,
         validator: boost.validator.assertValidAddress(),
         incentiveQuantity,
         claimant: boostImpostor,

@@ -10,8 +10,11 @@
     - [Getting Started](#getting-started)
     - [Solidity Development](#solidity-development)
   - [Coverage](#coverage)
-    - [Developing with the SDK](#developing-with-the-sdk)
-    - [Changesets \& Publishing](#changesets--publishing)
+  - [Developing with the SDK](#developing-with-the-sdk)
+  - [Changesets \& Publishing](#changesets--publishing)
+  - [Contract Deployment](#contract-deployment)
+    - [Deploy Core Contracts](#deploy-core-contracts)
+    - [Deploy Module Contracts](#deploy-module-contracts)
 
 [![Documentation](https://img.shields.io/badge/documentation-gh--pages-blue)](https://rabbitholegg.github.io/boost-protocol/index.html)
 [![Test Status](https://github.com/rabbitholegg/boost-protocol/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/rabbitholegg/boost-protocol/actions/workflows/verify.yml)
@@ -122,7 +125,7 @@ After running coverage you should have an `lcov.info` file in `/packages/evm/cov
 
 You may need to tweak the settings for the extention in order to help it find the coverage report.
 
-### Developing with the SDK
+## Developing with the SDK
 
 The build step for `@boostxyz/sdk` requires the following deployed contract address environment variables to exist in either a global context, or set in `/packages/sdk/.env`
 
@@ -175,22 +178,25 @@ import { BoostCore } from '@boostxyz/sdk'
 // etc
 ```
 
-### Changesets & Publishing
+## Changesets & Publishing
 
 In order to publish you need to make sure that the pull request you're submitting has a changeset. If you don't want to publish this isn't needed. In order to generate a changeset run `pnpm changeset`, select a change type [major,minor,patch], and draft a small summary of the changeset. Select version based on [semantic versioning](https://semver.org/).
 
 After this all you need to do is push and merge the pull request and the Github Action will handle the process of versioning, and publishing.
 
-### Contract Deployment
+> [!NOTE]
+> You do not need to add a changeset if you are just modifying test files.
+
+## Contract Deployment
 
 To deploy the contracts, you can use the provided scripts. Make sure to replace any sensitive information such as private keys with your own secure values.
 
-Deploy Core Contracts
+### Deploy Core Contracts
 To deploy the core contracts to the Sepolia testnet, use the following command:
 `forge script script/solidity/Deploy.s.sol:CoreDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"`
 
 In order to deploy to another network simply switch the RPC you're broadcasting against.
 
-Deploy Module Contracts
+### Deploy Module Contracts
 To deploy the module contracts to the Sepolia testnet, use the following command:
 `forge script script/solidity/Deploy_Modules.s.sol:ModuleBaseDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"`

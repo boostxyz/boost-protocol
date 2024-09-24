@@ -64,21 +64,19 @@ describe('SignerValidator', () => {
     // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
     const untrustedSigner = accounts.at(2)!;
 
-    const claimDataPayload = await boost.validator.encodeClaimData({
+    const claimDataPayload = await validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boostId,
     });
 
-    const badClaimDataPayload = await boost.validator.encodeClaimData({
+    const badClaimDataPayload = await validator.encodeClaimData({
       signer: untrustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boostId,
@@ -119,11 +117,10 @@ describe('SignerValidator', () => {
     // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
     const trustedSigner = accounts.at(0)!;
 
-    const claimDataPayload = await boost.validator.encodeClaimData({
+    const claimDataPayload = await validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boostId,

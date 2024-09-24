@@ -19,6 +19,8 @@ import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
+import {SignerValidator} from "contracts/validators/SignerValidator.sol";
+
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
     using stdJson for string;
@@ -45,6 +47,9 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployCGDAIncentive(registry);
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
+        _deploySignerValidator(registry);
+        _deploySimpleAllowList(registry);
+        _deploySimpleDenyList(registry);
 
         _saveJson();
     }
@@ -130,5 +135,35 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deploy2(initCode, "");
         vm.broadcast();
         registry.register(BoostRegistry.RegistryType.INCENTIVE, "AllowListIncentive", allowListIncentive);
+    }
+
+    function _deploySignerValidator(BoostRegistry registry) internal returns (address signerValidator) {
+        bytes memory initCode = type(SignerValidator).creationCode;
+        signerValidator = _getCreate2Address(initCode, "");
+        console.log("SignerValidator: ", signerValidator);
+        deployJson = deployJsonKey.serialize("SignerValidator", signerValidator);
+        _deploy2(initCode, "");
+        vm.broadcast();
+        registry.register(BoostRegistry.RegistryType.VALIDATOR, "SignerValidator", signerValidator);
+    }
+
+    function _deploySimpleAllowList(BoostRegistry registry) internal returns (address simpleAllowList) {
+        bytes memory initCode = type(SimpleAllowList).creationCode;
+        simpleAllowList = _getCreate2Address(initCode, "");
+        console.log("SimpleAllowList: ", simpleAllowList);
+        deployJson = deployJsonKey.serialize("SimpleAllowList", simpleAllowList);
+        _deploy2(initCode, "");
+        vm.broadcast();
+        registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", simpleAllowList);
+    }
+
+    function _deploySimpleDenyList(BoostRegistry registry) internal returns (address simpleDenyList) {
+        bytes memory initCode = type(SimpleDenyList).creationCode;
+        simpleDenyList = _getCreate2Address(initCode, "");
+        console.log("SimpleDenyList: ", simpleDenyList);
+        deployJson = deployJsonKey.serialize("SimpleDenyList", simpleDenyList);
+        _deploy2(initCode, "");
+        vm.broadcast();
+        registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList", simpleDenyList);
     }
 }

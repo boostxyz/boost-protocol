@@ -236,9 +236,6 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@boostxyz/signatures':
-        specifier: workspace:*
-        version: link:../signatures
       '@wagmi/core':
         specifier: 2.13.0
         version: 2.13.0(react@18.3.0)(typescript@5.3.3)(viem@2.9.27)
@@ -252,6 +249,9 @@ importers:
       '@boostxyz/evm':
         specifier: workspace:*
         version: link:../evm
+      '@boostxyz/signatures':
+        specifier: workspace:*
+        version: link:../signatures
 
   packages/signatures: {}
 

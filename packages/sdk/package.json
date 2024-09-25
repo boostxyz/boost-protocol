@@ -196,11 +196,9 @@
     "test:ci": "CI=true vitest --coverage",
     "typedoc": "npx typedoc --sort required-first --sort visibility --sort kind"
   },
-  "dependencies": {
-    "@boostxyz/signatures": "workspace:*"
-  },
   "optionalDependencies": {
-    "@boostxyz/evm": "workspace:*"
+    "@boostxyz/evm": "workspace:*",
+    "@boostxyz/signatures": "workspace:*"
   },
   "peerDependencies": {
     "@wagmi/core": "2",

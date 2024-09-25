@@ -18,6 +18,7 @@ import {
   type Hex,
   encodeAbiParameters,
 } from 'viem';
+import { PointsIncentive as PointsIncentiveBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -105,10 +106,12 @@ export class PointsIncentive extends DeployableTarget<
    *
    * @public
    * @static
-   * @type {Address}
+   * @type {Record<number, Address>}
    */
-  public static override base: Address = import.meta.env
-    .VITE_POINTS_INCENTIVE_BASE;
+  public static override bases: Record<number, Address> = {
+    ...(PointsIncentiveBases as Record<number, Address>),
+    31337: import.meta.env.VITE_POINTS_INCENTIVE_BASE,
+  };
   /**
    * @inheritdoc
    *

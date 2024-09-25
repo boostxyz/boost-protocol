@@ -3,12 +3,15 @@ import {
   type ReadContractParameters,
   type WatchContractEventParameters,
   type WriteContractParameters,
+  getAccount,
+  getClient,
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
 import type {
   Abi,
   AbiEvent,
+  Address,
   ContractEventName,
   ContractFunctionName,
   GetLogsParameters,
@@ -18,9 +21,27 @@ import type {
   WaitForTransactionReceiptParameters,
 } from 'viem';
 import { isHex, keccak256, slice, toHex } from 'viem';
-import { NoContractAddressUponReceiptError } from './errors';
+import {
+  InvalidProtocolChainIdError,
+  NoConnectedChainIdError,
+  NoContractAddressUponReceiptError,
+} from './errors';
 
 export type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
+
+/**
+ * Enum encapsulating all the different types of targets used in the Boost V2 Protocol.
+ *
+ * @export
+ * @enum {number}
+ */
+export enum RegistryType {
+  ACTION = 0,
+  ALLOW_LIST = 1,
+  BUDGET = 2,
+  INCENTIVE = 3,
+  VALIDATOR = 4,
+}
 
 /**
  * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.
@@ -32,8 +53,8 @@ export type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
  * @template {ContractFunctionName<abi>} functionName
  */
 export type WriteParams<
-  abi extends Abi,
-  functionName extends ContractFunctionName<abi>,
+  abi extends Abi = Abi,
+  functionName extends ContractFunctionName<abi> = ContractFunctionName<abi>,
 > = Partial<
   Omit<
     WriteContractParameters<abi, functionName>,
@@ -184,15 +205,44 @@ export async function awaitResult<Result = unknown>(
 }
 
 /**
- * Enum encapsulating all the different types of targets used in the Boost V2 Protocol.
+ * Given a wagmi config and a map of chain id's to addresses, determine an address that maps to the currently connected chain id, or throw a typed error.
  *
  * @export
- * @enum {number}
+ * @param {Config} config
+ * @param {Record<string, Address>} addressByChainId
+ * @param {number} desiredChainId
+ * @returns {Address}
+ * @throws {@link NoConnectedChainIdError}
+ * @throws {@link InvalidProtocolChainIdError}
  */
-export enum RegistryType {
-  ACTION = 0,
-  ALLOW_LIST = 1,
-  BUDGET = 2,
-  INCENTIVE = 3,
-  VALIDATOR = 4,
+export function assertValidAddressByChainId(
+  config: Config,
+  addressByChainId: Record<number, Address>,
+  desiredChainId?: number,
+): Address {
+  let chainId: number | undefined = undefined;
+  const wagmiAccount = getAccount(config);
+  // if manually providing a chain id for some contract operation, try to use it
+  if (desiredChainId !== undefined) {
+    if (addressByChainId[desiredChainId]) chainId = desiredChainId;
+  } else if (wagmiAccount.chainId !== undefined) {
+    // otherwise if we can get the current chain id off the connected account and it matches one of ours, use it
+    if (addressByChainId[wagmiAccount.chainId]) chainId = wagmiAccount.chainId;
+  }
+  // chainId is still undefined, try to get chain id off viem client
+  if (chainId === undefined) {
+    const client = getClient(config);
+    if (client?.chain.id && addressByChainId[client?.chain.id])
+      chainId = client.chain.id;
+  }
+  // if chainId is STILL undefined, use our default addresses
+  // TODO: update this when on prod network
+  if (chainId === undefined) chainId = Number(__DEFAULT_CHAIN_ID__);
+  if (!addressByChainId[chainId])
+    throw new InvalidProtocolChainIdError(
+      chainId,
+      Object.keys(addressByChainId).map(Number),
+    );
+  // biome-ignore lint/style/noNonNullAssertion: this type should be narrowed by the above statement but isn't?
+  return addressByChainId[chainId]!;
 }

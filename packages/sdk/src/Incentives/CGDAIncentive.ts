@@ -21,6 +21,7 @@ import {
   type Hex,
   encodeAbiParameters,
 } from 'viem';
+import { CGDAIncentive as CGDAIncentiveBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -144,10 +145,12 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @static
-   * @type {Address}
+   * @type {Record<number, Address>}
    */
-  public static override base: Address = import.meta.env
-    .VITE_CGDA_INCENTIVE_BASE;
+  public static override bases: Record<number, Address> = {
+    ...(CGDAIncentiveBases as Record<number, Address>),
+    31337: import.meta.env.VITE_CGDA_INCENTIVE_BASE,
+  };
   /**
    * @inheritdoc
    *

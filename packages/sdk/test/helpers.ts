@@ -287,59 +287,97 @@ export async function deployFixtures(
     }),
   );
 
+  const chainId = 1337;
+
   const bases = {
     ContractAction: class TContractAction extends ContractAction {
-      public static override base = contractActionBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: contractActionBase,
+      };
     },
     EventAction: class TEventAction extends EventAction {
-      public static override base = eventActionBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: eventActionBase,
+      };
     },
     ERC721MintAction: class TERC721MintAction extends ERC721MintAction {
-      public static override base = erc721MintActionBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: erc721MintActionBase,
+      };
     },
     SimpleAllowList: class TSimpleAllowList extends SimpleAllowList {
-      public static override base = simpleAllowListBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: simpleAllowListBase,
+      };
     },
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
-      public static override base = simpleDenyListBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: simpleDenyListBase,
+      };
     },
     OpenAllowList: class TOpenAllowList extends OpenAllowList {
-      public static override base = simpleDenyListBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: simpleDenyListBase,
+      };
     },
     SimpleBudget: class TSimpleBudget extends SimpleBudget {
-      public static override base = simpleBudgetBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: simpleBudgetBase,
+      };
     },
     ManagedBudget: class TManagedBudget extends ManagedBudget {
-      public static override base = managedBudgetBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: managedBudgetBase,
+      };
     },
     VestingBudget: class TVestingBudget extends VestingBudget {
-      public static override base = vestingBudgetBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: vestingBudgetBase,
+      };
     },
     AllowListIncentive: class TAllowListIncentive extends AllowListIncentive {
-      public static override base = allowListIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: allowListIncentiveBase,
+      };
     },
     CGDAIncentive: class TCGDAIncentive extends CGDAIncentive {
-      public static override base = cgdaIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: cgdaIncentiveBase,
+      };
     },
     ERC20Incentive: class TERC20Incentive extends ERC20Incentive {
-      public static override base = erc20IncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: erc20IncentiveBase,
+      };
     },
     ERC20VariableIncentive: class TERC20VariableIncentive extends ERC20VariableIncentive {
-      public static override base = erc20VariableIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: erc20VariableIncentiveBase,
+      };
     },
     ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
-      public static override base = erc1155IncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: erc1155IncentiveBase,
+      };
     },
     PointsIncentive: class TPointsIncentive extends PointsIncentive {
-      public static override base = pointsIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: pointsIncentiveBase,
+      };
     },
     SignerValidator: class TSignerValidator extends SignerValidator {
-      public static override base = signerValidatorBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: signerValidatorBase,
+      };
     },
   };
 
   for (const [name, deployable] of Object.entries(bases)) {
-    await registry.register(deployable.registryType, name, deployable.base);
+    await registry.register(
+      deployable.registryType,
+      name,
+      deployable.bases[chainId]!,
+    );
   }
 
   class TBoostCore extends BoostCore {
@@ -393,10 +431,13 @@ export async function deployFixtures(
         isBase,
       );
     }
-    override OpenAllowList(isBase?: boolean) {
+    override OpenAllowList(
+      options: DeployablePayloadOrAddress<undefined>,
+      isBase?: boolean,
+    ) {
       return new bases.OpenAllowList(
         { config: this._config, account: this._account },
-        undefined,
+        options,
         isBase,
       );
     }
@@ -787,43 +828,41 @@ export function fundBudget(
   points?: MockPoints,
 ) {
   return async function fundBudget() {
-    {
-      if (!budget)
-        budget = await loadFixture(freshManagedBudget(options, fixtures)); // await loadFixture(freshBudget(options, fixtures));
-      if (!erc20) erc20 = await loadFixture(fundErc20(options));
-      if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
-      if (!points) points = await loadFixture(fundPoints(options));
+    if (!budget)
+      budget = await loadFixture(freshManagedBudget(options, fixtures)); // await loadFixture(freshBudget(options, fixtures));
+    if (!erc20) erc20 = await loadFixture(fundErc20(options));
+    if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
+    if (!points) points = await loadFixture(fundPoints(options));
 
-      await budget.allocate(
-        {
-          amount: parseEther('1.0'),
-          asset: zeroAddress,
-          target: options.account.address,
-        },
-        { value: parseEther('1.0') },
-      );
-
-      await erc20.approve(budget.assertValidAddress(), parseEther('100'));
-      await budget.allocate({
-        amount: parseEther('100'),
-        asset: erc20.assertValidAddress(),
+    await budget.allocate(
+      {
+        amount: parseEther('1.0'),
+        asset: zeroAddress,
         target: options.account.address,
-      });
+      },
+      { value: parseEther('1.0') },
+    );
 
-      await writeMockErc1155SetApprovalForAll(options.config, {
-        args: [budget.assertValidAddress(), true],
-        address: erc1155.assertValidAddress(),
-        account: options.account,
-      });
-      await budget.allocate({
-        tokenId: 1n,
-        amount: 100n,
-        asset: erc1155.assertValidAddress(),
-        target: options.account.address,
-      });
+    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await budget.allocate({
+      amount: parseEther('100'),
+      asset: erc20.assertValidAddress(),
+      target: options.account.address,
+    });
 
-      return { budget, erc20, erc1155, points } as BudgetFixtures;
-    }
+    await writeMockErc1155SetApprovalForAll(options.config, {
+      args: [budget.assertValidAddress(), true],
+      address: erc1155.assertValidAddress(),
+      account: options.account,
+    });
+    await budget.allocate({
+      tokenId: 1n,
+      amount: 100n,
+      asset: erc1155.assertValidAddress(),
+      target: options.account.address,
+    });
+
+    return { budget, erc20, erc1155, points } as BudgetFixtures;
   };
 }
 
@@ -836,45 +875,43 @@ export function fundManagedBudget(
   points?: MockPoints,
 ) {
   return async function fundBudget() {
-    {
-      if (!budget)
-        budget = await loadFixture(freshManagedBudget(options, fixtures));
-      if (!erc20) erc20 = await loadFixture(fundErc20(options));
-      if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
-      if (!points) points = await loadFixture(fundPoints(options));
+    if (!budget)
+      budget = await loadFixture(freshManagedBudget(options, fixtures));
+    if (!erc20) erc20 = await loadFixture(fundErc20(options));
+    if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
+    if (!points) points = await loadFixture(fundPoints(options));
 
-      await budget.allocate(
-        {
-          amount: parseEther('1.0'),
-          asset: zeroAddress,
-          target: options.account.address,
-        },
-        { value: parseEther('1.0') },
-      );
-
-      await erc20.approve(budget.assertValidAddress(), parseEther('100'));
-      await budget.allocate({
-        amount: parseEther('100'),
-        asset: erc20.assertValidAddress(),
+    await budget.allocate(
+      {
+        amount: parseEther('1.0'),
+        asset: zeroAddress,
         target: options.account.address,
-      });
+      },
+      { value: parseEther('1.0') },
+    );
 
-      await writeMockErc1155SetApprovalForAll(options.config, {
-        args: [budget.assertValidAddress(), true],
-        address: erc1155.assertValidAddress(),
-        account: options.account,
-      });
-      await budget.allocate({
-        tokenId: 1n,
-        amount: 100n,
-        asset: erc1155.assertValidAddress(),
-        target: options.account.address,
-      });
+    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await budget.allocate({
+      amount: parseEther('100'),
+      asset: erc20.assertValidAddress(),
+      target: options.account.address,
+    });
 
-      return { budget, erc20, erc1155, points } as BudgetFixtures & {
-        budget: ManagedBudget;
-      };
-    }
+    await writeMockErc1155SetApprovalForAll(options.config, {
+      args: [budget.assertValidAddress(), true],
+      address: erc1155.assertValidAddress(),
+      account: options.account,
+    });
+    await budget.allocate({
+      tokenId: 1n,
+      amount: 100n,
+      asset: erc1155.assertValidAddress(),
+      target: options.account.address,
+    });
+
+    return { budget, erc20, erc1155, points } as BudgetFixtures & {
+      budget: ManagedBudget;
+    };
   };
 }
 
@@ -887,31 +924,29 @@ export function fundVestingBudget(
   points?: MockPoints,
 ) {
   return async function fundVestingBudget() {
-    {
-      if (!budget)
-        budget = await loadFixture(freshManagedBudget(options, fixtures));
-      if (!erc20) erc20 = await loadFixture(fundErc20(options));
-      if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
-      if (!points) points = await loadFixture(fundPoints(options));
+    if (!budget)
+      budget = await loadFixture(freshManagedBudget(options, fixtures));
+    if (!erc20) erc20 = await loadFixture(fundErc20(options));
+    if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
+    if (!points) points = await loadFixture(fundPoints(options));
 
-      await budget.allocate(
-        {
-          amount: parseEther('1.0'),
-          asset: zeroAddress,
-          target: options.account.address,
-        },
-        { value: parseEther('1.0') },
-      );
-
-      await erc20.approve(budget.assertValidAddress(), parseEther('100'));
-      await budget.allocate({
-        amount: parseEther('100'),
-        asset: erc20.assertValidAddress(),
+    await budget.allocate(
+      {
+        amount: parseEther('1.0'),
+        asset: zeroAddress,
         target: options.account.address,
-      });
+      },
+      { value: parseEther('1.0') },
+    );
 
-      return { budget, erc20, erc1155, points } as BudgetFixtures;
-    }
+    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await budget.allocate({
+      amount: parseEther('100'),
+      asset: erc20.assertValidAddress(),
+      target: options.account.address,
+    });
+
+    return { budget, erc20, erc1155, points } as BudgetFixtures;
   };
 }
 

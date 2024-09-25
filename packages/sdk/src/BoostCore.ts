@@ -31,6 +31,8 @@ import {
   zeroAddress,
   zeroHash,
 } from 'viem';
+import { BoostRegistry as BoostRegistryBases } from '../dist/deployments.json';
+import { BoostCore as BoostCoreBases } from '../dist/deployments.json';
 import { type Action, actionFromAddress } from './Actions/Action';
 import { EventAction, type EventActionPayload } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
@@ -93,9 +95,16 @@ import {
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
   IncentiveNotCloneableError,
+  InvalidProtocolChainIdError,
   MustInitializeBudgetError,
+  NoConnectedChainIdError,
 } from './errors';
-import type { GenericLog, ReadParams, WriteParams } from './utils';
+import {
+  type GenericLog,
+  type ReadParams,
+  type WriteParams,
+  assertValidAddressByChainId,
+} from './utils';
 
 export { boostCoreAbi };
 
@@ -107,13 +116,24 @@ export { boostCoreAbi };
 export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 /**
- * The fixed address for the deployed Boost Core.
- * By default, `new BoostCore` will use this address if not otherwise provided.
+ * The address of the deployed BoostCore instance. In prerelease mode, this will be its sepolia address
  *
  * @type {Address}
  */
-export const BOOST_CORE_ADDRESS: Address = import.meta.env
-  .VITE_BOOST_CORE_ADDRESS;
+export const BOOST_CORE_ADDRESS = (BoostCoreBases as Record<string, Address>)[
+  __DEFAULT_CHAIN_ID__
+];
+
+/**
+ * The fixed addresses for the deployed Boost Core.
+ * By default, `new BoostCore` will use the address deployed to the currently connected chain, or `BOOST_CORE_ADDRESS` if not provided.
+ *
+ * @type {Record<number, Address>}
+ */
+export const BOOST_CORE_ADDRESSES: Record<number, Address> = {
+  ...(BoostCoreBases as Record<number, Address>),
+  31337: import.meta.env.VITE_BOOST_CORE_ADDRESS,
+};
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.
@@ -250,7 +270,8 @@ export class BoostCore extends Deployable<
         options.protocolFeeReceiver,
       ]);
     } else {
-      super({ account, config }, BOOST_CORE_ADDRESS);
+      const address = assertValidAddressByChainId(config, BOOST_CORE_ADDRESSES);
+      super({ account, config }, address);
     }
     //@ts-expect-error I can't set this property on the class because for some reason it takes super out of constructor scope?
     this.abi = boostCoreAbi;
@@ -266,14 +287,12 @@ export class BoostCore extends Deployable<
    */
   public async createBoost(
     _boostPayload: CreateBoostPayload,
-    _options?: DeployableOptions,
+    _params?: DeployableOptions &
+      WriteParams<typeof boostCoreAbi, 'createBoost'>,
   ) {
     const coreAddress = this.assertValidAddress();
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(
-        _boostPayload,
-        _options,
-      );
+      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload, _params);
 
     let {
       budget,
@@ -290,7 +309,7 @@ export class BoostCore extends Deployable<
     const boostFactory = createWriteContract({
       abi: boostCoreAbi,
       functionName: 'createBoost',
-      address: this.address,
+      address: this.assertValidAddress(),
     });
 
     if (!owner) {
@@ -313,6 +332,8 @@ export class BoostCore extends Deployable<
       throw new MustInitializeBudgetError();
     }
 
+    const desiredChainId = _params?.chain?.id || _params?.chainId;
+
     // if we're supplying an address, it could be a pre-initialized target
     // if base is explicitly set to false, then it will not be initialized, and it will be referenced as is if it implements interface correctly
     let actionPayload: BoostPayload['action'] = {
@@ -321,7 +342,7 @@ export class BoostCore extends Deployable<
       parameters: zeroHash,
     };
     if (action.address) {
-      const isBase = action.address === action.base || action.isBase;
+      const isBase = action.isBase;
       actionPayload = {
         isBase: isBase,
         instance: action.address,
@@ -332,7 +353,11 @@ export class BoostCore extends Deployable<
     } else {
       actionPayload.parameters =
         action.buildParameters(undefined, options).args.at(0) || zeroHash;
-      actionPayload.instance = action.base;
+      actionPayload.instance = assertValidAddressByChainId(
+        options.config,
+        action.bases,
+        desiredChainId,
+      );
     }
 
     let validatorPayload: BoostPayload['validator'] = {
@@ -341,7 +366,7 @@ export class BoostCore extends Deployable<
       parameters: zeroHash,
     };
     if (validator.address) {
-      const isBase = validator.address === validator.base || validator.isBase;
+      const isBase = validator.isBase;
       validatorPayload = {
         isBase: isBase,
         instance: validator.address,
@@ -368,7 +393,11 @@ export class BoostCore extends Deployable<
             options,
           )
           .args.at(0) || zeroHash;
-      validatorPayload.instance = validator.base;
+      validatorPayload.instance = assertValidAddressByChainId(
+        options.config,
+        validator.bases,
+        desiredChainId,
+      );
     }
 
     let allowListPayload: BoostPayload['allowList'] = {
@@ -377,7 +406,7 @@ export class BoostCore extends Deployable<
       parameters: zeroHash,
     };
     if (allowList.address) {
-      const isBase = allowList.address === allowList.base || allowList.isBase;
+      const isBase = allowList.isBase;
       allowListPayload = {
         isBase: isBase,
         instance: allowList.address,
@@ -388,10 +417,14 @@ export class BoostCore extends Deployable<
     } else {
       allowListPayload.parameters =
         allowList.buildParameters(undefined, options).args.at(0) || zeroHash;
-      allowListPayload.instance = allowList.base;
+      allowListPayload.instance = assertValidAddressByChainId(
+        options.config,
+        allowList.bases,
+        desiredChainId,
+      );
     }
 
-    let incentivesPayloads: Array<Target> = incentives.map(() => ({
+    const incentivesPayloads: Array<Target> = incentives.map(() => ({
       instance: zeroAddress,
       isBase: true,
       parameters: zeroHash,
@@ -400,7 +433,7 @@ export class BoostCore extends Deployable<
       // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
       const incentive = incentives.at(i)!;
       if (incentive.address) {
-        const isBase = incentive.address === incentive.base || incentive.isBase;
+        const isBase = incentive.isBase;
         if (!isBase) throw new IncentiveNotCloneableError(incentive);
         incentivesPayloads[i] = {
           isBase: isBase,
@@ -415,7 +448,11 @@ export class BoostCore extends Deployable<
         incentivesPayloads[i]!.parameters =
           incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
         // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-        incentivesPayloads[i]!.instance = incentive.base;
+        incentivesPayloads[i]!.instance = assertValidAddressByChainId(
+          options.config,
+          incentive.bases,
+          desiredChainId,
+        );
       }
     }
 
@@ -432,8 +469,10 @@ export class BoostCore extends Deployable<
     };
 
     const boostHash = await boostFactory(options.config, {
-      args: [prepareBoostPayload(onChainPayload)],
       ...this.optionallyAttachAccount(options.account),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(_params as any),
+      args: [prepareBoostPayload(onChainPayload)],
     });
     const receipt = await waitForTransactionReceipt(options.config, {
       hash: boostHash,

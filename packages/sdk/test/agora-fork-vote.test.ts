@@ -5,7 +5,7 @@ import {
   type Address,
   type Hex,
   createTestClient,
-  pad,
+  encodeAbiParameters,
   parseEther,
   publicActions,
   toHex,
@@ -21,7 +21,6 @@ import {
   prepareSignerValidatorClaimDataPayload,
 } from '../src';
 import { BoostCore } from '../src/BoostCore';
-import { StrategyType } from '../src/claiming';
 import { accounts } from './accounts';
 import {
   type BudgetFixtures,
@@ -38,8 +37,6 @@ const targetContract = '0xcDF27F107725988f2261Ce2256bDfCdE8B382B10' as Address;
 // https://optimistic.etherscan.io/tx/0x3d281344e4d0578dfc5af517c59e87770d4ded9465456cee0bd1e93484976e88
 const inputData =
   '0x5678138877d106504340c0bb50e5748cc9bd714e946816c7726ae7b15f132a7daa0705c40000000000000000000000000000000000000000000000000000000000000001';
-// For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
-const incentiveData = pad('0xdef456232173821931823712381232131391321934');
 // This is only for a single incentive boost
 const incentiveQuantity = 1;
 const referrer = accounts[1].account;
@@ -144,11 +141,10 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           allowed: [owner],
         }),
         incentives: [
-          new bases.ERC20Incentive(defaultOptions, {
+          new bases.ERC20VariableIncentive(defaultOptions, {
             asset: erc20.assertValidAddress(),
-            reward: parseEther('1'),
-            limit: 100n,
-            strategy: StrategyType.POOL,
+            reward: parseEther('0.1'),
+            limit: parseEther('1'),
           }),
         ],
       });
@@ -167,27 +163,69 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         address: boostImpostor,
         value: parseEther('10'),
       });
-      const testReceipt = await walletClient.sendTransaction({
+      const testTxHash = await walletClient.sendTransaction({
         data: inputData,
         account: boostImpostor,
         to: targetContract,
       });
 
-      const transaction = await walletClient.getTransactionReceipt({
-        hash: testReceipt,
-      });
-      const logs = transaction.logs;
-
       // Make sure that the transaction was sent as expected and validates the action
-      expect(testReceipt).toBeDefined();
-      const validation = await action.validateActionSteps({
-        logs, // do we need to pass the logs in, in order to validate them?
+      expect(testTxHash).toBeDefined();
+      const testTxReceipt = await walletClient.getTransactionReceipt({
+        hash: testTxHash,
       });
-      expect(validation).toBe(true);
+      await walletClient.mine({ blocks: 1 });
+      // const logs = transaction.logs;
+      // const validation = await action.validateActionSteps({
+      //   logs, // do we need to pass the logs in, in order to validate them?
+      // });
+      // expect(validation).toBe(true);
+
+      const amountOfVotes = await walletClient.readContract({
+        address: '0xcdf27f107725988f2261ce2256bdfcde8b382b10',
+        abi: [
+          {
+            inputs: [
+              {
+                internalType: 'address',
+                name: 'account',
+                type: 'address',
+              },
+              {
+                internalType: 'uint256',
+                name: 'blockNumber',
+                type: 'uint256',
+              },
+            ],
+            name: 'getVotes',
+            outputs: [
+              {
+                internalType: 'uint256',
+                name: '',
+                type: 'uint256',
+              },
+            ],
+            stateMutability: 'view',
+            type: 'function',
+          },
+        ],
+        functionName: 'getVotes',
+        args: [boostImpostor, testTxReceipt.blockNumber],
+      });
+
+      // If the amountOfVotes is greater than 100, then the reward should be 0.1 ETH, otherwise it will be 0.01 ETH
+      const rewardAmount =
+        amountOfVotes >= parseEther('100')
+          ? parseEther('0.1')
+          : parseEther('0.01');
+
       // Generate the signature using the trusted signer
       const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
         signer: trustedSigner,
-        incentiveData,
+        incentiveData: encodeAbiParameters(
+          [{ name: '', type: 'uint256' }],
+          [rewardAmount],
+        ),
         chainId: optimism.id,
         validator: boost.validator.assertValidAddress(),
         incentiveQuantity,

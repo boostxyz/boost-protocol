@@ -20,7 +20,6 @@ import {
   FilterType,
   PrimitiveType,
   SignatureType,
-  prepareSignerValidatorClaimDataPayload,
 } from '../src';
 import { BoostCore } from '../src/BoostCore';
 import { StrategyType } from '../src/claiming';
@@ -100,7 +99,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         chainid: sepolia.id,
         signature: selector, // NameRegistered(string,bytes32,address,uint256,uint256,uint256)
         signatureType: SignatureType.EVENT, // We're working with an event
-        actionType: 0, // Custom action type (set as 0 for now)
         targetContract: targetContract, // Address of the targetContract
         // We want to target the Minter property on the Purchase event
         actionParameter: {
@@ -193,11 +191,10 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const validation = await action.validateActionSteps();
       expect(validation).toBe(true);
       // Generate the signature using the trusted signer
-      const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      const claimDataPayload = await boost.validator.encodeClaimData({
         signer: trustedSigner,
         incentiveData,
         chainId: sepolia.id,
-        validator: boost.validator.assertValidAddress(),
         incentiveQuantity,
         claimant: boostImpostor,
         boostId: boost.id,

@@ -533,6 +533,12 @@ export class EventAction extends DeployableTarget<
         return fieldValue === criteria.filterData;
 
       case FilterType.NOT_EQUAL:
+        if (criteria.fieldType === PrimitiveType.ADDRESS) {
+          return !isAddressEqual(
+            criteria.filterData,
+            `0x${fieldValue.slice(-40)}`,
+          );
+        }
         return fieldValue !== criteria.filterData;
 
       case FilterType.GREATER_THAN:

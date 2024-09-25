@@ -18,7 +18,7 @@ function freshDenyList(fixtures: Fixtures) {
   return function freshDenyList() {
     return fixtures.registry.clone(
       crypto.randomUUID(),
-      new fixtures.bases.SimpleDenyList(defaultOptions, {
+      fixtures.core.SimpleDenyList({
         owner: defaultOptions.account.address,
         denied: [defaultOptions.account.address],
       }),

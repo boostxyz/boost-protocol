@@ -27,32 +27,61 @@ import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
   type ActionStep,
   AllowListIncentive,
+  type AllowListIncentivePayload,
   BoostCore,
   type Budget,
   CGDAIncentive,
+  type CGDAIncentivePayload,
   type CreateBoostPayload,
   ERC20Incentive,
+  type ERC20IncentivePayload,
   ERC20VariableIncentive,
   EventAction,
   type EventActionPayload,
   FilterType,
   ManagedBudget,
   PointsIncentive,
+  type PointsIncentivePayload,
   PrimitiveType,
   SignatureType,
   SignerValidator,
+  type SignerValidatorPayload,
   SimpleAllowList,
+  type SimpleAllowListPayload,
   SimpleDenyList,
+  type SimpleDenyListPayload,
 } from '../src';
-import { ContractAction } from '../src/Actions/ContractAction';
-import { ERC721MintAction } from '../src/Actions/ERC721MintAction';
+import {
+  ContractAction,
+  type ContractActionPayload,
+} from '../src/Actions/ContractAction';
+import {
+  ERC721MintAction,
+  type ERC721MintActionPayload,
+} from '../src/Actions/ERC721MintAction';
 import { BoostRegistry } from '../src/BoostRegistry';
-import { ManagedBudgetRoles } from '../src/Budgets/ManagedBudget';
-import { VestingBudget } from '../src/Budgets/VestingBudget';
-import { ERC1155Incentive } from '../src/Incentives/ERC1155Incentive';
+import {
+  type ManagedBudgetPayload,
+  ManagedBudgetRoles,
+} from '../src/Budgets/ManagedBudget';
+import {
+  VestingBudget,
+  type VestingBudgetPayload,
+} from '../src/Budgets/VestingBudget';
+import type { ERC20VariableIncentivePayload } from '../src/Incentives/ERC20VariableIncentive';
+import {
+  ERC1155Incentive,
+  type ERC1155IncentivePayload,
+} from '../src/Incentives/ERC1155Incentive';
 import { getDeployedContractAddress } from '../src/utils';
-import { SimpleBudget } from './../src/Budgets/SimpleBudget';
-import type { DeployableOptions } from './../src/Deployable/Deployable';
+import {
+  SimpleBudget,
+  type SimpleBudgetPayload,
+} from './../src/Budgets/SimpleBudget';
+import type {
+  DeployableOptions,
+  DeployablePayloadOrAddress,
+} from './../src/Deployable/Deployable';
 import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
 import { MockERC1155 } from './MockERC1155';
@@ -102,7 +131,7 @@ export async function freshBoost(
       ),
     validator:
       options.validator ||
-      new fixtures.bases.SignerValidator(defaultOptions, {
+      fixtures.core.SignerValidator({
         signers: [
           defaultOptions.account.address,
           accounts.at(0)?.account as Address,
@@ -111,7 +140,7 @@ export async function freshBoost(
       }),
     allowList:
       options.allowList ||
-      new fixtures.bases.SimpleAllowList(defaultOptions, {
+      fixtures.core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
@@ -126,11 +155,6 @@ export async function deployFixtures(
   const registry = await new BoostRegistry({
     address: null,
     ...options,
-  }).deploy();
-  const core = await new BoostCore({
-    ...options,
-    registryAddress: registry.assertValidAddress(),
-    protocolFeeReceiver: account.address,
   }).deploy();
 
   const contractActionBase = await getDeployedContractAddress(
@@ -308,9 +332,138 @@ export async function deployFixtures(
   };
 
   for (const [name, deployable] of Object.entries(bases)) {
-    console.log(name, deployable.base);
     await registry.register(deployable.registryType, name, deployable.base);
   }
+
+  class TBoostCore extends BoostCore {
+    ContractAction(
+      options: DeployablePayloadOrAddress<ContractActionPayload>,
+      isBase?: boolean,
+    ) {
+      return new bases.ContractAction(
+        { config: this._config, account: this._account },
+        options,
+        isBase,
+      );
+    }
+    override EventAction(
+      options: DeployablePayloadOrAddress<EventActionPayload>,
+      isBase?: boolean,
+    ) {
+      return new bases.EventAction(
+        { config: this._config, account: this._account },
+        options,
+        isBase,
+      );
+    }
+    ERC721MintAction(
+      options: DeployablePayloadOrAddress<ERC721MintActionPayload>,
+      isBase?: boolean,
+    ) {
+      return new bases.ERC721MintAction(
+        { config: this._config, account: this._account },
+        options,
+        isBase,
+      );
+    }
+    override SimpleAllowList(
+      options: DeployablePayloadOrAddress<SimpleAllowListPayload>,
+      isBase?: boolean,
+    ) {
+      return new bases.SimpleAllowList(
+        { config: this._config, account: this._account },
+        options,
+        isBase,
+      );
+    }
+    override SimpleDenyList(
+      options: DeployablePayloadOrAddress<SimpleDenyListPayload>,
+      isBase?: boolean,
+    ) {
+      return new bases.SimpleDenyList(
+        { config: this._config, account: this._account },
+        options,
+        isBase,
+      );
+    }
+    SimpleBudget(options: DeployablePayloadOrAddress<SimpleBudgetPayload>) {
+      return new bases.SimpleBudget(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    override ManagedBudget(
+      options: DeployablePayloadOrAddress<ManagedBudgetPayload>,
+    ) {
+      return new bases.ManagedBudget(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    VestingBudget(options: DeployablePayloadOrAddress<VestingBudgetPayload>) {
+      return new bases.VestingBudget(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    override AllowListIncentive(options: AllowListIncentivePayload) {
+      return new bases.AllowListIncentive(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    override CGDAIncentive(options: CGDAIncentivePayload) {
+      return new bases.CGDAIncentive(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    override ERC20Incentive(options: ERC20IncentivePayload) {
+      return new bases.ERC20Incentive(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    ERC1155Incentive(options: ERC1155IncentivePayload) {
+      return new bases.ERC1155Incentive(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    override PointsIncentive(options: PointsIncentivePayload) {
+      return new bases.PointsIncentive(
+        { config: this._config, account: this._account },
+        options,
+      );
+    }
+    override SignerValidator(
+      options: DeployablePayloadOrAddress<SignerValidatorPayload>,
+      isBase?: boolean,
+    ) {
+      return new bases.SignerValidator(
+        { config: this._config, account: this._account },
+        options,
+        isBase,
+      );
+    }
+    override ERC20VariableIncentive(
+      options: DeployablePayloadOrAddress<ERC20VariableIncentivePayload>,
+      isBase?: boolean,
+    ) {
+      return new bases.ERC20VariableIncentive(
+        { config: this._config, account: this._account },
+        options,
+        isBase,
+      );
+    }
+  }
+
+  const core = new TBoostCore({
+    ...options,
+    registryAddress: registry.assertValidAddress(),
+    protocolFeeReceiver: account.address,
+  });
+  await core.deploy();
 
   return {
     registry,

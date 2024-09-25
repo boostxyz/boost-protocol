@@ -41,7 +41,7 @@ describe('PointsIncentive', () => {
     const referrer = accounts.at(1)!.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const pointsIncentive = new fixtures.bases.PointsIncentive(defaultOptions, {
+    const pointsIncentive = fixtures.core.PointsIncentive({
       venue: points.assertValidAddress(),
       selector: bytes4('issue(address,uint256)'),
       reward: 1n,
@@ -90,7 +90,7 @@ describe('PointsIncentive', () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
 
-    const pointsIncentive = new fixtures.bases.PointsIncentive(defaultOptions, {
+    const pointsIncentive = fixtures.core.PointsIncentive({
       venue: points.assertValidAddress(),
       selector: bytes4('issue(address,uint256)'),
       reward,

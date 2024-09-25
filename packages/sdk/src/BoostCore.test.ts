@@ -28,39 +28,34 @@ describe('BoostCore', () => {
   });
 
   test('can get the total number of boosts', async () => {
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
 
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
     await client.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -72,39 +67,33 @@ describe('BoostCore', () => {
   });
 
   test('can successfully create a boost using all base contract implementations', async () => {
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
     const boost = await client.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -165,39 +154,33 @@ describe('BoostCore', () => {
   });
 
   test('can read the raw on chain representation of a boost', async () => {
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
     const _boost = await client.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -219,16 +202,11 @@ describe('BoostCore', () => {
   });
 
   test('can reuse an existing action', async () => {
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
 
     // allocate more funds to the budget
@@ -242,23 +220,22 @@ describe('BoostCore', () => {
 
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -268,21 +245,17 @@ describe('BoostCore', () => {
     });
     const boost = await client.createBoost({
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
-        _boost.action.assertValidAddress(),
-        false,
-      ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      action: core.EventAction(_boost.action.assertValidAddress(), false),
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -295,16 +268,11 @@ describe('BoostCore', () => {
   });
 
   test('can reuse an existing validator', async () => {
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
@@ -318,23 +286,22 @@ describe('BoostCore', () => {
 
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -344,24 +311,22 @@ describe('BoostCore', () => {
     });
     const boost = await client.createBoost({
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(
-        defaultOptions,
+      validator: core.SignerValidator(
         _boost.validator.assertValidAddress(),
         false,
       ),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -374,16 +339,11 @@ describe('BoostCore', () => {
   });
 
   test('can reuse an existing allowlist', async () => {
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
@@ -397,23 +357,22 @@ describe('BoostCore', () => {
 
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -423,24 +382,22 @@ describe('BoostCore', () => {
     });
     const boost = await client.createBoost({
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(
-        defaultOptions,
+      allowList: core.SimpleAllowList(
         _boost.allowList.assertValidAddress(),
         false,
       ),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,
@@ -453,16 +410,11 @@ describe('BoostCore', () => {
   });
 
   test('cannot reuse an existing incentive', async () => {
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
@@ -474,7 +426,7 @@ describe('BoostCore', () => {
       target: defaultOptions.account.address,
     });
 
-    const incentive = new bases.ERC20Incentive(defaultOptions, {
+    const incentive = core.ERC20Incentive({
       asset: erc20.assertValidAddress(),
       reward: parseEther('1'),
       limit: 100n,
@@ -482,18 +434,17 @@ describe('BoostCore', () => {
     });
     const _boost = await client.createBoost({
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
@@ -502,18 +453,17 @@ describe('BoostCore', () => {
     try {
       await client.createBoost({
         budget: budget,
-        action: new bases.EventAction(
-          defaultOptions,
+        action: core.EventAction(
           makeMockEventActionPayload(
             core.assertValidAddress(),
             erc20.assertValidAddress(),
           ),
         ),
-        validator: new bases.SignerValidator(defaultOptions, {
+        validator: core.SignerValidator({
           signers: [defaultOptions.account.address],
           validatorCaller: defaultOptions.account.address,
         }),
-        allowList: new bases.SimpleAllowList(defaultOptions, {
+        allowList: core.SimpleAllowList({
           owner: defaultOptions.account.address,
           allowed: [defaultOptions.account.address],
         }),
@@ -525,50 +475,45 @@ describe('BoostCore', () => {
   });
 
   test('can offer multiple incentives', async () => {
-    const { registry, core, bases } = fixtures;
+    const { registry, core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20, points, erc1155 } = budgets;
-    const allowList = await registry.clone(
+    const allowList = await registry.initialize(
       'SharedAllowList',
-      new bases.SimpleAllowList(defaultOptions, {
+      core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
     );
 
-    const erc20Incentive = new bases.ERC20Incentive(defaultOptions, {
+    const erc20Incentive = core.ERC20Incentive({
       asset: erc20.assertValidAddress(),
       reward: 1n,
       limit: 10n,
       strategy: StrategyType.POOL,
     });
-    const erc1155Incentive = new bases.ERC1155Incentive(defaultOptions, {
+    const erc1155Incentive = core.ERC1155Incentive({
       asset: erc1155.assertValidAddress(),
       strategy: ERC1155StrategyType.POOL,
       limit: 1n,
       tokenId: 1n,
       extraData: '0x',
     });
-    const cgdaIncentive = new bases.CGDAIncentive(defaultOptions, {
+    const cgdaIncentive = core.CGDAIncentive({
       asset: erc20.assertValidAddress(),
       initialReward: 1n,
       totalBudget: 10n,
       rewardBoost: 1n,
       rewardDecay: 1n,
     });
-    const allowListIncentive = new bases.AllowListIncentive(defaultOptions, {
+    const allowListIncentive = core.AllowListIncentive({
       allowList: allowList.assertValidAddress(),
       limit: 5n,
     });
-    const pointsIncentive = new bases.PointsIncentive(defaultOptions, {
+    const pointsIncentive = core.PointsIncentive({
       venue: points.assertValidAddress(),
       selector: bytes4('issue(address,uint256)'),
       reward: 1n,
@@ -580,22 +525,17 @@ describe('BoostCore', () => {
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(
-        defaultOptions,
-        allowList.assertValidAddress(),
-        false,
-      ),
+      allowList: core.SimpleAllowList(allowList.assertValidAddress()),
       incentives: [
         erc1155Incentive,
         erc20Incentive,
@@ -772,40 +712,34 @@ describe('BoostCore', () => {
   test('can subscribe to contract events', async () => {
     const subscription = vi.fn();
 
-    const { core, bases } = fixtures;
+    const { core } = fixtures;
     const client = new BoostCore({
       ...defaultOptions,
       address: core.assertValidAddress(),
     });
     client.subscribe(subscription, { pollingInterval: 100 });
-
-    // to whom it may concern, this syntax is only used because we need to use test classes
-    // that are preconfigured with the dynamic base addresses generated at test time.
-    // normally you would use the follow api for brevity
-    // budget: client.SimpleBudget({} | '0xaddress')
     const { budget, erc20 } = budgets;
     await client.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
-      action: new bases.EventAction(
-        defaultOptions,
+      action: core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
         ),
       ),
-      validator: new bases.SignerValidator(defaultOptions, {
+      validator: core.SignerValidator({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
-      allowList: new bases.SimpleAllowList(defaultOptions, {
+      allowList: core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
       }),
       incentives: [
-        new bases.ERC20Incentive(defaultOptions, {
+        core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
           limit: 100n,

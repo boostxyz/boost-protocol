@@ -10,13 +10,13 @@ import {
   deployFixtures,
   fundErc721,
 } from '../../test/helpers';
+import { EventAction, actionFromAddress } from './Action';
 import {
   type EventActionPayloadSimple,
   FilterType,
   PrimitiveType,
   SignatureType,
-} from '../utils';
-import { EventAction, actionFromAddress } from './Action';
+} from './EventAction';
 
 let fixtures: Fixtures, erc721: MockERC721;
 
@@ -36,7 +36,6 @@ export function basicErc721TransferAction(
         chainid: 31337,
         signature: selectors['Transfer(address,address,uint256)'] as Hex,
         signatureType: SignatureType.EVENT,
-        actionType: 0,
         targetContract: erc721.assertValidAddress(),
         actionParameter: {
           filterType: FilterType.EQUAL,

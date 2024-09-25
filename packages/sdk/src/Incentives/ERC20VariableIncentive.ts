@@ -15,25 +15,53 @@ import {
   writeErc20VariableIncentiveClawback,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
-import type { Address, ContractEventName, Hex } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  encodeAbiParameters,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { type ClaimPayload, prepareClaimPayload } from '../claiming';
 import {
-  type ClaimPayload,
-  type ERC20VariableIncentivePayload,
   type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
-  prepareClaimPayload,
-  prepareERC20VariableIncentivePayload,
 } from '../utils';
 
 export { erc20VariableIncentiveAbi };
-export type { ERC20VariableIncentivePayload };
+/**
+ * The object representation of a `ERC20VariableIncentivePayload.InitPayload`
+ *
+ * @export
+ * @interface ERC20VariableIncentivePayload
+ * @typedef {ERC20VariableIncentivePayload}
+ */
+export interface ERC20VariableIncentivePayload {
+  /**
+   * The address of the incentivized asset.
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The amount of the asset to distribute.
+   *
+   * @type {bigint}
+   */
+  reward: bigint;
+  /**
+   * How many times can this incentive be claimed.
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
 
 /**
  * A generic `viem.Log` event with support for `ERC20VariableIncentive` event types.
@@ -241,7 +269,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
-  public async claim(
+  protected async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>,
   ) {
@@ -257,7 +285,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
-  public async claimRaw(
+  protected async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>,
   ) {
@@ -365,4 +393,28 @@ export class ERC20VariableIncentive extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Given a {@link ERC20VariableIncentivePayload}, properly encode a ` ERC20VariableIncentive.InitPayload` for use with {@link ERC20VariableIncentive} initialization.
+ *
+ * @param {ERC20VariableIncentivePayload} param0
+ * @param {Address} param0.asset - The address of the incentivized asset.
+ * @param {bigint} param0.reward - The amount of the asset to distribute.
+ * @param {bigint} param0.limit - How many times can this incentive be claimed.
+ * @returns {*}
+ */
+export function prepareERC20VariableIncentivePayload({
+  asset,
+  reward,
+  limit,
+}: ERC20VariableIncentivePayload) {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint256', name: 'reward' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [asset, reward, limit],
+  );
 }

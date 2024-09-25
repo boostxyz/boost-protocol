@@ -10,19 +10,12 @@ import {
   makeMockEventActionPayload,
 } from '../test/helpers';
 import { ContractAction } from './Actions/ContractAction';
-import { PassthroughAuth } from './Auth/PassthroughAuth';
 import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
+import { ERC1155StrategyType } from './Incentives/ERC1155Incentive';
+import { StrategyType } from './claiming';
 import { IncentiveNotCloneableError } from './errors';
-import {
-  ActionStep,
-  ERC1155StrategyType,
-  FilterType,
-  PrimitiveType,
-  SignatureType,
-  StrategyType,
-  bytes4,
-} from './utils';
+import { bytes4 } from './utils';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 

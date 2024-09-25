@@ -22,6 +22,8 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodeAbiParameters,
+  parseAbiParameters,
   zeroAddress,
 } from 'viem';
 import type {
@@ -36,22 +38,40 @@ import {
 import {
   type ERC1155TransferPayload,
   type FungibleTransferPayload,
+  prepareERC1155Transfer,
+  prepareFungibleTransfer,
+} from '../transfers';
+import {
   type GenericLog,
   type ReadParams,
   RegistryType,
-  type SimpleBudgetPayload,
   type WriteParams,
-  prepareERC1155Transfer,
-  prepareFungibleTransfer,
-  prepareSimpleBudgetPayload,
 } from '../utils';
 
 export { simpleBudgetAbi };
-export type {
-  ERC1155TransferPayload,
-  FungibleTransferPayload,
-  SimpleBudgetPayload,
-};
+export type { ERC1155TransferPayload, FungibleTransferPayload };
+
+/**
+ * The object representation of a `SimpleBudgetPayload.InitPayload`
+ *
+ * @export
+ * @interface SimpleBudgetPayload
+ * @typedef {SimpleBudgetPayload}
+ */
+export interface SimpleBudgetPayload {
+  /**
+   * The budget's owner
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+   *
+   * @type {Address[]}
+   */
+  authorized: Address[];
+}
 
 /**
  * A generic `viem.Log` event with support for `SimpleBudget` event types.
@@ -521,3 +541,24 @@ export class SimpleBudget extends DeployableTarget<
     };
   }
 }
+
+/**
+ * Given a {@link SimpleBudgetPayload}, properly encode a `SimpleBudget.InitPayload` for use with {@link SimpleBudget} initialization.
+ *
+ * @param {SimpleBudgetPayload} param0
+ * @param {Address} param0.owner - The budget's owner
+ * @param {{}} param0.authorized - List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+ * @returns {*}
+ */
+export const prepareSimpleBudgetPayload = ({
+  owner,
+  authorized,
+}: SimpleBudgetPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'SimpleBudgetPayload payload',
+      'struct SimpleBudgetPayload { address owner; address[] authorized; }',
+    ]),
+    [{ owner, authorized }],
+  );
+};

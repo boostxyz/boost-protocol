@@ -4,9 +4,9 @@ import {
   type WaitForTransactionReceiptReturnType,
   zeroHash,
 } from 'viem';
+import type { Criteria } from './Actions/EventAction';
 import type { BoostRegistry } from './BoostRegistry';
 import type { Incentive } from './Incentives/Incentive';
-import type { Criteria } from './utils';
 
 /**
  * This error is thrown during Boost creation if no `BoostCreated` event was emitted.

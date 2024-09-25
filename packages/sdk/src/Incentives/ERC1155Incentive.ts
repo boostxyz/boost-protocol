@@ -16,7 +16,13 @@ import {
   writeErc1155IncentiveClawback,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
-import type { Address, ContractEventName, Hex } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  encodeAbiParameters,
+  parseAbiParameters,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -24,19 +30,68 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
-  type ERC1155IncentivePayload,
-  ERC1155StrategyType,
+  type StrategyType,
+  prepareClaimPayload,
+} from '../claiming';
+import {
   type GenericLog,
   type ReadParams,
   RegistryType,
-  type StrategyType,
   type WriteParams,
-  prepareClaimPayload,
-  prepareERC1155IncentivePayload,
 } from '../utils';
 
-export { ERC1155StrategyType, erc1155IncentiveAbi };
-export type { ERC1155IncentivePayload };
+export { erc1155IncentiveAbi };
+
+/**
+ * Enum representing inventive disbursement strategies for {@link ERC1155Incentive}
+ *
+ * @export
+ * @enum {number}
+ */
+export enum ERC1155StrategyType {
+  POOL = 0,
+  MINT = 1,
+}
+
+/**
+ * The object representation of a `ERC1155Incentive.InitPayload`
+ *
+ * @export
+ * @interface ERC1155IncentivePayload
+ * @typedef {ERC1155IncentivePayload}
+ */
+export interface ERC1155IncentivePayload {
+  /**
+   * The address of the `ERC1155` asset
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * Should be `Strategy.POOL`
+   *
+   * @type {ERC1155StrategyType}
+   */
+  strategy: ERC1155StrategyType;
+  /**
+   * The token ID to target
+   *
+   * @type {bigint}
+   */
+  tokenId: bigint;
+  /**
+   *  The maximum number of claims that can be made (one per address)
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+  /**
+   *  Any extra data to accompany the claim, if applicable.
+   *
+   * @type {Hex}
+   */
+  extraData: Hex;
+}
 
 /**
  * A generic `viem.Log` event with support for `ERC1155Incentive` event types.
@@ -239,7 +294,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?WriteParams<typeof erc1155IncentiveAbi, 'claim'>} [params]
    * @returns {unknown}
    */
-  public async claim(
+  protected async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
   ) {
@@ -255,7 +310,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?WriteParams<typeof erc1155IncentiveAbi, 'claim'>} [params]
    * @returns {unknown}
    */
-  public async claimRaw(
+  protected async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
   ) {
@@ -382,3 +437,30 @@ export class ERC1155Incentive extends DeployableTarget<
     };
   }
 }
+
+/**
+ * Given a {@link ERC1155IncentivePayload}, properly encode a `ERC1155Incentive.InitPayload` for use with {@link ERC1155Incentive} initialization.
+ *
+ * @param {ERC1155IncentivePayload} param0
+ * @param {Address} param0.asset - The address of the `ERC1155` asset
+ * @param {ERC1155StrategyType} param0.strategy - Should be `Strategy.POOL`
+ * @param {bigint} param0.tokenId - The token ID to target
+ * @param {bigint} param0.limit -  The maximum number of claims that can be made (one per address)
+ * @param {Hex} param0.extraData - Any extra data to accompany the claim, if applicable.
+ * @returns {Hex}
+ */
+export const prepareERC1155IncentivePayload = ({
+  asset,
+  strategy,
+  tokenId,
+  limit,
+  extraData,
+}: ERC1155IncentivePayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'InitPayload payload',
+      'struct InitPayload { address asset; uint8 strategy; uint256 tokenId; uint256 limit; bytes extraData; }',
+    ]),
+    [{ asset, strategy, tokenId, limit, extraData }],
+  );
+};

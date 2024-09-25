@@ -27,3 +27,6 @@ remappings=[
 [doc]
 title = "Boost Protocol Docs"
 repository = "https://github.com/rabbitholegg/boost-protocol"
+
+[etherscan]
+sepolia = { key = "${MAIN_ETHERSCAN_API_KEY}", chain = "sepolia" }

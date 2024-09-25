@@ -29,6 +29,8 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodeAbiParameters,
+  parseAbiParameters,
   zeroAddress,
 } from 'viem';
 import type {
@@ -43,22 +45,46 @@ import {
 import {
   type ERC1155TransferPayload,
   type FungibleTransferPayload,
+  prepareERC1155Transfer,
+  prepareFungibleTransfer,
+} from '../transfers';
+import {
   type GenericLog,
-  type ManagedBudgetPayload,
   type ReadParams,
   RegistryType,
   type WriteParams,
-  prepareERC1155Transfer,
-  prepareFungibleTransfer,
-  prepareManagedBudgetPayload,
 } from '../utils';
 
 export { managedBudgetAbi };
-export type {
-  ERC1155TransferPayload,
-  FungibleTransferPayload,
-  ManagedBudgetPayload,
-};
+export type { ERC1155TransferPayload, FungibleTransferPayload };
+
+/**
+ * The object representation of a `ManagedBudgetPayload.InitPayload`
+ *
+ * @export
+ * @interface ManagedBudgetPayload
+ * @typedef {ManagedBudgetPayload}
+ */
+export interface ManagedBudgetPayload {
+  /**
+   * The budget's owner
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+   *
+   * @type {Address[]}
+   */
+  authorized: Address[];
+  /**
+   * List of roles to assign to the corresponding account by index.
+   *
+   * @type {bigint[]}
+   */
+  roles: bigint[];
+}
 
 /**
  * Enum representing available roles for use in the `ManagedBudget`.
@@ -745,3 +771,26 @@ export class ManagedBudget extends DeployableTarget<
     };
   }
 }
+
+/**
+ * Given a {@link ManagedBudgetPayload}, properly encode a `ManagedBudget.InitPayload` for use with {@link ManagedBudget} initialization.
+ *
+ * @param {ManagedBudgetPayload} param0
+ * @param {Address} param0.owner - The budget's owner
+ * @param {{}} param0.authorized - List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+ * @param {{}} param0.roles - List of roles to assign to the corresponding account by index.
+ * @returns {*}
+ */
+export const prepareManagedBudgetPayload = ({
+  owner,
+  authorized,
+  roles,
+}: ManagedBudgetPayload) => {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'ManagedBudgetPayload payload',
+      'struct ManagedBudgetPayload { address owner; address[] authorized; uint256[] roles; }',
+    ]),
+    [{ owner, authorized, roles }],
+  );
+};

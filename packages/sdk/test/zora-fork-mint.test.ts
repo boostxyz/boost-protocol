@@ -91,7 +91,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           fieldIndex: 1, // Might need to be 2, we'll see - let's log this
           filterData: boostImpostor, // Filtering based on the core address
         },
-        chainid: base.id,
       };
 
       // Define EventActionPayload manually
@@ -102,7 +101,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           signature: selector, // Transfer(address,address,uint256) event signature
           fieldIndex: 0, // Targeting the 'from' address
           targetContract: boostImpostor, // The ERC20 contract we're monitoring
-          chainid: base.id,
         },
         actionStepOne: eventActionStep, // Use the custom step for action
         actionStepTwo: eventActionStep, // Repeat the action step if necessary

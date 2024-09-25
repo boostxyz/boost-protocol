@@ -83,7 +83,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         chainid: base.id,
         signature: selector, // Purchased(address,address,uint256,uint256,uint256) event
         signatureType: SignatureType.EVENT, // We're working with an event
-        actionType: 0, // Custom action type (set as 0 for now)
         targetContract: targetContract, // Address of the zora NFT contract
         // We want to target the 'sender' property on the Purchase event
         actionParameter: {
@@ -172,7 +171,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         signer: trustedSigner,
         incentiveData,
         chainId: base.id,
-        validator: boost.validator.assertValidAddress(),
         incentiveQuantity,
         claimant: boostImpostor,
         boostId: boost.id,

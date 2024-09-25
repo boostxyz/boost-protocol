@@ -21,14 +21,21 @@ runs:
       run: |
         echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
     - uses: actions/cache@v4
-      name: Setup cache
+      name: Setup pnpm cache
       with:
-        path: |
-          ${{ env.STORE_PATH }}
-          .cache
-        key: ${{ runner.os }}-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+        save-always: true
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
-          ${{ runner.os }}-cache-
+          ${{ runner.os }}-deps-
+    - uses: actions/cache@v4
+      name: Setup turbo cache
+      with:
+        save-always: true
+        path: .cache
+        key: ${{ runner.os }}-turbo-${{ github.head_ref || github.ref_name }}
+        restore-keys: |
+          ${{ runner.os }}-turbo-
     - name: Install dependencies
       shell: bash
       run: pnpm install

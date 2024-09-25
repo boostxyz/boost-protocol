@@ -83,20 +83,24 @@ export interface ManagedBudgetPayload {
    *
    * @type {bigint[]}
    */
-  roles: bigint[];
+  roles: ManagedBudgetRoles[];
 }
 
 /**
- * Enum representing available roles for use in the `ManagedBudget`.
+ *  Enum representing available roles for use in the `ManagedBudget`.
  * `MANAGER` can disburse funds.
  * `ADMIN` can additionally manage authorized users on the budget.
  *
+ * @export
  * @type {{ readonly MANAGER: 1n; readonly ADMIN_ROLE: 2n; }}
+ * @enum {bigint}
  */
-export const ManagedBudgetRoles = {
-  MANAGER: 1n,
-  ADMIN: 2n,
-} as const;
+export enum ManagedBudgetRoles {
+  //@ts-expect-error ts doesn't like bigint enum values
+  MANAGER = 1n,
+  //@ts-expect-error ts doesn't like bigint enum values
+  ADMIN = 2n,
+}
 
 /**
  * A generic `viem.Log` event with support for `ManagedBudget` event types.
@@ -152,9 +156,11 @@ export function prepareTransfer(
 ) {
   if (isFungibleTransfer(transfer)) {
     return prepareFungibleTransfer(transfer);
-  } else if (isERC1155TransferPayload(transfer)) {
+  }
+  if (isERC1155TransferPayload(transfer)) {
     return prepareERC1155Transfer(transfer);
-  } else throw new UnknownTransferPayloadSupplied(transfer);
+  }
+  throw new UnknownTransferPayloadSupplied(transfer);
 }
 
 /**
@@ -571,9 +577,12 @@ export class ManagedBudget extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
-    return [ManagedBudgetRoles.MANAGER, ManagedBudgetRoles.ADMIN].filter(
-      (role) => (roles & role) === role,
-    );
+    return (
+      [
+        ManagedBudgetRoles.MANAGER,
+        ManagedBudgetRoles.ADMIN,
+      ] as unknown as Array<bigint>
+    ).filter((role) => (roles & role) === role);
   }
 
   /**
@@ -791,6 +800,6 @@ export const prepareManagedBudgetPayload = ({
       'ManagedBudgetPayload payload',
       'struct ManagedBudgetPayload { address owner; address[] authorized; uint256[] roles; }',
     ]),
-    [{ owner, authorized, roles }],
+    [{ owner, authorized, roles: roles as unknown as Array<bigint> }],
   );
 };

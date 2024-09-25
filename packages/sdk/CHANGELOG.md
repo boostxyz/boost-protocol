@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.10
+
+### Patch Changes
+
+- 48f014d: fix address comparison for NOT_EQUAL case
+
 ## 0.0.0-alpha.9
 
 ### Minor Changes

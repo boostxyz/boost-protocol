@@ -26,6 +26,8 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodeAbiParameters,
+  parseAbiParameters,
   zeroAddress,
 } from 'viem';
 import type {
@@ -36,17 +38,56 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
   type FungibleTransferPayload,
+  prepareFungibleTransfer,
+} from '../transfers';
+import {
   type GenericLog,
   type ReadParams,
   RegistryType,
-  type VestingBudgetPayload,
   type WriteParams,
-  prepareFungibleTransfer,
-  prepareVestingBudgetPayload,
 } from '../utils';
 
 export { vestingBudgetAbi };
-export type { VestingBudgetPayload };
+export type { FungibleTransferPayload };
+/**
+ * The object representation of a `VestingBudget.InitPayload`
+ *
+ * @export
+ * @interface VestingBudgetPayload
+ * @typedef {VestingBudgetPayload}
+ */
+export interface VestingBudgetPayload {
+  /**
+   * The budget's owner.
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+   *
+   * @type {Address[]}
+   */
+  authorized: Address[];
+  /**
+   * The timestamp at which the vesting schedule begins
+   *
+   * @type {bigint}
+   */
+  start: bigint;
+  /**
+   * The duration of the vesting schedule (in seconds)
+   *
+   * @type {bigint}
+   */
+  duration: bigint;
+  /**
+   * The duration of the cliff period (in seconds)
+   *
+   * @type {bigint}
+   */
+  cliff: bigint;
+}
 
 /**
  * A generic `viem.Log` event with support for `VestingBudget` event types.
@@ -531,4 +572,31 @@ export class VestingBudget extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Given a {@link VestingBudgetPayload}, properly encode a `VestingBudget.InitPayload` for use with {@link VestingBudget} initialization.
+ *
+ * @param {VestingBudgetPayload} param0
+ * @param {Address} param0.owner - The budget's owner.
+ * @param {{}} param0.authorized - List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
+ * @param {bigint} param0.start - The timestamp at which the vesting schedule begins
+ * @param {bigint} param0.duration - The duration of the vesting schedule (in seconds)
+ * @param {bigint} param0.cliff - The duration of the cliff period (in seconds)
+ * @returns {Hex}
+ */
+export function prepareVestingBudgetPayload({
+  owner,
+  authorized,
+  start,
+  duration,
+  cliff,
+}: VestingBudgetPayload) {
+  return encodeAbiParameters(
+    parseAbiParameters([
+      'VestingBudgetPayload payload',
+      'struct VestingBudgetPayload { address owner; address[] authorized; uint64 start; uint64 duration; uint64 cliff; }',
+    ]),
+    [{ owner, authorized, start, duration, cliff }],
+  );
 }

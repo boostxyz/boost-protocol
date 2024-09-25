@@ -10,6 +10,7 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodeAbiParameters,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -23,13 +24,32 @@ import {
   type GenericLog,
   type ReadParams,
   RegistryType,
-  type SimpleDenyListPayload,
   type WriteParams,
-  prepareSimpleDenyListPayload,
 } from '../utils';
 
 export { simpleDenyListAbi };
-export type { SimpleDenyListPayload };
+
+/**
+ * Object representation of a {@link SimpleDenyList} initialization payload.
+ *
+ * @export
+ * @interface SimpleDenyListPayload
+ * @typedef {SimpleDenyListPayload}
+ */
+export interface SimpleDenyListPayload {
+  /**
+   * The allow list's owner
+   *
+   * @type {Address}
+   */
+  owner: Address;
+  /**
+   * List of denied addresses.
+   *
+   * @type {Address[]}
+   */
+  denied: Address[];
+}
 
 /**
  * A generic `viem.Log` event with support for `SimpleDenyList` event types.
@@ -148,111 +168,6 @@ export class SimpleDenyList extends DeployableTarget<
     return { hash, result };
   }
 
-  // /**
-  //  * A typed wrapper for (viem.getLogs)[https://viem.sh/docs/actions/public/getLogs#getlogs].
-  //  * Accepts `eventName` and `eventNames` as optional parameters to narrow the returned log types.
-  //  * @example
-  //  * ```ts
-  //  * const logs = contract.getLogs({ eventName: 'EventName' })
-  //  * const logs = contract.getLogs({ eventNames: ['EventName'] })
-  //  * ```
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof simpleDenyListAbi>} event
-  //  * @template {ExtractAbiEvent<
-  //  *       typeof simpleDenyListAbi,
-  //  *       event
-  //  *     >} [abiEvent=ExtractAbiEvent<typeof simpleDenyListAbi, event>]
-  //  * @param {?Omit<
-  //  *       GetLogsParams<typeof simpleDenyListAbi, event, abiEvent, abiEvent[]>,
-  //  *       'event' | 'events'
-  //  *     > & {
-  //  *       eventName?: event;
-  //  *       eventNames?: event[];
-  //  *     }} [params]
-  //  * @returns {Promise<GetLogsReturnType<abiEvent, abiEvent[]>>}
-  //  */
-  // public async getLogs<
-  //   event extends ContractEventName<typeof simpleDenyListAbi>,
-  //   const abiEvent extends ExtractAbiEvent<
-  //     typeof simpleDenyListAbi,
-  //     event
-  //   > = ExtractAbiEvent<typeof simpleDenyListAbi, event>,
-  // >(
-  //   params?: Omit<
-  //     GetLogsParams<typeof simpleDenyListAbi, event, abiEvent, abiEvent[]>,
-  //     'event' | 'events'
-  //   > & {
-  //     eventName?: event;
-  //     eventNames?: event[];
-  //   },
-  // ): Promise<GetLogsReturnType<abiEvent, abiEvent[]>> {
-  //   return getLogs(this._config.getClient({ chainId: params?.chainId }), {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wag
-  //     ...(params as any),
-  //     ...(params?.eventName
-  //       ? {
-  //           event: getAbiItem({
-  //             abi: simpleDenyListAbi,
-  //             name: params.eventName,
-  //             // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //           } as any),
-  //         }
-  //       : {}),
-  //     ...(params?.eventNames
-  //       ? {
-  //           events: params.eventNames.map((name) =>
-  //             getAbiItem({
-  //               abi: simpleDenyListAbi,
-  //               name,
-  //               // biome-ignore lint/suspicious/noExplicitAny: awkward abi intersection issue
-  //             } as any),
-  //           ),
-  //         }
-  //       : {}),
-  //     address: this.assertValidAddress(),
-  //   });
-  // }
-
-  // /**
-  //  * A typed wrapper for `wagmi.watchContractEvent`
-  //  *
-  //  * @public
-  //  * @async
-  //  * @template {ContractEventName<typeof simpleDenyListAbi>} event
-  //  * @param {(log: SimpleDenyListLog<event>) => unknown} cb
-  //  * @param {?WatchParams<typeof simpleDenyListAbi, event> & {
-  //  *       eventName?: event;
-  //  *     }} [params]
-  //  * @returns {unknown, params?: any) => unknown} Unsubscribe function
-  //  */
-  // public async subscribe<
-  //   event extends ContractEventName<typeof simpleDenyListAbi>,
-  // >(
-  //   cb: (log: SimpleDenyListLog<event>) => unknown,
-  //   params?: WatchParams<typeof simpleDenyListAbi, event> & {
-  //     eventName?: event;
-  //   },
-  // ) {
-  //   return watchContractEvent<
-  //     typeof this._config,
-  //     (typeof this._config)['chains'][number]['id'],
-  //     typeof simpleDenyListAbi,
-  //     event
-  //   >(this._config, {
-  //     // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-  //     ...(params as any),
-  //     eventName: params?.eventName,
-  //     abi: simpleDenyListAbi,
-  //     address: this.assertValidAddress(),
-  //     onLogs: (logs) => {
-  //       for (let l of logs) {
-  //         cb(l as unknown as SimpleDenyListLog<event>);
-  //       }
-  //     },
-  //   });
-  // }
-
   /**
    * @inheritdoc
    *
@@ -288,4 +203,25 @@ export class SimpleDenyList extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Given a {@link SimpleDenyListPayload}, properly encode the initialization payload.
+ *
+ * @param {SimpleDenyListPayload} param0
+ * @param {Address} param0.owner - The allow list's owner
+ * @param {Address[]} param0.denied - List of denied addresses.
+ * @returns {Hex}
+ */
+export function prepareSimpleDenyListPayload({
+  owner,
+  denied,
+}: SimpleDenyListPayload) {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'owner' },
+      { type: 'address[]', name: 'denied' },
+    ],
+    [owner, denied],
+  );
 }

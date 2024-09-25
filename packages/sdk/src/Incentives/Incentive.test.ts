@@ -1,7 +1,7 @@
 import { zeroAddress } from 'viem';
 import { describe, expect, test } from 'vitest';
 import { defaultOptions } from '../../test/helpers';
-import { StrategyType } from '../utils';
+import { StrategyType } from '../claiming';
 import {
   AllowListIncentive,
   CGDAIncentive,

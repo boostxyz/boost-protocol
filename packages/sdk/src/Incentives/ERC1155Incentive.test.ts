@@ -1,15 +1,6 @@
 import { readMockErc1155BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { signMessage } from '@wagmi/core';
-import {
-  encodePacked,
-  isAddress,
-  keccak256,
-  pad,
-  parseEther,
-  zeroAddress,
-  zeroHash,
-} from 'viem';
+import { isAddress, pad, parseEther, zeroAddress, zeroHash } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '../../test/accounts';
 import {
@@ -20,7 +11,6 @@ import {
   freshBoost,
   fundBudget,
 } from '../../test/helpers';
-import { prepareSignerValidatorClaimDataPayload } from '../utils';
 import { ERC1155Incentive, ERC1155StrategyType } from './ERC1155Incentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
@@ -71,11 +61,10 @@ describe.skip('ERC1155Incentive', () => {
     const claimant = trustedSigner.account;
     const incentiveData = pad('0xdef456232173821931823712381232131391321934');
     const incentiveQuantity = 1;
-    const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+    const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      validator: boost.validator.assertValidAddress(),
       incentiveQuantity,
       claimant,
       boostId: boost.id,

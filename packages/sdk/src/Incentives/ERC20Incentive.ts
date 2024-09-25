@@ -18,7 +18,12 @@ import {
   writeErc20IncentiveDrawRaffle,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
-import type { Address, ContractEventName, Hex } from 'viem';
+import {
+  type Address,
+  type ContractEventName,
+  type Hex,
+  encodeAbiParameters,
+} from 'viem';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -26,18 +31,51 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
-  type ERC20IncentivePayload,
+  type StrategyType,
+  prepareClaimPayload,
+} from '../claiming';
+import {
   type GenericLog,
   type ReadParams,
   RegistryType,
-  type StrategyType,
   type WriteParams,
-  prepareClaimPayload,
-  prepareERC20IncentivePayload,
 } from '../utils';
 
 export { erc20IncentiveAbi };
-export type { ERC20IncentivePayload };
+
+/**
+ * The object representation of a `ERC20Incentive.InitPayload`
+ *
+ * @export
+ * @interface ERC20IncentivePayload
+ * @typedef {ERC20IncentivePayload}
+ */
+export interface ERC20IncentivePayload {
+  /**
+   * The address of the incentivized asset.
+   *
+   * @type {Address}
+   */
+  asset: Address;
+  /**
+   * The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
+   *
+   * @type {StrategyType}
+   */
+  strategy: StrategyType;
+  /**
+   * The amount of the asset to distribute.
+   *
+   * @type {bigint}
+   */
+  reward: bigint;
+  /**
+   * How many times can this incentive be claimed.
+   *
+   * @type {bigint}
+   */
+  limit: bigint;
+}
 
 /**
  * A generic `viem.Log` event with support for `ERC20Incentive` event types.
@@ -255,7 +293,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
-  public async claim(
+  protected async claim(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
   ) {
@@ -271,7 +309,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
-  public async claimRaw(
+  protected async claimRaw(
     payload: ClaimPayload,
     params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
   ) {
@@ -414,4 +452,31 @@ export class ERC20Incentive extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+}
+
+/**
+ * Given a {@link ERC20IncentivePayload}, properly encode a `ERC20Incentive.InitPayload` for use with {@link ERC20Incentive} initialization.
+ *
+ * @param {ERC20IncentivePayload} param0
+ * @param {Address} param0.asset - The address of the incentivized asset.
+ * @param {StrategyType} param0.strategy - The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
+ * @param {bigint} param0.reward - The amount of the asset to distribute.
+ * @param {bigint} param0.limit - How many times can this incentive be claimed.
+ * @returns {*}
+ */
+export function prepareERC20IncentivePayload({
+  asset,
+  strategy,
+  reward,
+  limit,
+}: ERC20IncentivePayload) {
+  return encodeAbiParameters(
+    [
+      { type: 'address', name: 'asset' },
+      { type: 'uint8', name: 'strategy' },
+      { type: 'uint256', name: 'reward' },
+      { type: 'uint256', name: 'limit' },
+    ],
+    [asset, strategy, reward, limit],
+  );
 }

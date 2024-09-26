@@ -40,6 +40,7 @@ import {
   type EventActionPayload,
   FilterType,
   ManagedBudget,
+  OpenAllowList,
   PointsIncentive,
   type PointsIncentivePayload,
   PrimitiveType,
@@ -299,6 +300,9 @@ export async function deployFixtures(
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
       public static override base = simpleDenyListBase;
     },
+    OpenAllowList: class TOpenAllowList extends OpenAllowList {
+      public static override base = simpleDenyListBase;
+    },
     SimpleBudget: class TSimpleBudget extends SimpleBudget {
       public static override base = simpleBudgetBase;
     },
@@ -383,6 +387,13 @@ export async function deployFixtures(
       return new bases.SimpleDenyList(
         { config: this._config, account: this._account },
         options,
+        isBase,
+      );
+    }
+    override OpenAllowList(isBase?: boolean) {
+      return new bases.OpenAllowList(
+        { config: this._config, account: this._account },
+        undefined,
         isBase,
       );
     }
@@ -477,7 +488,7 @@ export function freshBudget(
   fixtures: Fixtures,
 ) {
   return async function freshBudget() {
-    return await fixtures.registry.clone(
+    return await fixtures.registry.initialize(
       crypto.randomUUID(),
       new fixtures.bases.SimpleBudget(options, {
         owner: options.account.address,
@@ -495,7 +506,7 @@ export function freshManagedBudget(
   fixtures: Fixtures,
 ) {
   return async function freshBudget() {
-    return await fixtures.registry.clone(
+    return await fixtures.registry.initialize(
       crypto.randomUUID(),
       new fixtures.bases.ManagedBudget(options, {
         owner: options.account.address,
@@ -514,7 +525,7 @@ export function freshVestingBudget(
   fixtures: Fixtures,
 ) {
   return async function freshVestingBudget() {
-    return await fixtures.registry.clone(
+    return await fixtures.registry.initialize(
       crypto.randomUUID(),
       new fixtures.bases.VestingBudget(options, {
         owner: options.account.address,

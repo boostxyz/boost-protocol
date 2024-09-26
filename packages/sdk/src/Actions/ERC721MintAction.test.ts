@@ -29,7 +29,7 @@ const mintSelector = toFunctionSelector('function mint(address to)');
 
 function nonPayableAction(fixtures: Fixtures, erc721: MockERC721) {
   return function nonPayableAction() {
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
       fixtures.core.ERC721MintAction({
         chainId: BigInt(31_337),

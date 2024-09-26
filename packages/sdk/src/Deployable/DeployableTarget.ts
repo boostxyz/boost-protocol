@@ -75,7 +75,7 @@ export class DeployableTarget<
    */
   constructor(
     options: DeployableOptions,
-    payload: DeployablePayloadOrAddress<Payload>,
+    payload?: DeployablePayloadOrAddress<Payload>,
     isBase?: boolean,
   ) {
     super(options, payload);

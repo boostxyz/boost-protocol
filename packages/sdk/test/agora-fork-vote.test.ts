@@ -31,7 +31,7 @@ import {
 } from './helpers';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
-// This is the zora contract we're going to push a transaction against
+// This is the Agora contract we're going to push a transaction against
 const targetContract = '0xcDF27F107725988f2261Ce2256bDfCdE8B382B10' as Address;
 // We take the raw inputData off of an existing historical transaction
 // https://optimistic.etherscan.io/tx/0x3d281344e4d0578dfc5af517c59e87770d4ded9465456cee0bd1e93484976e88
@@ -115,10 +115,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           targetContract: targetContract, // The ERC20 contract we're monitoring
           chainid: optimism.id,
         },
-        actionStepOne: eventActionStep, // Use the custom step for action
-        actionStepTwo: eventActionStep, // Repeat the action step if necessary
-        actionStepThree: eventActionStep, // You can expand for more steps if needed
-        actionStepFour: eventActionStep, // Up to 4 action steps
+        actionSteps: [eventActionStep],
       };
       // Initialize EventAction with the custom payload
       const eventAction = new bases.EventAction(
@@ -175,6 +172,8 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         hash: testTxHash,
       });
       await walletClient.mine({ blocks: 1 });
+
+      // TODO: uncomment when validation works for non-indexed event params
       // const logs = transaction.logs;
       // const validation = await action.validateActionSteps({
       //   logs, // do we need to pass the logs in, in order to validate them?
@@ -220,14 +219,13 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           : parseEther('0.01');
 
       // Generate the signature using the trusted signer
-      const claimDataPayload = await prepareSignerValidatorClaimDataPayload({
+      const claimDataPayload = await boost.validator.encodeClaimData({
         signer: trustedSigner,
         incentiveData: encodeAbiParameters(
           [{ name: '', type: 'uint256' }],
           [rewardAmount],
         ),
         chainId: optimism.id,
-        validator: boost.validator.assertValidAddress(),
         incentiveQuantity,
         claimant: boostImpostor,
         boostId: boost.id,

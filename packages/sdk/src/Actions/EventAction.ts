@@ -41,7 +41,6 @@ import {
   type Overwrite,
   type ReadParams,
   RegistryType,
-  SignatureType,
   type WriteParams,
 } from '../utils';
 
@@ -638,7 +637,7 @@ export class EventAction extends DeployableTarget<
         if (criteria.fieldType === PrimitiveType.ADDRESS) {
           return !isAddressEqual(
             criteria.filterData,
-            `0x${fieldValue.slice(-40)}`,
+            `0x${(fieldValue as string).slice(-40)}`,
           );
         }
         return fieldValue !== criteria.filterData;

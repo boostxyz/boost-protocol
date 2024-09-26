@@ -145,6 +145,16 @@ contract CGDAIncentiveTest is Test {
         assertEq(asset.balanceOf(address(incentive)), 0 ether);
     }
 
+    function test_no_duplicate_claim() public {
+        assertEq(incentive.currentReward(), 1 ether);
+        address claimer = makeAddr("zach zebra's zootopia");
+
+        incentive.claim(claimer, hex"");
+
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, claimer, hex""));
+        incentive.claim(claimer, hex"");
+    }
+
     function test_claim_OutOfBudget() public {
         incentive.clawback(
             abi.encode(
@@ -158,7 +168,11 @@ contract CGDAIncentiveTest is Test {
         assertEq(incentive.currentReward(), 0 ether);
         assertEq(asset.balanceOf(address(incentive)), 0 ether);
 
-        vm.expectRevert(AIncentive.NotClaimable.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BoostError.ClaimFailed.selector, makeAddr("sam's soggy sandwich & soup shack"), hex""
+            )
+        );
         incentive.claim(makeAddr("sam's soggy sandwich & soup shack"), hex"");
 
         assertEq(incentive.currentReward(), 0 ether);

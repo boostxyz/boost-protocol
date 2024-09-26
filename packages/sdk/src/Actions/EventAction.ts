@@ -20,6 +20,7 @@ import {
   decodeFunctionData,
   encodeAbiParameters,
   isAddressEqual,
+  trim,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
@@ -564,8 +565,8 @@ export class EventAction extends DeployableTarget<
     },
   ) {
     const criteria = actionStep.actionParameter;
-    const signature = actionStep.signature;
-    if (!params?.txHash) {
+    const signature = trim(actionStep.signature);
+    if (!params || !params?.txHash) {
       // Should we return false in this case?
       throw new Error('txHash is required for function validation');
     }
@@ -578,15 +579,25 @@ export class EventAction extends DeployableTarget<
       signature
     ] as AbiFunction;
 
-    const decodedData = decodeFunctionData({
-      abi: [func],
-      data: transaction.input,
-    });
+    if (!func) {
+      throw new Error(
+        `No known ABI for given function signature: ${signature}`,
+      );
+    }
+    let decodedData;
+    try {
+      decodedData = decodeFunctionData({
+        abi: [func],
+        data: transaction.input,
+      });
+    } catch (e) {
+      throw new Error(`Failed to decode function data: ${e}`);
+    }
 
     // Validate the criteria against decoded arguments using fieldIndex
     const decodedArgs = decodedData.args;
 
-    if (!decodedArgs) return false;
+    if (!decodedArgs || !decodedData) return false;
 
     if (
       !this.validateFunctionAgainstCriteria(

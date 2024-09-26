@@ -45,7 +45,10 @@ contract BoostCoreTest is Test {
     address[] mockAddresses;
 
     BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1));
-    BoostLib.Target action = _makeAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
+    BoostLib.Target action =
+        _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
+    BoostLib.Target contractAction =
+        _makeContractAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
     BoostLib.Target allowList = _makeAllowList(address(this));
 
     address[] authorized = [address(boostCore)];
@@ -122,6 +125,30 @@ contract BoostCoreTest is Test {
     function testCreateBoost() public {
         boostCore.createBoost(validCreateCalldata);
         assertEq(1, boostCore.getBoostCount());
+    }
+
+    function testCreateBoost_NoValidator() public {
+        bytes memory invalidCreateCalldata = LibZip.cdCompress(
+            abi.encode(
+                BoostCore.InitPayload({
+                    budget: budget,
+                    action: contractAction,
+                    validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
+                    allowList: allowList,
+                    incentives: _makeIncentives(1),
+                    protocolFee: 500, // 5%
+                    referralFee: 1000, // 10%
+                    maxParticipants: 10_000,
+                    owner: address(1)
+                })
+            )
+        );
+
+        vm.expectRevert(
+            abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(AValidator).interfaceId, address(0))
+        );
+        boostCore.createBoost(invalidCreateCalldata);
+        assertEq(0, boostCore.getBoostCount());
     }
 
     function testCreateBoost_FullValidation() public {
@@ -332,13 +359,9 @@ contract BoostCoreTest is Test {
         boostCore.createBoost(validCreateCalldata);
 
         // Mint an ERC721 token to the claimant (this contract)
-        uint256 tokenId = 1;
         mockERC721.mint{value: 0.1 ether}(address(this));
         mockERC721.mint{value: 0.1 ether}(address(this));
         mockERC721.mint{value: 0.1 ether}(address(this));
-
-        // Prepare the data payload for validation
-        bytes memory data = abi.encode(address(this), abi.encode(tokenId));
 
         // Try to claim the incentive with insufficient funds
         vm.expectRevert(
@@ -479,10 +502,26 @@ contract BoostCoreTest is Test {
     // Test Helper Functions //
     ///////////////////////////
 
-    function _makeAction(address target, bytes4 selector, uint256 value) internal returns (BoostLib.Target memory) {
+    function _makeERC721MintAction(address target, bytes4 selector, uint256 value)
+        internal
+        returns (BoostLib.Target memory)
+    {
         return BoostLib.Target({
             isBase: true,
             instance: address(new ERC721MintAction()),
+            parameters: abi.encode(
+                AContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
+            )
+        });
+    }
+
+    function _makeContractAction(address target, bytes4 selector, uint256 value)
+        internal
+        returns (BoostLib.Target memory)
+    {
+        return BoostLib.Target({
+            isBase: true,
+            instance: address(new ContractAction()),
             parameters: abi.encode(
                 AContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
             )

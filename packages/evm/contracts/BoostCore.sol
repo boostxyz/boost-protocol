@@ -131,6 +131,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 ? boost.action.supportsInterface(type(AValidator).interfaceId) ? address(boost.action) : address(0)
                 : _makeTarget(type(AValidator).interfaceId, payload_.validator, true)
         );
+
+        if (address(boost.validator) == address(0)) {
+            revert BoostError.InvalidInstance(type(AValidator).interfaceId, address(0));
+        }
+
         emit BoostCreated(
             _boosts.length - 1,
             boost.owner,

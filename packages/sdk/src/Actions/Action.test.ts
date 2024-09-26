@@ -50,7 +50,7 @@ export function basicErc721TransferAction(
 
 export function cloneEventAction(fixtures: Fixtures, erc721: MockERC721) {
   return function cloneEventAction() {
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
       fixtures.core.EventAction(basicErc721TransferAction(erc721)),
     );

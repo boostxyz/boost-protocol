@@ -390,6 +390,13 @@ export async function deployFixtures(
         isBase,
       );
     }
+    override OpenAllowList(isBase?: boolean) {
+      return new bases.OpenAllowList(
+        { config: this._config, account: this._account },
+        undefined,
+        isBase,
+      );
+    }
     SimpleBudget(options: DeployablePayloadOrAddress<SimpleBudgetPayload>) {
       return new bases.SimpleBudget(
         { config: this._config, account: this._account },
@@ -481,7 +488,7 @@ export function freshBudget(
   fixtures: Fixtures,
 ) {
   return async function freshBudget() {
-    return await fixtures.registry.clone(
+    return await fixtures.registry.initialize(
       crypto.randomUUID(),
       new fixtures.bases.SimpleBudget(options, {
         owner: options.account.address,
@@ -499,7 +506,7 @@ export function freshManagedBudget(
   fixtures: Fixtures,
 ) {
   return async function freshBudget() {
-    return await fixtures.registry.clone(
+    return await fixtures.registry.initialize(
       crypto.randomUUID(),
       new fixtures.bases.ManagedBudget(options, {
         owner: options.account.address,
@@ -518,7 +525,7 @@ export function freshVestingBudget(
   fixtures: Fixtures,
 ) {
   return async function freshVestingBudget() {
-    return await fixtures.registry.clone(
+    return await fixtures.registry.initialize(
       crypto.randomUUID(),
       new fixtures.bases.VestingBudget(options, {
         owner: options.account.address,

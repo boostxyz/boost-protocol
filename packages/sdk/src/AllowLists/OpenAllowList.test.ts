@@ -17,7 +17,7 @@ beforeAll(async () => {
 
 function freshOpenAllowList(fixtures: Fixtures) {
   return function freshOpenAllowList() {
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
       new fixtures.bases.OpenAllowList(defaultOptions),
     );

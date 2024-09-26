@@ -16,7 +16,7 @@ beforeAll(async () => {
 
 function freshDenyList(fixtures: Fixtures) {
   return function freshDenyList() {
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
       fixtures.core.SimpleDenyList({
         owner: defaultOptions.account.address,

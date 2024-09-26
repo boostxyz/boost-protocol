@@ -682,13 +682,13 @@ export class ManagedBudget extends DeployableTarget<
    * If a tokenId is provided, get the total amount of ERC1155 assets allocated to the budget, including any that have been distributed
    *
    * @public
-   * @param {Address} asset - The address of the asset
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"] - The address of the asset
    * @param {?(bigint | undefined)} [tokenId] - The ID of the token
    * @param {?ReadParams<typeof managedBudgetAbi, 'total'>} [params]
    * @returns {Promise<bigint>} - The total amount of assets
    */
   public total(
-    asset: Address,
+    asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
     params?: ReadParams<typeof managedBudgetAbi, 'total'>,
   ) {
@@ -705,13 +705,13 @@ export class ManagedBudget extends DeployableTarget<
    * If a tokenId is provided, get the amount of ERC1155 assets available for distribution from the budget
    *
    * @public
-   * @param {Address} asset
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
    * @param {?(bigint | undefined)} [tokenId]
    * @param {?ReadParams<typeof managedBudgetAbi, 'available'>} [params]
    * @returns {Promise<bigint>} - The amount of assets available
    */
   public available(
-    asset: Address,
+    asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
     params?: ReadParams<typeof managedBudgetAbi, 'available'>,
   ) {
@@ -728,13 +728,13 @@ export class ManagedBudget extends DeployableTarget<
    * If a tokenId is provided, get the amount of ERC1155 assets that have been distributed from the budget
    *
    * @public
-   * @param {Address} asset
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
    * @param {?(bigint | undefined)} [tokenId]
    * @param {?ReadParams<typeof managedBudgetAbi, 'distributed'>} [params]
    * @returns {Promise<bigint>} - The amount of assets distributed
    */
   public distributed(
-    asset: Address,
+    asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
     params?: ReadParams<typeof managedBudgetAbi, 'distributed'>,
   ) {

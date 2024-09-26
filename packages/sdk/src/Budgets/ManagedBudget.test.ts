@@ -42,8 +42,8 @@ describe('ManagedBudget', () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
-    const one = accounts.at(1)!.account;
-    const two = accounts.at(2)!.account;
+    const one = accounts[1].account;
+    const two = accounts[2].account;
     await budget.setAuthorized([one, two], [true, true]);
     expect(await budget.hasAllRoles(one, ManagedBudgetRoles.ADMIN)).toBe(false);
     expect(await budget.hasAllRoles(one, ManagedBudgetRoles.MANAGER)).toBe(
@@ -58,8 +58,8 @@ describe('ManagedBudget', () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
-    const admin = accounts.at(1)!.account;
-    const manager = accounts.at(2)!.account;
+    const admin = accounts[1].account;
+    const manager = accounts[2].account;
     await budget.grantRoles(
       [admin, manager],
       [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
@@ -76,8 +76,8 @@ describe('ManagedBudget', () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
-    const admin = accounts.at(1)!.account;
-    const manager = accounts.at(2)!.account;
+    const admin = accounts[1].account;
+    const manager = accounts[2].account;
     await budget.grantRoles(
       [admin, manager],
       [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
@@ -115,7 +115,7 @@ describe('ManagedBudget', () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
-    expect(await budget.available(zeroAddress)).toBe(0n);
+    expect(await budget.available()).toBe(0n);
   });
 
   describe('can allocate', () => {
@@ -136,7 +136,7 @@ describe('ManagedBudget', () => {
           value: parseEther('1.0'),
         },
       );
-      expect(await budget.available(zeroAddress)).toBe(parseEther('1.0'));
+      expect(await budget.available()).toBe(parseEther('1.0'));
     });
 
     test('erc20', async () => {
@@ -186,7 +186,7 @@ describe('ManagedBudget', () => {
         target: defaultOptions.account.address,
       });
 
-      expect(await budget.available(zeroAddress)).toBe(0n);
+      expect(await budget.available()).toBe(0n);
     });
 
     test('erc20 assets', async () => {

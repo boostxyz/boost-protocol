@@ -53,7 +53,7 @@ describe.skip('VestingBudget', () => {
     const budget = await loadFixture(
       freshVestingBudget(defaultOptions, fixtures),
     );
-    expect(await budget.available(zeroAddress)).toBe(0n);
+    expect(await budget.available()).toBe(0n);
   });
 
   describe('can allocate', () => {
@@ -73,7 +73,7 @@ describe.skip('VestingBudget', () => {
           value: parseEther('1.0'),
         },
       );
-      expect(await budget.available(zeroAddress)).toBe(parseEther('1.0'));
+      expect(await budget.available()).toBe(parseEther('1.0'));
     });
 
     test('erc20', async () => {
@@ -105,7 +105,7 @@ describe.skip('VestingBudget', () => {
         target: defaultOptions.account.address,
       });
 
-      expect(await budget.available(zeroAddress)).toBe(0n);
+      expect(await budget.available()).toBe(0n);
     });
 
     test('erc20 assets', async () => {

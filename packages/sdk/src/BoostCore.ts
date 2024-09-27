@@ -34,6 +34,7 @@ import {
 import { type Action, actionFromAddress } from './Actions/Action';
 import { EventAction, type EventActionPayload } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
+import { OpenAllowList } from './AllowLists/OpenAllowList';
 import {
   SimpleAllowList,
   type SimpleAllowListPayload,
@@ -1008,6 +1009,24 @@ export class BoostCore extends Deployable<
   //     isBase,
   //   );
   // }
+  /**
+   * Bound {@link OpenAllowList} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const list = core.OpenAllowList('0x') // is roughly equivalent to
+   * const list = new OpenAllowList({ config: core._config, account: core._account }, '0x')
+   * ```
+   * @param {?boolean} [isBase]
+   * @returns {OpenAllowList}
+   */
+  OpenAllowList(isBase?: boolean) {
+    return new OpenAllowList(
+      { config: this._config, account: this._account },
+      undefined,
+      isBase,
+    );
+  }
   /**
    * Bound {@link SimpleAllowList} constructor that reuses the same configuration as the Boost Core instance.
    *

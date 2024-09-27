@@ -1,4 +1,5 @@
 import {
+  type AbiFunction,
   type Hex,
   type Log,
   type WaitForTransactionReceiptReturnType,
@@ -381,6 +382,28 @@ export class TooManyEventActionStepsProvidedError extends Error {
 }
 
 /**
+ * Function action validation context to help debug other validation errors
+ *
+ * @interface FunctionActionValidationMeta
+ * @typedef {FunctionActionValidationMeta}
+ */
+interface FunctionActionValidationMeta {
+  decodedArgs: readonly (string | bigint)[];
+  /**
+   * The value pulled off the log being validated against
+   *
+   * @type {*}
+   * biome-ignore lint/suspicious/noExplicitAny: this can be a few different types based on what the log emits
+   */
+  fieldValue: any;
+  /**
+   * The criteria being used to compare during validation
+   *
+   * @type {Criteria}
+   */
+  criteria: Criteria;
+}
+/**
  * Event action validation context to help debug other validation errors
  *
  * @interface EventActionValidationMeta
@@ -392,7 +415,7 @@ interface EventActionValidationMeta {
    *
    * @type {Log}
    */
-  log: Log;
+  log?: Log;
   /**
    * The value pulled off the log being validated against
    *
@@ -413,17 +436,23 @@ interface EventActionValidationMeta {
  * Instantiated with relevent context data for more in depth debugging.
  *
  * @export
- * @class EventActionValidationError
- * @typedef {EventActionValidationError}
+ * @class FieldActionValidationError
+ * @typedef {FieldActionValidationError}
  * @extends {Error}
  */
-export class EventActionValidationError extends Error {
+export class FieldActionValidationError extends Error {
+  /**
+   * The function input arguments being validated against
+   *
+   * @type {decodedArgs}
+   */
+  decodedArgs?: readonly (string | bigint)[];
   /**
    * The viem log being validated against
    *
    * @type {Log}
    */
-  log: Log;
+  log?: Log;
   /**
    * The value pulled off the log being validated against
    *
@@ -438,7 +467,7 @@ export class EventActionValidationError extends Error {
    */
   criteria: Criteria;
   /**
-   * Creates an instance of EventActionValidationError.
+   * Creates an instance of FieldActionValidationError.
    *
    * @constructor
    * @param {string} message
@@ -449,12 +478,23 @@ export class EventActionValidationError extends Error {
    */
   constructor(
     message: string,
-    { fieldValue, criteria, log }: EventActionValidationMeta,
+    {
+      fieldValue,
+      criteria,
+      ...args
+    }: EventActionValidationMeta | FunctionActionValidationMeta,
   ) {
     super(message);
     this.fieldValue = fieldValue;
     this.criteria = criteria;
-    this.log = log;
+
+    switch (true) {
+      case 'log' in args:
+        this.log = args.log;
+        break;
+      case 'decodedArgs' in args:
+        this.decodedArgs = args.decodedArgs;
+    }
   }
 }
 
@@ -464,16 +504,18 @@ export class EventActionValidationError extends Error {
  * @export
  * @class FieldValueUndefinedError
  * @typedef {FieldValueUndefinedError}
- * @extends {EventActionValidationError}
+ * @extends {FieldActionValidationError}
  */
-export class FieldValueUndefinedError extends EventActionValidationError {
+export class FieldValueUndefinedError extends FieldActionValidationError {
   /**
    * Creates an instance of FieldValueUndefinedError.
    *
    * @constructor
    * @param {EventActionValidationMeta} metadata
    */
-  constructor(metadata: EventActionValidationMeta) {
+  constructor(
+    metadata: EventActionValidationMeta | FunctionActionValidationMeta,
+  ) {
     super('Field value is undefined', metadata);
   }
 }
@@ -484,20 +526,49 @@ export class FieldValueUndefinedError extends EventActionValidationError {
  * @export
  * @class InvalidNumericalCriteriaError
  * @typedef {InvalidNumericalCriteriaError}
- * @extends {EventActionValidationError}
+ * @extends {FieldActionValidationError}
  */
-export class InvalidNumericalCriteriaError extends EventActionValidationError {
+export class InvalidNumericalCriteriaError extends FieldActionValidationError {
   /**
    * Creates an instance of InvalidNumericalCriteria.
    *
    * @constructor
    * @param {EventActionValidationMeta} metadata
    */
-  constructor(metadata: EventActionValidationMeta) {
+  constructor(
+    metadata: EventActionValidationMeta | FunctionActionValidationMeta,
+  ) {
     super(
       'Numerical comparisons cannot be used with non-numerical criteria',
       metadata,
     );
+  }
+}
+
+/**
+ * Thrown when decoding function data fails.
+ *
+ * @export
+ * @class FunctionDataDecodeError
+ * @typedef {FunctionDataDecodeError}
+ * @extends {Error}
+ */
+export class FunctionDataDecodeError extends Error {
+  public abi: AbiFunction[];
+  public originalError: Error;
+
+  /**
+   * Creates an instance of FunctionDataDecodeError.
+   *
+   * @constructor
+   * @param {AbiFunction[]} abi - The ABI of the function.
+   * @param {Error} originalError - The original error that was thrown.
+   */
+  constructor(abi: AbiFunction[], originalError: Error) {
+    super(`Failed to decode function data: ${originalError.message}`);
+    this.name = 'FunctionDataDecodeError';
+    this.abi = abi;
+    this.originalError = originalError;
   }
 }
 
@@ -507,16 +578,18 @@ export class InvalidNumericalCriteriaError extends EventActionValidationError {
  * @export
  * @class FieldValueNotComparableError
  * @typedef {FieldValueNotComparableError}
- * @extends {EventActionValidationError}
+ * @extends {FieldActionValidationError}
  */
-export class FieldValueNotComparableError extends EventActionValidationError {
+export class FieldValueNotComparableError extends FieldActionValidationError {
   /**
    * Creates an instance of FieldValueNotComparableError.
    *
    * @constructor
    * @param {EventActionValidationMeta} metadata
    */
-  constructor(metadata: EventActionValidationMeta) {
+  constructor(
+    metadata: EventActionValidationMeta | FunctionActionValidationMeta,
+  ) {
     super('Filter can only be used with bytes or string field type', metadata);
   }
 }
@@ -527,16 +600,18 @@ export class FieldValueNotComparableError extends EventActionValidationError {
  * @export
  * @class UnrecognizedFilterTypeError
  * @typedef {UnrecognizedFilterTypeError}
- * @extends {EventActionValidationError}
+ * @extends {FieldActionValidationError}
  */
-export class UnrecognizedFilterTypeError extends EventActionValidationError {
+export class UnrecognizedFilterTypeError extends FieldActionValidationError {
   /**
    * Creates an instance of UnrecognizedFilterTypeError.
    *
    * @constructor
    * @param {EventActionValidationMeta} metadata
    */
-  constructor(metadata: EventActionValidationMeta) {
+  constructor(
+    metadata: EventActionValidationMeta | FunctionActionValidationMeta,
+  ) {
     super('Invalid FilterType provided', metadata);
   }
 }

@@ -7,15 +7,21 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import events from '@boostxyz/signatures/events';
+import functions from '@boostxyz/signatures/functions';
 import {
   type Abi,
   type AbiEvent,
+  type AbiFunction,
   type Address,
   type ContractEventName,
+  type GetTransactionParameters,
   type Hex,
   type Log,
+  type PublicClient,
+  decodeFunctionData,
   encodeAbiParameters,
   isAddressEqual,
+  trim,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import type {
@@ -26,6 +32,7 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   FieldValueNotComparableError,
   FieldValueUndefinedError,
+  FunctionDataDecodeError,
   InvalidNumericalCriteriaError,
   NoEventActionStepsProvidedError,
   TooManyEventActionStepsProvidedError,
@@ -198,6 +205,41 @@ export interface ActionStep {
    */
   actionParameter: Criteria;
 }
+
+/**
+ * Parameters for validating an event step.
+ *
+ * This type omits the 'address' field from GetLogsParams and adds optional fields
+ * for logs and known events.
+ *
+ * @typedef {Object} ValidateEventStepParams
+ * @property {Log[]} [logs]
+ * @property {Record<Hex, AbiEvent>} [knownEvents]
+ * @property {number} [fromBlock]
+ * @property {number} [toBlock]
+ * @property {Hex} [blockHash]
+ * @property {Abi} abi
+ * @property {ContractEventName<Abi>} eventName
+ */
+export type ValidateEventStepParams = Omit<
+  GetLogsParams<Abi, ContractEventName<Abi>> & {
+    logs?: Log[];
+    knownEvents?: Record<Hex, AbiEvent>;
+  },
+  'address'
+>;
+
+/**
+ * Parameters for validating a function step.
+ *
+ * This type includes all parameters required to get a transaction.
+ *
+ * @typedef {Object} ValidateFunctionStepParams
+ * @property {Hex} hash
+ * @property {number} [chainId]
+ */
+export type ValidateFunctionStepParams = GetTransactionParameters;
+
 /**
  * You can either supply a simplified version of the payload, or one that explicitly declares action steps.
  *
@@ -444,10 +486,8 @@ export class EventAction extends DeployableTarget<
    */
   public async validateActionSteps(
     params?: ReadParams<typeof eventActionAbi, 'getActionSteps'> &
-      GetLogsParams<Abi, ContractEventName<Abi>> & {
-        knownEvents?: Record<Hex, AbiEvent>;
-        logs?: Log[];
-      },
+      ValidateEventStepParams &
+      ValidateFunctionStepParams & { chainId?: number },
   ) {
     const actionSteps = await this.getActionSteps(params);
     for (const actionStep of actionSteps) {
@@ -459,24 +499,43 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Validates a single action step with a given criteria against logs.
-   * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
+   * Validates a single action step with a given criteria against logs or function calls.
+   * If logs are provided in the optional `params` argument, then those logs will be used instead of being fetched with the configured client.
+   * For functions a hash is required.
    *
    * @public
    * @async
-   * @param {ActionStep} actionStep
-   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *       knownEvents?: Record<Hex, AbiEvent>;
-   *       logs?: Log[];
-   *     }} [params]
+   * @param {ActionStep} actionStep - The action step to validate. Can be a function of event step.
+   * @param {?ValidateEventStepParams & ValidateFunctionStepParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
    * @returns {Promise<boolean>}
    */
   public async isActionStepValid(
     actionStep: ActionStep,
-    params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
-      knownEvents?: Record<Hex, AbiEvent>;
-      logs?: Log[];
-    },
+    params?: ValidateEventStepParams &
+      ValidateFunctionStepParams & { chainId?: number },
+  ) {
+    if (actionStep.signatureType === SignatureType.EVENT) {
+      return await this.isActionEventValid(actionStep, params);
+    }
+    if (actionStep.signatureType === SignatureType.FUNC) {
+      return await this.isActionFunctionValid(actionStep, params);
+    }
+    return false;
+  }
+
+  /**
+   * Validates a single action event with a given criteria against logs.
+   * If logs are provided in the optional `params` argument, then those logs will be used instead of being fetched with the configured client.
+   *
+   * @public
+   * @async
+   * @param {ActionStep} actionStep - The action step containing the event to validate.
+   * @param {?ValidateEventStepParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
+   * @returns {Promise<boolean>} Resolves to true if the action event is valid, throws if input is invalid, otherwise false.
+   */
+  public async isActionEventValid(
+    actionStep: ActionStep,
+    params?: ValidateEventStepParams & { chainId?: number },
   ) {
     const criteria = actionStep.actionParameter;
     const signature = actionStep.signature;
@@ -508,57 +567,178 @@ export class EventAction extends DeployableTarget<
     }
     return true;
   }
-
   /**
-   * Validates a {@link Log} against a given criteria.
+   * Validates a single action function with a given criteria against the transaction input.
+   * If a transaction hash is provided in the optional `params` argument, then the transaction
+   * will be fetched and decoded using the configured client.
+   *
+   * @public
+   * @async
+   * @param {ActionStep} actionStep - The action step containing the function to validate.
+   * @param {?ValidateFunctionStepParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, transaction hash, and chain ID.
+   * @returns {Promise<boolean>} Resolves to true if the action function is valid, throws if the inputs are invalid, otherwise false.
+   */
+  public async isActionFunctionValid(
+    actionStep: ActionStep,
+    params?: ValidateFunctionStepParams & { chainId?: number },
+  ) {
+    const criteria = actionStep.actionParameter;
+    const signature = trim(actionStep.signature);
+    if (!params || !params?.hash) {
+      // Should we return false in this case?
+      throw new Error('Hash is required for function validation');
+    }
+    const client = this._config.getClient({
+      chainId: params?.chainId,
+    }) as PublicClient;
+    // Fetch the transaction receipt and decode the function input using `viem` utilities
+    const transaction = await client.getTransaction({ hash: params.hash });
+    const func = (functions.abi as Record<Hex, AbiFunction>)[
+      signature
+    ] as AbiFunction;
+
+    if (!func) {
+      throw new Error(
+        `No known ABI for given function signature: ${signature}`,
+      );
+    }
+    let decodedData;
+    try {
+      decodedData = decodeFunctionData({
+        abi: [func],
+        data: transaction.input,
+      });
+    } catch (e) {
+      throw new FunctionDataDecodeError([func], e as Error);
+    }
+
+    // Validate the criteria against decoded arguments using fieldIndex
+    const decodedArgs = decodedData.args;
+
+    if (!decodedArgs || !decodedData) return false;
+
+    if (
+      !this.validateFunctionAgainstCriteria(
+        criteria,
+        decodedArgs as (string | bigint)[],
+      )
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+  /**
+   * Validates a field against a given criteria.
    *
    * @param {Criteria} criteria - The criteria to validate against.
-   * @param {Log} log - The Viem event log.
-   * @returns {boolean} - Returns true if the log passes the criteria, false otherwise.
+   * @param {string | bigint} fieldValue - The field value to validate.
+   * @param {Log} log - Optional, for error handling context.
+   * @returns {Promise<boolean>} - Returns true if the field passes the criteria, false otherwise.
    */
-  public validateLogAgainstCriteria(criteria: Criteria, log: Log) {
-    const fieldValue = log.topics.at(criteria.fieldIndex);
-    if (fieldValue === undefined) {
-      throw new FieldValueUndefinedError({ log, criteria, fieldValue });
-    }
+  public validateFieldAgainstCriteria(
+    criteria: Criteria,
+    fieldValue: string | bigint,
+    input: { log: Log } | { decodedArgs: readonly (string | bigint)[] },
+  ): boolean {
     // Type narrow based on criteria.filterType
     switch (criteria.filterType) {
       case FilterType.EQUAL:
         if (criteria.fieldType === PrimitiveType.ADDRESS) {
           return isAddressEqual(
             criteria.filterData,
-            `0x${fieldValue.slice(-40)}`,
+            `0x${(fieldValue as string).slice(-40)}`,
           );
         }
         return fieldValue === criteria.filterData;
 
       case FilterType.NOT_EQUAL:
+        if (criteria.fieldType === PrimitiveType.ADDRESS) {
+          return !isAddressEqual(
+            criteria.filterData,
+            `0x${(fieldValue as string).slice(-40)}`,
+          );
+        }
         return fieldValue !== criteria.filterData;
 
       case FilterType.GREATER_THAN:
         if (criteria.fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) > BigInt(criteria.filterData);
         }
-        throw new InvalidNumericalCriteriaError({ log, criteria, fieldValue });
+        throw new InvalidNumericalCriteriaError({
+          ...input,
+          criteria,
+          fieldValue,
+        });
 
       case FilterType.LESS_THAN:
         if (criteria.fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) < BigInt(criteria.filterData);
         }
-        throw new InvalidNumericalCriteriaError({ log, criteria, fieldValue });
+        throw new InvalidNumericalCriteriaError({
+          ...input,
+          criteria,
+          fieldValue,
+        });
 
       case FilterType.CONTAINS:
         if (
           criteria.fieldType === PrimitiveType.BYTES ||
           criteria.fieldType === PrimitiveType.STRING
         ) {
-          return fieldValue.includes(criteria.filterData);
+          return (fieldValue as string).includes(criteria.filterData);
         }
-        throw new FieldValueNotComparableError({ log, criteria, fieldValue });
+        throw new FieldValueNotComparableError({
+          ...input,
+          criteria,
+          fieldValue,
+        });
 
       default:
-        throw new UnrecognizedFilterTypeError({ log, criteria, fieldValue });
+        throw new UnrecognizedFilterTypeError({
+          ...input,
+          criteria,
+          fieldValue,
+        });
     }
+  }
+
+  /**
+   * Validates a {@link Log} against a given criteria.
+   *
+   * @param {Criteria} criteria - The criteria to validate against.
+   * @param {Log} log - The Viem event log.
+   * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
+   */
+  public validateLogAgainstCriteria(criteria: Criteria, log: Log): boolean {
+    const fieldValue = log.topics.at(criteria.fieldIndex);
+    if (fieldValue === undefined) {
+      throw new FieldValueUndefinedError({ log, criteria, fieldValue });
+    }
+    return this.validateFieldAgainstCriteria(criteria, fieldValue, { log });
+  }
+
+  /**
+   * Validates a function's decoded arguments against a given criteria.
+   *
+   * @param {Criteria} criteria - The criteria to validate against.
+   * @param {unknown[]} decodedArgs - The decoded arguments of the function call.
+   * @returns {Promise<boolean>} - Returns true if the decoded argument passes the criteria, false otherwise.
+   */
+  public validateFunctionAgainstCriteria(
+    criteria: Criteria,
+    decodedArgs: readonly (string | bigint)[],
+  ): boolean {
+    const fieldValue = decodedArgs[criteria.fieldIndex];
+    if (fieldValue === undefined) {
+      throw new FieldValueUndefinedError({
+        criteria,
+        fieldValue,
+      });
+    }
+    return this.validateFieldAgainstCriteria(criteria, fieldValue, {
+      decodedArgs,
+    });
   }
 
   /**

@@ -20,7 +20,7 @@ export default {
   build: {
     sourcemap: true,
     rollupOptions: {
-      external: [/^viem/, /^@wagmi(?!.*\/codegen)/, /^@boostxyz\/signatures/],
+      external: [/^viem/, /^@wagmi(?!.*\/codegen)/],
     },
     lib: {
       entry: Object.keys(packageJson.exports).map((mod) =>

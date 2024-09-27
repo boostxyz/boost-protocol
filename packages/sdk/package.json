@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/sdk",
-  "version": "0.0.0-alpha.9",
+  "version": "0.0.0-alpha.11",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "files": ["dist", "src"],
@@ -185,7 +185,8 @@
     }
   },
   "scripts": {
-    "build": "vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "build": "vite build && tsc -p ./tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap",
+    "typecheck": "tsc -p ./tsconfig.build.json --noEmit",
     "lint:ci": "npx biome ci",
     "lint": "npx biome check",
     "bench": "vitest bench",
@@ -194,13 +195,11 @@
     "dev": "vite build --watch",
     "test": "vitest dev",
     "test:ci": "CI=true vitest --coverage",
-    "typedoc": "npx typedoc --sort required-first --sort visibility --sort kind"
-  },
-  "dependencies": {
-    "@boostxyz/signatures": "workspace:*"
+    "typedoc": "npx typedoc --tsconfig ./tsconfig.build.json --sort required-first --sort visibility --sort kind"
   },
   "optionalDependencies": {
-    "@boostxyz/evm": "workspace:*"
+    "@boostxyz/evm": "workspace:*",
+    "@boostxyz/signatures": "workspace:*"
   },
   "peerDependencies": {
     "@wagmi/core": "2",

@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build
+  verify:
+    name: Verify
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -39,21 +39,6 @@ jobs:
           VITE_POINTS_INCENTIVE_BASE: ${{ vars.VITE_POINTS_INCENTIVE_BASE}}
           VITE_SIGNER_VALIDATOR_BASE: ${{ vars.VITE_SIGNER_VALIDATOR_BASE}}
         run: npx turbo build --cache-dir=".cache"
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 2
-      - name: Install dependencies
-        uses: ./.github/actions/install-dependencies
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Make envfile
         uses: SpicyPizza/create-envfile@v2.0

@@ -56,7 +56,7 @@ export interface ERC20VariableIncentivePayload {
    */
   reward: bigint;
   /**
-   * How many times can this incentive be claimed.
+   * The total spending limit of the asset that will be distributed.
    *
    * @type {bigint}
    */
@@ -79,7 +79,7 @@ export type ERC20VariableIncentiveLog<
 > = GenericLog<typeof erc20VariableIncentiveAbi, event>;
 
 /**
- * A simple ERC20 incentive implementation that allows claiming of tokens
+ *  A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
  *
  * @export
  * @class ERC20VariableIncentive
@@ -129,12 +129,12 @@ export class ERC20VariableIncentive extends DeployableTarget<
   }
 
   /**
-   * The current reward
+   * The total amount of rewards claimed
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'currentReward'>} [params]
-   * @returns {Promise<bigint>} - The current reward
+   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'totalClaimed'>} [params]
+   * @returns {Promise<bigint>}
    */
   public async totalClaimed(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'totalClaimed'>,

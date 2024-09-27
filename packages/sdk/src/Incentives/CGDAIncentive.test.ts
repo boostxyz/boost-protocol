@@ -41,7 +41,7 @@ describe('CGDAIncentive', () => {
     const referrer = accounts.at(1)!.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const erc20Incentive = new fixtures.bases.CGDAIncentive(defaultOptions, {
+    const erc20Incentive = fixtures.core.CGDAIncentive({
       asset: budgets.erc20.assertValidAddress(),
       initialReward: 1n,
       totalBudget: 10n,
@@ -86,7 +86,7 @@ describe('CGDAIncentive', () => {
     const referrer = accounts.at(1)!.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const erc20Incentive = new fixtures.bases.CGDAIncentive(defaultOptions, {
+    const erc20Incentive = fixtures.core.CGDAIncentive({
       asset: budgets.erc20.assertValidAddress(),
       initialReward: 1n,
       totalBudget: 10n,

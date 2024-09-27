@@ -480,12 +480,12 @@ export class VestingBudget extends DeployableTarget<
    * This is equal to the sum of the total current balance and the total distributed amount
    *
    * @public
-   * @param {Address} asset -  The address of the asset (or the zero address for native assets)
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"] -  The address of the asset (or the zero address for native assets)
    * @param {?ReadParams<typeof vestingBudgetAbi, 'total'>} [params]
    * @returns {Promise<bigint>}
    */
   public total(
-    asset: Address,
+    asset: Address = zeroAddress,
     params?: ReadParams<typeof vestingBudgetAbi, 'total'>,
   ) {
     return readVestingBudgetTotal(this._config, {
@@ -501,12 +501,12 @@ export class VestingBudget extends DeployableTarget<
    * This is equal to the total vested amount minus any already distributed
    *
    * @public
-   * @param {Address} asset -  The address of the asset (or the zero address for native assets)
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"] -  The address of the asset (or the zero address for native assets)
    * @param {?ReadParams<typeof vestingBudgetAbi, 'available'>} [params]
    * @returns {Promise<bigint>} - The amount of assets currently available for distribution
    */
   public available(
-    asset: Address,
+    asset: Address = zeroAddress,
     params?: ReadParams<typeof vestingBudgetAbi, 'available'>,
   ) {
     return readVestingBudgetAvailable(this._config, {
@@ -521,12 +521,12 @@ export class VestingBudget extends DeployableTarget<
    * Get the amount of assets that have been distributed from the budget
    *
    * @public
-   * @param {Address} asset
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
    * @param {?ReadParams<typeof vestingBudgetAbi, 'distributed'>} [params]
    * @returns {Promise<bigint>} - The amount of assets distributed
    */
   public distributed(
-    asset: Address,
+    asset: Address = zeroAddress,
     params?: ReadParams<typeof vestingBudgetAbi, 'distributed'>,
   ) {
     return readVestingBudgetDistributed(this._config, {

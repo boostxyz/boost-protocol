@@ -42,7 +42,7 @@ describe('ERC20Incentive', () => {
     const referrer = accounts.at(1)!.account!,
       // biome-ignore lint/style/noNonNullAssertion: we know this is defined
       trustedSigner = accounts.at(0)!;
-    const erc20Incentive = new fixtures.bases.ERC20Incentive(defaultOptions, {
+    const erc20Incentive = fixtures.core.ERC20Incentive({
       asset: budgets.erc20.assertValidAddress(),
       strategy: StrategyType.POOL,
       reward: 1n,
@@ -85,7 +85,7 @@ describe('ERC20Incentive', () => {
     const referrer = accounts.at(1)!.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
-    const erc20Incentive = new fixtures.bases.ERC20Incentive(defaultOptions, {
+    const erc20Incentive = fixtures.core.ERC20Incentive({
       asset: budgets.erc20.assertValidAddress(),
       strategy: StrategyType.POOL,
       reward: 1n,

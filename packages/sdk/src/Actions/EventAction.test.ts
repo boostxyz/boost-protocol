@@ -257,7 +257,7 @@ describe('EventAction Event Selector', () => {
     } as Log;
     const action = await loadFixture(cloneEventAction(fixtures, erc721));
     expect(
-      await action.validateActionSteps({ logParams: { logs: [log] } }),
+      await action.validateActionSteps({ txParams: { logs: [log] } }),
     ).toBe(true);
   });
 });
@@ -413,7 +413,7 @@ describe('EventAction Func Selector', () => {
 
     expect(
       await action.validateActionSteps({
-        logParams: { hash },
+        txParams: { hash },
       }),
     ).toBe(true);
   });

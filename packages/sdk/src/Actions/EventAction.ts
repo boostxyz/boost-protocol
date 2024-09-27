@@ -327,13 +327,13 @@ type ReadEventActionParams<
   fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
 > = ReadParams<typeof eventActionAbi, fnName>;
 
-type LogParams = ValidateEventStepParams & ValidateFunctionStepParams;
+type TxParams = ValidateEventStepParams | ValidateFunctionStepParams;
 
 type ValidateInputParams<
   fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
 > = {
   getterParams?: ReadEventActionParams<fnName>;
-  logParams?: LogParams;
+  txParams?: TxParams;
 };
 
 /**
@@ -490,7 +490,7 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?validateInputParams<'getActionSteps'>} [params]
+   * @param {?ValidateInputParams<'getActionSteps'>} [params]
    * @returns {Promise<boolean>}
    */
   public async validateActionSteps(
@@ -498,7 +498,7 @@ export class EventAction extends DeployableTarget<
   ) {
     const actionSteps = await this.getActionSteps(params?.getterParams);
     for (const actionStep of actionSteps) {
-      if (!(await this.isActionStepValid(actionStep, params?.logParams))) {
+      if (!(await this.isActionStepValid(actionStep, params?.txParams))) {
         return false;
       }
     }
@@ -513,18 +513,21 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {ActionStep} actionStep - The action step to validate. Can be a function of event step.
-   * @param {?LogParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
+   * @param {?TxParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
    * @returns {Promise<boolean>}
    */
   public async isActionStepValid(
     actionStep: ActionStep,
-    params?: LogParams & { chainId?: number },
+    params?: TxParams & { chainId?: number },
   ) {
     if (actionStep.signatureType === SignatureType.EVENT) {
       return await this.isActionEventValid(actionStep, params);
     }
     if (actionStep.signatureType === SignatureType.FUNC) {
-      return await this.isActionFunctionValid(actionStep, params);
+      return await this.isActionFunctionValid(
+        actionStep,
+        params as ValidateFunctionStepParams,
+      );
     }
     return false;
   }

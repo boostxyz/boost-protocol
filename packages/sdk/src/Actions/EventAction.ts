@@ -32,6 +32,7 @@ import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   FieldValueNotComparableError,
   FieldValueUndefinedError,
+  FunctionDataDecodeError,
   InvalidNumericalCriteriaError,
   NoEventActionStepsProvidedError,
   TooManyEventActionStepsProvidedError,
@@ -608,7 +609,7 @@ export class EventAction extends DeployableTarget<
         data: transaction.input,
       });
     } catch (e) {
-      throw new Error(`Failed to decode function data: ${e}`);
+      throw new FunctionDataDecodeError([func], e as Error);
     }
 
     // Validate the criteria against decoded arguments using fieldIndex

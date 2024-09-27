@@ -1,4 +1,5 @@
 import {
+  type AbiFunction,
   type Hex,
   type Log,
   type WaitForTransactionReceiptReturnType,
@@ -541,6 +542,33 @@ export class InvalidNumericalCriteriaError extends FieldActionValidationError {
       'Numerical comparisons cannot be used with non-numerical criteria',
       metadata,
     );
+  }
+}
+
+/**
+ * Thrown when decoding function data fails.
+ *
+ * @export
+ * @class FunctionDataDecodeError
+ * @typedef {FunctionDataDecodeError}
+ * @extends {Error}
+ */
+export class FunctionDataDecodeError extends Error {
+  public abi: AbiFunction[];
+  public originalError: Error;
+
+  /**
+   * Creates an instance of FunctionDataDecodeError.
+   *
+   * @constructor
+   * @param {AbiFunction[]} abi - The ABI of the function.
+   * @param {Error} originalError - The original error that was thrown.
+   */
+  constructor(abi: AbiFunction[], originalError: Error) {
+    super(`Failed to decode function data: ${originalError.message}`);
+    this.name = 'FunctionDataDecodeError';
+    this.abi = abi;
+    this.originalError = originalError;
   }
 }
 

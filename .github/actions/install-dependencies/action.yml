@@ -33,7 +33,7 @@ runs:
       with:
         save-always: true
         path: .cache
-        key: ${{ runner.os }}-turbo-${{ github.head_ref || github.ref_name }}
+        key: ${{ runner.os }}-turbo-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-turbo-
     - name: Install dependencies

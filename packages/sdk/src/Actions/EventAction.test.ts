@@ -275,7 +275,7 @@ describe('EventAction Func Selector', () => {
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 
-  test('validates function action step with correct txHash', async () => {
+  test('validates function action step with correct hash', async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
     const recipient = accounts[1].account;
@@ -285,12 +285,12 @@ describe('EventAction Func Selector', () => {
 
     expect(
       await action.isActionFunctionValid(actionSteps[0], {
-        txHash: hash,
+        hash,
       }),
     ).toBe(true);
   });
 
-  test('throws an error when txHash is missing', async () => {
+  test('throws an error when hash is missing', async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
     try {
@@ -298,7 +298,7 @@ describe('EventAction Func Selector', () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toBe(
-        'txHash is required for function validation',
+        'Hash is required for function validation',
       );
     }
   });
@@ -313,7 +313,7 @@ describe('EventAction Func Selector', () => {
     });
 
     const criteriaMatch = await action.isActionFunctionValid(actionSteps[0], {
-      txHash: hash,
+      hash,
     });
 
     expect(criteriaMatch).toBe(true);
@@ -334,7 +334,7 @@ describe('EventAction Func Selector', () => {
     });
 
     try {
-      await action.isActionFunctionValid(invalidStep, { txHash: hash });
+      await action.isActionFunctionValid(invalidStep, { hash });
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toContain(
@@ -354,7 +354,7 @@ describe('EventAction Func Selector', () => {
 
     expect(
       await action.isActionFunctionValid(actionSteps[0], {
-        txHash: hash,
+        hash,
       }),
     ).toBe(true);
   });
@@ -376,7 +376,7 @@ describe('EventAction Func Selector', () => {
 
     expect(
       await action.isActionFunctionValid(actionSteps[0], {
-        txHash: hash,
+        hash,
       }),
     ).toBe(true);
   });
@@ -397,7 +397,7 @@ describe('EventAction Func Selector', () => {
 
     expect(
       await action.isActionFunctionValid(actionSteps[0], {
-        txHash: hash,
+        hash,
       }),
     ).toBe(true);
   });
@@ -411,7 +411,7 @@ describe('EventAction Func Selector', () => {
 
     expect(
       await action.validateActionSteps({
-        txHash: hash,
+        hash,
       }),
     ).toBe(true);
   });

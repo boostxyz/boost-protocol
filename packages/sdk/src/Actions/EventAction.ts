@@ -14,6 +14,7 @@ import {
   type AbiFunction,
   type Address,
   type ContractEventName,
+  type GetTransactionParameters,
   type Hex,
   type Log,
   type PublicClient,
@@ -203,6 +204,41 @@ export interface ActionStep {
    */
   actionParameter: Criteria;
 }
+
+/**
+ * Parameters for validating an event step.
+ *
+ * This type omits the 'address' field from GetLogsParams and adds optional fields
+ * for logs and known events.
+ *
+ * @typedef {Object} ValidateEventStepParams
+ * @property {Log[]} [logs]
+ * @property {Record<Hex, AbiEvent>} [knownEvents]
+ * @property {number} [fromBlock]
+ * @property {number} [toBlock]
+ * @property {Hex} [blockHash]
+ * @property {Abi} abi
+ * @property {ContractEventName<Abi>} eventName
+ */
+export type ValidateEventStepParams = Omit<
+  GetLogsParams<Abi, ContractEventName<Abi>> & {
+    logs?: Log[];
+    knownEvents?: Record<Hex, AbiEvent>;
+  },
+  'address'
+>;
+
+/**
+ * Parameters for validating a function step.
+ *
+ * This type includes all parameters required to get a transaction.
+ *
+ * @typedef {Object} ValidateFunctionStepParams
+ * @property {Hex} hash
+ * @property {number} [chainId]
+ */
+export type ValidateFunctionStepParams = GetTransactionParameters;
+
 /**
  * You can either supply a simplified version of the payload, or one that explicitly declares action steps.
  *
@@ -449,10 +485,8 @@ export class EventAction extends DeployableTarget<
    */
   public async validateActionSteps(
     params?: ReadParams<typeof eventActionAbi, 'getActionSteps'> &
-      GetLogsParams<Abi, ContractEventName<Abi>> & {
-        knownEvents?: Record<Hex, AbiEvent>;
-        logs?: Log[];
-      },
+      ValidateEventStepParams &
+      ValidateFunctionStepParams & { chainId?: number },
   ) {
     const actionSteps = await this.getActionSteps(params);
     for (const actionStep of actionSteps) {
@@ -464,25 +498,20 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Validates a single action step with a given criteria against logs.
-   * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
+   * Validates a single action step with a given criteria against logs or function calls.
+   * If logs are provided in the optional `params` argument, then those logs will be used instead of being fetched with the configured client.
+   * For functions a hash is required.
    *
    * @public
    * @async
-   * @param {ActionStep} actionStep
-   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *       knownEvents?: Record<Hex, AbiEvent>;
-   *       logs?: Log[];
-   *     }} [params]
+   * @param {ActionStep} actionStep - The action step to validate. Can be a function of event step.
+   * @param {?ValidateEventStepParams & ValidateFunctionStepParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
    * @returns {Promise<boolean>}
    */
   public async isActionStepValid(
     actionStep: ActionStep,
-    params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
-      knownEvents?: Record<Hex, AbiEvent>;
-      logs?: Log[];
-      txHash?: Hex;
-    },
+    params?: ValidateEventStepParams &
+      ValidateFunctionStepParams & { chainId?: number },
   ) {
     if (actionStep.signatureType === SignatureType.EVENT) {
       return await this.isActionEventValid(actionStep, params);
@@ -495,23 +524,17 @@ export class EventAction extends DeployableTarget<
 
   /**
    * Validates a single action event with a given criteria against logs.
-   * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
+   * If logs are provided in the optional `params` argument, then those logs will be used instead of being fetched with the configured client.
    *
    * @public
    * @async
-   * @param {ActionStep} actionStep
-   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *       knownEvents?: Record<Hex, AbiEvent>;
-   *       logs?: Log[];
-   *     }} [params]
-   * @returns {Promise<boolean>}
+   * @param {ActionStep} actionStep - The action step containing the event to validate.
+   * @param {?ValidateEventStepParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
+   * @returns {Promise<boolean>} Resolves to true if the action event is valid, throws if input is invalid, otherwise false.
    */
   public async isActionEventValid(
     actionStep: ActionStep,
-    params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
-      knownEvents?: Record<Hex, AbiEvent>;
-      logs?: Log[];
-    },
+    params?: ValidateEventStepParams & { chainId?: number },
   ) {
     const criteria = actionStep.actionParameter;
     const signature = actionStep.signature;
@@ -544,36 +567,31 @@ export class EventAction extends DeployableTarget<
     return true;
   }
   /**
-   * Validates a single action function with a given criteria against logs.
-   * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
+   * Validates a single action function with a given criteria against the transaction input.
+   * If a transaction hash is provided in the optional `params` argument, then the transaction
+   * will be fetched and decoded using the configured client.
    *
    * @public
    * @async
-   * @param {ActionStep} actionStep
-   * @param {?GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *       knownEvents?: Record<Hex, AbiEvent>;
-   *       txHash?: Hex;
-   *     }} [params]
-   * @returns {Promise<boolean>}
+   * @param {ActionStep} actionStep - The action step containing the function to validate.
+   * @param {?ValidateFunctionStepParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, transaction hash, and chain ID.
+   * @returns {Promise<boolean>} Resolves to true if the action function is valid, throws if the inputs are invalid, otherwise false.
    */
   public async isActionFunctionValid(
     actionStep: ActionStep,
-    params?: GetLogsParams<Abi, ContractEventName<Abi>> & {
-      knownEvents?: Record<Hex, AbiEvent>;
-      txHash?: Hex;
-    },
+    params?: ValidateFunctionStepParams & { chainId?: number },
   ) {
     const criteria = actionStep.actionParameter;
     const signature = trim(actionStep.signature);
-    if (!params || !params?.txHash) {
+    if (!params || !params?.hash) {
       // Should we return false in this case?
-      throw new Error('txHash is required for function validation');
+      throw new Error('Hash is required for function validation');
     }
     const client = this._config.getClient({
       chainId: params?.chainId,
     }) as PublicClient;
     // Fetch the transaction receipt and decode the function input using `viem` utilities
-    const transaction = await client.getTransaction({ hash: params.txHash });
+    const transaction = await client.getTransaction({ hash: params.hash });
     const func = (functions.abi as Record<Hex, AbiFunction>)[
       signature
     ] as AbiFunction;

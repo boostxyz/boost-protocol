@@ -7,10 +7,11 @@ import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
+import { OpenAllowList } from './OpenAllowList';
 import { SimpleAllowList } from './SimpleAllowList';
 import { SimpleDenyList } from './SimpleDenyList';
 
-export { SimpleAllowList, SimpleDenyList };
+export { OpenAllowList, SimpleAllowList, SimpleDenyList };
 
 /**
  * A union type representing all valid protocol AllowList implementations
@@ -18,7 +19,7 @@ export { SimpleAllowList, SimpleDenyList };
  * @export
  * @typedef {AllowList}
  */
-export type AllowList = SimpleAllowList | SimpleDenyList;
+export type AllowList = OpenAllowList | SimpleAllowList | SimpleDenyList;
 
 /**
  * A map of AllowList component interfaces to their constructors.
@@ -32,6 +33,7 @@ export const AllowListByComponentInterface = {
 
 /**
  * A function that will read a contract's component interface using `getComponentInterface` and return the correct instantiated instance.
+ * This function will never return an instance of {@link OpenAllowList} because it has the same component interface as {@link SimpleDenyList}
  *
  * @export
  * @async
@@ -56,5 +58,5 @@ export async function allowListFromAddress(
       interfaceId as Hex,
     );
   }
-  return new Ctor(options, address);
+  return new Ctor(options, address) as SimpleDenyList | SimpleAllowList;
 }

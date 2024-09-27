@@ -74,10 +74,9 @@ export type SimpleDenyListLog<
  * @typedef {SimpleDenyList}
  * @extends {DeployableTarget<SimpleDenyListPayload>}
  */
-export class SimpleDenyList extends DeployableTarget<
-  SimpleDenyListPayload,
-  typeof simpleDenyListAbi
-> {
+export class SimpleDenyList<
+  Payload = SimpleDenyListPayload,
+> extends DeployableTarget<Payload | undefined, typeof simpleDenyListAbi> {
   public override readonly abi = simpleDenyListAbi;
   /**
    * @inheritdoc
@@ -177,13 +176,11 @@ export class SimpleDenyList extends DeployableTarget<
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: SimpleDenyListPayload,
+    _payload?: Payload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload, options] = this.validateDeploymentConfig(
-      _payload,
-      _options,
-    );
+    const [p, options] = this.validateDeploymentConfig(_payload, _options);
+    const payload = p as SimpleDenyListPayload;
     if (!payload.owner || payload.owner === zeroAddress) {
       const owner = options.account
         ? options.account.address

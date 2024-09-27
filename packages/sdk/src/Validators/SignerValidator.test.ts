@@ -16,9 +16,9 @@ function freshValidator(fixtures: Fixtures) {
   return function freshValidator() {
     // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
     const account = accounts.at(1)!.account;
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
-      new fixtures.bases.SignerValidator(defaultOptions, {
+      fixtures.core.SignerValidator({
         signers: [defaultOptions.account.address, account],
         validatorCaller: testAccount.address,
       }),

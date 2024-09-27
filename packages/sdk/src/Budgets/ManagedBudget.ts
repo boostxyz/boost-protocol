@@ -81,22 +81,26 @@ export interface ManagedBudgetPayload {
   /**
    * List of roles to assign to the corresponding account by index.
    *
-   * @type {bigint[]}
+   * @type {ManagedBudgetRoles[]}
    */
-  roles: bigint[];
+  roles: ManagedBudgetRoles[];
 }
 
 /**
- * Enum representing available roles for use in the `ManagedBudget`.
+ *  Enum representing available roles for use in the `ManagedBudget`.
  * `MANAGER` can disburse funds.
  * `ADMIN` can additionally manage authorized users on the budget.
  *
+ * @export
  * @type {{ readonly MANAGER: 1n; readonly ADMIN_ROLE: 2n; }}
+ * @enum {bigint}
  */
-export const ManagedBudgetRoles = {
-  MANAGER: 1n,
-  ADMIN: 2n,
-} as const;
+export enum ManagedBudgetRoles {
+  //@ts-expect-error ts doesn't like bigint enum values
+  MANAGER = 1n,
+  //@ts-expect-error ts doesn't like bigint enum values
+  ADMIN = 2n,
+}
 
 /**
  * A generic `viem.Log` event with support for `ManagedBudget` event types.
@@ -152,9 +156,11 @@ export function prepareTransfer(
 ) {
   if (isFungibleTransfer(transfer)) {
     return prepareFungibleTransfer(transfer);
-  } else if (isERC1155TransferPayload(transfer)) {
+  }
+  if (isERC1155TransferPayload(transfer)) {
     return prepareERC1155Transfer(transfer);
-  } else throw new UnknownTransferPayloadSupplied(transfer);
+  }
+  throw new UnknownTransferPayloadSupplied(transfer);
 }
 
 /**
@@ -441,13 +447,13 @@ export class ManagedBudget extends DeployableTarget<
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {bigint[]} roles
+   * @param {ManagedBudgetRoles[]} roles
    * @param {?WriteParams<typeof managedBudgetAbi, 'grantRoles'>} [params]
    * @returns {unknown}
    */
   public async grantRoles(
     addresses: Address[],
-    roles: bigint[],
+    roles: ManagedBudgetRoles[],
     params?: WriteParams<typeof managedBudgetAbi, 'grantRoles'>,
   ) {
     return await this.awaitResult(this.grantRolesRaw(addresses, roles, params));
@@ -463,13 +469,13 @@ export class ManagedBudget extends DeployableTarget<
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {bigint[]} roles
+   * @param {ManagedBudgetRoles[]} roles
    * @param {?WriteParams<typeof managedBudgetAbi, 'grantRoles'>} [params]
    * @returns {unknown}
    */
   public async grantRolesRaw(
     addresses: Address[],
-    roles: bigint[],
+    roles: ManagedBudgetRoles[],
     params?: WriteParams<typeof managedBudgetAbi, 'grantRoles'>,
   ) {
     const { request, result } = await simulateManagedBudgetGrantRoles(
@@ -500,13 +506,13 @@ export class ManagedBudget extends DeployableTarget<
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {bigint[]} roles
+   * @param {ManagedBudgetRoles[]} roles
    * @param {?WriteParams<typeof managedBudgetAbi, 'revokeRoles'>} [params]
    * @returns {unknown}
    */
   public async revokeRoles(
     addresses: Address[],
-    roles: bigint[],
+    roles: ManagedBudgetRoles[],
     params?: WriteParams<typeof managedBudgetAbi, 'revokeRoles'>,
   ) {
     return await this.awaitResult(
@@ -523,13 +529,13 @@ export class ManagedBudget extends DeployableTarget<
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {bigint[]} roles
+   * @param {ManagedBudgetRoles[]} roles
    * @param {?WriteParams<typeof managedBudgetAbi, 'revokeRoles'>} [params]
    * @returns {unknown}
    */
   public async revokeRolesRaw(
     addresses: Address[],
-    roles: bigint[],
+    roles: ManagedBudgetRoles[],
     params?: WriteParams<typeof managedBudgetAbi, 'revokeRoles'>,
   ) {
     const { request, result } = await simulateManagedBudgetRevokeRoles(
@@ -558,7 +564,7 @@ export class ManagedBudget extends DeployableTarget<
    * @public
    * @param {Address} account
    * @param {?ReadParams<typeof managedBudgetAbi, 'rolesOf'>} [params]
-   * @returns {Promise<Array<bigint>>}
+   * @returns {Promise<Array<ManagedBudgetRoles>>}
    */
   public async rolesOf(
     account: Address,
@@ -571,9 +577,14 @@ export class ManagedBudget extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
-    return [ManagedBudgetRoles.MANAGER, ManagedBudgetRoles.ADMIN].filter(
+    return (
+      [
+        ManagedBudgetRoles.MANAGER,
+        ManagedBudgetRoles.ADMIN,
+      ] as unknown as Array<bigint>
+    ).filter(
       (role) => (roles & role) === role,
-    );
+    ) as unknown as ManagedBudgetRoles[];
   }
 
   /**
@@ -584,13 +595,13 @@ export class ManagedBudget extends DeployableTarget<
    * await budget.hasAnyRole(0xfoo, ManagedBudgetRoles.ADMIN | ManagedBudgetRoles.MANAGER)
    * @public
    * @param {Address} account
-   * @param {bigint} roles
+   * @param {ManagedBudgetRoles} roles
    * @param {?ReadParams<typeof managedBudgetAbi, 'hasAnyRole'>} [params]
    * @returns {Promise<boolean>}
    */
   public hasAnyRole(
     account: Address,
-    roles: bigint,
+    roles: ManagedBudgetRoles,
     params?: ReadParams<typeof managedBudgetAbi, 'hasAnyRole'>,
   ) {
     return readManagedBudgetHasAnyRole(this._config, {
@@ -611,13 +622,13 @@ export class ManagedBudget extends DeployableTarget<
    *
    * @public
    * @param {Address} account
-   * @param {bigint} roles
+   * @param {ManagedBudgetRoles} roles
    * @param {?ReadParams<typeof managedBudgetAbi, 'hasAllRoles'>} [params]
    * @returns {*}
    */
   public hasAllRoles(
     account: Address,
-    roles: bigint,
+    roles: ManagedBudgetRoles,
     params?: ReadParams<typeof managedBudgetAbi, 'hasAllRoles'>,
   ) {
     return readManagedBudgetHasAllRoles(this._config, {
@@ -671,13 +682,13 @@ export class ManagedBudget extends DeployableTarget<
    * If a tokenId is provided, get the total amount of ERC1155 assets allocated to the budget, including any that have been distributed
    *
    * @public
-   * @param {Address} asset - The address of the asset
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"] - The address of the asset
    * @param {?(bigint | undefined)} [tokenId] - The ID of the token
    * @param {?ReadParams<typeof managedBudgetAbi, 'total'>} [params]
    * @returns {Promise<bigint>} - The total amount of assets
    */
   public total(
-    asset: Address,
+    asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
     params?: ReadParams<typeof managedBudgetAbi, 'total'>,
   ) {
@@ -694,13 +705,13 @@ export class ManagedBudget extends DeployableTarget<
    * If a tokenId is provided, get the amount of ERC1155 assets available for distribution from the budget
    *
    * @public
-   * @param {Address} asset
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
    * @param {?(bigint | undefined)} [tokenId]
    * @param {?ReadParams<typeof managedBudgetAbi, 'available'>} [params]
    * @returns {Promise<bigint>} - The amount of assets available
    */
   public available(
-    asset: Address,
+    asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
     params?: ReadParams<typeof managedBudgetAbi, 'available'>,
   ) {
@@ -717,13 +728,13 @@ export class ManagedBudget extends DeployableTarget<
    * If a tokenId is provided, get the amount of ERC1155 assets that have been distributed from the budget
    *
    * @public
-   * @param {Address} asset
+   * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
    * @param {?(bigint | undefined)} [tokenId]
    * @param {?ReadParams<typeof managedBudgetAbi, 'distributed'>} [params]
    * @returns {Promise<bigint>} - The amount of assets distributed
    */
   public distributed(
-    asset: Address,
+    asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
     params?: ReadParams<typeof managedBudgetAbi, 'distributed'>,
   ) {
@@ -791,6 +802,6 @@ export const prepareManagedBudgetPayload = ({
       'ManagedBudgetPayload payload',
       'struct ManagedBudgetPayload { address owner; address[] authorized; uint256[] roles; }',
     ]),
-    [{ owner, authorized, roles }],
+    [{ owner, authorized, roles: roles as unknown as Array<bigint> }],
   );
 };

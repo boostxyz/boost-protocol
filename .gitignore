@@ -4,6 +4,7 @@ dist
 coverage
 .cache
 tsconfig.tsbuildinfo
+tsconfig.build.tsbuildinfo
 .DS_Store
 docs
 

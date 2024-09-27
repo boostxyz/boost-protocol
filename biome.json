@@ -47,6 +47,7 @@
         "noUnusedVariables": "error"
       },
       "style": {
+        "useLiteralEnumMembers": "warn",
         "noInferrableTypes": "warn",
         "noNamespace": "error",
         "noNonNullAssertion": "warn",

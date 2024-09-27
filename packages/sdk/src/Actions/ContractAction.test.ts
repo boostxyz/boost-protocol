@@ -36,9 +36,9 @@ const mintSelector = toFunctionSelector(
 
 function payableContractAction(fixtures: Fixtures, erc20: MockERC20) {
   return function payableContractAction() {
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
-      new fixtures.bases.ContractAction(defaultOptions, {
+      fixtures.core.ContractAction({
         chainId: BigInt(31_337),
         target: erc20.assertValidAddress(),
         selector: mintPayableSelector,
@@ -50,9 +50,9 @@ function payableContractAction(fixtures: Fixtures, erc20: MockERC20) {
 
 function nonPayableAction(fixtures: Fixtures, erc20: MockERC20) {
   return function nonPayableAction() {
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
-      new fixtures.bases.ContractAction(defaultOptions, {
+      fixtures.core.ContractAction({
         chainId: BigInt(31_337),
         target: erc20.assertValidAddress(),
         selector: mintSelector,
@@ -64,9 +64,9 @@ function nonPayableAction(fixtures: Fixtures, erc20: MockERC20) {
 
 function otherAction(fixtures: Fixtures, erc20: MockERC20) {
   return function nonPayableAction() {
-    return fixtures.registry.clone(
+    return fixtures.registry.initialize(
       crypto.randomUUID(),
-      new fixtures.bases.ContractAction(defaultOptions, {
+      fixtures.core.ContractAction({
         chainId: BigInt(31_337) + 1n,
         target: erc20.assertValidAddress(),
         selector: mintSelector,

@@ -4,6 +4,7 @@ import { isAddress, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '../../test/MockERC20';
 import type { MockERC1155 } from '../../test/MockERC1155';
+import { accounts } from '../../test/accounts';
 import {
   type Fixtures,
   defaultOptions,
@@ -15,7 +16,7 @@ import {
   fundManagedBudget,
 } from '../../test/helpers';
 import { testAccount } from '../../test/viem';
-import { ManagedBudget } from './ManagedBudget';
+import { ManagedBudget, ManagedBudgetRoles } from './ManagedBudget';
 
 let fixtures: Fixtures,
   budget: ManagedBudget,
@@ -37,13 +38,73 @@ describe('ManagedBudget', () => {
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 
+  test('can grant manager role to many users', async () => {
+    const budget = await loadFixture(
+      freshManagedBudget(defaultOptions, fixtures),
+    );
+    const one = accounts[1].account;
+    const two = accounts[2].account;
+    await budget.setAuthorized([one, two], [true, true]);
+    expect(await budget.hasAllRoles(one, ManagedBudgetRoles.ADMIN)).toBe(false);
+    expect(await budget.hasAllRoles(one, ManagedBudgetRoles.MANAGER)).toBe(
+      true,
+    );
+    expect(await budget.hasAllRoles(two, ManagedBudgetRoles.MANAGER)).toBe(
+      true,
+    );
+  });
+
+  test('can grant roles', async () => {
+    const budget = await loadFixture(
+      freshManagedBudget(defaultOptions, fixtures),
+    );
+    const admin = accounts[1].account;
+    const manager = accounts[2].account;
+    await budget.grantRoles(
+      [admin, manager],
+      [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
+    );
+    expect(await budget.hasAllRoles(admin, ManagedBudgetRoles.ADMIN)).toBe(
+      true,
+    );
+    expect(await budget.hasAllRoles(manager, ManagedBudgetRoles.MANAGER)).toBe(
+      true,
+    );
+  });
+
+  test('can revoke roles', async () => {
+    const budget = await loadFixture(
+      freshManagedBudget(defaultOptions, fixtures),
+    );
+    const admin = accounts[1].account;
+    const manager = accounts[2].account;
+    await budget.grantRoles(
+      [admin, manager],
+      [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
+    );
+    await budget.revokeRoles(
+      [admin, manager],
+      [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
+    );
+    expect(await budget.hasAllRoles(admin, ManagedBudgetRoles.ADMIN)).toBe(
+      false,
+    );
+    expect(await budget.hasAllRoles(manager, ManagedBudgetRoles.MANAGER)).toBe(
+      false,
+    );
+  });
+
   test('can be owned', async () => {
-    const budget = await loadFixture(freshBudget(defaultOptions, fixtures));
+    const budget = await loadFixture(
+      freshManagedBudget(defaultOptions, fixtures),
+    );
     expect(await budget.owner()).toBe(defaultOptions.account.address);
   });
 
   test('can have authorized users', async () => {
-    const budget = await loadFixture(freshBudget(defaultOptions, fixtures));
+    const budget = await loadFixture(
+      freshManagedBudget(defaultOptions, fixtures),
+    );
     expect(await budget.isAuthorized(defaultOptions.account.address)).toBe(
       true,
     );
@@ -51,8 +112,10 @@ describe('ManagedBudget', () => {
   });
 
   test('can have no initial balance', async () => {
-    const budget = await loadFixture(freshBudget(defaultOptions, fixtures));
-    expect(await budget.available(zeroAddress)).toBe(0n);
+    const budget = await loadFixture(
+      freshManagedBudget(defaultOptions, fixtures),
+    );
+    expect(await budget.available()).toBe(0n);
   });
 
   describe('can allocate', () => {
@@ -73,7 +136,7 @@ describe('ManagedBudget', () => {
           value: parseEther('1.0'),
         },
       );
-      expect(await budget.available(zeroAddress)).toBe(parseEther('1.0'));
+      expect(await budget.available()).toBe(parseEther('1.0'));
     });
 
     test('erc20', async () => {
@@ -123,7 +186,7 @@ describe('ManagedBudget', () => {
         target: defaultOptions.account.address,
       });
 
-      expect(await budget.available(zeroAddress)).toBe(0n);
+      expect(await budget.available()).toBe(0n);
     });
 
     test('erc20 assets', async () => {

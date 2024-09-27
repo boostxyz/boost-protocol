@@ -35,7 +35,7 @@ import {
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the zora contract we're going to push a transaction against
-const targetContract = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
+const targetContract: Address = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
 // We take the raw inputData off of an existing historical transaction
 // https://basescan.org/tx/0x17a4d7e08acec16f385d2a038b948359919e3675eca22a09789b462a9178a769
 const inputData =
@@ -100,7 +100,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           signatureType: SignatureType.EVENT,
           signature: selector, // Purchased(address,address,uint256,uint256,uint256) event
           fieldIndex: 0, // Targeting the 'from' address
-          targetContract: boostImpostor, // The ERC20 contract we're monitoring
+          targetContract: targetContract, // The Zora NFT contract we're monitoring
         },
         actionSteps: [eventActionStep],
       };

@@ -328,8 +328,20 @@ export interface EventActionPayloadRaw {
   actionStepFour: ActionStep;
 }
 
+/**
+ * Array of event logs to pass into TxParams
+ * @export
+ * @typedef {EventLogs}
+ */
 export type EventLogs = GetLogsReturnType<AbiEvent, AbiEvent[], true>;
 
+/**
+ * Getter params from the event action contract
+ *
+ * @export
+ * @typedef {ReadEventActionParams}
+ * @param {fnName} fnName - The getter function name
+ */
 export type ReadEventActionParams<
   fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
 > = ReadParams<typeof eventActionAbi, fnName>;

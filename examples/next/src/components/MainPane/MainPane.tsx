@@ -1,7 +1,6 @@
 // components/MainPane.tsx
 import type { FC } from 'react';
 
-import { Divider } from '@chakra-ui/react';
 import { useAccount } from 'wagmi';
 
 import {
@@ -30,8 +29,6 @@ const MainPane: FC = () => {
             <Balance />
             <BlockNumber />
             <BoostCoreInfo />
-
-            <Divider mb={5} />
           </>
         )}
       </article>

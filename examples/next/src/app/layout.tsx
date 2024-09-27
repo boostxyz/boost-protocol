@@ -28,13 +28,6 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
-      <Head>
-        <link
-          key="matcha"
-          rel="stylesheet"
-          href="https://matcha.mizu.sh/matcha.css"
-        />
-      </Head>
       <body className={noto_sans.className}>
         <Providers>
           <div className="layout-simple">

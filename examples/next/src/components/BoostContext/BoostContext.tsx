@@ -1,3 +1,5 @@
+'use client';
+
 import { wagmiConfig } from '@/wagmi';
 import {
   BoostCore,
@@ -6,7 +8,12 @@ import {
   type BoostRegistryConfig,
 } from '@boostxyz/sdk';
 import { createContext, useContext, useMemo } from 'react';
-import { WagmiProviderNotFoundError, useConfig } from 'wagmi';
+import {
+  WagmiProviderNotFoundError,
+  getAccount,
+  useAccount,
+  useConfig,
+} from 'wagmi';
 
 export interface IBoostContext {
   registry: BoostRegistry;
@@ -33,15 +40,17 @@ export function BoostProvider({
   registry,
 }: React.PropsWithChildren<BoostProviderProps>) {
   const config = useConfig();
+  const account = useAccount(config);
 
   if (!config) throw new WagmiProviderNotFoundError();
 
   const value = useMemo(() => {
+    console.log('!!!', config, account);
     return {
-      core: new BoostCore({ ...core, config }),
-      registry: new BoostRegistry({ ...registry, config }),
+      core: new BoostCore({ ...core, config, account }),
+      registry: new BoostRegistry({ ...registry, config, account }),
     };
-  }, [config, core, registry]);
+  }, [config, account, core, registry]);
 
   return (
     <BoostContext.Provider value={value}>{children}</BoostContext.Provider>

@@ -1,8 +1,6 @@
 'use client';
 import { type ReactNode, useEffect, useState } from 'react';
 
-import { CacheProvider } from '@chakra-ui/next-js';
-import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
@@ -17,11 +15,6 @@ export function Providers({ children }: Readonly<{ children: ReactNode }>) {
 
   const queryClient = new QueryClient();
 
-  const theme = extendTheme({
-    initialColorMode: 'dark',
-    useSystemColorMode: false,
-  });
-
   const appInfo = {
     appName: 'Boost SDK Examples',
   };
@@ -29,13 +22,9 @@ export function Providers({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <CacheProvider>
-          <ChakraProvider resetCSS theme={theme}>
-            <RainbowKitProvider coolMode appInfo={appInfo}>
-              <BoostProvider>{mounted && children}</BoostProvider>
-            </RainbowKitProvider>
-          </ChakraProvider>
-        </CacheProvider>
+        <RainbowKitProvider coolMode appInfo={appInfo}>
+          <BoostProvider>{mounted && children}</BoostProvider>
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

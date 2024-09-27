@@ -7,7 +7,7 @@ interface InfoTextProps {
 
 const InfoText: FC<InfoTextProps> = ({ label, value = 'N/A', ...props }) => (
   <div {...props}>
-    {label}: <span>{value}</span>
+    {label}: <b>{value}</b>
   </div>
 );
 

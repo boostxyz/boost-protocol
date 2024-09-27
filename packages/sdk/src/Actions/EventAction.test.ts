@@ -338,7 +338,7 @@ describe('EventAction Func Selector', () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toContain(
-        'AbiFunctionSignatureNotFoundError',
+        'Failed to decode function data: Encoded function signature "0x6a627842"',
       );
     }
   });

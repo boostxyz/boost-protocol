@@ -1,5 +1,16 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.11
+
+### Minor Changes
+
+- f11669c: add `OpenAllowList`, for zero config allow list support
+- 74e818c: ManagedBudgetRoles as ts enum
+
+### Patch Changes
+
+- 4b65cfe: refactor budget methods to make assets have zero address as the default value
+
 ## 0.0.0-alpha.10
 
 ### Patch Changes

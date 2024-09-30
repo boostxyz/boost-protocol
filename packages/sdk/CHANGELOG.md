@@ -1,5 +1,14 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.12
+
+### Minor Changes
+
+- bac443d: Implement support for non-indexed string parameters
+- 1df1f74: split out eventABI getter parameters from the validation parameters for
+  validateActionSteps calls
+- bac443d: Support Regex filtering for Event Actions
+
 ## 0.0.0-alpha.11
 
 ### Minor Changes

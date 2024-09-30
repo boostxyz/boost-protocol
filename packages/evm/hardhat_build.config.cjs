@@ -1,7 +1,6 @@
 require('@nomicfoundation/hardhat-foundry');
 require('@nomicfoundation/hardhat-viem');
 require('@nomicfoundation/hardhat-ignition-viem');
-require('@nomicfoundation/hardhat-toolbox-viem');
 
 module.exports = {
   solidity: {

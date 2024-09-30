@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/evm",
-  "version": "0.0.0-alpha.1",
+  "version": "0.0.0-alpha.2",
   "description": "",
   "private": true,
   "publishConfig": {
@@ -25,7 +25,7 @@
   "types": "./dist/generated.d.ts",
   "typings": "./dist/generated.d.ts",
   "scripts": {
-    "build": "npm run clean && npm run build:componentInterfaces && forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "build": "npm run build:componentInterfaces && forge build --sizes && wagmi generate && vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
     "build:componentInterfaces": "forge script script/solidity/ComponentInterface.s.sol",
     "clean": "forge clean && hardhat --config hardhat_build.config.cjs clean && rm -rf cache",
     "test": "forge test -vvv",

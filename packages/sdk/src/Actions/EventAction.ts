@@ -14,12 +14,15 @@ import {
   type AbiFunction,
   type Address,
   type ContractEventName,
+  type ContractFunctionName,
+  type GetLogsReturnType,
   type GetTransactionParameters,
   type Hex,
   type Log,
   type PublicClient,
   decodeFunctionData,
   encodeAbiParameters,
+  fromHex,
   isAddressEqual,
   trim,
 } from 'viem';
@@ -30,12 +33,14 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  DecodedArgsMalformedError,
   FieldValueNotComparableError,
   FieldValueUndefinedError,
   FunctionDataDecodeError,
   InvalidNumericalCriteriaError,
   NoEventActionStepsProvidedError,
   TooManyEventActionStepsProvidedError,
+  UnparseableAbiParamError,
   UnrecognizedFilterTypeError,
 } from '../errors';
 import {
@@ -62,6 +67,7 @@ export enum FilterType {
   GREATER_THAN = 2,
   LESS_THAN = 3,
   CONTAINS = 4,
+  REGEX = 5,
 }
 
 /**
@@ -323,6 +329,26 @@ export interface EventActionPayloadRaw {
 }
 
 /**
+ * Array of event logs to pass into TxParams
+ * @export
+ * @typedef {EventLogs}
+ */
+export type EventLogs = GetLogsReturnType<AbiEvent, AbiEvent[], true>;
+
+/**
+ * Getter params from the event action contract
+ *
+ * @export
+ * @typedef {ReadEventActionParams}
+ * @param {fnName} fnName - The getter function name
+ */
+export type ReadEventActionParams<
+  fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
+> = ReadParams<typeof eventActionAbi, fnName>;
+
+type TxParams = ValidateEventStepParams | ValidateFunctionStepParams;
+
+/**
  * A generic event action
  *
  * @export
@@ -365,12 +391,12 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {number} index The index of the action event to retrieve
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionStep'>} [params]
+   * @param {?ReadEventActionParams<'getActionStep'>} [params]
    * @returns {Promise<ActionStep>}
    */
   public async getActionStep(
     index: number,
-    params?: ReadParams<typeof eventActionAbi, 'getActionStep'>,
+    params?: ReadEventActionParams<'getActionStep'>,
   ) {
     const steps = await this.getActionSteps(params);
     return steps.at(index);
@@ -381,11 +407,11 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'>} [params]
+   * @param {?ReadEventActionParams<'getActionSteps'>} [params]
    * @returns {Promise<ActionStep[]>}
    */
   public async getActionSteps(
-    params?: ReadParams<typeof eventActionAbi, 'getActionSteps'>,
+    params?: ReadEventActionParams<'getActionSteps'>,
   ) {
     const steps = (await readEventActionGetActionSteps(this._config, {
       address: this.assertValidAddress(),
@@ -401,11 +427,11 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionStepsCount'>} [params]
+   * @param {?ReadEventActionParams<'getActionStepsCount'>} [params]
    * @returns {Promise<bigint>}
    */
   public async getActionStepsCount(
-    params?: ReadParams<typeof eventActionAbi, 'getActionStepsCount'>,
+    params?: ReadEventActionParams<'getActionStepsCount'>,
   ) {
     const steps = await this.getActionSteps(params);
     return steps.length;
@@ -416,17 +442,16 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionClaimant'>} [params]
+   * @param {?ReadEventActionParams<'getActionClaimant'>} [params]
    * @returns {Promise<ActionClaimant>}
    */
   public async getActionClaimant(
-    params?: ReadParams<typeof eventActionAbi, 'getActionClaimant'>,
+    params?: ReadEventActionParams<'getActionClaimant'>,
   ) {
     const result = (await readEventActionGetActionClaimant(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
+      ...params,
     })) as RawActionClaimant;
     return _fromRawActionStep(result);
   }
@@ -477,19 +502,11 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof eventActionAbi, 'getActionSteps'> &
-   *       GetLogsParams<Abi, ContractEventName<Abi>> & {
-   *         knownEvents?: Record<Hex, AbiEvent>;
-   *         logs?: Log[];
-   *       }} [params]
+   * @param {?TxParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async validateActionSteps(
-    params?: ReadParams<typeof eventActionAbi, 'getActionSteps'> &
-      ValidateEventStepParams &
-      ValidateFunctionStepParams & { chainId?: number },
-  ) {
-    const actionSteps = await this.getActionSteps(params);
+  public async validateActionSteps(params?: TxParams) {
+    const actionSteps = await this.getActionSteps();
     for (const actionStep of actionSteps) {
       if (!(await this.isActionStepValid(actionStep, params))) {
         return false;
@@ -506,19 +523,21 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {ActionStep} actionStep - The action step to validate. Can be a function of event step.
-   * @param {?ValidateEventStepParams & ValidateFunctionStepParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
+   * @param {?TxParams & { chainId?: number }} [params] - Additional parameters for validation, including known events, logs, and chain ID.
    * @returns {Promise<boolean>}
    */
   public async isActionStepValid(
     actionStep: ActionStep,
-    params?: ValidateEventStepParams &
-      ValidateFunctionStepParams & { chainId?: number },
+    params?: TxParams & { chainId?: number },
   ) {
     if (actionStep.signatureType === SignatureType.EVENT) {
       return await this.isActionEventValid(actionStep, params);
     }
     if (actionStep.signatureType === SignatureType.FUNC) {
-      return await this.isActionFunctionValid(actionStep, params);
+      return await this.isActionFunctionValid(
+        actionStep,
+        params as ValidateFunctionStepParams,
+      );
     }
     return false;
   }
@@ -546,8 +565,17 @@ export class EventAction extends DeployableTarget<
     } else {
       event = (events.abi as Record<Hex, AbiEvent>)[signature] as AbiEvent;
     }
+
     if (!event) {
       throw new Error(`No known ABI for given event signature: ${signature}`);
+    }
+
+    if (this.isArraylikeIndexed(actionStep, event)) {
+      // If the field is indexed, we can't filter on it
+      throw new UnparseableAbiParamError(
+        actionStep.actionParameter.fieldIndex,
+        event,
+      );
     }
     const targetContract = actionStep.targetContract;
     // Get all logs matching the event signature from the target contract
@@ -561,7 +589,7 @@ export class EventAction extends DeployableTarget<
       }));
     if (!logs.length) return false;
     for (let log of logs) {
-      if (!this.validateLogAgainstCriteria(criteria, log)) {
+      if (!this.validateLogAgainstCriteria(criteria, log as EventLogs[0])) {
         return false;
       }
     }
@@ -633,32 +661,24 @@ export class EventAction extends DeployableTarget<
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {string | bigint} fieldValue - The field value to validate.
-   * @param {Log} log - Optional, for error handling context.
    * @returns {Promise<boolean>} - Returns true if the field passes the criteria, false otherwise.
    */
   public validateFieldAgainstCriteria(
     criteria: Criteria,
-    fieldValue: string | bigint,
-    input: { log: Log } | { decodedArgs: readonly (string | bigint)[] },
+    fieldValue: string | bigint | Hex,
+    input:
+      | { log: EventLogs[0] }
+      | { decodedArgs: readonly (string | bigint)[] },
   ): boolean {
     // Type narrow based on criteria.filterType
     switch (criteria.filterType) {
       case FilterType.EQUAL:
         if (criteria.fieldType === PrimitiveType.ADDRESS) {
-          return isAddressEqual(
-            criteria.filterData,
-            `0x${(fieldValue as string).slice(-40)}`,
-          );
+          return isAddressEqual(criteria.filterData, fieldValue as Address);
         }
         return fieldValue === criteria.filterData;
 
       case FilterType.NOT_EQUAL:
-        if (criteria.fieldType === PrimitiveType.ADDRESS) {
-          return !isAddressEqual(
-            criteria.filterData,
-            `0x${(fieldValue as string).slice(-40)}`,
-          );
-        }
         return fieldValue !== criteria.filterData;
 
       case FilterType.GREATER_THAN:
@@ -686,13 +706,35 @@ export class EventAction extends DeployableTarget<
           criteria.fieldType === PrimitiveType.BYTES ||
           criteria.fieldType === PrimitiveType.STRING
         ) {
-          return (fieldValue as string).includes(criteria.filterData);
+          let substring;
+          if (criteria.fieldType === PrimitiveType.STRING) {
+            substring = fromHex(criteria.filterData, 'string');
+          } else {
+            // truncate the `0x` prefix
+            substring = criteria.filterData.slice(2);
+          }
+          return (fieldValue as string).includes(substring);
         }
         throw new FieldValueNotComparableError({
           ...input,
           criteria,
           fieldValue,
         });
+
+      case FilterType.REGEX:
+        if (typeof fieldValue !== 'string') {
+          throw new FieldValueNotComparableError({
+            ...input,
+            criteria,
+            fieldValue,
+          });
+        }
+
+        if (criteria.fieldType === PrimitiveType.STRING) {
+          // fieldValue is decoded by the ABI
+          const regexString = fromHex(criteria.filterData, 'string');
+          return new RegExp(regexString).test(fieldValue);
+        }
 
       default:
         throw new UnrecognizedFilterTypeError({
@@ -710,8 +752,19 @@ export class EventAction extends DeployableTarget<
    * @param {Log} log - The Viem event log.
    * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
    */
-  public validateLogAgainstCriteria(criteria: Criteria, log: Log): boolean {
-    const fieldValue = log.topics.at(criteria.fieldIndex);
+  public validateLogAgainstCriteria(
+    criteria: Criteria,
+    log: EventLogs[0],
+  ): boolean {
+    if (!Array.isArray(log.args) || log.args.length <= criteria.fieldIndex) {
+      throw new DecodedArgsMalformedError({
+        log,
+        criteria,
+        fieldValue: undefined,
+      });
+    }
+
+    const fieldValue = log.args.at(criteria.fieldIndex);
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({ log, criteria, fieldValue });
     }
@@ -788,6 +841,17 @@ export class EventAction extends DeployableTarget<
       args: [prepareEventActionPayload(rawPayload)],
       ...this.optionallyAttachAccount(options.account),
     };
+  }
+
+  public isArraylikeIndexed(step: ActionStep, event: AbiEvent) {
+    if (
+      (step.actionParameter.fieldType === PrimitiveType.STRING ||
+        step.actionParameter.fieldType === PrimitiveType.BYTES) &&
+      event.inputs[step.actionParameter.fieldIndex]?.indexed
+    ) {
+      return true;
+    }
+    return false;
   }
 }
 

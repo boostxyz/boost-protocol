@@ -29,7 +29,10 @@
       "packages/evm/cache_forge",
       "dist",
       ".next",
-      ".turbo"
+      ".turbo",
+      "assets",
+      "coverage",
+      "**/*.test.ts"
     ]
   },
   "linter": {

@@ -1,5 +1,5 @@
 require('dotenv').config();
-require('@nomicfoundation/hardhat-toolbox-viem');
+
 module.exports = {
   networks: {
     ...(process.env.VITE_ALCHEMY_API_KEY

@@ -27,20 +27,24 @@ export function basicErc721TransferAction(
     actionClaimant: {
       chainid: 31337,
       signatureType: SignatureType.EVENT,
-      signature: selectors['Transfer(address,address,uint256)'] as Hex,
-      fieldIndex: 2,
+      signature: selectors[
+        'Transfer(address indexed,address indexed,uint256 indexed)'
+      ] as Hex,
+      fieldIndex: 1,
       targetContract: erc721.assertValidAddress(),
     },
     actionSteps: [
       {
         chainid: 31337,
-        signature: selectors['Transfer(address,address,uint256)'] as Hex,
+        signature: selectors[
+          'Transfer(address indexed,address indexed,uint256 indexed)'
+        ] as Hex,
         signatureType: SignatureType.EVENT,
         targetContract: erc721.assertValidAddress(),
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
-          fieldIndex: 2,
+          fieldIndex: 1,
           filterData: accounts[1].account,
         },
       },

@@ -361,4 +361,14 @@ contract IncentiveBitsTest is Test {
         vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveClaimed.selector, 7));
         _used.setOrThrow(fakeHash, 7);
     }
+
+    function testIncentiveWorksOutofOrder() public {
+        unchecked {
+            for (uint256 x = 7; x < 8; x--) {
+                _used.setOrThrow(fakeHash, x);
+            }
+        }
+        uint8 map = _used.map[fakeHash];
+        assertEq(type(uint8).max, map);
+    }
 }

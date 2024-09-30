@@ -1,4 +1,5 @@
-import { selectors } from '@boostxyz/signatures/functions';
+import { selectors as eventSelectors } from '@boostxyz/signatures/events';
+import { selectors as funcSelectors } from '@boostxyz/signatures/functions';
 import {
   loadFixture,
   mine,
@@ -16,15 +17,15 @@ import {
 } from 'viem';
 import { optimism } from 'viem/chains';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { BoostCore } from '../src/BoostCore';
 import {
   type ActionStep,
   FilterType,
   PrimitiveType,
   SignatureType,
-  StrategyType,
   prepareSignerValidatorClaimDataPayload,
-} from '../src/utils';
+} from '../src';
+import { BoostCore } from '../src/BoostCore';
+import { StrategyType } from '../src/claiming';
 import { accounts } from './accounts';
 import {
   type BudgetFixtures,
@@ -36,11 +37,11 @@ import {
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the uniswap contract we're going to push a transaction against
-const targetContract = '0x88cbDF306C53b31cb1Dc5b465503d8C70d57bd3C' as Address;
+const uniswapRouter = '0xCb1355ff08Ab38bBCE60111F1bb2B784bE25D7e8';
 // We take the raw inputData off of an existing historical transaction
-// https://optimistic.etherscan.io/tx/0x57b2f3c07d6705bae18fd7129d5ea1c3f3c903447f92b206689593487daf1abb
+// https://optimistic.etherscan.io/tx/0x47a5d7b1b6e2866fcebd731fba5fa0b5386815db6002013e7e1dd43a0538bc04
 const inputData =
-  '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000066f1d9d5000000000000000000000000000000000000000000000000000000000000000300060c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000000219ca7b261cc76e00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002b6985884c4392d348587b19cb9eaaf157f13271cd000bb842000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000420000000000000000000000000000000000000600000000000000000000000077777d91c0b8ec9984a05302e4ef041dccf77fee0000000000000000000000000000000000000000000000000000000000000050000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000216d28496122ce4';
+  '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000066f6e3fb00000000000000000000000000000000000000000000000000000000000000040b000604000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000028000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000028db3066eac000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000028db3066eac000000000000000000000000000000000000000000000000000deab85555214488b700000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002b42000000000000000000000000000000000000060001f44200000000000000000000000000000000000042000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006000000000000000000000000042000000000000000000000000000000000000420000000000000000000000003d83ec320541ae96c4c91e9202643870458fb290000000000000000000000000000000000000000000000000000000000000001900000000000000000000000000000000000000000000000000000000000000600000000000000000000000004200000000000000000000000000000000000042000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000deab85555214488b7';
 // For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
 const incentiveData = pad('0xdef456232173821931823712381232131391321934');
 // This is only for a single incentive boost
@@ -48,20 +49,38 @@ const incentiveQuantity = 1;
 const referrer = accounts[1].account;
 
 // We take the address of the imposter from the transaction above
-const boostImpostor = '0x8652B4598A997dfdf5809344B3b2Ba709A65A786' as Address;
+const boostImpostor = '0xc25fef376784E9BcaD3E1472575c1E10079c56d1' as Address;
 const trustedSigner = accounts[0];
 const RPC_URL =
   'https://opt-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
-const OPTIMISM_CHAIN_BLOCK = 125763452;
-const selector = selectors[
+const OPT_CHAIN_BLOCK = BigInt('125928596');
+
+const funcSelector = funcSelectors[
   'execute(bytes commands, bytes[] inputs, uint256 deadline)'
+] as Hex;
+const eventSelector = eventSelectors[
+  'Transfer(address,address,uint256)'
 ] as Hex;
 
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
   'Boost with Swapping on Uniswap Incentive',
   () => {
+    const walletClient = createTestClient({
+      transport: http('http://127.0.0.1:8545'),
+      chain: optimism,
+      mode: 'hardhat',
+    })
+      .extend(publicActions)
+      .extend(walletActions);
+
     beforeAll(async () => {
-      await reset(RPC_URL, OPTIMISM_CHAIN_BLOCK);
+      await walletClient.reset({
+        jsonRpcUrl: RPC_URL,
+        // jsonRpcUrl: 'http://127.0.0.1:8545', // getting timeout when requesting eth_chainId
+        blockNumber: OPT_CHAIN_BLOCK - 1n,
+      });
+      // Use viem to send the transaction from the impersonated account
+
       fixtures = await loadFixture(deployFixtures);
       budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
     });
@@ -79,18 +98,50 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
       await mine();
 
-      // Step defining the action for Transfer event
-      const eventActionStep: ActionStep = {
-        signature: pad(selector), // execute(bytes commands,bytes[] inputs,uint256 deadline) function signature
+      // OP token address
+      const erc20TokenAddress =
+        '0x4200000000000000000000000000000000000042' as Address;
+
+      // Step for defining the action for the execute function (loose validation to ensure the address calls the function)
+      const eventActionStepOne: ActionStep = {
+        signature: pad(funcSelector), // execute(bytes commands,bytes[] inputs,uint256 deadline) function signature
         signatureType: SignatureType.FUNC, // We're working with a fuction
         actionType: 0, // Custom action type (set as 0 for now)
-        targetContract: targetContract, // Address of the Uniswap router contract
-        // We want to target the inputs property on the execute function
+        targetContract: uniswapRouter, // Address of the Uniswap router contract
+        // We want to target the commands property on the execute function
         actionParameter: {
-          filterType: FilterType.CONTAINS, // Filter to check for equality
-          fieldType: PrimitiveType.BYTES, // The field we're filtering is an address
-          fieldIndex: 1, // Might need to be 2, we'll see - let's log this
-          filterData: '0x6985884c4392d348587b19cb9eaaf157f13271cd', // Filtering based on swapTo contract (ZRO)
+          filterType: FilterType.NOT_EQUAL,
+          fieldType: PrimitiveType.BYTES, // The field we're filtering is a bytes type
+          fieldIndex: 0,
+          filterData: '0x0', // since we're using NOT_EQUAL, we can put anything but '0x0b000604'
+        },
+        chainid: optimism.id,
+      };
+
+      // Two steps defining the action for Transfer event (transfer of OP from Uniswap Router -> boostImpostor)
+      const eventActionStepTwo: ActionStep = {
+        signature: eventSelector, // Transfer(address,address,uint256) event signature
+        signatureType: SignatureType.EVENT, // We're working with an event
+        actionType: 0, // Custom action type (set as 0 for now)
+        targetContract: erc20TokenAddress, // Address of the ERC20 token address
+        actionParameter: {
+          filterType: FilterType.EQUAL, // Filter to check for equality
+          fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
+          fieldIndex: 1, // we want to target the first event, but the topic[0] is reserved for the event hash
+          filterData: uniswapRouter, // Filtering based on the Uniswap Router address
+        },
+        chainid: optimism.id,
+      };
+      const eventActionStepThree: ActionStep = {
+        signature: eventSelector, // Transfer(address,address,uint256) event signature
+        signatureType: SignatureType.EVENT, // We're working with an event
+        actionType: 0, // Custom action type (set as 0 for now)
+        targetContract: erc20TokenAddress, // Address of the ERC20 token address
+        actionParameter: {
+          filterType: FilterType.EQUAL, // Filter to check for equality
+          fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
+          fieldIndex: 2,
+          filterData: boostImpostor, // Filtering based on the boost impostor's address
         },
         chainid: optimism.id,
       };
@@ -99,15 +150,16 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const eventActionPayload = {
         actionClaimant: {
           signatureType: SignatureType.FUNC,
-          signature: pad(selector), // execute(bytes commands,bytes[] inputs,uint256 deadline) function signature
-          fieldIndex: 0, // Targeting the 'from' address
-          targetContract: targetContract, // The ERC20 contract we're monitoring
+          signature: eventSelector, // Transfer(address,address,uint256) event signature
+          fieldIndex: 1, // Targeting the 'to' address
+          targetContract: erc20TokenAddress, // The ERC20 contract we're monitoring
           chainid: optimism.id,
         },
-        actionStepOne: eventActionStep, // Use the custom step for action
-        actionStepTwo: eventActionStep, // Repeat the action step if necessary
-        actionStepThree: eventActionStep, // You can expand for more steps if needed
-        actionStepFour: eventActionStep, // Up to 4 action steps
+        actionSteps: [
+          eventActionStepOne,
+          eventActionStepTwo,
+          eventActionStepThree,
+        ],
       };
       // Initialize EventAction with the custom payload
       const eventAction = new bases.EventAction(
@@ -145,14 +197,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const action = boost.action;
       expect(action).toBeDefined();
 
-      // Use viem to send the transaction from the impersonated account
-      const walletClient = createTestClient({
-        transport: http('http://127.0.0.1:8545'),
-        chain: optimism,
-        mode: 'hardhat',
-      })
-        .extend(publicActions)
-        .extend(walletActions);
       await walletClient.impersonateAccount({
         address: boostImpostor,
       });
@@ -163,16 +207,18 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const testReceipt = await walletClient.sendTransaction({
         data: inputData,
         account: boostImpostor,
-        to: targetContract,
-        value: 29_777_000_000_000_000n,
+        to: uniswapRouter,
+        value: parseEther('0.184'),
       });
 
       // Make sure that the transaction was sent as expected and validates the action
       expect(testReceipt).toBeDefined();
 
       // validation doesn't work against functions, ideally will validate here
-      // const validation = await action.validateActionSteps();
-      // expect(validation).toBe(true);
+      const validation = await action.validateActionSteps({
+        hash: '0x57b2f3c07d6705bae18fd7129d5ea1c3f3c903447f92b206689593487daf1abb',
+      });
+      expect(validation).toBe(true);
 
       // Generate the signature using the trusted signer
       const claimDataPayload = await prepareSignerValidatorClaimDataPayload({

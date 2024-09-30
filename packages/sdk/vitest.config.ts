@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   define: {
-    __DEFAULT_CHAIN_ID__: '1337',
+    __DEFAULT_CHAIN_ID__: 31337,
   },
   test: {
     fileParallelism: false,

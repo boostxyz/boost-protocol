@@ -9,7 +9,6 @@ import {
   writeBoostRegistryRegister,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
-import { getAccount } from '@wagmi/core';
 import {
   type Address,
   type ContractEventName,
@@ -23,7 +22,6 @@ import {
   type GenericDeployableParams,
 } from './Deployable/Deployable';
 import type { DeployableTarget } from './Deployable/DeployableTarget';
-import { InvalidProtocolChainIdError, NoConnectedChainIdError } from './errors';
 import {
   type GenericLog,
   type HashAndSimulatedResult,
@@ -32,8 +30,6 @@ import {
   type WriteParams,
   assertValidAddressByChainId,
 } from './utils';
-
-export { boostRegistryAbi };
 
 /**
  * The address of the deployed `BoostRegistry` instance. In prerelease mode, this will be its sepolia address
@@ -167,6 +163,26 @@ export class BoostRegistry extends Deployable<
   typeof boostRegistryAbi
 > {
   /**
+   * A static property representing a map of stringified chain ID's to the address of the deployed implementation on chain
+   *
+   * @static
+   * @readonly
+   * @type {Record<string, Address>}
+   */
+  static readonly addresses: Record<number, Address> = BOOST_REGISTRY_ADDRESSES;
+
+  /**
+   * A getter that will return Boost registry's static addresses by numerical chain ID
+   *
+   * @public
+   * @readonly
+   * @type {Record<number, Address>}
+   */
+  public get addresses(): Record<number, Address> {
+    return (this.constructor as typeof BoostRegistry).addresses;
+  }
+
+  /**
    * Creates an instance of BoostRegistry.
    *
    * @see {@link BoostRegistryConfig}
@@ -182,7 +198,7 @@ export class BoostRegistry extends Deployable<
     } else if (isBoostRegistryDeployable(options)) {
       super({ account, config }, []);
     } else {
-      const address = assertValidAddressByChainId(
+      const { address } = assertValidAddressByChainId(
         config,
         BOOST_REGISTRY_ADDRESSES,
       );
@@ -235,7 +251,11 @@ export class BoostRegistry extends Deployable<
     const { request, result } = await simulateBoostRegistryRegister(
       this._config,
       {
-        address: this.assertValidAddress(),
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chain?.id || params?.chainId,
+        ),
         args: [registryType, name, implementation],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -329,7 +349,7 @@ export class BoostRegistry extends Deployable<
       config: this._config,
       account: this._account,
     });
-    const baseAddress = assertValidAddressByChainId(
+    const { address: baseAddress } = assertValidAddressByChainId(
       this._config,
       target.bases,
       params?.chain?.id || params?.chainId,
@@ -337,7 +357,11 @@ export class BoostRegistry extends Deployable<
     const { request, result } = await simulateBoostRegistryDeployClone(
       this._config,
       {
-        address: this.assertValidAddress(),
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chain?.id || params?.chainId,
+        ),
         args: [target.registryType, baseAddress, displayName, payload.args[0]],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -363,7 +387,11 @@ export class BoostRegistry extends Deployable<
     params?: ReadParams<typeof boostRegistryAbi, 'getBaseImplementation'>,
   ) {
     return await readBoostRegistryGetBaseImplementation(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [identifier],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -385,7 +413,11 @@ export class BoostRegistry extends Deployable<
     params?: ReadParams<typeof boostRegistryAbi, 'getClone'>,
   ) {
     return await readBoostRegistryGetBaseImplementation(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [identifier],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -407,7 +439,11 @@ export class BoostRegistry extends Deployable<
     params?: ReadParams<typeof boostRegistryAbi, 'getClones'>,
   ) {
     return await readBoostRegistryGetClones(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [deployer],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -435,7 +471,11 @@ export class BoostRegistry extends Deployable<
     params?: ReadParams<typeof boostRegistryAbi, 'getCloneIdentifier'>,
   ) {
     return await readBoostRegistryGetCloneIdentifier(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [registryType, base, deployer, displayName],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -459,7 +499,11 @@ export class BoostRegistry extends Deployable<
     params?: ReadParams<typeof boostRegistryAbi, 'getIdentifier'>,
   ) {
     return await readBoostRegistryGetCloneIdentifier(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [registryType, displayName],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

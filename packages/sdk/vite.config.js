@@ -50,7 +50,7 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
 /** @type {import('vite').UserConfig} */
 export default {
   define: {
-    __DEFAULT_CHAIN_ID__: process.env.DEFAULT_CHAIN_ID || '11155111',
+    __DEFAULT_CHAIN_ID__: Number(process.env.DEFAULT_CHAIN_ID) || 11155111,
   },
   build: {
     emptyOutDir: false,

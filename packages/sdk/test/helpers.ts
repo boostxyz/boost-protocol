@@ -112,10 +112,7 @@ export async function freshBoost(
   fixtures: Fixtures,
   options: Partial<CreateBoostPayload>,
 ) {
-  const core = new BoostCore({
-    ...defaultOptions,
-    address: fixtures.core.assertValidAddress(),
-  });
+  const { core } = fixtures;
   const { budget, erc20 } = await loadFixture(
     fundBudget(defaultOptions, fixtures),
   );
@@ -126,8 +123,7 @@ export async function freshBoost(
     budget: options.budget || budget,
     action:
       options.action ||
-      new fixtures.bases.EventAction(
-        defaultOptions,
+      core.EventAction(
         makeMockEventActionPayload(
           core.assertValidAddress(),
           erc20.assertValidAddress(),
@@ -155,11 +151,23 @@ export async function freshBoost(
 export async function deployFixtures(
   options: DeployableTestOptions = defaultOptions,
 ) {
+  const chainId = 31337;
   const { config, account } = options;
-  const registry = await new BoostRegistry({
+  const _registry = await new BoostRegistry({
     address: null,
     ...options,
   }).deploy();
+
+  class TBoostRegistry extends BoostRegistry {
+    public static override addresses: Record<number, Address> = {
+      [chainId]: _registry.assertValidAddress(),
+    };
+  }
+
+  const registry = new TBoostRegistry({
+    ...options,
+    address: _registry.assertValidAddress(),
+  });
 
   const contractActionBase = await getDeployedContractAddress(
     config,
@@ -287,8 +295,6 @@ export async function deployFixtures(
     }),
   );
 
-  const chainId = 1337;
-
   const bases = {
     ContractAction: class TContractAction extends ContractAction {
       public static override bases: Record<number, Address> = {
@@ -380,7 +386,17 @@ export async function deployFixtures(
     );
   }
 
+  const _core = await new BoostCore({
+    ...options,
+    registryAddress: registry.assertValidAddress(),
+    protocolFeeReceiver: account.address,
+  }).deploy();
+
   class TBoostCore extends BoostCore {
+    public static override addresses: Record<number, Address> = {
+      [chainId]: _core.assertValidAddress(),
+    };
+
     ContractAction(
       options: DeployablePayloadOrAddress<ContractActionPayload>,
       isBase?: boolean,
@@ -431,13 +447,10 @@ export async function deployFixtures(
         isBase,
       );
     }
-    override OpenAllowList(
-      options: DeployablePayloadOrAddress<undefined>,
-      isBase?: boolean,
-    ) {
+    override OpenAllowList(isBase?: boolean) {
       return new bases.OpenAllowList(
         { config: this._config, account: this._account },
-        options,
+        undefined,
         isBase,
       );
     }
@@ -515,10 +528,8 @@ export async function deployFixtures(
 
   const core = new TBoostCore({
     ...options,
-    registryAddress: registry.assertValidAddress(),
-    protocolFeeReceiver: account.address,
+    address: _core.assertValidAddress(),
   });
-  await core.deploy();
 
   return {
     registry,

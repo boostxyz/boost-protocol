@@ -205,21 +205,20 @@ export async function awaitResult<Result = unknown>(
 }
 
 /**
- * Given a wagmi config and a map of chain id's to addresses, determine an address that maps to the currently connected chain id, or throw a typed error.
+ * Given a wagmi config and a map of chain id's to addresses, determine an address/chainId combo that maps to the currently connected chain id, or throw a typed error.
  *
  * @export
  * @param {Config} config
  * @param {Record<string, Address>} addressByChainId
  * @param {number} desiredChainId
- * @returns {Address}
- * @throws {@link NoConnectedChainIdError}
+ * @returns {{ chainId: number, address: Address }}
  * @throws {@link InvalidProtocolChainIdError}
  */
 export function assertValidAddressByChainId(
   config: Config,
   addressByChainId: Record<number, Address>,
   desiredChainId?: number,
-): Address {
+): { chainId: number; address: Address } {
   let chainId: number | undefined = undefined;
   const wagmiAccount = getAccount(config);
   // if manually providing a chain id for some contract operation, try to use it
@@ -244,5 +243,5 @@ export function assertValidAddressByChainId(
       Object.keys(addressByChainId).map(Number),
     );
   // biome-ignore lint/style/noNonNullAssertion: this type should be narrowed by the above statement but isn't?
-  return addressByChainId[chainId]!;
+  return { chainId, address: addressByChainId[chainId]! };
 }

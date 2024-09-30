@@ -1,3 +1,4 @@
+import { selectors } from '@boostxyz/signatures/functions';
 import {
   loadFixture,
   mine,
@@ -51,9 +52,7 @@ const trustedSigner = accounts[0];
 const CHAIN_URL =
   'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
 const CHAIN_BLOCK = 20166633n; // block befre the swap transaction
-// const selector = selectors['execute(bytes commands,bytes[] inputs)'] as Hex;
-const selector =
-  '0x24856bc300000000000000000000000000000000000000000000000000000000' as Hex;
+const selector = selectors['execute(bytes commands,bytes[] inputs)'] as Hex;
 
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
   'Boost for Swapping on a Specific DEX (aerodrome)',
@@ -78,7 +77,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
     test('should create a boost for swapping on a specific DEX', async () => {
       const { budget, erc20 } = budgets;
 
-      const { core, bases } = fixtures;
+      const { core } = fixtures;
 
       const client = new BoostCore({
         ...defaultOptions,
@@ -91,7 +90,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // Step defining the action for Transfer event
       const eventActionStep: ActionStep = {
         chainid: base.id,
-        signature: selector, // execute(bytes commands,bytes[] inputs)
+        signature: pad(selector), // execute(bytes commands,bytes[] inputs)
         signatureType: SignatureType.FUNC, // We're working with a function signature
         targetContract: targetContract, // Address of the universal router contract
         actionParameter: {
@@ -107,34 +106,26 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         actionClaimant: {
           chainid: base.id,
           signatureType: SignatureType.FUNC,
-          signature: selector, // execute(bytes commands,bytes[] inputs)
+          signature: pad(selector), // execute(bytes commands,bytes[] inputs)
           fieldIndex: 0, // Targeting the 'from' address
           targetContract: targetContract as Address, // The universal router contract
         },
         actionSteps: [eventActionStep],
       };
       // Initialize EventAction with the custom payload
-      const eventAction = new bases.EventAction(
-        defaultOptions,
-        eventActionPayload,
-      );
+      const eventAction = core.EventAction(eventActionPayload);
       // Create the boost using the custom EventAction
       await client.createBoost({
-        protocolFee: 1n,
-        referralFee: 2n,
-        maxParticipants: 100n,
+        maxParticipants: 10n,
         budget: budget, // Use the ManagedBudget
         action: eventAction, // Pass the manually created EventAction
-        validator: new bases.SignerValidator(defaultOptions, {
+        validator: core.SignerValidator({
           signers: [owner, trustedSigner.account], // Whichever account we're going to sign with needs to be a signer
-          validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
+          validatorCaller: core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
         }),
-        allowList: new bases.SimpleAllowList(defaultOptions, {
-          owner: owner,
-          allowed: [owner],
-        }),
+        allowList: core.OpenAllowList(),
         incentives: [
-          new bases.ERC20Incentive(defaultOptions, {
+          core.ERC20Incentive({
             asset: erc20.assertValidAddress(),
             reward: parseEther('1'),
             limit: 100n,
@@ -156,7 +147,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         address: boostImpostor,
         value: parseEther('10'),
       });
-      const testReceipt = await walletClient.sendTransaction({
+      const hash = await walletClient.sendTransaction({
         data: inputData,
         account: boostImpostor,
         to: targetContract,
@@ -164,8 +155,8 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       });
 
       // Make sure that the transaction was sent as expected and validates the action
-      expect(testReceipt).toBeDefined();
-      const validation = await action.validateActionSteps();
+      expect(hash).toBeDefined();
+      const validation = await action.validateActionSteps({ hash });
       expect(validation).toBe(true);
       // Generate the signature using the trusted signer
       const claimDataPayload = await boost.validator.encodeClaimData({

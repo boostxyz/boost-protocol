@@ -74,15 +74,14 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       .extend(walletActions);
 
     beforeAll(async () => {
-      await walletClient.reset({
-        jsonRpcUrl: RPC_URL,
-        // jsonRpcUrl: 'http://127.0.0.1:8545', // getting timeout when requesting eth_chainId
-        blockNumber: OPT_CHAIN_BLOCK - 1n,
-      });
-      // Use viem to send the transaction from the impersonated account
-
       fixtures = await loadFixture(deployFixtures);
       budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+
+      await walletClient.reset({
+        // jsonRpcUrl: RPC_URL,
+        jsonRpcUrl: 'http://127.0.0.1:8545', // getting timeout when requesting eth_chainId
+        blockNumber: OPT_CHAIN_BLOCK - 1n,
+      });
     });
 
     test('should create a boost for incentivizing swapping on Uniswap', async () => {
@@ -197,6 +196,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const action = boost.action;
       expect(action).toBeDefined();
 
+      // Use viem to send the transaction from the impersonated account
       await walletClient.impersonateAccount({
         address: boostImpostor,
       });

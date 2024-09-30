@@ -68,11 +68,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const { budget, erc20 } = budgets;
 
       const { core } = fixtures;
-
-      const client = new BoostCore({
-        ...defaultOptions,
-        address: core.assertValidAddress(),
-      });
       const owner = defaultOptions.account.address;
       // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
       await mine();
@@ -106,7 +101,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // Initialize EventAction with the custom payload
       const eventAction = core.EventAction(eventActionPayload);
       // Create the boost using the custom EventAction
-      await client.createBoost({
+      await core.createBoost({
         protocolFee: 250n,
         referralFee: 250n,
         maxParticipants: 100n,
@@ -131,8 +126,8 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       });
 
       // Make sure the boost was created as expected
-      expect(await client.getBoostCount()).toBe(1n);
-      const boost = await client.getBoost(0n);
+      expect(await core.getBoostCount()).toBe(1n);
+      const boost = await core.getBoost(0n);
       const action = boost.action;
       expect(action).toBeDefined();
 

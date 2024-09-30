@@ -87,7 +87,7 @@ export class DeployableAlreadyDeployedError extends Error {
    */
   constructor(address: string) {
     super(
-      `Attempted to deploy a contract that already has an address configured`,
+      'Attempted to deploy a contract that already has an address configured',
     );
     this.address = address;
   }
@@ -678,5 +678,21 @@ export class UnrecognizedFilterTypeError extends FieldActionValidationError {
     metadata: EventActionValidationMeta | FunctionActionValidationMeta,
   ) {
     super('Invalid FilterType provided', metadata);
+  }
+}
+
+export class NoConnectedChainIdError extends Error {
+  constructor() {
+    super(
+      'Provided Wagmi configuration does not define `chainId` property with which to target protocol contracts',
+    );
+  }
+}
+
+export class InvalidProtocolChainIdError extends Error {
+  constructor(chainId: number, validChainIds: number[]) {
+    super(
+      `Provided Wagmi configuration supplied a "chainId" where protocol is not deployed, provided: ${chainId}, but valid chains are: ${validChainIds}`,
+    );
   }
 }

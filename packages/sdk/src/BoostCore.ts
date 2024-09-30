@@ -31,6 +31,7 @@ import {
   zeroAddress,
   zeroHash,
 } from 'viem';
+import { BoostCore as BoostCoreBases } from '../dist/deployments.json';
 import { type Action, actionFromAddress } from './Actions/Action';
 import { EventAction, type EventActionPayload } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
@@ -95,7 +96,12 @@ import {
   IncentiveNotCloneableError,
   MustInitializeBudgetError,
 } from './errors';
-import type { GenericLog, ReadParams, WriteParams } from './utils';
+import {
+  type GenericLog,
+  type ReadParams,
+  type WriteParams,
+  assertValidAddressByChainId,
+} from './utils';
 
 export { boostCoreAbi };
 
@@ -107,13 +113,24 @@ export { boostCoreAbi };
 export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 /**
- * The fixed address for the deployed Boost Core.
- * By default, `new BoostCore` will use this address if not otherwise provided.
+ * The address of the deployed BoostCore instance. In prerelease mode, this will be its sepolia address
  *
  * @type {Address}
  */
-export const BOOST_CORE_ADDRESS: Address = import.meta.env
-  .VITE_BOOST_CORE_ADDRESS;
+export const BOOST_CORE_ADDRESS = (BoostCoreBases as Record<string, Address>)[
+  __DEFAULT_CHAIN_ID__
+];
+
+/**
+ * The fixed addresses for the deployed Boost Core.
+ * By default, `new BoostCore` will use the address deployed to the currently connected chain, or `BOOST_CORE_ADDRESS` if not provided.
+ *
+ * @type {Record<number, Address>}
+ */
+export const BOOST_CORE_ADDRESSES: Record<number, Address> = {
+  ...(BoostCoreBases as Record<number, Address>),
+  31337: import.meta.env.VITE_BOOST_CORE_ADDRESS,
+};
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.
@@ -233,6 +250,26 @@ export class BoostCore extends Deployable<
   typeof boostCoreAbi
 > {
   /**
+   * A static property representing a map of stringified chain ID's to the address of the deployed implementation on chain
+   *
+   * @static
+   * @readonly
+   * @type {Record<string, Address>}
+   */
+  static readonly addresses: Record<number, Address> = BOOST_CORE_ADDRESSES;
+
+  /**
+   * A getter that will return Boost core's static addresses by numerical chain ID
+   *
+   * @public
+   * @readonly
+   * @type {Record<number, Address>}
+   */
+  public get addresses(): Record<number, Address> {
+    return (this.constructor as typeof BoostCore).addresses;
+  }
+
+  /**
    * Creates an instance of BoostCore.
    *
    * @constructor
@@ -250,7 +287,11 @@ export class BoostCore extends Deployable<
         options.protocolFeeReceiver,
       ]);
     } else {
-      super({ account, config }, BOOST_CORE_ADDRESS);
+      const { address } = assertValidAddressByChainId(
+        config,
+        BOOST_CORE_ADDRESSES,
+      );
+      super({ account, config }, address);
     }
     //@ts-expect-error I can't set this property on the class because for some reason it takes super out of constructor scope?
     this.abi = boostCoreAbi;
@@ -266,14 +307,17 @@ export class BoostCore extends Deployable<
    */
   public async createBoost(
     _boostPayload: CreateBoostPayload,
-    _options?: DeployableOptions,
+    _params?: DeployableOptions &
+      WriteParams<typeof boostCoreAbi, 'createBoost'>,
   ) {
-    const coreAddress = this.assertValidAddress();
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(
-        _boostPayload,
-        _options,
-      );
+      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload, _params);
+    const desiredChainId = _params?.chain?.id || _params?.chainId;
+    const { chainId, address: coreAddress } = assertValidAddressByChainId(
+      options.config,
+      this.addresses,
+      desiredChainId,
+    );
 
     let {
       budget,
@@ -290,7 +334,7 @@ export class BoostCore extends Deployable<
     const boostFactory = createWriteContract({
       abi: boostCoreAbi,
       functionName: 'createBoost',
-      address: this.address,
+      address: coreAddress,
     });
 
     if (!owner) {
@@ -321,7 +365,7 @@ export class BoostCore extends Deployable<
       parameters: zeroHash,
     };
     if (action.address) {
-      const isBase = action.address === action.base || action.isBase;
+      const isBase = action.isBase;
       actionPayload = {
         isBase: isBase,
         instance: action.address,
@@ -332,7 +376,11 @@ export class BoostCore extends Deployable<
     } else {
       actionPayload.parameters =
         action.buildParameters(undefined, options).args.at(0) || zeroHash;
-      actionPayload.instance = action.base;
+      actionPayload.instance = assertValidAddressByChainId(
+        options.config,
+        action.bases,
+        chainId,
+      ).address;
     }
 
     let validatorPayload: BoostPayload['validator'] = {
@@ -341,7 +389,7 @@ export class BoostCore extends Deployable<
       parameters: zeroHash,
     };
     if (validator.address) {
-      const isBase = validator.address === validator.base || validator.isBase;
+      const isBase = validator.isBase;
       validatorPayload = {
         isBase: isBase,
         instance: validator.address,
@@ -368,7 +416,11 @@ export class BoostCore extends Deployable<
             options,
           )
           .args.at(0) || zeroHash;
-      validatorPayload.instance = validator.base;
+      validatorPayload.instance = assertValidAddressByChainId(
+        options.config,
+        validator.bases,
+        chainId,
+      ).address;
     }
 
     let allowListPayload: BoostPayload['allowList'] = {
@@ -377,7 +429,7 @@ export class BoostCore extends Deployable<
       parameters: zeroHash,
     };
     if (allowList.address) {
-      const isBase = allowList.address === allowList.base || allowList.isBase;
+      const isBase = allowList.isBase;
       allowListPayload = {
         isBase: isBase,
         instance: allowList.address,
@@ -388,10 +440,14 @@ export class BoostCore extends Deployable<
     } else {
       allowListPayload.parameters =
         allowList.buildParameters(undefined, options).args.at(0) || zeroHash;
-      allowListPayload.instance = allowList.base;
+      allowListPayload.instance = assertValidAddressByChainId(
+        options.config,
+        allowList.bases,
+        chainId,
+      ).address;
     }
 
-    let incentivesPayloads: Array<Target> = incentives.map(() => ({
+    const incentivesPayloads: Array<Target> = incentives.map(() => ({
       instance: zeroAddress,
       isBase: true,
       parameters: zeroHash,
@@ -400,7 +456,7 @@ export class BoostCore extends Deployable<
       // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
       const incentive = incentives.at(i)!;
       if (incentive.address) {
-        const isBase = incentive.address === incentive.base || incentive.isBase;
+        const isBase = incentive.isBase;
         if (!isBase) throw new IncentiveNotCloneableError(incentive);
         incentivesPayloads[i] = {
           isBase: isBase,
@@ -415,7 +471,11 @@ export class BoostCore extends Deployable<
         incentivesPayloads[i]!.parameters =
           incentive.buildParameters(undefined, options).args.at(0) || zeroHash;
         // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-        incentivesPayloads[i]!.instance = incentive.base;
+        incentivesPayloads[i]!.instance = assertValidAddressByChainId(
+          options.config,
+          incentive.bases,
+          chainId,
+        ).address;
       }
     }
 
@@ -432,8 +492,11 @@ export class BoostCore extends Deployable<
     };
 
     const boostHash = await boostFactory(options.config, {
-      args: [prepareBoostPayload(onChainPayload)],
       ...this.optionallyAttachAccount(options.account),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(_params as any),
+      chainId,
+      args: [prepareBoostPayload(onChainPayload)],
     });
     const receipt = await waitForTransactionReceipt(options.config, {
       hash: boostHash,
@@ -510,7 +573,11 @@ export class BoostCore extends Deployable<
     const { request, result } = await simulateBoostCoreClaimIncentive(
       this._config,
       {
-        address: this.assertValidAddress(),
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chain?.id || params?.chainId,
+        ),
         args: [boostId, incentiveId, referrer, data],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -578,7 +645,11 @@ export class BoostCore extends Deployable<
     const { request, result } = await simulateBoostCoreClaimIncentiveFor(
       this._config,
       {
-        address: this.assertValidAddress(),
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chain?.id || params?.chainId,
+        ),
         args: [boostId, incentiveId, referrer, data, claimant],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -677,7 +748,11 @@ export class BoostCore extends Deployable<
     params?: ReadParams<typeof boostCoreAbi, 'getBoostCount'>,
   ) {
     return await readBoostCoreGetBoostCount(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -700,7 +775,7 @@ export class BoostCore extends Deployable<
     params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'> &
       ReadParams<typeof iAuthAbi, 'isAuthorized'>,
   ) {
-    const auth = await this.createBoostAuth();
+    const auth = await this.createBoostAuth(params);
     return readIAuthIsAuthorized(this._config, {
       address: auth,
       args: [address],
@@ -722,7 +797,11 @@ export class BoostCore extends Deployable<
     params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'>,
   ) {
     return await readBoostCoreCreateBoostAuth(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -766,7 +845,11 @@ export class BoostCore extends Deployable<
     const { request, result } = await simulateBoostCoreSetCreateBoostAuth(
       this._config,
       {
-        address: this.assertValidAddress(),
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chainId,
+        ),
         args: [address],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -789,7 +872,11 @@ export class BoostCore extends Deployable<
     params?: ReadParams<typeof boostCoreAbi, 'protocolFee'>,
   ) {
     return await readBoostCoreProtocolFee(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -809,7 +896,11 @@ export class BoostCore extends Deployable<
     params?: ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>,
   ) {
     return await readBoostCoreProtocolFeeReceiver(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -853,7 +944,11 @@ export class BoostCore extends Deployable<
     const { request, result } = await simulateBoostCoreSetProtocolFeeReceiver(
       this._config,
       {
-        address: this.assertValidAddress(),
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chainId,
+        ),
         args: [address],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -877,7 +972,11 @@ export class BoostCore extends Deployable<
    */
   public async claimFee(params?: ReadParams<typeof boostCoreAbi, 'claimFee'>) {
     return await readBoostCoreClaimFee(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -917,7 +1016,11 @@ export class BoostCore extends Deployable<
     const { request, result } = await simulateBoostCoreSetClaimFee(
       this._config,
       {
-        address: this.assertValidAddress(),
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chainId,
+        ),
         args: [claimFee],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

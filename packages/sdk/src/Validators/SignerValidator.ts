@@ -18,6 +18,7 @@ import {
   encodeAbiParameters,
 } from 'viem';
 import { signTypedData } from 'viem/accounts';
+import { SignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -306,10 +307,12 @@ export class SignerValidator extends DeployableTarget<
    *
    * @public
    * @static
-   * @type {Address}
+   * @type {Record<number, Address>}
    */
-  public static override base: Address = import.meta.env
-    .VITE_SIGNER_VALIDATOR_BASE;
+  public static override bases: Record<number, Address> = {
+    ...(SignerValidatorBases as Record<number, Address>),
+    31337: import.meta.env.VITE_SIGNER_VALIDATOR_BASE,
+  };
   /**
    * @inheritdoc
    *

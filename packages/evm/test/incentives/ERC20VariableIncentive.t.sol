@@ -11,7 +11,6 @@ import {AIncentive, IBoostClaim} from "contracts/incentives/AIncentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 import {AERC20VariableIncentive} from "contracts/incentives/AERC20VariableIncentive.sol";
 
-
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
 

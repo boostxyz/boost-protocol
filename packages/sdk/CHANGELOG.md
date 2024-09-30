@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.13
+
+### Minor Changes
+
+- a7a3331: refactor base to bases in boost targets, resolve base address from config, and default to sepolia for now
+
 ## 0.0.0-alpha.12
 
 ### Minor Changes

@@ -329,13 +329,6 @@ type ReadEventActionParams<
 
 type TxParams = ValidateEventStepParams | ValidateFunctionStepParams;
 
-type ValidateInputParams<
-  fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
-> = {
-  getterParams?: ReadEventActionParams<fnName>;
-  txParams?: TxParams;
-};
-
 /**
  * A generic event action
  *
@@ -490,15 +483,13 @@ export class EventAction extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ValidateInputParams<'getActionSteps'>} [params]
+   * @param {?TxParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async validateActionSteps(
-    params?: ValidateInputParams<'getActionSteps'>,
-  ) {
-    const actionSteps = await this.getActionSteps(params?.getterParams);
+  public async validateActionSteps(params?: TxParams) {
+    const actionSteps = await this.getActionSteps();
     for (const actionStep of actionSteps) {
-      if (!(await this.isActionStepValid(actionStep, params?.txParams))) {
+      if (!(await this.isActionStepValid(actionStep, params))) {
         return false;
       }
     }

@@ -495,13 +495,38 @@ export async function deployStringEmitterMock(
       anonymous: false,
       inputs: [
         {
-          indexed: true,
+          indexed: false,
+          internalType: 'address',
+          name: 'messenger',
+          type: 'address',
+        },
+        {
+          indexed: false,
           internalType: 'string',
           name: 'emittedInfo',
           type: 'string',
         },
       ],
       name: 'Info',
+      type: 'event',
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'messenger',
+          type: 'address',
+        },
+        {
+          indexed: true,
+          internalType: 'string',
+          name: 'emittedInfo',
+          type: 'string',
+        },
+      ],
+      name: 'InfoIndexed',
       type: 'event',
     },
     {
@@ -517,11 +542,24 @@ export async function deployStringEmitterMock(
       stateMutability: 'nonpayable',
       type: 'function',
     },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'infoToEmit',
+          type: 'string',
+        },
+      ],
+      name: 'storeIndexed',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
   ];
 
   // from sourcecode here: https://gist.github.com/topocount/f1bf0f53c41e53fd0824b250a92cfad7
   const stringEmitterBytecode =
-    '0x6080604052348015600e575f80fd5b506101cf8061001c5f395ff3fe608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063131a06801461002d575b5f80fd5b610047600480360381019061004291906100fa565b610049565b005b8181604051610059929190610181565b60405180910390207f6d128f203c67be3b2d9bf1612fd59bdd6ae01f4f0d2ffedd05e76ab2a09b7f8a60405160405180910390a25050565b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f8083601f8401126100ba576100b9610099565b5b8235905067ffffffffffffffff8111156100d7576100d661009d565b5b6020830191508360018202830111156100f3576100f26100a1565b5b9250929050565b5f80602083850312156101105761010f610091565b5b5f83013567ffffffffffffffff81111561012d5761012c610095565b5b610139858286016100a5565b92509250509250929050565b5f81905092915050565b828183375f83830152505050565b5f6101688385610145565b935061017583858461014f565b82840190509392505050565b5f61018d82848661015d565b9150819050939250505056fea264697066735822122078b2f20733c3e7365d624d4e4b056202633440be09d47a294bad7c236c6d2a0c64736f6c634300081a0033';
+    '0x6080604052348015600e575f80fd5b506103078061001c5f395ff3fe608060405234801561000f575f80fd5b5060043610610034575f3560e01c8063131a06801461003857806319e951a414610054575b5f80fd5b610052600480360381019061004d9190610177565b610070565b005b61006e60048036038101906100699190610177565b6100af565b005b7fe46343e36b0721f173bdc76b8f25c08b04f417df09c27e1e83ba1980007fef8c3383836040516100a39392919061025b565b60405180910390a15050565b81816040516100bf9291906102b9565b60405180910390203373ffffffffffffffffffffffffffffffffffffffff167f883a883a9ea847654d33471b1e5fb2dea76a2cfc86a6cc7da6c14102800e4d0b60405160405180910390a35050565b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f8083601f84011261013757610136610116565b5b8235905067ffffffffffffffff8111156101545761015361011a565b5b6020830191508360018202830111156101705761016f61011e565b5b9250929050565b5f806020838503121561018d5761018c61010e565b5b5f83013567ffffffffffffffff8111156101aa576101a9610112565b5b6101b685828601610122565b92509250509250929050565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6101eb826101c2565b9050919050565b6101fb816101e1565b82525050565b5f82825260208201905092915050565b828183375f83830152505050565b5f601f19601f8301169050919050565b5f61023a8385610201565b9350610247838584610211565b6102508361021f565b840190509392505050565b5f60408201905061026e5f8301866101f2565b818103602083015261028181848661022f565b9050949350505050565b5f81905092915050565b5f6102a0838561028b565b93506102ad838584610211565b82840190509392505050565b5f6102c5828486610295565b9150819050939250505056fea2646970667358221220bd08bcf727e6d8abeb6af5a11b4a0163eea7cea32d5df0c72d3df2ef0c8b836464736f6c634300081a0033';
 
   const stringEmitterAddress = await getDeployedContractAddress(
     config,
@@ -543,11 +581,23 @@ export async function deployStringEmitterMock(
     return writeContract(config, request);
   }
 
+  async function emitIndexedString(infoToEmit: string) {
+    const { request } = await simulateContract(config, {
+      address: stringEmitterAddress,
+      abi: stringEmitterAbi,
+      functionName: 'storeIndexed',
+      args: [infoToEmit],
+      account,
+    });
+    return writeContract(config, request);
+  }
+
   console.log('StringEmitter', stringEmitterAddress);
   return {
     address: stringEmitterAddress,
     abi: stringEmitterAbi,
     emitString,
+    emitIndexedString,
   };
 }
 

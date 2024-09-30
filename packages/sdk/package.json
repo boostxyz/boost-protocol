@@ -197,13 +197,16 @@
     "test:ci": "CI=true vitest --coverage",
     "typedoc": "npx typedoc --tsconfig ./tsconfig.build.json --sort required-first --sort visibility --sort kind"
   },
+  "dependencies": {
+    "@boostxyz/signatures": "workspace:*"
+  },
   "optionalDependencies": {
     "@boostxyz/evm": "workspace:*",
     "@boostxyz/signatures": "workspace:*"
   },
   "peerDependencies": {
     "@wagmi/core": "2",
-    "viem": "2",
-    "abitype": "1"
+    "abitype": "1",
+    "viem": "2"
   }
 }

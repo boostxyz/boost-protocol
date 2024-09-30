@@ -15,6 +15,7 @@ import {
   type Address,
   type ContractEventName,
   type ContractFunctionName,
+  type GetLogsReturnType,
   type GetTransactionParameters,
   type Hex,
   type Log,
@@ -32,12 +33,14 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  DecodedArgsMalformedError,
   FieldValueNotComparableError,
   FieldValueUndefinedError,
   FunctionDataDecodeError,
   InvalidNumericalCriteriaError,
   NoEventActionStepsProvidedError,
   TooManyEventActionStepsProvidedError,
+  UnparseableAbiParamError,
   UnrecognizedFilterTypeError,
 } from '../errors';
 import {
@@ -325,7 +328,9 @@ export interface EventActionPayloadRaw {
   actionStepFour: ActionStep;
 }
 
-type ReadEventActionParams<
+export type EventLogs = GetLogsReturnType<AbiEvent, AbiEvent[], true>;
+
+export type ReadEventActionParams<
   fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
 > = ReadParams<typeof eventActionAbi, fnName>;
 
@@ -548,8 +553,17 @@ export class EventAction extends DeployableTarget<
     } else {
       event = (events.abi as Record<Hex, AbiEvent>)[signature] as AbiEvent;
     }
+
     if (!event) {
       throw new Error(`No known ABI for given event signature: ${signature}`);
+    }
+
+    if (this.isArraylikeIndexed(actionStep, event)) {
+      // If the field is indexed, we can't filter on it
+      throw new UnparseableAbiParamError(
+        actionStep.actionParameter.fieldIndex,
+        event,
+      );
     }
     const targetContract = actionStep.targetContract;
     // Get all logs matching the event signature from the target contract
@@ -563,7 +577,7 @@ export class EventAction extends DeployableTarget<
       }));
     if (!logs.length) return false;
     for (let log of logs) {
-      if (!this.validateLogAgainstCriteria(criteria, log)) {
+      if (!this.validateLogAgainstCriteria(criteria, log as EventLogs[0])) {
         return false;
       }
     }
@@ -639,27 +653,20 @@ export class EventAction extends DeployableTarget<
    */
   public validateFieldAgainstCriteria(
     criteria: Criteria,
-    fieldValue: string | bigint,
-    input: { log: Log } | { decodedArgs: readonly (string | bigint)[] },
+    fieldValue: string | bigint | Hex,
+    input:
+      | { log: EventLogs[0] }
+      | { decodedArgs: readonly (string | bigint)[] },
   ): boolean {
     // Type narrow based on criteria.filterType
     switch (criteria.filterType) {
       case FilterType.EQUAL:
         if (criteria.fieldType === PrimitiveType.ADDRESS) {
-          return isAddressEqual(
-            criteria.filterData,
-            `0x${(fieldValue as string).slice(-40)}`,
-          );
+          return isAddressEqual(criteria.filterData, fieldValue as Address);
         }
         return fieldValue === criteria.filterData;
 
       case FilterType.NOT_EQUAL:
-        if (criteria.fieldType === PrimitiveType.ADDRESS) {
-          return !isAddressEqual(
-            criteria.filterData,
-            `0x${(fieldValue as string).slice(-40)}`,
-          );
-        }
         return fieldValue !== criteria.filterData;
 
       case FilterType.GREATER_THAN:
@@ -687,7 +694,14 @@ export class EventAction extends DeployableTarget<
           criteria.fieldType === PrimitiveType.BYTES ||
           criteria.fieldType === PrimitiveType.STRING
         ) {
-          return (fieldValue as string).includes(criteria.filterData);
+          let substring;
+          if (criteria.fieldType === PrimitiveType.STRING) {
+            substring = fromHex(criteria.filterData, 'string');
+          } else {
+            // truncate the `0x` prefix
+            substring = criteria.filterData.slice(2);
+          }
+          return (fieldValue as string).includes(substring);
         }
         throw new FieldValueNotComparableError({
           ...input,
@@ -703,10 +717,11 @@ export class EventAction extends DeployableTarget<
             fieldValue,
           });
         }
+
         if (criteria.fieldType === PrimitiveType.STRING) {
-          const param = fromHex(fieldValue as Hex, 'string');
+          // fieldValue is decoded by the ABI
           const regexString = fromHex(criteria.filterData, 'string');
-          return new RegExp(regexString).test(param);
+          return new RegExp(regexString).test(fieldValue);
         }
 
       default:
@@ -725,8 +740,19 @@ export class EventAction extends DeployableTarget<
    * @param {Log} log - The Viem event log.
    * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
    */
-  public validateLogAgainstCriteria(criteria: Criteria, log: Log): boolean {
-    const fieldValue = log.topics.at(criteria.fieldIndex);
+  public validateLogAgainstCriteria(
+    criteria: Criteria,
+    log: EventLogs[0],
+  ): boolean {
+    if (!Array.isArray(log.args) || log.args.length <= criteria.fieldIndex) {
+      throw new DecodedArgsMalformedError({
+        log,
+        criteria,
+        fieldValue: undefined,
+      });
+    }
+
+    const fieldValue = log.args.at(criteria.fieldIndex);
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({ log, criteria, fieldValue });
     }
@@ -803,6 +829,17 @@ export class EventAction extends DeployableTarget<
       args: [prepareEventActionPayload(rawPayload)],
       ...this.optionallyAttachAccount(options.account),
     };
+  }
+
+  public isArraylikeIndexed(step: ActionStep, event: AbiEvent) {
+    if (
+      (step.actionParameter.fieldType === PrimitiveType.STRING ||
+        step.actionParameter.fieldType === PrimitiveType.BYTES) &&
+      event.inputs[step.actionParameter.fieldIndex]?.indexed
+    ) {
+      return true;
+    }
+    return false;
   }
 }
 

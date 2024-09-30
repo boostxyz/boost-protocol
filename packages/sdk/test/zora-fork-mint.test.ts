@@ -35,7 +35,7 @@ import {
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the zora contract we're going to push a transaction against
-const targetContract = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
+const targetContract: Address = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
 // We take the raw inputData off of an existing historical transaction
 // https://basescan.org/tx/0x17a4d7e08acec16f385d2a038b948359919e3675eca22a09789b462a9178a769
 const inputData =
@@ -78,18 +78,18 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
       await mine();
 
-      // Step defining the action for Transfer event
+      // Step defining the action for Purchased event
       const eventActionStep: ActionStep = {
         chainid: base.id,
-        signature: selector, // Transfer(address,address,uint256) event signature
+        signature: selector, // Purchased(address,address,uint256,uint256,uint256) event
         signatureType: SignatureType.EVENT, // We're working with an event
-        targetContract: targetContract, // Address of the ERC20 contract
-        // We want to target the Minter property on the Purchase event
+        targetContract: targetContract, // Address of the zora NFT contract
+        // We want to target the 'sender' property on the Purchase event
         actionParameter: {
           filterType: FilterType.EQUAL, // Filter to check for equality
           fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
-          fieldIndex: 1, // Might need to be 2, we'll see - let's log this
-          filterData: boostImpostor, // Filtering based on the core address
+          fieldIndex: 1, // The sender is at the 1st topic on the event
+          filterData: boostImpostor, // Filtering based on the imposters address
         },
       };
 
@@ -98,14 +98,11 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         actionClaimant: {
           chainid: base.id,
           signatureType: SignatureType.EVENT,
-          signature: selector, // Transfer(address,address,uint256) event signature
+          signature: selector, // Purchased(address,address,uint256,uint256,uint256) event
           fieldIndex: 0, // Targeting the 'from' address
-          targetContract: boostImpostor, // The ERC20 contract we're monitoring
+          targetContract: targetContract, // The Zora NFT contract we're monitoring
         },
-        actionStepOne: eventActionStep, // Use the custom step for action
-        actionStepTwo: eventActionStep, // Repeat the action step if necessary
-        actionStepThree: eventActionStep, // You can expand for more steps if needed
-        actionStepFour: eventActionStep, // Up to 4 action steps
+        actionSteps: [eventActionStep],
       };
       // Initialize EventAction with the custom payload
       const eventAction = core.EventAction(eventActionPayload);
@@ -159,7 +156,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         data: inputData,
         account: boostImpostor,
         to: targetContract,
-        value: 29_777_000_000_000_000n,
+        value: parseEther('0.029777'),
       });
 
       // Make sure that the transaction was sent as expected and validates the action
@@ -170,7 +167,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       const claimDataPayload = await boost.validator.encodeClaimData({
         signer: trustedSigner,
         incentiveData,
-        chainId: 8453,
+        chainId: base.id,
         incentiveQuantity,
         claimant: boostImpostor,
         boostId: boost.id,

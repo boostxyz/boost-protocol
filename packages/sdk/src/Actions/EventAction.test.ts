@@ -1,7 +1,17 @@
 import { selectors as eventSelectors } from '@boostxyz/signatures/events';
 import { selectors as funcSelectors } from '@boostxyz/signatures/functions';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { type Address, type Hex, type Log, isAddress, pad, parseEther, toHex } from 'viem';
+import {
+  type AbiEvent,
+  type Address,
+  type GetLogsReturnType,
+  type Hex,
+  type Log,
+  isAddress,
+  pad,
+  parseEther,
+  toHex,
+} from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '../../test/MockERC20';
 import type { MockERC721 } from '../../test/MockERC721';
@@ -17,6 +27,7 @@ import {
 } from '../../test/helpers';
 import {
   EventAction,
+  type EventLogs,
   type EventActionPayloadSimple,
   FilterType,
   PrimitiveType,
@@ -39,21 +50,25 @@ function basicErc721TransferAction(
   return {
     actionClaimant: {
       signatureType: SignatureType.EVENT,
-      signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
-      fieldIndex: 2,
+      signature: eventSelectors[
+        'Transfer(address indexed,address indexed,uint256 indexed)'
+      ] as Hex,
+      fieldIndex: 1,
       targetContract: erc721.assertValidAddress(),
       chainid: defaultOptions.config.chains[0].id,
     },
     actionSteps: [
       {
-        signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
+        signature: eventSelectors[
+          'Transfer(address indexed,address indexed,uint256 indexed)'
+        ] as Hex,
         signatureType: SignatureType.EVENT,
         targetContract: erc721.assertValidAddress(),
         chainid: defaultOptions.config.chains[0].id,
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
-          fieldIndex: 2,
+          fieldIndex: 1,
           filterData: accounts[1].account,
         },
       },
@@ -128,30 +143,70 @@ function basicErc20MintFuncAction(erc20: MockERC20): EventActionPayloadSimple {
   };
 }
 
-function regexErc721TransferAction(
+function indexedStringErc721TransferAction(
+  filterType: FilterType,
+  data: Hex,
   stringEmitterAddress: Address,
   erc721: MockERC721,
 ): EventActionPayloadSimple {
   return {
     actionClaimant: {
       signatureType: SignatureType.EVENT,
-      signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
-      fieldIndex: 2,
+      signature: eventSelectors[
+        'Transfer(address indexed,address indexed,uint256 indexed)'
+      ] as Hex,
+      fieldIndex: 1,
       targetContract: erc721.assertValidAddress(),
       chainid: defaultOptions.config.chains[0].id,
     },
     actionSteps: [
       {
-        signature: eventSelectors['Info(string indexed emittedInfo)'] as Hex,
+        signature: eventSelectors[
+          'InfoIndexed(address indexed,string indexed)'
+        ] as Hex,
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: stringEmitterAddress,
         chainid: defaultOptions.config.chains[0].id,
         actionParameter: {
-          filterType: FilterType.REGEX,
+          filterType,
           fieldType: PrimitiveType.STRING,
           fieldIndex: 1,
-          filterData: toHex('Hello'),
+          filterData: data,
+        },
+      },
+    ],
+  };
+}
+
+function stringErc721TransferAction(
+  filterType: FilterType,
+  data: Hex,
+  stringEmitterAddress: Address,
+  erc721: MockERC721,
+): EventActionPayloadSimple {
+  return {
+    actionClaimant: {
+      signatureType: SignatureType.EVENT,
+      signature: eventSelectors[
+        'Transfer(address indexed,address indexed,uint256 indexed)'
+      ] as Hex,
+      fieldIndex: 1,
+      targetContract: erc721.assertValidAddress(),
+      chainid: defaultOptions.config.chains[0].id,
+    },
+    actionSteps: [
+      {
+        signature: eventSelectors['Info(address,string)'] as Hex,
+        signatureType: SignatureType.EVENT,
+        actionType: 0,
+        targetContract: stringEmitterAddress,
+        chainid: defaultOptions.config.chains[0].id,
+        actionParameter: {
+          filterType,
+          fieldType: PrimitiveType.STRING,
+          fieldIndex: 1,
+          filterData: data,
         },
       },
     ],
@@ -184,10 +239,9 @@ function cloneFunctionAction(fixtures: Fixtures, erc721: MockERC721) {
 
 function cloneStringEventAction(
   fixtures: Fixtures,
-  stringEmitterAddress: Address,
+  actionParams: EventActionPayloadSimple,
 ) {
-  const actionParams = regexErc721TransferAction(stringEmitterAddress, erc721);
-  return function cloneStringEventAction() {
+  return function loadFixtureCallback() {
     return fixtures.registry.clone(
       crypto.randomUUID(),
       new fixtures.bases.EventAction(defaultOptions, actionParams),
@@ -219,14 +273,16 @@ describe('EventAction Event Selector', () => {
       step.actionParameter.filterData =
         step.actionParameter.filterData.toUpperCase() as Hex;
       expect(step).toMatchObject({
-        signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
+        signature: eventSelectors[
+          'Transfer(address indexed,address indexed,uint256 indexed)'
+        ] as Hex,
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: erc721.assertValidAddress().toUpperCase(),
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
-          fieldIndex: 2,
+          fieldIndex: 1,
           filterData: accounts[1].account.toUpperCase(),
         },
       });
@@ -241,14 +297,16 @@ describe('EventAction Event Selector', () => {
       step.actionParameter.filterData =
         step.actionParameter.filterData.toUpperCase() as Hex;
       expect(step).toMatchObject({
-        signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
+        signature: eventSelectors[
+          'Transfer(address indexed,address indexed,uint256 indexed)'
+        ] as Hex,
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: erc721.assertValidAddress().toUpperCase(),
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
-          fieldIndex: 2,
+          fieldIndex: 1,
           filterData: accounts[1].account.toUpperCase(),
         },
       });
@@ -266,8 +324,10 @@ describe('EventAction Event Selector', () => {
       claimant.targetContract = claimant.targetContract.toUpperCase() as Hex;
       expect(claimant).toMatchObject({
         signatureType: SignatureType.EVENT,
-        signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
-        fieldIndex: 2,
+        signature: eventSelectors[
+          'Transfer(address indexed,address indexed,uint256 indexed)'
+        ] as Hex,
+        fieldIndex: 1,
       });
     });
 
@@ -280,14 +340,16 @@ describe('EventAction Event Selector', () => {
       step.actionParameter.filterData =
         step.actionParameter.filterData.toUpperCase() as Hex;
       expect(step).toMatchObject({
-        signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
+        signature: eventSelectors[
+          'Transfer(address indexed,address indexed,uint256 indexed)'
+        ] as Hex,
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: erc721.assertValidAddress().toUpperCase(),
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
-          fieldIndex: 2,
+          fieldIndex: 1,
           filterData: accounts[1].account.toUpperCase(),
         },
       });
@@ -305,8 +367,10 @@ describe('EventAction Event Selector', () => {
       claimant.targetContract = claimant.targetContract.toUpperCase() as Hex;
       expect(claimant).toMatchObject({
         signatureType: SignatureType.EVENT,
-        signature: eventSelectors['Transfer(address,address,uint256)'] as Hex,
-        fieldIndex: 2,
+        signature: eventSelectors[
+          'Transfer(address indexed,address indexed,uint256 indexed)'
+        ] as Hex,
+        fieldIndex: 1,
         targetContract: erc721.assertValidAddress().toUpperCase(),
       });
     });
@@ -325,38 +389,86 @@ describe('EventAction Event Selector', () => {
     });
 
     test('can supply your own logs to validate against', async () => {
-      const log = {
-        eventName: 'Transfer',
-        args: undefined,
-        address: erc721.assertValidAddress(),
-        blockHash:
-          '0xbf602f988260519805d032be46d6ff97fbefbee6924b21097074d6d0bc34eced',
-        blockNumber: 1203n,
-        data: '0x',
-        logIndex: 0,
-        removed: false,
-        topics: [
-          '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-          '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-          '0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8',
-          '0x0000000000000000000000000000000000000000000000000000000000000001',
-        ],
-        transactionHash:
-          '0xff0e6ab0c4961ec14b7b40afec83ed7d7a77582683512a262e641d21f82efea5',
-        transactionIndex: 0,
-      } as Log;
+      const logs: EventLogs = [
+        {
+          eventName: 'Transfer',
+          args: [
+            '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+            '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+            1n,
+          ],
+          address: erc721.assertValidAddress(),
+          blockHash:
+            '0xbf602f988260519805d032be46d6ff97fbefbee6924b21097074d6d0bc34eced',
+          blockNumber: 1203n,
+          data: '0x',
+          logIndex: 0,
+          removed: false,
+          topics: [
+            '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+            '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+            '0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8',
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+          ],
+          transactionHash:
+            '0xff0e6ab0c4961ec14b7b40afec83ed7d7a77582683512a262e641d21f82efea5',
+          transactionIndex: 0,
+        },
+      ];
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       expect(
-        await action.validateActionSteps({ logs: [log] }),
+        await action.validateActionSteps({ logs }),
       ).toBe(true);
     });
 
-    describe.todo('regex transfer event', () => {
-      test('can parse an emitted string event', async () => {
+    describe('string event actions', () => {
+      test('cannot parse and validate contains for an emitted string event with an indexed param', async () => {
         const action = await loadFixture(
-          cloneStringEventAction(fixtures, stringEmitterFixtures.address),
+          cloneStringEventAction(
+            fixtures,
+            indexedStringErc721TransferAction(
+              FilterType.CONTAINS,
+              toHex('ello'),
+              stringEmitterFixtures.address,
+              erc721,
+            ),
+          ),
         );
-        await stringEmitterFixtures.emitString('hello world');
+
+        await stringEmitterFixtures.emitIndexedString('Hello world');
+        await expect(() => action.validateActionSteps()).rejects.toThrowError(
+          /Parameter is not transparently stored onchain/,
+        );
+      });
+      test('can parse and validate contains for an emitted string event', async () => {
+        const action = await loadFixture(
+          cloneStringEventAction(
+            fixtures,
+            stringErc721TransferAction(
+              FilterType.CONTAINS,
+              toHex('ello'),
+              stringEmitterFixtures.address,
+              erc721,
+            ),
+          ),
+        );
+        await stringEmitterFixtures.emitString('Hello world');
+        expect(await action.validateActionSteps()).toBe(true);
+      });
+      test('can parse and validate regex for an emitted string event', async () => {
+        const action = await loadFixture(
+          cloneStringEventAction(
+            fixtures,
+            stringErc721TransferAction(
+              FilterType.REGEX,
+              toHex('[hH]ello'),
+              stringEmitterFixtures.address,
+              erc721,
+            ),
+          ),
+        );
+
+        await stringEmitterFixtures.emitString('Hello world');
         expect(await action.validateActionSteps()).toBe(true);
       });
     });

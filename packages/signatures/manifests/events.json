@@ -1,10 +1,10 @@
 [
   "// Begin common builtin event signatures",
-  "Transfer(address,address,uint256)",
+  "Transfer(address indexed,address indexed,uint256 indexed)",
   "Purchased(address,address,uint256,uint256,uint256)",
   "NameRegistered(string,bytes32,address,uint256,uint256,uint256)",
   "DelegateChanged(address,address,address)",
   "// Test signatures",
-  "Info(bytes)",
-  "Info(string indexed emittedInfo)"
+  "InfoIndexed(address indexed,string indexed)",
+  "Info(address,string)"
 ]

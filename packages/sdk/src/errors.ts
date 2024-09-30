@@ -1,4 +1,5 @@
 import {
+  type AbiEvent,
   type AbiFunction,
   type Hex,
   type Log,
@@ -6,6 +7,7 @@ import {
   zeroHash,
 } from 'viem';
 import type { Criteria } from './Actions/EventAction';
+import type { EventLogs } from './Actions/EventAction';
 import type { BoostRegistry } from './BoostRegistry';
 import type { Incentive } from './Incentives/Incentive';
 
@@ -250,6 +252,44 @@ export class InvalidComponentInterfaceError extends Error {
 }
 
 /**
+ * This error is thrown when a param is not transparently stored onchain
+ *
+ * @export
+ * @class UnparseableAbiParamError
+ * @typedef {UnparseableAbiParamError}
+ * @extends {Error}
+ */
+export class UnparseableAbiParamError extends Error {
+  /**
+   * the param index that is unparseable
+   *
+   * @type {number}
+   */
+  input_param_idx: number;
+  /**
+   * The given event that contains the unparseable param
+   *
+   * @type {AbiEvent}
+   */
+  event: AbiEvent;
+  /**
+   * Creates an instance of UnknownTransferPayloadSupplied.
+   *
+   * @constructor
+   * @param {number} input_param_idx
+   * @param {AbiEvent} event
+   */
+  constructor(input_param_idx: number, event: AbiEvent) {
+    super(
+      `Parameter is not transparently stored onchain. Parameter ${input_param_idx} in event ${event.name} cannot be used in an action`,
+      { cause: event },
+    );
+    this.event = event;
+    this.input_param_idx = input_param_idx;
+  }
+}
+
+/**
  * This error is thrown when attempting a Budget transfer and arguments aren't of the type `FungibleTransferPayload` or `ERC1155TransferPayload`
  *
  * @see {@link FungibleTransferPayload}
@@ -415,7 +455,7 @@ interface EventActionValidationMeta {
    *
    * @type {Log}
    */
-  log?: Log;
+  log?: EventLogs[0];
   /**
    * The value pulled off the log being validated against
    *
@@ -452,7 +492,7 @@ export class FieldActionValidationError extends Error {
    *
    * @type {Log}
    */
-  log?: Log;
+  log?: EventLogs[0];
   /**
    * The value pulled off the log being validated against
    *
@@ -495,6 +535,31 @@ export class FieldActionValidationError extends Error {
       case 'decodedArgs' in args:
         this.decodedArgs = args.decodedArgs;
     }
+  }
+}
+
+/**
+ * Thrown when abi-decoded args on log is undefined
+ *
+ * @export
+ * @class FieldValueUndefinedError
+ * @typedef {FieldValueUndefinedError}
+ * @extends {FieldActionValidationError}
+ */
+export class DecodedArgsMalformedError extends FieldActionValidationError {
+  /**
+   * Creates an instance of DecodedArgsUndefinedError.
+   *
+   * @constructor
+   * @param {DecodedArgsMalformedError} metadata
+   */
+  constructor(
+    metadata: EventActionValidationMeta | FunctionActionValidationMeta,
+  ) {
+    super(
+      'Decoded Args are malformed; Check which params are indexed',
+      metadata,
+    );
   }
 }
 

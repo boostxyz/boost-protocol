@@ -44,7 +44,7 @@
     "dotenv": "16.4.5",
     "lefthook": "^1.6.15",
     "prettier": "^3.2.5",
-    "solady": "^0.0.208",
+    "solady": "^0.0.246",
     "turbo": "^2.0.0",
     "typedoc": "^0.26.4",
     "typedoc-material-theme": "^1.1.0",

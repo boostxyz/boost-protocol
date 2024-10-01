@@ -1,5 +1,11 @@
 # @boostxyz/signatures
 
+## 0.0.0-alpha.3
+
+### Minor Changes
+
+- 6154f5e: pad function selectors to 32 bytes in signatures package
+
 ## 0.0.0-alpha.2
 
 ### Minor Changes

@@ -3,7 +3,7 @@
   "Transfer(address indexed,address indexed,uint256 indexed)",
   "Purchased(address,address,uint256,uint256,uint256)",
   "NameRegistered(string,bytes32,address,uint256,uint256,uint256)",
-  "DelegateChanged(address,address,address)",
+  "DelegateChanged(address indexed,address indexed,address indexed)",
   "// Test signatures",
   "InfoIndexed(address indexed,string indexed)",
   "Info(address,string)"

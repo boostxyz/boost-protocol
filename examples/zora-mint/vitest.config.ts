@@ -9,5 +9,7 @@ export default defineConfig({
     fileParallelism: false,
     env: loadEnv('', process.cwd(), ''),
     globalSetup: ['../../test/src/setup.hardhat.ts'],
+    hookTimeout: 30_000,
+    testTimeout: 10_000,
   },
 });

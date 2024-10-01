@@ -34,4 +34,4 @@ jobs:
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: npx turbo test:ci --cache-dir=".cache" --concurrency=1 --filter="./examples/*"
+          command: npx hardhat node | npx turbo test:ci --cache-dir=".cache" --concurrency=1 --filter="./examples/*"

@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/sdk",
-  "version": "0.0.0-alpha.12",
+  "version": "0.0.0-alpha.14",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "files": ["dist", "src"],

@@ -24,6 +24,7 @@ import {
   type Hex,
   encodeAbiParameters,
 } from 'viem';
+import { ERC20Incentive as ERC20IncentiveBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -110,10 +111,12 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @static
-   * @type {Address}
+   * @type {Record<number, Address>}
    */
-  public static override base: Address = import.meta.env
-    .VITE_ERC20_INCENTIVE_BASE;
+  public static override bases: Record<number, Address> = {
+    ...(ERC20IncentiveBases as Record<number, Address>),
+    31337: import.meta.env.VITE_ERC20_INCENTIVE_BASE,
+  };
   /**
    * @inheritdoc
    *

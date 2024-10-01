@@ -32,7 +32,7 @@ import {
 import { createConfig, deployContract } from '@wagmi/core';
 import type { Hex } from 'viem';
 import { http, createWalletClient } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
+import { type Address, privateKeyToAccount } from 'viem/accounts';
 import * as _chains from 'viem/chains';
 import type { Command } from '../utils';
 
@@ -82,6 +82,8 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
   });
 
   const options: DeployableOptions = { config, account };
+
+  const chainId = chain!.id!;
 
   const registry = await (
     new BoostRegistry({
@@ -236,48 +238,72 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     //   public static override base = erc721MintActionBase;
     // },
     EventAction: class TEventAction extends EventAction {
-      public static override base = eventActionBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: eventActionBase,
+      } as Record<number, Address>;
     },
     SimpleAllowList: class TSimpleAllowList extends SimpleAllowList {
-      public static override base = simpleAllowListBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: simpleAllowListBase,
+      } as Record<number, Address>;
     },
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
-      public static override base = simpleDenyListBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: simpleDenyListBase,
+      } as Record<number, Address>;
     },
     // SimpleBudget: class TSimpleBudget extends SimpleBudget {
     //   public static override base = simpleBudgetBase;
     // },
     ManagedBudget: class TSimpleBudget extends ManagedBudget {
-      public static override base = managedBudgetBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: managedBudgetBase,
+      } as Record<number, Address>;
     },
     // VestingBudget: class TVestingBudget extends VestingBudget {
     //   public static override base = vestingBudgetBase;
     // },
     AllowListIncentive: class TAllowListIncentive extends AllowListIncentive {
-      public static override base = allowListIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: allowListIncentiveBase,
+      } as Record<number, Address>;
     },
     CGDAIncentive: class TCGDAIncentive extends CGDAIncentive {
-      public static override base = cgdaIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: cgdaIncentiveBase,
+      } as Record<number, Address>;
     },
     ERC20Incentive: class TERC20Incentive extends ERC20Incentive {
-      public static override base = erc20IncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: erc20IncentiveBase,
+      } as Record<number, Address>;
     },
     ERC20VariableIncentive: class TERC20VariableIncentive extends ERC20VariableIncentive {
-      public static override base = erc20VariableIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: erc20VariableIncentiveBase,
+      } as Record<number, Address>;
     },
     // ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
     //   public static override base = erc1155IncentiveBase;
     // },
     PointsIncentive: class TPointsIncentive extends PointsIncentive {
-      public static override base = pointsIncentiveBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: pointsIncentiveBase,
+      } as Record<number, Address>;
     },
     SignerValidator: class TSignerValidator extends SignerValidator {
-      public static override base = signerValidatorBase;
+      public static override bases: Record<number, Address> = {
+        [chainId]: signerValidatorBase,
+      } as Record<number, Address>;
     },
   };
 
   for (const [name, deployable] of Object.entries(bases)) {
-    await registry.register(deployable.registryType, name, deployable.base);
+    await registry.register(
+      deployable.registryType,
+      name,
+      deployable.bases[chainId],
+    );
   }
 
   return {

@@ -83,7 +83,8 @@ contract CGDAIncentive is AOwnable, ACGDAIncentive {
     /// @inheritdoc AIncentive
     /// @notice Claim the incentive
     function claim(address claimTarget, bytes calldata) external virtual override onlyOwner returns (bool) {
-        if (!_isClaimable(claimTarget)) revert NotClaimable();
+        if (!_isClaimable(claimTarget)) revert BoostError.ClaimFailed(claimTarget, hex"");
+        claimed[claimTarget] = true;
         claims++;
 
         // Calculate the current reward and update the state

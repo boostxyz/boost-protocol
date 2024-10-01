@@ -51,6 +51,7 @@
       "node": "./dist/transfers.js",
       "types": "./dist/transfers.d.ts"
     },
+    "./deployments.json": "./dist/deployments.json",
     "./Boost": {
       "require": "./dist/Boost.cjs",
       "import": "./dist/Boost.js",
@@ -185,14 +186,14 @@
     }
   },
   "scripts": {
-    "build": "vite build && tsc -p ./tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap",
+    "build": "mkdir -p dist && vite build && tsc -p ./tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap",
     "typecheck": "tsc -p ./tsconfig.build.json --noEmit",
     "lint:ci": "npx biome ci",
     "lint": "npx biome check",
     "bench": "vitest bench",
     "bench:ci": "CI=true vitest bench",
     "clean": "rm -rf dist",
-    "dev": "vite build --watch",
+    "dev": "mkdir -p dist && vite build --watch",
     "test": "vitest dev",
     "test:ci": "CI=true vitest --coverage",
     "typedoc": "npx typedoc --tsconfig ./tsconfig.build.json --sort required-first --sort visibility --sort kind"

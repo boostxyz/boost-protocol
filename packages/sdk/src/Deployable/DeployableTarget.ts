@@ -1,6 +1,6 @@
 import {
   type aCloneableAbi,
-  readACloneableGetComponentInterface as readACloneableGetComponentInterface,
+  readACloneableGetComponentInterface,
   readACloneableSupportsInterface,
 } from '@boostxyz/evm';
 import { deployContract } from '@wagmi/core';
@@ -11,6 +11,7 @@ import {
   type Hex,
   type WaitForTransactionReceiptParameters,
   isAddress,
+  isAddressEqual,
   zeroAddress,
 } from 'viem';
 import {
@@ -38,13 +39,13 @@ export class DeployableTarget<
   ContractAbi extends Abi,
 > extends Deployable<Payload, ContractAbi> {
   /**
-   * A static property representing the address of the base implementation on chain, used when cloning base contracts.
+   * A static property representing a map of stringified chain ID's to the address of the base implementation on chain, used when cloning base contracts.
    *
    * @static
    * @readonly
-   * @type {Address}
+   * @type {Record<string, Address>}
    */
-  static readonly base: Address = zeroAddress;
+  static readonly bases: Record<number, Address> = {};
   /**
    * The target's registry type.
    *
@@ -61,7 +62,14 @@ export class DeployableTarget<
    */
   protected _isBase = true;
   get isBase() {
-    if (!!this.address && this.address !== this.base) return false;
+    if (
+      !!this.address &&
+      Object.values(this.bases).some((base) =>
+        // biome-ignore lint/style/noNonNullAssertion: won't evaluate this if address checked and defined above
+        isAddressEqual(this.address!, base),
+      )
+    )
+      return true;
     return this._isBase;
   }
 
@@ -83,22 +91,25 @@ export class DeployableTarget<
     if (
       typeof payload === 'string' &&
       isAddress(payload) &&
-      payload !== this.base &&
-      payload !== zeroAddress
+      payload !== zeroAddress &&
+      !Object.values(this.bases).some((base) => {
+        if (!payload || !base) return false;
+        return isAddressEqual(payload, base);
+      })
     )
       isBase = false;
     if (isBase !== undefined) this._isBase = isBase;
   }
 
   /**
-   * A getter that will return the base implementation's static address
+   * A getter that will return the base implementation's static addresses by numerical chain ID
    *
    * @public
    * @readonly
-   * @type {Address}
+   * @type {Record<number, Address>}
    */
-  public get base(): Address {
-    return (this.constructor as typeof DeployableTarget).base;
+  public get bases(): Record<number, Address> {
+    return (this.constructor as typeof DeployableTarget).bases;
   }
 
   /**

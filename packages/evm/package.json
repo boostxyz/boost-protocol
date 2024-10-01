@@ -18,7 +18,8 @@
       "types": "./dist/generated.d.ts"
     },
     "./artifacts/contracts/*.json": "./artifacts/contracts/*.json",
-    "./deploys/componentInterfaces.json": "./deploys/componentInterfaces.json"
+    "./deploys/componentInterfaces.json": "./deploys/componentInterfaces.json",
+    "./deploys/*.json": "./deploys/*.json"
   },
   "main": "./dist/generated.cjs",
   "module": "./dist/generated.js",

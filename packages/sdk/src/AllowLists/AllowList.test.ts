@@ -52,7 +52,7 @@ describe('AllowList', () => {
     ).toBeInstanceOf(SimpleAllowList);
   });
 
-  test('can automatically instantiate SimpleAllowList given an address', async () => {
+  test('can automatically instantiate SimpleDenyList given an address', async () => {
     const _allowList = await loadFixture(freshDenyList(fixtures));
     expect(
       await allowListFromAddress(

@@ -33,6 +33,7 @@ import {
   parseAbiParameters,
   zeroAddress,
 } from 'viem';
+import { ManagedBudget as ManagedBudgetBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -54,7 +55,6 @@ import {
   RegistryType,
   type WriteParams,
 } from '../utils';
-
 export { managedBudgetAbi };
 export type { ERC1155TransferPayload, FungibleTransferPayload };
 
@@ -189,10 +189,12 @@ export class ManagedBudget extends DeployableTarget<
    *
    * @public
    * @static
-   * @type {Address}
+   * @type {Record<number, Address>}
    */
-  public static override base: Address = import.meta.env
-    .VITE_MANAGED_BUDGET_BASE;
+  public static override bases: Record<number, Address> = {
+    ...(ManagedBudgetBases as Record<number, Address>),
+    31337: import.meta.env.VITE_MANAGED_BUDGET_BASE,
+  };
   /**
    * @inheritdoc
    *

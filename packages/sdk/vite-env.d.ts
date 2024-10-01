@@ -2,6 +2,11 @@
 
 import type { Address } from 'viem';
 
+declare global {
+  // If process.env.DEFAULT_CHAIN_ID exists, use it otherwise default to sepolia
+  const __DEFAULT_CHAIN_ID__: string;
+}
+
 interface ImportMetaEnv {
   readonly VITE_BOOST_REGISTRY_ADDRESS: Address;
   readonly VITE_BOOST_CORE_ADDRESS: Address;

@@ -29,13 +29,9 @@ describe('BoostCore', () => {
 
   test('can get the total number of boosts', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
 
     const { budget, erc20 } = budgets;
-    await client.createBoost({
+    await core.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
@@ -63,17 +59,13 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    expect(await client.getBoostCount()).toBe(1n);
+    expect(await core.getBoostCount()).toBe(1n);
   });
 
   test('can successfully create a boost using all base contract implementations', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const { budget, erc20 } = budgets;
-    const boost = await client.createBoost({
+    const boost = await core.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
@@ -101,7 +93,7 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const onChainBoost = await client.readBoost(boost.id);
+    const onChainBoost = await core.readBoost(boost.id);
 
     expect(boost.owner).toBe(onChainBoost.owner);
     expect(boost.protocolFee).toBe(onChainBoost.protocolFee);
@@ -155,12 +147,8 @@ describe('BoostCore', () => {
 
   test('can read the raw on chain representation of a boost', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const { budget, erc20 } = budgets;
-    const _boost = await client.createBoost({
+    const _boost = await core.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
@@ -188,7 +176,7 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const boost = await client.readBoost(_boost.id);
+    const boost = await core.readBoost(_boost.id);
     expect(boost.protocolFee).toBe(1001n);
     expect(boost.referralFee).toBe(1002n);
     expect(boost.maxParticipants).toBe(100n);
@@ -203,10 +191,6 @@ describe('BoostCore', () => {
 
   test('can reuse an existing action', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const { budget, erc20 } = budgets;
 
     // allocate more funds to the budget
@@ -218,7 +202,7 @@ describe('BoostCore', () => {
       target: defaultOptions.account.address,
     });
 
-    const _boost = await client.createBoost({
+    const _boost = await core.createBoost({
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -243,7 +227,7 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const boost = await client.createBoost({
+    const boost = await core.createBoost({
       budget: budget,
       action: core.EventAction(_boost.action.assertValidAddress(), false),
       validator: core.SignerValidator({
@@ -263,16 +247,12 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const onChainBoost = await client.readBoost(boost.id);
+    const onChainBoost = await core.readBoost(boost.id);
     expect(onChainBoost.action).toBe(_boost.action.assertValidAddress());
   });
 
   test('can reuse an existing validator', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
@@ -284,7 +264,7 @@ describe('BoostCore', () => {
       target: defaultOptions.account.address,
     });
 
-    const _boost = await client.createBoost({
+    const _boost = await core.createBoost({
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -309,7 +289,7 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const boost = await client.createBoost({
+    const boost = await core.createBoost({
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -334,16 +314,12 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const onChainBoost = await client.readBoost(boost.id);
+    const onChainBoost = await core.readBoost(boost.id);
     expect(onChainBoost.validator).toBe(_boost.validator.assertValidAddress());
   });
 
   test('can reuse an existing allowlist', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
@@ -355,7 +331,7 @@ describe('BoostCore', () => {
       target: defaultOptions.account.address,
     });
 
-    const _boost = await client.createBoost({
+    const _boost = await core.createBoost({
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -380,7 +356,7 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const boost = await client.createBoost({
+    const boost = await core.createBoost({
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -405,16 +381,12 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    const onChainBoost = await client.readBoost(boost.id);
+    const onChainBoost = await core.readBoost(boost.id);
     expect(onChainBoost.allowList).toBe(_boost.allowList.assertValidAddress());
   });
 
   test('cannot reuse an existing incentive', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
@@ -432,7 +404,7 @@ describe('BoostCore', () => {
       limit: 100n,
       strategy: StrategyType.POOL,
     });
-    const _boost = await client.createBoost({
+    const _boost = await core.createBoost({
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -451,7 +423,7 @@ describe('BoostCore', () => {
       incentives: [incentive],
     });
     try {
-      await client.createBoost({
+      await core.createBoost({
         budget: budget,
         action: core.EventAction(
           makeMockEventActionPayload(
@@ -476,10 +448,6 @@ describe('BoostCore', () => {
 
   test('can offer multiple incentives', async () => {
     const { registry, core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const { budget, erc20, points, erc1155 } = budgets;
     const allowList = await registry.initialize(
       'SharedAllowList',
@@ -520,7 +488,7 @@ describe('BoostCore', () => {
       limit: 10n,
     });
 
-    await client.createBoost({
+    await core.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
@@ -562,58 +530,38 @@ describe('BoostCore', () => {
 
   test('can get  the protocol fee', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
 
-    expect(await client.protocolFee()).toBe(1000n);
+    expect(await core.protocolFee()).toBe(1000n);
   });
 
   test('can get the protocol fee receiver', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
 
-    expect(await client.protocolFeeReceiver()).toBe(
+    expect(await core.protocolFeeReceiver()).toBe(
       defaultOptions.account.address,
     );
   });
 
   test('can set the protocol fee receiver', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
 
-    await client.setProcolFeeReceiver(zeroAddress);
+    await core.setProcolFeeReceiver(zeroAddress);
 
-    expect(await client.protocolFeeReceiver()).toBe(zeroAddress);
+    expect(await core.protocolFeeReceiver()).toBe(zeroAddress);
   });
 
   test('can get the claim fee', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
 
-    expect(await client.claimFee()).toBe(75000000000000n);
+    expect(await core.claimFee()).toBe(75000000000000n);
   });
 
   test('can set the claim fee', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
 
-    await client.setClaimFee(100n);
+    await core.setClaimFee(100n);
 
-    expect(await client.claimFee()).toBe(100n);
+    expect(await core.claimFee()).toBe(100n);
   });
 
   test('binds all actions, budgets, allowlists, incentives, and validators to reuse core options and account', () => {
@@ -713,13 +661,9 @@ describe('BoostCore', () => {
     const subscription = vi.fn();
 
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
-    client.subscribe(subscription, { pollingInterval: 100 });
+    core.subscribe(subscription, { pollingInterval: 100 });
     const { budget, erc20 } = budgets;
-    await client.createBoost({
+    await core.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
@@ -757,17 +701,13 @@ describe('BoostCore', () => {
 
   test('can set a passthrough auth scheme', async () => {
     const { core } = fixtures;
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
 
-    const auth = client.PassthroughAuth();
+    const auth = core.PassthroughAuth();
     await auth.deploy();
-    await client.setCreateBoostAuth(auth);
-    expect((await client.createBoostAuth()).toLowerCase()).toBe(
+    await core.setCreateBoostAuth(auth);
+    expect((await core.createBoostAuth()).toLowerCase()).toBe(
       auth.assertValidAddress(),
     );
-    expect(await client.isAuthorized(zeroAddress)).toBe(true);
+    expect(await core.isAuthorized(zeroAddress)).toBe(true);
   });
 });

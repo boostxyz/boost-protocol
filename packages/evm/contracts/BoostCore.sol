@@ -49,6 +49,14 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address budget
     );
 
+    event BoostClaimed(
+        uint256 indexed boostId,
+        uint256 indexed incentiveId,
+        address indexed claimant,
+        address referrer,
+        bytes data
+    );
+
     /// @notice The list of boosts
     BoostLib.Boost[] private _boosts;
 
@@ -177,6 +185,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         if (!boost.incentives[incentiveId_].claim(claimant, data_)) {
             revert BoostError.ClaimFailed(claimant, data_);
         }
+        emit BoostClaimed(boostId_, incentiveId_, claimant, referrer_, data_);
     }
 
     /// @notice Get a Boost by index

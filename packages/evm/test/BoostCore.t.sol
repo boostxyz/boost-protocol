@@ -318,6 +318,10 @@ contract BoostCoreTest is Test {
         // Prepare the data payload for validation
         bytes memory data = abi.encode(address(this), abi.encode(tokenId));
 
+        // Expect the BoostClaimed event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit BoostCore.BoostClaimed(0, 0, address(this), address(0), data);
+
         // Claim the incentive
         boostCore.claimIncentive{value: 0.000075 ether}(0, 0, address(0), data);
 

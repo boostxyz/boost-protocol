@@ -8,7 +8,7 @@ import {
   deployFixtures,
   fundBudget,
   makeMockEventActionPayload,
-} from '../test/helpers';
+} from '@boostxyz/test/helpers';
 import { ContractAction } from './Actions/ContractAction';
 import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
@@ -21,7 +21,7 @@ let fixtures: Fixtures, budgets: BudgetFixtures;
 
 describe('BoostCore', () => {
   beforeAll(async () => {
-    fixtures = await loadFixture(deployFixtures);
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
   beforeEach(async () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));

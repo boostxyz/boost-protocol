@@ -1,6 +1,6 @@
 import { zeroAddress } from 'viem';
 import { describe, expect, test } from 'vitest';
-import { defaultOptions } from '../../test/helpers';
+import { defaultOptions } from '@boostxyz/test/helpers';
 import { PassthroughAuth } from './PassthroughAuth';
 
 describe('PassthroughAuth', () => {

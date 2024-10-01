@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "dist",
+    "module": "Preserve",
+    "moduleResolution": "Bundler"
+  },
+  "exclude": ["dist", "node_modules"],
+  "references": [
+    {
+      "path": "../../test"
+    }
+  ]
+}

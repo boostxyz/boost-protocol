@@ -1,0 +1,20 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["vite-env.d.ts", "src"],
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "./src",
+    "outDir": "dist",
+    "module": "Preserve",
+    "moduleResolution": "Bundler"
+  },
+  "exclude": ["dist", "build", "node_modules"],
+  "references": [
+    {
+      "path": "../packages/evm"
+    },
+    {
+      "path": "../packages/sdk"
+    }
+  ]
+}

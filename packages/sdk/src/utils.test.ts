@@ -1,8 +1,8 @@
 import { simulateMockErc20Mint, writeMockErc20Mint } from '@boostxyz/evm';
 import { isAddress } from 'viem';
 import { describe, expect, test } from 'vitest';
-import { MockERC20 } from '../test/MockERC20';
-import { defaultOptions } from '../test/helpers';
+import { MockERC20 } from '@boostxyz/test/MockERC20';
+import { defaultOptions } from '@boostxyz/test/helpers';
 import { awaitResult, bytes4, getDeployedContractAddress } from './utils';
 
 describe('bytes4', () => {

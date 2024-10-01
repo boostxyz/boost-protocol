@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC20 } from '../../test/MockERC20';
+import type { MockERC20 } from '@boostxyz/test/MockERC20';
 import {
   type Fixtures,
   defaultOptions,
@@ -9,14 +9,14 @@ import {
   freshVestingBudget,
   fundErc20,
   fundVestingBudget,
-} from '../../test/helpers';
-import { testAccount } from '../../test/viem';
+} from '@boostxyz/test/helpers';
+import { testAccount } from '@boostxyz/test/viem';
 import { VestingBudget } from './VestingBudget';
 
 let fixtures: Fixtures, budget: VestingBudget, erc20: MockERC20;
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
 describe.skip('VestingBudget', () => {

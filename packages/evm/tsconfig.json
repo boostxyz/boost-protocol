@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "artifacts"
+    "rootDir": "artifacts",
+    "composite": true
   },
   "include": ["artifacts/**/*.ts"]
 }

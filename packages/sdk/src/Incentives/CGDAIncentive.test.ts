@@ -2,7 +2,7 @@ import { readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, pad, parseEther } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import { accounts } from '../../test/accounts';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -10,14 +10,14 @@ import {
   deployFixtures,
   freshBoost,
   fundBudget,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { CGDAIncentive } from './CGDAIncentive';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
 describe('CGDAIncentive', () => {
   beforeAll(async () => {
-    fixtures = await loadFixture(deployFixtures);
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
 
   beforeEach(async () => {

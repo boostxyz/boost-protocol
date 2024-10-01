@@ -110,7 +110,6 @@ export class PointsIncentive extends DeployableTarget<
    */
   public static override bases: Record<number, Address> = {
     ...(PointsIncentiveBases as Record<number, Address>),
-    31337: import.meta.env.VITE_POINTS_INCENTIVE_BASE,
   };
   /**
    * @inheritdoc

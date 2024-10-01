@@ -115,7 +115,6 @@ export class ERC20Incentive extends DeployableTarget<
    */
   public static override bases: Record<number, Address> = {
     ...(ERC20IncentiveBases as Record<number, Address>),
-    31337: import.meta.env.VITE_ERC20_INCENTIVE_BASE,
   };
   /**
    * @inheritdoc

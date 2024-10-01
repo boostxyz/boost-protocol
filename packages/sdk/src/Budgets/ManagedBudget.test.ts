@@ -2,9 +2,9 @@ import { writeMockErc1155SetApprovalForAll } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC20 } from '../../test/MockERC20';
-import type { MockERC1155 } from '../../test/MockERC1155';
-import { accounts } from '../../test/accounts';
+import type { MockERC20 } from '@boostxyz/test/MockERC20';
+import type { MockERC1155 } from '@boostxyz/test/MockERC1155';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   defaultOptions,
@@ -14,8 +14,8 @@ import {
   fundErc20,
   fundErc1155,
   fundManagedBudget,
-} from '../../test/helpers';
-import { testAccount } from '../../test/viem';
+} from '@boostxyz/test/helpers';
+import { testAccount } from '@boostxyz/test/viem';
 import { ManagedBudget, ManagedBudgetRoles } from './ManagedBudget';
 
 let fixtures: Fixtures,
@@ -24,7 +24,7 @@ let fixtures: Fixtures,
   erc1155: MockERC1155;
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
 describe('ManagedBudget', () => {

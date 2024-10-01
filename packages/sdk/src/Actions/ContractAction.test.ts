@@ -10,20 +10,20 @@ import {
   zeroAddress,
 } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC20 } from '../../test/MockERC20';
-import { accounts } from '../../test/accounts';
+import type { MockERC20 } from '@boostxyz/test/MockERC20';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
   fundErc20,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { ContractAction } from './ContractAction';
 
 let fixtures: Fixtures, erc20: MockERC20;
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
 const mintPayableSelector = toFunctionSelector(

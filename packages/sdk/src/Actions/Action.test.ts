@@ -2,14 +2,14 @@ import { selectors } from '@boostxyz/signatures/events';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import type { Hex } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC721 } from '../../test/MockERC721';
-import { accounts } from '../../test/accounts';
+import type { MockERC721 } from '@boostxyz/test/MockERC721';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
   fundErc721,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { EventAction, actionFromAddress } from './Action';
 import {
   type EventActionPayloadSimple,
@@ -62,7 +62,7 @@ export function cloneEventAction(fixtures: Fixtures, erc721: MockERC721) {
 }
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
 describe('Action', () => {

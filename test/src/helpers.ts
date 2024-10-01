@@ -385,10 +385,14 @@ export function deployFixtures(
     };
 
     for (const [name, deployable] of Object.entries(bases)) {
+      console.log(
+        `deploying ${name} on ${chainId} with base address ${deployable.bases[chainId]}`,
+      );
       await registry.register(
         deployable.registryType,
         name,
         deployable.bases[chainId]!,
+        { chainId },
       );
     }
 

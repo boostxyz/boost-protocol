@@ -57,11 +57,3 @@ export async function setup({}: GlobalSetupContext) {
 }
 
 export default setup;
-
-// You can also extend `ProvidedContext` type
-// to have type safe access to `provide/inject` methods:
-declare module 'vitest' {
-  export interface ProvidedContext {
-    wsPort: number;
-  }
-}

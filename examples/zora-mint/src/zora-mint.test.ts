@@ -59,7 +59,7 @@ const selector = selectors[
 describe("Boost with NFT Minting Incentive", () => {
   beforeAll(async () => {
     await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
-    fixtures = await loadFixture(deployFixtures(defaultOptions));
+    fixtures = await loadFixture(deployFixtures(defaultOptions, 8453));
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 

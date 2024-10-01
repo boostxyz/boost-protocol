@@ -22,7 +22,6 @@ import {
   PrimitiveType,
   SignatureType,
 } from '../src';
-import { BoostCore } from '../src/BoostCore';
 import { StrategyType } from '../src/claiming';
 import { accounts } from './accounts';
 import {
@@ -53,7 +52,7 @@ const trustedSigner = accounts[0];
 const BASE_CHAIN_URL =
   'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
 const BASE_CHAIN_BLOCK = 20160592;
-const selector = selectors['DelegateChanged(address,address,address)'] as Hex;
+const selector = selectors['DelegateChanged(address indexed,address indexed,address indexed)'] as Hex;
 
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
   'Boost with Delegate Action Incentive',
@@ -82,7 +81,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         actionParameter: {
           filterType: FilterType.EQUAL, // Filter to check for equality
           fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
-          fieldIndex: 3, // toDelegate event field
+          fieldIndex: 2, // toDelegate event argument
           filterData: delegatee, // Filtering based on the delegatee address
         },
       };
@@ -93,7 +92,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
           chainid: base.id,
           signatureType: SignatureType.EVENT,
           signature: selector, // DelegateChanged(address,address,address)
-          fieldIndex: 3, // Targeting the 'delegatee' address
+          fieldIndex: 0, // Targeting the 'delegator' address
           targetContract: targetContract, // The ERC20 contract we're monitoring
         },
         actionSteps: [eventActionStep],
@@ -109,7 +108,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         action: eventAction, // Pass the manually created EventAction
         validator: core.SignerValidator({
           signers: [owner, trustedSigner.account!], // Whichever account we're going to sign with needs to be a signer
-          validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
+          validatorCaller: core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
         }),
         allowList: core.SimpleAllowList({
           owner: owner,
@@ -168,7 +167,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       });
 
       // Claim the incentive for the imposter
-      await fixtures.core.claimIncentiveFor(
+      await core.claimIncentiveFor(
         boost.id,
         0n,
         referrer,

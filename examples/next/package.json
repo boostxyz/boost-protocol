@@ -33,7 +33,7 @@
     "react-jazzicon": "1.0.4",
     "sharp": "0.33.3",
     "viem": "^2.9.27",
-    "wagmi": "^2.5.22"
+    "wagmi": "^2.12.16"
   },
   "devDependencies": {
     "@types/node": "20.12.7",

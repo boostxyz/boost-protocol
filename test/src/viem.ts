@@ -32,7 +32,7 @@ export const makeTestClient = () =>
 
 export type TestClient = ReturnType<typeof makeTestClient>;
 
-export function setupConfig(walletClient = makeTestClient()) {
+export function nf(walletClient = makeTestClient()) {
   return createConfig({
     ssr: true,
     chains: [hardhat, base],

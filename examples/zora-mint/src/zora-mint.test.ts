@@ -28,10 +28,23 @@ import { accounts } from "@boostxyz/test/accounts";
 import {
   type BudgetFixtures,
   type Fixtures,
-  defaultOptions,
   deployFixtures,
   fundBudget,
 } from "@boostxyz/test/helpers";
+import { setupConfig, testAccount } from "@boostxyz/test/viem";
+
+const walletClient = createTestClient({
+  transport: http("http://127.0.0.1:8545"),
+  chain: base,
+  mode: "hardhat",
+})
+  .extend(publicActions)
+  .extend(walletActions);
+
+const defaultOptions = {
+  account: testAccount,
+  config: setupConfig(walletClient),
+};
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the zora contract we're going to push a transaction against
@@ -65,13 +78,8 @@ describe("Boost with NFT Minting Incentive", () => {
 
   test("should create a boost for incentivizing NFT minting", async () => {
     const { budget, erc20 } = budgets;
-
     const { core } = fixtures;
 
-    const client = new BoostCore({
-      ...defaultOptions,
-      address: core.assertValidAddress(),
-    });
     const owner = defaultOptions.account.address;
     // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
     await mine();
@@ -130,19 +138,12 @@ describe("Boost with NFT Minting Incentive", () => {
     });
 
     // Make sure the boost was created as expected
-    expect(await client.getBoostCount()).toBe(1n);
-    const boost = await client.getBoost(0n);
+    expect(await core.getBoostCount()).toBe(1n);
+    const boost = await core.getBoost(0n);
     const action = boost.action;
     expect(action).toBeDefined();
 
     // Use viem to send the transaction from the impersonated account
-    const walletClient = createTestClient({
-      transport: http("http://127.0.0.1:8545"),
-      chain: base,
-      mode: "hardhat",
-    })
-      .extend(publicActions)
-      .extend(walletActions);
     await walletClient.impersonateAccount({
       address: boostImpostor,
     });

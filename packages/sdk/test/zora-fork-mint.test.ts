@@ -22,7 +22,6 @@ import {
   PrimitiveType,
   SignatureType,
 } from '../src';
-import { BoostCore } from '../src/BoostCore';
 import { StrategyType } from '../src/claiming';
 import { accounts } from './accounts';
 import {
@@ -53,7 +52,7 @@ const BASE_CHAIN_URL =
   'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
 const BASE_CHAIN_BLOCK = 17519193;
 const selector = selectors[
-  'Purchased(address,address,uint256,uint256,uint256)'
+  'Purchased(address indexed,address indexed,uint256 indexed,uint256,uint256)'
 ] as Hex;
 
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
@@ -70,10 +69,6 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
 
       const { core } = fixtures;
 
-      const client = new BoostCore({
-        ...defaultOptions,
-        address: core.assertValidAddress(),
-      });
       const owner = defaultOptions.account.address;
       // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
       await mine();
@@ -88,7 +83,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         actionParameter: {
           filterType: FilterType.EQUAL, // Filter to check for equality
           fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
-          fieldIndex: 1, // The sender is at the 1st topic on the event
+          fieldIndex: 0, // We want to target the first argument (index 0)
           filterData: boostImpostor, // Filtering based on the imposters address
         },
       };
@@ -107,7 +102,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // Initialize EventAction with the custom payload
       const eventAction = core.EventAction(eventActionPayload);
       // Create the boost using the custom EventAction
-      await client.createBoost({
+      await core.createBoost({
         protocolFee: 1n,
         referralFee: 2n,
         maxParticipants: 100n,
@@ -115,7 +110,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         action: eventAction, // Pass the manually created EventAction
         validator: core.SignerValidator({
           signers: [owner, trustedSigner.account], // Whichever account we're going to sign with needs to be a signer
-          validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
+          validatorCaller: core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
         }),
         allowList: core.SimpleAllowList({
           owner: owner,
@@ -132,8 +127,8 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       });
 
       // Make sure the boost was created as expected
-      expect(await client.getBoostCount()).toBe(1n);
-      const boost = await client.getBoost(0n);
+      expect(await core.getBoostCount()).toBe(1n);
+      const boost = await core.getBoost(0n);
       const action = boost.action;
       expect(action).toBeDefined();
 
@@ -152,6 +147,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
         address: boostImpostor,
         value: parseEther('10'),
       });
+
       const testReceipt = await walletClient.sendTransaction({
         data: inputData,
         account: boostImpostor,
@@ -174,7 +170,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       });
 
       // Claim the incentive for the imposter
-      await fixtures.core.claimIncentiveFor(
+      await core.claimIncentiveFor(
         boost.id,
         0n,
         referrer,

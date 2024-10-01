@@ -151,7 +151,7 @@ export async function freshBoost(
 export async function deployFixtures(
   options: DeployableTestOptions = defaultOptions,
 ) {
-  const chainId = 31337;
+  const chainId = 8453;
   const { config, account } = options;
   const _registry = await new BoostRegistry({
     address: null,

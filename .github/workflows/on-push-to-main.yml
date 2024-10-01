@@ -13,6 +13,11 @@ jobs:
     uses: ./.github/workflows/verify.yml
     secrets: inherit
 
+  use-cases:
+    name: Use Case Tests
+    uses: ./.github/workflows/use-cases.yml
+    secrets: inherit
+
   docs:
     name: Deploy SDK Typedoc
     needs: verify

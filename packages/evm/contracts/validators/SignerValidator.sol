@@ -126,6 +126,7 @@ library IncentiveBits {
     function setOrThrow(IncentiveMap storage bitmap, bytes32 hash, uint256 incentive) internal {
         bytes4 invalidSelector = BoostError.IncentiveToBig.selector;
         bytes4 claimedSelector = BoostError.IncentiveClaimed.selector;
+
         /// @solidity memory-safe-assembly
         assembly {
             if gt(incentive, 7) {
@@ -141,7 +142,7 @@ library IncentiveBits {
             // toggle the value that was stored inline on stack with xor
             let updatedStorageValue := xor(sload(storageSlot), shl(incentive, 1))
             // isolate the toggled bit and see if it's been unset back to zero
-            let alreadySet := xor(1, shr(incentive, updatedStorageValue))
+            let alreadySet := xor(1, and(1, shr(incentive, updatedStorageValue)))
             if alreadySet {
                 // revert if the stored value was unset
                 mstore(0, claimedSelector)

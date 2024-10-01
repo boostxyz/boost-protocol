@@ -22,7 +22,6 @@ import {
   PrimitiveType,
   SignatureType,
 } from "@boostxyz/sdk";
-import { BoostCore } from "@boostxyz/sdk/BoostCore";
 import { StrategyType } from "@boostxyz/sdk/claiming";
 import { accounts } from "@boostxyz/test/accounts";
 import {
@@ -66,7 +65,7 @@ const BASE_CHAIN_URL =
   "https://base-mainnet.g.alchemy.com/v2/" + process.env.VITE_ALCHEMY_API_KEY;
 const BASE_CHAIN_BLOCK = 17519193;
 const selector = selectors[
-  "Purchased(address,address,uint256,uint256,uint256)"
+  "Purchased(address indexed,address indexed,uint256 indexed,uint256,uint256)"
 ] as Hex;
 
 describe("Boost with NFT Minting Incentive", () => {
@@ -94,7 +93,7 @@ describe("Boost with NFT Minting Incentive", () => {
       actionParameter: {
         filterType: FilterType.EQUAL, // Filter to check for equality
         fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
-        fieldIndex: 1, // The sender is at the 1st topic on the event
+        fieldIndex: 0, // We want to target the first argument (index 0)
         filterData: boostImpostor, // Filtering based on the imposters address
       },
     };
@@ -121,7 +120,7 @@ describe("Boost with NFT Minting Incentive", () => {
       action: eventAction, // Pass the manually created EventAction
       validator: core.SignerValidator({
         signers: [owner, trustedSigner.account], // Whichever account we're going to sign with needs to be a signer
-        validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
+        validatorCaller: core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
       }),
       allowList: core.SimpleAllowList({
         owner: owner,

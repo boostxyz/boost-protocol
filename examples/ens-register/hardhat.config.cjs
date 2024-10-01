@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('@nomicfoundation/hardhat-toolbox-viem');
 module.exports = {
   networks: {
     hardhat: {

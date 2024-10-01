@@ -48,7 +48,7 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "@nomicfoundation/hardhat-viem": "^2.0.2",
-    "@wagmi/cli": "^2.1.15",
+    "@wagmi/cli": "^2.1.16",
     "abitype": "^1.0.2",
     "hardhat": "^2.22.9",
     "ts-node": "^10.9.2",

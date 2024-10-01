@@ -1,6 +1,7 @@
 {
   "name": "boost-protocol",
   "private": true,
+  "type": "module",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "license": "GPL-3.0-or-later",

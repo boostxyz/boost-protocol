@@ -113,7 +113,7 @@ describe("Boost with NFT Minting Incentive", () => {
     // Initialize EventAction with the custom payload
     const eventAction = core.EventAction(eventActionPayload);
     // Create the boost using the custom EventAction
-    await client.createBoost({
+    await core.createBoost({
       protocolFee: 1n,
       referralFee: 2n,
       maxParticipants: 100n,
@@ -173,7 +173,7 @@ describe("Boost with NFT Minting Incentive", () => {
     });
 
     // Claim the incentive for the imposter
-    await fixtures.core.claimIncentiveFor(
+    await core.claimIncentiveFor(
       boost.id,
       0n,
       referrer,

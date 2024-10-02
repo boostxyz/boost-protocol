@@ -114,6 +114,18 @@ importers:
         specifier: workspace:*
         version: link:../../test
 
+  examples/swap-specific-dex:
+    dependencies:
+      '@boostxyz/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@boostxyz/signatures':
+        specifier: workspace:*
+        version: link:../../packages/signatures
+      '@boostxyz/test':
+        specifier: workspace:*
+        version: link:../../test
+
   examples/zora-mint:
     dependencies:
       '@boostxyz/sdk':

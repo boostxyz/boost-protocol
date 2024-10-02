@@ -3,6 +3,6 @@
 "EVM":
   - "packages/evm/**/*"
 "examples":
-  - "packages/examples/**/*"
+  - "examples/**/*"
 "documentation":
   - "docs/**/*"

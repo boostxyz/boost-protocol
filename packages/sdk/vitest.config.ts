@@ -8,15 +8,6 @@ export default defineConfig({
   test: {
     fileParallelism: false,
     env: loadEnv('', process.cwd(), ''),
-    globalSetup: ['./test/setup.hardhat.ts'],
-    // reporters: [
-    //   'default',
-    //   {
-    //     async onWatcherRerun() {
-    //       await teardown();
-    //       await setup();
-    //     },
-    //   },
-    // ],
+    globalSetup: ['../../test/src/setup.hardhat.ts'],
   },
 });

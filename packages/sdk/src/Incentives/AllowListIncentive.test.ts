@@ -1,13 +1,13 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { accounts } from '../../test/accounts';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
   freshBoost,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
 import { PointsIncentive } from './PointsIncentive';
 
@@ -27,7 +27,7 @@ function freshAllowList(fixtures: Fixtures) {
 
 describe('AllowListIncentive', () => {
   beforeAll(async () => {
-    fixtures = await loadFixture(deployFixtures);
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
 
   test('can successfully be deployed', async () => {

@@ -60,8 +60,8 @@ export class DeployableTarget<
    * @readonly
    * @type {boolean}
    */
-  protected _isBase = true;
-  get isBase() {
+  readonly _isBase: boolean = true;
+  public get isBase() {
     if (
       !!this.address &&
       Object.values(this.bases).some((base) =>

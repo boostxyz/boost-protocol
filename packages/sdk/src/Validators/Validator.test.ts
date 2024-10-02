@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { defaultOptions } from '../../test/helpers';
-import { testAccount } from '../../test/viem';
+import { defaultOptions } from '@boostxyz/test/helpers';
+import { testAccount } from '@boostxyz/test/viem';
 import { SignerValidator } from './SignerValidator';
 import { validatorFromAddress } from './Validator';
 

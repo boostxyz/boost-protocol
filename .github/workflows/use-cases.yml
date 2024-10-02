@@ -1,0 +1,37 @@
+name: Use Case Tests
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  use-cases:
+    name: Use Case Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_ALCHEMY_API_KEY: ${{ secrets.VITE_ALCHEMY_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 2
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v2.0
+        with:
+          envkey_TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
+          directory: packages/evm
+          file_name: .env
+
+      - name: Run tests
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          command: npx turbo test:ci --cache-dir=".cache" --concurrency=1 --filter="./examples/zora-mint"

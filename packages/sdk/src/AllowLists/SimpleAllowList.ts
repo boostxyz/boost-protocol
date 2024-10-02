@@ -1,5 +1,6 @@
 import {
   readSimpleAllowListIsAllowed,
+  readSimpleAllowListOwner,
   simpleAllowListAbi,
   simulateSimpleAllowListGrantRoles,
   simulateSimpleAllowListSetAllowed,
@@ -97,7 +98,6 @@ export class SimpleAllowList extends DeployableTarget<
    */
   public static override bases: Record<number, Address> = {
     ...(SimpleAllowListBases as Record<number, Address>),
-    31337: import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE,
   };
   /**
    * @inheritdoc

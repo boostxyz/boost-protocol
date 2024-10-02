@@ -1,6 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseAbiItem, toEventSelector, toFunctionSelector } from 'viem';
+import { pad } from 'viem';
 import events from './manifests/events.json' with { type: 'json' };
 import functions from './manifests/functions.json' with { type: 'json' };
 
@@ -31,7 +32,7 @@ function generateSelector(type, signature) {
     case 'event':
       return toEventSelector(signature);
     case 'function':
-      return toFunctionSelector(signature);
+      return pad(toFunctionSelector(signature));
     default:
       throw new Error(`Invalid type: ${type}`);
   }

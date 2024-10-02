@@ -3,6 +3,7 @@
   "mint(address to, uint256 amount)",
   "mintPayable(address to, uint256 amount)",
   "execute(bytes commands,bytes[] inputs)",
+  "register(string name,address owner,uint256 duration,bytes32 secret,address resolver,bytes[] data,bool reverseRecord,uint16 ownerControlledFuses)",
   "// Test function signatures",
   "mint(address)"
 ]

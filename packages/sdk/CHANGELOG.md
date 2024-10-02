@@ -1,5 +1,29 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.15
+
+### Minor Changes
+
+- 8b4be2a: add indexes to use case test signatures, refactor example tests
+
+### Patch Changes
+
+- Updated dependencies [8b4be2a]
+  - @boostxyz/signatures@0.0.0-alpha.4
+
+## 0.0.0-alpha.14
+
+### Patch Changes
+
+- Updated dependencies [6154f5e]
+  - @boostxyz/signatures@0.0.0-alpha.3
+
+## 0.0.0-alpha.13
+
+### Minor Changes
+
+- a7a3331: refactor base to bases in boost targets, resolve base address from config, and default to sepolia for now
+
 ## 0.0.0-alpha.12
 
 ### Minor Changes

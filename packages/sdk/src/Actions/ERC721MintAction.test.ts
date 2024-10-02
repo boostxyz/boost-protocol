@@ -9,20 +9,20 @@ import {
   zeroAddress,
 } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC721 } from '../../test/MockERC721';
-import { accounts } from '../../test/accounts';
+import type { MockERC721 } from '@boostxyz/test/MockERC721';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
   fundErc721,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { ERC721MintAction } from './ERC721MintAction';
 
 let fixtures: Fixtures, erc721: MockERC721;
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
 const mintSelector = toFunctionSelector('function mint(address to)');

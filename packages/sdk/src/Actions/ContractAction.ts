@@ -102,9 +102,7 @@ export class ContractAction<
    * @static
    * @type {Record<number, Address>}
    */
-  public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_CONTRACT_ACTION_BASE,
-  };
+  public static override bases: Record<number, Address> = {};
   /**
    * @inheritdoc
    *

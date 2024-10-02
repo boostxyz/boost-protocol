@@ -24,6 +24,7 @@ import {
   encodeAbiParameters,
   fromHex,
   isAddressEqual,
+  pad,
   trim,
 } from 'viem';
 import { getLogs } from 'viem/actions';
@@ -378,7 +379,6 @@ export class EventAction extends DeployableTarget<
    */
   public static override bases: Record<number, Address> = {
     ...(EventActionBases as Record<number, Address>),
-    31337: import.meta.env.VITE_EVENT_ACTION_BASE,
   };
   /**
    * @inheritdoc
@@ -615,7 +615,8 @@ export class EventAction extends DeployableTarget<
     params?: ValidateFunctionStepParams & { chainId?: number },
   ) {
     const criteria = actionStep.actionParameter;
-    const signature = trim(actionStep.signature);
+    let signature = actionStep.signature;
+
     if (!params || !params?.hash) {
       // Should we return false in this case?
       throw new Error('Hash is required for function validation');

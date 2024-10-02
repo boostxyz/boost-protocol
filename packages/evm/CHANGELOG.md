@@ -1,5 +1,17 @@
 # @boostxyz/evm
 
+## 0.0.0-alpha.4
+
+### Minor Changes
+
+- 8b4be2a: add indexes to use case test signatures, refactor example tests
+
+## 0.0.0-alpha.3
+
+### Minor Changes
+
+- a7a3331: refactor base to bases in boost targets, resolve base address from config, and default to sepolia for now
+
 ## 0.0.0-alpha.2
 
 ### Minor Changes

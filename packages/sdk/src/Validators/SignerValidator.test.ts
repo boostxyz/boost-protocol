@@ -1,13 +1,13 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, pad } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { accounts } from '../../test/accounts';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-} from '../../test/helpers';
-import { testAccount } from '../../test/viem';
+} from '@boostxyz/test/helpers';
+import { testAccount } from '@boostxyz/test/viem';
 import { SignerValidator } from './SignerValidator';
 
 let fixtures: Fixtures;
@@ -28,7 +28,7 @@ function freshValidator(fixtures: Fixtures) {
 
 describe('SignerValidator', () => {
   beforeAll(async () => {
-    fixtures = await loadFixture(deployFixtures);
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
 
   test('can successfully be deployed', async () => {

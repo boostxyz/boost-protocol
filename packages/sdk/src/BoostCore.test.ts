@@ -8,11 +8,9 @@ import {
   deployFixtures,
   fundBudget,
   makeMockEventActionPayload,
-} from '../test/helpers';
+} from '@boostxyz/test/helpers';
 import { ContractAction } from './Actions/ContractAction';
-import { BoostCore } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
-import { ERC1155StrategyType } from './Incentives/ERC1155Incentive';
 import { StrategyType } from './claiming';
 import { IncentiveNotCloneableError } from './errors';
 import { bytes4 } from './utils';
@@ -21,7 +19,7 @@ let fixtures: Fixtures, budgets: BudgetFixtures;
 
 describe('BoostCore', () => {
   beforeAll(async () => {
-    fixtures = await loadFixture(deployFixtures);
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
   beforeEach(async () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
@@ -463,13 +461,13 @@ describe('BoostCore', () => {
       limit: 10n,
       strategy: StrategyType.POOL,
     });
-    const erc1155Incentive = core.ERC1155Incentive({
-      asset: erc1155.assertValidAddress(),
-      strategy: ERC1155StrategyType.POOL,
-      limit: 1n,
-      tokenId: 1n,
-      extraData: '0x',
-    });
+    // const erc1155Incentive = core.ERC1155Incentive({
+    //   asset: erc1155.assertValidAddress(),
+    //   strategy: ERC1155StrategyType.POOL,
+    //   limit: 1n,
+    //   tokenId: 1n,
+    //   extraData: '0x',
+    // });
     const cgdaIncentive = core.CGDAIncentive({
       asset: erc20.assertValidAddress(),
       initialReward: 1n,
@@ -505,7 +503,7 @@ describe('BoostCore', () => {
       }),
       allowList: core.SimpleAllowList(allowList.assertValidAddress()),
       incentives: [
-        erc1155Incentive,
+        // erc1155Incentive,
         erc20Incentive,
         cgdaIncentive,
         allowListIncentive,

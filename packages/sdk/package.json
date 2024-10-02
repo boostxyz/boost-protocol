@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/sdk",
-  "version": "0.0.0-alpha.12",
+  "version": "0.0.0-alpha.15",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "files": ["dist", "src"],
@@ -206,8 +206,8 @@
     "@boostxyz/signatures": "workspace:*"
   },
   "peerDependencies": {
-    "@wagmi/core": "2",
+    "@wagmi/core": "2.x",
     "abitype": "1",
-    "viem": "2"
+    "viem": "2.x"
   }
 }

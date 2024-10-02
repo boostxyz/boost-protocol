@@ -27,10 +27,10 @@ import { accounts } from "@boostxyz/test/accounts";
 import {
   type BudgetFixtures,
   type Fixtures,
-  defaultOptions,
   deployFixtures,
   fundBudget,
 } from "@boostxyz/test/helpers";
+import { setupConfig, testAccount } from "@boostxyz/test/viem";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the Wormhole (W) token contract we're going to push delegate transaction against
@@ -56,10 +56,23 @@ const selector = selectors[
   "DelegateChanged(address indexed,address indexed,address indexed)"
 ] as Hex;
 
+const walletClient = createTestClient({
+  transport: http("http://127.0.0.1:8545"),
+  chain: base,
+  mode: "hardhat",
+})
+  .extend(publicActions)
+  .extend(walletActions);
+
+const defaultOptions = {
+  account: testAccount,
+  config: setupConfig(walletClient),
+};
+
 describe("Boost with Delegate Action Incentive", () => {
   beforeAll(async () => {
     await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
-    fixtures = await loadFixture(deployFixtures(defaultOptions));
+    fixtures = await loadFixture(deployFixtures(defaultOptions, 8453));
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 
@@ -130,14 +143,6 @@ describe("Boost with Delegate Action Incentive", () => {
     const action = boost.action;
     expect(action).toBeDefined();
 
-    // Use viem to send the transaction from the impersonated account
-    const walletClient = createTestClient({
-      transport: http("http://127.0.0.1:8545"),
-      chain: base,
-      mode: "hardhat",
-    })
-      .extend(publicActions)
-      .extend(walletActions);
     await walletClient.impersonateAccount({
       address: boostImpostor,
     });

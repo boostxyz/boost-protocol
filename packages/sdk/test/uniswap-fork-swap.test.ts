@@ -59,7 +59,7 @@ const funcSelector = funcSelectors[
   'execute(bytes commands, bytes[] inputs, uint256 deadline)'
 ] as Hex;
 const eventSelector = eventSelectors[
-  'Transfer(address,address,uint256)'
+  'Transfer(address indexed,address indexed,uint256 indexed)'
 ] as Hex;
 
 describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
@@ -148,7 +148,7 @@ describe.skipIf(!process.env.VITE_ALCHEMY_API_KEY)(
       // Define EventActionPayload manually
       const eventActionPayload = {
         actionClaimant: {
-          signatureType: SignatureType.FUNC,
+          signatureType: SignatureType.EVENT,
           signature: eventSelector, // Transfer(address,address,uint256) event signature
           fieldIndex: 1, // Targeting the 'to' address
           targetContract: erc20TokenAddress, // The ERC20 contract we're monitoring

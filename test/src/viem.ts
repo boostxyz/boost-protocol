@@ -8,7 +8,7 @@ import {
   zeroHash,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { base, hardhat, sepolia } from 'viem/chains';
+import { arbitrum, base, hardhat, sepolia } from 'viem/chains';
 import { accounts } from './accounts';
 
 const { account, key } = accounts.at(0) || {
@@ -35,7 +35,7 @@ export type TestClient = ReturnType<typeof makeTestClient>;
 export function setupConfig(walletClient = makeTestClient()) {
   return createConfig({
     ssr: true,
-    chains: [hardhat, base, sepolia],
+    chains: [hardhat, arbitrum, base, sepolia],
     client: () => walletClient,
   });
 }

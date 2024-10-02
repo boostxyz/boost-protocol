@@ -2,7 +2,7 @@ import { readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { encodeAbiParameters, isAddress, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import { accounts } from '../../test/accounts';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -10,7 +10,7 @@ import {
   deployFixtures,
   freshBoost,
   fundBudget,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
 
 const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
@@ -19,7 +19,7 @@ let fixtures: Fixtures, budgets: BudgetFixtures;
 
 describe('ERC20VariableIncentive', () => {
   beforeAll(async () => {
-    fixtures = await loadFixture(deployFixtures);
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
 
   beforeEach(async () => {

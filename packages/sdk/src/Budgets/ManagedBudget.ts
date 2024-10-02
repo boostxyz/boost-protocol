@@ -193,7 +193,6 @@ export class ManagedBudget extends DeployableTarget<
    */
   public static override bases: Record<number, Address> = {
     ...(ManagedBudgetBases as Record<number, Address>),
-    31337: import.meta.env.VITE_MANAGED_BUDGET_BASE,
   };
   /**
    * @inheritdoc

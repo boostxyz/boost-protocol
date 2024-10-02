@@ -11,11 +11,11 @@ import {
   pad,
   parseEther,
   toHex,
-} from "viem";
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
-import type { MockERC20 } from "../../test/MockERC20";
-import type { MockERC721 } from "../../test/MockERC721";
-import { accounts } from "../../test/accounts";
+} from 'viem';
+import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import type { MockERC20 } from '@boostxyz/test/MockERC20';
+import type { MockERC721 } from '@boostxyz/test/MockERC721';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   type StringEmitterFixtures,
@@ -24,7 +24,7 @@ import {
   fundErc20,
   deployStringEmitterMock,
   fundErc721,
-} from "../../test/helpers";
+} from '@boostxyz/test/helpers';
 import {
   EventAction,
   type EventLogs,
@@ -40,7 +40,7 @@ let fixtures: Fixtures,
   stringEmitterFixtures: StringEmitterFixtures;
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
   stringEmitterFixtures = await loadFixture(deployStringEmitterMock);
 });
 

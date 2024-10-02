@@ -52,7 +52,7 @@ jobs:
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: npx turbo test:ci --cache-dir=".cache"
+          command: npx turbo test:ci --cache-dir=".cache" --filter="./packages/*"
 
       # - name: Upload coverage reports to Codecov
       #   uses: codecov/codecov-action@v4.3.0

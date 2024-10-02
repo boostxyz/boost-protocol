@@ -2,15 +2,15 @@ import { readPointsBalanceOf, writePointsGrantRoles } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockPoints } from '../../test/MockPoints';
-import { accounts } from '../../test/accounts';
+import type { MockPoints } from '@boostxyz/test/MockPoints';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
   freshBoost,
   freshPoints,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { bytes4 } from '../utils';
 import { PointsIncentive } from './PointsIncentive';
 
@@ -18,7 +18,7 @@ let fixtures: Fixtures, points: MockPoints;
 
 describe('PointsIncentive', () => {
   beforeAll(async () => {
-    fixtures = await loadFixture(deployFixtures);
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
 
   beforeEach(async () => {

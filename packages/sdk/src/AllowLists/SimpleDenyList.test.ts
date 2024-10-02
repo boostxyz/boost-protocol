@@ -5,13 +5,13 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { SimpleDenyList } from './SimpleDenyList';
 
 let fixtures: Fixtures;
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
 function freshDenyList(fixtures: Fixtures) {

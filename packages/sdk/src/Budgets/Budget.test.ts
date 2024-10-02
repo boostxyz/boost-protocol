@@ -5,14 +5,14 @@ import {
   defaultOptions,
   deployFixtures,
   freshManagedBudget,
-} from '../../test/helpers';
+} from '@boostxyz/test/helpers';
 import { budgetFromAddress } from './Budget';
 import { ManagedBudget } from './ManagedBudget';
 
 let fixtures: Fixtures;
 
 beforeAll(async () => {
-  fixtures = await loadFixture(deployFixtures);
+  fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
 describe('Budget', () => {

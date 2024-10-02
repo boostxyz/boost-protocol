@@ -1,5 +1,16 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.15
+
+### Minor Changes
+
+- 8b4be2a: add indexes to use case test signatures, refactor example tests
+
+### Patch Changes
+
+- Updated dependencies [8b4be2a]
+  - @boostxyz/signatures@0.0.0-alpha.4
+
 ## 0.0.0-alpha.14
 
 ### Patch Changes

@@ -680,6 +680,8 @@ export class EventAction extends DeployableTarget<
       case FilterType.EQUAL:
         if (criteria.fieldType === PrimitiveType.ADDRESS) {
           return isAddressEqual(criteria.filterData, fieldValue as Address);
+        } else if (criteria.fieldType === PrimitiveType.UINT) {
+          return BigInt(fieldValue) === BigInt(criteria.filterData);
         }
         return fieldValue === criteria.filterData;
 

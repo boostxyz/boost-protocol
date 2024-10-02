@@ -4,6 +4,7 @@
   "Purchased(address indexed,address indexed,uint256 indexed,uint256,uint256)",
   "NameRegistered(string,bytes32,address,uint256,uint256,uint256)",
   "DelegateChanged(address indexed,address indexed,address indexed)",
+  "SwappedV3(bytes16,address,uint256,address,address indexed,address indexed,address indexed,uint256,uint256,uint256)",
   "// Test signatures",
   "InfoIndexed(address indexed,string indexed)",
   "Info(address,string)"

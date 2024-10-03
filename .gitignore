@@ -2,19 +2,31 @@ node_modules/
 .turbo
 dist
 coverage
-.cache
+**/.cache
 tsconfig.tsbuildinfo
 tsconfig.build.tsbuildinfo
 .DS_Store
-docs
+**/docs
 
 .env*
 !.env.sample
-cache
+**/cache
 docs
 .boost
+
+**/.vscode
 
 # don't commit local testnet deploys
 packages/evm/deploys/31337.json
 # don't commit componentInterfaces, since these are used at build time
 packages/evm/deploys/componentInterfaces.json
+
+# evm package
+packages/evm/cache_forge/
+packages/evm/out/
+packages/evm/artifacts/
+
+# Ignores development broadcast logs
+!packages/evm/broadcast
+packages/evm/broadcast/*/31337/
+packages/evm/broadcast/**/dry-run/

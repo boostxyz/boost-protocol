@@ -199,7 +199,8 @@
     "typedoc": "npx typedoc --tsconfig ./tsconfig.build.json --sort required-first --sort visibility --sort kind"
   },
   "dependencies": {
-    "@boostxyz/signatures": "workspace:*"
+    "@boostxyz/signatures": "workspace:*",
+    "ts-pattern": "5.4.0"
   },
   "optionalDependencies": {
     "@boostxyz/evm": "workspace:*",

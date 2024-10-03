@@ -11,11 +11,13 @@ import {
   pad,
   parseEther,
   toHex,
+  zeroAddress,
 } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '@boostxyz/test/MockERC20';
 import type { MockERC721 } from '@boostxyz/test/MockERC721';
 import { accounts } from '@boostxyz/test/accounts';
+import { InvalidNumericalCriteriaError, FieldValueNotComparableError, UnrecognizedFilterTypeError } from '../errors';
 import {
   type Fixtures,
   type StringEmitterFixtures,
@@ -32,6 +34,7 @@ import {
   FilterType,
   PrimitiveType,
   SignatureType,
+  Criteria,
 } from "./EventAction";
 
 let fixtures: Fixtures,
@@ -245,6 +248,20 @@ function cloneStringEventAction(
       crypto.randomUUID(),
       new fixtures.bases.EventAction(defaultOptions, actionParams),
     );
+  };
+}
+
+function createMockCriteria(
+  filterType: FilterType,
+  fieldType: PrimitiveType,
+  filterData: Hex,
+  fieldIndex: number = 0
+): Criteria {
+  return {
+    filterType,
+    fieldType,
+    filterData,
+    fieldIndex,
   };
 }
 
@@ -471,6 +488,127 @@ describe("EventAction Event Selector", () => {
     });
   });
 });
+
+describe("validateFieldAgainstCriteria unit tests", () => {
+  let action: EventAction
+  beforeAll(async () => {
+      action = await loadFixture(cloneEventAction(fixtures, erc721));
+  });
+  const mockAddress = '0x1234567890abcdef1234567890abcdef12345678';
+  const mockInput = { decodedArgs: ['not used'] };
+
+  test('should return true for EQUAL filter type with ADDRESS field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.ADDRESS, mockAddress);
+    const result = action.validateFieldAgainstCriteria(mockCriteria, mockAddress, mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should return true for EQUAL filter type with UINT field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.UINT, '0xc8');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+    expect(result).toBe(true);
+  });
+  test('should return true for EQUAL filter type with STRING field type when values match', () => {
+    // Decoded value: 'hello'
+    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.STRING, '0x68656c6c6f');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 'hello', mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should return false for EQUAL filter type with STRING field type when values do not match', () => {
+    // Decoded value: 'hello'
+    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.STRING, '0x68656c6c6f');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 'world', mockInput);
+    expect(result).toBe(false);
+  });
+
+  test('should return true for EQUAL filter type with BYTES field type when values match', () => {
+    // Decoded value: '0x68656c6c6f' (hex for 'hello')
+    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.BYTES, '0x68656c6c6f');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, '0x68656c6c6f', mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should return false for EQUAL filter type with BYTES field type when values do not match', () => {
+    // Decoded value: '0x68656c6c6f' (hex for 'hello')
+    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.BYTES, '0x68656c6c6f');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, '0x776f726c64', mockInput); // hex for 'world'
+    expect(result).toBe(false);
+  });
+
+  test('should return false for NOT_EQUAL filter type with ADDRESS field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.NOT_EQUAL, PrimitiveType.ADDRESS, mockAddress);
+    const result = action.validateFieldAgainstCriteria(mockCriteria, zeroAddress, mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should return true for NOT_EQUAL filter type with UINT field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.NOT_EQUAL, PrimitiveType.UINT, '0xc9');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should throw InvalidNumericalCriteriaError for GREATER_THAN filter type with non-uint field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.GREATER_THAN, PrimitiveType.STRING, '0x100');
+    expect(() => action.validateFieldAgainstCriteria(mockCriteria, '200', mockInput)).toThrow('non-numerical criteria');
+  });
+
+  test('should return true for GREATER_THAN filter type with UINT field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.GREATER_THAN, PrimitiveType.UINT, '0x64');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should return true for CONTAINS filter type with STRING field type', () => {
+    // Decoded value: 'hello'
+    const mockCriteria = createMockCriteria(FilterType.CONTAINS, PrimitiveType.STRING, '0x68656c6c6f');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 'hello world', mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should return true for CONTAINS filter type with BYTES field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.CONTAINS, PrimitiveType.BYTES, '0xbeef');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, '0xdeadbeef', mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should throw FieldValueNotComparableError for CONTAINS filter type with non-string/bytes field type', () => {
+    // Decoded value: 123
+    const mockCriteria = createMockCriteria(FilterType.CONTAINS, PrimitiveType.UINT, '0x7b');
+    expect(() => action.validateFieldAgainstCriteria(mockCriteria, 123n, mockInput)).toThrow(/only .* bytes or string/);
+  });
+
+  test('should throw UnrecognizedFilterTypeError for unrecognized filter type', () => {
+    const mockCriteria = createMockCriteria(6 as FilterType, PrimitiveType.STRING, '0x74657374'); // Decoded value: 'test'
+    expect(() => action.validateFieldAgainstCriteria(mockCriteria, 'test', mockInput)).toThrow('Invalid FilterType');
+  });
+
+  test('should return true for LESS_THAN filter type with UINT field type', () => {
+    // Decoded value: 200
+    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.UINT, '0xc8');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 100n, mockInput);
+    expect(result).toBe(true);
+  });
+
+  test('should return false for LESS_THAN filter type with UINT field type when value is greater', () => {
+    // Decoded value: 100
+    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.UINT, '0x64');
+    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+    expect(result).toBe(false);
+  });
+
+  test('should throw InvalidNumericalCriteriaError for LESS_THAN filter type with non-uint field type', () => {
+    // Decoded value: 100
+    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.STRING, '0x64');
+    expect(() => action.validateFieldAgainstCriteria(mockCriteria, '50', mockInput)).toThrow('non-numerical');
+  });
+
+  test('should throw InvalidNumericalCriteriaError for LESS_THAN filter type with ADDRESS field type', () => {
+    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.ADDRESS, '0x1234567890abcdef1234567890abcdef12345678');
+    expect(() => action.validateFieldAgainstCriteria(mockCriteria, '0x1234567890abcdef1234567890abcdef12345678', mockInput)).toThrow('non-numerical');
+  });
+
+})
 
 describe("EventAction Func Selector", () => {
   beforeEach(async () => {

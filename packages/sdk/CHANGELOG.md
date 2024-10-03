@@ -1,5 +1,17 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.16
+
+### Minor Changes
+
+- 5144fde: add owner to allow/denylist
+
+### Patch Changes
+
+- Updated dependencies [90d3275]
+- Updated dependencies [c7964fd]
+  - @boostxyz/signatures@0.0.0-alpha.5
+
 ## 0.0.0-alpha.15
 
 ### Minor Changes

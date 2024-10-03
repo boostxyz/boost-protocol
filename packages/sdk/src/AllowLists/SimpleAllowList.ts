@@ -109,6 +109,26 @@ export class SimpleAllowList extends DeployableTarget<
   public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
 
   /**
+   * Retrieves the owner
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof simpleAllowListAbi, 'owner'>} [params]
+   * @returns {Promise<Address>} - The address of the owner
+   */
+  public async owner(
+    params?: ReadParams<typeof simpleAllowListAbi, 'owner'>,
+  ): Promise<Address> {
+    return await readSimpleAllowListOwner(this._config, {
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      address: this.assertValidAddress(),
+      args: [],
+    });
+  }
+
+  /**
    * Check if a user is authorized.
    *
    * @public

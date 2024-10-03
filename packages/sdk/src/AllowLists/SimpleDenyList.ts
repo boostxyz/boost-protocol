@@ -1,4 +1,5 @@
 import {
+  readSimpleAllowListOwner,
   readSimpleDenyListIsAllowed,
   simpleDenyListAbi,
   simulateSimpleDenyListSetDenied,
@@ -97,6 +98,26 @@ export class SimpleDenyList<
    * @type {RegistryType}
    */
   public static override registryType: RegistryType = RegistryType.ALLOW_LIST;
+
+  /**
+   * Retrieves the owner
+   *
+   * @public
+   * @async
+   * @param {?ReadParams<typeof simpleDenyListAbi, 'owner'>} [params]
+   * @returns {Promise<Address>} - The address of the owner
+   */
+  public async owner(
+    params?: ReadParams<typeof simpleDenyListAbi, 'owner'>,
+  ): Promise<Address> {
+    return await readSimpleAllowListOwner(this._config, {
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+      address: this.assertValidAddress(),
+      args: [],
+    });
+  }
 
   /**
    * Check if a user is authorized (i.e. not denied)

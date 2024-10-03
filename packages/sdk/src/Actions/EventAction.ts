@@ -8,6 +8,7 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import events from '@boostxyz/signatures/events';
 import functions from '@boostxyz/signatures/functions';
+import { match } from 'ts-pattern';
 import {
   type Abi,
   type AbiEvent,
@@ -24,8 +25,6 @@ import {
   encodeAbiParameters,
   fromHex,
   isAddressEqual,
-  pad,
-  trim,
 } from 'viem';
 import { getLogs } from 'viem/actions';
 import { EventAction as EventActionBases } from '../../dist/deployments.json';
@@ -678,13 +677,35 @@ export class EventAction extends DeployableTarget<
     // Type narrow based on criteria.filterType
     switch (criteria.filterType) {
       case FilterType.EQUAL:
-        if (criteria.fieldType === PrimitiveType.ADDRESS) {
-          return isAddressEqual(criteria.filterData, fieldValue as Address);
-        }
-        return fieldValue === criteria.filterData;
+        return match(criteria.fieldType)
+          .with(PrimitiveType.ADDRESS, () =>
+            isAddressEqual(criteria.filterData, fieldValue as Address),
+          )
+          .with(
+            PrimitiveType.UINT,
+            () => BigInt(fieldValue) === BigInt(criteria.filterData),
+          )
+          .with(
+            PrimitiveType.STRING,
+            () => fieldValue === fromHex(criteria.filterData, 'string'),
+          )
+          .otherwise(() => fieldValue === criteria.filterData);
 
       case FilterType.NOT_EQUAL:
-        return fieldValue !== criteria.filterData;
+        return match(criteria.fieldType)
+          .with(
+            PrimitiveType.ADDRESS,
+            () => !isAddressEqual(criteria.filterData, fieldValue as Address),
+          )
+          .with(
+            PrimitiveType.UINT,
+            () => BigInt(fieldValue) !== BigInt(criteria.filterData),
+          )
+          .with(
+            PrimitiveType.STRING,
+            () => fieldValue !== fromHex(criteria.filterData, 'string'),
+          )
+          .otherwise(() => fieldValue !== criteria.filterData);
 
       case FilterType.GREATER_THAN:
         if (criteria.fieldType === PrimitiveType.UINT) {

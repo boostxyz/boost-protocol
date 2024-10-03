@@ -1,5 +1,12 @@
 # @boostxyz/signatures
 
+## 0.0.0-alpha.5
+
+### Patch Changes
+
+- 90d3275: add register function selector to signatures
+- c7964fd: add SwappedV3 event to signatures package
+
 ## 0.0.0-alpha.4
 
 ### Minor Changes

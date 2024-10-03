@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/signatures",
-  "version": "0.0.0-alpha.4",
+  "version": "0.0.0-alpha.5",
   "description": "An offline database of builtin bytes4 selectors and their corresponding abi items",
   "repository": "https://github.com/rabbitholegg/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",

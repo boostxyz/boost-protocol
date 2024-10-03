@@ -61,9 +61,7 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     /// @notice Allocate assets to the budget
     /// @param data_ The compressed data for the allocation (amount, token address, token ID, etc.)
     /// @return True if the allocation was successful
-    function allocate(
-        bytes calldata data_
-    ) external payable virtual returns (bool);
+    function allocate(bytes calldata data_) external payable virtual returns (bool);
 
     /// @notice Reclaim assets from the budget
     /// @param data_ The compressed data for the reclamation (amount, token address, token ID, etc.)
@@ -78,9 +76,7 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     /// @notice Disburse assets from the budget to multiple recipients
     /// @param data_ The array of compressed {Transfer} requests
     /// @return True if all disbursements were successful
-    function disburseBatch(
-        bytes[] calldata data_
-    ) external virtual returns (bool);
+    function disburseBatch(bytes[] calldata data_) external virtual returns (bool);
 
     /// @notice Get the total amount of assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset
@@ -95,9 +91,7 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     /// @notice Get the amount of assets that have been distributed from the budget
     /// @param asset_ The address of the asset
     /// @return The amount of assets distributed
-    function distributed(
-        address asset_
-    ) external view virtual returns (uint256);
+    function distributed(address asset_) external view virtual returns (uint256);
 
     /// @notice Reconcile the budget to ensure the known state matches the actual state
     /// @param data_ The compressed data for the reconciliation (amount, token address, token ID, etc.)
@@ -105,12 +99,8 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     function reconcile(bytes calldata data_) external virtual returns (uint256);
 
     /// @inheritdoc ACloneable
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ACloneable) returns (bool) {
-        return
-            interfaceId == type(ABudget).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {
+        return interfaceId == type(ABudget).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc Receiver

@@ -124,13 +124,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
     /// @dev If the asset transfer fails, the disbursement will revert
-    function disburse(bytes calldata data_)
-        public
-        virtual
-        override
-        onlyAuthorized
-        returns (bool)
-    {
+    function disburse(bytes calldata data_) public virtual override onlyAuthorized returns (bool) {
         Transfer memory request = abi.decode(data_, (Transfer));
         if (request.assetType == AssetType.ERC20 || request.assetType == AssetType.ETH) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));

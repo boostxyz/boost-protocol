@@ -19,13 +19,8 @@ contract SimpleDenyList is ASimpleDenyList {
 
     /// @notice Initialize the contract with the initial list of denied addresses
     /// @param data_ The compressed initialization data `(address owner, address[] denyList)`
-    function initialize(
-        bytes calldata data_
-    ) public virtual override initializer {
-        (address owner_, address[] memory denyList_) = abi.decode(
-            data_,
-            (address, address[])
-        );
+    function initialize(bytes calldata data_) public virtual override initializer {
+        (address owner_, address[] memory denyList_) = abi.decode(data_, (address, address[]));
 
         _initializeOwner(owner_);
         for (uint256 i = 0; i < denyList_.length; i++) {
@@ -37,10 +32,7 @@ contract SimpleDenyList is ASimpleDenyList {
     /// @param user_ The address of the user
     /// @param - The data payload for the authorization check, not used in this implementation
     /// @return True if the user is authorized
-    function isAllowed(
-        address user_,
-        bytes calldata /* data_ - unused */
-    ) external view override returns (bool) {
+    function isAllowed(address user_, bytes calldata /* data_ - unused */ ) external view override returns (bool) {
         return !_denied[user_];
     }
 
@@ -49,10 +41,11 @@ contract SimpleDenyList is ASimpleDenyList {
     /// @param denied_ The denied status of each user
     /// @dev The length of the `users_` and `denied_` arrays must be the same
     /// @dev This function can only be called by the owner or users with ADMIN_ROLE permissions
-    function setDenied(
-        address[] calldata users_,
-        bool[] calldata denied_
-    ) external override onlyOwnerOrRoles(ADMIN_ROLE) {
+    function setDenied(address[] calldata users_, bool[] calldata denied_)
+        external
+        override
+        onlyOwnerOrRoles(ADMIN_ROLE)
+    {
         if (users_.length != denied_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {

@@ -25,18 +25,17 @@ contract RBAC is OwnableRoles {
     /// @return True if the account is authorized
     /// @dev The mechanism for checking authorization is left to the implementing contract
     function isAuthorized(address account_) public view virtual returns (bool) {
-        return
-            owner() == account_ ||
-            hasAnyRole(account_, MANAGER_ROLE | ADMIN_ROLE);
+        return owner() == account_ || hasAnyRole(account_, MANAGER_ROLE | ADMIN_ROLE);
     }
 
     /// @notice Set roles for accounts authoried to use the resource as managers
     /// @param accounts_ The accounts to grant or revoke the MANAGER_ROLE by index
     /// @param authorized_ Whether to grant or revoke the MANAGER_ROLE
-    function setAuthorized(
-        address[] calldata accounts_,
-        bool[] calldata authorized_
-    ) external virtual onlyOwnerOrRoles(ADMIN_ROLE) {
+    function setAuthorized(address[] calldata accounts_, bool[] calldata authorized_)
+        external
+        virtual
+        onlyOwnerOrRoles(ADMIN_ROLE)
+    {
         if (accounts_.length != authorized_.length) {
             revert BoostError.LengthMismatch();
         }
@@ -53,10 +52,11 @@ contract RBAC is OwnableRoles {
     /// @notice Set roles for accounts authorized to use the resource
     /// @param accounts_ The accounts to assign the corresponding role by index
     /// @param roles_ The roles to assign
-    function grantRoles(
-        address[] calldata accounts_,
-        uint256[] calldata roles_
-    ) external virtual onlyOwnerOrRoles(ADMIN_ROLE) {
+    function grantRoles(address[] calldata accounts_, uint256[] calldata roles_)
+        external
+        virtual
+        onlyOwnerOrRoles(ADMIN_ROLE)
+    {
         if (accounts_.length != roles_.length) {
             revert BoostError.LengthMismatch();
         }
@@ -68,10 +68,11 @@ contract RBAC is OwnableRoles {
     /// @notice Revoke roles for accounts authorized to use the resource
     /// @param accounts_ The accounts to assign the corresponding role by index
     /// @param roles_ The roles to remove
-    function revokeRoles(
-        address[] calldata accounts_,
-        uint256[] calldata roles_
-    ) external virtual onlyOwnerOrRoles(ADMIN_ROLE) {
+    function revokeRoles(address[] calldata accounts_, uint256[] calldata roles_)
+        external
+        virtual
+        onlyOwnerOrRoles(ADMIN_ROLE)
+    {
         if (accounts_.length != roles_.length) {
             revert BoostError.LengthMismatch();
         }

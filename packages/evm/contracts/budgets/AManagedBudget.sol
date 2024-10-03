@@ -18,48 +18,28 @@ abstract contract AManagedBudget is ABudget, IERC1155Receiver {
     /// @param asset_ The address of the asset
     /// @param tokenId_ The ID of the token
     /// @return The total amount of assets
-    function total(
-        address asset_,
-        uint256 tokenId_
-    ) external view virtual returns (uint256);
+    function total(address asset_, uint256 tokenId_) external view virtual returns (uint256);
 
     /// @notice Get the amount of ERC1155 assets available for distribution from the budget
     /// @param asset_ The address of the asset
     /// @param tokenId_ The ID of the token
     /// @return The amount of assets available
-    function available(
-        address asset_,
-        uint256 tokenId_
-    ) public view virtual returns (uint256);
+    function available(address asset_, uint256 tokenId_) public view virtual returns (uint256);
 
     /// @notice Get the amount of ERC1155 assets that have been distributed from the budget
     /// @param asset_ The address of the asset
     /// @param tokenId_ The ID of the token
     /// @return The amount of assets distributed
-    function distributed(
-        address asset_,
-        uint256 tokenId_
-    ) external view virtual returns (uint256);
+    function distributed(address asset_, uint256 tokenId_) external view virtual returns (uint256);
 
     /// @inheritdoc ACloneable
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ABudget, IERC165) returns (bool) {
-        return
-            interfaceId == type(AManagedBudget).interfaceId ||
-            interfaceId == type(IERC1155Receiver).interfaceId ||
-            interfaceId == type(IERC165).interfaceId ||
-            ABudget.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ABudget, IERC165) returns (bool) {
+        return interfaceId == type(AManagedBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId
+            || interfaceId == type(IERC165).interfaceId || ABudget.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc ACloneable
-    function getComponentInterface()
-        public
-        pure
-        virtual
-        override
-        returns (bytes4)
-    {
+    function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(AManagedBudget).interfaceId;
     }
 }

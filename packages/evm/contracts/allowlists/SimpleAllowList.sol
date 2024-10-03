@@ -21,13 +21,8 @@ contract SimpleAllowList is ASimpleAllowList {
 
     /// @notice Initialize the contract with the list of allowed addresses
     /// @param data_ The compressed initialization data `(address owner, address[] allowList)`
-    function initialize(
-        bytes calldata data_
-    ) public virtual override initializer {
-        (address owner_, address[] memory allowList_) = abi.decode(
-            data_,
-            (address, address[])
-        );
+    function initialize(bytes calldata data_) public virtual override initializer {
+        (address owner_, address[] memory allowList_) = abi.decode(data_, (address, address[]));
         _initializeOwner(owner_);
         for (uint256 i = 0; i < allowList_.length; i++) {
             _allowed[allowList_[i]] = true;
@@ -38,10 +33,7 @@ contract SimpleAllowList is ASimpleAllowList {
     /// @param user_ The address of the user
     /// @param - The data payload for the authorization check, not used in this implementation
     /// @return True if the user is authorized
-    function isAllowed(
-        address user_,
-        bytes calldata /* data_ - unused */
-    ) external view override returns (bool) {
+    function isAllowed(address user_, bytes calldata /* data_ - unused */ ) external view override returns (bool) {
         return _allowed[user_];
     }
 
@@ -50,12 +42,14 @@ contract SimpleAllowList is ASimpleAllowList {
     /// @param allowed_ The allowed status of each user
     /// @dev The length of the `users_` and `allowed_` arrays must be the same
     /// @dev This function can only be called by the owner or users with ADMIN_ROLE permissions
-    function setAllowed(
-        address[] calldata users_,
-        bool[] calldata allowed_
-    ) external override onlyOwnerOrRoles(ADMIN_ROLE) {
-        if (users_.length != allowed_.length)
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_)
+        external
+        override
+        onlyOwnerOrRoles(ADMIN_ROLE)
+    {
+        if (users_.length != allowed_.length) {
             revert BoostError.LengthMismatch();
+        }
 
         for (uint256 i = 0; i < users_.length; i++) {
             _allowed[users_[i]] = allowed_[i];

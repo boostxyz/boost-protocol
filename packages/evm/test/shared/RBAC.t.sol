@@ -33,18 +33,8 @@ contract RBACTest is Test {
         accounts[1] = address(0xaaaa);
         authorized[1] = rbac.ADMIN_ROLE();
         rbac.grantRoles(accounts, authorized);
-        assertTrue(
-            rbac.hasAllRoles(
-                address(0xc0ffee),
-                rbac.MANAGER_ROLE()
-            )
-        );
-        assertTrue(
-            rbac.hasAllRoles(
-                address(0xaaaa),
-                rbac.MANAGER_ROLE() & rbac.ADMIN_ROLE()
-            )
-        );
+        assertTrue(rbac.hasAllRoles(address(0xc0ffee), rbac.MANAGER_ROLE()));
+        assertTrue(rbac.hasAllRoles(address(0xaaaa), rbac.MANAGER_ROLE() & rbac.ADMIN_ROLE()));
         assertFalse(rbac.isAuthorized(address(0xdeadbeef)));
     }
 
@@ -116,32 +106,12 @@ contract RBACTest is Test {
         accounts[1] = address(0xaaaa);
         authorized[1] = rbac.ADMIN_ROLE();
         rbac.grantRoles(accounts, authorized);
-        assertTrue(
-            rbac.hasAllRoles(
-                address(0xc0ffee),
-                rbac.MANAGER_ROLE()
-            )
-        );
-        assertTrue(
-            rbac.hasAllRoles(
-                address(0xaaaa),
-                rbac.MANAGER_ROLE() & rbac.ADMIN_ROLE()
-            )
-        );
+        assertTrue(rbac.hasAllRoles(address(0xc0ffee), rbac.MANAGER_ROLE()));
+        assertTrue(rbac.hasAllRoles(address(0xaaaa), rbac.MANAGER_ROLE() & rbac.ADMIN_ROLE()));
         assertFalse(rbac.isAuthorized(address(0xdeadbeef)));
         rbac.revokeRoles(accounts, authorized);
-        assertFalse(
-            rbac.hasAllRoles(
-                address(0xc0ffee),
-                rbac.MANAGER_ROLE()
-            )
-        );
-        assertFalse(
-            rbac.hasAnyRole(
-                address(0xaaaa),
-                rbac.ADMIN_ROLE() | rbac.MANAGER_ROLE()
-            )
-        );
+        assertFalse(rbac.hasAllRoles(address(0xc0ffee), rbac.MANAGER_ROLE()));
+        assertFalse(rbac.hasAnyRole(address(0xaaaa), rbac.ADMIN_ROLE() | rbac.MANAGER_ROLE()));
     }
 
     function testRevokeRoles_NotOwner() public {
@@ -272,20 +242,14 @@ contract RBACTest is Test {
         rbac.setAuthorized(accounts, authorizations);
 
         // Verify that the user is authorized
-        assertTrue(
-            rbac.isAuthorized(user),
-            "User should be authorized"
-        );
+        assertTrue(rbac.isAuthorized(user), "User should be authorized");
 
         // Remove authorization from the user
         authorizations[0] = false;
         rbac.setAuthorized(accounts, authorizations);
 
         // Verify that the user is no longer authorized
-        assertFalse(
-            rbac.isAuthorized(user),
-            "User should not be authorized"
-        );
+        assertFalse(rbac.isAuthorized(user), "User should not be authorized");
     }
 
     ///////////////////////////////

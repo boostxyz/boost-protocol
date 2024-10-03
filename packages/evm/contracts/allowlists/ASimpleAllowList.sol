@@ -13,28 +13,15 @@ abstract contract ASimpleAllowList is AAllowList {
     /// @param allowed_ The allowed status of each user
     /// @dev The length of the `users_` and `allowed_` arrays must be the same
     /// @dev This function can only be called by the owner
-    function setAllowed(
-        address[] calldata users_,
-        bool[] calldata allowed_
-    ) external virtual;
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external virtual;
 
     /// @inheritdoc ACloneable
-    function getComponentInterface()
-        public
-        pure
-        virtual
-        override(ACloneable)
-        returns (bytes4)
-    {
+    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(ASimpleAllowList).interfaceId;
     }
 
     /// @inheritdoc ACloneable
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(AAllowList) returns (bool) {
-        return
-            interfaceId == type(ASimpleAllowList).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AAllowList) returns (bool) {
+        return interfaceId == type(ASimpleAllowList).interfaceId || super.supportsInterface(interfaceId);
     }
 }

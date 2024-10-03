@@ -128,7 +128,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
         public
         virtual
         override
-        onlyOwnerOrRoles(ADMIN_ROLE | MANAGER_ROLE)
+        onlyAuthorized
         returns (bool)
     {
         Transfer memory request = abi.decode(data_, (Transfer));
@@ -167,67 +167,6 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
         }
 
         return true;
-    }
-
-    /// @inheritdoc ABudget
-    /// @dev Checks if account has any level of authorization
-    function isAuthorized(address account_) public view virtual override returns (bool) {
-        return owner() == account_ || hasAnyRole(account_, MANAGER_ROLE | ADMIN_ROLE);
-    }
-
-    /// @inheritdoc ABudget
-    /// @dev If authorization is true, grant manager role, otherwise revoke manager role.
-    function setAuthorized(address[] calldata accounts_, bool[] calldata authorized_)
-        external
-        virtual
-        override
-        onlyOwnerOrRoles(ADMIN_ROLE)
-    {
-        if (accounts_.length != authorized_.length) {
-            revert BoostError.LengthMismatch();
-        }
-        for (uint256 i = 0; i < accounts_.length; i++) {
-            bool authorization = authorized_[i];
-            if (authorization == true) {
-                _grantRoles(accounts_[i], MANAGER_ROLE);
-            } else {
-                _removeRoles(accounts_[i], MANAGER_ROLE);
-            }
-        }
-    }
-
-    /// @notice Set roles for accounts authoried to use the budget
-    /// @param accounts_ The accounts to assign the corresponding role by index
-    /// @param roles_ The roles to assign
-    function grantRoles(address[] calldata accounts_, uint256[] calldata roles_)
-        external
-        virtual
-        override
-        onlyOwnerOrRoles(ADMIN_ROLE)
-    {
-        if (accounts_.length != roles_.length) {
-            revert BoostError.LengthMismatch();
-        }
-        for (uint256 i = 0; i < accounts_.length; i++) {
-            _grantRoles(accounts_[i], roles_[i]);
-        }
-    }
-
-    /// @notice Revoke roles for accounts authoried to use the budget
-    /// @param accounts_ The accounts to assign the corresponding role by index
-    /// @param roles_ The roles to remove
-    function revokeRoles(address[] calldata accounts_, uint256[] calldata roles_)
-        external
-        virtual
-        override
-        onlyOwnerOrRoles(ADMIN_ROLE)
-    {
-        if (accounts_.length != roles_.length) {
-            revert BoostError.LengthMismatch();
-        }
-        for (uint256 i = 0; i < accounts_.length; i++) {
-            _removeRoles(accounts_[i], roles_[i]);
-        }
     }
 
     /// @inheritdoc ABudget

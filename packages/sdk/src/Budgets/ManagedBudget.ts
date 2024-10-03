@@ -39,6 +39,7 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { DeployableTargetWithRBAC } from '../Deployable/DeployableTargetWithRBAC';
 import {
   DeployableUnknownOwnerProvidedError,
   UnknownTransferPayloadSupplied,
@@ -170,9 +171,9 @@ export function prepareTransfer(
  * @export
  * @class ManagedBudget
  * @typedef {ManagedBudget}
- * @extends {DeployableTarget<ManagedBudgetPayload>}
+ * @extends {DeployableTargetWithRBAC<ManagedBudgetPayload>}
  */
-export class ManagedBudget extends DeployableTarget<
+export class ManagedBudget extends DeployableTargetWithRBAC<
   ManagedBudgetPayload,
   typeof managedBudgetAbi
 > {

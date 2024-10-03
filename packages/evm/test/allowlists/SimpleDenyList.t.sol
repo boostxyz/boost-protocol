@@ -122,6 +122,12 @@ contract SimpleDenyListTest is Test {
         denyList.setDenied(new address[](1), new bool[](2));
     }
 
+    function testSetDenied_NotAdmin() public {
+        vm.prank(address(0xc0ffee));
+        vm.expectRevert();
+        denyList.setDenied(new address[](1), new bool[](1));
+    }
+
     ////////////////////////////////////
     // SimpleDenyList.getComponentInterface //
     ////////////////////////////////////

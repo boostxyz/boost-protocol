@@ -33,7 +33,9 @@ contract SimpleAllowListTest is Test {
     ////////////////////////////////
 
     function testInitialize() public {
-        SimpleAllowList freshClone = SimpleAllowList(LibClone.clone(address(baseAllowList)));
+        SimpleAllowList freshClone = SimpleAllowList(
+            LibClone.clone(address(baseAllowList))
+        );
         address[] memory users = new address[](1);
         users[0] = address(1);
 
@@ -54,7 +56,10 @@ contract SimpleAllowListTest is Test {
         // Because the slot is private, we use `vm.load` to access it then parse out the bits:
         //   - [0] is the `initializing` flag (which should be 0 == false)
         //   - [1..64] hold the `initializedVersion` (which should be 1)
-        bytes32 slot = vm.load(address(allowList), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffbf601132);
+        bytes32 slot = vm.load(
+            address(allowList),
+            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffbf601132
+        );
 
         uint64 version;
         assembly {
@@ -81,9 +86,21 @@ contract SimpleAllowListTest is Test {
 
     function testIsAllowed_UnnecessaryData() public {
         // Extra data should have no effect on the result because it is ignored in this implementation
-        assertTrue(allowList.isAllowed(address(1), unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"));
+        assertTrue(
+            allowList.isAllowed(
+                address(1),
+                unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"
+            )
+        );
         assertFalse(
-            allowList.isAllowed(address(2), abi.encodePacked(uint8(42), keccak256("unexpected"), "data!!1!one1!"))
+            allowList.isAllowed(
+                address(2),
+                abi.encodePacked(
+                    uint8(42),
+                    keccak256("unexpected"),
+                    "data!!1!one1!"
+                )
+            )
         );
     }
 
@@ -113,6 +130,12 @@ contract SimpleAllowListTest is Test {
     function testSetAllowed_LengthMismatch() public {
         vm.expectRevert(BoostError.LengthMismatch.selector);
         allowList.setAllowed(new address[](1), new bool[](2));
+    }
+
+    function testSetAllowed_NotAdmin() public {
+        vm.prank(address(0xc0ffee));
+        vm.expectRevert();
+        allowList.setAllowed(new address[](1), new bool[](1));
     }
 
     ////////////////////////////////////

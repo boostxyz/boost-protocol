@@ -13,15 +13,28 @@ abstract contract ASimpleDenyList is AAllowList {
     /// @param denied_ The denied status of each user
     /// @dev The length of the `users_` and `denied_` arrays must be the same
     /// @dev This function can only be called by the owner
-    function setDenied(address[] calldata users_, bool[] calldata denied_) external virtual;
+    function setDenied(
+        address[] calldata users_,
+        bool[] calldata denied_
+    ) external virtual;
 
     /// @inheritdoc ACloneable
-    function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
+    function getComponentInterface()
+        public
+        pure
+        virtual
+        override(ACloneable)
+        returns (bytes4)
+    {
         return type(ASimpleDenyList).interfaceId;
     }
 
     /// @inheritdoc ACloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AAllowList) returns (bool) {
-        return interfaceId == type(ASimpleDenyList).interfaceId || super.supportsInterface(interfaceId);
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(AAllowList) returns (bool) {
+        return
+            interfaceId == type(ASimpleDenyList).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }

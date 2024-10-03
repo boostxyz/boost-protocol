@@ -2,9 +2,7 @@ import {
   readSimpleAllowListIsAllowed,
   readSimpleAllowListOwner,
   simpleAllowListAbi,
-  simulateSimpleAllowListGrantRoles,
   simulateSimpleAllowListSetAllowed,
-  writeSimpleAllowListGrantRoles,
   writeSimpleAllowListSetAllowed,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
@@ -22,7 +20,10 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableTarget } from '../Deployable/DeployableTarget';
+import {
+  DeployableTargetWithRBAC,
+  Roles,
+} from '../Deployable/DeployableTargetWithRBAC';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
   type GenericLog,
@@ -73,18 +74,19 @@ export type SimpleAllowListLog<
 /**
  * A constant representing the list manager's role
  *
+ * @deprecated use {@link Roles} instead
  * @type {2n}
  */
-export const LIST_MANAGER_ROLE = 2n;
+export const LIST_MANAGER_ROLE = Roles.ADMIN;
 /**
  * A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
  *
  * @export
  * @class SimpleAllowList
  * @typedef {SimpleAllowList}
- * @extends {DeployableTarget<SimpleAllowListPayload>}
+ * @extends {DeployableTargetWithRBAC<SimpleAllowListPayload>}
  */
-export class SimpleAllowList extends DeployableTarget<
+export class SimpleAllowList extends DeployableTargetWithRBAC<
   SimpleAllowListPayload,
   typeof simpleAllowListAbi
 > {
@@ -198,53 +200,6 @@ export class SimpleAllowList extends DeployableTarget<
       },
     );
     const hash = await writeSimpleAllowListSetAllowed(this._config, request);
-    return { hash, result };
-  }
-
-  /**
-   * Allows the owner to grant `user` `roles`.
-   *
-   * @public
-   * @async
-   * @param {Address} address
-   * @param {bigint} role
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'grantRoles'>} [params]
-   * @returns {Promise<void>}
-   */
-  public async grantRoles(
-    address: Address,
-    role: bigint,
-    params?: WriteParams<typeof simpleAllowListAbi, 'grantRoles'>,
-  ) {
-    return await this.awaitResult(this.grantRolesRaw(address, role, params));
-  }
-
-  /**
-   * Allows the owner to grant `user` `roles`.
-   *
-   * @public
-   * @async
-   * @param {Address} address
-   * @param {bigint} role
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'grantRoles'>} [params]
-   * @returns {Promise<void>}
-   */
-  public async grantRolesRaw(
-    address: Address,
-    role: bigint,
-    params?: ReadParams<typeof simpleAllowListAbi, 'grantRoles'>,
-  ) {
-    const { request, result } = await simulateSimpleAllowListGrantRoles(
-      this._config,
-      {
-        address: this.assertValidAddress(),
-        args: [address, role],
-        ...this.optionallyAttachAccount(),
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
-    const hash = await writeSimpleAllowListGrantRoles(this._config, request);
     return { hash, result };
   }
 

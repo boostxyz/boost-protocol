@@ -17,7 +17,7 @@ import {ASimpleBudget} from "contracts/budgets/ASimpleBudget.sol";
 /// @title Simple ABudget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
-contract SimpleBudget is ASimpleBudget, Ownable, ReentrancyGuard {
+contract SimpleBudget is ASimpleBudget, ReentrancyGuard {
     using SafeTransferLib for address;
 
     /// @dev The total amount of each fungible asset distributed from the budget
@@ -28,12 +28,6 @@ contract SimpleBudget is ASimpleBudget, Ownable, ReentrancyGuard {
 
     /// @dev The mapping of authorized addresses
     mapping(address => bool) internal _isAuthorized;
-
-    /// @notice A modifier that allows only authorized addresses to call the function
-    modifier onlyAuthorized() {
-        if (!isAuthorized(msg.sender)) revert Unauthorized();
-        _;
-    }
 
     /// @notice The payload for initializing a SimpleBudget
     struct InitPayload {
@@ -53,7 +47,7 @@ contract SimpleBudget is ASimpleBudget, Ownable, ReentrancyGuard {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
         _initializeOwner(init_.owner);
         for (uint256 i = 0; i < init_.authorized.length; i++) {
-            _isAuthorized[init_.authorized[i]] = true;
+            _setRoles(init_.authorized[i], MANAGER_ROLE);
         }
     }
 
@@ -170,24 +164,6 @@ contract SimpleBudget is ASimpleBudget, Ownable, ReentrancyGuard {
         }
 
         return true;
-    }
-
-    /// @inheritdoc ABudget
-    function setAuthorized(address[] calldata account_, bool[] calldata authorized_)
-        external
-        virtual
-        override
-        onlyOwner
-    {
-        if (account_.length != authorized_.length) revert BoostError.LengthMismatch();
-        for (uint256 i = 0; i < account_.length; i++) {
-            _isAuthorized[account_[i]] = authorized_[i];
-        }
-    }
-
-    /// @inheritdoc ABudget
-    function isAuthorized(address account_) public view virtual override returns (bool) {
-        return _isAuthorized[account_] || account_ == owner();
     }
 
     /// @inheritdoc ABudget

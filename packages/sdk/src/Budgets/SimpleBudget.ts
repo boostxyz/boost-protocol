@@ -1,7 +1,6 @@
 import {
   readSimpleBudgetAvailable,
   readSimpleBudgetDistributed,
-  readSimpleBudgetIsAuthorized,
   readSimpleBudgetOwner,
   readSimpleBudgetTotal,
   simpleBudgetAbi,
@@ -9,12 +8,10 @@ import {
   simulateSimpleBudgetClawback,
   simulateSimpleBudgetDisburse,
   simulateSimpleBudgetDisburseBatch,
-  simulateSimpleBudgetSetAuthorized,
   writeSimpleBudgetAllocate,
   writeSimpleBudgetClawback,
   writeSimpleBudgetDisburse,
   writeSimpleBudgetDisburseBatch,
-  writeSimpleBudgetSetAuthorized,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import { getAccount } from '@wagmi/core';
@@ -31,6 +28,7 @@ import type {
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { DeployableTargetWithRBAC } from '../Deployable/DeployableTargetWithRBAC';
 import {
   DeployableUnknownOwnerProvidedError,
   UnknownTransferPayloadSupplied,
@@ -139,9 +137,9 @@ export function prepareTransfer(
  * @export
  * @class SimpleBudget
  * @typedef {SimpleBudget}
- * @extends {DeployableTarget<SimpleBudgetPayload>}
+ * @extends {DeployableTargetWithRBAC<SimpleBudgetPayload>}
  */
-export class SimpleBudget extends DeployableTarget<
+export class SimpleBudget extends DeployableTargetWithRBAC<
   SimpleBudgetPayload,
   typeof simpleBudgetAbi
 > {
@@ -345,78 +343,6 @@ export class SimpleBudget extends DeployableTarget<
     );
     const hash = await writeSimpleBudgetDisburseBatch(this._config, request);
     return { hash, result };
-  }
-
-  /**
-   * Set the authorized status of the given accounts
-   * The mechanism for managing authorization is left to the implementing contract
-   *
-   * @public
-   * @async
-   * @param {Address[]} addresses - The accounts to authorize or deauthorize
-   * @param {boolean[]} allowed - The authorization status for the given accounts
-   * @param {?WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {Promise<void>}
-   */
-  public async setAuthorized(
-    addresses: Address[],
-    allowed: boolean[],
-    params?: WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>,
-  ) {
-    return await this.awaitResult(
-      this.setAuthorizedRaw(addresses, allowed, params),
-    );
-  }
-
-  /**
-   * Set the authorized status of the given accounts
-   * The mechanism for managing authorization is left to the implementing contract
-   *
-   * @public
-   * @async
-   * @param {Address[]} addresses - The accounts to authorize or deauthorize
-   * @param {boolean[]} allowed - The authorization status for the given accounts
-   * @param {?WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {Promise<void>}
-   */
-  public async setAuthorizedRaw(
-    addresses: Address[],
-    allowed: boolean[],
-    params?: WriteParams<typeof simpleBudgetAbi, 'setAuthorized'>,
-  ) {
-    const { request, result } = await simulateSimpleBudgetSetAuthorized(
-      this._config,
-      {
-        address: this.assertValidAddress(),
-        args: [addresses, allowed],
-        ...this.optionallyAttachAccount(),
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
-    const hash = await writeSimpleBudgetSetAuthorized(this._config, request);
-    return { hash, result };
-  }
-
-  /**
-   * Check if the given account is authorized to use the budget
-   *
-   * @public
-   * @param {Address} account
-   * @param {?ReadParams<typeof simpleBudgetAbi, 'isAuthorized'>} [params]
-   * @returns {Promise<boolean>} - True if the account is authorized
-   */
-  public isAuthorized(
-    account: Address,
-    params?: ReadParams<typeof simpleBudgetAbi, 'isAuthorized'>,
-  ) {
-    return readSimpleBudgetIsAuthorized(this._config, {
-      address: this.assertValidAddress(),
-      args: [account],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
   }
 
   /**

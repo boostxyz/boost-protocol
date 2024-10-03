@@ -27,6 +27,7 @@ export * from './Budgets/ManagedBudget';
 export * from './Deployable/Deployable';
 export * from './Deployable/Contract';
 export * from './Deployable/DeployableTarget';
+export * from './Deployable/DeployableTargetWithRBAC';
 
 // Incentives
 

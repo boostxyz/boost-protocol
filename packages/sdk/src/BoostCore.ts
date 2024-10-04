@@ -228,7 +228,7 @@ export type BoostCoreConfig =
 export type CreateBoostPayload = {
   budget: Budget;
   action: Action;
-  validator: Validator;
+  validator?: Validator;
   allowList: AllowList;
   incentives: Array<Incentive>;
   protocolFee?: bigint;
@@ -345,6 +345,13 @@ export class BoostCore extends Deployable<
       if (owner === zeroAddress) {
         throw new DeployableUnknownOwnerProvidedError();
       }
+    }
+
+    if (!validator) {
+      validator = this.SignerValidator({
+        signers: [owner],
+        validatorCaller: coreAddress,
+      });
     }
 
     let budgetPayload: BoostPayload['budget'] = zeroAddress;

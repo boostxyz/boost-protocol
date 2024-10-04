@@ -21,6 +21,9 @@ import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/in
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+import { deployContract, simulateContract, writeContract } from '@wagmi/core';
+import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
   type ActionStep,
   AllowListIncentive,
@@ -66,10 +69,7 @@ import {
   SimpleDenyList,
   type SimpleDenyListPayload,
   getDeployedContractAddress,
-} from '@boostxyz/sdk';
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { deployContract, simulateContract, writeContract } from '@wagmi/core';
-import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
+} from '../../packages/sdk/src/index';
 import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
 import { MockERC1155 } from './MockERC1155';
@@ -119,11 +119,8 @@ export async function freshBoost(
     validator:
       options.validator ||
       fixtures.core.SignerValidator({
-        signers: [
-          defaultOptions.account.address,
-          accounts.at(0)?.account as Address,
-        ],
-        validatorCaller: accounts.at(0)?.account as Address,
+        signers: [defaultOptions.account.address],
+        validatorCaller: fixtures.core.assertValidAddress(),
       }),
     allowList:
       options.allowList ||

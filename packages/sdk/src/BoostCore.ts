@@ -228,7 +228,7 @@ export type BoostCoreConfig =
 export type CreateBoostPayload = {
   budget: Budget;
   action: Action;
-  validator: Validator;
+  validator?: Validator;
   allowList: AllowList;
   incentives: Array<Incentive>;
   protocolFee?: bigint;
@@ -347,6 +347,13 @@ export class BoostCore extends Deployable<
       }
     }
 
+    if (!validator) {
+      validator = this.SignerValidator({
+        signers: [owner],
+        validatorCaller: coreAddress,
+      });
+    }
+
     let budgetPayload: BoostPayload['budget'] = zeroAddress;
     if (budget.address) {
       budgetPayload = budget.address;
@@ -394,28 +401,12 @@ export class BoostCore extends Deployable<
         isBase: isBase,
         instance: validator.address,
         parameters: isBase
-          ? validator
-              .buildParameters(
-                {
-                  signers: [owner],
-                  validatorCaller: coreAddress,
-                },
-                options,
-              )
-              .args.at(0) || zeroHash
+          ? validator.buildParameters(undefined, options).args.at(0) || zeroHash
           : zeroHash,
       };
     } else {
       validatorPayload.parameters =
-        validator
-          .buildParameters(
-            {
-              signers: [owner],
-              validatorCaller: coreAddress,
-            },
-            options,
-          )
-          .args.at(0) || zeroHash;
+        validator.buildParameters(undefined, options).args.at(0) || zeroHash;
       validatorPayload.instance = assertValidAddressByChainId(
         options.config,
         validator.bases,

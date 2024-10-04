@@ -708,4 +708,74 @@ describe('BoostCore', () => {
     );
     expect(await core.isAuthorized(zeroAddress)).toBe(true);
   });
+
+  test('uses the provided validator when one is specified', async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+    const customValidator = core.SignerValidator({
+      signers: [budget.assertValidAddress()],
+      validatorCaller: core.assertValidAddress(),
+    });
+    const boost = await core.createBoost({
+      maxParticipants: 100n,
+      budget: budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      validator: customValidator,
+      allowList: core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        core.ERC20Incentive({
+          asset: erc20.assertValidAddress(),
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+      ],
+    });
+    
+    expect(boost.validator).toBe(customValidator);
+    const signers = await boost.validator.signers(budget.assertValidAddress());
+    expect(signers).toBe(true);
+  });
+
+  test('creates a boost with a default validator when none is provided', async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+    const boost = await core.createBoost({
+      maxParticipants: 100n,
+      budget: budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      allowList: core.OpenAllowList(),
+      incentives: [
+        core.ERC20Incentive({
+          asset: erc20.assertValidAddress(),
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+        }),
+      ],
+    });
+
+    const validator = boost.validator;
+
+    // expect boostCore to be a validatorCaller
+    expect(validator.payload?.validatorCaller).toBe(core.assertValidAddress());
+
+    // expect current account to be a signer
+    const signer = await validator.signers(defaultOptions.account.address);
+    expect(signer).toBeDefined();
+    expect(signer).toBe(true);
+  });
 });

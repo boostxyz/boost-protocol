@@ -401,28 +401,12 @@ export class BoostCore extends Deployable<
         isBase: isBase,
         instance: validator.address,
         parameters: isBase
-          ? validator
-              .buildParameters(
-                {
-                  signers: [owner],
-                  validatorCaller: coreAddress,
-                },
-                options,
-              )
-              .args.at(0) || zeroHash
+          ? validator.buildParameters(undefined, options).args.at(0) || zeroHash
           : zeroHash,
       };
     } else {
       validatorPayload.parameters =
-        validator
-          .buildParameters(
-            {
-              signers: [owner],
-              validatorCaller: coreAddress,
-            },
-            options,
-          )
-          .args.at(0) || zeroHash;
+        validator.buildParameters(undefined, options).args.at(0) || zeroHash;
       validatorPayload.instance = assertValidAddressByChainId(
         options.config,
         validator.bases,

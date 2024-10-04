@@ -1,22 +1,22 @@
-import { readPointsBalanceOf, writePointsGrantRoles } from '@boostxyz/evm';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { isAddress, pad, parseEther, zeroAddress } from 'viem';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockPoints } from '@boostxyz/test/MockPoints';
-import { accounts } from '@boostxyz/test/accounts';
+import { readPointsBalanceOf, writePointsGrantRoles } from "@boostxyz/evm";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { isAddress, pad, parseEther, zeroAddress } from "viem";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import type { MockPoints } from "@boostxyz/test/MockPoints";
+import { accounts } from "@boostxyz/test/accounts";
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
   freshBoost,
   freshPoints,
-} from '@boostxyz/test/helpers';
-import { bytes4 } from '../utils';
-import { PointsIncentive } from './PointsIncentive';
+} from "@boostxyz/test/helpers";
+import { bytes4 } from "../utils";
+import { PointsIncentive } from "./PointsIncentive";
 
 let fixtures: Fixtures, points: MockPoints;
 
-describe('PointsIncentive', () => {
+describe("PointsIncentive", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
@@ -25,10 +25,10 @@ describe('PointsIncentive', () => {
     points = await loadFixture(freshPoints);
   });
 
-  test('can successfully be deployed', async () => {
+  test("can successfully be deployed", async () => {
     const action = new PointsIncentive(defaultOptions, {
       venue: zeroAddress,
-      selector: '0xdeadb33f',
+      selector: "0xdeadb33f",
       reward: 1n,
       limit: 1n,
     });
@@ -36,14 +36,14 @@ describe('PointsIncentive', () => {
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 
-  test('can claim', async () => {
+  test("can claim", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const trustedSigner = accounts.at(0)!;
     const pointsIncentive = fixtures.core.PointsIncentive({
       venue: points.assertValidAddress(),
-      selector: bytes4('issue(address,uint256)'),
+      selector: bytes4("issue(address,uint256)"),
       reward: 1n,
       limit: 10n,
     });
@@ -52,7 +52,7 @@ describe('PointsIncentive', () => {
     });
 
     const claimant = trustedSigner.account;
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
     const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
@@ -73,7 +73,7 @@ describe('PointsIncentive', () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: parseEther('0.000075') },
+      { value: parseEther("0.000075") },
     );
     expect(
       await readPointsBalanceOf(defaultOptions.config, {
@@ -83,7 +83,7 @@ describe('PointsIncentive', () => {
     ).toBe(1n);
   });
 
-  test('cannot claim twice', async () => {
+  test("cannot claim twice", async () => {
     const reward = 1n;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!;
@@ -92,7 +92,7 @@ describe('PointsIncentive', () => {
 
     const pointsIncentive = fixtures.core.PointsIncentive({
       venue: points.assertValidAddress(),
-      selector: bytes4('issue(address,uint256)'),
+      selector: bytes4("issue(address,uint256)"),
       reward,
       limit: 10n,
     });
@@ -101,7 +101,7 @@ describe('PointsIncentive', () => {
     });
 
     const claimant = trustedSigner.account;
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
     const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
@@ -122,7 +122,7 @@ describe('PointsIncentive', () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: parseEther('0.000075') },
+      { value: parseEther("0.000075") },
     );
     try {
       await fixtures.core.claimIncentive(
@@ -130,7 +130,7 @@ describe('PointsIncentive', () => {
         0n,
         referrer,
         claimDataPayload,
-        { value: parseEther('0.000075') },
+        { value: parseEther("0.000075") },
       );
     } catch (e) {
       expect(e).toBeInstanceOf(Error);

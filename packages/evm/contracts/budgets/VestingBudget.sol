@@ -21,7 +21,7 @@ import {AVestingBudget} from "contracts/budgets/AVestingBudget.sol";
 ///     - Any assets allocated to this type of budget will follow the vesting schedule as if they were locked from the beginning, which is to say that, if the vesting has already started, some portion of the assets will be immediately available for distribution.
 ///     - A vesting budget can also act as a time-lock, unlocking all assets at a specified point in time. To release assets at a specific time rather than vesting them over time, set the `start` to the desired time and the `duration` to zero.
 ///     - This contract is {Ownable} to enable the owner to allocate to the budget, reclaim and disburse assets from the budget, and to set authorized addresses. Additionally, the owner can transfer ownership of the budget to another address. Doing so has no effect on the vesting schedule.
-contract VestingBudget is AVestingBudget, Ownable, ReentrancyGuard {
+contract VestingBudget is AVestingBudget, ReentrancyGuard {
     using SafeTransferLib for address;
 
     /// @notice The payload for initializing a VestingBudget
@@ -36,16 +36,7 @@ contract VestingBudget is AVestingBudget, Ownable, ReentrancyGuard {
     /// @dev The total amount of each fungible asset distributed from the budget
     mapping(address => uint256) private _distributedFungible;
 
-    /// @dev The mapping of authorized addresses
-    mapping(address => bool) internal _isAuthorized;
-
-    /// @notice A modifier that allows only authorized addresses to call the function
-    modifier onlyAuthorized() {
-        if (!isAuthorized(msg.sender)) revert Unauthorized();
-        _;
-    }
-
-    /// @notice Construct a new SimpleBudget
+    /// @notice Construct a new ManagedBudget
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
         _disableInitializers();
@@ -62,7 +53,7 @@ contract VestingBudget is AVestingBudget, Ownable, ReentrancyGuard {
 
         _initializeOwner(init_.owner);
         for (uint256 i = 0; i < init_.authorized.length; i++) {
-            _isAuthorized[init_.authorized[i]] = true;
+            _setRoles(init_.authorized[i], MANAGER_ROLE);
         }
     }
 
@@ -145,24 +136,6 @@ contract VestingBudget is AVestingBudget, Ownable, ReentrancyGuard {
         }
 
         return true;
-    }
-
-    /// @inheritdoc ABudget
-    function setAuthorized(address[] calldata account_, bool[] calldata authorized_)
-        external
-        virtual
-        override
-        onlyOwner
-    {
-        if (account_.length != authorized_.length) revert BoostError.LengthMismatch();
-        for (uint256 i = 0; i < account_.length; i++) {
-            _isAuthorized[account_[i]] = authorized_[i];
-        }
-    }
-
-    /// @inheritdoc ABudget
-    function isAuthorized(address account_) public view virtual override returns (bool) {
-        return _isAuthorized[account_] || account_ == owner();
     }
 
     /// @notice Get the end time of the vesting schedule
@@ -248,7 +221,7 @@ contract VestingBudget is AVestingBudget, Ownable, ReentrancyGuard {
         } else if (timestamp >= start + duration) {
             return totalAllocation;
         } else {
-            return totalAllocation * (timestamp - start) / duration;
+            return (totalAllocation * (timestamp - start)) / duration;
         }
     }
 }

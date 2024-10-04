@@ -70,7 +70,7 @@ contract EndToEndSigner is Test, OwnableRoles {
         // "I can specify a list of allowed addresses" => SimpleAllowList
         registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList", address(new SimpleDenyList()));
 
-        // "I can create a budget" => SimpleBudget
+        // "I can create a budget" => ManagedBudget
         registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(new ManagedBudget()));
         _budget = _given_that_I_have_a_budget();
     }
@@ -166,7 +166,7 @@ contract EndToEndSigner is Test, OwnableRoles {
 
     function _given_that_I_have_a_budget() internal returns (ManagedBudget budget) {
         // 1. Let's find the budget implementation we want to use (this should be handled by the UI)
-        //   - In this case, we're using the registered SimpleBudget implementation
+        //   - In this case, we're using the registered ManagedBudget implementation
         //   - Budgets require an owner and a list of initially authorized addresses
         address[] memory authorized = new address[](1);
         authorized[0] = address(core);

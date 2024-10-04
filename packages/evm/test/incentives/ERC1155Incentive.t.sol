@@ -15,13 +15,13 @@ import {ERC1155Incentive} from "contracts/incentives/ERC1155Incentive.sol";
 import {AERC1155Incentive} from "contracts/incentives/AERC1155Incentive.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {SimpleBudget, ASimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ManagedBudget, AManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     using SafeTransferLib for address;
 
     ERC1155Incentive public incentive;
-    SimpleBudget public budget;
+    ManagedBudget public budget;
     MockERC1155 public mockAsset = new MockERC1155();
 
     function setUp() public {
@@ -234,10 +234,11 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         return ERC1155Incentive(LibClone.clone(address(new ERC1155Incentive())));
     }
 
-    function _newBudgetClone() internal returns (SimpleBudget newBudget) {
+    function _newBudgetClone() internal returns (ManagedBudget newBudget) {
         address[] memory authorized = new address[](0);
-        SimpleBudget.InitPayload memory initPayload = SimpleBudget.InitPayload(address(this), authorized);
-        newBudget = SimpleBudget(payable(LibClone.clone(address(new SimpleBudget()))));
+        uint256[] memory roles = new uint256[](0);
+        ManagedBudget.InitPayload memory initPayload = ManagedBudget.InitPayload(address(this), authorized, roles);
+        newBudget = ManagedBudget(payable(LibClone.clone(address(new ManagedBudget()))));
         newBudget.initialize(abi.encode(initPayload));
     }
 

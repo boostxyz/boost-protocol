@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
-
 import {ASimpleDenyList} from "contracts/allowlists/ASimpleDenyList.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
+import {RBAC} from "contracts/shared/RBAC.sol";
 
 /// @title SimpleDenyList
 /// @notice A simple implementation of an AllowList that implicitly allows all addresses except those explicitly added to the deny list
-contract SimpleDenyList is AOwnable, ASimpleDenyList {
+contract SimpleDenyList is ASimpleDenyList {
     /// @dev An internal mapping of denied statuses
     mapping(address => bool) internal _denied;
 
@@ -41,8 +40,8 @@ contract SimpleDenyList is AOwnable, ASimpleDenyList {
     /// @param users_ The list of users to update
     /// @param denied_ The denied status of each user
     /// @dev The length of the `users_` and `denied_` arrays must be the same
-    /// @dev This function can only be called by the owner
-    function setDenied(address[] calldata users_, bool[] calldata denied_) external override onlyOwner {
+    /// @dev This function can only be called by the owner or users with ADMIN_ROLE permissions
+    function setDenied(address[] calldata users_, bool[] calldata denied_) external override onlyAuthorized {
         if (users_.length != denied_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {

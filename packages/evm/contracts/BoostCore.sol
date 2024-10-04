@@ -50,11 +50,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     );
 
     event BoostClaimed(
-        uint256 indexed boostId,
-        uint256 indexed incentiveId,
-        address indexed claimant,
-        address referrer,
-        bytes data
+        uint256 indexed boostId, uint256 indexed incentiveId, address indexed claimant, address referrer, bytes data
     );
 
     /// @notice The list of boosts

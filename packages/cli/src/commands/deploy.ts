@@ -4,7 +4,6 @@ import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/Event
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
-import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
@@ -46,7 +45,6 @@ export type DeployResult = {
   ERC721_MINT_ACTION_BASE: string;
   SIMPLE_ALLOWLIST_BASE: string;
   SIMPLE_DENYLIST_BASE: string;
-  SIMPLE_BUDGET_BASE: string;
   MANAGED_BUDGET_BASE: string;
   VESTING_BUDGET_BASE: string;
   ALLOWLIST_INCENTIVE_BASE: string;
@@ -131,14 +129,6 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     deployContract(config, {
       abi: SimpleDenyListArtifact.abi,
       bytecode: SimpleDenyListArtifact.bytecode as Hex,
-      account,
-    }),
-  );
-  const simpleBudgetBase = await getDeployedContractAddress(
-    config,
-    deployContract(config, {
-      abi: SimpleBudgetArtifact.abi,
-      bytecode: SimpleBudgetArtifact.bytecode as Hex,
       account,
     }),
   );
@@ -250,12 +240,9 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
       public static override bases: Record<number, Address> = {
         [chainId]: simpleDenyListBase,
-      } as Record<number, Address>;
+      };
     },
-    // SimpleBudget: class TSimpleBudget extends SimpleBudget {
-    //   public static override base = simpleBudgetBase;
-    // },
-    ManagedBudget: class TSimpleBudget extends ManagedBudget {
+    ManagedBudget: class TManagedBudget extends ManagedBudget {
       public static override bases: Record<number, Address> = {
         [chainId]: managedBudgetBase,
       } as Record<number, Address>;
@@ -314,7 +301,6 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     ERC721_MINT_ACTION_BASE: erc721MintActionBase,
     SIMPLE_ALLOWLIST_BASE: simpleAllowListBase,
     SIMPLE_DENYLIST_BASE: simpleDenyListBase,
-    SIMPLE_BUDGET_BASE: simpleBudgetBase,
     MANAGED_BUDGET_BASE: managedBudgetBase,
     VESTING_BUDGET_BASE: vestingBudgetBase,
     ALLOWLIST_INCENTIVE_BASE: allowListIncentiveBase,

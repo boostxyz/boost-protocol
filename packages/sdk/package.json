@@ -94,6 +94,12 @@
       "node": "./dist/Deployable/DeployableTarget.js",
       "types": "./dist/Deployable/DeployableTarget.d.ts"
     },
+    "./Deployable/DeployableTargetWithRBAC": {
+      "require": "./dist/Deployable/DeployableTargetWithRBAC.cjs",
+      "import": "./dist/Deployable/DeployableTargetWithRBAC.js",
+      "node": "./dist/Deployable/DeployableTargetWithRBAC.js",
+      "types": "./dist/Deployable/DeployableTargetWithRBAC.d.ts"
+    },
     "./Deployable/Contract": {
       "require": "./dist/Deployable/Contract.cjs",
       "import": "./dist/Deployable/Contract.js",

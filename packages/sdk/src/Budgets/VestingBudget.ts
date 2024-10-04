@@ -34,7 +34,7 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { DeployableTargetWithRBAC } from '../Deployable/DeployableTargetWithRBAC';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
   type FungibleTransferPayload,
@@ -115,9 +115,9 @@ export type VestingBudgetLog<
  * @export
  * @class VestingBudget
  * @typedef {VestingBudget}
- * @extends {DeployableTarget<VestingBudgetPayload>}
+ * @extends {DeployableTargetWithRBAC<VestingBudgetPayload>}
  */
-export class VestingBudget extends DeployableTarget<
+export class VestingBudget extends DeployableTargetWithRBAC<
   VestingBudgetPayload,
   typeof vestingBudgetAbi
 > {
@@ -385,77 +385,6 @@ export class VestingBudget extends DeployableTarget<
     );
     const hash = await writeVestingBudgetDisburseBatch(this._config, request);
     return { hash, result };
-  }
-
-  /**
-   * Set the authorized status of the given accounts
-   * The mechanism for managing authorization is left to the implementing contract
-   *
-   * @public
-   * @async
-   * @param {Address[]} addresses - The accounts to authorize or deauthorize
-   * @param {boolean[]} allowed - The authorization status for the given accounts
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {Promise<void>}
-   */
-  public async setAuthorized(
-    addresses: Address[],
-    allowed: boolean[],
-    params?: WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>,
-  ) {
-    return await this.awaitResult(
-      this.setAuthorizedRaw(addresses, allowed, params),
-    );
-  }
-
-  /**
-   * Set the authorized status of the given accounts
-   * The mechanism for managing authorization is left to the implementing contract
-   *
-   * @public
-   * @async
-   * @param {Address[]} addresses - The accounts to authorize or deauthorize
-   * @param {boolean[]} allowed - The authorization status for the given accounts
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>} [params]
-   * @returns {Promise<void>}
-   */
-  public async setAuthorizedRaw(
-    addresses: Address[],
-    allowed: boolean[],
-    params?: WriteParams<typeof vestingBudgetAbi, 'setAuthorized'>,
-  ) {
-    const { request, result } = await simulateVestingBudgetSetAuthorized(
-      this._config,
-      {
-        address: this.assertValidAddress(),
-        args: [addresses, allowed],
-        ...this.optionallyAttachAccount(),
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
-    const hash = await writeVestingBudgetSetAuthorized(this._config, request);
-    return { hash, result };
-  }
-
-  /**
-   * Check if the given account is authorized to use the budget
-   *
-   * @public
-   * @param {Address} account
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'isAuthorized'>} [params]
-   * @returns {Promise<boolean>} - True if the account is authorized
-   */
-  public isAuthorized(
-    account: Address,
-    params?: ReadParams<typeof vestingBudgetAbi, 'isAuthorized'>,
-  ) {
-    return readVestingBudgetIsAuthorized(this._config, {
-      address: this.assertValidAddress(),
-      args: [account],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
   }
 
   /**

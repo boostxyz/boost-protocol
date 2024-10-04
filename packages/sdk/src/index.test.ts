@@ -1,7 +1,7 @@
-import { describe, expect, test } from 'vitest';
-import * as SDK from './index';
+import { describe, expect, test } from "vitest";
+import * as SDK from "./index";
 
-describe('sdk exports', () => {
+describe("sdk exports", () => {
   test(`should export all public API`, () => {
     expect(SDK.BoostRegistry).toBeDefined();
     expect(SDK.BoostCore).toBeDefined();
@@ -14,7 +14,6 @@ describe('sdk exports', () => {
     expect(SDK.SimpleAllowList).toBeDefined();
     expect(SDK.SimpleDenyList).toBeDefined();
     expect(SDK.ManagedBudget).toBeDefined();
-    // expect(SDK.SimpleBudget).toBeDefined();
     // expect(SDK.VestingBudget).toBeDefined();
     expect(SDK.AllowListIncentive).toBeDefined();
     expect(SDK.CGDAIncentive).toBeDefined();

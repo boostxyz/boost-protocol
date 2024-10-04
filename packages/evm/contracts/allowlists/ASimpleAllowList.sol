@@ -8,9 +8,6 @@ import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 /// @title Simple AllowList
 /// @notice A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
 abstract contract ASimpleAllowList is AAllowList {
-    /// @notice The role for managing the allow list
-    uint256 public constant LIST_MANAGER_ROLE = 1 << 1;
-
     /// @notice Set the allowed status of a user
     /// @param users_ The list of users to update
     /// @param allowed_ The allowed status of each user

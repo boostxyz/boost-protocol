@@ -538,14 +538,6 @@ export function deployFixtures(
       address: _core.assertValidAddress(),
     });
 
-    console.log(
-      `deployed BoostRegistry on ${chainId} with address ${registry.address}`,
-    );
-
-    console.log(
-      `deployed BoostCore on ${chainId} with address ${core.address}`,
-    );
-
     return {
       registry,
       core,

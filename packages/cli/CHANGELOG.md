@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 0.0.0-alpha.15
+
+### Minor Changes
+
+- eed8dae: create RBAC contract, extend allowlists and budgets from it to unify auth/event api, remove SimpleBudget as it's functionally similar to ManagedBudget
+
 ## 0.0.0-alpha.14
 
 ## 0.0.0-alpha.13

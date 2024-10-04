@@ -18,7 +18,7 @@ import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
 // Budgets
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 // Incentives
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
@@ -52,7 +52,8 @@ contract BoostCoreTest is Test {
     BoostLib.Target allowList = _makeAllowList(address(this));
 
     address[] authorized = [address(boostCore)];
-    ABudget budget = _makeBudget(address(this), authorized);
+    uint256[] roles = [1 << 0];
+    ABudget budget = _makeBudget(address(this), authorized, roles);
 
     bytes validCreateCalldata = LibZip.cdCompress(
         abi.encode(
@@ -542,9 +543,14 @@ contract BoostCoreTest is Test {
         });
     }
 
-    function _makeBudget(address owner_, address[] memory authorized_) internal returns (ABudget _budget) {
-        _budget = ABudget(payable(address(new SimpleBudget()).clone()));
-        _budget.initialize(abi.encode(SimpleBudget.InitPayload({owner: owner_, authorized: authorized_})));
+    function _makeBudget(address owner_, address[] memory authorized_, uint256[] memory roles_)
+        internal
+        returns (ABudget _budget)
+    {
+        _budget = ABudget(payable(address(new ManagedBudget()).clone()));
+        _budget.initialize(
+            abi.encode(ManagedBudget.InitPayload({owner: owner_, authorized: authorized_, roles: roles_}))
+        );
     }
 
     function _makeIncentives(uint256 count) internal returns (BoostLib.Target[] memory) {

@@ -75,9 +75,9 @@ export type SimpleAllowListLog<
  * A constant representing the list manager's role
  *
  * @deprecated use {@link Roles} instead
- * @type {2n}
+ * @type {1n}
  */
-export const LIST_MANAGER_ROLE = Roles.ADMIN;
+export const LIST_MANAGER_ROLE = Roles.MANAGER;
 /**
  * A simple implementation of an AllowList that checks if a user is authorized based on a list of allowed addresses
  *

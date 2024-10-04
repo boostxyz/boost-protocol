@@ -42,11 +42,7 @@ contract SimpleAllowList is ASimpleAllowList {
     /// @param allowed_ The allowed status of each user
     /// @dev The length of the `users_` and `allowed_` arrays must be the same
     /// @dev This function can only be called by the owner or users with ADMIN_ROLE permissions
-    function setAllowed(address[] calldata users_, bool[] calldata allowed_)
-        external
-        override
-        onlyOwnerOrRoles(ADMIN_ROLE)
-    {
+    function setAllowed(address[] calldata users_, bool[] calldata allowed_) external override onlyAuthorized {
         if (users_.length != allowed_.length) {
             revert BoostError.LengthMismatch();
         }

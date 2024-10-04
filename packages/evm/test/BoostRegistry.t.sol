@@ -10,7 +10,7 @@ import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
@@ -32,14 +32,14 @@ contract BoostRegistryTest is Test {
         abi.encodePacked(BoostRegistry.RegistryType.ALLOW_LIST, keccak256(abi.encodePacked("SimpleAllowList")))
     );
 
-    SimpleBudget baseBudgetImpl;
-    bytes32 constant SIMPLE_BUDGET_IDENTIFIER =
-        keccak256(abi.encodePacked(BoostRegistry.RegistryType.BUDGET, keccak256(abi.encodePacked("SimpleBudget"))));
+    ManagedBudget baseBudgetImpl;
+    bytes32 constant MANAGED_BUDGET_IDENTIFIER =
+        keccak256(abi.encodePacked(BoostRegistry.RegistryType.BUDGET, keccak256(abi.encodePacked("ManagedBudget"))));
 
     function setUp() public {
         registry = new BoostRegistry();
         baseAllowListImpl = new SimpleAllowList();
-        baseBudgetImpl = new SimpleBudget();
+        baseBudgetImpl = new ManagedBudget();
 
         // The AllowList is needed for later tests, so we register it during setup
         registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(baseAllowListImpl));
@@ -50,11 +50,11 @@ contract BoostRegistryTest is Test {
     ////////////////////////////
 
     function testRegister() public {
-        bytes32 identifier = registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget");
+        bytes32 identifier = registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "ManagedBudget");
         vm.expectEmit(true, true, true, true);
         emit BoostRegistry.Registered(BoostRegistry.RegistryType.BUDGET, identifier, address(baseBudgetImpl));
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
-        assertEq(address(registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER)), address(baseBudgetImpl));
+        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(baseBudgetImpl));
+        assertEq(address(registry.getBaseImplementation(MANAGED_BUDGET_IDENTIFIER)), address(baseBudgetImpl));
     }
 
     function testRegister_Duplicate() public {
@@ -90,15 +90,15 @@ contract BoostRegistryTest is Test {
         // SimpleAllowList was registered during setup, so ensure we can retrieve it
         assertEq(address(registry.getBaseImplementation(SIMPLE_ALLOW_LIST_IDENTIFIER)), address(baseAllowListImpl));
 
-        // Ensure we can register and retrieve the SimpleBudget implementation
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
-        assertEq(address(registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER)), address(baseBudgetImpl));
+        // Ensure we can register and retrieve the ManagedBudget implementation
+        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(baseBudgetImpl));
+        assertEq(address(registry.getBaseImplementation(MANAGED_BUDGET_IDENTIFIER)), address(baseBudgetImpl));
     }
 
     function testGetBaseImplementation_NotRegistered() public {
         // Ensure we can't retrieve an unregistered implementation
-        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotRegistered.selector, SIMPLE_BUDGET_IDENTIFIER));
-        registry.getBaseImplementation(SIMPLE_BUDGET_IDENTIFIER);
+        vm.expectRevert(abi.encodeWithSelector(BoostRegistry.NotRegistered.selector, MANAGED_BUDGET_IDENTIFIER));
+        registry.getBaseImplementation(MANAGED_BUDGET_IDENTIFIER);
     }
 
     /////////////////////////////////
@@ -111,7 +111,7 @@ contract BoostRegistryTest is Test {
             SIMPLE_ALLOW_LIST_IDENTIFIER
         );
 
-        assertEq(registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget"), SIMPLE_BUDGET_IDENTIFIER);
+        assertEq(registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "ManagedBudget"), MANAGED_BUDGET_IDENTIFIER);
     }
 
     //////////////////////////////////////
@@ -165,10 +165,13 @@ contract BoostRegistryTest is Test {
     }
 
     function testDeployClone_Initialize() public {
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
+        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(baseBudgetImpl));
 
         address[] memory authorized = new address[](1);
         authorized[0] = address(this);
+
+        uint256[] memory roles = new uint256[](1);
+        roles[0] = 1 << 0;
 
         bytes32 salt = keccak256(
             abi.encodePacked(BoostRegistry.RegistryType.BUDGET, baseBudgetImpl, "Testing ABudget", address(this))
@@ -190,15 +193,15 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing ABudget",
-            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
+            abi.encode(ManagedBudget.InitPayload({owner: address(this), authorized: authorized, roles: roles}))
         );
 
         assertTrue(instance.supportsInterface(type(ABudget).interfaceId));
-        assertEq(SimpleBudget(payable(address(instance))).owner(), address(this));
+        assertEq(ManagedBudget(payable(address(instance))).owner(), address(this));
     }
 
     function testDeployClone_Initialize_Fail() public {
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
+        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(baseBudgetImpl));
 
         vm.expectRevert(); // Totally invalid initialization data => EVM panic
         registry.deployClone(
@@ -216,7 +219,7 @@ contract BoostRegistryTest is Test {
     ////////////////////////////
 
     function testGetClone() public {
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(baseBudgetImpl));
+        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(baseBudgetImpl));
 
         bytes32 cloneId = registry.getCloneIdentifier(
             BoostRegistry.RegistryType.BUDGET, address(baseBudgetImpl), address(this), "Testing ABudget"
@@ -225,7 +228,9 @@ contract BoostRegistryTest is Test {
             BoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing ABudget",
-            abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: new address[](0)}))
+            abi.encode(
+                ManagedBudget.InitPayload({owner: address(this), authorized: new address[](0), roles: new uint256[](0)})
+            )
         );
 
         BoostRegistry.Clone memory clone = registry.getClone(cloneId);

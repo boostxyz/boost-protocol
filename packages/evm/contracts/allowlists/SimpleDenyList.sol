@@ -41,11 +41,7 @@ contract SimpleDenyList is ASimpleDenyList {
     /// @param denied_ The denied status of each user
     /// @dev The length of the `users_` and `denied_` arrays must be the same
     /// @dev This function can only be called by the owner or users with ADMIN_ROLE permissions
-    function setDenied(address[] calldata users_, bool[] calldata denied_)
-        external
-        override
-        onlyOwnerOrRoles(ADMIN_ROLE)
-    {
+    function setDenied(address[] calldata users_, bool[] calldata denied_) external override onlyAuthorized {
         if (users_.length != denied_.length) revert BoostError.LengthMismatch();
 
         for (uint256 i = 0; i < users_.length; i++) {

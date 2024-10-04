@@ -13,13 +13,13 @@ import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 contract ERC20IncentiveTest is Test {
     using SafeTransferLib for address;
 
     ERC20Incentive public incentive;
-    SimpleBudget public budget;
+    ManagedBudget public budget;
     MockERC20 public mockAsset = new MockERC20();
 
     function setUp() public {
@@ -328,10 +328,11 @@ contract ERC20IncentiveTest is Test {
         return ERC20Incentive(LibClone.clone(address(new ERC20Incentive())));
     }
 
-    function _newBudgetClone() internal returns (SimpleBudget newBudget) {
+    function _newBudgetClone() internal returns (ManagedBudget newBudget) {
         address[] memory authorized = new address[](0);
-        SimpleBudget.InitPayload memory initPayload = SimpleBudget.InitPayload(address(this), authorized);
-        newBudget = SimpleBudget(payable(LibClone.clone(address(new SimpleBudget()))));
+        uint256[] memory roles = new uint256[](0);
+        ManagedBudget.InitPayload memory initPayload = ManagedBudget.InitPayload(address(this), authorized, roles);
+        newBudget = ManagedBudget(payable(LibClone.clone(address(new ManagedBudget()))));
         newBudget.initialize(abi.encode(initPayload));
     }
 

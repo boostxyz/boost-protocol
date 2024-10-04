@@ -36,7 +36,7 @@ contract VestingBudget is AVestingBudget, ReentrancyGuard {
     /// @dev The total amount of each fungible asset distributed from the budget
     mapping(address => uint256) private _distributedFungible;
 
-    /// @notice Construct a new SimpleBudget
+    /// @notice Construct a new ManagedBudget
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
         _disableInitializers();
@@ -221,7 +221,7 @@ contract VestingBudget is AVestingBudget, ReentrancyGuard {
         } else if (timestamp >= start + duration) {
             return totalAllocation;
         } else {
-            return totalAllocation * (timestamp - start) / duration;
+            return (totalAllocation * (timestamp - start)) / duration;
         }
     }
 }

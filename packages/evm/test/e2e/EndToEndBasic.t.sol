@@ -74,6 +74,8 @@ contract EndToEndBasic is Test {
 
     ManagedBudget public _budget;
 
+    address badClaimer = makeAddr("bad claimer");
+
     function setUp() public {
         // Before we can fulfill our stories, we need to get some setup out of the way...
         erc20.mint(address(this), 1000 ether);
@@ -164,6 +166,26 @@ contract EndToEndBasic is Test {
         core.claimIncentive{value: core.claimFee()}(
             boostId, incentiveId, address(0), abi.encode(address(this), abi.encode(tokenId))
         );
+
+        // "non-allowlisted users cannot claim this boost"
+        tokenId = 2;
+        startHoax(badClaimer);
+        // user mints nft with valid mintFee
+        (success,) = ERC721MintAction(address(boost.action)).target().call{value: mintFee}(mintPayload);
+        assertTrue(success);
+
+        vm.record();
+
+        uint256 fee = core.claimFee();
+        startHoax(badClaimer);
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        core.claimIncentive{value: fee}(
+            boostId, incentiveId, address(0), abi.encode(address(this), abi.encode(tokenId))
+        );
+
+        (bytes32[] memory reads, bytes32[] memory writes) = vm.accesses(address(boost.validator));
+        assertEq(reads.length, 0);
+        assertEq(writes.length, 0);
     }
 
     //////////////////
@@ -243,9 +265,16 @@ contract EndToEndBasic is Test {
         assertEq(budget.available(address(0)), 10.5 ether);
     }
 
-    function _given_that_I_am_eligible_for_a_boost() internal returns (BoostLib.Boost memory) {
+    function _given_that_I_am_eligible_for_a_boost() internal returns (BoostLib.Boost memory boost) {
         _when_I_allocate_assets_to_my_budget(_budget);
-        return _when_I_create_a_new_boost_with_my_budget(_budget);
+        boost = _when_I_create_a_new_boost_with_my_budget(_budget);
+
+        // set my eligibility
+        address[] memory allowedUsers = new address[](1);
+        allowedUsers[0] = address(this);
+        bool[] memory allowedStatus = new bool[](1);
+        allowedStatus[0] = true;
+        SimpleAllowList(address(boost.allowList)).setAllowed(allowedUsers, allowedStatus);
     }
 
     /// @notice When I create a new Boost with my budget

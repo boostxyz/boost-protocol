@@ -115,6 +115,12 @@ contract SimpleAllowListTest is Test {
         allowList.setAllowed(new address[](1), new bool[](2));
     }
 
+    function testSetAllowed_NotAdmin() public {
+        vm.prank(address(0xc0ffee));
+        vm.expectRevert();
+        allowList.setAllowed(new address[](1), new bool[](1));
+    }
+
     ////////////////////////////////////
     // SimpleAllowList.getComponentInterface //
     ////////////////////////////////////

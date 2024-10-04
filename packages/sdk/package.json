@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/sdk",
-  "version": "0.0.0-alpha.16",
+  "version": "0.0.0-alpha.17",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "files": ["dist", "src"],
@@ -93,6 +93,12 @@
       "import": "./dist/Deployable/DeployableTarget.js",
       "node": "./dist/Deployable/DeployableTarget.js",
       "types": "./dist/Deployable/DeployableTarget.d.ts"
+    },
+    "./Deployable/DeployableTargetWithRBAC": {
+      "require": "./dist/Deployable/DeployableTargetWithRBAC.cjs",
+      "import": "./dist/Deployable/DeployableTargetWithRBAC.js",
+      "node": "./dist/Deployable/DeployableTargetWithRBAC.js",
+      "types": "./dist/Deployable/DeployableTargetWithRBAC.d.ts"
     },
     "./Deployable/Contract": {
       "require": "./dist/Deployable/Contract.cjs",

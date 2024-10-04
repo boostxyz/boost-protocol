@@ -12,13 +12,13 @@ import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 contract CGDAIncentiveTest is Test {
     using SafeTransferLib for address;
 
     MockERC20 public asset = new MockERC20();
-    SimpleBudget public budget;
+    ManagedBudget public budget;
     CGDAIncentive public incentive;
 
     function setUp() public {

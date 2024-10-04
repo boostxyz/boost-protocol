@@ -19,7 +19,7 @@ import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 import {AAction} from "contracts/actions/AAction.sol";
 import {AContractAction, ContractAction} from "contracts/actions/ContractAction.sol";
@@ -72,7 +72,7 @@ contract EndToEndBasic is Test {
     MockERC20 public erc20 = new MockERC20();
     MockERC721 public erc721 = new MockERC721();
 
-    SimpleBudget public _budget;
+    ManagedBudget public _budget;
 
     function setUp() public {
         // Before we can fulfill our stories, we need to get some setup out of the way...
@@ -87,15 +87,15 @@ contract EndToEndBasic is Test {
         // "I can specify a list of allowed addresses" => SimpleAllowList
         registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList", address(new SimpleAllowList()));
 
-        // "I can create a budget" => SimpleBudget
-        registry.register(BoostRegistry.RegistryType.BUDGET, "SimpleBudget", address(new SimpleBudget()));
+        // "I can create a budget" => ManagedBudget
+        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(new ManagedBudget()));
         _budget = _given_that_I_have_a_budget();
     }
 
     /// @notice As a creator, I want to incentivize users to engage with my content so that I can grow my audience.
     function test__As_a_creator() public {
         // "Given that I have a budget"
-        SimpleBudget budget = _budget;
+        ManagedBudget budget = _budget;
         _when_I_allocate_assets_to_my_budget(budget);
 
         // "When I create a boost with my budget"
@@ -108,9 +108,9 @@ contract EndToEndBasic is Test {
         assertEq(boost.owner, address(1));
 
         // Let's spot check the Boost we just created
-        // - ABudget == SimpleBudget
+        // - ABudget == ManagedBudget
         assertEq(address(boost.budget), address(budget));
-        assertEq(SimpleBudget(payable(address(boost.budget))).owner(), address(this));
+        assertEq(ManagedBudget(payable(address(boost.budget))).owner(), address(this));
         assertTrue(budget.isAuthorized(address(this)));
         assertFalse(budget.isAuthorized(address(0xdeadbeef)));
 
@@ -170,25 +170,30 @@ contract EndToEndBasic is Test {
     // Test Helpers //
     //////////////////
 
-    function _given_that_I_have_a_budget() internal returns (SimpleBudget budget) {
+    function _given_that_I_have_a_budget() internal returns (ManagedBudget budget) {
         // 1. Let's find the budget implementation we want to use (this should be handled by the UI)
-        //   - In this case, we're using the registered SimpleBudget implementation
+        //   - In this case, we're using the registered ManagedBudget implementation
         //   - Budgets require an owner and a list of initially authorized addresses
         address[] memory authorized = new address[](1);
         authorized[0] = address(core);
 
-        budget = SimpleBudget(
+        uint256[] memory roles = new uint256[](1);
+        roles[0] = 1 << 0;
+
+        budget = ManagedBudget(
             payable(
                 address(
                     registry.deployClone(
                         BoostRegistry.RegistryType.BUDGET,
                         address(
                             registry.getBaseImplementation(
-                                registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "SimpleBudget")
+                                registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "ManagedBudget")
                             )
                         ),
-                        "My Simple ABudget",
-                        abi.encode(SimpleBudget.InitPayload({owner: address(this), authorized: authorized}))
+                        "My Managed ABudget",
+                        abi.encode(
+                            ManagedBudget.InitPayload({owner: address(this), authorized: authorized, roles: roles})
+                        )
                     )
                 )
             )

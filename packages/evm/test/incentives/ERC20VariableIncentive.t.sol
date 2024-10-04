@@ -12,7 +12,7 @@ import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentiv
 import {AERC20VariableIncentive} from "contracts/incentives/AERC20VariableIncentive.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {SimpleBudget} from "contracts/budgets/SimpleBudget.sol";
+import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 contract ERC20VariableIncentiveTest is Test {
     using SafeTransferLib for address;
@@ -23,7 +23,7 @@ contract ERC20VariableIncentiveTest is Test {
     address VARIABLE_REWARD_CLAIM = makeAddr("VARIABLE_REWARD_CLAIM");
 
     ERC20VariableIncentive public incentive;
-    SimpleBudget public budget;
+    ManagedBudget public budget;
     MockERC20 public mockAsset = new MockERC20();
 
     function setUp() public {
@@ -191,10 +191,11 @@ contract ERC20VariableIncentiveTest is Test {
         return ERC20VariableIncentive(LibClone.clone(address(new ERC20VariableIncentive())));
     }
 
-    function _newBudgetClone() internal returns (SimpleBudget newBudget) {
+    function _newBudgetClone() internal returns (ManagedBudget newBudget) {
         address[] memory authorized = new address[](0);
-        SimpleBudget.InitPayload memory initPayload = SimpleBudget.InitPayload(address(this), authorized);
-        newBudget = SimpleBudget(payable(LibClone.clone(address(new SimpleBudget()))));
+        uint256[] memory roles = new uint256[](0);
+        ManagedBudget.InitPayload memory initPayload = ManagedBudget.InitPayload(address(this), authorized, roles);
+        newBudget = ManagedBudget(payable(LibClone.clone(address(new ManagedBudget()))));
         newBudget.initialize(abi.encode(initPayload));
     }
 

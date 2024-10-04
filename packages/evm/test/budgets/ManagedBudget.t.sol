@@ -232,7 +232,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         uint256 tokenId = 42;
         uint256 initialAmount = 100;
 
-        // Approve SimpleBudget to spend tokens
+        // Approve ManagedBudget to spend tokens
         mockERC1155.setApprovalForAll(address(managedBudget), true);
 
         // Prepare allocation data

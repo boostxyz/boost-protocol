@@ -7,7 +7,6 @@ import { InvalidComponentInterfaceError } from '../errors';
 import { ManagedBudget } from './ManagedBudget';
 
 export {
-  // SimpleBudget,
   // VestingBudget,
   ManagedBudget,
 };
@@ -18,7 +17,7 @@ export {
  * @export
  * @typedef {Budget}
  */
-export type Budget = ManagedBudget; // | SimpleBudget | VestingBudget
+export type Budget = ManagedBudget; // | VestingBudget
 
 /**
  * A map of Budget component interfaces to their constructors.

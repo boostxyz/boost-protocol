@@ -5,12 +5,13 @@ import {Receiver} from "@solady/accounts/Receiver.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {RBAC} from "contracts/shared/RBAC.sol";
 
 /// @title Boost ABudget
 /// @notice Abstract contract for a generic ABudget within the Boost protocol
 /// @dev ABudget classes are expected to implement the allocation, reclamation, and disbursement of assets.
 /// @dev WARNING: Budgets currently support only ETH, ERC20, and ERC1155 assets. Other asset types may be added in the future.
-abstract contract ABudget is ACloneable, Receiver {
+abstract contract ABudget is ACloneable, Receiver, RBAC {
     enum AssetType {
         ETH,
         ERC20,
@@ -44,9 +45,6 @@ abstract contract ABudget is ACloneable, Receiver {
         uint256 amount;
         bytes data;
     }
-
-    /// @notice Emitted when an address's authorization status changes
-    event Authorized(address indexed account, bool isAuthorized);
 
     /// @notice Emitted when assets are distributed from the budget
     event Distributed(address indexed asset, address to, uint256 amount);
@@ -99,18 +97,6 @@ abstract contract ABudget is ACloneable, Receiver {
     /// @param data_ The compressed data for the reconciliation (amount, token address, token ID, etc.)
     /// @return The amount of assets reconciled
     function reconcile(bytes calldata data_) external virtual returns (uint256);
-
-    /// @notice Set the authorized status of the given accounts
-    /// @param accounts_ The accounts to authorize or deauthorize
-    /// @param authorized_ The authorization status for the given accounts
-    /// @dev The mechanism for managing authorization is left to the implementing contract
-    function setAuthorized(address[] calldata accounts_, bool[] calldata authorized_) external virtual;
-
-    /// @notice Check if the given account is authorized to use the budget
-    /// @param account_ The account to check
-    /// @return True if the account is authorized
-    /// @dev The mechanism for checking authorization is left to the implementing contract
-    function isAuthorized(address account_) external view virtual returns (bool);
 
     /// @inheritdoc ACloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {

@@ -20,7 +20,7 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableTarget } from '../Deployable/DeployableTarget';
+import { DeployableTargetWithRBAC } from '../Deployable/DeployableTargetWithRBAC';
 import { DeployableUnknownOwnerProvidedError } from '../errors';
 import {
   type GenericLog,
@@ -74,11 +74,14 @@ export type SimpleDenyListLog<
  * @export
  * @class SimpleDenyList
  * @typedef {SimpleDenyList}
- * @extends {DeployableTarget<SimpleDenyListPayload>}
+ * @extends {DeployableTargetWithRBAC<SimpleDenyListPayload>}
  */
 export class SimpleDenyList<
   Payload = SimpleDenyListPayload,
-> extends DeployableTarget<Payload | undefined, typeof simpleDenyListAbi> {
+> extends DeployableTargetWithRBAC<
+  Payload | undefined,
+  typeof simpleDenyListAbi
+> {
   public override readonly abi = simpleDenyListAbi;
   /**
    * @inheritdoc

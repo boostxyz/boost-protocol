@@ -28,6 +28,9 @@ abstract contract AERC20Incentive is AIncentive {
         RAFFLE
     }
 
+    /// @notice A mapping of address to claim status
+    mapping(address => bool) public claimed;
+
     /// @notice The address of the ERC20-like token
     address public asset;
 

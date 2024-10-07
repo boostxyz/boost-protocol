@@ -28,6 +28,10 @@ contract ERC1155Incentive is AOwnable, AERC1155Incentive {
         bytes extraData;
     }
 
+    struct ERC1155ClaimPayload {
+        bytes32 transactionHash;
+    }
+
     /// @notice Construct a new ERC1155Incentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
@@ -80,15 +84,18 @@ contract ERC1155Incentive is AOwnable, AERC1155Incentive {
 
     /// @notice Claim the incentive
     /// @param claimTarget the recipient of the payout
-    /// @param data_ The data payload for the incentive claim `(address recipient, bytes data)`
+    /// @param data_ The encoded BoostClaimData containing the transaction hash
     /// @return True if the incentive was successfully claimed
+    /// @dev This incentive only allows for at most one valid claim per transaction
+    /// @dev A transaction hash must be provided to individuate multiple claims
     function claim(address claimTarget, bytes calldata data_) external override onlyOwner returns (bool) {
+        bytes32 txHash = _getTxHash(data_);
         // Disburse the incentive based on the strategy (POOL only for now)
         if (strategy == Strategy.POOL) {
-            if (!_isClaimable(claimTarget)) revert NotClaimable();
+            if (!_isClaimable(txHash)) revert NotClaimable();
 
             claims++;
-            claimed[claimTarget] = true;
+            claimed[txHash] = true;
 
             // wake-disable-next-line reentrancy (not a risk here)
             asset.safeTransferFrom(address(this), claimTarget, tokenId, 1, data_);
@@ -118,19 +125,28 @@ contract ERC1155Incentive is AOwnable, AERC1155Incentive {
     }
 
     /// @notice Check if an incentive is claimable
-    /// @param claimTarget the potential recipient of the payout
+    /// @param data_ The encoded BoostClaimData to be checked
     /// @return True if the incentive is claimable based on the data payload
     /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
-    /// @dev The recipient must not have already claimed the incentive
-    function isClaimable(address claimTarget, bytes calldata) public view override returns (bool) {
-        return _isClaimable(claimTarget);
+    /// @dev The txHash must not already be claimed against and address is unused
+    function isClaimable(address, bytes calldata data_) public view override returns (bool) {
+        bytes32 txHash = _getTxHash(data_);
+        return _isClaimable(txHash);
     }
 
     /// @notice Check if an incentive is claimable for a specific recipient
-    /// @param recipient_ The address of the recipient
     /// @return True if the incentive is claimable for the recipient
-    function _isClaimable(address recipient_) internal view returns (bool) {
-        return !claimed[recipient_] && claims < limit;
+    function _isClaimable(bytes32 txHash) internal view returns (bool) {
+        return !claimed[txHash] && claims < limit;
+    }
+
+    /// @notice Extracts the transaction hash from the provided BoostClaimData
+    /// @param data_ The encoded BoostClaimData from which to extract the transaction hash
+    /// @return txHash The extracted transaction hash
+    function _getTxHash(bytes calldata data_) internal pure returns (bytes32 txHash) {
+        BoostClaimData memory claimData = abi.decode(data_, (BoostClaimData));
+        ERC1155ClaimPayload memory incentiveData = abi.decode(claimData.incentiveData, (ERC1155ClaimPayload));
+        return incentiveData.transactionHash;
     }
 
     /// @inheritdoc IERC1155Receiver

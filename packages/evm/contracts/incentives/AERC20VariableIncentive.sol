@@ -15,6 +15,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 abstract contract AERC20VariableIncentive is AIncentive {
     using SafeTransferLib for address;
 
+    /// @notice A mapping of address to claim status
+    mapping(address => bool) public claimed;
+
     /// @notice The address of the ERC20-like token
     address public asset;
 

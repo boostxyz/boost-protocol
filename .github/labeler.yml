@@ -2,7 +2,9 @@
   - "packages/sdk/**/*"
 "EVM":
   - "packages/evm/**/*"
+"signatures":
+  - "packages/signatures/**/*"
 "examples":
   - "examples/**/*"
-"documentation":
-  - "docs/**/*"
+"changeset":
+  - ".changeset/*.md"

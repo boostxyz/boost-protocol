@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
+import {ABoostRegistry} from "contracts/ABoostRegistry.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
@@ -12,49 +12,8 @@ import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 /// @title Boost Registry
 /// @notice A registry for base implementations and cloned instances
 /// @dev This contract is used to register base implementations and deploy new instances of those implementations for use within the Boost protocol
-contract BoostRegistry is ERC165, ReentrancyGuard {
+contract BoostRegistry is ABoostRegistry, ReentrancyGuard {
     using BoostLib for address;
-
-    /// @notice The types of bases that can be registered
-    enum RegistryType {
-        ACTION,
-        ALLOW_LIST,
-        BUDGET,
-        INCENTIVE,
-        VALIDATOR
-    }
-
-    /// @notice The data structure for a deployed clone
-    /// @param baseType The type of base implementation
-    /// @param name The display name for the clone
-    /// @param instance The address of the clone
-    /// @param deployer The address of the deployer
-    struct Clone {
-        RegistryType baseType;
-        ACloneable instance;
-        address deployer;
-        string name;
-    }
-
-    /// @notice Emitted when a new base implementation is registered
-    event Registered(RegistryType indexed registryType, bytes32 indexed identifier, address implementation);
-
-    /// @notice Emitted when a new instance of a base implementation is deployed
-    event Deployed(
-        RegistryType indexed registryType,
-        bytes32 indexed identifier,
-        address baseImplementation,
-        ACloneable deployedInstance
-    );
-
-    /// @notice Thrown when a base implementation is already registered
-    error AlreadyRegistered(RegistryType registryType, bytes32 identifier);
-
-    /// @notice Thrown when no match is found for the given identifier
-    error NotRegistered(bytes32 identifier);
-
-    /// @notice Thrown when the implementation is not a valid {ACloneable} base
-    error NotACloneable(address implementation);
 
     /// @notice The registry of base implementations
     mapping(bytes32 => ACloneable) private _bases;
@@ -82,6 +41,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @dev The given address must implement the given type interface (See {ERC165-supportsInterface})
     function register(RegistryType type_, string calldata name_, address implementation_)
         external
+        override
         onlyACloneables(implementation_)
     {
         bytes32 identifier = getIdentifier(type_, name_);
@@ -101,6 +61,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @dev This function will either emit a `Deployed` event and return the clone or revert
     function deployClone(RegistryType type_, address base_, string calldata name_, bytes calldata data_)
         external
+        override
         nonReentrant
         returns (ACloneable instance)
     {
@@ -123,7 +84,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @param identifier_ The unique identifier for the implementation (see {getIdentifier})
     /// @return implementation The address of the implementation
     /// @dev This function will revert if the implementation is not registered
-    function getBaseImplementation(bytes32 identifier_) public view returns (ACloneable implementation) {
+    function getBaseImplementation(bytes32 identifier_) public view override returns (ACloneable implementation) {
         implementation = _bases[identifier_];
         if (address(implementation) == address(0)) revert NotRegistered(identifier_);
     }
@@ -131,7 +92,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @notice Get the address of a deployed clone by its identifier
     /// @param identifier_ The unique identifier for the deployed clone (see {getCloneIdentifier})
     /// @return clone The address of the deployed clone
-    function getClone(bytes32 identifier_) external view returns (Clone memory clone) {
+    function getClone(bytes32 identifier_) external view override returns (Clone memory clone) {
         clone = _clones[identifier_];
         if (address(clone.instance) == address(0)) revert NotRegistered(identifier_);
     }
@@ -140,7 +101,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @param deployer_ The address of the deployer
     /// @return clones The list of deployed clones for the given deployer
     /// @dev WARNING: This function may return a large amount of data and is primarily intended for off-chain usage. It should be avoided in on-chain logic.
-    function getClones(address deployer_) external view returns (bytes32[] memory) {
+    function getClones(address deployer_) external view override returns (bytes32[] memory) {
         return _deployedClones[deployer_];
     }
 
@@ -153,6 +114,7 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     function getCloneIdentifier(RegistryType type_, address base_, address deployer_, string calldata name_)
         public
         pure
+        override
         returns (bytes32 identifier)
     {
         return _getIdentifier(type_, keccak256(abi.encodePacked(base_, deployer_, name_)));
@@ -162,7 +124,12 @@ contract BoostRegistry is ERC165, ReentrancyGuard {
     /// @param type_ The base type for the implementation
     /// @param name_ The name of the implementation
     /// @return identifier The unique identifier for the implementation
-    function getIdentifier(RegistryType type_, string calldata name_) public pure returns (bytes32 identifier) {
+    function getIdentifier(RegistryType type_, string calldata name_)
+        public
+        pure
+        override
+        returns (bytes32 identifier)
+    {
         return _getIdentifier(type_, keccak256(abi.encodePacked(name_)));
     }
 

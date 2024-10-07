@@ -10,7 +10,7 @@ import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 import {MockERC20, MockERC721} from "contracts/shared/Mocks.sol";
 
 import {BoostCore} from "contracts/BoostCore.sol";
-import {BoostRegistry} from "contracts/BoostRegistry.sol";
+import {BoostRegistry, ABoostRegistry} from "contracts/BoostRegistry.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
@@ -58,20 +58,20 @@ contract EndToEndSigner is Test, OwnableRoles {
         erc20.mint(address(this), 1000 ether);
 
         // "I can specify the action of 'Mint an NFT'" => ERC721MintAction
-        registry.register(BoostRegistry.RegistryType.ACTION, "ERC721MintAction", address(new ERC721MintAction()));
+        registry.register(ABoostRegistry.RegistryType.ACTION, "ERC721MintAction", address(new ERC721MintAction()));
 
         // "I can specify the incentive of '100 ERC20' with a max of 5 participants" => ERC20Incentive
         registry.register(
-            BoostRegistry.RegistryType.INCENTIVE, "ERC20VariableIncentive", address(new ERC20VariableIncentive())
+            ABoostRegistry.RegistryType.INCENTIVE, "ERC20VariableIncentive", address(new ERC20VariableIncentive())
         );
 
-        registry.register(BoostRegistry.RegistryType.VALIDATOR, "SignerValidator", address(new SignerValidator()));
+        registry.register(ABoostRegistry.RegistryType.VALIDATOR, "SignerValidator", address(new SignerValidator()));
 
         // "I can specify a list of allowed addresses" => SimpleAllowList
-        registry.register(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList", address(new SimpleDenyList()));
+        registry.register(ABoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList", address(new SimpleDenyList()));
 
         // "I can create a budget" => ManagedBudget
-        registry.register(BoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(new ManagedBudget()));
+        registry.register(ABoostRegistry.RegistryType.BUDGET, "ManagedBudget", address(new ManagedBudget()));
         _budget = _given_that_I_have_a_budget();
     }
 
@@ -178,10 +178,10 @@ contract EndToEndSigner is Test, OwnableRoles {
             payable(
                 address(
                     registry.deployClone(
-                        BoostRegistry.RegistryType.BUDGET,
+                        ABoostRegistry.RegistryType.BUDGET,
                         address(
                             registry.getBaseImplementation(
-                                registry.getIdentifier(BoostRegistry.RegistryType.BUDGET, "ManagedBudget")
+                                registry.getIdentifier(ABoostRegistry.RegistryType.BUDGET, "ManagedBudget")
                             )
                         ),
                         "My Managed ABudget",
@@ -258,7 +258,7 @@ contract EndToEndSigner is Test, OwnableRoles {
             isBase: true,
             instance: address(
                 registry.getBaseImplementation(
-                    registry.getIdentifier(BoostRegistry.RegistryType.INCENTIVE, "ERC20VariableIncentive")
+                    registry.getIdentifier(ABoostRegistry.RegistryType.INCENTIVE, "ERC20VariableIncentive")
                 )
             ),
             // "... of '5 ERC20'"
@@ -281,7 +281,7 @@ contract EndToEndSigner is Test, OwnableRoles {
                             isBase: true,
                             instance: address(
                                 registry.getBaseImplementation(
-                                    registry.getIdentifier(BoostRegistry.RegistryType.ACTION, "ERC721MintAction")
+                                    registry.getIdentifier(ABoostRegistry.RegistryType.ACTION, "ERC721MintAction")
                                 )
                             ),
                             parameters: abi.encode(
@@ -298,7 +298,7 @@ contract EndToEndSigner is Test, OwnableRoles {
                             isBase: true,
                             instance: address(
                                 registry.getBaseImplementation(
-                                    registry.getIdentifier(BoostRegistry.RegistryType.VALIDATOR, "SignerValidator")
+                                    registry.getIdentifier(ABoostRegistry.RegistryType.VALIDATOR, "SignerValidator")
                                 )
                             ),
                             parameters: abi.encode(signers, address(core))
@@ -308,7 +308,7 @@ contract EndToEndSigner is Test, OwnableRoles {
                             isBase: true,
                             instance: address(
                                 registry.getBaseImplementation(
-                                    registry.getIdentifier(BoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList")
+                                    registry.getIdentifier(ABoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList")
                                 )
                             ),
                             parameters: abi.encode(address(this), denyList)

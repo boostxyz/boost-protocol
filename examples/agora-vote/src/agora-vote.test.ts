@@ -4,6 +4,7 @@ import {
   PrimitiveType,
   SignatureType,
 } from '@boostxyz/sdk';
+import functions from '@boostxyz/signatures/functions'
 import events from '@boostxyz/signatures/events';
 import { accounts } from '@boostxyz/test/accounts';
 import {
@@ -81,12 +82,11 @@ describe('Boost with Voting Incentive', () => {
 
     const owner = defaultOptions.account.address;
 
-    // Step defining the action for VoteCast event
-    const eventActionStepOne: ActionStep = {
+    // Step defining the action for VoteCast event, targeting the proposal
+    const filterProposalIdStep: ActionStep = {
       chainid: optimism.id,
       signature: selector, // VoteCast event signature
       signatureType: SignatureType.EVENT, // We're working with an event
-      actionType: 0, // Custom action type (set as 0 for now)
       targetContract: targetContract, // Address of the ERC20 contract
       // We want to target the ProposalId property on the VoteCast event
       actionParameter: {
@@ -101,11 +101,11 @@ describe('Boost with Voting Incentive', () => {
       },
     };
 
-    const eventActionStepTwo: ActionStep = {
+    // Step defining the action for VoteCast event, targeting the support
+    const filterSupportStep: ActionStep = {
       chainid: optimism.id,
       signature: selector, // VoteCast event signature
       signatureType: SignatureType.EVENT, // We're working with an event
-      actionType: 0, // Custom action type (set as 0 for now)
       targetContract: targetContract, // Address of the ERC20 contract
       // We want to target the Support property on the VoteCast event
       actionParameter: {
@@ -125,7 +125,7 @@ describe('Boost with Voting Incentive', () => {
         fieldIndex: 0, // Targeting the 'voter' address
         targetContract: targetContract, // The Agora vote contract we're monitoring
       },
-      actionSteps: [eventActionStepOne, eventActionStepTwo],
+      actionSteps: [filterProposalIdStep, filterSupportStep],
     };
     // Initialize EventAction with the custom payload
     const eventAction = core.EventAction(eventActionPayload);
@@ -198,37 +198,13 @@ describe('Boost with Voting Incentive', () => {
     });
     expect(validation).toBe(true);
 
-    const amountOfVotes = await walletClient.readContract({
+    const getVotesAbi = functions.abi[functions.selectors['getVotes(address account, uint256 blockNumber) view returns (uint256)'] as '0x00000000000000000000000000000000000000000000000000000000eb9019d4']
+    const amountOfVotes = (await walletClient.readContract({
       address: '0xcdf27f107725988f2261ce2256bdfcde8b382b10',
-      abi: [
-        {
-          inputs: [
-            {
-              internalType: 'address',
-              name: 'account',
-              type: 'address',
-            },
-            {
-              internalType: 'uint256',
-              name: 'blockNumber',
-              type: 'uint256',
-            },
-          ],
-          name: 'getVotes',
-          outputs: [
-            {
-              internalType: 'uint256',
-              name: '',
-              type: 'uint256',
-            },
-          ],
-          stateMutability: 'view',
-          type: 'function',
-        },
-      ],
+      abi: [getVotesAbi],
       functionName: 'getVotes',
       args: [boostImpostor, txReceipt.blockNumber],
-    });
+    })) as bigint;
 
     // If the amountOfVotes is greater than 100, then the reward should be 0.1 ETH, otherwise it will be 0.01 ETH
     const rewardAmount =

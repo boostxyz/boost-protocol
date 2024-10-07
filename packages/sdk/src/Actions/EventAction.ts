@@ -44,6 +44,8 @@ import {
   TooManyEventActionStepsProvidedError,
   UnparseableAbiParamError,
   UnrecognizedFilterTypeError,
+  ValidationChainIdMissingError,
+  ValidationHashMissingError,
 } from '../errors';
 import {
   type GetLogsParams,
@@ -536,10 +538,6 @@ export class EventAction extends DeployableTarget<
     actionStep: ActionStep,
     params: TxParams & { hash?: Hex; chainId?: number },
   ) {
-    const client = this._config.getClient({
-      chainId: params.chainId,
-    }) as PublicClient;
-
     if (actionStep.signatureType === SignatureType.EVENT) {
       const eventParams = params as ValidateEventStepParams;
       const signature = actionStep.signature;
@@ -573,12 +571,15 @@ export class EventAction extends DeployableTarget<
       }
 
       if (!params?.hash) {
-        throw new Error('Hash is required for event validation');
+        throw new ValidationHashMissingError();
       }
       if (!params?.chainId) {
-        throw new Error('Chain id is required for event validation');
+        throw new ValidationChainIdMissingError();
       }
 
+      const client = this._config.getClient({
+        chainId: params.chainId,
+      }) as PublicClient;
       const receipt = await client.getTransactionReceipt({
         hash: params.hash,
       });
@@ -599,11 +600,14 @@ export class EventAction extends DeployableTarget<
     }
     if (actionStep.signatureType === SignatureType.FUNC) {
       if (!params?.hash) {
-        throw new Error('Hash is required for function validation');
+        throw new ValidationHashMissingError();
       }
       if (!params?.chainId) {
-        throw new Error('Chain id is required for function validation');
+        throw new ValidationChainIdMissingError();
       }
+      const client = this._config.getClient({
+        chainId: params.chainId,
+      }) as PublicClient;
       const transaction = await client.getTransaction({
         hash: params.hash,
       });

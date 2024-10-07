@@ -422,6 +422,44 @@ export class TooManyEventActionStepsProvidedError extends Error {
 }
 
 /**
+ * Thrown when missing a transaction hash for validating action steps.
+ *
+ * @export
+ * @class ValidationHashMissingError
+ * @typedef {ValidationHashMissingError}
+ * @extends {Error}
+ */
+export class ValidationHashMissingError extends Error {
+  /**
+   * Creates an instance of ValidationHashMissingError.
+   *
+   * @constructor
+   */
+  constructor() {
+    super('Hash is required for validation');
+  }
+}
+
+/**
+ * Thrown when missing a chain id for validating action steps.
+ *
+ * @export
+ * @class ValidationChainIdMissingError
+ * @typedef {ValidationChainIdMissingError}
+ * @extends {Error}
+ */
+export class ValidationChainIdMissingError extends Error {
+  /**
+   * Creates an instance of ValidationChainIdMissingError.
+   *
+   * @constructor
+   */
+  constructor() {
+    super('Chain id is required for validation');
+  }
+}
+
+/**
  * Function action validation context to help debug other validation errors
  *
  * @interface FunctionActionValidationMeta

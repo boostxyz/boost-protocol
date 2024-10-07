@@ -23,7 +23,9 @@ function addToIndex(type, signature, target) {
     : signature;
   const itemString = `${type} ${signatureWithoutType}`;
   const selector = generateSelector(type, signature);
-  target.abi[selector] = parseAbiItem(itemString);
+  const abiItem = parseAbiItem(itemString);
+  target.abi[selector] = abiItem;
+  target.abi[signatureWithoutType] = abiItem;
   target.selectors[signatureWithoutType] = selector;
 }
 

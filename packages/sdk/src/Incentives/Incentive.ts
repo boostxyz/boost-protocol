@@ -62,7 +62,7 @@ export const IncentiveByComponentInterface = {
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
- * @returns {unknown}
+ * @returns {Incentive}
  * @throws {@link InvalidComponentInterfaceError}
  */
 export async function incentiveFromAddress(

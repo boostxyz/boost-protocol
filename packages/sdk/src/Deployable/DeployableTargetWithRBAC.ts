@@ -68,7 +68,7 @@ export class DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses - The accounts to authorize or deauthorize
    * @param {boolean[]} allowed - The authorization status for the given accounts
-   * @param {?WriteParams<typeof rbacAbi, 'setAuthorized'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async setAuthorized(
@@ -89,7 +89,7 @@ export class DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses - The accounts to authorize or deauthorize
    * @param {boolean[]} allowed - The authorization status for the given accounts
-   * @param {?WriteParams<typeof rbacAbi, 'setAuthorized'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async setAuthorizedRaw(
@@ -119,8 +119,8 @@ export class DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
-   * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async grantRoles(
     addresses: Address[],
@@ -141,8 +141,8 @@ export class DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
-   * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async grantRolesRaw(
     addresses: Address[],
@@ -175,8 +175,8 @@ export class DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
-   * @param {?WriteParams<typeof rbacAbi, 'revokeRoles'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async revokeRoles(
     addresses: Address[],
@@ -198,8 +198,8 @@ export class DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
-   * @param {?WriteParams<typeof rbacAbi, 'revokeRoles'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async revokeRolesRaw(
     addresses: Address[],
@@ -228,7 +228,7 @@ export class DeployableTargetWithRBAC<
    * (await rbac.rolesOf(0xfoo)).includes(RbacRoles.ADMIN)
    * @public
    * @param {Address} account
-   * @param {?ReadParams<typeof rbacAbi, 'rolesOf'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Array<RbacRoles>>}
    */
   public async rolesOf(
@@ -256,7 +256,7 @@ export class DeployableTargetWithRBAC<
    * @public
    * @param {Address} account
    * @param {RbacRoles} roles
-   * @param {?ReadParams<typeof rbacAbi, 'hasAnyRole'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public hasAnyRole(
@@ -283,8 +283,8 @@ export class DeployableTargetWithRBAC<
    * @public
    * @param {Address} account
    * @param {RbacRoles} roles
-   * @param {?ReadParams<typeof rbacAbi, 'hasAllRoles'>} [params]
-   * @returns {*}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>}
    */
   public hasAllRoles(
     account: Address,
@@ -305,7 +305,7 @@ export class DeployableTargetWithRBAC<
    *
    * @public
    * @param {Address} account
-   * @param {?ReadParams<typeof rbacAbi, 'isAuthorized'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the account is authorized
    */
   public isAuthorized(

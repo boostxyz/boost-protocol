@@ -112,8 +112,8 @@ export class AllowListIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'owner'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
    */
   public async owner(
     params?: ReadParams<typeof allowListIncentiveAbi, 'owner'>,
@@ -131,7 +131,7 @@ export class AllowListIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'claims'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async claims(
@@ -150,7 +150,7 @@ export class AllowListIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'reward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async reward(
@@ -170,7 +170,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'claimed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async claimed(
@@ -190,7 +190,7 @@ export class AllowListIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'allowList'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<SimpleAllowList>}
    */
   public async allowList(
@@ -212,8 +212,8 @@ export class AllowListIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'limit'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>}
    */
   public async limit(
     params?: ReadParams<typeof allowListIncentiveAbi, 'limit'>,
@@ -231,7 +231,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {Pick<ClaimPayload, 'target'>} payload
-   * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<true>} - return true if successful, otherwise revert
    */
   protected async claim(
@@ -247,8 +247,8 @@ export class AllowListIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {Pick<ClaimPayload, 'target'>} payload
-   * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
-   * @returns {Promise<true>} - return true if successful, otherwise revert
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - return true if successful, otherwise revert
    */
   protected async claimRaw(
     payload: Pick<ClaimPayload, 'target'>,
@@ -274,7 +274,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {Pick<ClaimPayload, 'target'>} payload
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the incentive is claimable based on the data payload
    */
   public async isClaimable(

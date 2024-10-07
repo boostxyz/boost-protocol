@@ -61,7 +61,7 @@ export class Contract<ContractAbi extends Abi> {
    *
    * @public
    * @readonly
-   * @type {*}
+   * @type {Address | undefined}
    */
   public get address() {
     return this._address;
@@ -174,7 +174,6 @@ export class Contract<ContractAbi extends Abi> {
    * A typed wrapper for `wagmi.watchContractEvent`
    *
    * @public
-   * @async
    * @template {ContractEvent} event
    * @param {(
    *       log: WatchContractEventOnLogsParameter<ContractAbi, event, true>[number],
@@ -182,9 +181,9 @@ export class Contract<ContractAbi extends Abi> {
    * @param {?WatchParams<ContractAbi, event> & {
    *       eventName?: event;
    *     }} [params]
-   * @returns {unknown, params?: any) => unknown}
+   * @returns {() => void}
    */
-  public async subscribe<event extends ContractEventName<ContractAbi>>(
+  public subscribe<event extends ContractEventName<ContractAbi>>(
     cb: (
       log: WatchContractEventOnLogsParameter<ContractAbi, event, true>[number],
     ) => unknown,
@@ -218,7 +217,7 @@ export class Contract<ContractAbi extends Abi> {
    * @template [Result=unknown]
    * @param {Promise<HashAndSimulatedResult<Result>>} hashPromise
    * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
-   * @returns {unknown}
+   * @returns {Promise<Result>}
    */
   protected async awaitResult<Result = unknown>(
     hashPromise: Promise<HashAndSimulatedResult<Result>>,

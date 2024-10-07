@@ -149,7 +149,7 @@ export class Deployable<
    * @param {?Payload} [_payload]
    * @param {?DeployableOptions} [_options]
    * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams] - See [viem.WaitForTransactionReceipt](https://v1.viem.sh/docs/actions/public/waitForTransactionReceipt.html#waitfortransactionreceipt)
-   * @returns {unknown}
+   * @returns {Promise<this>}
    */
   protected async deploy(
     _payload?: Payload,

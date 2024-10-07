@@ -131,7 +131,7 @@ export class DeployableTarget<
    * @param {?Payload} [payload]
    * @param {?DeployableOptions} [options]
    * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
-   * @returns {unknown}
+   * @returns {Promise<this>}
    */
   protected override async deploy(
     payload?: Payload,
@@ -174,8 +174,8 @@ export class DeployableTarget<
    * @public
    * @async
    * @param {Hex} interfaceId - The interface identifier
-   * @param {?ReadParams<typeof contractActionAbi, 'supportsInterface'>} [params]
-   * @returns {unknown} - True if the contract supports the interface
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>} - True if the contract supports the interface
    */
   public async supportsInterface(
     interfaceId: Hex,
@@ -196,8 +196,8 @@ export class DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof contractActionAbi, 'getComponentInterface'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Hex>}
    */
   public async getComponentInterface(
     params?: ReadParams<typeof aCloneableAbi, 'getComponentInterface'>,

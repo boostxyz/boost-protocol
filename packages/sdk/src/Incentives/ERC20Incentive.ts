@@ -130,8 +130,8 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'owner'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
    */
   public async owner(params?: ReadParams<typeof erc20IncentiveAbi, 'owner'>) {
     return await readErc20IncentiveOwner(this._config, {
@@ -147,7 +147,7 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'currentReward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(
@@ -166,7 +166,7 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'claims'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
@@ -184,7 +184,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'claimed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async claimed(
@@ -204,7 +204,7 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'asset'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public async asset(params?: ReadParams<typeof erc20IncentiveAbi, 'asset'>) {
@@ -220,7 +220,7 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'strategy'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<StrategyType>}
    */
   public strategy(
@@ -238,7 +238,7 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'reward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async reward(params?: ReadParams<typeof erc20IncentiveAbi, 'reward'>) {
@@ -254,8 +254,8 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'limit'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>}
    */
   public async limit(params?: ReadParams<typeof erc20IncentiveAbi, 'limit'>) {
     return await readErc20IncentiveLimit(this._config, {
@@ -271,7 +271,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {bigint} i - Index of address
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'entries'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public async entries(
@@ -292,7 +292,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   protected async claim(
@@ -308,8 +308,8 @@ export class ERC20Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'claim'>} [params]
-   * @returns {Promise<boolean>} - Returns true if successfully claimed
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - Returns true if successfully claimed
    */
   protected async claimRaw(
     payload: ClaimPayload,
@@ -335,7 +335,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
    */
   public async clawback(
@@ -351,8 +351,8 @@ export class ERC20Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'clawback'>} [params]
-   * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} -  True if the assets were successfully clawbacked
    */
   public async clawbackRaw(
     payload: ClaimPayload,
@@ -378,8 +378,8 @@ export class ERC20Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'isClaimable'>} [params]
-   * @returns {unknown} = True if the incentive is claimable based on the data payload
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>} = True if the incentive is claimable based on the data payload
    */
   public async isClaimable(
     payload: ClaimPayload,
@@ -398,7 +398,7 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async drawRaffle(
@@ -412,8 +412,8 @@ export class ERC20Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>} [params]
-   * @returns {Promise<void>}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async drawRaffleRaw(
     params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
@@ -464,7 +464,7 @@ export class ERC20Incentive extends DeployableTarget<
  * @param {StrategyType} param0.strategy - The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
  * @param {bigint} param0.reward - The amount of the asset to distribute.
  * @param {bigint} param0.limit - How many times can this incentive be claimed.
- * @returns {*}
+ * @returns {Hex}
  */
 export function prepareERC20IncentivePayload({
   asset,

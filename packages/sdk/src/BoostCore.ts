@@ -48,6 +48,7 @@ import { type Auth, PassthroughAuth } from './Auth/Auth';
 import {
   Boost,
   type BoostPayload,
+  RawBoost,
   type Target,
   prepareBoostPayload,
 } from './Boost';
@@ -303,7 +304,7 @@ export class BoostCore extends Deployable<
    * @async
    * @param {CreateBoostPayload} _boostPayload
    * @param {?DeployableOptions} [_options]
-   * @returns {Boost}
+   * @returns {Promise<Boost>}
    */
   public async createBoost(
     _boostPayload: CreateBoostPayload,
@@ -527,8 +528,8 @@ export class BoostCore extends Deployable<
    * @param {bigint} incentiveId
    * @param {Address} address
    * @param {Hex} data
-   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async claimIncentive(
     boostId: bigint,
@@ -551,8 +552,8 @@ export class BoostCore extends Deployable<
    * @param {bigint} incentiveId - The ID of the Incentive
    * @param {Address} referrer - The address of the referrer (if any)
    * @param {Hex} data- The data for the claim
-   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async claimIncentiveRaw(
     boostId: bigint,
@@ -589,8 +590,8 @@ export class BoostCore extends Deployable<
    * @param {Address} referrer
    * @param {Hex} data
    * @param {Address} claimant
-   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async claimIncentiveFor(
     boostId: bigint,
@@ -622,8 +623,8 @@ export class BoostCore extends Deployable<
    * @param {Address} referrer - The address of the referrer (if any)
    * @param {Hex} data - The data for the claim
    * @param {Address} claimant - The address of the user eligible for the incentive payout
-   * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: Hex; result: void; }>}
    */
   public async claimIncentiveForRaw(
     boostId: bigint,
@@ -657,8 +658,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {bigint} id
-   * @param {?ReadParams<typeof boostCoreAbi, 'getBoost'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<RawBoost>}
    */
   public async readBoost(
     id: bigint,
@@ -679,8 +680,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {(string | bigint)} _id
-   * @param {?ReadParams<typeof boostCoreAbi, 'getBoost'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Boost>}
    */
   public async getBoost(
     _id: string | bigint,
@@ -732,7 +733,7 @@ export class BoostCore extends Deployable<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof boostCoreAbi, 'getBoostCount'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async getBoostCount(
@@ -757,7 +758,7 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof boostCoreAbi, 'createBoostAuth'> &
+   * @param {?ReadParams &
    *       ReadParams<typeof iAuthAbi, 'isAuthorized'>} [params]
    * @returns {Promise<boolean>}
    */
@@ -781,8 +782,8 @@ export class BoostCore extends Deployable<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof boostCoreAbi, 'createBoostAuth'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
    */
   public async createBoostAuth(
     params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'>,
@@ -806,8 +807,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {Auth} auth
-   * @param {?WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async setCreateBoostAuth(
     auth: Auth,
@@ -826,8 +827,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {Address} address
-   * @param {?WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setCreateBoostAuthRaw(
     address: Address,
@@ -856,7 +857,7 @@ export class BoostCore extends Deployable<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof boostCoreAbi, 'protocolFee'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {unknown}
    */
   public async protocolFee(
@@ -880,8 +881,8 @@ export class BoostCore extends Deployable<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
    */
   public async protocolFeeReceiver(
     params?: ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>,
@@ -905,8 +906,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {Address} address
-   * @param {?WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async setProcolFeeReceiver(
     address: Address,
@@ -925,8 +926,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {Address} address
-   * @param {?WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setProcolFeeReceiverRaw(
     address: Address,
@@ -958,8 +959,8 @@ export class BoostCore extends Deployable<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof boostCoreAbi, 'claimFee'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>}
    */
   public async claimFee(params?: ReadParams<typeof boostCoreAbi, 'claimFee'>) {
     return await readBoostCoreClaimFee(this._config, {
@@ -981,8 +982,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {bigint} claimFee
-   * @param {?WriteParams<typeof boostCoreAbi, 'setClaimFee'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async setClaimFee(
     claimFee: bigint,
@@ -997,8 +998,8 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {bigint} claimFee
-   * @param {?WriteParams<typeof boostCoreAbi, 'setClaimFee'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setClaimFeeRaw(
     claimFee: bigint,

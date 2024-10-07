@@ -164,8 +164,8 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'owner'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
    */
   public async owner(params?: ReadParams<typeof cgdaIncentiveAbi, 'owner'>) {
     return await readCgdaIncentiveOwner(this._config, {
@@ -181,7 +181,7 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'claims'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async claims(params?: ReadParams<typeof cgdaIncentiveAbi, 'claims'>) {
@@ -198,7 +198,7 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof allowListIncentiveAbi, 'reward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async reward(params?: ReadParams<typeof cgdaIncentiveAbi, 'reward'>) {
@@ -216,7 +216,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'claimed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async claimed(
@@ -236,8 +236,8 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'asset'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
    */
   public async asset(params?: ReadParams<typeof cgdaIncentiveAbi, 'asset'>) {
     return await readCgdaIncentiveAsset(this._config, {
@@ -252,7 +252,7 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'cgdaParams'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<CGDAParameters>}
    */
   public async cgdaParams(
@@ -277,7 +277,7 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'totalBudget'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async totalBudget(
@@ -296,7 +296,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   protected async claim(
@@ -312,7 +312,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   protected async claimRaw(
@@ -336,7 +336,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
    */
   public async clawback(
@@ -352,7 +352,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof cgdaIncentiveAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
    */
   public async clawbackRaw(
@@ -379,7 +379,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'isClaimable'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the incentive is claimable based on the data payload
    */
   public async isClaimable(
@@ -401,7 +401,7 @@ export class CGDAIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof cgdaIncentiveAbi, 'currentReward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(

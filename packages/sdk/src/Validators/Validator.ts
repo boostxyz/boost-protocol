@@ -32,7 +32,7 @@ export const ValidatorByComponentInterface = {
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
- * @returns {unknown}
+ * @returns {Promise<Validator>}
  * @throws {@link InvalidComponentInterfaceError}
  */
 export async function validatorFromAddress(

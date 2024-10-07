@@ -327,8 +327,8 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof signerValidatorAbi, 'signers'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>}
    */
   public async signers(
     address: Address,
@@ -348,8 +348,8 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {SignerValidatorSignaturePayload} payload
-   * @param {?ReadParams<typeof signerValidatorAbi, 'hashSignerData'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Hex>}
    */
   public async hashSignerData(
     payload: SignerValidatorSignaturePayload,
@@ -374,7 +374,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {SignerValidatorValidatePayload} payload
-   * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   protected async validate(
@@ -390,7 +390,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {SignerValidatorValidatePayload} payload
-   * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   protected async validateRaw(
@@ -423,8 +423,8 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {Address[]} addresses - The list of signers to update
    * @param {boolean[]} allowed - The authorized status of each signer
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async setAuthorized(
     addresses: Address[],
@@ -443,8 +443,8 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {Address[]} addresses - The list of signers to update
    * @param {boolean[]} allowed - The authorized status of each signer
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setAuthorizedRaw(
     addresses: Address[],
@@ -471,8 +471,8 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setValidatorCallerRaw(
     address: Address,
@@ -501,8 +501,8 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
    */
   public async setValidatorCaller(
     address: Address,

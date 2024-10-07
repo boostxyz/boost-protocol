@@ -115,7 +115,7 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'owner'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>} - The address of the owner
    */
   public async owner(
@@ -136,7 +136,7 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {Address} address - The address of the user
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the user is authorized
    */
   public async isAllowed(
@@ -160,7 +160,7 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses - The list of users to update
    * @param {boolean[]} allowed - The allowed status of each user
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<void>}
    */
   public async setAllowed(
@@ -181,8 +181,8 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses - The list of users to update
    * @param {boolean[]} allowed - The allowed status of each user
-   * @param {?ReadParams<typeof simpleAllowListAbi, 'setAllowed'>} [params]
-   * @returns {Promise<void>}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setAllowedRaw(
     addresses: Address[],

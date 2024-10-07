@@ -17,7 +17,6 @@ import {
   encodeAbiParameters,
   parseAbiParameters,
 } from 'viem';
-import {} from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -117,7 +116,7 @@ export class ContractAction<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof contractActionAbi, 'chainId'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async chainId(
@@ -136,7 +135,7 @@ export class ContractAction<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof contractActionAbi, 'target'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<`0x${string}`>}
    */
   public async target(params?: ReadParams<typeof contractActionAbi, 'target'>) {
@@ -154,7 +153,7 @@ export class ContractAction<
    * @example `function mint(address to, uint256 amount)`
    * @public
    * @async
-   * @param {?ReadParams<typeof contractActionAbi, 'selector'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<`0x${string}`>}
    */
   public async selector(
@@ -173,7 +172,7 @@ export class ContractAction<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof contractActionAbi, 'value'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async value(params?: ReadParams<typeof contractActionAbi, 'value'>) {
@@ -191,7 +190,7 @@ export class ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof contractActionAbi, 'execute'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
   public async execute(
@@ -207,8 +206,8 @@ export class ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof contractActionAbi, 'execute'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
   public async executeRaw(
     data: Hex,
@@ -234,8 +233,8 @@ export class ContractAction<
    * @public
    * @async
    * @param {Hex} calldata
-   * @param {?ReadParams<typeof contractActionAbi, 'prepare'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<`0x${string}`>}
    */
   public async prepare(
     calldata: Hex,

@@ -149,7 +149,7 @@ export function isERC1155TransferPayload(
  *
  * @export
  * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
- * @returns {*}
+ * @returns {Hex}
  * @throws {@link UnknownTransferPayloadSupplied}
  */
 export function prepareTransfer(
@@ -212,7 +212,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof managedBudgetAbi, 'allocate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the allocation was successful
    */
   public async allocate(
@@ -230,8 +230,8 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof managedBudgetAbi, 'allocate'>} [params]
-   * @returns {Promise<boolean>} - True if the allocation was successful
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the allocation was successful
    */
   public async allocateRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -260,7 +260,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof managedBudgetAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the request was successful
    */
   public async clawback(
@@ -279,8 +279,8 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof managedBudgetAbi, 'clawback'>} [params]
-   * @returns {Promise<boolean>} - True if the request was successful
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the request was successful
    */
   public async clawbackRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -307,7 +307,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof managedBudgetAbi, 'disburse'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the disbursement was successful
    */
   public async disburse(
@@ -324,8 +324,8 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)} transfer
-   * @param {?WriteParams<typeof managedBudgetAbi, 'disburse'>} [params]
-   * @returns {Promise<boolean>} - True if the disbursement was successful
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the disbursement was successful
    */
   public async disburseRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
@@ -351,7 +351,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {Array<FungibleTransferPayload | ERC1155TransferPayload>} transfers
-   * @param {?WriteParams<typeof managedBudgetAbi, 'disburseBatch'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if all disbursements were successful
    */
   public async disburseBatch(
@@ -367,8 +367,8 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {Array<FungibleTransferPayload | ERC1155TransferPayload>} transfers
-   * @param {?WriteParams<typeof managedBudgetAbi, 'disburseBatch'>} [params]
-   * @returns {Promise<boolean>} - True if all disbursements were successful
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if all disbursements were successful
    */
   public async disburseBatchRaw(
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
@@ -392,7 +392,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * Get the owner of the budget
    *
    * @public
-   * @param {?ReadParams<typeof managedBudgetAbi, 'owner'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public owner(params?: ReadParams<typeof managedBudgetAbi, 'owner'>) {
@@ -411,7 +411,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @param {Address} [asset="0x0000000000000000000000000000000000000000"] - The address of the asset
    * @param {?(bigint | undefined)} [tokenId] - The ID of the token
-   * @param {?ReadParams<typeof managedBudgetAbi, 'total'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The total amount of assets
    */
   public total(
@@ -434,7 +434,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
    * @param {?(bigint | undefined)} [tokenId]
-   * @param {?ReadParams<typeof managedBudgetAbi, 'available'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The amount of assets available
    */
   public available(
@@ -457,7 +457,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @public
    * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
    * @param {?(bigint | undefined)} [tokenId]
-   * @param {?ReadParams<typeof managedBudgetAbi, 'distributed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The amount of assets distributed
    */
   public distributed(
@@ -517,7 +517,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
  * @param {Address} param0.owner - The budget's owner
  * @param {{}} param0.authorized - List of accounts authorized to use the budget. This list should include a Boost core address to interact with the protocol.
  * @param {{}} param0.roles - List of roles to assign to the corresponding account by index.
- * @returns {*}
+ * @returns {Hex}
  */
 export const prepareManagedBudgetPayload = ({
   owner,

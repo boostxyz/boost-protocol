@@ -15,7 +15,6 @@ import {
   encodeAbiParameters,
   toHex,
 } from 'viem';
-import {} from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -97,8 +96,8 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {bigint} token
-   * @param {?ReadParams<typeof erc721MintActionAbi, 'validated'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>}
    */
   public async validated(
     token: bigint,
@@ -119,8 +118,8 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'execute'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
   public override async execute(
     data: Hex,
@@ -135,8 +134,8 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'execute'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
   public override async executeRaw(
     data: Hex,
@@ -162,8 +161,8 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?ReadParams<typeof erc721MintActionAbi, 'prepare'>} [params]
-   * @returns {unknown}
+   * @param {?ReadParams} [params]
+   * @returns {Promise<`0x${string}`>}
    */
   public override async prepare(
     data: Hex,
@@ -185,8 +184,8 @@ export class ERC721MintAction extends ContractAction<
    * @async
    * @param {Address} holder - The holder
    * @param {BigInt} tokenId - The token ID
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
-   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the action has been validated for the user
+   * @param {?WriteParams} [params]
+   * @returns {Promise<boolean>} - True if the action has been validated for the user
    */
   protected async validate(
     holder: Address,
@@ -203,7 +202,7 @@ export class ERC721MintAction extends ContractAction<
    * @async
    * @param {Address} holder - The holder
    * @param {BigInt} tokenId - The token ID
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the action has been validated for the user
    */
   protected async validateRaw(
@@ -280,7 +279,7 @@ export function prepareERC721MintActionValidate(
  * @param {Address} param0.target - The target contract address
  * @param {Hex} param0.selector - The selector for the function to be called
  * @param {bigint} param0.value - The native token value to send with the function call
- * @returns {*}
+ * @returns {Hex}
  */
 export function prepareERC721MintActionPayload({
   chainId,

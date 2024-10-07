@@ -152,7 +152,7 @@ export class SimpleDenyList<
    * @param {Address[]} addresses - The list of users to update
    * @param {boolean[]} allowed - The denied status of each user
    * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setDenied(
     addresses: Address[],
@@ -172,7 +172,7 @@ export class SimpleDenyList<
    * @param {Address[]} addresses - The list of users to update
    * @param {boolean[]} allowed - The denied status of each user
    * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setDeniedRaw(
     addresses: Address[],

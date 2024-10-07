@@ -113,7 +113,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {?ReadParams<typeof allowListIncentiveAbi, 'owner'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address>}
    */
   public async owner(
     params?: ReadParams<typeof allowListIncentiveAbi, 'owner'>,
@@ -213,7 +213,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {?ReadParams<typeof allowListIncentiveAbi, 'limit'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async limit(
     params?: ReadParams<typeof allowListIncentiveAbi, 'limit'>,
@@ -248,7 +248,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @async
    * @param {Pick<ClaimPayload, 'target'>} payload
    * @param {?WriteParams<typeof allowListIncentiveAbi, 'claim'>} [params]
-   * @returns {Promise<true>} - return true if successful, otherwise revert
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - return true if successful, otherwise revert
    */
   protected async claimRaw(
     payload: Pick<ClaimPayload, 'target'>,

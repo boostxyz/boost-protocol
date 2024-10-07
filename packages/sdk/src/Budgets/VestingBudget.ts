@@ -160,7 +160,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'start'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>}
    */
   public start(params?: ReadParams<typeof vestingBudgetAbi, 'start'>) {
     return readVestingBudgetStart(this._config, {
@@ -176,7 +176,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'duration'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>}
    */
   public duration(params?: ReadParams<typeof vestingBudgetAbi, 'duration'>) {
     return readVestingBudgetDuration(this._config, {
@@ -192,7 +192,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    *
    * @public
    * @param {?ReadParams<typeof vestingBudgetAbi, 'cliff'>} [params]
-   * @returns {*}
+   * @returns {Promise<bigint>}
    */
   public cliff(params?: ReadParams<typeof vestingBudgetAbi, 'cliff'>) {
     return readVestingBudgetCliff(this._config, {
@@ -230,7 +230,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @async
    * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'allocate'>} [params]
-   * @returns {Promise<boolean>} - True if the allocation was successful
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the allocation was successful
    */
   public async allocateRaw(
     transfer: FungibleTransferPayload,
@@ -279,7 +279,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @async
    * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'clawback'>} [params]
-   * @returns {Promise<boolean>} - True if the request was successful
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the request was successful
    */
   public async clawbackRaw(
     transfer: FungibleTransferPayload,
@@ -324,7 +324,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @async
    * @param {(FungibleTransferPayload)} transfer
    * @param {?WriteParams<typeof vestingBudgetAbi, 'disburse'>} [params]
-   * @returns {Promise<boolean>} - True if the disbursement was successful
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the disbursement was successful
    */
   public async disburseRaw(
     transfer: FungibleTransferPayload,
@@ -367,7 +367,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @async
    * @param {Array<FungibleTransferPayload>} transfers
    * @param {?WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>} [params]
-   * @returns {Promise<boolean>} - True if all disbursements were successful
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if all disbursements were successful
    */
   public async disburseBatchRaw(
     transfers: FungibleTransferPayload[],

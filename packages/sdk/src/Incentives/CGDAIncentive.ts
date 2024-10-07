@@ -165,7 +165,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {?ReadParams<typeof cgdaIncentiveAbi, 'owner'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address>}
    */
   public async owner(params?: ReadParams<typeof cgdaIncentiveAbi, 'owner'>) {
     return await readCgdaIncentiveOwner(this._config, {
@@ -237,7 +237,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {?ReadParams<typeof cgdaIncentiveAbi, 'asset'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address>}
    */
   public async asset(params?: ReadParams<typeof cgdaIncentiveAbi, 'asset'>) {
     return await readCgdaIncentiveAsset(this._config, {

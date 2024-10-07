@@ -328,7 +328,7 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {Address} address
    * @param {?ReadParams<typeof signerValidatorAbi, 'signers'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<boolean>}
    */
   public async signers(
     address: Address,
@@ -349,7 +349,7 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {SignerValidatorSignaturePayload} payload
    * @param {?ReadParams<typeof signerValidatorAbi, 'hashSignerData'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Hex>}
    */
   public async hashSignerData(
     payload: SignerValidatorSignaturePayload,
@@ -424,7 +424,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {Address[]} addresses - The list of signers to update
    * @param {boolean[]} allowed - The authorized status of each signer
    * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setAuthorized(
     addresses: Address[],
@@ -444,7 +444,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {Address[]} addresses - The list of signers to update
    * @param {boolean[]} allowed - The authorized status of each signer
    * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setAuthorizedRaw(
     addresses: Address[],
@@ -472,7 +472,7 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {Address} address
    * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setValidatorCallerRaw(
     address: Address,
@@ -502,7 +502,7 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {Address} address
    * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async setValidatorCaller(
     address: Address,

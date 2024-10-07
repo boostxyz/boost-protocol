@@ -528,7 +528,7 @@ export class BoostCore extends Deployable<
    * @param {Address} address
    * @param {Hex} data
    * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async claimIncentive(
     boostId: bigint,
@@ -552,7 +552,7 @@ export class BoostCore extends Deployable<
    * @param {Address} referrer - The address of the referrer (if any)
    * @param {Hex} data- The data for the claim
    * @param {?WriteParams<typeof boostCoreAbi, 'claimIncentive'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async claimIncentiveRaw(
     boostId: bigint,

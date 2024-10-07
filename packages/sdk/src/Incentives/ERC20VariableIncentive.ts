@@ -117,7 +117,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'owner'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<Address>}
    */
   public async owner(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'owner'>,
@@ -250,7 +250,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'limit'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<bigint>}
    */
   public async limit(
     params?: ReadParams<typeof erc20VariableIncentiveAbi, 'limit'>,
@@ -285,7 +285,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>} [params]
-   * @returns {Promise<boolean>} - Returns true if successfully claimed
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - Returns true if successfully claimed
    */
   protected async claimRaw(
     payload: ClaimPayload,
@@ -328,7 +328,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @async
    * @param {ClaimPayload} payload
    * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'clawback'>} [params]
-   * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} -  True if the assets were successfully clawbacked
    */
   public async clawbackRaw(
     payload: ClaimPayload,
@@ -358,7 +358,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @async
    * @param {ClaimPayload} payload
    * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'isClaimable'>} [params]
-   * @returns {unknown} = True if the incentive is claimable based on the data payload
+   * @returns {Promise<boolean>} = True if the incentive is claimable based on the data payload
    */
   public async isClaimable(
     payload: ClaimPayload,
@@ -404,7 +404,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
  * @param {Address} param0.asset - The address of the incentivized asset.
  * @param {bigint} param0.reward - The amount of the asset to distribute.
  * @param {bigint} param0.limit - How many times can this incentive be claimed.
- * @returns {*}
+ * @returns {Hex}
  */
 export function prepareERC20VariableIncentivePayload({
   asset,

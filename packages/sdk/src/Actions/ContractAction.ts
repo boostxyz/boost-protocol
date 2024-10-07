@@ -17,7 +17,6 @@ import {
   encodeAbiParameters,
   parseAbiParameters,
 } from 'viem';
-import {} from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -208,7 +207,7 @@ export class ContractAction<
    * @async
    * @param {Hex} data
    * @param {?WriteParams<typeof contractActionAbi, 'execute'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
   public async executeRaw(
     data: Hex,
@@ -235,7 +234,7 @@ export class ContractAction<
    * @async
    * @param {Hex} calldata
    * @param {?ReadParams<typeof contractActionAbi, 'prepare'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<`0x${string}`>}
    */
   public async prepare(
     calldata: Hex,

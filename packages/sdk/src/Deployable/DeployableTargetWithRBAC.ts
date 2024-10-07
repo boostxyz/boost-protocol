@@ -120,7 +120,7 @@ export class DeployableTargetWithRBAC<
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
    * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async grantRoles(
     addresses: Address[],
@@ -142,7 +142,7 @@ export class DeployableTargetWithRBAC<
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
    * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async grantRolesRaw(
     addresses: Address[],
@@ -176,7 +176,7 @@ export class DeployableTargetWithRBAC<
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
    * @param {?WriteParams<typeof rbacAbi, 'revokeRoles'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<void>}
    */
   public async revokeRoles(
     addresses: Address[],
@@ -199,7 +199,7 @@ export class DeployableTargetWithRBAC<
    * @param {Address[]} addresses
    * @param {RbacRoles[]} roles
    * @param {?WriteParams<typeof rbacAbi, 'revokeRoles'>} [params]
-   * @returns {unknown}
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async revokeRolesRaw(
     addresses: Address[],
@@ -284,7 +284,7 @@ export class DeployableTargetWithRBAC<
    * @param {Address} account
    * @param {RbacRoles} roles
    * @param {?ReadParams<typeof rbacAbi, 'hasAllRoles'>} [params]
-   * @returns {*}
+   * @returns {Promise<boolean>}
    */
   public hasAllRoles(
     account: Address,

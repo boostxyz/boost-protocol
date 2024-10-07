@@ -90,6 +90,18 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(@types/node@20.16.10)(terser@5.31.1)
 
+  examples/agora-vote:
+    dependencies:
+      '@boostxyz/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@boostxyz/signatures':
+        specifier: workspace:*
+        version: link:../../packages/signatures
+      '@boostxyz/test':
+        specifier: workspace:*
+        version: link:../../test
+
   examples/delegate-action:
     dependencies:
       '@boostxyz/sdk':

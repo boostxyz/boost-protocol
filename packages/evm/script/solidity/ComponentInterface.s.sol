@@ -73,7 +73,7 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAManagedBudget() internal {
         string memory interfaceId = uint256(
             uint32(type(AManagedBudget).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AManagedBudget",
             interfaceId
@@ -83,14 +83,14 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAEventAction() internal {
         string memory interfaceId = uint256(
             uint32(type(AEventAction).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize("AEventAction", interfaceId);
     }
 
     function _getInterfaceAERC20Incentive() internal {
         string memory interfaceId = uint256(
             uint32(type(AERC20Incentive).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AERC20Incentive",
             interfaceId
@@ -100,20 +100,20 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceACloneable() internal {
         string memory interfaceId = uint256(
             uint32(type(ACloneable).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize("ACloneable", interfaceId);
     }
 
     function _getInterfaceABudget() internal {
         string memory interfaceId = uint256(uint32(type(ABudget).interfaceId))
-            .toMinimalHexString();
+            .toHexString(4);
         componentJson = componentJsonKey.serialize("ABudget", interfaceId);
     }
 
     function _getInterfaceAVestingBudget() internal {
         string memory interfaceId = uint256(
             uint32(type(AVestingBudget).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AVestingBudget",
             interfaceId
@@ -123,7 +123,7 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceASignerValidator() internal {
         string memory interfaceId = uint256(
             uint32(type(ASignerValidator).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "ASignerValidator",
             interfaceId
@@ -133,7 +133,7 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAAllowListIncentive() internal {
         string memory interfaceId = uint256(
             uint32(type(AAllowListIncentive).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AAllowListIncentive",
             interfaceId
@@ -143,7 +143,7 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceACGDAIncentive() internal {
         string memory interfaceId = uint256(
             uint32(type(ACGDAIncentive).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "ACGDAIncentive",
             interfaceId
@@ -153,14 +153,14 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAIncentive() internal {
         string memory interfaceId = uint256(
             uint32(type(AIncentive).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize("AIncentive", interfaceId);
     }
 
     function _getInterfaceAERC20VariableIncentive() internal {
         string memory interfaceId = uint256(
             uint32(type(AERC20VariableIncentive).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AERC20VariableIncentive",
             interfaceId
@@ -170,7 +170,7 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAPointsIncentive() internal {
         string memory interfaceId = uint256(
             uint32(type(APointsIncentive).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "APointsIncentive",
             interfaceId
@@ -180,7 +180,7 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceASimpleAllowList() internal {
         string memory interfaceId = uint256(
             uint32(type(ASimpleAllowList).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "ASimpleAllowList",
             interfaceId
@@ -190,7 +190,7 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceASimpleDenyList() internal {
         string memory interfaceId = uint256(
             uint32(type(ASimpleDenyList).interfaceId)
-        ).toMinimalHexString();
+        ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "ASimpleDenyList",
             interfaceId

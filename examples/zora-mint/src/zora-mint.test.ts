@@ -124,7 +124,7 @@ describe("Boost with NFT Minting Incentive", () => {
       }),
       allowList: core.SimpleAllowList({
         owner: owner,
-        allowed: [owner],
+        allowed: [owner, boostImpostor],
       }),
       incentives: [
         core.ERC20Incentive({

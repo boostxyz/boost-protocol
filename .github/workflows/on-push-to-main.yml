@@ -71,8 +71,8 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm changeset:version
-          commit: "chore: version package"
-          title: "chore: version package"
+          commit: "chore: version packages"
+          title: "[ADHOC] chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.BOOST_GITHUB_TOKEN }}
 

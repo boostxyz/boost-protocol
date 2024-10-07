@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/cli/changelog",
     {
-      "repo": "rabbitholegg/boost-protocol"
+      "repo": "boostxyz/boost-protocol"
     }
   ],
   "commit": false,

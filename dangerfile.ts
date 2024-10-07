@@ -44,7 +44,7 @@ try {
   const changesets = danger.git.fileMatch('.changeset/*.md');
   if (!changesets.edited) {
     warn(
-      `Are you sure you want to be submitting a change without including a changeset? If you're just changing docs or tests, you probably don't need to. See [the publishing section of the README](https://github.com/rabbitholegg/boost-protocol?tab=readme-ov-file#changesets--publishing) for more info.`,
+      `Are you sure you want to be submitting a change without including a changeset? If you're just changing docs or tests, you probably don't need to. See [the publishing section of the README](https://github.com/boostxyz/boost-protocol?tab=readme-ov-file#changesets--publishing) for more info.`,
     );
   }
 } catch (e) {

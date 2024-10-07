@@ -8,7 +8,7 @@
   },
   "files": ["dist", "artifacts", "contracts"],
   "type": "module",
-  "repository": "https://github.com/rabbitholegg/boost-protocol",
+  "repository": "https://github.com/boostxyz/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "exports": {
     ".": {

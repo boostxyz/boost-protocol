@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BOOST_GITHUB_TOKEN }}
 
       - name: Lint
         run: npx turbo lint:ci --cache-dir=".cache"

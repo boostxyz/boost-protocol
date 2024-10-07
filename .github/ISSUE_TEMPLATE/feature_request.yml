@@ -10,11 +10,11 @@ body:
     attributes:
       value: >
         **Thanks :heart: for taking the time to fill out this feature request report!** We kindly ask that you search to
-        see if an issue [already exists](https://github.com/rabbitholegg/boost-protocol/issues?q=is%3Aissue+sort%3Acreated-desc+) for
+        see if an issue [already exists](https://github.com/boostxyz/boost-protocol/issues?q=is%3Aissue+sort%3Acreated-desc+) for
         your feature.
 
         We are also happy to accept contributions from our users. For more details see
-        [here](https://github.com/rabbitholegg/boost-protocol/blob/main/.github/CONTRIBUTING.md).
+        [here](https://github.com/boostxyz/boost-protocol/blob/main/.github/CONTRIBUTING.md).
 
   - type: textarea
     attributes:

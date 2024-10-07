@@ -17,7 +17,7 @@
     - [Deploy Module Contracts](#deploy-module-contracts)
 
 [![Documentation](https://img.shields.io/badge/documentation-gh--pages-blue)](https://rabbitholegg.github.io/boost-protocol/index.html)
-[![Test Status](https://github.com/rabbitholegg/boost-protocol/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/rabbitholegg/boost-protocol/actions/workflows/verify.yml)
+[![Test Status](https://github.com/boostxyz/boost-protocol/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/boostxyz/boost-protocol/actions/workflows/verify.yml)
 
 > [!WARNING]
 > Boost Protocol is currently under active development and is not ready for production use. The code and documentation are subject to change. We recommend against building on top of the protocol prior to the first official release.
@@ -95,7 +95,7 @@ The Boost Protocol is designed to be flexible and customizable, allowing develop
 
 ### Getting Started
 
-Clone the repository - `git clone https://github.com/rabbitholegg/boost-protocol`
+Clone the repository - `git clone https://github.com/boostxyz/boost-protocol`
 
 Install dependencies - `pnpm install`. This command will also initialize all submodules required for `evm` package development.
 

@@ -150,16 +150,17 @@ describe("Boost with NFT Minting Incentive", () => {
       address: boostImpostor,
       value: parseEther("10"),
     });
-    const testReceipt = await walletClient.sendTransaction({
+    const txHash = await walletClient.sendTransaction({
       data: inputData,
       account: boostImpostor,
       to: targetContract,
       value: parseEther("0.029777"),
     });
+    const chainId = await walletClient.getChainId();
 
     // Make sure that the transaction was sent as expected and validates the action
-    expect(testReceipt).toBeDefined();
-    const validation = await action.validateActionSteps();
+    expect(txHash).toBeDefined();
+    const validation = await action.validateActionSteps({ hash: txHash, chainId });
     expect(validation).toBe(true);
     // Generate the signature using the trusted signer
     const claimDataPayload = await boost.validator.encodeClaimData({

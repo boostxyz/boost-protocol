@@ -174,7 +174,7 @@ export class DeployableTarget<
    * @public
    * @async
    * @param {Hex} interfaceId - The interface identifier
-   * @param {?ReadParams<typeof contractActionAbi, 'supportsInterface'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the contract supports the interface
    */
   public async supportsInterface(
@@ -196,7 +196,7 @@ export class DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof contractActionAbi, 'getComponentInterface'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
   public async getComponentInterface(

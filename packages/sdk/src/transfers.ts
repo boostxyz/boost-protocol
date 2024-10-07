@@ -211,7 +211,7 @@ export interface FungiblePayload {
  * @export
  * @param {FungiblePayload} param0
  * @param {bigint} param0.amount - The amount being transferred
- * @returns {*}
+ * @returns {Hex}
  */
 export function prepareFungiblePayload({ amount }: FungiblePayload) {
   return encodeAbiParameters(

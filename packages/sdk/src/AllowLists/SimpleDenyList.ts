@@ -107,7 +107,7 @@ export class SimpleDenyList<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof simpleDenyListAbi, 'owner'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>} - The address of the owner
    */
   public async owner(
@@ -128,7 +128,7 @@ export class SimpleDenyList<
    * @public
    * @async
    * @param {Address} address - The address of the user
-   * @param {?ReadParams<typeof simpleDenyListAbi, 'isAllowed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the user is authorized
    */
   public async isAllowed(
@@ -151,7 +151,7 @@ export class SimpleDenyList<
    * @async
    * @param {Address[]} addresses - The list of users to update
    * @param {boolean[]} allowed - The denied status of each user
-   * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async setDenied(
@@ -171,7 +171,7 @@ export class SimpleDenyList<
    * @async
    * @param {Address[]} addresses - The list of users to update
    * @param {boolean[]} allowed - The denied status of each user
-   * @param {?WriteParams<typeof simpleDenyListAbi, 'setDenied'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setDeniedRaw(

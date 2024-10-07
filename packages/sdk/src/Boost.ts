@@ -13,6 +13,25 @@ import type { Incentive } from './Incentives/Incentive';
 import type { Validator } from './Validators/Validator';
 
 /**
+ * Interface representing a `BoostLib.Boost` on-chain struct
+ *
+ * @export
+ * @interface BoostPayload
+ * @typedef {BoostPayload}
+ */
+export interface RawBoost {
+  action: Address;
+  validator: Address;
+  allowList: Address;
+  budget: Address;
+  incentives: readonly Address[];
+  protocolFee: bigint;
+  referralFee: bigint;
+  maxParticipants: bigint;
+  owner: Address;
+}
+
+/**
  * Configuration used to instantiate a `Boost` instance.
  *
  * @export

@@ -214,8 +214,8 @@ export class BoostRegistry extends Deployable<
    * @param {RegistryType} registryType - The base type for the implementation
    * @param {string} name - A name for the implementation (must be unique within the given type)
    * @param {Address} implementation - The address of the implementation contract
-   * @param {?WriteParams<typeof boostRegistryAbi, 'register'>} [params] - Optional params to provide the underlying Viem contract call
-   * @returns {unknown}
+   * @param {?WriteParams} [params] - Optional params to provide the underlying Viem contract call
+   * @returns {Promise<void>}
    * @example
    * ```ts
    * await registry.register(ContractAction.registryType, 'ContractAction', ContractAction.base)
@@ -239,8 +239,8 @@ export class BoostRegistry extends Deployable<
    * @param {RegistryType} registryType
    * @param {string} name
    * @param {Address} implementation
-   * @param {?WriteParams<typeof boostRegistryAbi, 'register'>} [params]
-   * @returns {unknown}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async registerRaw(
     registryType: RegistryType,
@@ -275,8 +275,8 @@ export class BoostRegistry extends Deployable<
    * @template {DeployableTarget} Target
    * @param {string} displayName - The display name for the clone
    * @param {Target} target - An instance of a target contract to clone and initialize
-   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {Target} - The provided instance, but with a new address attached.
+   * @param {?WriteParams} [params]
+   * @returns {Promise<Target>} - The provided instance, but with a new address attached.
    * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
   public initialize<Target extends DeployableTarget<any, any>>(
@@ -295,8 +295,8 @@ export class BoostRegistry extends Deployable<
    * @template {DeployableTarget} Target
    * @param {string} displayName - The display name for the clone
    * @param {Target} target - An instance of a target contract to clone and initialize
-   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {Target} - The provided instance, but with a new address attached.
+   * @param {?WriteParams} [params]
+   * @returns {Promise<Target>} - The provided instance, but with a new address attached.
    * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
   public async clone<Target extends DeployableTarget<any, any>>(
@@ -316,8 +316,8 @@ export class BoostRegistry extends Deployable<
    * @template {DeployableTarget} Target
    * @param {string} displayName
    * @param {Target} target
-   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {Target}
+   * @param {?WriteParams} [params]
+   * @returns {Promise<Address>}
    * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
   public async deployClone<Target extends DeployableTarget<any, any>>(
@@ -336,8 +336,8 @@ export class BoostRegistry extends Deployable<
    * @async
    * @param {string} displayName
    * @param {DeployableTarget} target
-   * @param {?WriteParams<typeof boostRegistryAbi, 'deployClone'>} [params]
-   * @returns {unknown} - The transaction hash
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: Hex, result: Address }>} - The transaction hash
    * biome-ignore lint/suspicious/noExplicitAny: any deployable target will suffice
    */
   public async deployCloneRaw<Target extends DeployableTarget<any, any>>(
@@ -379,8 +379,8 @@ export class BoostRegistry extends Deployable<
    * @public
    * @async
    * @param {Hex} identifier - The unique identifier for the implementation (see {getIdentifier})
-   * @param {?ReadParams<typeof boostRegistryAbi, 'getBaseImplementation'>} [params]
-   * @returns {unknown} - The address of the implementation
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>} - The address of the implementation
    */
   public async getBaseImplementation(
     identifier: Hex,
@@ -405,7 +405,7 @@ export class BoostRegistry extends Deployable<
    * @public
    * @async
    * @param {Hex} identifier - The unique identifier for the deployed clone (see {getCloneIdentifier})
-   * @param {?ReadParams<typeof boostRegistryAbi, 'getClone'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>} - The address of the deployed clone
    */
   public async getClone(
@@ -431,7 +431,7 @@ export class BoostRegistry extends Deployable<
    * @public
    * @async
    * @param {Address} deployer - The address of the deployer
-   * @param {?ReadParams<typeof boostRegistryAbi, 'getClones'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex[]>} - The list of deployed clones for the given deployer
    */
   public async getClones(
@@ -460,7 +460,7 @@ export class BoostRegistry extends Deployable<
    * @param {Address} base - The address of the base implementation
    * @param {Address} deployer - The address of the deployer
    * @param {string} displayName - The display name of the clone
-   * @param {?ReadParams<typeof boostRegistryAbi, 'getCloneIdentifier'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex>} - The unique identifier for the clone
    */
   public async getCloneIdentifier(
@@ -490,7 +490,7 @@ export class BoostRegistry extends Deployable<
    * @async
    * @param {RegistryType} registryType - The base type for the implementation
    * @param {string} displayName - The name of the implementation
-   * @param {?ReadParams<typeof boostRegistryAbi, 'getIdentifier'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex>} - The unique identifier for the implementation
    */
   public async getIdentifier(

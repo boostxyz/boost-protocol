@@ -327,7 +327,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof signerValidatorAbi, 'signers'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async signers(
@@ -348,7 +348,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {SignerValidatorSignaturePayload} payload
-   * @param {?ReadParams<typeof signerValidatorAbi, 'hashSignerData'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
   public async hashSignerData(
@@ -374,7 +374,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {SignerValidatorValidatePayload} payload
-   * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   protected async validate(
@@ -390,7 +390,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {SignerValidatorValidatePayload} payload
-   * @param {?WriteParams<typeof signerValidatorAbi, 'validate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   protected async validateRaw(
@@ -423,7 +423,7 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {Address[]} addresses - The list of signers to update
    * @param {boolean[]} allowed - The authorized status of each signer
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async setAuthorized(
@@ -443,7 +443,7 @@ export class SignerValidator extends DeployableTarget<
    * @async
    * @param {Address[]} addresses - The list of signers to update
    * @param {boolean[]} allowed - The authorized status of each signer
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setAuthorized'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setAuthorizedRaw(
@@ -471,7 +471,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setValidatorCallerRaw(
@@ -501,7 +501,7 @@ export class SignerValidator extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async setValidatorCaller(

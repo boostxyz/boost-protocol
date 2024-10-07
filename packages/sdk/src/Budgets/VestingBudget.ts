@@ -143,7 +143,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * Get the owner of the budget
    *
    * @public
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'owner'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public owner(params?: ReadParams<typeof vestingBudgetAbi, 'owner'>) {
@@ -159,7 +159,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * The timestamp at which the vesting schedule begins
    *
    * @public
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'start'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public start(params?: ReadParams<typeof vestingBudgetAbi, 'start'>) {
@@ -175,7 +175,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * The duration of the vesting schedule (in seconds)
    *
    * @public
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'duration'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public duration(params?: ReadParams<typeof vestingBudgetAbi, 'duration'>) {
@@ -191,7 +191,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * The duration of the cliff period (in seconds)
    *
    * @public
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'cliff'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public cliff(params?: ReadParams<typeof vestingBudgetAbi, 'cliff'>) {
@@ -211,7 +211,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'allocate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the allocation was successful
    */
   public async allocate(
@@ -229,7 +229,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'allocate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the allocation was successful
    */
   public async allocateRaw(
@@ -259,7 +259,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the request was successful
    */
   public async clawback(
@@ -278,7 +278,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the request was successful
    */
   public async clawbackRaw(
@@ -306,7 +306,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburse'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the disbursement was successful
    */
   public async disburse(
@@ -323,7 +323,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {(FungibleTransferPayload)} transfer
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburse'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the disbursement was successful
    */
   public async disburseRaw(
@@ -350,7 +350,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {Array<FungibleTransferPayload>} transfers
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if all disbursements were successful
    */
   public async disburseBatch(
@@ -366,7 +366,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {Array<FungibleTransferPayload>} transfers
-   * @param {?WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if all disbursements were successful
    */
   public async disburseBatchRaw(
@@ -391,7 +391,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * Get the end time of the vesting schedule
    *
    * @public
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'end'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public end(params?: ReadParams<typeof vestingBudgetAbi, 'end'>) {
@@ -409,7 +409,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    *
    * @public
    * @param {Address} [asset="0x0000000000000000000000000000000000000000"] -  The address of the asset (or the zero address for native assets)
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'total'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public total(
@@ -430,7 +430,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    *
    * @public
    * @param {Address} [asset="0x0000000000000000000000000000000000000000"] -  The address of the asset (or the zero address for native assets)
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'available'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The amount of assets currently available for distribution
    */
   public available(
@@ -450,7 +450,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    *
    * @public
    * @param {Address} [asset="0x0000000000000000000000000000000000000000"]
-   * @param {?ReadParams<typeof vestingBudgetAbi, 'distributed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The amount of assets distributed
    */
   public distributed(

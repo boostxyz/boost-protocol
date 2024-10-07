@@ -40,7 +40,7 @@ export interface ClaimPayload {
  * @param {ClaimPayload} param0
  * @param {Address} param0.target - The address of the recipient
  * @param {Hex} [param0.data=zeroHash] - The implementation-specific data for the claim, if needed
- * @returns {*}
+ * @returns {Hex}
  */
 export const prepareClaimPayload = ({
   target,

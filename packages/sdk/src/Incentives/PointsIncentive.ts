@@ -125,7 +125,7 @@ export class PointsIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'claims'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async claims(
@@ -144,7 +144,7 @@ export class PointsIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20IncentiveAbi, 'currentReward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(
@@ -163,7 +163,7 @@ export class PointsIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'reward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} The reward amount issued for each claim
    */
   public async reward(
@@ -183,7 +183,7 @@ export class PointsIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'claimed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async claimed(
@@ -203,7 +203,7 @@ export class PointsIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'venue'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public async venue(params?: ReadParams<typeof pointsIncentiveAbi, 'venue'>) {
@@ -219,7 +219,7 @@ export class PointsIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'limit'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async limit(params?: ReadParams<typeof pointsIncentiveAbi, 'limit'>) {
@@ -235,7 +235,7 @@ export class PointsIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'selector'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
   public async selector(
@@ -254,7 +254,7 @@ export class PointsIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} -  True if the incentive was successfully claimed
    */
   protected async claim(
@@ -270,7 +270,7 @@ export class PointsIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof pointsIncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} -  True if the incentive was successfully claimed
    */
   protected async claimRaw(
@@ -299,7 +299,7 @@ export class PointsIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?ReadParams<typeof pointsIncentiveAbi, 'isClaimable'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} -  True if the incentive is claimable based on the data payload
    */
   public async isClaimable(

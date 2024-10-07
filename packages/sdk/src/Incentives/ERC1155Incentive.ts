@@ -144,7 +144,7 @@ export class ERC1155Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'claims'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async claims(
@@ -163,7 +163,7 @@ export class ERC1155Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'reward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async reward(
@@ -183,7 +183,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'claimed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async claimed(
@@ -203,7 +203,7 @@ export class ERC1155Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'asset'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public async asset(params?: ReadParams<typeof erc1155IncentiveAbi, 'asset'>) {
@@ -219,7 +219,7 @@ export class ERC1155Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'strategy'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<StrategyType>}
    */
   public strategy(
@@ -237,7 +237,7 @@ export class ERC1155Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'limit'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {unknown}
    */
   public async limit(params?: ReadParams<typeof erc1155IncentiveAbi, 'limit'>) {
@@ -253,7 +253,7 @@ export class ERC1155Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'tokenId'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async tokenId(
@@ -271,7 +271,7 @@ export class ERC1155Incentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'extraData'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
   public async extraData(
@@ -290,7 +290,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>}
    */
   protected async claim(
@@ -306,7 +306,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>}
    */
   protected async claimRaw(
@@ -333,7 +333,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>}
    */
   public async clawback(
@@ -349,7 +349,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc1155IncentiveAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>}
    */
   public async clawbackRaw(
@@ -376,7 +376,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'isClaimable'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async isClaimable(
@@ -397,7 +397,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @public
    * @async
    * @param {ERC1155IncentivePayload} data
-   * @param {?ReadParams<typeof erc1155IncentiveAbi, 'preflight'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
   public async preflight(

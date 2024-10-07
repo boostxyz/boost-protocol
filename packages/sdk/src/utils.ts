@@ -154,7 +154,7 @@ export function bytes4(input: string) {
  * @param {WagmiConfig} config - [Wagmi Configuration](https://wagmi.sh/core/api/createConfig)
  * @param {Promise<Hash>} hash - A transaction hash promise
  * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams] - @see {@link WaitForTransactionReceiptParameters}
- * @returns {unknown}
+ * @returns {Promise<Address>}
  * @throws {@link NoContractAddressUponReceiptError} if no `contractAddress` exists after the transaction has been received
  */
 export async function getDeployedContractAddress(

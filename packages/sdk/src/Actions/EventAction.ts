@@ -465,7 +465,7 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof eventActionAbi, 'execute'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
   public async execute(
@@ -481,7 +481,7 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof eventActionAbi, 'execute'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
   public async executeRaw(

@@ -116,7 +116,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'owner'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public async owner(
@@ -135,7 +135,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'totalClaimed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async totalClaimed(
@@ -154,7 +154,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'currentReward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(
@@ -173,7 +173,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'claims'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async claims(
@@ -193,7 +193,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {Address} address
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'claimed'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async claimed(
@@ -213,7 +213,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'asset'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
   public async asset(
@@ -231,7 +231,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'reward'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async reward(
@@ -249,7 +249,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'limit'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
   public async limit(
@@ -268,7 +268,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
   protected async claim(
@@ -284,7 +284,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'claim'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - Returns true if successfully claimed
    */
   protected async claimRaw(
@@ -311,7 +311,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
    */
   public async clawback(
@@ -327,7 +327,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?WriteParams<typeof erc20VariableIncentiveAbi, 'clawback'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} -  True if the assets were successfully clawbacked
    */
   public async clawbackRaw(
@@ -357,7 +357,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @public
    * @async
    * @param {ClaimPayload} payload
-   * @param {?ReadParams<typeof erc20VariableIncentiveAbi, 'isClaimable'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} = True if the incentive is claimable based on the data payload
    */
   public async isClaimable(

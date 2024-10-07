@@ -96,7 +96,7 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {bigint} token
-   * @param {?ReadParams<typeof erc721MintActionAbi, 'validated'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async validated(
@@ -118,7 +118,7 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'execute'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
   public override async execute(
@@ -134,7 +134,7 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'execute'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
   public override async executeRaw(
@@ -161,7 +161,7 @@ export class ERC721MintAction extends ContractAction<
    * @public
    * @async
    * @param {Hex} data
-   * @param {?ReadParams<typeof erc721MintActionAbi, 'prepare'>} [params]
+   * @param {?ReadParams} [params]
    * @returns {Promise<`0x${string}`>}
    */
   public override async prepare(
@@ -184,7 +184,7 @@ export class ERC721MintAction extends ContractAction<
    * @async
    * @param {Address} holder - The holder
    * @param {BigInt} tokenId - The token ID
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated for the user
    */
   protected async validate(
@@ -202,7 +202,7 @@ export class ERC721MintAction extends ContractAction<
    * @async
    * @param {Address} holder - The holder
    * @param {BigInt} tokenId - The token ID
-   * @param {?WriteParams<typeof erc721MintActionAbi, 'validate'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the action has been validated for the user
    */
   protected async validateRaw(

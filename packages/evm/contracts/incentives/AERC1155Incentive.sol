@@ -21,6 +21,9 @@ abstract contract AERC1155Incentive is AIncentive, IERC1155Receiver {
         MINT
     }
 
+    /// @notice A mapping of txHash to claim status
+    mapping(bytes32 => bool) public claimed;
+
     /// @notice The address of the ERC1155-compliant contract
     IERC1155 public asset;
 

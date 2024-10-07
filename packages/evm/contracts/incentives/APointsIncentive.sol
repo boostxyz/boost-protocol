@@ -14,6 +14,9 @@ import {AIncentive} from "contracts/incentives/AIncentive.sol";
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to operate the points contract's issuance function
 abstract contract APointsIncentive is AIncentive {
+    /// @notice A mapping of address to claim status
+    mapping(address => bool) public claimed;
+
     /// @notice The address of the points contract
     address public venue;
 

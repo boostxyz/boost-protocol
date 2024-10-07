@@ -19,6 +19,9 @@ abstract contract AAllowListIncentive is AIncentive {
     /// @notice The maximum number of claims that can be made (one per address)
     uint256 public limit;
 
+    /// @notice A mapping of address to claim status
+    mapping(address => bool) public claimed;
+
     /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {
         return type(AAllowListIncentive).interfaceId;

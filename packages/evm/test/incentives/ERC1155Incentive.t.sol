@@ -10,7 +10,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {AIncentive, IBoostClaim} from "contracts/incentives/AIncentive.sol";
 import {ERC1155Incentive} from "contracts/incentives/ERC1155Incentive.sol";
 import {AERC1155Incentive} from "contracts/incentives/AERC1155Incentive.sol";
 
@@ -23,6 +23,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     ERC1155Incentive public incentive;
     ManagedBudget public budget;
     MockERC1155 public mockAsset = new MockERC1155();
+    bytes32 public mockTxHash = hex"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
 
     function setUp() public {
         incentive = _newIncentiveClone();
@@ -84,28 +85,32 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         // Initialize the ERC1155Incentive
         _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
 
+        bytes memory data = _encodeTxHash(mockTxHash);
+
         vm.expectEmit(true, false, false, true);
         emit AIncentive.Claimed(
-            address(1), abi.encodePacked(address(mockAsset), address(1), uint256(42), uint256(1), bytes(""))
+            address(1), abi.encodePacked(address(mockAsset), address(1), uint256(42), uint256(1), data)
         );
 
+        console.logBytes(data);
         // Claim the incentive
-        incentive.claim(address(1), hex"");
+        incentive.claim(address(1), data);
 
         // Check the claim status
-        assertTrue(incentive.claimed(address(1)));
+        assertFalse(incentive.isClaimable(address(1), data));
     }
 
     function testClaim_AlreadyClaimed() public {
         // Initialize the ERC1155Incentive
         _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
+        bytes memory data = _encodeTxHash(mockTxHash);
 
         // Claim the incentive on behalf of address(1)
-        incentive.claim(address(1), hex"");
+        incentive.claim(address(1), data);
 
         // Attempt to claim for address(1) again => revert
         vm.expectRevert(AIncentive.NotClaimable.selector);
-        incentive.claim(address(1), hex"");
+        incentive.claim(address(1), data);
     }
 
     ////////////////////////////
@@ -145,20 +150,22 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     function testIsClaimable() public {
         // Initialize the ERC1155Incentive
         _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
+        bytes memory data = _encodeTxHash(mockTxHash);
 
         // Check if the incentive is claimable
-        assertTrue(incentive.isClaimable(address(1), hex""));
+        assertTrue(incentive.isClaimable(address(1), data));
     }
 
     function testIsClaimable_AlreadyClaimed() public {
         // Initialize the ERC1155Incentive
         _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
+        bytes memory data = _encodeTxHash(mockTxHash);
 
         // Claim the incentive on behalf of address(1)
-        incentive.claim(address(1), hex"");
+        incentive.claim(address(1), data);
 
-        // Check if the incentive is still claimable for address(1) => false
-        assertFalse(incentive.isClaimable(address(1), hex""));
+        // Check if the incentive is still claimable for the same txHash
+        assertFalse(incentive.isClaimable(address(2), data));
     }
 
     function testIsClaimable_ExceedsMaxClaims() public {
@@ -168,14 +175,14 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         // Claim the incentive for 5 different addresses
         address[] memory recipients = _randomAccounts(6);
         for (uint256 i = 0; i < 5; i++) {
-            incentive.claim(recipients[i], hex"");
+            incentive.claim(recipients[i], _encodeTxHash(bytes32(i)));
         }
 
         // Check the claim count
         assertEq(incentive.claims(), 5);
 
         // Check if the incentive is claimable for the 6th address => false
-        assertFalse(incentive.isClaimable(recipients[5], hex""));
+        assertFalse(incentive.isClaimable(recipients[5], _encodeTxHash(bytes32(uint256(5)))));
     }
 
     //////////////////////////////
@@ -305,5 +312,10 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return interfaceId == type(IERC1155Receiver).interfaceId;
+    }
+
+    function _encodeTxHash(bytes32 hash) internal pure returns (bytes memory encoded) {
+        bytes memory incentiveData = abi.encode(ERC1155Incentive.ERC1155ClaimPayload({transactionHash: hash}));
+        return abi.encode(IBoostClaim.BoostClaimData({validatorData: hex"", incentiveData: incentiveData}));
     }
 }

@@ -34,9 +34,6 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
     /// @notice The reward amount issued for each claim
     uint256 public reward;
 
-    /// @notice A mapping of address to claim status
-    mapping(address => bool) public claimed;
-
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim
     /// @return True if the incentive was successfully claimed

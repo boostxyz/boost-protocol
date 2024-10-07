@@ -5,7 +5,10 @@ jobs:
   danger:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BOOST_GITHUB_TOKEN }}
       - name: Danger
         uses: danger/danger-js@9.1.8
         env:

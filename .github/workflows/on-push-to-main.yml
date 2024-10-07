@@ -60,6 +60,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 2
+          token: ${{ secrets.BOOST_GITHUB_TOKEN }}
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
@@ -87,6 +88,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 2
+          token: ${{ secrets.BOOST_GITHUB_TOKEN }}
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         env:

@@ -17,7 +17,6 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '@boostxyz/test/MockERC20';
 import type { MockERC721 } from '@boostxyz/test/MockERC721';
 import { accounts } from '@boostxyz/test/accounts';
-import { InvalidNumericalCriteriaError, FieldValueNotComparableError, UnrecognizedFilterTypeError, ValidationHashMissingError, ValidationChainIdMissingError } from '../errors';
 import {
   type Fixtures,
   type StringEmitterFixtures,
@@ -35,7 +34,6 @@ import {
   PrimitiveType,
   SignatureType,
   Criteria,
-  ValidateActionStepParams,
 } from "./EventAction";
 
 let fixtures: Fixtures,
@@ -393,35 +391,6 @@ describe("EventAction Event Selector", () => {
       });
     });
 
-    test("throws ValidationHashMissingError when hash is missing", async () => {
-      const action = await loadFixture(cloneEventAction(fixtures, erc721));
-      const actionSteps = await action.getActionSteps();
-      try {
-        await action.isActionStepValid(actionSteps[0]!, {} as ValidateActionStepParams);
-      } catch (e) {
-        expect(e).toBeInstanceOf(ValidationHashMissingError);
-        expect((e as ValidationHashMissingError).message).toBe(
-          "Hash is required for validation",
-        );
-      }
-    });
-
-    test("throws ValidationChainIdMissingError when chain id is missing", async () => {
-      const action = await loadFixture(cloneEventAction(fixtures, erc721));
-      const actionSteps = await action.getActionSteps();
-      const recipient = accounts[1].account;
-      await erc721.approve(recipient, 1n);
-      const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
-      try {
-        await action.isActionStepValid(actionSteps[0]!, { hash } as ValidateActionStepParams);
-      } catch (e) {
-        expect(e).toBeInstanceOf(ValidationChainIdMissingError);
-        expect((e as ValidationChainIdMissingError).message).toBe(
-          "Chain id is required for validation",
-        );
-      }
-    });
-
     test("with a correct log, validates", async () => {
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       const recipient = accounts[1].account;
@@ -664,37 +633,6 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.isActionStepValid(actionStep, { hash, chainId })
     ).toBe(true);
-  });
-
-  test("throws ValidationHashMissingError when hash is missing", async () => {
-    const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
-    const actionSteps = await action.getActionSteps();
-    try {
-      await action.isActionStepValid(actionSteps[0]!, {} as ValidateActionStepParams);
-    } catch (e) {
-      expect(e).toBeInstanceOf(ValidationHashMissingError);
-      expect((e as ValidationHashMissingError).message).toBe(
-        "Hash is required for validation",
-      );
-    }
-  });
-
-  test("throws ValidationChainIdMissingError when chain id is missing", async () => {
-    const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
-    const actionSteps = await action.getActionSteps();
-    const actionStep = actionSteps[0]!
-    const recipient = accounts[1].account;
-    const { hash } = await erc721.mintRaw(recipient, {
-      value: parseEther(".1"),
-    });
-    try {
-      await action.isActionStepValid(actionStep, { hash } as ValidateActionStepParams);
-    } catch (e) {
-      expect(e).toBeInstanceOf(ValidationChainIdMissingError);
-      expect((e as ValidationChainIdMissingError).message).toBe(
-        "Chain id is required for validation",
-      );
-    }
   });
 
   test("validates function step with EQUAL filter", async () => {

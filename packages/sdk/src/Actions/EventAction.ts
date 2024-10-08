@@ -45,8 +45,6 @@ import {
   UnparseableAbiParamError,
   UnrecognizedFilterTypeError,
   ValidationAbiMissingError,
-  ValidationChainIdMissingError,
-  ValidationHashMissingError,
   ValidationLogsMissingError,
 } from '../errors';
 import {
@@ -546,10 +544,6 @@ export class EventAction extends DeployableTarget<
         return this.isActionEventValid(actionStep, {
           ...params,
         });
-      } else if (!('hash' in params)) {
-        throw new ValidationHashMissingError();
-      } else if (!('chainId' in params)) {
-        throw new ValidationChainIdMissingError();
       }
 
       const client = this._config.getClient({
@@ -582,10 +576,6 @@ export class EventAction extends DeployableTarget<
           hash: params.hash,
         });
         return this.isActionFunctionValid(actionStep, transaction);
-      } else if (!('hash' in params)) {
-        throw new ValidationHashMissingError();
-      } else if (!('chainId' in params)) {
-        throw new ValidationChainIdMissingError();
       }
     }
     return false;

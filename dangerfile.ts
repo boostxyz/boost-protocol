@@ -27,7 +27,10 @@ function rules() {
       );
     } else {
       // Remind people to add some details to the description, 200 accounts for roughly a sentence more than the standard template headers.
-      if (pr.body.length < 200) {
+      if (pr.body.includes('Thank you!') && pr.body.length < 200) {
+        fail('Please add some non-placeholder details to the PR description.');
+      } else if (pr.body.length < 80) {
+        // if not using the template
         fail('Please add some non-placeholder details to the PR description.');
       }
 

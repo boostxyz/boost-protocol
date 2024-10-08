@@ -662,6 +662,9 @@ export class EventAction extends DeployableTarget<
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {string | bigint | Hex} fieldValue - The field value to validate.
+   * @param {Object} input - Additional context for validation.
+   * @param {EventLogs[0]} [input.log] - The event log, if validating an event.
+   * @param {readonly (string | bigint)[]} [input.decodedArgs] - The decoded function arguments, if validating a function call.
    * @returns {Promise<boolean>} - Returns true if the field passes the criteria, false otherwise.
    */
   public validateFieldAgainstCriteria(

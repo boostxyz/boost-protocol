@@ -13,6 +13,7 @@ import { InvalidComponentInterfaceError } from '../errors';
 import { AllowListIncentive } from './AllowListIncentive';
 import { CGDAIncentive } from './CGDAIncentive';
 import { ERC20Incentive } from './ERC20Incentive';
+import type { ERC20VariableCriteriaIncentive } from './ERC20VariableCriteriaIncentive';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
 // import { ERC1155Incentive } from './ERC1155Incentive';
 import { PointsIncentive } from './PointsIncentive';
@@ -38,7 +39,8 @@ export type Incentive =
   | ERC20Incentive
   // | ERC1155Incentive
   | PointsIncentive
-  | ERC20VariableIncentive;
+  | ERC20VariableIncentive
+  | ERC20VariableCriteriaIncentive;
 
 /**
  * A map of Incentive component interfaces to their constructors.

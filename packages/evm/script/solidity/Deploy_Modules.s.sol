@@ -12,6 +12,7 @@ import {EventAction} from "contracts/actions/EventAction.sol";
 
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
+import {ERC20VariableCriteriaIncentive} from "contracts/incentives/ERC20VariableCriteriaIncentive.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
@@ -44,6 +45,7 @@ contract ModuleBaseDeployer is ScriptUtils {
 
         _deployERC20Incentive(registry);
         _deployERC20VariableIncentive(registry);
+        _deployERC20VariableCriteriaIncentive(registry);
         _deployCGDAIncentive(registry);
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
@@ -101,6 +103,15 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("ERC20VariableIncentive", erc20VariableIncentive);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(newDeploy, "ERC20VariableIncentive", erc20VariableIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
+    }
+
+    function _deployERC20VariableCriteriaIncentive(BoostRegistry registry) internal returns (address erc20VariableCriteriaIncentive) {
+        bytes memory initCode = type(ERC20VariableCriteriaIncentive).creationCode;
+        erc20VariableCriteriaIncentive = _getCreate2Address(initCode, "");
+        console.log("ERC20VariableCriteriaIncentive: ", erc20VariableCriteriaIncentive);
+        deployJson = deployJsonKey.serialize("ERC20VariableCriteriaIncentive", erc20VariableCriteriaIncentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "ERC20VariableCriteriaIncentive", erc20VariableCriteriaIncentive, registry, BoostRegistry.RegistryType.INCENTIVE);
     }
     
     function _deployCGDAIncentive(BoostRegistry registry) internal returns (address cgdaIncentive) {

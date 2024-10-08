@@ -5,6 +5,7 @@
   "execute(bytes commands,bytes[] inputs)",
   "register(string name,address owner,uint256 duration,bytes32 secret,address resolver,bytes[] data,bool reverseRecord,uint16 ownerControlledFuses)",
   "getVotes(address account, uint256 blockNumber) view returns (uint256)",
+  "transferFrom(address,address,uint256)",
   "// Test function signatures",
   "mint(address)"
 ]

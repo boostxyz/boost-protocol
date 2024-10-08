@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -10,10 +9,11 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
+import {RBAC} from "contracts/shared/RBAC.sol";
 
 /// @title ERC20 AIncentive
 /// @notice A simple ERC20 incentive implementation that allows claiming of tokens
-contract ERC20Incentive is AOwnable, AERC20Incentive {
+contract ERC20Incentive is RBAC, AERC20Incentive {
     using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 
@@ -23,6 +23,7 @@ contract ERC20Incentive is AOwnable, AERC20Incentive {
         Strategy strategy;
         uint256 reward;
         uint256 limit;
+        address manager;
     }
 
     /// @notice Construct a new ERC20Incentive
@@ -50,6 +51,7 @@ contract ERC20Incentive is AOwnable, AERC20Incentive {
         reward = init_.reward;
         limit = init_.limit;
         _initializeOwner(msg.sender);
+        _setRoles(init_.manager, MANAGER_ROLE);
     }
 
     /// @inheritdoc AIncentive
@@ -95,7 +97,7 @@ contract ERC20Incentive is AOwnable, AERC20Incentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
+    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 

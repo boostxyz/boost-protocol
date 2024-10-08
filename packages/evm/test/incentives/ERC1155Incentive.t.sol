@@ -92,7 +92,6 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
             address(1), abi.encodePacked(address(mockAsset), address(1), uint256(42), uint256(1), data)
         );
 
-        console.logBytes(data);
         // Claim the incentive
         incentive.claim(address(1), data);
 
@@ -124,6 +123,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload = abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50)}));
+        hoax(address(budget));
         incentive.clawback(reclaimPayload);
         assertEq(mockAsset.balanceOf(address(1), 42), 50);
 
@@ -139,7 +139,8 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         // Reclaim 101 tokens => exceeds balance => revert
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(101)}));
-        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(budget), reclaimPayload));
+        hoax(address(budget));
         incentive.clawback(reclaimPayload);
     }
 
@@ -257,7 +258,7 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
 
     function _initPayload(MockERC1155 asset, ERC1155Incentive.Strategy strategy, uint256 tokenId, uint256 limit)
         internal
-        pure
+        view
         returns (bytes memory)
     {
         return abi.encode(
@@ -266,7 +267,8 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
                 strategy: strategy,
                 tokenId: tokenId,
                 limit: limit,
-                extraData: ""
+                extraData: "",
+                manager: address(budget)
             })
         );
     }

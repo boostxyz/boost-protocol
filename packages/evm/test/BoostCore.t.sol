@@ -564,7 +564,8 @@ contract BoostCoreTest is Test {
                         asset: address(mockERC20),
                         strategy: AERC20Incentive.Strategy.POOL,
                         reward: 1 ether,
-                        limit: 100
+                        limit: 100,
+                        manager: address(budget)
                     })
                 )
             });

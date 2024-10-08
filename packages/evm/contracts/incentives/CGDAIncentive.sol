@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -10,10 +9,11 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACGDAIncentive} from "contracts/incentives/ACGDAIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {RBAC} from "contracts/shared/RBAC.sol";
 
 /// @title Continuous Gradual Dutch Auction AIncentive
 /// @notice An ERC20 incentive implementation with reward amounts adjusting dynamically based on claim volume.
-contract CGDAIncentive is AOwnable, ACGDAIncentive {
+contract CGDAIncentive is RBAC, ACGDAIncentive {
     using SafeTransferLib for address;
 
     /// @notice The payload for initializing a CGDAIncentive
@@ -28,6 +28,7 @@ contract CGDAIncentive is AOwnable, ACGDAIncentive {
         uint256 rewardDecay;
         uint256 rewardBoost;
         uint256 totalBudget;
+        address manager;
     }
 
     /// @notice Construct a new CGDAIncentive
@@ -61,6 +62,7 @@ contract CGDAIncentive is AOwnable, ACGDAIncentive {
 
         totalBudget = init_.totalBudget;
         _initializeOwner(msg.sender);
+        _setRoles(init_.manager, MANAGER_ROLE);
     }
 
     /// @inheritdoc AIncentive
@@ -101,7 +103,7 @@ contract CGDAIncentive is AOwnable, ACGDAIncentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external virtual override onlyOwner returns (bool) {
+    function clawback(bytes calldata data_) external virtual override onlyRoles(MANAGER_ROLE) returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 

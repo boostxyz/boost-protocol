@@ -125,6 +125,7 @@ contract ERC20IncentiveTest is Test {
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50 ether)}));
+        hoax(address(budget));
         incentive.clawback(reclaimPayload);
         assertEq(mockAsset.balanceOf(address(1)), 50 ether);
 
@@ -140,7 +141,8 @@ contract ERC20IncentiveTest is Test {
         // Reclaim 50.1x => not an integer multiple of the reward amount => revert
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50.1 ether)}));
-        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(budget), reclaimPayload));
+        hoax(address(budget));
         incentive.clawback(reclaimPayload);
     }
 
@@ -158,7 +160,8 @@ contract ERC20IncentiveTest is Test {
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(100 ether)}));
 
-        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(budget), reclaimPayload));
+        hoax(address(budget));
         incentive.clawback(reclaimPayload);
         assertEq(incentive.limit(), 5);
     }
@@ -169,7 +172,8 @@ contract ERC20IncentiveTest is Test {
 
         // Reclaim the full reward amount
         bytes memory reclaimPayload =
-            abi.encode(AIncentive.ClawbackPayload({target: address(this), data: abi.encode(100 ether)}));
+            abi.encode(AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(100 ether)}));
+        hoax(address(budget));
         incentive.clawback(reclaimPayload);
 
         // Check that the limit is set to 0
@@ -342,10 +346,18 @@ contract ERC20IncentiveTest is Test {
 
     function _initPayload(address asset, AERC20Incentive.Strategy strategy, uint256 reward, uint256 limit)
         internal
-        pure
+        view
         returns (bytes memory)
     {
-        return abi.encode(ERC20Incentive.InitPayload({asset: asset, strategy: strategy, reward: reward, limit: limit}));
+        return abi.encode(
+            ERC20Incentive.InitPayload({
+                asset: asset,
+                strategy: strategy,
+                reward: reward,
+                limit: limit,
+                manager: address(budget)
+            })
+        );
     }
 
     function _makeFungibleTransfer(ABudget.AssetType assetType, address asset, address target, uint256 value)

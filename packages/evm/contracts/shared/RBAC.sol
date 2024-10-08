@@ -9,7 +9,7 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 /// @notice A minimal )
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
 contract RBAC is OwnableRoles {
-    /// @notice The role for depositing funds.
+    /// @notice The role for managing allocations to Incentives.
     uint256 public constant MANAGER_ROLE = _ROLE_0;
     /// @notice The role for depositing, withdrawal, and manager management
     uint256 public constant ADMIN_ROLE = _ROLE_1;

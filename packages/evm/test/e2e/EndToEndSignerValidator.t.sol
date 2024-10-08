@@ -33,7 +33,7 @@ import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentiv
 
 import {AValidator} from "contracts/validators/AValidator.sol";
 
-contract EndToEndSigner is Test, OwnableRoles {
+contract EndToEndSignerValidator is Test, OwnableRoles {
     BoostRegistry public registry = new BoostRegistry();
     address fee_recipient = address(1);
     BoostCore public core = new BoostCore(registry, fee_recipient);
@@ -264,7 +264,7 @@ contract EndToEndSigner is Test, OwnableRoles {
             // "... of '5 ERC20'"
             //address asset_, uint256 reward_, uint256 limit_
             // reward (second param) is unused
-            parameters: abi.encode(erc20, rewardAmount, incentiveLimitAmount)
+            parameters: abi.encode(erc20, rewardAmount, incentiveLimitAmount, address(budget))
         });
 
         return core.createBoost(

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
 import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -11,10 +10,11 @@ import {AERC20VariableIncentive} from "contracts/incentives/AERC20VariableIncent
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {RBAC} from "contracts/shared/RBAC.sol";
 
 /// @title ERC20 Incentive with Variable Rewards
 /// @notice A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
-contract ERC20VariableIncentive is AERC20VariableIncentive, AOwnable {
+contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
     using SafeTransferLib for address;
 
     /// @notice The reward multiplier; if 0, the signed amount from the claim payload is used directly
@@ -23,6 +23,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, AOwnable {
         address asset;
         uint256 reward;
         uint256 limit;
+        address manager;
     }
 
     /// @notice Construct a new ERC20VariableIncentive
@@ -54,6 +55,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, AOwnable {
         totalClaimed = 0;
 
         _initializeOwner(msg.sender);
+        _setRoles(init_.manager, MANAGER_ROLE);
     }
 
     /// @notice Claim the incentive with variable rewards
@@ -95,7 +97,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, AOwnable {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
+    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
@@ -114,7 +116,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, AOwnable {
     /// @return budgetData The {Transfer} payload to be passed to the {ABudget} for interpretation
     function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
         // TODO: remove unused reward param
-        (address asset_, uint256 reward_, uint256 limit_) = abi.decode(data_, (address, uint256, uint256));
+        (address asset_,, uint256 limit_) = abi.decode(data_, (address, uint256, uint256));
 
         return abi.encode(
             ABudget.Transfer({

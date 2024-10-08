@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
-import {Ownable as AOwnable} from "@solady/auth/Ownable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
@@ -13,12 +12,13 @@ import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {RBAC} from "contracts/shared/RBAC.sol";
 
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 /// @title ERC1155Incentive
 /// @notice A simple ERC1155 incentive implementation that allows claiming of tokens
-contract ERC1155Incentive is AOwnable, AERC1155Incentive {
+contract ERC1155Incentive is RBAC, AERC1155Incentive {
     /// @notice The payload for initializing an ERC1155Incentive
     struct InitPayload {
         IERC1155 asset;
@@ -26,6 +26,7 @@ contract ERC1155Incentive is AOwnable, AERC1155Incentive {
         uint256 tokenId;
         uint256 limit;
         bytes extraData;
+        address manager;
     }
 
     struct ERC1155ClaimPayload {
@@ -42,7 +43,6 @@ contract ERC1155Incentive is AOwnable, AERC1155Incentive {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed initialization payload
     function initialize(bytes calldata data_) public override initializer {
-        _initializeOwner(msg.sender);
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         // Ensure the strategy is valid (MINT is not yet supported)
@@ -62,6 +62,7 @@ contract ERC1155Incentive is AOwnable, AERC1155Incentive {
         extraData = init_.extraData;
 
         _initializeOwner(msg.sender);
+        _setRoles(init_.manager, MANAGER_ROLE);
     }
 
     /// @inheritdoc AIncentive
@@ -108,7 +109,7 @@ contract ERC1155Incentive is AOwnable, AERC1155Incentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyOwner returns (bool) {
+    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (bool) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 

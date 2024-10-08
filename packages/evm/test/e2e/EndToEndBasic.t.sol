@@ -301,7 +301,7 @@ contract EndToEndBasic is Test {
                 )
             ),
             // "... of '100 ERC20' with a max of 5 participants"
-            parameters: abi.encode(erc20, AERC20Incentive.Strategy.POOL, 100 ether, 5)
+            parameters: abi.encode(erc20, AERC20Incentive.Strategy.POOL, 100 ether, 5, address(budget))
         });
 
         return core.createBoost(

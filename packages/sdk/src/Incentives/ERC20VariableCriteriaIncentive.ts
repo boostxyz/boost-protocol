@@ -179,16 +179,17 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
     hash,
   }: GetIncentiveScalarParams): Promise<bigint> {
     const criteria = await this.getIncentiveCriteria();
-    const transactionReceipt = await getTransactionReceipt(
-      this._config.getClient(),
-      {
-        hash,
-      },
-    );
     const transaction = await getTransaction(this._config.getClient(), {
       hash,
     });
     if (criteria.criteriaType === SignatureType.EVENT) {
+      const transactionReceipt = await getTransactionReceipt(
+        this._config.getClient(),
+        {
+          hash,
+        },
+      );
+
       const logs = transactionReceipt.logs;
 
       if (logs.length === 0) {
@@ -206,14 +207,16 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
         const decodedEvents = parseEventLogs({
           abi: [eventAbi],
           logs,
-        }) as Log[];
+        });
         if (decodedEvents == undefined || decodedEvents.length === 0) {
           throw new NoMatchingLogsError(
             `No logs found for event signature ${criteria.signature}`,
           );
         }
-        // Note: Double check this LOC
-        const scalarValue = decodedEvents[0]?.topics[criteria.fieldIndex];
+        const scalarValue = (decodedEvents[0]?.args as string[])[
+          criteria.fieldIndex
+        ];
+
         if (scalarValue === undefined) {
           throw new DecodedArgsError(
             `Decoded argument at index ${criteria.fieldIndex} is undefined`,
@@ -237,7 +240,6 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
           abi: [func],
           data: transaction.input,
         });
-
         const scalarValue = decodedFunction.args[criteria.fieldIndex] as string;
         if (scalarValue === undefined || scalarValue === null) {
           throw new DecodedArgsError(

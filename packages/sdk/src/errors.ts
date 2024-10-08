@@ -460,6 +460,45 @@ export class ValidationChainIdMissingError extends Error {
 }
 
 /**
+ * The error is thrown when trying to reuse an existing deployed Incentive that isn't a base implementation.
+ *
+ * @export
+ * @class ValidationAbiMissingError
+ * @typedef {ValidationAbiMissingError}
+ * @extends {Error}
+ */
+export class ValidationAbiMissingError extends Error {
+  /**
+   * Creates an instance of ValidationAbiMissingError.
+   *
+   * @constructor
+   * @param {Hex} signature
+   */
+  constructor(signature: Hex) {
+    super(`No known ABI for given signature: ${signature}`);
+  }
+}
+
+/**
+ * Thrown when missing logs for validating action steps.
+ *
+ * @export
+ * @class ValidationLogsMissingError
+ * @typedef {ValidationLogsMissingError}
+ * @extends {Error}
+ */
+export class ValidationLogsMissingError extends Error {
+  /**
+   * Creates an instance of ValidationLogsMissingError.
+   *
+   * @constructor
+   */
+  constructor() {
+    super('Logs are required for validation');
+  }
+}
+
+/**
  * Function action validation context to help debug other validation errors
  *
  * @interface FunctionActionValidationMeta

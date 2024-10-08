@@ -35,6 +35,7 @@ import {
   PrimitiveType,
   SignatureType,
   Criteria,
+  ValidateActionStepParams,
 } from "./EventAction";
 
 let fixtures: Fixtures,
@@ -396,7 +397,7 @@ describe("EventAction Event Selector", () => {
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       const actionSteps = await action.getActionSteps();
       try {
-        await action.isActionStepValid(actionSteps[0]!, {} as unknown as any);
+        await action.isActionStepValid(actionSteps[0]!, {} as ValidateActionStepParams);
       } catch (e) {
         expect(e).toBeInstanceOf(ValidationHashMissingError);
         expect((e as ValidationHashMissingError).message).toBe(
@@ -412,7 +413,7 @@ describe("EventAction Event Selector", () => {
       await erc721.approve(recipient, 1n);
       const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
       try {
-        await action.isActionStepValid(actionSteps[0]!, { hash });
+        await action.isActionStepValid(actionSteps[0]!, { hash } as ValidateActionStepParams);
       } catch (e) {
         expect(e).toBeInstanceOf(ValidationChainIdMissingError);
         expect((e as ValidationChainIdMissingError).message).toBe(
@@ -669,7 +670,7 @@ describe("EventAction Func Selector", () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
     try {
-      await action.isActionStepValid(actionSteps[0]!, {} as unknown as any);
+      await action.isActionStepValid(actionSteps[0]!, {} as ValidateActionStepParams);
     } catch (e) {
       expect(e).toBeInstanceOf(ValidationHashMissingError);
       expect((e as ValidationHashMissingError).message).toBe(
@@ -687,7 +688,7 @@ describe("EventAction Func Selector", () => {
       value: parseEther(".1"),
     });
     try {
-      await action.isActionStepValid(actionStep, { hash });
+      await action.isActionStepValid(actionStep, { hash } as ValidateActionStepParams);
     } catch (e) {
       expect(e).toBeInstanceOf(ValidationChainIdMissingError);
       expect((e as ValidationChainIdMissingError).message).toBe(

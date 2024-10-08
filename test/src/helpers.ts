@@ -17,6 +17,7 @@ import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/Ves
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
+import ERC20VariableCriteriaIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
@@ -49,6 +50,8 @@ import {
   type DeployablePayloadOrAddress,
   ERC20Incentive,
   type ERC20IncentivePayload,
+  ERC20VariableCriteriaIncentive,
+  type ERC20VariableCriteriaIncentivePayload,
   ERC20VariableIncentive,
   type ERC20VariableIncentivePayload,
   EventAction,
@@ -252,6 +255,14 @@ export function deployFixtures(
         account,
       }),
     );
+    const erc20VariableCriteriaIncentiveBase = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: ERC20VariableCriteriaIncentiveArtifact.abi,
+        bytecode: ERC20VariableCriteriaIncentiveArtifact.bytecode as Hex,
+        account,
+      }),
+    );
 
     // const erc1155IncentiveBase = await getDeployedContractAddress(
     //   config,
@@ -346,6 +357,11 @@ export function deployFixtures(
           [chainId]: erc20VariableIncentiveBase,
         };
       },
+      ERC20VariableCriteriaIncentive: class TERC20VariableCriteriaIncentive extends ERC20VariableCriteriaIncentive {
+        public static override bases: Record<number, Address> = {
+          [chainId]: erc20VariableCriteriaIncentiveBase,
+        };
+      },
       // ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
       //   public static override bases: Record<number, Address> = {
       //     [chainId]: erc1155IncentiveBase,
@@ -376,6 +392,7 @@ export function deployFixtures(
       CGDAIncentive: typeof CGDAIncentive;
       ERC20Incentive: typeof ERC20Incentive;
       ERC20VariableIncentive: typeof ERC20VariableIncentive;
+      ERC20VariableCriteriaIncentive: typeof ERC20VariableCriteriaIncentive;
       // ERC1155Incentive: typeof ERC1155Incentive;
       PointsIncentive: typeof PointsIncentive;
       SignerValidator: typeof SignerValidator;
@@ -526,6 +543,16 @@ export function deployFixtures(
         isBase?: boolean,
       ) {
         return new bases.ERC20VariableIncentive(
+          { config: this._config, account: this._account },
+          options,
+          isBase,
+        );
+      }
+      override ERC20VariableCriteriaIncentive(
+        options: DeployablePayloadOrAddress<ERC20VariableCriteriaIncentivePayload>,
+        isBase?: boolean,
+      ) {
+        return new bases.ERC20VariableCriteriaIncentive(
           { config: this._config, account: this._account },
           options,
           isBase,

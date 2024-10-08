@@ -35,6 +35,7 @@ export * from './Incentives/AllowListIncentive';
 export * from './Incentives/CGDAIncentive';
 export * from './Incentives/ERC20Incentive';
 export * from './Incentives/ERC20VariableIncentive';
+export * from './Incentives/ERC20VariableCriteriaIncentive';
 // export * from './Incentives/ERC1155Incentive';
 export * from './Incentives/Incentive';
 export * from './Incentives/PointsIncentive';

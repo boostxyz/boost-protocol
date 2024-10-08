@@ -17,7 +17,6 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '@boostxyz/test/MockERC20';
 import type { MockERC721 } from '@boostxyz/test/MockERC721';
 import { accounts } from '@boostxyz/test/accounts';
-import { InvalidNumericalCriteriaError, FieldValueNotComparableError, UnrecognizedFilterTypeError } from '../errors';
 import {
   type Fixtures,
   type StringEmitterFixtures,
@@ -41,10 +40,12 @@ let fixtures: Fixtures,
   erc721: MockERC721,
   erc20: MockERC20,
   stringEmitterFixtures: StringEmitterFixtures;
+let chainId: number;
 
 beforeAll(async () => {
   fixtures = await loadFixture(deployFixtures(defaultOptions));
   stringEmitterFixtures = await loadFixture(deployStringEmitterMock);
+  chainId = defaultOptions.config.chains[0].id;
 });
 
 function basicErc721TransferAction(
@@ -58,7 +59,7 @@ function basicErc721TransferAction(
       ] as Hex,
       fieldIndex: 1,
       targetContract: erc721.assertValidAddress(),
-      chainid: defaultOptions.config.chains[0].id,
+      chainid: chainId,
     },
     actionSteps: [
       {
@@ -67,7 +68,7 @@ function basicErc721TransferAction(
         ] as Hex,
         signatureType: SignatureType.EVENT,
         targetContract: erc721.assertValidAddress(),
-        chainid: defaultOptions.config.chains[0].id,
+        chainid: chainId,
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
@@ -91,14 +92,13 @@ function cloneEventAction(fixtures: Fixtures, erc721: MockERC721) {
 function basicErc721MintFuncAction(
   erc721: MockERC721,
 ): EventActionPayloadSimple {
-  console.log(funcSelectors["mint(address)"] as Hex);
   return {
     actionClaimant: {
       signatureType: SignatureType.FUNC,
       signature: funcSelectors["mint(address)"] as Hex,
       fieldIndex: 0,
       targetContract: erc721.assertValidAddress(),
-      chainid: defaultOptions.config.chains[0].id,
+      chainid: chainId,
     },
     actionSteps: [
       {
@@ -106,7 +106,7 @@ function basicErc721MintFuncAction(
         signatureType: SignatureType.FUNC,
         actionType: 0,
         targetContract: erc721.assertValidAddress(),
-        chainid: defaultOptions.config.chains[0].id,
+        chainid: chainId,
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
@@ -125,7 +125,7 @@ function basicErc20MintFuncAction(erc20: MockERC20): EventActionPayloadSimple {
       signature: funcSelectors["mint(address to, uint256 amount)"] as Hex,
       fieldIndex: 0,
       targetContract: erc20.assertValidAddress(),
-      chainid: defaultOptions.config.chains[0].id,
+      chainid: chainId,
     },
     actionSteps: [
       {
@@ -133,7 +133,7 @@ function basicErc20MintFuncAction(erc20: MockERC20): EventActionPayloadSimple {
         signatureType: SignatureType.FUNC,
         actionType: 0,
         targetContract: erc20.assertValidAddress(),
-        chainid: defaultOptions.config.chains[0].id,
+        chainid: chainId,
         actionParameter: {
           filterType: FilterType.EQUAL,
           fieldType: PrimitiveType.ADDRESS,
@@ -159,7 +159,7 @@ function indexedStringErc721TransferAction(
       ] as Hex,
       fieldIndex: 1,
       targetContract: erc721.assertValidAddress(),
-      chainid: defaultOptions.config.chains[0].id,
+      chainid: chainId,
     },
     actionSteps: [
       {
@@ -169,7 +169,7 @@ function indexedStringErc721TransferAction(
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: stringEmitterAddress,
-        chainid: defaultOptions.config.chains[0].id,
+        chainid: chainId,
         actionParameter: {
           filterType,
           fieldType: PrimitiveType.STRING,
@@ -195,7 +195,7 @@ function stringErc721TransferAction(
       ] as Hex,
       fieldIndex: 1,
       targetContract: erc721.assertValidAddress(),
-      chainid: defaultOptions.config.chains[0].id,
+      chainid: chainId,
     },
     actionSteps: [
       {
@@ -203,7 +203,7 @@ function stringErc721TransferAction(
         signatureType: SignatureType.EVENT,
         actionType: 0,
         targetContract: stringEmitterAddress,
-        chainid: defaultOptions.config.chains[0].id,
+        chainid: chainId,
         actionParameter: {
           filterType,
           fieldType: PrimitiveType.STRING,
@@ -308,7 +308,7 @@ describe("EventAction Event Selector", () => {
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       const steps = await action.getActionSteps();
       expect(steps.length).toBe(1);
-      const step = steps[0];
+      const step = steps[0]!;
       step.targetContract = step.targetContract.toUpperCase() as Hex;
       step.actionParameter.filterData =
         step.actionParameter.filterData.toUpperCase() as Hex;
@@ -351,7 +351,7 @@ describe("EventAction Event Selector", () => {
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       const steps = await action.getActionSteps();
       expect(steps.length).toBe(1);
-      const step = steps[0];
+      const step = steps[0]!;
       step.targetContract = step.targetContract.toUpperCase() as Hex;
       step.actionParameter.filterData =
         step.actionParameter.filterData.toUpperCase() as Hex;
@@ -391,20 +391,16 @@ describe("EventAction Event Selector", () => {
       });
     });
 
-    test("with no logs, does not validate", async () => {
-      const action = await loadFixture(cloneEventAction(fixtures, erc721));
-      expect(await action.validateActionSteps()).toBe(false);
-    });
-
     test("with a correct log, validates", async () => {
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       const recipient = accounts[1].account;
       await erc721.approve(recipient, 1n);
-      await erc721.transferFrom(defaultOptions.account.address, recipient, 1n);
-      expect(await action.validateActionSteps()).toBe(true);
+      const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
+      expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
     });
 
     test("can supply your own logs to validate against", async () => {
+      const hash = "0xff0e6ab0c4961ec14b7b40afec83ed7d7a77582683512a262e641d21f82efea5"
       const logs: EventLogs = [
         {
           eventName: "Transfer",
@@ -432,7 +428,7 @@ describe("EventAction Event Selector", () => {
         },
       ];
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
-      expect(await action.validateActionSteps({ logs })).toBe(true);
+      expect(await action.validateActionSteps({ hash, chainId, logs })).toBe(true);
     });
 
     describe("string event actions", () => {
@@ -449,8 +445,8 @@ describe("EventAction Event Selector", () => {
           ),
         );
 
-        await stringEmitterFixtures.emitIndexedString("Hello world");
-        await expect(() => action.validateActionSteps()).rejects.toThrowError(
+        const hash = await stringEmitterFixtures.emitIndexedString("Hello world");
+        await expect(() => action.validateActionSteps({ hash, chainId })).rejects.toThrowError(
           /Parameter is not transparently stored onchain/,
         );
       });
@@ -466,8 +462,8 @@ describe("EventAction Event Selector", () => {
             ),
           ),
         );
-        await stringEmitterFixtures.emitString("Hello world");
-        expect(await action.validateActionSteps()).toBe(true);
+        const hash = await stringEmitterFixtures.emitString("Hello world");
+        expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
       });
       test("can parse and validate regex for an emitted string event", async () => {
         const action = await loadFixture(
@@ -482,8 +478,8 @@ describe("EventAction Event Selector", () => {
           ),
         );
 
-        await stringEmitterFixtures.emitString("Hello world");
-        expect(await action.validateActionSteps()).toBe(true);
+        const hash = await stringEmitterFixtures.emitString("Hello world");
+        expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
       });
     });
   });
@@ -628,42 +624,29 @@ describe("EventAction Func Selector", () => {
   test("validates function action step with correct hash", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
+    const actionStep = actionSteps[0]!
     const recipient = accounts[1].account;
     const { hash } = await erc721.mintRaw(recipient, {
       value: parseEther(".1"),
     });
 
     expect(
-      await action.isActionFunctionValid(actionSteps[0], {
-        hash,
-      }),
+      await action.isActionStepValid(actionStep, { hash, chainId })
     ).toBe(true);
-  });
-
-  test("throws an error when hash is missing", async () => {
-    const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
-    const actionSteps = await action.getActionSteps();
-    try {
-      await action.isActionFunctionValid(actionSteps[0], {});
-    } catch (e) {
-      expect(e).toBeInstanceOf(Error);
-      expect((e as Error).message).toBe(
-        "Hash is required for function validation",
-      );
-    }
   });
 
   test("validates function step with EQUAL filter", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
-
+    const actionStep = actionSteps[0]!
     const recipient = accounts[1].account;
     const { hash } = await erc721.mintRaw(recipient, {
       value: parseEther(".1"),
     });
 
-    const criteriaMatch = await action.isActionFunctionValid(actionSteps[0], {
+    const criteriaMatch = await action.isActionStepValid(actionStep, {
       hash,
+      chainId,
     });
 
     expect(criteriaMatch).toBe(true);
@@ -672,10 +655,11 @@ describe("EventAction Func Selector", () => {
   test("fails validation with incorrect function signature", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
+    const actionStep = actionSteps[0]!;
     const recipient = accounts[1].account;
 
     const invalidStep = {
-      ...actionSteps[0],
+      ...actionStep,
       signature: funcSelectors["mint(address to, uint256 amount)"] as Hex, // Intentional mismatch
     };
 
@@ -684,7 +668,7 @@ describe("EventAction Func Selector", () => {
     });
 
     try {
-      await action.isActionFunctionValid(invalidStep, { hash });
+      await action.isActionStepValid(invalidStep, { hash, chainId });
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toContain(
@@ -696,15 +680,17 @@ describe("EventAction Func Selector", () => {
   test("validates against NOT_EQUAL filter criteria", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
-    actionSteps[0].actionParameter.filterType = FilterType.NOT_EQUAL;
+    const actionStep = actionSteps[0]!;
+    actionStep.actionParameter.filterType = FilterType.NOT_EQUAL;
     const recipient = accounts[2].account;
     const { hash } = await erc721.mintRaw(recipient, {
       value: parseEther(".1"),
     });
 
     expect(
-      await action.isActionFunctionValid(actionSteps[0], {
+      await action.isActionStepValid(actionStep, {
         hash,
+        chainId,
       }),
     ).toBe(true);
   });
@@ -712,8 +698,9 @@ describe("EventAction Func Selector", () => {
   test("validates GREATER_THAN criteria for numeric values", async () => {
     const action = await loadFixture(cloneFunctionAction20(fixtures, erc20));
     const actionSteps = await action.getActionSteps();
+    const actionStep = actionSteps[0]!;
 
-    actionSteps[0].actionParameter = {
+    actionStep.actionParameter = {
       filterType: FilterType.GREATER_THAN,
       fieldType: PrimitiveType.UINT,
       fieldIndex: 1,
@@ -725,8 +712,9 @@ describe("EventAction Func Selector", () => {
     const { hash } = await erc20.mintRaw(address, value);
 
     expect(
-      await action.isActionFunctionValid(actionSteps[0], {
+      await action.isActionStepValid(actionStep, {
         hash,
+        chainId,
       }),
     ).toBe(true);
   });
@@ -734,7 +722,8 @@ describe("EventAction Func Selector", () => {
   test("validates LESS_THAN criteria for numeric values", async () => {
     const action = await loadFixture(cloneFunctionAction20(fixtures, erc20));
     const actionSteps = await action.getActionSteps();
-    actionSteps[0].actionParameter = {
+    const actionStep = actionSteps[0]!;
+    actionStep.actionParameter = {
       filterType: FilterType.LESS_THAN,
       fieldType: PrimitiveType.UINT,
       fieldIndex: 1,
@@ -746,8 +735,9 @@ describe("EventAction Func Selector", () => {
     const { hash } = await erc20.mintRaw(address, value);
 
     expect(
-      await action.isActionFunctionValid(actionSteps[0], {
+      await action.isActionStepValid(actionStep, {
         hash,
+        chainId,
       }),
     ).toBe(true);
   });
@@ -762,6 +752,7 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.validateActionSteps({
         hash,
+        chainId,
       }),
     ).toBe(true);
   });

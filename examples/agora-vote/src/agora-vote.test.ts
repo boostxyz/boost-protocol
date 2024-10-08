@@ -138,10 +138,7 @@ describe("Boost with Voting Incentive", () => {
         signers: [owner, trustedSigner.account], // Whichever account we're going to sign with needs to be a signer
         validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
       }),
-      allowList: core.SimpleAllowList({
-        owner: owner,
-        allowed: [owner],
-      }),
+      allowList: core.OpenAllowList(),
       incentives: [
         core.ERC20VariableIncentive({
           asset: erc20.assertValidAddress(),

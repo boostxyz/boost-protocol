@@ -2,6 +2,7 @@
   "$schema": "https://turbo.build/schema.json",
   "globalPassThroughEnv": [
     "VITE_ALCHEMY_API_KEY",
+    "HARDHAT_KEEPALIVE",
     "VITE_BOOST_TESTNET_SIGNER_EOA",
     "VITE_BOOST_MAINNET_SIGNER_EOA"
   ],

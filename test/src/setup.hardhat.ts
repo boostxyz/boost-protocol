@@ -41,17 +41,17 @@ function createHardhatProcess(): Promise<ChildProcessWithoutNullStreams> {
 
 export async function setup({}: GlobalSetupContext) {
   const pids = await findProcess('port', 8545);
-  let process: ChildProcessWithoutNullStreams;
+  let proc: ChildProcessWithoutNullStreams;
   if (pids.length)
     console.log('hardhat process already running, not starting a new one');
   else {
-    process = await createHardhatProcess();
+    proc = await createHardhatProcess();
     console.log('hardhat started successfully');
   }
 
   return function () {
-    if (process && !process.killed) {
-      process.kill();
+    if (!process.env.HARDHAT_KEEPALIVE && proc && !proc.killed) {
+      proc.kill();
     }
   };
 }

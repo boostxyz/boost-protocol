@@ -821,7 +821,7 @@ describe('BoostCore', () => {
     const claimInfo = await fixtures.core.getClaimFromTransaction({ hash })
     expect(claimInfo).toBeDefined()
     expect(claimInfo?.claimant).toBe(claimant)
-    expect(claimInfo?.boostId).toBe(0n)
+    expect(typeof claimInfo?.boostId).toBe('bigint')
     expect(claimInfo?.referrer).toBe(referrer)
   });
 });

@@ -18,12 +18,8 @@ contract ScriptUtils is Script {
     function _deploy2(bytes memory deployCode, bytes memory args) internal returns (bool) {
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
         bytes32 bytecodeHash = keccak256(abi.encodePacked(deployCode, args));
-        address computedAddress = address(uint160(uint256(keccak256(abi.encodePacked(
-            bytes1(0xff),
-            CREATE2_FACTORY,
-            salt,
-            bytecodeHash
-        )))));
+        address computedAddress =
+            address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), CREATE2_FACTORY, salt, bytecodeHash)))));
 
         // Check if the address already has code deployed
         uint256 codeSize;
@@ -78,8 +74,14 @@ contract ScriptUtils is Script {
         return string(abi.encodePacked(vm.projectRoot(), "/deploys/", vm.toString(block.chainid), ".json"));
     }
 
-    function _registerIfNew(bool isNew, string memory contractName, address deployedAddress, BoostRegistry registry, BoostRegistry.RegistryType registryType) internal {
-        if(isNew) {
+    function _registerIfNew(
+        bool isNew,
+        string memory contractName,
+        address deployedAddress,
+        BoostRegistry registry,
+        BoostRegistry.RegistryType registryType
+    ) internal {
+        if (isNew) {
             vm.broadcast();
             registry.register(registryType, contractName, deployedAddress);
         }

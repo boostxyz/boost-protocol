@@ -1,5 +1,16 @@
 # @boostxyz/signatures
 
+## 0.0.0-alpha.6
+
+### Minor Changes
+
+- 93f20ca: add README documenting usage and contribution
+
+### Patch Changes
+
+- 720ef29: add `VoteCast` event
+- c64582d: [BOOST-4787] feat: extend erc20variableincentive to include on chain criteria
+
 ## 0.0.0-alpha.5
 
 ### Patch Changes

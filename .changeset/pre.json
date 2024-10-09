@@ -5,24 +5,35 @@
     "@boostxyz/evm": "0.0.0-alpha.0",
     "@boostxyz/sdk": "0.0.0-alpha.0",
     "@boostxyz/signatures": "0.0.0-alpha.0",
-    "@boostxyz/cli": "0.0.0-alpha.0"
+    "@boostxyz/cli": "0.0.0-alpha.0",
+    "agora-vote": "1.0.0",
+    "delegate-action": "1.0.0",
+    "ens-register": "1.0.0",
+    "swap-specific-dex": "1.0.0",
+    "zora-mint": "1.0.0",
+    "@boostxyz/test": "1.0.0"
   },
   "changesets": [
     "chatty-eagles-collect",
     "clever-planets-listen",
     "cuddly-toes-push",
     "empty-feet-cheat",
+    "fifty-frogs-repair",
     "fuzzy-walls-eat",
     "great-bulldogs-buy",
     "great-files-cheer",
+    "healthy-socks-stare",
     "hungry-beds-peel",
     "large-ladybugs-tan",
     "little-seals-punch",
     "lovely-tigers-accept",
     "mighty-pans-provide",
+    "nasty-planes-remain",
+    "plenty-ligers-notice",
     "polite-jars-lie",
     "popular-books-destroy",
     "pretty-carrots-wink",
+    "purple-islands-cheer",
     "red-kiwis-hope",
     "red-stingrays-greet",
     "shaggy-students-end",
@@ -35,6 +46,7 @@
     "tiny-baboons-buy",
     "wicked-feet-tap",
     "wild-rabbits-compare",
-    "witty-beers-melt"
+    "witty-beers-melt",
+    "witty-jokes-accept"
   ]
 }

@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 0.0.0-alpha.16
+
+### Patch Changes
+
+- c64582d: [BOOST-4787] feat: extend erc20variableincentive to include on chain criteria
+
 ## 0.0.0-alpha.15
 
 ### Minor Changes

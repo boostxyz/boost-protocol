@@ -31,6 +31,7 @@ describe('ERC20VariableIncentive', () => {
       asset: zeroAddress,
       reward: 1n,
       limit: 1n,
+      manager: zeroAddress,
     });
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
@@ -47,6 +48,7 @@ describe('ERC20VariableIncentive', () => {
         asset: budgets.erc20.assertValidAddress(),
         reward: 1n,
         limit: 1n,
+        manager: zeroAddress,
       },
     );
     const boost = await freshBoost(fixtures, {
@@ -93,6 +95,7 @@ describe('ERC20VariableIncentive', () => {
         asset: budgets.erc20.assertValidAddress(),
         reward: 1n,
         limit: 1n,
+        manager: zeroAddress,
       },
     );
     const boost = await freshBoost(fixtures, {

@@ -32,6 +32,7 @@ describe('ERC20Incentive', () => {
       strategy: StrategyType.POOL,
       reward: 1n,
       limit: 1n,
+      manager: zeroAddress,
     });
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
@@ -47,6 +48,7 @@ describe('ERC20Incentive', () => {
       strategy: StrategyType.POOL,
       reward: 1n,
       limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
     });
     const boost = await freshBoost(fixtures, {
       budget: budgets.budget,
@@ -90,6 +92,7 @@ describe('ERC20Incentive', () => {
       strategy: StrategyType.POOL,
       reward: 1n,
       limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
     });
     const boost = await freshBoost(fixtures, {
       budget: budgets.budget,

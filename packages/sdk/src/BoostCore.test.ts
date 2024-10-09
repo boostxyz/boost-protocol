@@ -57,6 +57,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -101,6 +102,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -184,6 +186,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -235,6 +238,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -255,6 +259,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -297,6 +302,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -322,6 +328,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -364,6 +371,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -389,6 +397,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -414,6 +423,7 @@ describe('BoostCore', () => {
       reward: parseEther('1'),
       limit: 100n,
       strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
     });
     const _boost = await core.createBoost({
       budget: budget,
@@ -473,6 +483,7 @@ describe('BoostCore', () => {
       reward: 1n,
       limit: 10n,
       strategy: StrategyType.POOL,
+      manager: budget.assertValidAddress(),
     });
     // const erc1155Incentive = core.ERC1155Incentive({
     //   asset: erc1155.assertValidAddress(),
@@ -487,6 +498,7 @@ describe('BoostCore', () => {
       totalBudget: 10n,
       rewardBoost: 1n,
       rewardDecay: 1n,
+      manager: budget.assertValidAddress(),
     });
     const allowListIncentive = core.AllowListIncentive({
       allowList: allowList.assertValidAddress(),
@@ -623,6 +635,7 @@ describe('BoostCore', () => {
       rewardDecay: 0n,
       rewardBoost: 0n,
       totalBudget: 0n,
+      manager: zeroAddress,
     });
     expect(cgdaIncentive._config).toEqual(defaultOptions.config);
     expect(cgdaIncentive._account).toEqual(defaultOptions.account);
@@ -699,6 +712,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -749,6 +763,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });
@@ -777,6 +792,7 @@ describe('BoostCore', () => {
           reward: parseEther('1'),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });

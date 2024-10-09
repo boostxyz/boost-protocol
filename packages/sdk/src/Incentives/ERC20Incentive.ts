@@ -76,6 +76,12 @@ export interface ERC20IncentivePayload {
    * @type {bigint}
    */
   limit: bigint;
+  /**
+   * The entity that can `clawback` funds
+   *
+   * @type {Address}
+   */
+  manager: Address;
 }
 
 /**
@@ -471,6 +477,7 @@ export function prepareERC20IncentivePayload({
   strategy,
   reward,
   limit,
+  manager,
 }: ERC20IncentivePayload) {
   return encodeAbiParameters(
     [
@@ -478,7 +485,8 @@ export function prepareERC20IncentivePayload({
       { type: 'uint8', name: 'strategy' },
       { type: 'uint256', name: 'reward' },
       { type: 'uint256', name: 'limit' },
+      { type: 'address', name: 'manager' },
     ],
-    [asset, strategy, reward, limit],
+    [asset, strategy, reward, limit, manager],
   );
 }

@@ -132,6 +132,7 @@ describe("Boost with NFT Minting Incentive", () => {
           reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
         }),
       ],
     });

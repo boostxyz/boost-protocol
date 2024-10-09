@@ -49,6 +49,7 @@ describe('Incentive', () => {
       totalBudget: 10n,
       rewardBoost: 1n,
       rewardDecay: 1n,
+      manager: zeroAddress,
     });
     await incentive.deploy();
     expect(
@@ -65,6 +66,7 @@ describe('Incentive', () => {
       strategy: StrategyType.POOL,
       reward: 1n,
       limit: 10n,
+      manager: zeroAddress,
     });
     await incentive.deploy();
     expect(
@@ -80,6 +82,7 @@ describe('Incentive', () => {
       asset: zeroAddress,
       reward: 1n,
       limit: 10n,
+      manager: zeroAddress,
     });
     await incentive.deploy();
     expect(

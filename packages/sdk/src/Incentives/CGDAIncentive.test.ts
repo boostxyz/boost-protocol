@@ -1,6 +1,6 @@
 import { readMockErc20BalanceOf } from '@boostxyz/evm';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { isAddress, pad, parseEther } from 'viem';
+import { isAddress, pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { accounts } from '@boostxyz/test/accounts';
 import {
@@ -31,6 +31,7 @@ describe('CGDAIncentive', () => {
       totalBudget: 10n,
       rewardBoost: 1n,
       rewardDecay: 1n,
+      manager: budgets.budget.address || zeroAddress 
     });
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
@@ -47,6 +48,7 @@ describe('CGDAIncentive', () => {
       totalBudget: 10n,
       rewardBoost: 1n,
       rewardDecay: 1n,
+      manager: budgets.budget.assertValidAddress(),
     });
     const boost = await freshBoost(fixtures, {
       budget: budgets.budget,
@@ -92,6 +94,7 @@ describe('CGDAIncentive', () => {
       totalBudget: 10n,
       rewardBoost: 1n,
       rewardDecay: 1n,
+      manager: budgets.budget.address || zeroAddress 
     });
     const boost = await freshBoost(fixtures, {
       budget: budgets.budget,

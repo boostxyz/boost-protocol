@@ -20,7 +20,12 @@ import {
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
-import { getAccount, waitForTransactionReceipt } from '@wagmi/core';
+import {
+  type GetTransactionReceiptParameters,
+  getAccount,
+  getTransactionReceipt,
+  waitForTransactionReceipt,
+} from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,
@@ -48,7 +53,6 @@ import { type Auth, PassthroughAuth } from './Auth/Auth';
 import {
   Boost,
   type BoostPayload,
-  RawBoost,
   type Target,
   prepareBoostPayload,
 } from './Boost';
@@ -1021,6 +1025,41 @@ export class BoostCore extends Deployable<
     );
     const hash = await writeBoostCoreSetClaimFee(this._config, request);
     return { hash, result };
+  }
+
+  /**
+   * Retrieves the claim information from a transaction receipt.
+   *
+   * @param {GetTransactionReceiptParameters} params - The parameters required to get the transaction receipt.
+   * @returns {Promise<{ boostId: bigint, incentiveId: bigint, claimer: Address, amount: bigint } | undefined>} The claim information if found, undefined otherwise.
+   *
+   * @description
+   * This method retrieves the transaction receipt using the provided parameters,
+   * then parses the logs to find the 'BoostClaimed' event.
+   * If found, it returns the arguments of the event, which include the boost ID,
+   * incentive ID, claimer address, and claimed amount.
+   *
+   * @example
+   * ```ts
+   * const claimInfo = await boostCore.getClaimFromTransaction({
+   *   hash: '0x...',
+   *   chainId: 1
+   * });
+   * if (claimInfo) {
+   *   console.log(`Boost ${claimInfo.boostId} claimed by ${claimInfo.claimer}`);
+   * }
+   * ```
+   */
+  public async getClaimFromTransaction(
+    params: GetTransactionReceiptParameters,
+  ) {
+    const receipt = await getTransactionReceipt(this._config, params);
+    const logs = parseEventLogs({
+      abi: boostCoreAbi,
+      eventName: 'BoostClaimed',
+      logs: receipt.logs,
+    });
+    return logs.at(0)?.args;
   }
 
   /**

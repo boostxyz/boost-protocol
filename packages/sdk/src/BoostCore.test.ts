@@ -1,11 +1,12 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { parseEther, zeroAddress } from 'viem';
+import { pad, parseEther, zeroAddress } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   type BudgetFixtures,
   type Fixtures,
   defaultOptions,
   deployFixtures,
+  freshBoost,
   fundBudget,
   makeMockEventActionPayload,
 } from '@boostxyz/test/helpers';
@@ -14,6 +15,8 @@ import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { StrategyType } from './claiming';
 import { IncentiveNotCloneableError } from './errors';
 import { bytes4 } from './utils';
+import { BOOST_CORE_CLAIM_FEE } from './BoostCore';
+import { accounts } from '@boostxyz/test/accounts';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -739,7 +742,7 @@ describe('BoostCore', () => {
         }),
       ],
     });
-    
+
     expect(boost.validator).toBe(customValidator);
     const signers = await boost.validator.signers(budget.assertValidAddress());
     expect(signers).toBe(true);
@@ -777,5 +780,48 @@ describe('BoostCore', () => {
     const signer = await validator.signers(defaultOptions.account.address);
     expect(signer).toBeDefined();
     expect(signer).toBe(true);
+  });
+
+  test('can retrieve the BoostClaimed event from a transaction hash', async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)!.account!,
+      // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+      trustedSigner = accounts.at(0)!;
+    const erc20Incentive = fixtures.core.ERC20Incentive({
+      asset: budgets.erc20.assertValidAddress(),
+      strategy: StrategyType.POOL,
+      reward: 1n,
+      limit: 1n,
+    });
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20Incentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveQuantity = 1;
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity,
+      claimant,
+      boostId: boost.id,
+    });
+
+    const {hash} = await fixtures.core.claimIncentiveRaw(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+      { value: BOOST_CORE_CLAIM_FEE },
+    );
+
+    const claimInfo = await fixtures.core.getClaimFromTransaction({ hash })
+    expect(claimInfo).toBeDefined()
+    expect(claimInfo?.claimant).toBe(claimant)
+    expect(claimInfo?.boostId).toBe(0n)
+    expect(claimInfo?.referrer).toBe(referrer)
   });
 });

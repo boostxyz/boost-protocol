@@ -1,5 +1,21 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.18
+
+### Minor Changes
+
+- 1025a21: add `BoostCore.getClaimFromTransaction` for retrieving `BoostClaimed` event from tx
+
+### Patch Changes
+
+- 7554bac: moves data fetching for validation at action step level
+- 9fe6e77: use default signer/validator when none is provided
+- c64582d: [BOOST-4787] feat: extend erc20variableincentive to include on chain criteria
+- Updated dependencies [720ef29]
+- Updated dependencies [93f20ca]
+- Updated dependencies [c64582d]
+  - @boostxyz/signatures@0.0.0-alpha.6
+
 ## 0.0.0-alpha.17
 
 ### Minor Changes

@@ -144,6 +144,15 @@ contract EndToEndBasic is Test {
 
         // - Max Participants == 5
         assertEq(boost.maxParticipants, 5);
+
+        // - ClawbackFromIncentive
+        // reverts on underflow
+        vm.expectRevert();
+        budget.clawbackFromIncentive(boost.incentives[0], abi.encode(500 ether + 1));
+
+        // can clawback funds from incentive
+        budget.clawbackFromIncentive(boost.incentives[0], abi.encode(500 ether));
+        assertEq(erc20.balanceOf(address(budget)), 500 ether);
     }
 
     /// @notice As a user, I want to complete a Boost so that I can earn the rewards.

@@ -15,6 +15,7 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 
 contract ManagedBudgetTest is Test, IERC1155Receiver {
     MockERC20 mockERC20;
@@ -466,6 +467,23 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
             abi.encodeWithSelector(ABudget.InsufficientFunds.selector, address(mockERC1155), uint256(100), uint256(101))
         );
         managedBudget.clawback(data);
+    }
+
+    function testClawbackFromIncentive_Unauthorized() public {
+        // see EndToEndBasic.t.sol for a working call flow
+
+        // Approve the budget to transfer tokens
+        mockERC20.approve(address(managedBudget), 100 ether);
+
+        // Allocate 100 tokens to the budget
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 100 ether);
+        managedBudget.allocate(data);
+        assertEq(managedBudget.available(address(mockERC20)), 100 ether);
+
+        data = hex"";
+        hoax(makeAddr("unauthorized caller"));
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        managedBudget.clawbackFromIncentive(AIncentive(makeAddr("fake incentive")), data);
     }
 
     ///////////////////////////

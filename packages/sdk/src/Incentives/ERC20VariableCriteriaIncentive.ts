@@ -5,6 +5,7 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
 import events from '@boostxyz/signatures/events';
 import functions from '@boostxyz/signatures/functions';
+import { getTransaction, getTransactionReceipt } from '@wagmi/core';
 import {
   type AbiEvent,
   type AbiFunction,
@@ -16,14 +17,19 @@ import {
   parseEventLogs,
 } from 'viem';
 import { ERC20VariableCriteriaIncentive as ERC20VariableCriteriaIncentiveBases } from '../../dist/deployments.json';
-
-import { getTransaction, getTransactionReceipt } from '@wagmi/core';
 import { SignatureType } from '../Actions/EventAction';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
+import {
+  DecodedArgsError,
+  FieldActionValidationError,
+  IncentiveCriteriaNotFoundError,
+  InvalidCriteriaTypeError,
+  NoMatchingLogsError,
+} from '../errors';
 import type { ReadParams } from '../utils';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
 
@@ -81,35 +87,6 @@ export interface IncentiveCriteria {
   targetContract: Address;
 }
 
-// Note: Move these to a separate file and refine
-class IncentiveCriteriaNotFoundError extends Error {
-  constructor(message: string, e?: Error) {
-    super(message + (e ? `: ${e.message}` : ''));
-    this.name = 'IncentiveCriteriaNotFoundError';
-  }
-}
-
-class NoMatchingLogsError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NoMatchingLogsError';
-  }
-}
-
-class InvalidCriteriaTypeError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'InvalidCriteriaTypeError';
-  }
-}
-
-class DecodedArgsError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'DecodedArgsError';
-  }
-}
-
 export interface ReadIncentiveCriteriaParams
   extends ReadParams<
     typeof erc20VariableCriteriaIncentiveAbi,
@@ -161,10 +138,7 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
 
       return criteria;
     } catch (e) {
-      throw new IncentiveCriteriaNotFoundError(
-        'Unable to fetch Incentive Criteria from contract',
-        e as Error,
-      );
+      throw new IncentiveCriteriaNotFoundError(e as Error);
     }
   }
 

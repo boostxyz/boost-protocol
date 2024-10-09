@@ -720,18 +720,144 @@ export class UnrecognizedFilterTypeError extends FieldActionValidationError {
   }
 }
 
+/**
+ * Thrown when no chain ID is provided in the Wagmi configuration.
+ *
+ * @export
+ * @class NoConnectedChainIdError
+ * @typedef {NoConnectedChainIdError}
+ * @extends {Error}
+ */
 export class NoConnectedChainIdError extends Error {
+  /**
+   * Creates an instance of NoConnectedChainIdError.
+   *
+   * @constructor
+   */
   constructor() {
     super(
       'Provided Wagmi configuration does not define `chainId` property with which to target protocol contracts',
     );
+    this.name = 'NoConnectedChainIdError';
   }
 }
 
+/**
+ * Thrown when an invalid chain ID is provided that doesn't match any deployed protocol.
+ *
+ * @export
+ * @class InvalidProtocolChainIdError
+ * @typedef {InvalidProtocolChainIdError}
+ * @extends {Error}
+ */
 export class InvalidProtocolChainIdError extends Error {
+  /**
+   * Creates an instance of InvalidProtocolChainIdError.
+   *
+   * @constructor
+   * @param {number} chainId - The chain ID provided in the configuration.
+   * @param {number[]} validChainIds - A list of valid chain IDs where the protocol is deployed.
+   */
   constructor(chainId: number, validChainIds: number[]) {
     super(
       `Provided Wagmi configuration supplied a "chainId" where protocol is not deployed, provided: ${chainId}, but valid chains are: ${validChainIds}`,
     );
+    this.name = 'InvalidProtocolChainIdError';
+  }
+}
+
+/**
+ * Thrown when the incentive criteria cannot be fetched from the contract.
+ *
+ * @export
+ * @class IncentiveCriteriaNotFoundError
+ * @typedef {IncentiveCriteriaNotFoundError}
+ * @extends {Error}
+ */
+export class IncentiveCriteriaNotFoundError extends Error {
+  /**
+   * Creates an instance of IncentiveCriteriaNotFoundError.
+   *
+   * @constructor
+   * @param {Error} [e] - Optional error object for further context.
+   * @param {string} [message='Unable to fetch Incentive Criteria from contract'] - Custom error message.
+   */
+  constructor(
+    e?: Error,
+    message = 'Unable to fetch Incentive Criteria from contract',
+  ) {
+    super(message + (e ? `: ${e.message}` : ''));
+    this.name = 'IncentiveCriteriaNotFoundError';
+  }
+}
+
+/**
+ * Thrown when no matching logs are found for a given event signature.
+ *
+ * @export
+ * @class NoMatchingLogsError
+ * @typedef {NoMatchingLogsError}
+ * @extends {Error}
+ */
+export class NoMatchingLogsError extends Error {
+  /**
+   * Creates an instance of NoMatchingLogsError.
+   *
+   * @constructor
+   * @param {string} signature - The event signature for which logs are being searched.
+   * @param {string} [message] - Optional custom error message.
+   */
+  constructor(
+    signature: string,
+    message = `No logs found for event signature ${signature}`,
+  ) {
+    super(message);
+    this.name = 'NoMatchingLogsError';
+  }
+}
+
+/**
+ * Thrown when an invalid criteria type is provided.
+ *
+ * @export
+ * @class InvalidCriteriaTypeError
+ * @typedef {InvalidCriteriaTypeError}
+ * @extends {Error}
+ */
+export class InvalidCriteriaTypeError extends Error {
+  /**
+   * Creates an instance of InvalidCriteriaTypeError.
+   *
+   * @constructor
+   * @param {string} [criteriaType='unknown'] - The invalid criteria type that was provided.
+   * @param {string} [message] - Optional custom error message.
+   */
+  constructor(
+    criteriaType = 'unknown',
+    message = `Invalid criteria type ${criteriaType}`,
+  ) {
+    super(message);
+    this.name = 'InvalidCriteriaTypeError';
+  }
+}
+
+/**
+ * Thrown when decoding function arguments fails.
+ *
+ * @export
+ * @class DecodedArgsError
+ * @typedef {DecodedArgsError}
+ * @extends {Error}
+ */
+export class DecodedArgsError extends Error {
+  /**
+   * Creates an instance of DecodedArgsError.
+   *
+   * @constructor
+   * @param {string} [message='Issue decoding args'] - Custom error message.
+   */
+  constructor(message = 'Issue decoding args') {
+    super(message);
+    this.name = 'DecodedArgsError';
   }
 }

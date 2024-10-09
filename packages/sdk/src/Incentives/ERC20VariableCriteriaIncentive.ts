@@ -17,7 +17,7 @@ import {
 } from 'viem';
 import { ERC20VariableCriteriaIncentive as ERC20VariableCriteriaIncentiveBases } from '../../dist/deployments.json';
 
-import { getTransaction, getTransactionReceipt } from 'viem/actions';
+import { getTransaction, getTransactionReceipt } from '@wagmi/core';
 import { SignatureType } from '../Actions/EventAction';
 import type {
   DeployableOptions,
@@ -179,16 +179,13 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
     hash,
   }: GetIncentiveScalarParams): Promise<bigint> {
     const criteria = await this.getIncentiveCriteria();
-    const transaction = await getTransaction(this._config.getClient(), {
+    const transaction = await getTransaction(this._config, {
       hash,
     });
     if (criteria.criteriaType === SignatureType.EVENT) {
-      const transactionReceipt = await getTransactionReceipt(
-        this._config.getClient(),
-        {
-          hash,
-        },
-      );
+      const transactionReceipt = await getTransactionReceipt(this._config, {
+        hash,
+      });
 
       const logs = transactionReceipt.logs;
 

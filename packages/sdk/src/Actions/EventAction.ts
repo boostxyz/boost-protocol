@@ -8,11 +8,17 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import events from '@boostxyz/signatures/events';
 import functions from '@boostxyz/signatures/functions';
+import {
+  GetTransactionReceiptParameters,
+  getTransaction,
+  getTransactionReceipt,
+} from '@wagmi/core';
 import { match } from 'ts-pattern';
 import {
   type Abi,
   type AbiEvent,
   type AbiFunction,
+  AbiItem,
   type Address,
   type ContractEventName,
   type ContractFunctionName,
@@ -26,6 +32,7 @@ import {
   decodeFunctionData,
   encodeAbiParameters,
   fromHex,
+  isAddress,
   isAddressEqual,
 } from 'viem';
 import { EventAction as EventActionBases } from '../../dist/deployments.json';
@@ -45,7 +52,6 @@ import {
   UnparseableAbiParamError,
   UnrecognizedFilterTypeError,
   ValidationAbiMissingError,
-  ValidationLogsMissingError,
 } from '../errors';
 import {
   type GetLogsParams,
@@ -220,15 +226,15 @@ export interface ActionStep {
  * Parameters for validating an action step.
  *
  * @typedef {Object} ValidateActionStepParams
- * @property {Record<Hex, AbiEvent>} [knownEvents] - Optional record of known events, keyed by their hex signature.
- * @property {AbiEvent} [event] - Optional ABI event definition.
+ * @property {Record<Hex, AbiEvent | AbiFunction>} [knownSignatures] - Optional record of known events, keyed by 32 byte selectors.
+ * @property {AbiEvent | AbiFunction} [abiItem] - Optional ABI item definition.
  * @property {EventLogs} [logs] - Event logs to validate against. Required if 'hash' is not provided.
  * @property {Hex} [hash] - Transaction hash to validate against. Required if 'logs' is not provided.
  * @property {number} [chainId] - Chain ID for the transaction. Required if 'hash' is provided.
  */
 export type ValidateActionStepParams = {
-  knownEvents?: Record<Hex, AbiEvent>;
-  event?: AbiEvent;
+  knownSignatures?: Record<Hex, AbiEvent | AbiFunction>;
+  abiItem?: AbiEvent | AbiFunction;
 } & ({ logs: EventLogs } | { hash: Hex; chainId: number });
 
 /**
@@ -432,7 +438,7 @@ export class EventAction extends DeployableTarget<
    */
   public async getActionClaimant(
     params?: ReadEventActionParams<'getActionClaimant'>,
-  ) {
+  ): Promise<ActionClaimant> {
     const result = (await readEventActionGetActionClaimant(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -482,6 +488,141 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
+   * Derives the action claimant address from a transaction based on the provided ActionClaimant configuration.
+   * This method supports both event-based and function-based claimant derivation.
+   *
+   ** @example
+   * // Example usage
+   * const eventAction = boost.action as EventAction
+   * const claimant = await eventAction.getActionClaimant() // {
+   *   signatureType: SignatureType.EVENT,
+   *   signature: '0x1234...',
+   *   fieldIndex: 2,
+   *   targetContract: '0xabcd...',
+   *   chainid: 1
+   * };
+   * const params: ValidateActionStepParams = {
+   *   hash: '0x5678...',
+   *   chainId: 1,
+   *   knownSignatures?: {
+   *     '0x1234...': {}
+   *   }
+   * };
+   * const claimantAddress = await eventAction.deriveActionClaimantFromTransaction(claimant, params);
+   *
+   * @param {ActionClaimant} claimant - The configuration specifying how to derive the claimant.
+   * @param {ValidateActionStepParams} params - Parameters for validation, including transaction hash, known signatures, logs, and chain ID.
+   * @returns {Promise<Address | undefined>} The derived claimant address if found, undefined otherwise.
+   * @throws {ValidationAbiMissingError} If the ABI for the specified signature is not found.
+   * @throws {FunctionDataDecodeError} If there's an error decoding function data (for function-based derivation).
+   */
+  public async deriveActionClaimantFromTransaction(
+    claimant: ActionClaimant,
+    params: ValidateActionStepParams,
+  ): Promise<Address | undefined> {
+    const signature = claimant.signature;
+    if (claimant.signatureType === SignatureType.EVENT) {
+      let event: AbiEvent;
+      if (params.abiItem) event = params.abiItem as AbiEvent;
+      if (params.knownSignatures) {
+        event = params.knownSignatures?.[signature] as AbiEvent;
+      } else {
+        event = (events.abi as Record<Hex, AbiEvent>)[signature] as AbiEvent;
+      }
+
+      if (!event) {
+        throw new ValidationAbiMissingError(signature);
+      }
+
+      let address: Address | undefined;
+      if ('logs' in params) {
+        for (let log of params.logs) {
+          if (!isAddressEqual(log.address, claimant.targetContract)) continue;
+          let addressCandidate = this.validateClaimantAgainstArgs(
+            claimant,
+            log,
+          );
+          if (addressCandidate) address = addressCandidate;
+        }
+        return address;
+      }
+      const receipt = await getTransactionReceipt(this._config, params);
+      const decodedLogs = receipt.logs.map((log) => {
+        const { eventName, args } = decodeEventLog({
+          abi: [event],
+          data: log.data,
+          topics: log.topics,
+        });
+        return { ...log, eventName, args };
+      });
+
+      for (let log of decodedLogs) {
+        if (!isAddressEqual(log.address, claimant.targetContract)) continue;
+        let addressCandidate = this.validateClaimantAgainstArgs(claimant, log);
+        if (addressCandidate) address = addressCandidate;
+      }
+      return address;
+    }
+    if (
+      claimant.signatureType === SignatureType.FUNC &&
+      'hash' in params &&
+      'chainId' in params
+    ) {
+      const transaction = await getTransaction(this._config, {
+        hash: params.hash,
+      });
+      if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
+      let func: AbiFunction;
+      if (params.abiItem) func = params.abiItem as AbiFunction;
+      if (params.knownSignatures) {
+        func = params.knownSignatures?.[signature] as AbiFunction;
+      } else {
+        func = (functions.abi as Record<Hex, AbiFunction>)[
+          signature
+        ] as AbiFunction;
+      }
+      if (!func) {
+        throw new ValidationAbiMissingError(claimant.signature);
+      }
+      let decodedData;
+      try {
+        decodedData = decodeFunctionData({
+          abi: [func],
+          data: transaction.input,
+        });
+      } catch (e) {
+        throw new FunctionDataDecodeError([func], e as Error);
+      }
+      return this.validateClaimantAgainstArgs(claimant, decodedData);
+    }
+  }
+
+  /**
+   * Validates the action claimant against the arguments of a log or function data.
+   *
+   * @param {ActionClaimant} claimant - The action claimant to validate.
+   * @param {Object} [logOrFnData] - Optional object containing the arguments to validate against.
+   * @param {Array<any> | readonly unknown[] | Record<string, unknown>} [logOrFnData.args] - The arguments from the log or function data.
+   * @returns {Address | undefined} The validated address if found and valid, otherwise undefined.
+   */
+  public validateClaimantAgainstArgs(
+    claimant: ActionClaimant,
+    logOrFnData?: {
+      args: Array<unknown> | readonly unknown[] | Record<string, unknown>;
+    },
+  ): Address | undefined {
+    if (
+      !logOrFnData ||
+      !Array.isArray(logOrFnData?.args) ||
+      logOrFnData?.args.length <= claimant.fieldIndex
+    ) {
+      return;
+    }
+    const maybeAddress = logOrFnData.args.at(claimant.fieldIndex);
+    if (isAddress(maybeAddress)) return maybeAddress;
+  }
+
+  /**
    * Retrieves action steps, and uses them to validate against, and optionally fetch logs that match the step's signature.
    * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
    *
@@ -518,9 +659,9 @@ export class EventAction extends DeployableTarget<
     if (actionStep.signatureType === SignatureType.EVENT) {
       const signature = actionStep.signature;
       let event: AbiEvent;
-      // Lookup ABI based on event signature
-      if (params.knownEvents) {
-        event = params.knownEvents?.[signature] as AbiEvent;
+      if (params.abiItem) event = params.abiItem as AbiEvent;
+      if (params.knownSignatures) {
+        event = params.knownSignatures?.[signature] as AbiEvent;
       } else {
         event = (events.abi as Record<Hex, AbiEvent>)[signature] as AbiEvent;
       }
@@ -537,13 +678,9 @@ export class EventAction extends DeployableTarget<
         );
       }
 
-      params.event = event;
-
       // Use the provided logs, no need to fetch receipt
       if ('logs' in params) {
-        return this.isActionEventValid(actionStep, {
-          ...params,
-        });
+        return this.isActionEventValid(actionStep, params.logs);
       }
 
       const client = this._config.getClient({
@@ -562,10 +699,7 @@ export class EventAction extends DeployableTarget<
         return { ...log, eventName, args };
       });
 
-      return this.isActionEventValid(actionStep, {
-        logs: decodedLogs,
-        ...params,
-      });
+      return this.isActionEventValid(actionStep, decodedLogs);
     }
     if (actionStep.signatureType === SignatureType.FUNC) {
       if ('hash' in params && 'chainId' in params) {
@@ -575,7 +709,7 @@ export class EventAction extends DeployableTarget<
         const transaction = await client.getTransaction({
           hash: params.hash,
         });
-        return this.isActionFunctionValid(actionStep, transaction);
+        return this.isActionFunctionValid(actionStep, transaction, params);
       }
     }
     return false;
@@ -588,18 +722,11 @@ export class EventAction extends DeployableTarget<
    * @public
    * @async
    * @param {ActionStep} actionStep - The action step containing the event to validate.
-   * @param {ValidateActionStepParams} params - Additional parameters for validation, including known events and logs
+   * @param {EventLogs} logs - Event logs to validate the given step against
    * @returns {Promise<boolean>} Resolves to true if the action event is valid, throws if input is invalid, otherwise false.
    */
-  public isActionEventValid(
-    actionStep: ActionStep,
-    params: ValidateActionStepParams,
-  ) {
-    if (!('logs' in params)) {
-      throw new ValidationLogsMissingError();
-    }
+  public isActionEventValid(actionStep: ActionStep, logs: EventLogs) {
     const criteria = actionStep.actionParameter;
-    const logs = params.logs;
     if (!logs.length) return false;
     for (let log of logs) {
       if (this.validateLogAgainstCriteria(criteria, log)) {
@@ -608,25 +735,37 @@ export class EventAction extends DeployableTarget<
     }
     return false;
   }
+
   /**
    * Validates a single action function with a given criteria against the transaction input.
    *
    * @public
-   * @async
    * @param {ActionStep} actionStep - The action step containing the function to validate.
    * @param {Transaction} transaction - The transaction that will be validated against.
-   * @returns {Promise<boolean>} Resolves to true if the action function is valid, throws if the inputs are invalid, otherwise false.
+   * @param {Object} [params] - Optional parameters for validation.
+   * @param {AbiItem} [params.abiItem] - The ABI item for the function, if known.
+   * @param {Record<Hex, AbiEvent | AbiFunction>} [params.knownSignatures] - A record of known signatures.
+   * @returns {boolean} Returns true if the action function is valid, false otherwise.
+   * @throws {ValidationAbiMissingError} Throws if the ABI for the function signature is not found.
+   * @throws {FunctionDataDecodeError} Throws if there's an error decoding the function data.
    */
   public isActionFunctionValid(
     actionStep: ActionStep,
     transaction: Transaction,
+    params?: Pick<ValidateActionStepParams, 'abiItem' | 'knownSignatures'>,
   ) {
     const criteria = actionStep.actionParameter;
     let signature = actionStep.signature;
 
-    const func = (functions.abi as Record<Hex, AbiFunction>)[
-      signature
-    ] as AbiFunction;
+    let func: AbiFunction;
+    if (params?.abiItem) func = params?.abiItem as AbiFunction;
+    if (params?.knownSignatures) {
+      func = params?.knownSignatures?.[signature] as AbiFunction;
+    } else {
+      func = (functions.abi as Record<Hex, AbiFunction>)[
+        signature
+      ] as AbiFunction;
+    }
     if (!func) {
       throw new ValidationAbiMissingError(signature);
     }
@@ -776,7 +915,7 @@ export class EventAction extends DeployableTarget<
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {Log} log - The Viem event log.
-   * @returns {Promise<boolean>} - Returns true if the log passes the criteria, false otherwise.
+   * @returns {boolean} - Returns true if the log passes the criteria, false otherwise.
    */
   public validateLogAgainstCriteria(
     criteria: Criteria,

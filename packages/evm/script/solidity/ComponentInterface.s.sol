@@ -51,19 +51,8 @@ contract LogComponentInterface is ScriptUtils {
         _saveJson();
     }
 
-    function _buildJsonDeployPath()
-        internal
-        view
-        override
-        returns (string memory)
-    {
-        return
-            string(
-                abi.encodePacked(
-                    vm.projectRoot(),
-                    "/deploys/componentInterfaces.json"
-                )
-            );
+    function _buildJsonDeployPath() internal view override returns (string memory) {
+        return string(abi.encodePacked(vm.projectRoot(), "/deploys/componentInterfaces.json"));
     }
 
     function _saveJson() internal {
@@ -71,129 +60,72 @@ contract LogComponentInterface is ScriptUtils {
     }
 
     function _getInterfaceAManagedBudget() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AManagedBudget).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "AManagedBudget",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(AManagedBudget).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AManagedBudget", interfaceId);
     }
 
     function _getInterfaceAEventAction() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AEventAction).interfaceId)
-        ).toHexString(4);
+        string memory interfaceId = uint256(uint32(type(AEventAction).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AEventAction", interfaceId);
     }
 
     function _getInterfaceAERC20Incentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AERC20Incentive).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "AERC20Incentive",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(AERC20Incentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AERC20Incentive", interfaceId);
     }
 
     function _getInterfaceACloneable() internal {
-        string memory interfaceId = uint256(
-            uint32(type(ACloneable).interfaceId)
-        ).toHexString(4);
+        string memory interfaceId = uint256(uint32(type(ACloneable).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("ACloneable", interfaceId);
     }
 
     function _getInterfaceABudget() internal {
-        string memory interfaceId = uint256(uint32(type(ABudget).interfaceId))
-            .toHexString(4);
+        string memory interfaceId = uint256(uint32(type(ABudget).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("ABudget", interfaceId);
     }
 
     function _getInterfaceAVestingBudget() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AVestingBudget).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "AVestingBudget",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(AVestingBudget).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AVestingBudget", interfaceId);
     }
 
     function _getInterfaceASignerValidator() internal {
-        string memory interfaceId = uint256(
-            uint32(type(ASignerValidator).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "ASignerValidator",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(ASignerValidator).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("ASignerValidator", interfaceId);
     }
 
     function _getInterfaceAAllowListIncentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AAllowListIncentive).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "AAllowListIncentive",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(AAllowListIncentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AAllowListIncentive", interfaceId);
     }
 
     function _getInterfaceACGDAIncentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(ACGDAIncentive).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "ACGDAIncentive",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(ACGDAIncentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("ACGDAIncentive", interfaceId);
     }
 
     function _getInterfaceAIncentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AIncentive).interfaceId)
-        ).toHexString(4);
+        string memory interfaceId = uint256(uint32(type(AIncentive).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AIncentive", interfaceId);
     }
 
     function _getInterfaceAERC20VariableIncentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AERC20VariableIncentive).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "AERC20VariableIncentive",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(AERC20VariableIncentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AERC20VariableIncentive", interfaceId);
     }
 
     function _getInterfaceAPointsIncentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(APointsIncentive).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "APointsIncentive",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(APointsIncentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("APointsIncentive", interfaceId);
     }
 
     function _getInterfaceASimpleAllowList() internal {
-        string memory interfaceId = uint256(
-            uint32(type(ASimpleAllowList).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "ASimpleAllowList",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(ASimpleAllowList).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("ASimpleAllowList", interfaceId);
     }
 
     function _getInterfaceASimpleDenyList() internal {
-        string memory interfaceId = uint256(
-            uint32(type(ASimpleDenyList).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "ASimpleDenyList",
-            interfaceId
-        );
+        string memory interfaceId = uint256(uint32(type(ASimpleDenyList).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("ASimpleDenyList", interfaceId);
     }
 }

@@ -68,7 +68,9 @@ contract ModuleBaseDeployer is ScriptUtils {
             string(abi.encodePacked(vm.projectRoot(), "/deploys/", vm.toString(block.chainid), ".json"));
         deployJson = vm.readFile(path);
         deployJson = deployJsonKey.serialize(deployJson);
-        if (!vm.keyExistsJson(deployJson, ".BoostRegistry")) revert("No registry deployed: run `pnpm deploy:core:local");
+        if (!vm.keyExistsJson(deployJson, ".BoostRegistry")) {
+            revert("No registry deployed: run `pnpm deploy:core:local");
+        }
         return BoostRegistry(deployJson.readAddress(".BoostRegistry"));
     }
 
@@ -105,7 +107,9 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ERC20VariableIncentive: ", erc20VariableIncentive);
         deployJson = deployJsonKey.serialize("ERC20VariableIncentive", erc20VariableIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "ERC20VariableIncentive", erc20VariableIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(
+            newDeploy, "ERC20VariableIncentive", erc20VariableIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE
+        );
     }
 
     function _deployERC20VariableCriteriaIncentive(BoostRegistry registry) internal returns (address erc20VariableCriteriaIncentive) {
@@ -141,7 +145,9 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("AllowListIncentive: ", allowListIncentive);
         deployJson = deployJsonKey.serialize("AllowListIncentive", allowListIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "AllowListIncentive", allowListIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(
+            newDeploy, "AllowListIncentive", allowListIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE
+        );
     }
 
     function _deploySignerValidator(BoostRegistry registry) internal returns (address signerValidator) {
@@ -186,4 +192,5 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("SimpleDenyList", simpleDenyList);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(newDeploy, "SimpleDenyList", simpleDenyList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
-    }}
+    }
+}

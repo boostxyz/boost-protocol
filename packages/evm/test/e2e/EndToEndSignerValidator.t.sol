@@ -119,10 +119,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
 
         // - Protocol Fee == 1,000 bps (custom fee) + 1,000 bps (base fee) = 2,000 bps = 20%
         assertEq(boost.protocolFee, 2_000);
-
-        // - Referral Fee == 500 bps (custom fee) + 1,000 bps (base fee) = 1,500 bps = 15%
-        assertEq(boost.referralFee, 1_500);
-
+        
         // - Max Participants == 5
         assertEq(boost.maxParticipants, 5);
     }
@@ -155,7 +152,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
 
         // pass it into claimIncentive
         startHoax(claimer);
-        core.claimIncentive{value: core.claimFee()}(boostId, incentiveId, address(0), claimData);
+        core.claimIncentive(boostId, incentiveId, address(0), claimData);
 
         assertEq(erc20.balanceOf(claimer), claimAmount);
     }
@@ -315,7 +312,6 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                         }),
                         incentives, // "I can specify the incentive..."
                         1_000, // "I can specify an additional protocol fee" => 1,000 bps == 10%
-                        500, // "I can specify an additional referral fee" => 500 bps == 5%
                         5, // "I can specify a maximum number of participants" => 5
                         address(1) // "I can specify the owner of the Boost" => address(1)
                     )

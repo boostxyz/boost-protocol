@@ -1,6 +1,4 @@
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { pad, parseEther, zeroAddress } from 'viem';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -10,13 +8,15 @@ import {
   fundBudget,
   makeMockEventActionPayload,
 } from '@boostxyz/test/helpers';
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+import { pad, parseEther, zeroAddress } from 'viem';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { ContractAction } from './Actions/ContractAction';
+import { BOOST_CORE_CLAIM_FEE } from './BoostCore';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { StrategyType } from './claiming';
 import { BoostNotFoundError, IncentiveNotCloneableError } from './errors';
 import { bytes4 } from './utils';
-import { BOOST_CORE_CLAIM_FEE } from './BoostCore';
-import { accounts } from '@boostxyz/test/accounts';
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -34,7 +34,6 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
     await core.createBoost({
       protocolFee: 1n,
-      referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -79,7 +78,6 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
     const boost = await core.createBoost({
       protocolFee: 1n,
-      referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -110,7 +108,6 @@ describe('BoostCore', () => {
 
     expect(boost.owner).toBe(onChainBoost.owner);
     expect(boost.protocolFee).toBe(onChainBoost.protocolFee);
-    expect(boost.referralFee).toBe(onChainBoost.referralFee);
     expect(boost.maxParticipants).toBe(onChainBoost.maxParticipants);
 
     expect(boost.action.address).toBe(onChainBoost.action);
@@ -163,7 +160,6 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
     const _boost = await core.createBoost({
       protocolFee: 1n,
-      referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -192,7 +188,6 @@ describe('BoostCore', () => {
     });
     const boost = await core.readBoost(_boost.id);
     expect(boost.protocolFee).toBe(1001n);
-    expect(boost.referralFee).toBe(1002n);
     expect(boost.maxParticipants).toBe(100n);
     expect(boost.budget).toBe(_boost.budget.assertValidAddress());
     expect(boost.action).toBe(_boost.action.assertValidAddress());
@@ -513,7 +508,6 @@ describe('BoostCore', () => {
 
     await core.createBoost({
       protocolFee: 1n,
-      referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -571,20 +565,6 @@ describe('BoostCore', () => {
     await core.setProcolFeeReceiver(zeroAddress);
 
     expect(await core.protocolFeeReceiver()).toBe(zeroAddress);
-  });
-
-  test('can get the claim fee', async () => {
-    const { core } = fixtures;
-
-    expect(await core.claimFee()).toBe(75000000000000n);
-  });
-
-  test('can set the claim fee', async () => {
-    const { core } = fixtures;
-
-    await core.setClaimFee(100n);
-
-    expect(await core.claimFee()).toBe(100n);
   });
 
   test('binds all actions, budgets, allowlists, incentives, and validators to reuse core options and account', () => {
@@ -689,7 +669,6 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
     await core.createBoost({
       protocolFee: 1n,
-      referralFee: 2n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -837,7 +816,7 @@ describe('BoostCore', () => {
       boostId: boost.id,
     });
 
-    const {hash} = await fixtures.core.claimIncentiveRaw(
+    const { hash } = await fixtures.core.claimIncentiveRaw(
       boost.id,
       0n,
       referrer,
@@ -845,10 +824,10 @@ describe('BoostCore', () => {
       { value: BOOST_CORE_CLAIM_FEE },
     );
 
-    const claimInfo = await fixtures.core.getClaimFromTransaction({ hash })
-    expect(claimInfo).toBeDefined()
-    expect(claimInfo?.claimant).toBe(claimant)
-    expect(typeof claimInfo?.boostId).toBe('bigint')
-    expect(claimInfo?.referrer).toBe(referrer)
+    const claimInfo = await fixtures.core.getClaimFromTransaction({ hash });
+    expect(claimInfo).toBeDefined();
+    expect(claimInfo?.claimant).toBe(claimant);
+    expect(typeof claimInfo?.boostId).toBe('bigint');
+    expect(claimInfo?.referrer).toBe(referrer);
   });
 });

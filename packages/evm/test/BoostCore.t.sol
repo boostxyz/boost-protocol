@@ -63,8 +63,7 @@ contract BoostCoreTest is Test {
                 validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                 allowList: allowList,
                 incentives: _makeIncentives(1),
-                protocolFee: 500, // 5%
-                referralFee: 1000, // 10%
+                protocolFee: 0, // 5%
                 maxParticipants: 10_000,
                 owner: address(1)
             })
@@ -72,8 +71,8 @@ contract BoostCoreTest is Test {
     );
 
     function setUp() public {
-        mockERC20.mint(address(this), 100 ether);
-        mockERC20.approve(address(budget), 100 ether);
+        mockERC20.mint(address(this), 110 ether);
+        mockERC20.approve(address(budget), 110 ether);
         budget.allocate(
             abi.encode(
                 ABudget.Transfer({
@@ -138,7 +137,6 @@ contract BoostCoreTest is Test {
                     allowList: allowList,
                     incentives: _makeIncentives(1),
                     protocolFee: 500, // 5%
-                    referralFee: 1000, // 10%
                     maxParticipants: 10_000,
                     owner: address(1)
                 })
@@ -159,7 +157,6 @@ contract BoostCoreTest is Test {
         // Check the basics
         assertEq(boost.owner, address(1));
         assertEq(boost.protocolFee, boostCore.protocolFee() + 500);
-        assertEq(boost.referralFee, boostCore.referralFee() + 1000);
         assertEq(boost.maxParticipants, 10_000);
 
         // Check the ABudget
@@ -251,7 +248,6 @@ contract BoostCoreTest is Test {
                     BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList,
                     _makeIncentives(1),
-                    0.01 ether,
                     0.001 ether,
                     10_000,
                     address(this)
@@ -279,7 +275,6 @@ contract BoostCoreTest is Test {
                     action,
                     allowList,
                     _makeIncentives(1),
-                    0.01 ether,
                     0.001 ether,
                     10_000,
                     address(this)
@@ -400,36 +395,6 @@ contract BoostCoreTest is Test {
         vm.stopPrank();
     }
 
-    function testClaimIncentive_WithReferrer() public {
-        // Create a Boost first
-        boostCore.createBoost(validCreateCalldata);
-
-        // Mint an ERC721 token to the claimant (this contract)
-        uint256 tokenId = 1;
-        mockERC721.mint{value: 0.1 ether}(address(this));
-        mockERC721.mint{value: 0.1 ether}(address(this));
-        mockERC721.mint{value: 0.1 ether}(address(this));
-
-        // Define a referrer
-        address referrer = makeAddr("referrer");
-        vm.deal(referrer, 1 ether); // Fund the referrer for testing purposes
-
-        // Prepare the data payload for validation
-        bytes memory data = abi.encode(address(this), abi.encode(tokenId));
-
-        // Claim the incentive with a referrer
-        boostCore.claimIncentive{value: 0.000075 ether}(0, 0, referrer, data);
-
-        // Check the claims
-        BoostLib.Boost memory boost = boostCore.getBoost(0);
-        ERC20Incentive _incentive = ERC20Incentive(address(boost.incentives[0]));
-        assertEq(_incentive.claims(), 1);
-
-        // Check that the claim fee was routed to the referrer
-        uint256 expectedReferrerBalance = 1 ether + (0.000075 ether * 2000 / 10000);
-        assertEq(referrer.balance, expectedReferrerBalance);
-    }
-
     ///////////////////////////
     // BoostCore.getBoost //
     ///////////////////////////
@@ -444,7 +409,6 @@ contract BoostCoreTest is Test {
         // Check the Boost details
         assertEq(boost.owner, address(1));
         assertEq(boost.protocolFee, boostCore.protocolFee() + 500);
-        assertEq(boost.referralFee, boostCore.referralFee() + 1000);
         assertEq(boost.maxParticipants, 10_000);
     }
 
@@ -473,16 +437,6 @@ contract BoostCoreTest is Test {
         assertEq(boostCore.protocolFeeReceiver(), newReceiver);
     }
 
-    ///////////////////////////
-    // BoostCore.setClaimFee //
-    ///////////////////////////
-
-    function testSetClaimFee() public {
-        uint256 newClaimFee = 0.0001 ether;
-        boostCore.setClaimFee(newClaimFee);
-        assertEq(boostCore.claimFee(), newClaimFee);
-    }
-
     //////////////////////////////
     // BoostCore.setProtocolFee //
     //////////////////////////////
@@ -491,16 +445,6 @@ contract BoostCoreTest is Test {
         uint64 newProtocolFee = 700; // 7%
         boostCore.setProtocolFee(newProtocolFee);
         assertEq(boostCore.protocolFee(), newProtocolFee);
-    }
-
-    //////////////////////////////
-    // BoostCore.setReferralFee //
-    //////////////////////////////
-
-    function testSetReferralFee() public {
-        uint64 newReferralFee = 1500; // 15%
-        boostCore.setReferralFee(newReferralFee);
-        assertEq(boostCore.referralFee(), newReferralFee);
     }
 
     ///////////////////////////

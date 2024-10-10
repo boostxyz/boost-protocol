@@ -4,8 +4,8 @@ import {
   PrimitiveType,
   SignatureType,
 } from '@boostxyz/sdk';
-import functions from '@boostxyz/signatures/functions'
 import events from '@boostxyz/signatures/events';
+import functions from '@boostxyz/signatures/functions';
 import { accounts } from '@boostxyz/test/accounts';
 import {
   type BudgetFixtures,
@@ -132,7 +132,6 @@ describe('Boost with Voting Incentive', () => {
     // Create the boost using the custom EventAction
     await core.createBoost({
       protocolFee: 1n,
-      referralFee: 2n,
       maxParticipants: 100n,
       budget: budget, // Use the ManagedBudget
       action: eventAction, // Pass the manually created EventAction
@@ -198,7 +197,12 @@ describe('Boost with Voting Incentive', () => {
     });
     expect(validation).toBe(true);
 
-    const getVotesAbi = functions.abi[functions.selectors['getVotes(address account, uint256 blockNumber) view returns (uint256)'] as '0x00000000000000000000000000000000000000000000000000000000eb9019d4']
+    const getVotesAbi =
+      functions.abi[
+        functions.selectors[
+          'getVotes(address account, uint256 blockNumber) view returns (uint256)'
+        ] as '0x00000000000000000000000000000000000000000000000000000000eb9019d4'
+      ];
     const amountOfVotes = (await walletClient.readContract({
       address: '0xcdf27f107725988f2261ce2256bdfcde8b382b10',
       abi: [getVotesAbi],
@@ -224,7 +228,6 @@ describe('Boost with Voting Incentive', () => {
       claimant: boostImpostor,
       boostId: boost.id,
     });
-
 
     // Claim the incentive for the imposter
     await core.claimIncentiveFor(

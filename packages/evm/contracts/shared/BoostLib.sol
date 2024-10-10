@@ -23,7 +23,6 @@ library BoostLib {
         ABudget budget;
         AIncentive[] incentives;
         uint64 protocolFee;
-        uint64 referralFee;
         uint256 maxParticipants;
         address owner;
     }

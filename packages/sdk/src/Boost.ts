@@ -26,7 +26,6 @@ export interface RawBoost {
   budget: Address;
   incentives: readonly Address[];
   protocolFee: bigint;
-  referralFee: bigint;
   maxParticipants: bigint;
   owner: Address;
 }
@@ -74,11 +73,6 @@ export interface BoostConfig {
    * @type {?bigint}
    */
   protocolFee?: bigint;
-  /**
-   *
-   * @type {?bigint}
-   */
-  referralFee?: bigint;
   /**
    *
    * @type {?bigint}
@@ -146,12 +140,6 @@ export class Boost {
    * @readonly
    * @type {bigint}
    */
-  readonly referralFee: bigint;
-  /**
-   *
-   * @readonly
-   * @type {bigint}
-   */
   readonly maxParticipants: bigint;
   /**
    *
@@ -174,7 +162,6 @@ export class Boost {
     this.allowList = config.allowList;
     this.incentives = config.incentives;
     this.protocolFee = config.protocolFee || 0n;
-    this.referralFee = config.referralFee || 0n;
     this.maxParticipants = config.maxParticipants || 0n;
     this.owner = config.owner || zeroAddress;
   }
@@ -238,12 +225,6 @@ export interface BoostPayload {
    */
   protocolFee?: bigint;
   /**
-   * The base referral fee (in bps)
-   *
-   * @type {?bigint}
-   */
-  referralFee?: bigint;
-  /**
    * Optional maximum amount of participants in the Boost.
    *
    * @type {?bigint}
@@ -268,7 +249,6 @@ export interface BoostPayload {
  * @param {Target} param0.allowList - Target for existing allowList, or base with initialization payload.
  * @param {Target[]} param0.incentives - Targets for new incentives, with initialization payloads.
  * @param {bigint} [param0.protocolFee=0n] - The base protocol fee (in bps)
- * @param {bigint} [param0.referralFee=0n] - The base referral fee (in bps)
  * @param {bigint} [param0.maxParticipants=0n] - Optional maximum amount of participants in the Boost.
  * @param {Address} param0.owner - The owner of the Boost.
  * @returns {Hex}
@@ -280,7 +260,6 @@ export function prepareBoostPayload({
   allowList,
   incentives,
   protocolFee = 0n,
-  referralFee = 0n,
   maxParticipants = 0n,
   owner,
 }: BoostPayload): Hex {
@@ -288,7 +267,7 @@ export function prepareBoostPayload({
     encodeAbiParameters(
       parseAbiParameters([
         'BoostPayload payload',
-        'struct BoostPayload { address budget; Target action; Target validator; Target allowList; Target[] incentives; uint64 protocolFee; uint64 referralFee; uint256 maxParticipants; address owner; }',
+        'struct BoostPayload { address budget; Target action; Target validator; Target allowList; Target[] incentives; uint64 protocolFee; uint256 maxParticipants; address owner; }',
         'struct Target { bool isBase; address instance; bytes parameters; }',
       ]),
       [
@@ -299,7 +278,6 @@ export function prepareBoostPayload({
           allowList,
           incentives,
           protocolFee,
-          referralFee,
           maxParticipants,
           owner,
         },

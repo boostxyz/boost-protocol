@@ -1,5 +1,13 @@
 # delegate-action
 
+## 1.0.1-alpha.1
+
+### Patch Changes
+
+- Updated dependencies [7076b88]
+  - @boostxyz/sdk@0.0.0-alpha.19
+  - @boostxyz/test@1.0.1-alpha.1
+
 ## 1.0.1-alpha.0
 
 ### Patch Changes

@@ -1,5 +1,7 @@
 # @boostxyz/cli
 
+## 0.0.0-alpha.17
+
 ## 0.0.0-alpha.16
 
 ### Patch Changes

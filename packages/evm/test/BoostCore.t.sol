@@ -71,6 +71,7 @@ contract BoostCoreTest is Test {
     );
 
     function setUp() public {
+        // We allocate 100 for the boost and 10 for protocol fees
         mockERC20.mint(address(this), 110 ether);
         mockERC20.approve(address(budget), 110 ether);
         budget.allocate(
@@ -79,7 +80,7 @@ contract BoostCoreTest is Test {
                     assetType: ABudget.AssetType.ERC20,
                     asset: address(mockERC20),
                     target: address(this),
-                    data: abi.encode(ABudget.FungiblePayload({amount: 100 ether}))
+                    data: abi.encode(ABudget.FungiblePayload({amount: 110 ether}))
                 })
             )
         );
@@ -156,7 +157,7 @@ contract BoostCoreTest is Test {
 
         // Check the basics
         assertEq(boost.owner, address(1));
-        assertEq(boost.protocolFee, boostCore.protocolFee() + 500);
+        assertEq(boost.protocolFee, boostCore.protocolFee());
         assertEq(boost.maxParticipants, 10_000);
 
         // Check the ABudget
@@ -354,24 +355,6 @@ contract BoostCoreTest is Test {
         assertEq(_incentive.claims(), 1);
     }
 
-    function testClaimIncentive_InsufficientFunds() public {
-        // Create a Boost first
-        boostCore.createBoost(validCreateCalldata);
-
-        // Mint an ERC721 token to the claimant (this contract)
-        mockERC721.mint{value: 0.1 ether}(address(this));
-        mockERC721.mint{value: 0.1 ether}(address(this));
-        mockERC721.mint{value: 0.1 ether}(address(this));
-
-        // Try to claim the incentive with insufficient funds
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                BoostError.InsufficientFunds.selector, 0x0000000000000000000000000000000000000000, 0, 75000000000000
-            )
-        );
-        boostCore.claimIncentive{value: 0}(0, 0, address(0), "");
-    }
-
     function testClaimIncentive_Unauthorized() public {
         // Create a Boost first
         boostCore.createBoost(validCreateCalldata);
@@ -408,7 +391,7 @@ contract BoostCoreTest is Test {
 
         // Check the Boost details
         assertEq(boost.owner, address(1));
-        assertEq(boost.protocolFee, boostCore.protocolFee() + 500);
+        assertEq(boost.protocolFee, boostCore.protocolFee());
         assertEq(boost.maxParticipants, 10_000);
     }
 

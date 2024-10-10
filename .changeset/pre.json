@@ -14,6 +14,7 @@
     "@boostxyz/test": "1.0.0"
   },
   "changesets": [
+    "calm-moles-fry",
     "chatty-eagles-collect",
     "clever-planets-listen",
     "cuddly-toes-push",

@@ -1,5 +1,13 @@
 # zora-mint
 
+## 1.0.1-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [aa20a00]
+  - @boostxyz/sdk@0.0.0-alpha.20
+  - @boostxyz/test@1.0.1-alpha.2
+
 ## 1.0.1-alpha.1
 
 ### Patch Changes

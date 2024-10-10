@@ -34,7 +34,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
         BoostLib.Target allowList;
         BoostLib.Target[] incentives;
         uint64 protocolFee;
-        uint64 referralFee;
         uint256 maxParticipants;
         address owner;
     }
@@ -64,14 +63,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice The protocol fee receiver
     address public protocolFeeReceiver;
 
-    /// @notice The claim fee (in wei)
-    uint256 public claimFee = 0.000075 ether;
-
     /// @notice The base protocol fee (in bps)
     uint64 public protocolFee = 1_000; // 10%
-
-    /// @notice The base referral fee (in bps)
-    uint64 public referralFee = 1_000; // 10%
 
     /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
     uint64 public constant FEE_DENOMINATOR = 10_000;
@@ -104,7 +97,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
     ///         - `Target` for the allowList
     ///         - `Target[]` for the incentives
     ///         - `uint256` for the protocolFee (added to the base protocol fee)
-    ///         - `uint256` for the referralFee (added to the base referral fee)
     ///         - `uint256` for the maxParticipants
     ///         - `address` for the owner of the Boost
     function createBoost(bytes calldata data_)
@@ -178,8 +170,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address claimant
     ) public payable nonReentrant {
         BoostLib.Boost storage boost = _boosts[boostId_];
-        if (msg.value < claimFee) revert BoostError.InsufficientFunds(address(0), msg.value, claimFee);
-        _routeClaimFee(boost, referrer_);
 
         if (!boost.allowList.isAllowed(claimant, data_)) revert BoostError.Unauthorized();
 
@@ -217,25 +207,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
         protocolFeeReceiver = protocolFeeReceiver_;
     }
 
-    /// @notice Set the claim fee
-    /// @param claimFee_ The new claim fee (in wei)
-    /// @dev This function is only callable by the owner
-    function setClaimFee(uint256 claimFee_) external onlyOwner {
-        claimFee = claimFee_;
-    }
-
     /// @notice Set the protocol fee
     /// @param protocolFee_ The new protocol fee (in bps)
     /// @dev This function is only callable by the owner
     function setProtocolFee(uint64 protocolFee_) external onlyOwner {
         protocolFee = protocolFee_;
-    }
-
-    /// @notice Set the referral fee
-    /// @param referralFee_ The new referral fee (in bps)
-    /// @dev This function is only callable by the owner
-    function setReferralFee(uint64 referralFee_) external onlyOwner {
-        referralFee = referralFee_;
     }
 
     /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it

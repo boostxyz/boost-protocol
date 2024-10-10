@@ -1,5 +1,6 @@
 {
   "name": "swap-specific-dex",
+  "private": true,
   "version": "1.0.1-alpha.1",
   "scripts": {
     "test": "npx vitest",

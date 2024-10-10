@@ -108,7 +108,6 @@ export async function freshBoost(
   );
   return core.createBoost({
     protocolFee: options.protocolFee || 1n,
-    referralFee: options.protocolFee || 2n,
     maxParticipants: options.protocolFee || 100n,
     budget: options.budget || budget,
     action:

@@ -84,7 +84,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     /// @notice Create a new Boost
-    /// @param data_ The compressed data for the Boost `(ABudget, Target<AAction>, Target<Validator>, Target<AAllowList>, Target<AIncentive>[], protocolFee, referralFee, maxParticipants, owner)`
+    /// @param data_ The compressed data for the Boost `(ABudget, Target<AAction>, Target<Validator>, Target<AAllowList>, Target<AIncentive>[], protocolFee, maxParticipants, owner)`
     /// @dev The data is expected to:
     ///     - be packed using `abi.encode()` and compressed using [Solady's LibZip calldata compression](https://github.com/Vectorized/solady/blob/main/src/utils/LibZip.sol)
     ///     - properly decode to the following types (in order):
@@ -115,7 +115,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
         boost.owner = payload_.owner;
         boost.budget = payload_.budget;
         boost.protocolFee = protocolFee + payload_.protocolFee;
-        boost.referralFee = referralFee + payload_.referralFee;
         boost.maxParticipants = payload_.maxParticipants;
 
         // Setup the Boost components
@@ -293,17 +292,17 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @return The modified preflight data for the protocol fee disbursement
     function _getFeeDisbursal(bytes memory preflight) internal view returns (bytes memory) {
         // Decode the preflight data to extract the transfer details
-        BoostLib.Transfer memory request = abi.decode(preflight, (BoostLib.Transfer));
+        ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
 
-        if (request.assetType == BoostLib.AssetType.ERC20 || request.assetType == BoostLib.AssetType.ETH) {
+        if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
             // Decode the fungible payload
-            BoostLib.FungiblePayload memory payload = abi.decode(request.data, (BoostLib.FungiblePayload));
+            ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
 
             // Calculate the protocol fee based on BIPS
             uint256 feeAmount = (payload.amount * protocolFee) / FEE_DENOMINATOR;
 
             // Create a new fungible payload for the protocol fee
-            BoostLib.FungiblePayload memory feePayload = BoostLib.FungiblePayload({amount: feeAmount});
+            ABudget.FungiblePayload memory feePayload = ABudget.FungiblePayload({amount: feeAmount});
 
             // Modify the original request for the fee disbursal
             request.data = abi.encode(feePayload);
@@ -311,15 +310,15 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
             // Encode and return the modified request as bytes
             return abi.encode(request);
-        } else if (request.assetType == BoostLib.AssetType.ERC1155) {
+        } else if (request.assetType == ABudget.AssetType.ERC1155) {
             // Decode the ERC1155 payload
-            BoostLib.ERC1155Payload memory payload = abi.decode(request.data, (BoostLib.ERC1155Payload));
+            ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
 
             // Calculate the protocol fee based on BIPS
             uint256 feeAmount = (payload.amount * protocolFee) / FEE_DENOMINATOR;
 
             // Create a new ERC1155 payload for the protocol fee
-            BoostLib.ERC1155Payload memory feePayload = BoostLib.ERC1155Payload({
+            ABudget.ERC1155Payload memory feePayload = ABudget.ERC1155Payload({
                 tokenId: payload.tokenId,
                 amount: feeAmount,
                 data: payload.data // Keep the additional data unchanged
@@ -332,7 +331,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             // Encode and return the modified request as bytes
             return abi.encode(request);
         } else {
-            revert BoostError.UnsupportedAssetType();
+            revert BoostError.NotImplemented();
         }
     }
 

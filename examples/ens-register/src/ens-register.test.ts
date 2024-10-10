@@ -1,4 +1,19 @@
+import {
+  type ActionStep,
+  FilterType,
+  PrimitiveType,
+  SignatureType,
+} from '@boostxyz/sdk';
+import { StrategyType } from '@boostxyz/sdk/claiming';
 import { selectors } from '@boostxyz/signatures/functions';
+import { accounts } from '@boostxyz/test/accounts';
+import {
+  type BudgetFixtures,
+  type Fixtures,
+  defaultOptions,
+  deployFixtures,
+  fundBudget,
+} from '@boostxyz/test/helpers';
 import {
   loadFixture,
   mine,
@@ -15,21 +30,6 @@ import {
 } from 'viem';
 import { sepolia } from 'viem/chains';
 import { beforeAll, describe, expect, test } from 'vitest';
-import {
-  type ActionStep,
-  FilterType,
-  PrimitiveType,
-  SignatureType,
-} from '@boostxyz/sdk';
-import { StrategyType } from '@boostxyz/sdk/claiming';
-import { accounts } from '@boostxyz/test/accounts';
-import {
-  type BudgetFixtures,
-  type Fixtures,
-  defaultOptions,
-  deployFixtures,
-  fundBudget,
-} from '@boostxyz/test/helpers';
 
 let fixtures: Fixtures;
 let budgets: BudgetFixtures;
@@ -51,7 +51,7 @@ const CHAIN_URL =
   'https://eth-sepolia.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
 const CHAIN_BLOCK = 6717970n; // block before the commit transaction
 const selector = selectors[
-  "register(string name,address owner,uint256 duration,bytes32 secret,address resolver,bytes[] data,bool reverseRecord,uint16 ownerControlledFuses)"
+  'register(string name,address owner,uint256 duration,bytes32 secret,address resolver,bytes[] data,bool reverseRecord,uint16 ownerControlledFuses)'
 ] as Hex;
 
 // https://sepolia.etherscan.io/tx/0xe527caab33384a58780aa12218c159c0b1910921aca0bc311a9dd7c39efb3316
@@ -60,143 +60,139 @@ const inputData =
 const commitData =
   '0xf14fcbc80eaeb279d6cd9d8e9917cb69abaf18adb26cfa42ee7fa24301ac6a915d504f4b';
 
-describe(
-  'Boost with ENS Registration Incentive',
-  () => {
-    const walletClient = createTestClient({
-      transport: http('http://127.0.0.1:8545'),
-      chain: sepolia,
-      mode: 'hardhat',
-    })
-      .extend(publicActions)
-      .extend(walletActions);
+describe('Boost with ENS Registration Incentive', () => {
+  const walletClient = createTestClient({
+    transport: http('http://127.0.0.1:8545'),
+    chain: sepolia,
+    mode: 'hardhat',
+  })
+    .extend(publicActions)
+    .extend(walletActions);
 
-    beforeAll(async () => {
-      await walletClient.reset({
-        jsonRpcUrl: CHAIN_URL,
-        blockNumber: CHAIN_BLOCK,
-      });
-      fixtures = await loadFixture(deployFixtures(defaultOptions, 11155111));
-      budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+  beforeAll(async () => {
+    await walletClient.reset({
+      jsonRpcUrl: CHAIN_URL,
+      blockNumber: CHAIN_BLOCK,
     });
+    fixtures = await loadFixture(deployFixtures(defaultOptions, 11155111));
+    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+  });
 
-    test('should create a boost for incentivizing ENS registration', async () => {
-      const { budget, erc20 } = budgets;
+  test('should create a boost for incentivizing ENS registration', async () => {
+    const { budget, erc20 } = budgets;
 
-      const { core } = fixtures;
-      const owner = defaultOptions.account.address;
-      // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
-      await mine();
+    const { core } = fixtures;
+    const owner = defaultOptions.account.address;
+    // This is a workaround to this known issue: https://github.com/NomicFoundation/hardhat/issues/5511
+    await mine();
 
-      // Step defining the action
-      const eventActionStep: ActionStep = {
+    // Step defining the action
+    const eventActionStep: ActionStep = {
+      chainid: sepolia.id,
+      signature: selector, // register function selector
+      signatureType: SignatureType.FUNC, // We're working with a function
+      targetContract: targetContract, // Address of the targetContract
+      actionParameter: {
+        filterType: FilterType.EQUAL, // Filter to check for equality
+        fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
+        fieldIndex: 1, // The owner function parameter
+        filterData: boostImpostor, // Filtering based on minters address
+      },
+    };
+
+    // Define EventActionPayload manually
+    const eventActionPayload = {
+      actionClaimant: {
         chainid: sepolia.id,
+        signatureType: SignatureType.FUNC,
         signature: selector, // register function selector
-        signatureType: SignatureType.FUNC, // We're working with a function
-        targetContract: targetContract, // Address of the targetContract
-        actionParameter: {
-          filterType: FilterType.EQUAL, // Filter to check for equality
-          fieldType: PrimitiveType.ADDRESS, // The field we're filtering is an address
-          fieldIndex: 1, // The owner function parameter
-          filterData: boostImpostor, // Filtering based on minters address
-        },
-      };
+        fieldIndex: 1, // Targeting the 'from' address
+        targetContract: targetContract, // The ERC20 contract we're monitoring
+      },
+      actionSteps: [eventActionStep],
+    };
+    // Initialize EventAction with the custom payload
+    const eventAction = core.EventAction(eventActionPayload);
 
-      // Define EventActionPayload manually
-      const eventActionPayload = {
-        actionClaimant: {
-          chainid: sepolia.id,
-          signatureType: SignatureType.FUNC,
-          signature: selector, // register function selector
-          fieldIndex: 1, // Targeting the 'from' address
-          targetContract: targetContract, // The ERC20 contract we're monitoring
-        },
-        actionSteps: [eventActionStep],
-      };
-      // Initialize EventAction with the custom payload
-      const eventAction = core.EventAction(eventActionPayload);
-
-      // Create the boost using the custom EventAction
-      await core.createBoost({
-        protocolFee: 250n,
-        referralFee: 250n,
-        maxParticipants: 100n,
-        budget: budget,
-        action: eventAction,
-        validator: core.SignerValidator({
-          signers: [owner, trustedSigner.account],
-          validatorCaller: fixtures.core.assertValidAddress(), // only core should be calling into the validate otherwise it's possible to burn signatures
+    // Create the boost using the custom EventAction
+    await core.createBoost({
+      protocolFee: 250n,
+      maxParticipants: 100n,
+      budget: budget,
+      action: eventAction,
+      validator: core.SignerValidator({
+        signers: [owner, trustedSigner.account],
+        validatorCaller: fixtures.core.assertValidAddress(), // only core should be calling into the validate otherwise it's possible to burn signatures
+      }),
+      allowList: core.OpenAllowList(),
+      incentives: [
+        core.ERC20Incentive({
+          asset: erc20.assertValidAddress(),
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
         }),
-        allowList: core.OpenAllowList(),
-        incentives: [
-          core.ERC20Incentive({
-            asset: erc20.assertValidAddress(),
-            reward: parseEther('1'),
-            limit: 100n,
-            strategy: StrategyType.POOL,
-          }),
-        ],
-      });
-
-      // Make sure the boost was created as expected
-      expect(await core.getBoostCount()).toBe(1n);
-      const boost = await core.getBoost(0n);
-      const action = boost.action;
-      expect(action).toBeDefined();
-
-      await walletClient.impersonateAccount({
-        address: boostImpostor,
-      });
-      await walletClient.setBalance({
-        address: boostImpostor,
-        value: parseEther('10'),
-      });
-
-      // submit the commit transaction
-      const commitReceipt = await walletClient.sendTransaction({
-        data: commitData,
-        account: boostImpostor,
-        to: targetContract,
-        value: parseEther('0'),
-      });
-      expect(commitReceipt).toBeDefined();
-
-      // allow for 60 seconds to pass before registering ENS name
-      await walletClient.request({
-        method: 'evm_increaseTime',
-        params: ['0x3c'], // increase time by 60 seconds
-      });
-
-      const hash = await walletClient.sendTransaction({
-        data: inputData,
-        account: boostImpostor,
-        to: targetContract,
-        value: parseEther('0.408279452054767655'),
-      });
-      // Make sure that the transaction was sent as expected and validates the action
-      expect(hash).toBeDefined();
-
-      const validation = await action.validateActionSteps({ hash });
-      expect(validation).toBe(true);
-      // Generate the signature using the trusted signer
-      const claimDataPayload = await boost.validator.encodeClaimData({
-        signer: trustedSigner,
-        incentiveData,
-        chainId: sepolia.id,
-        incentiveQuantity,
-        claimant: boostImpostor,
-        boostId: boost.id,
-      });
-
-      // Claim the incentive for the imposter
-      await core.claimIncentiveFor(
-        boost.id,
-        0n,
-        referrer,
-        claimDataPayload,
-        boostImpostor,
-        { value: parseEther('0.000075') },
-      );
+      ],
     });
-  },
-);
+
+    // Make sure the boost was created as expected
+    expect(await core.getBoostCount()).toBe(1n);
+    const boost = await core.getBoost(0n);
+    const action = boost.action;
+    expect(action).toBeDefined();
+
+    await walletClient.impersonateAccount({
+      address: boostImpostor,
+    });
+    await walletClient.setBalance({
+      address: boostImpostor,
+      value: parseEther('10'),
+    });
+
+    // submit the commit transaction
+    const commitReceipt = await walletClient.sendTransaction({
+      data: commitData,
+      account: boostImpostor,
+      to: targetContract,
+      value: parseEther('0'),
+    });
+    expect(commitReceipt).toBeDefined();
+
+    // allow for 60 seconds to pass before registering ENS name
+    await walletClient.request({
+      method: 'evm_increaseTime',
+      params: ['0x3c'], // increase time by 60 seconds
+    });
+
+    const hash = await walletClient.sendTransaction({
+      data: inputData,
+      account: boostImpostor,
+      to: targetContract,
+      value: parseEther('0.408279452054767655'),
+    });
+    // Make sure that the transaction was sent as expected and validates the action
+    expect(hash).toBeDefined();
+
+    const validation = await action.validateActionSteps({ hash });
+    expect(validation).toBe(true);
+    // Generate the signature using the trusted signer
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: sepolia.id,
+      incentiveQuantity,
+      claimant: boostImpostor,
+      boostId: boost.id,
+    });
+
+    // Claim the incentive for the imposter
+    await core.claimIncentiveFor(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+      boostImpostor,
+      { value: parseEther('0.000075') },
+    );
+  });
+});

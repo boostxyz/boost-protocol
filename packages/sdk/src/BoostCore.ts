@@ -1,7 +1,6 @@
 import {
   boostCoreAbi,
   type iAuthAbi,
-  readBoostCoreClaimFee,
   readBoostCoreCreateBoostAuth,
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
@@ -10,12 +9,10 @@ import {
   readIAuthIsAuthorized,
   simulateBoostCoreClaimIncentive,
   simulateBoostCoreClaimIncentiveFor,
-  simulateBoostCoreSetClaimFee,
   simulateBoostCoreSetCreateBoostAuth,
   simulateBoostCoreSetProtocolFeeReceiver,
   writeBoostCoreClaimIncentive,
   writeBoostCoreClaimIncentiveFor,
-  writeBoostCoreSetClaimFee,
   writeBoostCoreSetCreateBoostAuth,
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
@@ -248,7 +245,6 @@ export type CreateBoostPayload = {
   allowList: AllowList;
   incentives: Array<Incentive>;
   protocolFee?: bigint;
-  referralFee?: bigint;
   maxParticipants?: bigint;
   owner?: Address;
 };
@@ -342,7 +338,6 @@ export class BoostCore extends Deployable<
       allowList,
       incentives,
       protocolFee = 0n,
-      referralFee = 0n,
       maxParticipants = 0n,
       owner,
     } = payload;
@@ -493,7 +488,6 @@ export class BoostCore extends Deployable<
       allowList: allowListPayload,
       incentives: incentivesPayloads,
       protocolFee,
-      referralFee,
       maxParticipants,
       owner,
     };
@@ -528,7 +522,6 @@ export class BoostCore extends Deployable<
         incentive.at(boost.incentives.at(i)!),
       ),
       protocolFee: boost.protocolFee,
-      referralFee: boost.referralFee,
       maxParticipants: boost.maxParticipants,
       owner: boost.owner,
     });
@@ -723,13 +716,8 @@ export class BoostCore extends Deployable<
     if (typeof _id === 'string') {
       id = BigInt(_id);
     } else id = _id;
-    const {
-      protocolFee,
-      referralFee,
-      maxParticipants,
-      owner,
-      ...boostPayload
-    } = await this.readBoost(id, params);
+    const { protocolFee, maxParticipants, owner, ...boostPayload } =
+      await this.readBoost(id, params);
     const options: DeployableOptions = {
       config: this._config,
       account: this._account,
@@ -754,7 +742,6 @@ export class BoostCore extends Deployable<
       allowList,
       incentives,
       protocolFee,
-      referralFee,
       maxParticipants,
       owner,
     });
@@ -983,75 +970,6 @@ export class BoostCore extends Deployable<
       this._config,
       request,
     );
-    return { hash, result };
-  }
-
-  /**
-   * Get the claim fee.
-   *
-   * @public
-   * @async
-   * @param {?ReadParams} [params]
-   * @returns {Promise<bigint>}
-   */
-  public async claimFee(params?: ReadParams<typeof boostCoreAbi, 'claimFee'>) {
-    return await readBoostCoreClaimFee(this._config, {
-      ...assertValidAddressByChainId(
-        this._config,
-        this.addresses,
-        params?.chainId,
-      ),
-      args: [],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-  }
-
-  /**
-   * Sets the claim fee.
-   *
-   * @public
-   * @async
-   * @param {bigint} claimFee
-   * @param {?WriteParams} [params]
-   * @returns {Promise<void>}
-   */
-  public async setClaimFee(
-    claimFee: bigint,
-    params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
-  ) {
-    return await this.awaitResult(this.setClaimFeeRaw(claimFee, params));
-  }
-
-  /**
-   * Sets the claim fee.
-   *
-   * @public
-   * @async
-   * @param {bigint} claimFee
-   * @param {?WriteParams} [params]
-   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
-   */
-  public async setClaimFeeRaw(
-    claimFee: bigint,
-    params?: WriteParams<typeof boostCoreAbi, 'setClaimFee'>,
-  ) {
-    const { request, result } = await simulateBoostCoreSetClaimFee(
-      this._config,
-      {
-        ...assertValidAddressByChainId(
-          this._config,
-          this.addresses,
-          params?.chainId,
-        ),
-        args: [claimFee],
-        ...this.optionallyAttachAccount(),
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
-    const hash = await writeBoostCoreSetClaimFee(this._config, request);
     return { hash, result };
   }
 

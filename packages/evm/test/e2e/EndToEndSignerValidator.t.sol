@@ -119,7 +119,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
 
         // - Protocol Fee == 1,000 bps (custom fee) + 1,000 bps (base fee) = 2,000 bps = 20%
         assertEq(boost.protocolFee, 2_000);
-        
+
         // - Max Participants == 5
         assertEq(boost.maxParticipants, 5);
     }
@@ -196,7 +196,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
     function _when_I_allocate_assets_to_my_budget(ABudget budget) internal {
         // "When I allocate assets to my budget"
         // "And the asset is an ERC20 token"
-        erc20.approve(address(budget), 500 ether);
+        erc20.approve(address(budget), 550 ether);
         assertTrue(
             budget.allocate(
                 abi.encode(
@@ -204,15 +204,15 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                         assetType: ABudget.AssetType.ERC20,
                         asset: address(erc20),
                         target: address(this),
-                        data: abi.encode(ABudget.FungiblePayload({amount: 500 ether}))
+                        data: abi.encode(ABudget.FungiblePayload({amount: 550 ether}))
                     })
                 )
             )
         );
 
         // "Then my budget's balance should reflect the transferred amount"
-        assertEq(erc20.balanceOf(address(budget)), 500 ether);
-        assertEq(budget.available(address(erc20)), 500 ether);
+        assertEq(erc20.balanceOf(address(budget)), 550 ether);
+        assertEq(budget.available(address(erc20)), 550 ether);
 
         // "When I allocate assets to my budget"
         // "And the asset is ETH"

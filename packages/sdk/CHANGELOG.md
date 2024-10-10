@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.19
+
+### Minor Changes
+
+- 7076b88: export boostRegistryAbi, test all public exports
+
 ## 0.0.0-alpha.18
 
 ### Minor Changes

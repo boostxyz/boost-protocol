@@ -112,6 +112,11 @@ import {
   assertValidAddressByChainId,
 } from './utils';
 
+/**
+ * The ABI of the BoostCore contract, if needed for low level operations
+ *
+ * @type {typeof boostCoreAbi}
+ */
 export { boostCoreAbi };
 
 /**
@@ -126,9 +131,9 @@ export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
  *
  * @type {Address}
  */
-export const BOOST_CORE_ADDRESS = (BoostCoreBases as Record<string, Address>)[
-  __DEFAULT_CHAIN_ID__
-];
+export const BOOST_CORE_ADDRESS =
+  (BoostCoreBases as Record<string, Address>)[__DEFAULT_CHAIN_ID__] ||
+  zeroAddress;
 
 /**
  * The fixed addresses for the deployed Boost Core.

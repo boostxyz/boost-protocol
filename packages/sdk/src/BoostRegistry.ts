@@ -14,6 +14,7 @@ import {
   type ContractEventName,
   type Hex,
   isAddress,
+  zeroAddress,
 } from 'viem';
 import { BoostRegistry as BoostRegistryBases } from '../dist/deployments.json';
 import {
@@ -32,13 +33,20 @@ import {
 } from './utils';
 
 /**
+ * The ABI of the BoostRegistry contract, if needed for low level operations
+ *
+ * @type {typeof boostRegistryAbi}
+ */
+export { boostRegistryAbi };
+
+/**
  * The address of the deployed `BoostRegistry` instance. In prerelease mode, this will be its sepolia address
  *
  * @type {Address}
  */
-export const BOOST_REGISTRY_ADDRESS = (
-  BoostRegistryBases as Record<string, Address>
-)[__DEFAULT_CHAIN_ID__];
+export const BOOST_REGISTRY_ADDRESS =
+  (BoostRegistryBases as Record<string, Address>)[__DEFAULT_CHAIN_ID__] ||
+  zeroAddress;
 
 /**
  * The fixed addresses for the deployed Boost Registry.

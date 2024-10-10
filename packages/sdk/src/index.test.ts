@@ -1,39 +1,123 @@
 import { describe, expect, test } from "vitest";
 import * as SDK from "./index";
 
-describe("sdk exports", () => {
+// Please add any public interface you'd like to verify exists on the root export here
+// Types don't exist in .js so only list objects, constants, classes, etc, no interfaces
+const allExports = [
+  "BoostRegistry",
+  "BoostCore",
+  "Boost",
+  "EventAction",
+  "OpenAllowList",
+  "SimpleAllowList",
+  "SimpleDenyList",
+  "ManagedBudget",
+  "Deployable",
+  "Contract",
+  "DeployableTarget",
+  "DeployableTargetWithRBAC",
+  "AllowListIncentive",
+  "CGDAIncentive",
+  "ERC20Incentive",
+  "ERC20VariableIncentive",
+  "ERC20VariableCriteriaIncentive",
+  "PointsIncentive",
+  "SignerValidator",
+  "BoostCoreNoIdentifierEmitted",
+  "ContractAddressRequiredError",
+  "DeployableAlreadyDeployedError",
+  "DeployableBuildParametersUnspecifiedError",
+  "DeployableUnknownOwnerProvidedError",
+  "DeployableWagmiConfigurationRequiredError",
+  "DeployableMissingPayloadError",
+  "NoContractAddressUponReceiptError",
+  "InvalidComponentInterfaceError",
+  "UnparseableAbiParamError",
+  "UnknownTransferPayloadSupplied",
+  "BudgetMustAuthorizeBoostCore",
+  "MustInitializeBudgetError",
+  "IncentiveNotCloneableError",
+  "NoEventActionStepsProvidedError",
+  "TooManyEventActionStepsProvidedError",
+  "ValidationAbiMissingError",
+  "ValidationLogsMissingError",
+  "FieldActionValidationError",
+  "DecodedArgsMalformedError",
+  "FieldValueUndefinedError",
+  "InvalidNumericalCriteriaError",
+  "FunctionDataDecodeError",
+  "FieldValueNotComparableError",
+  "UnrecognizedFilterTypeError",
+  "NoConnectedChainIdError",
+  "InvalidProtocolChainIdError",
+  "IncentiveCriteriaNotFoundError",
+  "NoMatchingLogsError",
+  "InvalidCriteriaTypeError",
+  "DecodedArgsError",
+  "PassthroughAuth",
+  "prepareBoostPayload",
+  "actionFromAddress",
+  "isEventActionPayloadSimple",
+  "prepareEventActionPayload",
+  "allowListFromAddress",
+  "prepareSimpleAllowListPayload",
+  "prepareSimpleDenyListPayload",
+  "budgetFromAddress",
+  "isFungibleTransfer",
+  "isERC1155TransferPayload",
+  "prepareTransfer",
+  "prepareManagedBudgetPayload",
+  "prepareAllowListIncentivePayload",
+  "prepareCGDAIncentivePayload",
+  "prepareERC20IncentivePayload",
+  "prepareERC20VariableIncentivePayload",
+  "prepareERC20VariableCriteriaIncentivePayload",
+  "incentiveFromAddress",
+  "preparePointsIncentivePayload",
+  "prepareSignerValidatorClaimDataPayload",
+  "prepareSignerValidatorInputParams",
+  "prepareSignerValidatorPayload",
+  "validatorFromAddress",
+  "bytes4",
+  "getDeployedContractAddress",
+  "awaitResult",
+  "assertValidAddressByChainId",
+  "prepareClaimPayload",
+  "prepareERC1155Payload",
+  "prepareERC1155Transfer",
+  "prepareFungiblePayload",
+  "prepareFungibleTransfer",
+  "prepareTransferPayload",
+  "BOOST_REGISTRY_ADDRESS",
+  "BOOST_REGISTRY_ADDRESSES",
+  "boostCoreAbi",
+  "boostRegistryAbi",
+  "BOOST_CORE_CLAIM_FEE",
+  "BOOST_CORE_ADDRESS",
+  "BOOST_CORE_ADDRESSES",
+  "ActionByComponentInterface",
+  "AllowListByComponentInterface",
+  "simpleAllowListAbi",
+  "LIST_MANAGER_ROLE",
+  "simpleDenyListAbi",
+  "BudgetByComponentInterface",
+  "managedBudgetAbi",
+  "rbacAbi",
+  "allowListIncentiveAbi",
+  "cgdaIncentiveAbi",
+  "erc20IncentiveAbi",
+  "erc20VariableIncentiveAbi",
+  "IncentiveByComponentInterface",
+  "pointsIncentiveAbi",
+  "signerValidatorAbi",
+  "ValidatorByComponentInterface",
+  "passthroughAuthAbi"
+]
+
+describe("SDK exports", () => {
   test(`should export all public API`, () => {
-    expect(SDK.BoostRegistry).toBeDefined();
-    expect(SDK.BoostCore).toBeDefined();
-    expect(SDK.Boost).toBeDefined();
-
-    // interfaces
-    expect(SDK.PassthroughAuth).toBeDefined();
-    // expect(SDK.ContractAction).toBeDefined();
-    // expect(SDK.ERC721MintAction).toBeDefined();
-    expect(SDK.SimpleAllowList).toBeDefined();
-    expect(SDK.SimpleDenyList).toBeDefined();
-    expect(SDK.ManagedBudget).toBeDefined();
-    // expect(SDK.VestingBudget).toBeDefined();
-    expect(SDK.AllowListIncentive).toBeDefined();
-    expect(SDK.CGDAIncentive).toBeDefined();
-    expect(SDK.ERC20Incentive).toBeDefined();
-    // expect(SDK.ERC1155Incentive).toBeDefined();
-    expect(SDK.PointsIncentive).toBeDefined();
-    expect(SDK.SignerValidator).toBeDefined();
-
-    // errors
-    expect(SDK.BoostCoreNoIdentifierEmitted).toBeDefined();
-    expect(SDK.ContractAddressRequiredError).toBeDefined();
-    expect(SDK.DeployableAlreadyDeployedError).toBeDefined();
-    expect(SDK.DeployableBuildParametersUnspecifiedError).toBeDefined();
-    expect(SDK.DeployableUnknownOwnerProvidedError).toBeDefined();
-    expect(SDK.DeployableWagmiConfigurationRequiredError).toBeDefined();
-    expect(SDK.DeployableMissingPayloadError).toBeDefined();
-    expect(SDK.NoContractAddressUponReceiptError).toBeDefined();
-    expect(SDK.InvalidComponentInterfaceError).toBeDefined();
-    expect(SDK.UnknownTransferPayloadSupplied).toBeDefined();
-    expect(SDK.BudgetMustAuthorizeBoostCore).toBeDefined();
-    expect(SDK.IncentiveNotCloneableError).toBeDefined();
+    for(let exp of allExports) {
+      expect((SDK as any)[exp]).toBeDefined()
+    }
   });
 });

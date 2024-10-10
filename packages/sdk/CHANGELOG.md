@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.20
+
+### Minor Changes
+
+- aa20a00: add `EventAction.deriveActionClaimantFromTransaction` method, slight refactor to how `ValidateActionStepParams` are handled
+
 ## 0.0.0-alpha.19
 
 ### Minor Changes

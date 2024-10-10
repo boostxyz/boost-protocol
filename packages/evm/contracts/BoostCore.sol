@@ -281,7 +281,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     {
         incentives = new AIncentive[](targets_.length);
         for (uint256 i = 0; i < targets_.length; i++) {
-            // Deploy the clone, but don't initialize until it we've preflighted
+            // Deploy the clone, but don't initialize until we've preflighted
             _checkTarget(type(AIncentive).interfaceId, targets_[i].instance);
 
             // Ensure the target is a base implementation (incentive clones are not reusable)
@@ -289,18 +289,74 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 revert BoostError.InvalidInstance(type(AIncentive).interfaceId, targets_[i].instance);
             }
 
+            // Create the incentive instance
             incentives[i] = AIncentive(_makeTarget(type(AIncentive).interfaceId, targets_[i], false));
 
+            // Get the preflight data for the protocol fee and original disbursement
             bytes memory preflight = incentives[i].preflight(targets_[i].parameters);
             if (preflight.length != 0) {
+                // Protocol Fee disbursal
                 // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
                 if (!budget_.disburse(preflight)) {
                     revert BoostError.InvalidInitialization();
                 }
+                // Original disbursement call
+                if (!budget_.disburse(preflight))  {
+                    revert BoostError.InvalidInitialization();
+                }
             }
 
+            // Initialize the incentive instance after value has been trasnferred
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
             incentives[i].initialize(targets_[i].parameters);
+        }
+    }
+
+    /// @notice Internal helper function to calculate the protocol fee and prepare the modified disbursal
+    /// @param preflight The encoded data for the original disbursement
+    /// @return The modified preflight data for the protocol fee disbursement
+    function _getFeeDisbursal(bytes memory preflight) internal view returns (bytes memory) {
+        // Decode the preflight data to extract the transfer details
+        BoostLib.Transfer memory request = abi.decode(preflight, (BoostLib.Transfer));
+
+        if (request.assetType == BoostLib.AssetType.ERC20 || request.assetType == BoostLib.AssetType.ETH) {
+            // Decode the fungible payload
+            BoostLib.FungiblePayload memory payload = abi.decode(request.data, (BoostLib.FungiblePayload));
+
+            // Calculate the protocol fee based on BIPS
+            uint256 feeAmount = (payload.amount * protocolFee) / FEE_DENOMINATOR;
+
+            // Create a new fungible payload for the protocol fee
+            BoostLib.FungiblePayload memory feePayload = BoostLib.FungiblePayload({amount: feeAmount});
+
+            // Modify the original request for the fee disbursal
+            request.data = abi.encode(feePayload);
+            request.target = address(this); // Set the target to BoostCore (this contract)
+
+            // Encode and return the modified request as bytes
+            return abi.encode(request);
+        } else if (request.assetType == BoostLib.AssetType.ERC1155) {
+            // Decode the ERC1155 payload
+            BoostLib.ERC1155Payload memory payload = abi.decode(request.data, (BoostLib.ERC1155Payload));
+
+            // Calculate the protocol fee based on BIPS
+            uint256 feeAmount = (payload.amount * protocolFee) / FEE_DENOMINATOR;
+
+            // Create a new ERC1155 payload for the protocol fee
+            BoostLib.ERC1155Payload memory feePayload = BoostLib.ERC1155Payload({
+                tokenId: payload.tokenId,
+                amount: feeAmount,
+                data: payload.data // Keep the additional data unchanged
+            });
+
+            // Modify the original request for the fee disbursal
+            request.data = abi.encode(feePayload);
+            request.target = address(this); // Set the target to BoostCore (this contract)
+
+            // Encode and return the modified request as bytes
+            return abi.encode(request);
+        } else {
+            revert BoostError.UnsupportedAssetType();
         }
     }
 
@@ -311,24 +367,5 @@ contract BoostCore is Ownable, ReentrancyGuard {
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
             ACloneable(instance).initialize(target_.parameters);
         }
-    }
-
-    /// @notice Route the claim fee to the creator, referrer, and protocol fee receiver
-    /// @param boost The Boost for which to route the claim fee
-    /// @param referrer_ The address of the referrer (if any)
-    function _routeClaimFee(BoostLib.Boost storage boost, address referrer_) internal {
-        if (claimFee == 0) return;
-        uint256 netFee = claimFee;
-
-        // If a referrer is provided, transfer the revshare and reduce the net fee
-        if (referrer_ != address(0)) {
-            uint256 referralShare = claimFee * boost.referralFee / FEE_DENOMINATOR;
-            netFee -= referralShare;
-            referrer_.safeTransferETH(referralShare);
-        }
-
-        // The remaining fee is split between the owner and the protocol
-        boost.owner.safeTransferETH(netFee / 2);
-        protocolFeeReceiver.safeTransferETH(address(this).balance);
     }
 }

@@ -482,6 +482,34 @@ describe("EventAction Event Selector", () => {
         expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
       });
     });
+
+    test("can derive the claimant from an event action", async () => {
+      const action = await loadFixture(cloneEventAction(fixtures, erc721));
+      const recipient = accounts[1].account;
+      await erc721.approve(recipient, 1n);
+      const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
+      expect(
+        await action.deriveActionClaimantFromTransaction(await action.getActionClaimant(), {
+          hash,
+          chainId,
+        }),
+      ).toBe(recipient);
+    });
+
+    test("can derive the claimant from a function action", async () => {
+      const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
+      const recipient = accounts[1].account;
+      const { hash } = await erc721.mintRaw(recipient, {
+        value: parseEther(".1"),
+      });
+
+      expect(
+        await action.deriveActionClaimantFromTransaction(await action.getActionClaimant(), {
+          hash,
+          chainId,
+        }),
+      ).toBe(recipient);
+    });
   });
 });
 

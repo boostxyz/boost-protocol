@@ -40,7 +40,6 @@ const allExports = [
   "NoEventActionStepsProvidedError",
   "TooManyEventActionStepsProvidedError",
   "ValidationAbiMissingError",
-  "ValidationLogsMissingError",
   "FieldActionValidationError",
   "DecodedArgsMalformedError",
   "FieldValueUndefinedError",

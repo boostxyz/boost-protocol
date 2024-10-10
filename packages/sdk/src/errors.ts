@@ -442,25 +442,6 @@ export class ValidationAbiMissingError extends Error {
 }
 
 /**
- * Thrown when missing logs for validating action steps.
- *
- * @export
- * @class ValidationLogsMissingError
- * @typedef {ValidationLogsMissingError}
- * @extends {Error}
- */
-export class ValidationLogsMissingError extends Error {
-  /**
-   * Creates an instance of ValidationLogsMissingError.
-   *
-   * @constructor
-   */
-  constructor() {
-    super('Logs are required for validation');
-  }
-}
-
-/**
  * Function action validation context to help debug other validation errors
  *
  * @interface FunctionActionValidationMeta

@@ -52,12 +52,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
     );
 
     struct IncentiveDisbursalInfo {
-        ABudget.AssetType assetType;       // ERC20, ERC1155, or ETH
-        address asset;             // Token address or zero address for ETH
+        ABudget.AssetType assetType; // ERC20, ERC1155, or ETH
+        address asset; // Token address or zero address for ETH
         uint256 protocolFee; // Total protocol fees reserved for this incentive
-        uint256 tokenId;     // Token ID for ERC1155 incentives; unusued for fungible assets
+        uint256 tokenId; // Token ID for ERC1155 incentives; unusued for fungible assets
     }
-
 
     event BoostClaimed(
         uint256 indexed boostId, uint256 indexed incentiveId, address indexed claimant, address referrer, bytes data
@@ -205,6 +204,40 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @return The number of Boosts
     function getBoostCount() external view returns (uint256) {
         return _boosts.length;
+    }
+
+    /// @notice Returns the protocol fee and any remaining incentive value to the owner or budget
+    /// @param boostId The ID of the Boost
+    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external nonReentrant {
+        // We want to check that the sender is authorized to clawback the incentive
+
+        // Generate the unique key for the incentive
+        bytes32 key = _generateKey(boostId, incentiveId);
+        IncentiveDisbursalInfo storage incentive = incentives[key];
+
+        // Decode the data for clawback
+        AIncentive.ClawbackPayload memory claim_ = abi.decode(data_, (AIncentive.ClawbackPayload));
+        uint256 amount = abi.decode(claim_.data, (uint256));
+
+        // Calculate the protocol fee based on the clawback amount and the protocol fee percentage
+        uint256 protocolFeeAmount = (amount * incentive.protocolFee) / FEE_DENOMINATOR;
+
+        // Transfer the protocol fee to the protocol fee receiver
+        if (protocolFeeAmount > 0) {
+            if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
+                incentive.asset.safeTransfer(protocolFeeReceiver, protocolFeeAmount);
+            } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
+                // We have a reentrancy guard in place, so we can safely call the ERC1155 safeTransferFrom
+                IERC1155(incentive.asset).safeTransferFrom(
+                    address(this), protocolFeeReceiver, incentive.tokenId, protocolFeeAmount, ""
+                );
+            }
+        }
+
+        // Direct call to the clawback function on the incentive contract
+        (bool success,) = incentive.asset.call(abi.encodeWithSignature("clawback(bytes)", data_));
+
+        require(success, "Clawback failed");
     }
 
     /// @notice Set the createBoostAuth address
@@ -367,7 +400,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     /// @notice Decode the ERC1155 data
-    function _decodeERC1155Data(bytes memory data) internal pure returns (uint256 tokenId, bytes memory additionalData) {
+    function _decodeERC1155Data(bytes memory data)
+        internal
+        pure
+        returns (uint256 tokenId, bytes memory additionalData)
+    {
         return abi.decode(data, (uint256, bytes));
     }
 
@@ -377,12 +414,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address asset,
         ABudget.AssetType assetType,
         bytes memory extraData
-    ) internal  {
+    ) internal {
         bytes memory data;
         uint256 tokenId;
 
         if (assetType == ABudget.AssetType.ERC1155) {
-            (tokenId, ) = abi.decode(extraData, (uint256, bytes));
+            (tokenId,) = abi.decode(extraData, (uint256, bytes));
         } else {
             data = extraData; // For ERC20 or ETH, the data remains as is (likely empty)
         }

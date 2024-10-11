@@ -7,6 +7,9 @@ import {LibZip} from "@solady/utils/LibZip.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
@@ -48,6 +51,14 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address budget
     );
 
+    struct IncentiveDisbursalInfo {
+        ABudget.AssetType assetType;       // ERC20, ERC1155, or ETH
+        address asset;             // Token address or zero address for ETH
+        uint256 protocolFee; // Total protocol fees reserved for this incentive
+        uint256 tokenId;     // Token ID for ERC1155 incentives; unusued for fungible assets
+    }
+
+
     event BoostClaimed(
         uint256 indexed boostId, uint256 indexed incentiveId, address indexed claimant, address referrer, bytes data
     );
@@ -68,6 +79,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
     uint64 public constant FEE_DENOMINATOR = 10_000;
+
+    // @notice The set of incentives for the Boost
+    mapping(bytes32 => IncentiveDisbursalInfo) public incentives;
 
     modifier canCreateBoost(address sender) {
         if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
@@ -279,6 +293,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 if (!budget_.disburse(preflight))  {
                     revert BoostError.InvalidInitialization();
                 }
+                // decode the preflight data to extract the transfer details
+                ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
+                _addIncentive(_boosts.length - 1, i, request.asset, request.assetType, targets_[i].parameters);
             }
 
             // Initialize the incentive instance after value has been trasnferred
@@ -342,5 +359,41 @@ contract BoostCore is Ownable, ReentrancyGuard {
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
             ACloneable(instance).initialize(target_.parameters);
         }
+    }
+
+    /// @notice Generate a unique key for an incentive
+    function _generateKey(uint256 boostId, uint256 incentiveId) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(boostId, incentiveId));
+    }
+
+    /// @notice Decode the ERC1155 data
+    function _decodeERC1155Data(bytes memory data) internal pure returns (uint256 tokenId, bytes memory additionalData) {
+        return abi.decode(data, (uint256, bytes));
+    }
+
+    function _addIncentive(
+        uint256 boostId,
+        uint256 incentiveId,
+        address asset,
+        ABudget.AssetType assetType,
+        bytes memory extraData
+    ) internal  {
+        bytes memory data;
+        uint256 tokenId;
+
+        if (assetType == ABudget.AssetType.ERC1155) {
+            (tokenId, ) = abi.decode(extraData, (uint256, bytes));
+        } else {
+            data = extraData; // For ERC20 or ETH, the data remains as is (likely empty)
+        }
+
+        IncentiveDisbursalInfo memory info = IncentiveDisbursalInfo(
+            assetType,
+            asset,
+            protocolFee, // We store the current protocol fee in case it changes in the future
+            tokenId
+        );
+
+        incentives[_generateKey(boostId, incentiveId)] = info;
     }
 }

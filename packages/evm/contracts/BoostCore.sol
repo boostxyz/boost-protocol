@@ -167,13 +167,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
     {
         claimIncentiveFor(boostId_, incentiveId_, referrer_, data_, msg.sender);
     }
-
     /// @notice Claim an incentive for a Boost on behalf of another user
     /// @param boostId_ The ID of the Boost
     /// @param incentiveId_ The ID of the AIncentive
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     /// @param claimant the address of the user eligible for the incentive payout
+
     function claimIncentiveFor(
         uint256 boostId_,
         uint256 incentiveId_,
@@ -182,14 +182,35 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address claimant
     ) public payable nonReentrant {
         BoostLib.Boost storage boost = _boosts[boostId_];
+        bytes32 key = _generateKey(boostId_, incentiveId_);
+        IncentiveDisbursalInfo storage incentive = incentives[key];
 
+        // Validate the claimant against the allow list and the validator
         if (!boost.allowList.isAllowed(claimant, data_)) revert BoostError.Unauthorized();
 
         // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
         if (!boost.validator.validate(boostId_, incentiveId_, claimant, data_)) revert BoostError.Unauthorized();
+
+        // Get the balance of the asset before the claim
+        uint256 initialBalance = _getAssetBalance(incentive);
+
+        // Execute the claim
         if (!boost.incentives[incentiveId_].claim(claimant, data_)) {
             revert BoostError.ClaimFailed(claimant, data_);
         }
+
+        // Get the balance of the asset after the claim
+        uint256 finalBalance = _getAssetBalance(incentive);
+
+        // Calculate the change in balance and the protocol fee amount
+        uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
+        uint256 protocolFeeAmount = (balanceChange * incentive.protocolFee) / FEE_DENOMINATOR;
+
+        // Transfer the protocol fee to the protocol fee receiver if applicable
+        if (protocolFeeAmount > 0) {
+            _transferProtocolFee(incentive, protocolFeeAmount);
+        }
+
         emit BoostClaimed(boostId_, incentiveId_, claimant, referrer_, data_);
     }
 
@@ -227,7 +248,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
                 incentive.asset.safeTransfer(protocolFeeReceiver, protocolFeeAmount);
             } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
-                // We have a reentrancy guard in place, so we can safely call the ERC1155 safeTransferFrom
+                // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
                 IERC1155(incentive.asset).safeTransferFrom(
                     address(this), protocolFeeReceiver, incentive.tokenId, protocolFeeAmount, ""
                 );
@@ -237,6 +258,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         // Direct call to the clawback function on the incentive contract
         (bool success,) = incentive.asset.call(abi.encodeWithSignature("clawback(bytes)", data_));
 
+        // Throw a custom error here
         require(success, "Clawback failed");
     }
 
@@ -432,5 +454,26 @@ contract BoostCore is Ownable, ReentrancyGuard {
         );
 
         incentives[_generateKey(boostId, incentiveId)] = info;
+    }
+
+    // Helper function to get the balance of the asset depending on its type
+    function _getAssetBalance(IncentiveDisbursalInfo storage incentive) internal view returns (uint256) {
+        if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
+            return IERC20(incentive.asset).balanceOf(address(this));
+        } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
+            return IERC1155(incentive.asset).balanceOf(address(this), incentive.tokenId);
+        }
+        return 0;
+    }
+
+    // Helper function to transfer the protocol fee based on the asset type
+    function _transferProtocolFee(IncentiveDisbursalInfo storage incentive, uint256 amount) internal {
+        if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
+            incentive.asset.safeTransfer(protocolFeeReceiver, amount);
+        } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
+            IERC1155(incentive.asset).safeTransferFrom(
+                address(this), protocolFeeReceiver, incentive.tokenId, amount, ""
+            );
+        }
     }
 }

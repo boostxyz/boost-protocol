@@ -551,6 +551,47 @@ contract BoostCoreTest is Test {
         );
     }
 
+    function testClawbackWithZeroAmount() public {
+        address recipient = makeAddr("recipient");
+
+        // Setup: Create a Boost first with the valid calldata
+        boostCore.createBoost(validCreateCalldata);
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        uint256 boostId = 0;
+        uint256 incentiveId = 0;
+
+        // Generate the key for the incentive
+        bytes32 key = keccak256(abi.encodePacked(boostId, incentiveId));
+
+        // Mint some tokens to ensure there is balance in the incentive
+        mockERC20.mint(address(boost.incentives[incentiveId]), 100 ether);
+        mockERC20.approve(address(boostCore), 100 ether);
+
+        // Get initial balances
+        uint256 initialBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
+        uint256 initialBalanceRecipient = mockERC20.balanceOf(recipient);
+        uint256 initialProtocolReceiverBalance = mockERC20.balanceOf(boostCore.protocolFeeReceiver());
+
+        // Prepare the clawback payload with zero amount
+        bytes memory clawbackData = abi.encode(AIncentive.ClawbackPayload({target: recipient, data: abi.encode(0)}));
+
+        // Call clawback
+        boostCore.clawback(clawbackData, boostId, incentiveId);
+
+        // Assert that no balances have changed
+        uint256 finalBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
+        uint256 finalBalanceRecipient = mockERC20.balanceOf(recipient);
+        uint256 finalProtocolReceiverBalance = mockERC20.balanceOf(boostCore.protocolFeeReceiver());
+
+        assertEq(finalBalanceIncentive, initialBalanceIncentive, "Incentive balance should remain unchanged");
+        assertEq(finalBalanceRecipient, initialBalanceRecipient, "Recipient balance should remain unchanged");
+        assertEq(
+            finalProtocolReceiverBalance,
+            initialProtocolReceiverBalance,
+            "Protocol fee receiver balance should remain unchanged"
+        );
+    }
+
     ///////////////////////////
     // BoostCore.setProtocolFeeReceiver //
     ///////////////////////////

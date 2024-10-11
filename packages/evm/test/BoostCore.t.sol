@@ -395,9 +395,9 @@ contract BoostCoreTest is Test {
         assertEq(boost.maxParticipants, 10_000);
     }
 
-    ///////////////////////////
+    /////////////////////////////
     // BoostCore.getBoostCount //
-    ///////////////////////////
+    /////////////////////////////
 
     function testGetBoostCount() public {
         // Initially, there should be no Boosts
@@ -408,6 +408,147 @@ contract BoostCoreTest is Test {
 
         // Now, there should be one Boost
         assertEq(boostCore.getBoostCount(), 1);
+    }
+
+    ////////////////////////
+    // BoostCore.clawback //
+    ////////////////////////
+    function testFuzz_SingleClawbackPrecision(uint256 multiple) public {
+        address recipient = makeAddr("recipient");
+        // Assume clawbackAmount is between 1 wei and 1 ether for the sake of precision testing
+        vm.assume(multiple > 0 && multiple <= 100);
+        uint256 clawbackAmount = multiple * 1 ether;
+
+        // Setup: Create a Boost first with the valid calldata
+        boostCore.createBoost(validCreateCalldata);
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        uint256 boostId = 0;
+        uint256 incentiveId = 0;
+
+        // Prepare the clawback payload using the mockERC20 incentive and the clawback amount
+        bytes memory clawbackData =
+            abi.encode(AIncentive.ClawbackPayload({target: recipient, data: abi.encode(clawbackAmount)}));
+
+        // Generate the key for the incentive
+        bytes32 key = keccak256(abi.encodePacked(boostId, incentiveId));
+
+        // Ensure the initial balance is sufficient for the clawback
+        BoostCore.IncentiveDisbursalInfo memory incentive = boostCore.getIncentive(key);
+        uint256 initialBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
+        uint256 initaliBalanceRecipient = mockERC20.balanceOf(recipient);
+        require(initialBalanceIncentive >= clawbackAmount, "Insufficient initial balance for clawback test");
+
+        // Call clawback
+        boostCore.clawback(clawbackData, boostId, incentiveId);
+
+        // Get the protocol fee that should have been deducted
+        uint256 protocolFeeAmount = (clawbackAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
+
+        // Validate that the correct protocol fee was deducted
+        uint256 expectedRemainingRecipient =
+            clawbackAmount * (boostCore.FEE_DENOMINATOR() - boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
+
+        uint256 finalBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
+        uint256 finalBalanceRecipient = mockERC20.balanceOf(recipient);
+
+        // Assert the remaining balance matches the expected remaining balance
+        assertEq(
+            finalBalanceIncentive,
+            initialBalanceIncentive - clawbackAmount,
+            "Balance after clawback does not match expected"
+        );
+        assertEq(
+            finalBalanceRecipient,
+            initaliBalanceRecipient + clawbackAmount,
+            "Recipient balance after clawback does not match expected"
+        );
+
+        // Validate that the protocol fee was sent to the protocolFeeReceiver
+        uint256 protocolReceiverBalance = mockERC20.balanceOf(boostCore.protocolFeeReceiver());
+        assertEq(protocolReceiverBalance, protocolFeeAmount, "Protocol fee receiver did not receive correct amount");
+    }
+
+    function testFuzz_MultipleClawbacks(uint256[] memory multiples) public {
+        address recipient = makeAddr("recipient");
+        vm.assume(multiples.length > 0 && multiples.length <= 10); // Assume the array has between 1 and 10 entries
+
+        // Total clawback amount we'll use to ensure the BoostCore has enough balance
+        uint256 totalClawbackAmount = 0;
+
+        multiples[0] = bound(multiples[0], 1, 100);
+        multiples[0] = multiples[0] * 1 ether;
+        totalClawbackAmount += multiples[0];
+
+        // Calculate total clawback amount based on multiples
+        uint256 i = 1;
+        for (i = 1; (i < multiples.length && totalClawbackAmount < 100 ether); i++) {
+            // Assume each multiple is within a valid range to avoid too large values
+            multiples[i] = bound(multiples[i], 1, 100 - (totalClawbackAmount / 1 ether));
+            multiples[i] = multiples[i] * 1 ether;
+            totalClawbackAmount += multiples[i];
+        }
+
+        // Setup: Create a Boost first with the valid calldata
+        boostCore.createBoost(validCreateCalldata);
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        uint256 boostId = 0;
+        uint256 incentiveId = 0;
+
+        // Generate the key for the incentive
+        bytes32 key = keccak256(abi.encodePacked(boostId, incentiveId));
+
+        // Mint the required ERC20 balance and approve it for the BoostCore contract
+        mockERC20.mint(address(boost.incentives[incentiveId]), totalClawbackAmount);
+        mockERC20.approve(address(boostCore), totalClawbackAmount);
+
+        // Ensure the initial balance is sufficient for the total clawback amount
+        BoostCore.IncentiveDisbursalInfo memory incentive = boostCore.getIncentive(key);
+        uint256 initialBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
+        uint256 initialBalanceRecipient = mockERC20.balanceOf(recipient);
+        require(initialBalanceIncentive >= totalClawbackAmount, "Insufficient initial balance for clawback test");
+
+        // Initialize cumulative protocol fee tracker and cumulative recipient tracker
+        uint256 cumulativeProtocolFee = 0;
+        uint256 cumulativeRecipientAmount = 0;
+
+        // Execute multiple clawbacks
+        uint256 clawbackCount = i;
+        for (i = 0; i < clawbackCount; i++) {
+            // Prepare the clawback payload using the current clawback amount
+            bytes memory clawbackData =
+                abi.encode(AIncentive.ClawbackPayload({target: recipient, data: abi.encode(multiples[i])}));
+
+            // Call clawback
+            boostCore.clawback(clawbackData, boostId, incentiveId);
+
+            // Calculate the protocol fee for this clawback
+            uint256 protocolFeeAmount = (multiples[i] * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
+            cumulativeProtocolFee += protocolFeeAmount;
+        }
+
+        // Calculate the final balances
+        uint256 finalBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
+        uint256 finalBalanceRecipient = mockERC20.balanceOf(recipient);
+
+        // Assert the final balances are as expected
+        assertEq(
+            finalBalanceIncentive,
+            initialBalanceIncentive - totalClawbackAmount,
+            "Balance after multiple clawbacks does not match expected"
+        );
+        assertEq(
+            finalBalanceRecipient,
+            initialBalanceRecipient + totalClawbackAmount,
+            "Recipient balance after multiple clawbacks does not match expected"
+        );
+
+        // Validate that the total protocol fee was sent to the protocolFeeReceiver
+        uint256 protocolReceiverBalance = mockERC20.balanceOf(boostCore.protocolFeeReceiver());
+        assertEq(
+            protocolReceiverBalance,
+            cumulativeProtocolFee,
+            "Protocol fee receiver did not receive correct cumulative amount"
+        );
     }
 
     ///////////////////////////

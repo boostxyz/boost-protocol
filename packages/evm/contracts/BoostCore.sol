@@ -227,6 +227,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
         return _boosts.length;
     }
 
+    /// @notice Get the incentives for a Boost
+    /// @param key The key composed of the Boost ID and the Incentive ID - keccak256(abi.encodePacked(boostId, incentiveId))
+    function getIncentive(bytes32 key) external view returns (IncentiveDisbursalInfo memory) {
+        return incentives[key];
+    }
+
     /// @notice Returns the protocol fee and any remaining incentive value to the owner or budget
     /// @param boostId The ID of the Boost
     function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external nonReentrant {
@@ -254,9 +260,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 );
             }
         }
-
-        // Direct call to the clawback function on the incentive contract
-        (bool success,) = incentive.asset.call(abi.encodeWithSignature("clawback(bytes)", data_));
+        BoostLib.Boost memory boost = _boosts[boostId];
+        bool success = boost.incentives[incentiveId].clawback(abi.encode(claim_));
 
         // Throw a custom error here
         require(success, "Clawback failed");

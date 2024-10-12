@@ -51,6 +51,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address budget
     );
 
+    event ProtocolFeesCollected(uint256 indexed boostId, uint256 indexed incentiveId, uint256 amount, address indexed recipient);
+
+
     struct IncentiveDisbursalInfo {
         ABudget.AssetType assetType; // ERC20, ERC1155, or ETH
         address asset; // Token address or zero address for ETH
@@ -174,7 +177,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     /// @param claimant the address of the user eligible for the incentive payout
-
     function claimIncentiveFor(
         uint256 boostId_,
         uint256 incentiveId_,
@@ -212,6 +214,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         if (protocolFeeAmount > 0) {
             _transferProtocolFee(incentive, protocolFeeAmount);
             incentive.protocolFeesRemaining -= protocolFeeAmount;
+            emit ProtocolFeesCollected(boostId_, incentiveId_, protocolFeeAmount, protocolFeeReceiver);
         }
 
         emit BoostClaimed(boostId_, incentiveId_, claimant, referrer_, data_);
@@ -239,6 +242,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Returns the protocol fee and any remaining incentive value to the owner or budget
     /// @param boostId The ID of the Boost
     function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external nonReentrant {
+        BoostLib.Boost memory boost = _boosts[boostId];
+
+        if(msg.sender != address(boost.budget)) {
+            revert BoostError.Unauthorized();
+        }
+
         // Generate the unique key for the incentive
         bytes32 key = _generateKey(boostId, incentiveId);
         IncentiveDisbursalInfo storage incentive = incentives[key];
@@ -260,14 +269,52 @@ contract BoostCore is Ownable, ReentrancyGuard {
                     address(this), protocolFeeReceiver, incentive.tokenId, protocolFeeAmount, ""
                 );
             }
+            emit ProtocolFeesCollected(boostId, incentiveId, protocolFeeAmount, protocolFeeReceiver);
         }
 
         bool success = boost.incentives[incentiveId].clawback(abi.encode(claim_));
         // Throw a custom error here
-        if (!success) {
+        if(!success) {
             revert BoostError.ClawbackFailed(msg.sender, data_);
         }
         incentive.protocolFeesRemaining -= protocolFeeAmount;
+    }
+
+    /// @notice Settle any outstanding protocol fees for a Boost incentive
+    /// @param boostId The ID of the Boost
+    /// @param incentiveId The ID of the AIncentive
+    function settleProtocolFees(uint256 boostId, uint256 incentiveId) external nonReentrant {
+        BoostLib.Boost storage boost = _boosts[boostId];
+
+        // Generate the unique key for the incentive
+        bytes32 key = _generateKey(boostId, incentiveId);
+        IncentiveDisbursalInfo storage incentive = incentives[key];
+
+        // Get the expected balance based on protocolFeesRemaining and the specific incentive.protocolFee
+        uint256 expectedFeeBalance = (incentive.protocolFeesRemaining * FEE_DENOMINATOR) / incentive.protocolFee;
+
+        // Get the actual balance of the asset
+        uint256 actualBalance = _getAssetBalance(incentive);
+
+        // Check if there is any discrepancy between the expected and actual balance
+        if (actualBalance > expectedFeeBalance) {
+            uint256 discrepancy = actualBalance - expectedFeeBalance;
+
+            // Scale the amount to transfer based on the specific incentive protocol fee
+            uint256 feeToCollect = (discrepancy * incentive.protocolFee) / FEE_DENOMINATOR;
+
+            // Transfer the discrepancy to the protocol fee receiver
+            _transferProtocolFee(incentive, feeToCollect);
+
+            // Update protocolFeesRemaining based on the amount collected
+            if (incentive.protocolFeesRemaining >= feeToCollect) {
+                incentive.protocolFeesRemaining -= feeToCollect;
+            } else {
+                incentive.protocolFeesRemaining = 0;
+            }
+
+            emit ProtocolFeesCollected(boostId, incentiveId, feeToCollect, protocolFeeReceiver);
+        }
     }
 
     /// @notice Set the createBoostAuth address
@@ -359,9 +406,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 }
                 // decode the preflight data to extract the transfer details
                 ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
-                _addIncentive(
-                    _boosts.length - 1, i, request.asset, feeAmount, request.assetType, targets_[i].parameters
-                );
+                _addIncentive(_boosts.length - 1, i, request.asset, feeAmount, request.assetType, targets_[i].parameters);
             }
 
             // Initialize the incentive instance after value has been trasnferred

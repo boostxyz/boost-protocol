@@ -469,7 +469,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget.clawback(data);
     }
 
-    function testClawbackFromIncentive_Unauthorized() public {
+    function testClawbackFromTarget_Unauthorized() public {
         // see EndToEndBasic.t.sol for a working call flow
 
         // Approve the budget to transfer tokens
@@ -483,7 +483,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         data = hex"";
         hoax(makeAddr("unauthorized caller"));
         vm.expectRevert(BoostError.Unauthorized.selector);
-        managedBudget.clawbackFromIncentive(AIncentive(makeAddr("fake incentive")), data);
+        managedBudget.clawbackFromTarget(makeAddr("fake incentive"), data);
     }
 
     ///////////////////////////

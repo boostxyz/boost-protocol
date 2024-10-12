@@ -7,6 +7,7 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {RBAC} from "contracts/shared/RBAC.sol";
+import {IClaw} from "contracts/shared/IClaw.sol";
 
 /// @title Boost ABudget
 /// @notice Abstract contract for a generic ABudget within the Boost protocol
@@ -70,19 +71,15 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     function clawback(bytes calldata data_) external virtual returns (bool);
 
     /// @notice Pull assets from an Incentive back into a budget
+    /// @param target The address of the target contract to claw back from
     /// @param data_ The packed {AIncentive.ClawbackPayload.data} request
     /// @return True if the reclamation was successful
     /// @dev admins and managers can directly reclaim assets from an incentive
     /// @dev the budget can only clawback funds from incentives it originally funded
     /// @dev If the asset transfer fails, the reclamation will revert
-    function clawbackFromIncentive(AIncentive incentive, bytes calldata data_)
-        external
-        virtual
-        onlyAuthorized
-        returns (bool)
-    {
+    function clawbackFromTarget(address target, bytes calldata data_) external virtual onlyAuthorized returns (bool) {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
-        return incentive.clawback(abi.encode(payload));
+        return IClaw(target).clawback(abi.encode(payload));
     }
 
     /// @notice Disburse assets from the budget to a single recipient

@@ -174,6 +174,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     /// @param claimant the address of the user eligible for the incentive payout
+
     function claimIncentiveFor(
         uint256 boostId_,
         uint256 incentiveId_,
@@ -238,7 +239,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Returns the protocol fee and any remaining incentive value to the owner or budget
     /// @param boostId The ID of the Boost
     function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external nonReentrant {
-
         // Generate the unique key for the incentive
         bytes32 key = _generateKey(boostId, incentiveId);
         IncentiveDisbursalInfo storage incentive = incentives[key];
@@ -264,7 +264,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         bool success = boost.incentives[incentiveId].clawback(abi.encode(claim_));
         // Throw a custom error here
-        if(!success) {
+        if (!success) {
             revert BoostError.ClawbackFailed(msg.sender, data_);
         }
         incentive.protocolFeesRemaining -= protocolFeeAmount;
@@ -359,7 +359,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 }
                 // decode the preflight data to extract the transfer details
                 ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
-                _addIncentive(_boosts.length - 1, i, request.asset, feeAmount, request.assetType, targets_[i].parameters);
+                _addIncentive(
+                    _boosts.length - 1, i, request.asset, feeAmount, request.assetType, targets_[i].parameters
+                );
             }
 
             // Initialize the incentive instance after value has been trasnferred

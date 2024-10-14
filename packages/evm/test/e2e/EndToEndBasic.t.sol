@@ -101,6 +101,8 @@ contract EndToEndBasic is Test {
 
         // "When I create a boost with my budget"
         BoostLib.Boost memory boost = _when_I_create_a_new_boost_with_my_budget(budget);
+        uint256 boostId = 0; // This is the only Boost we've created = 0
+        uint256 incentiveId = 0; // This is the only AIncentive in that Boost = 0
 
         // "Then 500 ERC20 should be debited from my budget"
         assertEq(erc20.balanceOf(address(budget)), 0);
@@ -144,11 +146,12 @@ contract EndToEndBasic is Test {
         // - ClawbackFromTarget
         // reverts on underflow
         vm.expectRevert();
-        budget.clawbackFromTarget(address(boost.incentives[0]), abi.encode(500 ether + 1));
+        budget.clawbackFromTarget(address(core), abi.encode(500 ether + 1), boostId, incentiveId);
 
         // can clawback funds from incentive
-        budget.clawbackFromTarget(address(boost.incentives[0]), abi.encode(500 ether));
-        assertEq(erc20.balanceOf(address(budget)), 500 ether);
+        budget.clawbackFromTarget(address(core), abi.encode(500 ether), boostId, incentiveId);
+        // Should recover the full budget including the protocol fee
+        assertEq(erc20.balanceOf(address(budget)), 550 ether);
     }
 
     /// @notice As a user, I want to complete a Boost so that I can earn the rewards.

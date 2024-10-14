@@ -77,9 +77,14 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     /// @dev admins and managers can directly reclaim assets from an incentive
     /// @dev the budget can only clawback funds from incentives it originally funded
     /// @dev If the asset transfer fails, the reclamation will revert
-    function clawbackFromTarget(address target, bytes calldata data_) external virtual onlyAuthorized returns (bool) {
+    function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        virtual
+        onlyAuthorized
+        returns (bool)
+    {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
-        return IClaw(target).clawback(abi.encode(payload));
+        return IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);
     }
 
     /// @notice Disburse assets from the budget to a single recipient

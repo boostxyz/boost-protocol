@@ -483,7 +483,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         data = hex"";
         hoax(makeAddr("unauthorized caller"));
         vm.expectRevert(BoostError.Unauthorized.selector);
-        managedBudget.clawbackFromTarget(makeAddr("fake incentive"), data);
+        managedBudget.clawbackFromTarget(makeAddr("fake incentive"), data, 0, 0);
     }
 
     ///////////////////////////

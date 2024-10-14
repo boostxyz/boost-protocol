@@ -51,8 +51,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address budget
     );
 
-    event ProtocolFeesCollected(uint256 indexed boostId, uint256 indexed incentiveId, uint256 amount, address indexed recipient);
-
+    event ProtocolFeesCollected(
+        uint256 indexed boostId, uint256 indexed incentiveId, uint256 amount, address indexed recipient
+    );
 
     struct IncentiveDisbursalInfo {
         ABudget.AssetType assetType; // ERC20, ERC1155, or ETH
@@ -177,6 +178,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     /// @param claimant the address of the user eligible for the incentive payout
+
     function claimIncentiveFor(
         uint256 boostId_,
         uint256 incentiveId_,
@@ -244,7 +246,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external nonReentrant {
         BoostLib.Boost memory boost = _boosts[boostId];
 
-        if(msg.sender != address(boost.budget)) {
+        if (msg.sender != address(boost.budget)) {
             revert BoostError.Unauthorized();
         }
 
@@ -259,14 +261,14 @@ contract BoostCore is Ownable, ReentrancyGuard {
         // Calculate the protocol fee based on the clawback amount and the protocol fee percentage
         uint256 protocolFeeAmount = (amount * incentive.protocolFee) / FEE_DENOMINATOR;
 
-        // Transfer the protocol fee to the protocol fee receiver
+        // Transfer the protocol fee to the target of the clawback
         if (protocolFeeAmount > 0) {
             if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
-                incentive.asset.safeTransfer(protocolFeeReceiver, protocolFeeAmount);
+                incentive.asset.safeTransfer(claim_.target, protocolFeeAmount);
             } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
                 // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
                 IERC1155(incentive.asset).safeTransferFrom(
-                    address(this), protocolFeeReceiver, incentive.tokenId, protocolFeeAmount, ""
+                    address(this), claim_.target, incentive.tokenId, protocolFeeAmount, ""
                 );
             }
             emit ProtocolFeesCollected(boostId, incentiveId, protocolFeeAmount, protocolFeeReceiver);
@@ -274,7 +276,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         bool success = boost.incentives[incentiveId].clawback(abi.encode(claim_));
         // Throw a custom error here
-        if(!success) {
+        if (!success) {
             revert BoostError.ClawbackFailed(msg.sender, data_);
         }
         incentive.protocolFeesRemaining -= protocolFeeAmount;
@@ -406,7 +408,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 }
                 // decode the preflight data to extract the transfer details
                 ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
-                _addIncentive(_boosts.length - 1, i, request.asset, feeAmount, request.assetType, targets_[i].parameters);
+                _addIncentive(
+                    _boosts.length - 1, i, request.asset, feeAmount, request.assetType, targets_[i].parameters
+                );
             }
 
             // Initialize the incentive instance after value has been trasnferred

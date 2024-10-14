@@ -243,7 +243,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice Returns the protocol fee and any remaining incentive value to the owner or budget
     /// @param boostId The ID of the Boost
-    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external nonReentrant {
+    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        nonReentrant
+        returns (bool)
+    {
         BoostLib.Boost memory boost = _boosts[boostId];
 
         if (msg.sender != address(boost.budget)) {
@@ -280,6 +284,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             revert BoostError.ClawbackFailed(msg.sender, data_);
         }
         incentive.protocolFeesRemaining -= protocolFeeAmount;
+        return true;
     }
 
     /// @notice Settle any outstanding protocol fees for a Boost incentive

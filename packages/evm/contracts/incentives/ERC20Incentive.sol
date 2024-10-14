@@ -52,6 +52,7 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
         limit = init_.limit;
         _initializeOwner(msg.sender);
         _setRoles(init_.manager, MANAGER_ROLE);
+        _setRoles(msg.sender, MANAGER_ROLE);
     }
 
     /// @inheritdoc AIncentive

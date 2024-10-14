@@ -55,6 +55,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
 
         _initializeOwner(msg.sender);
         _setRoles(init_.manager, MANAGER_ROLE);
+        _setRoles(msg.sender, MANAGER_ROLE);
     }
 
     /// @notice Claim the incentive with variable rewards

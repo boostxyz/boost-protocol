@@ -1,6 +1,7 @@
 [
   "// Begin common builtin function signatures",
   "mint(address to, uint256 amount)",
+  "mint(address,uint256,address,uint256,address,string)",
   "mintPayable(address to, uint256 amount)",
   "execute(bytes commands,bytes[] inputs)",
   "register(string name,address owner,uint256 duration,bytes32 secret,address resolver,bytes[] data,bool reverseRecord,uint16 ownerControlledFuses)",

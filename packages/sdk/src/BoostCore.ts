@@ -700,7 +700,7 @@ export class BoostCore extends Deployable<
       // biome-ignore lint/suspicious/noExplicitAny: unknown error
     } catch (e: any) {
       if (e?.message?.includes('bounds'))
-        throw new BoostNotFoundError(String(id));
+        throw new BoostNotFoundError(String(_id));
       throw e;
     }
   }

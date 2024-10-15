@@ -294,7 +294,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
             bytes memory preflight = incentives[i].preflight(targets_[i].parameters);
             if (preflight.length != 0) {
                 // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
-                assert(budget_.disburse(preflight));
+                if (!budget_.disburse(preflight)) {
+                    revert BoostError.InvalidInitialization();
+                }
             }
 
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)

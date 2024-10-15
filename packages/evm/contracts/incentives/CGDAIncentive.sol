@@ -28,7 +28,6 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
         uint256 rewardDecay;
         uint256 rewardBoost;
         uint256 totalBudget;
-        address manager;
     }
 
     /// @notice Construct a new CGDAIncentive

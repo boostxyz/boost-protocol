@@ -26,7 +26,6 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
         uint256 tokenId;
         uint256 limit;
         bytes extraData;
-        address manager;
     }
 
     struct ERC1155ClaimPayload {

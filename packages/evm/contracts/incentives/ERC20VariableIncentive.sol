@@ -23,7 +23,6 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
         address asset;
         uint256 reward;
         uint256 limit;
-        address manager;
     }
 
     /// @notice Construct a new ERC20VariableIncentive

@@ -345,15 +345,7 @@ contract ERC20IncentiveTest is Test {
         view
         returns (bytes memory)
     {
-        return abi.encode(
-            ERC20Incentive.InitPayload({
-                asset: asset,
-                strategy: strategy,
-                reward: reward,
-                limit: limit,
-                manager: address(budget)
-            })
-        );
+        return abi.encode(ERC20Incentive.InitPayload({asset: asset, strategy: strategy, reward: reward, limit: limit}));
     }
 
     function _makeFungibleTransfer(ABudget.AssetType assetType, address asset, address target, uint256 value)

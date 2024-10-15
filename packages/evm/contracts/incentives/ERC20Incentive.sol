@@ -23,7 +23,6 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
         Strategy strategy;
         uint256 reward;
         uint256 limit;
-        address manager;
     }
 
     /// @notice Construct a new ERC20Incentive

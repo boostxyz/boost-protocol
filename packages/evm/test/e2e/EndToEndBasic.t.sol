@@ -308,7 +308,7 @@ contract EndToEndBasic is Test {
                 registry.getBaseImplementation(
                     registry.getIdentifier(ABoostRegistry.RegistryType.INCENTIVE, "ERC20Incentive")
                 )
-            ),
+                ),
             // "... of '100 ERC20' with a max of 5 participants"
             parameters: abi.encode(erc20, AERC20Incentive.Strategy.POOL, 100 ether, 5, address(budget))
         });
@@ -329,7 +329,7 @@ contract EndToEndBasic is Test {
                                 registry.getBaseImplementation(
                                     registry.getIdentifier(ABoostRegistry.RegistryType.ACTION, "ERC721MintAction")
                                 )
-                            ),
+                                ),
                             parameters: abi.encode(
                                 AContractAction.InitPayload({
                                     chainId: block.chainid,
@@ -337,7 +337,7 @@ contract EndToEndBasic is Test {
                                     selector: MockERC721.mint.selector,
                                     value: erc721.mintPrice()
                                 })
-                            )
+                                )
                         }),
                         BoostLib.Target({
                             // "... and I don't have to specify a validator"
@@ -352,7 +352,7 @@ contract EndToEndBasic is Test {
                                 registry.getBaseImplementation(
                                     registry.getIdentifier(ABoostRegistry.RegistryType.ALLOW_LIST, "SimpleAllowList")
                                 )
-                            ),
+                                ),
                             parameters: abi.encode(address(this), allowList)
                         }),
                         incentives, // "I can specify the incentive..."

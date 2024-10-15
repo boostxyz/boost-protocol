@@ -112,15 +112,24 @@ contract ModuleBaseDeployer is ScriptUtils {
         );
     }
 
-    function _deployERC20VariableCriteriaIncentive(BoostRegistry registry) internal returns (address erc20VariableCriteriaIncentive) {
+    function _deployERC20VariableCriteriaIncentive(BoostRegistry registry)
+        internal
+        returns (address erc20VariableCriteriaIncentive)
+    {
         bytes memory initCode = type(ERC20VariableCriteriaIncentive).creationCode;
         erc20VariableCriteriaIncentive = _getCreate2Address(initCode, "");
         console.log("ERC20VariableCriteriaIncentive: ", erc20VariableCriteriaIncentive);
         deployJson = deployJsonKey.serialize("ERC20VariableCriteriaIncentive", erc20VariableCriteriaIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "ERC20VariableCriteriaIncentive", erc20VariableCriteriaIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(
+            newDeploy,
+            "ERC20VariableCriteriaIncentive",
+            erc20VariableCriteriaIncentive,
+            registry,
+            BoostRegistry.RegistryType.INCENTIVE
+        );
     }
-    
+
     function _deployCGDAIncentive(BoostRegistry registry) internal returns (address cgdaIncentive) {
         bytes memory initCode = type(CGDAIncentive).creationCode;
         cgdaIncentive = _getCreate2Address(initCode, "");

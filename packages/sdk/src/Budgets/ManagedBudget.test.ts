@@ -140,14 +140,14 @@ describe('ManagedBudget', () => {
     });
 
     test('erc20', async () => {
-      await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+      await erc20.approve(budget.assertValidAddress(), parseEther('110'));
       await budget.allocate({
-        amount: parseEther('100'),
+        amount: parseEther('110'),
         asset: erc20.assertValidAddress(),
         target: defaultOptions.account.address,
       });
       expect(await budget.available(erc20.assertValidAddress())).toBe(
-        parseEther('100'),
+        parseEther('110'),
       );
     });
 
@@ -159,12 +159,12 @@ describe('ManagedBudget', () => {
       });
       await budget.allocate({
         tokenId: 1n,
-        amount: 100n,
+        amount: 110n,
         asset: erc1155.assertValidAddress(),
         target: defaultOptions.account.address,
       });
       expect(await budget.available(erc1155.assertValidAddress(), 1n)).toBe(
-        100n,
+        110n,
       );
     });
   });
@@ -197,7 +197,7 @@ describe('ManagedBudget', () => {
       });
 
       expect(await budget.available(erc20.assertValidAddress())).toBe(
-        parseEther('90'),
+        parseEther('100'),
       );
     });
 
@@ -210,7 +210,7 @@ describe('ManagedBudget', () => {
       });
 
       expect(await budget.available(erc1155.assertValidAddress(), 1n)).to.equal(
-        95n,
+        105n,
       );
     });
   });

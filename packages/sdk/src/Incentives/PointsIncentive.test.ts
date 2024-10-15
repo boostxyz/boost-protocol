@@ -72,8 +72,7 @@ describe("PointsIncentive", () => {
       boost.id,
       0n,
       referrer,
-      claimDataPayload,
-      { value: parseEther("0.000075") },
+      claimDataPayload
     );
     expect(
       await readPointsBalanceOf(defaultOptions.config, {

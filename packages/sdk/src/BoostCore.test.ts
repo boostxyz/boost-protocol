@@ -33,7 +33,7 @@ describe('BoostCore', () => {
 
     const { budget, erc20 } = budgets;
     await core.createBoost({
-      protocolFee: 1n,
+      protocolFee: 0n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -203,10 +203,10 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
 
     // allocate more funds to the budget
-    await erc20.mint(defaultOptions.account.address, parseEther('100'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await erc20.mint(defaultOptions.account.address, parseEther('110'));
+    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
     await budget.allocate({
-      amount: parseEther('100'),
+      amount: parseEther('110'),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
@@ -267,10 +267,10 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
-    await erc20.mint(defaultOptions.account.address, parseEther('100'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await erc20.mint(defaultOptions.account.address, parseEther('110'));
+    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
     await budget.allocate({
-      amount: parseEther('100'),
+      amount: parseEther('110'),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
@@ -336,10 +336,10 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
-    await erc20.mint(defaultOptions.account.address, parseEther('100'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await erc20.mint(defaultOptions.account.address, parseEther('110'));
+    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
     await budget.allocate({
-      amount: parseEther('100'),
+      amount: parseEther('110'),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
@@ -405,10 +405,10 @@ describe('BoostCore', () => {
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
-    await erc20.mint(defaultOptions.account.address, parseEther('100'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await erc20.mint(defaultOptions.account.address, parseEther('110'));
+    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
     await budget.allocate({
-      amount: parseEther('100'),
+      amount: parseEther('110'),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });

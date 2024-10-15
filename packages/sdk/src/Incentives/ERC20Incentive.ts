@@ -477,7 +477,6 @@ export function prepareERC20IncentivePayload({
   strategy,
   reward,
   limit,
-  manager,
 }: ERC20IncentivePayload) {
   return encodeAbiParameters(
     [
@@ -485,8 +484,7 @@ export function prepareERC20IncentivePayload({
       { type: 'uint8', name: 'strategy' },
       { type: 'uint256', name: 'reward' },
       { type: 'uint256', name: 'limit' },
-      { type: 'address', name: 'manager' },
     ],
-    [asset, strategy, reward, limit, manager],
+    [asset, strategy, reward, limit],
   );
 }

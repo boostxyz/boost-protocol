@@ -3,6 +3,8 @@ pragma solidity ^0.8.24;
 
 import "./Util.s.sol";
 
+import {LibClone} from "@solady/utils/LibClone.sol";
+
 import {BoostCore} from "contracts/BoostCore.sol";
 import {BoostRegistry, ABoostRegistry} from "contracts/BoostRegistry.sol";
 
@@ -51,7 +53,8 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployAllowListIncentive(registry);
         _deploySignerValidator(registry);
         _deploySimpleAllowList(registry);
-        _deploySimpleDenyList(registry);
+        address denyList = _deploySimpleDenyList(registry);
+        _deployOpenAllowList(registry, SimpleDenyList(denyList));
 
         _saveJson();
     }
@@ -157,6 +160,23 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("SimpleAllowList", simpleAllowList);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(newDeploy, "SimpleAllowList", simpleAllowList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
+    }
+
+    function _deployOpenAllowList(BoostRegistry registry, SimpleDenyList baseDenyList)
+        internal
+        returns (address list)
+    {
+        list = _getDeterministicCloneAddress(baseDenyList);
+        console.log("OpenAllowList: ", list);
+        deployJson = deployJsonKey.serialize("OpenAllowList", list);
+        bool newDeploy = _clone2(baseDenyList);
+
+        address[] memory users = new address[](0);
+        bytes memory data = abi.encode(address(0), users);
+        SimpleDenyList(list).initialize(data);
+
+        _registerIfNew(newDeploy, "OpenAllowList", list, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
+
     }
 
     function _deploySimpleDenyList(BoostRegistry registry) internal returns (address simpleDenyList) {

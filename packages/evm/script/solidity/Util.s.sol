@@ -3,6 +3,8 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
+import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 
 contract ScriptUtils is Script {
     using stdJson for string;
@@ -42,7 +44,37 @@ contract ScriptUtils is Script {
         }
     }
 
-    function _buildJsonDeployPath() internal virtual view returns (string memory) {
+    function _clone2(ACloneable base) internal returns (bool) {
+        bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
+        address computedAddress = LibClone.predictDeterministicAddress(address(base), salt, CREATE2_FACTORY);
+
+        // Check if the address already has code deployed
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(computedAddress)
+        }
+
+        if (codeSize == 0) {
+            bytes memory deployCode = LibClone.initCode(address(base));
+            bytes memory payload = abi.encodePacked(salt, deployCode);
+            // deploy using address configured at the CLI level
+            vm.broadcast();
+            (bool success,) = CREATE2_FACTORY.call(payload);
+            if (!success) revert("create2 failed");
+            return true;
+        } else {
+            console.log("Address already deployed at: ", computedAddress);
+            return false;
+        }
+    }
+
+    function _getDeterministicCloneAddress(ACloneable base) internal view returns(address) {
+        bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
+        return LibClone.predictDeterministicAddress(address(base), salt, CREATE2_FACTORY);
+
+    }
+
+    function _buildJsonDeployPath() internal view virtual returns (string memory) {
         return string(abi.encodePacked(vm.projectRoot(), "/deploys/", vm.toString(block.chainid), ".json"));
     }
 

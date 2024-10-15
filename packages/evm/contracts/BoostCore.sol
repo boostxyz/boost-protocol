@@ -84,6 +84,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
     uint64 public constant FEE_DENOMINATOR = 10_000;
 
+    address private constant ZERO_ADDRESS = address(0);
+
     // @notice The set of incentives for the Boost
     mapping(bytes32 => IncentiveDisbursalInfo) public incentives;
 
@@ -197,7 +199,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         if (!boost.validator.validate(boostId_, incentiveId_, claimant, data_)) revert BoostError.Unauthorized();
 
         // Get the balance of the asset before the claim
-        uint256 initialBalance = _getAssetBalance(incentive);
+        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive) : 0;
 
         // Execute the claim
         // wake-disable-next-line reentrancy (protected)
@@ -206,7 +208,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
 
         // Get the balance of the asset after the claim
-        uint256 finalBalance = _getAssetBalance(incentive);
+        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive) : 0;
 
         // Calculate the change in balance and the protocol fee amount
         uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;

@@ -1,6 +1,7 @@
 import {
   boostRegistryAbi,
   readBoostRegistryGetBaseImplementation,
+  readBoostRegistryGetClone,
   readBoostRegistryGetCloneIdentifier,
   readBoostRegistryGetClones,
   simulateBoostRegistryDeployClone,
@@ -73,6 +74,24 @@ export type BoostRegistryLog<
     typeof boostRegistryAbi
   >,
 > = GenericLog<typeof boostRegistryAbi, event>;
+
+/**
+ * An interface representing an on-chain Clone
+ *
+ * @export
+ * @interface Clone
+ * @typedef {Clone}
+ */
+export interface Clone {
+  // The clone's component type'
+  baseType: RegistryType;
+  // The address of the initialized clone.
+  instance: Address;
+  // The deployer of the clone.
+  deployer: Address;
+  // The display name of the clone
+  name: string;
+}
 
 /**
  * Instantiation options for a previously deployed Boost Registry
@@ -414,13 +433,13 @@ export class BoostRegistry extends Deployable<
    * @async
    * @param {Hex} identifier - The unique identifier for the deployed clone (see {getCloneIdentifier})
    * @param {?ReadParams} [params]
-   * @returns {Promise<Address>} - The address of the deployed clone
+   * @returns {Promise<Clone>} - The on-chain representation of the clone
    */
   public async getClone(
     identifier: Hex,
     params?: ReadParams<typeof boostRegistryAbi, 'getClone'>,
-  ) {
-    return await readBoostRegistryGetBaseImplementation(this._config, {
+  ): Promise<Clone> {
+    return await readBoostRegistryGetClone(this._config, {
       ...assertValidAddressByChainId(
         this._config,
         this.addresses,

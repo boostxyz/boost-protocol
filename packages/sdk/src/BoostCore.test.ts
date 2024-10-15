@@ -13,7 +13,7 @@ import {
 import { ContractAction } from './Actions/ContractAction';
 import type { ERC20Incentive } from './Incentives/ERC20Incentive';
 import { StrategyType } from './claiming';
-import { IncentiveNotCloneableError } from './errors';
+import { BoostNotFoundError, IncentiveNotCloneableError } from './errors';
 import { bytes4 } from './utils';
 import { BOOST_CORE_CLAIM_FEE } from './BoostCore';
 import { accounts } from '@boostxyz/test/accounts';
@@ -62,6 +62,16 @@ describe('BoostCore', () => {
     });
     expect(await core.getBoostCount()).toBe(1n);
   });
+
+  test('throws a typed error if no boost exists', async () => {
+    const { core } = fixtures;
+    try {
+      await core.getBoost(1000n)
+    } catch(e) {
+      expect(e instanceof BoostNotFoundError).toBe(true)
+      expect(e.id).toBe('1000')
+    }
+  })
 
   test('can successfully create a boost using all base contract implementations', async () => {
     const { core } = fixtures;

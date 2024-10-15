@@ -53,6 +53,7 @@ import { type Auth, PassthroughAuth } from './Auth/Auth';
 import {
   Boost,
   type BoostPayload,
+  type RawBoost,
   type Target,
   prepareBoostPayload,
 } from './Boost';
@@ -100,6 +101,7 @@ import {
 import { type Validator, validatorFromAddress } from './Validators/Validator';
 import {
   BoostCoreNoIdentifierEmitted,
+  BoostNotFoundError,
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
   IncentiveNotCloneableError,
@@ -673,22 +675,30 @@ export class BoostCore extends Deployable<
    * @param {bigint} id
    * @param {?ReadParams} [params]
    * @returns {Promise<RawBoost>}
+   * @throws {@link BoostNotFoundError}
    */
   public async readBoost(
     id: bigint,
     params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
-  ) {
-    return await readBoostCoreGetBoost(this._config, {
-      ...assertValidAddressByChainId(
-        this._config,
-        this.addresses,
-        params?.chainId,
-      ),
-      args: [id],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+  ): Promise<RawBoost> {
+    try {
+      return await readBoostCoreGetBoost(this._config, {
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chainId,
+        ),
+        args: [id],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      });
+      // biome-ignore lint/suspicious/noExplicitAny: unknown error
+    } catch (e: any) {
+      if (e?.message?.includes('bounds'))
+        throw new BoostNotFoundError(String(id));
+      throw e;
+    }
   }
 
   /**
@@ -699,6 +709,7 @@ export class BoostCore extends Deployable<
    * @param {(string | bigint)} _id
    * @param {?ReadParams} [params]
    * @returns {Promise<Boost>}
+   * @throws {@link BoostNotFoundError}
    */
   public async getBoost(
     _id: string | bigint,

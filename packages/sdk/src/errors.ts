@@ -842,3 +842,25 @@ export class DecodedArgsError extends Error {
     this.name = 'DecodedArgsError';
   }
 }
+
+/**
+ * Thrown when reading a Boost that does not exist
+ *
+ * @export
+ * @class BoostNotFoundError
+ * @typedef {BoostNotFoundError}
+ * @extends {Error}
+ */
+export class BoostNotFoundError extends Error {
+  public readonly id: string;
+  /**
+   * Creates an instance of BoostNotFoundError.
+   *
+   * @constructor
+   * @param {string} [id] - stringified boost id that does not exist
+   */
+  constructor(id: string) {
+    super(`Boost with not found with id: ${id}`);
+    this.id = id;
+  }
+}

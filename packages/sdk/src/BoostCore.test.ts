@@ -818,6 +818,7 @@ describe('BoostCore', () => {
       strategy: StrategyType.POOL,
       reward: 1n,
       limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
     });
     const boost = await freshBoost(fixtures, {
       budget: budgets.budget,

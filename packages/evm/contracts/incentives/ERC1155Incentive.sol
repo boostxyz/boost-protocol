@@ -36,7 +36,6 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
     /// @notice Construct a new ERC1155Incentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
-        reward = 1;
         _disableInitializers();
     }
 
@@ -45,6 +44,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
     function initialize(bytes calldata data_) public override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
+        reward = 1;
         // Ensure the strategy is valid (MINT is not yet supported)
         if (init_.strategy == Strategy.MINT) revert BoostError.NotImplemented();
         if (init_.limit == 0) revert BoostError.InvalidInitialization();

@@ -515,7 +515,7 @@ export class BoostCore extends Deployable<
     }).at(0);
     let boostId = 0n;
     if (!boostCreatedLog) throw new BoostCoreNoIdentifierEmitted();
-    boostId = boostCreatedLog?.args.boostIndex;
+    boostId = boostCreatedLog?.args.boostId;
     const boost = await this.readBoost(boostId);
     return new Boost({
       id: boostId,

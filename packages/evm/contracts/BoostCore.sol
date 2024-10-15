@@ -40,7 +40,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     event BoostCreated(
-        uint256 indexed boostIndex,
+        uint256 indexed boostId,
         address indexed owner,
         address indexed action,
         uint256 incentiveCount,

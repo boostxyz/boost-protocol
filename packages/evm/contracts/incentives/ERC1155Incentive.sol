@@ -62,7 +62,6 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
         extraData = init_.extraData;
 
         _initializeOwner(msg.sender);
-        _setRoles(init_.manager, MANAGER_ROLE);
         _setRoles(msg.sender, MANAGER_ROLE);
     }
 

@@ -62,7 +62,6 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
 
         totalBudget = init_.totalBudget;
         _initializeOwner(msg.sender);
-        _setRoles(init_.manager, MANAGER_ROLE);
         _setRoles(msg.sender, MANAGER_ROLE);
     }
 

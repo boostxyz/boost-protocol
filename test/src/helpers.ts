@@ -785,7 +785,7 @@ export function fundErc20(
   options: DeployableTestOptions,
   erc20?: MockERC20,
   funded: Address[] = [],
-  amount: bigint = parseEther('100'),
+  amount: bigint = parseEther('110'),
 ) {
   return async function fundErc20() {
     if (!erc20) erc20 = await freshERC20();
@@ -848,7 +848,7 @@ export function fundErc1155(
   options: DeployableTestOptions,
   erc1155?: MockERC1155,
   tokenId = 1n,
-  amount = 100n,
+  amount = 110n,
 ) {
   return async function fundErc1155() {
     if (!erc1155) erc1155 = await freshERC1155(options);
@@ -887,9 +887,9 @@ export function fundBudget(
       { value: parseEther('1.0') },
     );
 
-    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
     await budget.allocate({
-      amount: parseEther('100'),
+      amount: parseEther('110'),
       asset: erc20.assertValidAddress(),
       target: options.account.address,
     });
@@ -934,9 +934,9 @@ export function fundManagedBudget(
       { value: parseEther('1.0') },
     );
 
-    await erc20.approve(budget.assertValidAddress(), parseEther('100'));
+    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
     await budget.allocate({
-      amount: parseEther('100'),
+      amount: parseEther('110'),
       asset: erc20.assertValidAddress(),
       target: options.account.address,
     });
@@ -948,7 +948,7 @@ export function fundManagedBudget(
     });
     await budget.allocate({
       tokenId: 1n,
-      amount: 100n,
+      amount: 110n,
       asset: erc1155.assertValidAddress(),
       target: options.account.address,
     });

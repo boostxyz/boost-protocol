@@ -161,7 +161,6 @@ contract CGDAIncentiveTest is Test {
     }
 
     function test_claim_OutOfBudget() public {
-        hoax(address(budget));
         incentive.clawback(
             abi.encode(
                 AIncentive.ClawbackPayload({
@@ -264,7 +263,6 @@ contract CGDAIncentiveTest is Test {
 
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(0xdeadbeef), data: abi.encode(2 ether)}));
-        hoax(address(budget));
         incentive.clawback(reclaimPayload);
 
         assertEq(incentive.currentReward(), 0.25 ether);

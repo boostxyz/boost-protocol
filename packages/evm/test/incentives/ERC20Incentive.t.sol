@@ -125,7 +125,6 @@ contract ERC20IncentiveTest is Test {
         // Reclaim 50x the reward amount
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50 ether)}));
-        hoax(address(budget));
         incentive.clawback(reclaimPayload);
         assertEq(mockAsset.balanceOf(address(1)), 50 ether);
 
@@ -141,8 +140,7 @@ contract ERC20IncentiveTest is Test {
         // Reclaim 50.1x => not an integer multiple of the reward amount => revert
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(50.1 ether)}));
-        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(budget), reclaimPayload));
-        hoax(address(budget));
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.clawback(reclaimPayload);
     }
 
@@ -160,8 +158,7 @@ contract ERC20IncentiveTest is Test {
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(1), data: abi.encode(100 ether)}));
 
-        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(budget), reclaimPayload));
-        hoax(address(budget));
+        vm.expectRevert(abi.encodeWithSelector(BoostError.ClaimFailed.selector, address(this), reclaimPayload));
         incentive.clawback(reclaimPayload);
         assertEq(incentive.limit(), 5);
     }
@@ -173,7 +170,6 @@ contract ERC20IncentiveTest is Test {
         // Reclaim the full reward amount
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(100 ether)}));
-        hoax(address(budget));
         incentive.clawback(reclaimPayload);
 
         // Check that the limit is set to 0

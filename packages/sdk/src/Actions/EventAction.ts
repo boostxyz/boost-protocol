@@ -524,10 +524,12 @@ export class EventAction extends DeployableTarget<
     if (claimant.signatureType === SignatureType.EVENT) {
       let event: AbiEvent;
       if (params.abiItem) event = params.abiItem as AbiEvent;
-      if (params.knownSignatures) {
-        event = params.knownSignatures?.[signature] as AbiEvent;
-      } else {
-        event = (events.abi as Record<Hex, AbiEvent>)[signature] as AbiEvent;
+      else {
+        const sigPool: Record<Hex, AbiEvent> = {
+          ...(events.abi as Record<Hex, AbiEvent>),
+          ...((params.knownSignatures as Record<Hex, AbiEvent>) || {}),
+        };
+        event = sigPool[signature] as AbiEvent;
       }
 
       if (!event) {
@@ -574,12 +576,12 @@ export class EventAction extends DeployableTarget<
       if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
       let func: AbiFunction;
       if (params.abiItem) func = params.abiItem as AbiFunction;
-      if (params.knownSignatures) {
-        func = params.knownSignatures?.[signature] as AbiFunction;
-      } else {
-        func = (functions.abi as Record<Hex, AbiFunction>)[
-          signature
-        ] as AbiFunction;
+      else {
+        const sigPool: Record<Hex, AbiFunction> = {
+          ...(functions.abi as Record<Hex, AbiFunction>),
+          ...((params.knownSignatures as Record<Hex, AbiFunction>) || {}),
+        };
+        func = sigPool[signature] as AbiFunction;
       }
       if (!func) {
         throw new ValidationAbiMissingError(claimant.signature);
@@ -660,10 +662,12 @@ export class EventAction extends DeployableTarget<
       const signature = actionStep.signature;
       let event: AbiEvent;
       if (params.abiItem) event = params.abiItem as AbiEvent;
-      if (params.knownSignatures) {
-        event = params.knownSignatures?.[signature] as AbiEvent;
-      } else {
-        event = (events.abi as Record<Hex, AbiEvent>)[signature] as AbiEvent;
+      else {
+        const sigPool: Record<Hex, AbiEvent> = {
+          ...(events.abi as Record<Hex, AbiEvent>),
+          ...((params.knownSignatures as Record<Hex, AbiEvent>) || {}),
+        };
+        event = sigPool[signature] as AbiEvent;
       }
 
       if (!event) {
@@ -759,12 +763,12 @@ export class EventAction extends DeployableTarget<
 
     let func: AbiFunction;
     if (params?.abiItem) func = params?.abiItem as AbiFunction;
-    if (params?.knownSignatures) {
-      func = params?.knownSignatures?.[signature] as AbiFunction;
-    } else {
-      func = (functions.abi as Record<Hex, AbiFunction>)[
-        signature
-      ] as AbiFunction;
+    else {
+      const sigPool: Record<Hex, AbiFunction> = {
+        ...(functions.abi as Record<Hex, AbiFunction>),
+        ...((params?.knownSignatures as Record<Hex, AbiFunction>) || {}),
+      };
+      func = sigPool[signature] as AbiFunction;
     }
     if (!func) {
       throw new ValidationAbiMissingError(signature);

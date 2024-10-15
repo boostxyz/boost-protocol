@@ -672,16 +672,20 @@ export class BoostCore extends Deployable<
    *
    * @public
    * @async
-   * @param {bigint} id
+   * @param {bigint | string} id
    * @param {?ReadParams} [params]
    * @returns {Promise<RawBoost>}
    * @throws {@link BoostNotFoundError}
    */
   public async readBoost(
-    id: bigint,
+    _id: string | bigint,
     params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
   ): Promise<RawBoost> {
     try {
+      let id: bigint;
+      if (typeof _id === 'string') {
+        id = BigInt(_id);
+      } else id = _id;
       return await readBoostCoreGetBoost(this._config, {
         ...assertValidAddressByChainId(
           this._config,

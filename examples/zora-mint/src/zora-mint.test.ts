@@ -129,7 +129,7 @@ describe('Boost with NFT Minting Incentive', () => {
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
-          limit: 100n,
+          limit: 90n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
         }),

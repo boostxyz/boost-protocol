@@ -16,8 +16,8 @@ import type { Validator } from './Validators/Validator';
  * Interface representing a `BoostLib.Boost` on-chain struct
  *
  * @export
- * @interface BoostPayload
- * @typedef {BoostPayload}
+ * @interface RawBoost
+ * @typedef {RawBoost}
  */
 export interface RawBoost {
   action: Address;
@@ -35,8 +35,8 @@ export interface RawBoost {
  * Configuration used to instantiate a `Boost` instance.
  *
  * @export
- * @interface BoostPayload
- * @typedef {BoostPayload}
+ * @interface BoostConfig
+ * @typedef {BoostConfig}
  */
 export interface BoostConfig {
   /**

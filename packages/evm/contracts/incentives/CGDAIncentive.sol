@@ -90,15 +90,15 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
         claims++;
 
         // Calculate the current reward and update the state
-        uint256 reward = currentReward();
+        uint256 currentReward = currentReward();
         cgdaParams.lastClaimTime = block.timestamp;
         cgdaParams.currentReward =
-            reward > cgdaParams.rewardDecay ? reward - cgdaParams.rewardDecay : cgdaParams.rewardDecay;
+            currentReward > cgdaParams.rewardDecay ? currentReward - cgdaParams.rewardDecay : cgdaParams.rewardDecay;
 
-        // Transfer the reward to the recipient
-        asset.safeTransfer(claimTarget, reward);
+        // Transfer the currentReward to the recipient
+        asset.safeTransfer(claimTarget, currentReward);
 
-        emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, reward));
+        emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, currentReward));
         return true;
     }
 

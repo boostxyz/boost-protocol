@@ -114,7 +114,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
         // Ensure the amount is valid and reduce the max claims accordingly
-        if (amount > (limit - claims) ) revert BoostError.ClaimFailed(msg.sender, abi.encode(claim_));
+        if (amount > (limit - claims)) revert BoostError.ClaimFailed(msg.sender, abi.encode(claim_));
         limit -= amount;
 
         // Reclaim the incentive to the intended recipient

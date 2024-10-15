@@ -679,7 +679,11 @@ export class BoostCore extends Deployable<
     params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
   ) {
     return await readBoostCoreGetBoost(this._config, {
-      address: this.assertValidAddress(),
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
       args: [id],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally

@@ -35,7 +35,6 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
     /// @notice Initialize the contract with the incentive parameters
     /// @param data_ The compressed incentive parameters `(address asset, uint256 reward, uint256 limit)`
     function initialize(bytes calldata data_) public virtual override initializer {
-        _initializeOwner(msg.sender);
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
 
         address asset_ = init_.asset;

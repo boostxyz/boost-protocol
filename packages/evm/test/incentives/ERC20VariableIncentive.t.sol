@@ -156,7 +156,6 @@ contract ERC20VariableIncentiveTest is Test {
         // Reclaim some tokens
         bytes memory reclaimPayload =
             abi.encode(AIncentive.ClawbackPayload({target: address(this), data: abi.encode(2 ether)}));
-        hoax(address(budget));
         incentive.clawback(reclaimPayload);
 
         // Check the balance and limit

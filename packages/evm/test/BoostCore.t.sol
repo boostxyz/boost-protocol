@@ -424,11 +424,7 @@ contract BoostCoreTest is Test {
         uint256 boostId = 0;
         uint256 incentiveId = 0;
 
-        // Generate the key for the incentive
-        bytes32 key = keccak256(abi.encodePacked(boostId, incentiveId));
-
         // Ensure the initial balance is sufficient for the clawback
-        BoostCore.IncentiveDisbursalInfo memory incentive = boostCore.getIncentive(key);
         uint256 initialBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
         require(initialBalanceIncentive >= clawbackAmount, "Insufficient initial balance for clawback test");
 
@@ -479,15 +475,11 @@ contract BoostCoreTest is Test {
         uint256 boostId = 0;
         uint256 incentiveId = 0;
 
-        // Generate the key for the incentive
-        bytes32 key = keccak256(abi.encodePacked(boostId, incentiveId));
-
         // Mint the required ERC20 balance and approve it for the BoostCore contract
         mockERC20.mint(address(boost.incentives[incentiveId]), totalClawbackAmount);
         mockERC20.approve(address(boostCore), totalClawbackAmount);
 
         // Ensure the initial balance is sufficient for the total clawback amount
-        BoostCore.IncentiveDisbursalInfo memory incentive = boostCore.getIncentive(key);
         uint256 initialBalanceIncentive = mockERC20.balanceOf(address(boost.incentives[incentiveId]));
         require(initialBalanceIncentive >= totalClawbackAmount, "Insufficient initial balance for clawback test");
 
@@ -532,9 +524,6 @@ contract BoostCoreTest is Test {
         BoostLib.Boost memory boost = boostCore.getBoost(0);
         uint256 boostId = 0;
         uint256 incentiveId = 0;
-
-        // Generate the key for the incentive
-        bytes32 key = keccak256(abi.encodePacked(boostId, incentiveId));
 
         // Mint some tokens to ensure there is balance in the incentive
         mockERC20.mint(address(boost.incentives[incentiveId]), 100 ether);

@@ -40,7 +40,7 @@ abstract contract AManagedBudget is ABudget, IERC1155Receiver {
         virtual
         override
         onlyAuthorized
-        returns (uint256)
+        returns (uint256, address)
     {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
 

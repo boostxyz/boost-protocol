@@ -81,7 +81,7 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
         external
         virtual
         onlyAuthorized
-        returns (uint256)
+        returns (uint256, address)
     {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
         return IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);

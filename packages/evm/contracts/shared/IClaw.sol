@@ -5,9 +5,5 @@ interface IClaw {
     /// @notice Reclaim assets from the incentive
     /// @param data_ The data payload for the reclaim
     /// @return True if the assets were successfully reclaimed
-    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external returns (uint256);
-
-    /// @notice Get the asset for the incentive
-    /// @return The address of the asset
-    function asset() external view returns (address);
+    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId) external returns (uint256, address);
 }

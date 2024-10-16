@@ -130,14 +130,13 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
         virtual
         override
         onlyAuthorized
-        returns (uint256)
+        returns (uint256, address)
     {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
         IClaw incentive = IClaw(target);
-        uint256 amount = incentive.clawback(abi.encode(payload), boostId, incentiveId);
-        address asset = incentive.asset();
+        (uint256 amount, address asset) = incentive.clawback(abi.encode(payload), boostId, incentiveId);
         _distributedFungible[asset] -= amount;
-        return amount;
+        return (amount, asset);
     }
 
     /// @inheritdoc ABudget

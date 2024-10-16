@@ -18,9 +18,6 @@ abstract contract AERC20VariableIncentive is AIncentive {
     /// @notice A mapping of address to claim status
     mapping(address => bool) public claimed;
 
-    /// @notice The address of the ERC20-like token
-    address public asset;
-
     /// @notice The spending limit (max total claimable amount)
     uint256 public limit;
 

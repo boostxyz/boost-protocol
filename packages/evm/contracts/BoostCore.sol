@@ -293,8 +293,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param boostId The ID of the Boost
     /// @param incentiveId The ID of the AIncentive
     function settleProtocolFees(uint256 boostId, uint256 incentiveId) external nonReentrant {
-        BoostLib.Boost storage boost = _boosts[boostId];
-
         // Generate the unique key for the incentive
         bytes32 key = _generateKey(boostId, incentiveId);
         IncentiveDisbursalInfo storage incentive = incentives[key];

@@ -11,6 +11,7 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostRegistry.sol/BoostRegistry.json';
 import {
+  type Abi,
   type Address,
   type ContractEventName,
   type Hex,
@@ -312,6 +313,31 @@ export class BoostRegistry extends Deployable<
     params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
   ): Promise<Target> {
     return this.clone(displayName, target, params);
+  }
+
+  /**
+   * Initialize a new instance of a registered base implementation, returning a transaction hash, resulting address from simulated transaction, and the given target bound to the resulting address.
+   * This method is the same as `deployCloneRaw`, but serves to make its function more obvious as to why you'd need to use it.
+   *
+   * @public
+   * @async
+   * @template {DeployableTarget} Target
+   * @param {string} displayName - The display name for the clone
+   * @param {Target} target - An instance of a target contract to clone and initialize
+   * @param {?WriteParams} [params]
+   * @returns {Promise<HashAndSimulatedResult<Address> & { target: Target } >} - The transaction hash, simulated return address, and given target bound to simulated return address
+   */
+  public async initializeRaw<Target extends DeployableTarget<unknown, Abi>>(
+    displayName: string,
+    target: Target,
+    params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
+  ): Promise<HashAndSimulatedResult<Address> & { target: Target }> {
+    const { hash, result } = await this.deployCloneRaw(
+      displayName,
+      target,
+      params,
+    );
+    return { hash, result, target: target.at(result) };
   }
 
   /**

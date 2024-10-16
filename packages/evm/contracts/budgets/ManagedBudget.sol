@@ -133,7 +133,10 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
         returns (uint256)
     {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
-        uint256 amount = IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);
+        IClaw incentive = IClaw(target);
+        uint256 amount = incentive.clawback(abi.encode(payload), boostId, incentiveId);
+        address asset = incentive.asset();
+        _distributedFungible[asset] -= amount;
         return amount;
     }
 

@@ -408,7 +408,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
                     revert BoostError.InvalidInitialization();
                 }
                 // Original disbursement call
-                if (!budget_.disburse(preflight))  {
+                if (!budget_.disburse(preflight)) {
                     revert BoostError.InvalidInitialization();
                 }
                 // decode the preflight data to extract the transfer details

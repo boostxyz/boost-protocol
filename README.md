@@ -190,12 +190,53 @@ After this all you need to do is push and merge the pull request and the Github 
 
 To deploy the contracts, you can use the provided scripts. Make sure to replace any sensitive information such as private keys with your own secure values.
 
-### Deploy Core Contracts
-To deploy the core contracts to the Sepolia testnet, use the following command:
-`forge script script/solidity/Deploy.s.sol:CoreDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"`
+### Deployment Steps
+1. Update foundry using `foundryup`
+2. Make sure you have all `.env` variables added:
+    
+    ```
+    BOOST_FEE_RECIPIENT=
+    BOOST_DEPLOYMENT_SALT=
+    ETHERSCAN_API_KEY=
+    MAIN_ETHERSCAN_API_KEY=
+    ```
+    
+3. Note the current deployed addresses in `packages/evm/deploys`
+    
+    The currently deployed addresses will be ordered based on network ID.
+    
+    If there is a file representing a deployment on the network you’ll be deploying to take note of the current address.
+    
+    If there is **not** a file representing a deployment on that network you have to create one inside the `pacakges/evm/deploys`  with `touch <networkid>.json` for example:
+    
+    `cd packages/evm/deploys`
+    
+    `touch 31337.json`
+    
+4. [OPTIONAL] Deploy Core Contracts
 
-In order to deploy to another network simply switch the RPC you're broadcasting against.
-
-### Deploy Module Contracts
-To deploy the module contracts to the Sepolia testnet, use the following command:
-`forge script script/solidity/Deploy_Modules.s.sol:ModuleBaseDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"`
+    
+    <aside>
+    💡
+    
+    In the vast majority of cases you WILL NOT want to redeploy core and registry. Make absolutely sure you know what you’re doing before doing this step.
+    
+    </aside>
+    
+    To deploy the core contracts to the `Sepolia testnet`, use the following command:
+    
+    ```solidity
+    forge script script/solidity/Deploy.s.sol:CoreDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"
+    ```
+    
+    In order to deploy to another network simply switch the RPC you're broadcasting against.
+    
+5. Deploy Module Contracts
+    
+    To deploy the module contracts to the `Sepolia testnet`, use the following command:
+    
+    ```solidity
+    forge script script/solidity/Deploy_Modules.s.sol:ModuleBaseDeployer -f https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY --broadcast --verify --private-key "YOUR_PRIVATE_KEY"`
+    ```
+    
+6. Confirm that the addresses have changed for any module with new byte code. Any contract with any changes should have new byte code, and as a result be redeployed on a new deployment. Any contracts that *have not* changed should not be redeployed.

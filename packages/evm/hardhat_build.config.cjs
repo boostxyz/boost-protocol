@@ -15,4 +15,7 @@ module.exports = {
       runs: 10_000,
     },
   },
+  paths: {
+    cache: './cache_hh',
+  },
 };

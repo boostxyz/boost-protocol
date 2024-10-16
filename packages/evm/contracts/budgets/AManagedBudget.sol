@@ -34,19 +34,6 @@ abstract contract AManagedBudget is ABudget, IERC1155Receiver {
     /// @return The amount of assets distributed
     function distributed(address asset_, uint256 tokenId_) external view virtual returns (uint256);
 
-    // Optionally override the function if needed
-    function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId)
-        external
-        virtual
-        override
-        onlyAuthorized
-        returns (uint256, address)
-    {
-        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
-
-        return IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);
-    }
-
     /// @inheritdoc ACloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(ABudget, IERC165) returns (bool) {
         return interfaceId == type(AManagedBudget).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId

@@ -15,7 +15,7 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
     event Claimed(address indexed recipient, bytes data);
 
     /// @notice The address of the ERC20-like token
-    address public asset;
+    address public asset = address(0xdeaDDeADDEaDdeaDdEAddEADDEAdDeadDEADDEaD);
 
     /// @notice Thrown when a claim fails
     error ClaimFailed();

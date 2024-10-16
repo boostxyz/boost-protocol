@@ -280,9 +280,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
             emit ProtocolFeesCollected(boostId, incentiveId, protocolFeeAmount, protocolFeeReceiver);
         }
 
-        bool success = boost.incentives[incentiveId].clawback(abi.encode(claim_));
+        uint256 clawbackAmount = boost.incentives[incentiveId].clawback(abi.encode(claim_));
         // Throw a custom error here
-        if (!success) {
+        if (clawbackAmount == 0) {
             revert BoostError.ClawbackFailed(msg.sender, data_);
         }
         incentive.protocolFeesRemaining -= protocolFeeAmount;

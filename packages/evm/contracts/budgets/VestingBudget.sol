@@ -95,18 +95,18 @@ contract VestingBudget is AVestingBudget, ReentrancyGuard {
     /// @dev Only the owner can directly reclaim assets from the budget, and this action is not subject to the vesting schedule
     /// @dev If the amount is zero, the entire available balance of the asset will be transferred to the receiver
     /// @dev If the asset transfer fails for any reason, the function will revert
-    function clawback(bytes calldata data_) external virtual override onlyOwner returns (bool) {
+    function clawback(bytes calldata data_) external virtual override onlyOwner returns (uint256) {
         Transfer memory request = abi.decode(data_, (Transfer));
+        uint256 amount;
         if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
-            _transferFungible(
-                request.asset, request.target, payload.amount == 0 ? available(request.asset) : payload.amount
-            );
+            amount = payload.amount == 0 ? available(request.asset) : payload.amount;
+            _transferFungible(request.asset, request.target, amount);
         } else {
-            return false;
+            return amount;
         }
 
-        return true;
+        return amount;
     }
 
     /// @inheritdoc ABudget

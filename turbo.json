@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalPassThroughEnv": ["VITE_ALCHEMY_API_KEY"],
+  "globalPassThroughEnv": ["VITE_ALCHEMY_API_KEY", "HARDHAT_KEEPALIVE"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

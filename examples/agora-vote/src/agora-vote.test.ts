@@ -35,7 +35,7 @@ import { optimism } from 'viem/chains';
 import { beforeAll, describe, expect, test } from 'vitest';
 
 const walletClient = createTestClient({
-  transport: http('http://127.0.0.1:8545'),
+  transport: http('http://localhost:8545'),
   chain: optimism,
   mode: 'hardhat',
 })
@@ -140,10 +140,7 @@ describe('Boost with Voting Incentive', () => {
         signers: [owner, trustedSigner.account], // Whichever account we're going to sign with needs to be a signer
         validatorCaller: fixtures.core.assertValidAddress(), // Only core should be calling into the validate otherwise it's possible to burn signatures
       }),
-      allowList: core.SimpleAllowList({
-        owner: owner,
-        allowed: [owner],
-      }),
+      allowList: core.OpenAllowList(),
       incentives: [
         core.ERC20VariableIncentive({
           asset: erc20.assertValidAddress(),
@@ -224,7 +221,6 @@ describe('Boost with Voting Incentive', () => {
       claimant: boostImpostor,
       boostId: boost.id,
     });
-
 
     // Claim the incentive for the imposter
     await core.claimIncentiveFor(

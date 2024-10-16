@@ -57,7 +57,7 @@ const selector = selectors[
 ] as Hex;
 
 const walletClient = createTestClient({
-  transport: http("http://127.0.0.1:8545"),
+  transport: http('http://localhost:8545'),
   chain: base,
   mode: "hardhat",
 })
@@ -150,7 +150,7 @@ describe("Boost with Delegate Action Incentive", () => {
       address: boostImpostor,
       value: parseEther("10"),
     });
-    const testReceipt = await walletClient.sendTransaction({
+    const hash = await walletClient.sendTransaction({
       data: inputData,
       account: boostImpostor,
       to: targetContract,
@@ -158,8 +158,8 @@ describe("Boost with Delegate Action Incentive", () => {
     });
 
     // Make sure that the transaction was sent as expected and validates the action
-    expect(testReceipt).toBeDefined();
-    const validation = await action.validateActionSteps();
+    expect(hash).toBeDefined();
+    const validation = await action.validateActionSteps({ hash });
     expect(validation).toBe(true);
     // Generate the signature using the trusted signer
     const claimDataPayload = await boost.validator.encodeClaimData({

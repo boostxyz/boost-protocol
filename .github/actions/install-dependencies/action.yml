@@ -33,7 +33,9 @@ runs:
       with:
         save-always: true
         path: .cache
-        key: ${{ runner.os }}-turbo
+        key: ${{ runner.os }}-turbo-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-turbo-
     - name: Install dependencies
       shell: bash
       run: pnpm install

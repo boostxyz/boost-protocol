@@ -345,7 +345,7 @@ contract VestingBudgetTest is Test {
         uint256 result = vestingBudget.clawback(erc1155Data);
 
         // Assert that clawback fails for unsupported asset type
-        assertGt(result, 0, "Clawback should fail for unsupported asset type (ERC1155)");
+        assertEq(result, 0, "Clawback should fail for unsupported asset type (ERC1155)");
     }
 
     ///////////////////////////

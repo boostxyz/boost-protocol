@@ -12,6 +12,8 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {IClaw} from "contracts/shared/IClaw.sol";
 
 /// @title Managed ABudget
 /// @notice A minimal budget implementation with RBAC that simply holds and distributes tokens (ERC20-like and native)
@@ -120,6 +122,14 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     }
 
     /// @inheritdoc ABudget
+    function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId) external override(AManagedBudget) returns (bool) {
+        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
+        Transfer memory request = abi.decode(data_, (Transfer));
+        _distributedFungible[request.asset] += _getAmount(request);
+        return IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);
+    }
+
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to a single recipient if sender is owner, admin, or manager
     /// @param data_ The packed {Transfer} request
     /// @return True if the disbursement was successful
@@ -133,7 +143,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
             if (payload.amount > avail) {
                 revert InsufficientFunds(request.asset, avail, payload.amount);
             }
-
+            _distributedFungible[request.asset] += payload.amount;
             _transferFungible(request.asset, request.target, payload.amount);
         } else if (request.assetType == AssetType.ERC1155) {
             ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
@@ -232,9 +242,6 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
         if (amount_ > available(asset_)) {
             revert InsufficientFunds(asset_, available(asset_), amount_);
         }
-
-        _distributedFungible[asset_] += amount_;
-
         // Transfer the asset to the recipient
         if (asset_ == address(0)) {
             SafeTransferLib.safeTransferETH(to_, amount_);
@@ -263,6 +270,23 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
         IERC1155(asset_).safeTransferFrom(address(this), to_, tokenId_, amount_, data_);
 
         emit Distributed(asset_, to_, amount_);
+    }
+
+    /// @notice Internal helper function to extract the amount from the transfer payload based on the asset type
+    /// @param transfer The transfer struct containing the asset type and data
+    /// @return The amount of the asset to transfer
+    function _getAmount(Transfer memory transfer) internal pure returns (uint256) {
+        if (transfer.assetType == ABudget.AssetType.ERC20 || transfer.assetType == ABudget.AssetType.ETH) {
+            // Decode the fungible payload
+            FungiblePayload memory payload = abi.decode(transfer.data, (ABudget.FungiblePayload));
+            return payload.amount;
+        } else if (transfer.assetType == ABudget.AssetType.ERC1155) {
+            // Decode the ERC1155 payload
+            ERC1155Payload memory payload = abi.decode(transfer.data, (ABudget.ERC1155Payload));
+            return payload.amount;
+        } else {
+            revert BoostError.NotImplemented();
+        }
     }
 
     /// @inheritdoc IERC1155Receiver

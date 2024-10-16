@@ -9,6 +9,8 @@ import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {IClaw} from "contracts/shared/IClaw.sol";
 
 /// @title Abstract Managed ABudget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
@@ -31,6 +33,12 @@ abstract contract AManagedBudget is ABudget, IERC1155Receiver {
     /// @param tokenId_ The ID of the token
     /// @return The amount of assets distributed
     function distributed(address asset_, uint256 tokenId_) external view virtual returns (uint256);
+
+    // Optionally override the function if needed
+    function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId) external virtual override returns (bool) {
+        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
+        return IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);
+    }
 
     /// @inheritdoc ACloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(ABudget, IERC165) returns (bool) {

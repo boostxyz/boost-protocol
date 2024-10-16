@@ -27,6 +27,7 @@ function addToIndex(type, signature, target) {
   target.abi[selector] = abiItem;
   target.abi[signatureWithoutType] = abiItem;
   target.selectors[signatureWithoutType] = selector;
+  target.selectors[selector] = signatureWithoutType;
 }
 
 function generateSelector(type, signature) {

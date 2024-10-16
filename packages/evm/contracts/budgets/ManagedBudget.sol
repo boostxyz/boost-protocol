@@ -282,23 +282,6 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
         emit Distributed(asset_, to_, amount_);
     }
 
-    /// @notice Internal helper function to extract the amount from the transfer payload based on the asset type
-    /// @param transfer The transfer struct containing the asset type and data
-    /// @return The amount of the asset to transfer
-    function _getAmount(Transfer memory transfer) internal pure returns (uint256) {
-        if (transfer.assetType == ABudget.AssetType.ERC20 || transfer.assetType == ABudget.AssetType.ETH) {
-            // Decode the fungible payload
-            FungiblePayload memory payload = abi.decode(transfer.data, (ABudget.FungiblePayload));
-            return payload.amount;
-        } else if (transfer.assetType == ABudget.AssetType.ERC1155) {
-            // Decode the ERC1155 payload
-            ERC1155Payload memory payload = abi.decode(transfer.data, (ABudget.ERC1155Payload));
-            return payload.amount;
-        } else {
-            revert BoostError.NotImplemented();
-        }
-    }
-
     /// @inheritdoc IERC1155Receiver
     /// @dev This contract does not care about the specifics of the inbound token, so we simply return the magic value (i.e. the selector for `onERC1155Received`)
     function onERC1155Received(address, address, uint256, uint256, bytes calldata)

@@ -14,6 +14,7 @@ contract CoreDeployer is ScriptUtils {
     }
 
     function run() public {
+        console.log("deploying address: ", vm.addr(vm.envUint("SIGNER_PRIVATE_KEY")));
         // 1. Deploy Boost registry
         address registry = _deployRegistry();
         address core = _deployCore(registry);

@@ -516,7 +516,7 @@ contract BoostCoreTest is Test {
             instance: address(new ERC721MintAction()),
             parameters: abi.encode(
                 AContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
-                )
+            )
         });
     }
 
@@ -529,7 +529,7 @@ contract BoostCoreTest is Test {
             instance: address(new ContractAction()),
             parameters: abi.encode(
                 AContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
-                )
+            )
         });
     }
 
@@ -567,7 +567,7 @@ contract BoostCoreTest is Test {
                         limit: 100,
                         manager: address(budget)
                     })
-                    )
+                )
             });
         }
         return incentives;

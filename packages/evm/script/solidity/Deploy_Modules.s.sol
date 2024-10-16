@@ -126,7 +126,7 @@ contract ModuleBaseDeployer is ScriptUtils {
             "ERC20VariableCriteriaIncentive",
             erc20VariableCriteriaIncentive,
             registry,
-            BoostRegistry.RegistryType.INCENTIVE
+            ABoostRegistry.RegistryType.INCENTIVE
         );
     }
 
@@ -200,6 +200,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("SimpleDenyList: ", simpleDenyList);
         deployJson = deployJsonKey.serialize("SimpleDenyList", simpleDenyList);
         bool newDeploy = _deploy2(initCode, "");
+
         _registerIfNew(newDeploy, "SimpleDenyList", simpleDenyList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
     }
 }

@@ -78,7 +78,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
                 target: address(this),
                 data: abi.encode(
                     ABudget.ERC1155Payload({tokenId: init_.tokenId, amount: init_.limit, data: init_.extraData})
-                    )
+                )
             })
         );
     }

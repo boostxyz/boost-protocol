@@ -260,7 +260,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                 registry.getBaseImplementation(
                     registry.getIdentifier(ABoostRegistry.RegistryType.INCENTIVE, "ERC20VariableIncentive")
                 )
-                ),
+            ),
             // "... of '5 ERC20'"
             //address asset_, uint256 reward_, uint256 limit_
             // reward (second param) is unused
@@ -283,7 +283,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                                 registry.getBaseImplementation(
                                     registry.getIdentifier(ABoostRegistry.RegistryType.ACTION, "ERC721MintAction")
                                 )
-                                ),
+                            ),
                             parameters: abi.encode(
                                 AContractAction.InitPayload({
                                     chainId: block.chainid,
@@ -291,7 +291,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                                     selector: MockERC721.mint.selector,
                                     value: erc721.mintPrice()
                                 })
-                                )
+                            )
                         }),
                         BoostLib.Target({
                             // "... and I can specify a SignerValidator to sign off on claims"
@@ -300,7 +300,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                                 registry.getBaseImplementation(
                                     registry.getIdentifier(ABoostRegistry.RegistryType.VALIDATOR, "SignerValidator")
                                 )
-                                ),
+                            ),
                             parameters: abi.encode(signers, address(core))
                         }),
                         BoostLib.Target({
@@ -310,7 +310,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                                 registry.getBaseImplementation(
                                     registry.getIdentifier(ABoostRegistry.RegistryType.ALLOW_LIST, "SimpleDenyList")
                                 )
-                                ),
+                            ),
                             parameters: abi.encode(address(this), denyList)
                         }),
                         incentives, // "I can specify the incentive..."

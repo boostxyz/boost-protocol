@@ -108,7 +108,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256) {
+    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
@@ -121,7 +121,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
         IERC1155(asset).safeTransferFrom(address(this), claim_.target, tokenId, amount, claim_.data);
         emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, tokenId, amount, claim_.data));
 
-        return amount;
+        return (amount, asset);
     }
 
     /// @notice Check if an incentive is claimable

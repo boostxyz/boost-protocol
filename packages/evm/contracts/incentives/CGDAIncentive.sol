@@ -102,7 +102,7 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external virtual override onlyRoles(MANAGER_ROLE) returns (uint256) {
+    function clawback(bytes calldata data_) external virtual override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
@@ -110,7 +110,7 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
         asset.safeTransfer(claim_.target, amount);
         emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, amount));
 
-        return amount;
+        return (amount, asset);
     }
 
     /// @inheritdoc AIncentive

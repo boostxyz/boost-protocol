@@ -45,7 +45,7 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
     /// @notice Reclaim assets from the incentive
     /// @param data_ The data payload for the reclaim
     /// @return True if the assets were successfully reclaimed
-    function clawback(bytes calldata data_) external virtual returns (uint256);
+    function clawback(bytes calldata data_) external virtual returns (uint256, address);
 
     /// @notice Check if an incentive is claimable
     /// @param data_ The data payload for the claim check (data, signature, etc.)

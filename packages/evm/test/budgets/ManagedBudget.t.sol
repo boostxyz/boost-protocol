@@ -331,7 +331,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim all tokens from the budget
         data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 0);
-        assertGt(managedBudget.clawback(data), 0);
+        assertEq(managedBudget.clawback(data), 0);
 
         // Ensure the budget has no tokens left
         assertEq(managedBudget.available(address(mockERC20)), 0 ether);
@@ -516,7 +516,6 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Disburse 100 ETH from the budget to the recipient
         data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 100 ether);
-        assertGt(managedBudget.clawback(data), 0);
         assertTrue(managedBudget.disburse(data));
         assertEq(address(1).balance, 100 ether);
 

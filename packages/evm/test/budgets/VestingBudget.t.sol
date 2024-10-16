@@ -234,10 +234,11 @@ contract VestingBudgetTest is Test {
         _vestAll();
 
         // Reclaim 99 tokens from the budget
-        assertTrue(
+        assertGt(
             vestingBudget.clawback(
                 _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 99 ether)
-            )
+            ),
+            0
         );
 
         // Ensure the budget total is still 100
@@ -254,7 +255,7 @@ contract VestingBudgetTest is Test {
 
         // Reclaim 99 ETH from the budget
         bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 99 ether);
-        assertTrue(vestingBudget.clawback(data));
+        assertGt(vestingBudget.clawback(data), 0);
 
         // Ensure the budget has 1 ETH left
         assertEq(vestingBudget.available(address(0)), 1 ether);
@@ -266,7 +267,7 @@ contract VestingBudgetTest is Test {
 
         // Reclaim all tokens from the budget
         bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 0);
-        assertTrue(vestingBudget.clawback(data));
+        assertGt(vestingBudget.clawback(data), 0);
 
         // Ensure the budget has no tokens left
         assertEq(vestingBudget.available(address(mockERC20)), 0 ether);
@@ -341,10 +342,10 @@ contract VestingBudgetTest is Test {
         );
 
         // Try to clawback ERC1155 tokens
-        bool result = vestingBudget.clawback(erc1155Data);
+        uint256 result = vestingBudget.clawback(erc1155Data);
 
         // Assert that clawback fails for unsupported asset type
-        assertFalse(result, "Clawback should fail for unsupported asset type (ERC1155)");
+        assertGt(result, 0, "Clawback should fail for unsupported asset type (ERC1155)");
     }
 
     ///////////////////////////

@@ -14,6 +14,9 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
     /// @dev The `data` field contains implementation-specific context. See the implementation's `claim` function for details.
     event Claimed(address indexed recipient, bytes data);
 
+    /// @notice The address of the ERC20-like token
+    address public asset;
+
     /// @notice Thrown when a claim fails
     error ClaimFailed();
 
@@ -42,7 +45,7 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
     /// @notice Reclaim assets from the incentive
     /// @param data_ The data payload for the reclaim
     /// @return True if the assets were successfully reclaimed
-    function clawback(bytes calldata data_) external virtual returns (bool);
+    function clawback(bytes calldata data_) external virtual returns (uint256);
 
     /// @notice Check if an incentive is claimable
     /// @param data_ The data payload for the claim check (data, signature, etc.)

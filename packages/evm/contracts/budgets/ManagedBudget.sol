@@ -98,13 +98,15 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     /// @dev Only admins can directly reclaim assets from the budget
     /// @dev If the amount is zero, the entire balance of the asset will be transferred to the receiver
     /// @dev If the asset transfer fails, the reclamation will revert
-    function clawback(bytes calldata data_) external virtual override onlyOwnerOrRoles(ADMIN_ROLE) returns (bool) {
+    function clawback(bytes calldata data_) external virtual override onlyOwnerOrRoles(ADMIN_ROLE) returns (uint256) {
         Transfer memory request = abi.decode(data_, (Transfer));
+        uint256 amount = 0;
         if (request.assetType == AssetType.ETH || request.assetType == AssetType.ERC20) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
             _transferFungible(
                 request.asset, request.target, payload.amount == 0 ? available(request.asset) : payload.amount
             );
+            amount = payload.amount;
         } else if (request.assetType == AssetType.ERC1155) {
             ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
             _transferERC1155(
@@ -114,19 +116,25 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
                 payload.amount == 0 ? IERC1155(request.asset).balanceOf(address(this), payload.tokenId) : payload.amount,
                 payload.data
             );
+            amount = payload.amount;
         } else {
-            return false;
+            return amount;
         }
 
-        return true;
+        return amount;
     }
 
     /// @inheritdoc ABudget
-    function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId) external override(AManagedBudget) returns (bool) {
+    function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        virtual
+        override
+        onlyAuthorized
+        returns (uint256)
+    {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
-        Transfer memory request = abi.decode(data_, (Transfer));
-        _distributedFungible[request.asset] += _getAmount(request);
-        return IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);
+        uint256 amount = IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);
+        return amount;
     }
 
     /// @inheritdoc ABudget

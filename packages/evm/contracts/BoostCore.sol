@@ -382,12 +382,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Configure a set of incentives for a Boost using the given ABudget
     /// @param targets_ The set of incentives {Target<AIncentive>[]}
     /// @param budget_ The ABudget from which to allocate the incentives
-    /// @return incentives The set of initialized incentives {AIncentive[]}
+    /// @return newIncentives The set of initialized incentives {AIncentive[]}
     function _makeIncentives(BoostLib.Target[] memory targets_, ABudget budget_)
         internal
-        returns (AIncentive[] memory incentives)
+        returns (AIncentive[] memory newIncentives)
     {
-        incentives = new AIncentive[](targets_.length);
+        newIncentives = new AIncentive[](targets_.length);
         for (uint256 i = 0; i < targets_.length; i++) {
             // Deploy the clone, but don't initialize until we've preflighted
             _checkTarget(type(AIncentive).interfaceId, targets_[i].instance);
@@ -398,10 +398,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
             }
 
             // Create the incentive instance
-            incentives[i] = AIncentive(_makeTarget(type(AIncentive).interfaceId, targets_[i], false));
+            newIncentives[i] = AIncentive(_makeTarget(type(AIncentive).interfaceId, targets_[i], false));
 
             // Get the preflight data for the protocol fee and original disbursement
-            bytes memory preflight = incentives[i].preflight(targets_[i].parameters);
+            bytes memory preflight = newIncentives[i].preflight(targets_[i].parameters);
             if (preflight.length != 0) {
                 (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight);
                 // Protocol Fee disbursal
@@ -422,7 +422,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
             // Initialize the incentive instance after value has been trasnferred
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
-            incentives[i].initialize(targets_[i].parameters);
+            newIncentives[i].initialize(targets_[i].parameters);
         }
     }
 

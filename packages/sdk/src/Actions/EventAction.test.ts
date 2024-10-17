@@ -12,6 +12,7 @@ import {
   parseEther,
   toHex,
   zeroAddress,
+  zeroHash,
 } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import type { MockERC20 } from '@boostxyz/test/MockERC20';
@@ -34,6 +35,7 @@ import {
   PrimitiveType,
   SignatureType,
   Criteria,
+  anyActionParameter,
 } from "./EventAction";
 
 let fixtures: Fixtures,
@@ -80,11 +82,19 @@ function basicErc721TransferAction(
   };
 }
 
-function cloneEventAction(fixtures: Fixtures, erc721: MockERC721) {
+function basicErc721TransferActionWithEmptyActionParameter(erc721: MockERC721) {
+  const eventActionPayload = basicErc721TransferAction(erc721)
+  if (eventActionPayload.actionSteps[0]?.actionParameter) {
+    eventActionPayload.actionSteps[0].actionParameter = anyActionParameter()
+  }
+  return eventActionPayload
+}
+
+function cloneEventAction(fixtures: Fixtures, erc721: MockERC721, eventActionPayload = basicErc721TransferAction(erc721)) {
   return function cloneEventAction() {
     return fixtures.registry.initialize(
       crypto.randomUUID(),
-      fixtures.core.EventAction(basicErc721TransferAction(erc721)),
+      fixtures.core.EventAction(eventActionPayload),
     );
   };
 }
@@ -116,6 +126,14 @@ function basicErc721MintFuncAction(
       },
     ],
   };
+}
+
+function basicErc721MintFuncActionWithEmptyActionParameter(erc721: MockERC721) {
+  const eventActionPayload = basicErc721MintFuncAction(erc721)
+  if (eventActionPayload.actionSteps[0]?.actionParameter) {
+    eventActionPayload.actionSteps[0].actionParameter = anyActionParameter()
+  }
+  return eventActionPayload
 }
 
 function basicErc20MintFuncAction(erc20: MockERC20): EventActionPayloadSimple {
@@ -227,13 +245,13 @@ function cloneFunctionAction20(fixtures: Fixtures, erc20: MockERC20) {
   };
 }
 
-function cloneFunctionAction(fixtures: Fixtures, erc721: MockERC721) {
+function cloneFunctionAction(fixtures: Fixtures, erc721: MockERC721, eventActionPayload = basicErc721MintFuncAction(erc721)) {
   return function cloneFunctionAction() {
     return fixtures.registry.clone(
       crypto.randomUUID(),
       new fixtures.bases.EventAction(
         defaultOptions,
-        basicErc721MintFuncAction(erc721),
+        eventActionPayload
       ),
     );
   };
@@ -510,13 +528,21 @@ describe("EventAction Event Selector", () => {
         }),
       ).toBe(recipient);
     });
+
+    test('validates empty actionParameter', async () => {
+      const action = await loadFixture(cloneEventAction(fixtures, erc721, basicErc721TransferActionWithEmptyActionParameter(erc721)))
+      const recipient = accounts[1].account;
+      await erc721.approve(recipient, 1n);
+      const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
+      expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
+    })
   });
 });
 
 describe("validateFieldAgainstCriteria unit tests", () => {
   let action: EventAction
   beforeAll(async () => {
-      action = await loadFixture(cloneEventAction(fixtures, erc721));
+    action = await loadFixture(cloneEventAction(fixtures, erc721));
   });
   const mockAddress = '0x1234567890abcdef1234567890abcdef12345678';
   const mockInput = { decodedArgs: ['not used'] };
@@ -632,6 +658,11 @@ describe("validateFieldAgainstCriteria unit tests", () => {
     expect(() => action.validateFieldAgainstCriteria(mockCriteria, '0x1234567890abcdef1234567890abcdef12345678', mockInput)).toThrow('non-numerical');
   });
 
+  test('should return true for anyActionParameter', async () => {
+    const mockCriteria = anyActionParameter()
+    const result = action.validateFieldAgainstCriteria(mockCriteria, zeroHash, mockInput)
+    expect(result).toBe(true)
+  })
 })
 
 describe("EventAction Func Selector", () => {
@@ -704,6 +735,16 @@ describe("EventAction Func Selector", () => {
       );
     }
   });
+
+  test('validates empty actionParameter', async () => {
+    const action = await loadFixture(cloneFunctionAction(fixtures, erc721, basicErc721MintFuncActionWithEmptyActionParameter(erc721)))
+    const recipient = accounts[1].account;
+    const { hash } = await erc721.mintRaw(recipient, {
+      value: parseEther(".1"),
+    });
+
+    expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
+  })
 
   test("validates against NOT_EQUAL filter criteria", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));

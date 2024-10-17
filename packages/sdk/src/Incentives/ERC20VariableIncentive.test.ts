@@ -60,7 +60,7 @@ describe('ERC20VariableIncentive', () => {
     const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
-      incentiveData: await erc20VariableIncentive.buildClaimData(parseEther('1')),
+      incentiveData: erc20VariableIncentive.buildClaimData(parseEther('1')),
       chainId: defaultOptions.config.chains[0].id,
       incentiveQuantity,
       claimant,

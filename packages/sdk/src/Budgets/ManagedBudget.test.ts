@@ -9,14 +9,14 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBudget,
   freshManagedBudget,
   fundErc20,
   fundErc1155,
   fundManagedBudget,
 } from '@boostxyz/test/helpers';
 import { testAccount } from '@boostxyz/test/viem';
-import { ManagedBudget, ManagedBudgetRoles } from './ManagedBudget';
+import { ManagedBudget } from './ManagedBudget';
+import { Roles } from '../Deployable/DeployableTargetWithRBAC';
 
 let fixtures: Fixtures,
   budget: ManagedBudget,
@@ -45,11 +45,11 @@ describe('ManagedBudget', () => {
     const one = accounts[1].account;
     const two = accounts[2].account;
     await budget.setAuthorized([one, two], [true, true]);
-    expect(await budget.hasAllRoles(one, ManagedBudgetRoles.ADMIN)).toBe(false);
-    expect(await budget.hasAllRoles(one, ManagedBudgetRoles.MANAGER)).toBe(
+    expect(await budget.hasAllRoles(one, Roles.ADMIN)).toBe(false);
+    expect(await budget.hasAllRoles(one, Roles.MANAGER)).toBe(
       true,
     );
-    expect(await budget.hasAllRoles(two, ManagedBudgetRoles.MANAGER)).toBe(
+    expect(await budget.hasAllRoles(two, Roles.MANAGER)).toBe(
       true,
     );
   });
@@ -60,14 +60,14 @@ describe('ManagedBudget', () => {
     );
     const admin = accounts[1].account;
     const manager = accounts[2].account;
-    await budget.grantRoles(
+    await budget.grantManyRoles(
       [admin, manager],
-      [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
+      [Roles.ADMIN, Roles.MANAGER],
     );
-    expect(await budget.hasAllRoles(admin, ManagedBudgetRoles.ADMIN)).toBe(
+    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(
       true,
     );
-    expect(await budget.hasAllRoles(manager, ManagedBudgetRoles.MANAGER)).toBe(
+    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(
       true,
     );
   });
@@ -78,18 +78,18 @@ describe('ManagedBudget', () => {
     );
     const admin = accounts[1].account;
     const manager = accounts[2].account;
-    await budget.grantRoles(
+    await budget.grantManyRoles(
       [admin, manager],
-      [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
+      [Roles.ADMIN, Roles.MANAGER],
     );
-    await budget.revokeRoles(
+    await budget.revokeManyRoles(
       [admin, manager],
-      [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
+      [Roles.ADMIN, Roles.MANAGER],
     );
-    expect(await budget.hasAllRoles(admin, ManagedBudgetRoles.ADMIN)).toBe(
+    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(
       false,
     );
-    expect(await budget.hasAllRoles(manager, ManagedBudgetRoles.MANAGER)).toBe(
+    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(
       false,
     );
   });

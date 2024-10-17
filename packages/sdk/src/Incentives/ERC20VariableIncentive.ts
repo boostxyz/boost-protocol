@@ -379,6 +379,21 @@ export class ERC20VariableIncentive extends DeployableTarget<
   }
 
   /**
+   * Builds the claim data for the ERC20VariableIncentive.
+   *
+   * @public
+   * @param {bigint} rewardAmount
+   * @returns {Promise<Hex>} A Promise that resolves with the encoded claim data
+   * @description This function returns the encoded claim data for the ERC20VariableIncentive.
+   */
+  public buildClaimData(rewardAmount: bigint) {
+    return encodeAbiParameters(
+      [{ type: 'uint256', name: 'rewardAmount' }],
+      [rewardAmount],
+    );
+  }
+
+  /**
    * @inheritdoc
    *
    * @public

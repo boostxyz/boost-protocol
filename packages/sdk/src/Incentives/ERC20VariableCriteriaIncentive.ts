@@ -252,6 +252,21 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
       ...this.optionallyAttachAccount(options.account),
     };
   }
+
+  /**
+   * Builds the claim data for the ERC20VariableCriteriaIncentive.
+   *
+   * @public
+   * @param {bigint} rewardAmount
+   * @returns {Hex} Returns the encoded claim data
+   * @description This function returns the encoded claim data for the ERC20VariableCriteriaIncentive.
+   */
+  public buildClaimData(rewardAmount: bigint) {
+    return encodeAbiParameters(
+      [{ type: 'uint256', name: 'rewardAmount' }],
+      [rewardAmount],
+    );
+  }
 }
 
 /**

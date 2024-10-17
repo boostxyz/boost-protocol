@@ -16,6 +16,7 @@ import {
   type ContractEventName,
   type Hex,
   encodeAbiParameters,
+  zeroHash,
 } from 'viem';
 import { AllowListIncentive as AllowListIncentiveBases } from '../../dist/deployments.json';
 import { SimpleAllowList } from '../AllowLists/AllowList';
@@ -311,6 +312,17 @@ export class AllowListIncentive extends DeployableTarget<
       args: [prepareAllowListIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
+  }
+
+  /**
+   * Builds the claim data for the AllowListIncentive.
+   *
+   * @public
+   * @returns {Hash} A `zeroHash`, as AllowListIncentive doesn't require specific claim data.
+   * @description This function returns `zeroHash` because AllowListIncentive doesn't use any specific claim data.
+   */
+  public buildClaimData() {
+    return zeroHash;
   }
 }
 

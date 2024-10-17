@@ -23,6 +23,7 @@ import {
   type ContractEventName,
   type Hex,
   encodeAbiParameters,
+  zeroHash,
 } from 'viem';
 import { ERC20Incentive as ERC20IncentiveBases } from '../../dist/deployments.json';
 import type {
@@ -459,6 +460,17 @@ export class ERC20Incentive extends DeployableTarget<
       args: [prepareERC20IncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
+  }
+
+  /**
+   * Builds the claim data for the ERC20Incentive.
+   *
+   * @public
+   * @returns {Promise<Hash>} A Promise that resolves to `zeroHash`, as ERC20Incentive doesn't require specific claim data.
+   * @description This function returns `zeroHash` because ERC20Incentive doesn't use any specific claim data.
+   */
+  public buildClaimData() {
+    return zeroHash;
   }
 }
 

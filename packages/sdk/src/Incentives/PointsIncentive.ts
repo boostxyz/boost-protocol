@@ -17,6 +17,7 @@ import {
   type ContractEventName,
   type Hex,
   encodeAbiParameters,
+  zeroHash,
 } from 'viem';
 import { PointsIncentive as PointsIncentiveBases } from '../../dist/deployments.json';
 import type {
@@ -336,6 +337,17 @@ export class PointsIncentive extends DeployableTarget<
       args: [preparePointsIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
+  }
+
+  /**
+   * Builds the claim data for the ERC20Incentive.
+   *
+   * @public
+   * @returns {Promise<Hash>} A Promise that resolves to `zeroHash`, as PointsIncentive doesn't require specific claim data.
+   * @description This function returns `zeroHash` because PointsIncentive doesn't use any specific claim data.
+   */
+  public buildClaimData() {
+    return zeroHash;
   }
 }
 

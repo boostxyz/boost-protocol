@@ -56,7 +56,7 @@ describe('ERC20Incentive', () => {
     });
 
     const claimant = trustedSigner.account;
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveData = erc20Incentive.buildClaimData();
     const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,

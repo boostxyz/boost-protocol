@@ -318,7 +318,7 @@ export class AllowListIncentive extends DeployableTarget<
    * Builds the claim data for the AllowListIncentive.
    *
    * @public
-   * @returns {Promise<Hash>} A Promise that resolves to `zeroHash`, as AllowListIncentive doesn't require specific claim data.
+   * @returns {Hash} A `zeroHash`, as AllowListIncentive doesn't require specific claim data.
    * @description This function returns `zeroHash` because AllowListIncentive doesn't use any specific claim data.
    */
   public buildClaimData() {

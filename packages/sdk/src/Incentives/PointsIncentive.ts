@@ -340,10 +340,10 @@ export class PointsIncentive extends DeployableTarget<
   }
 
   /**
-   * Builds the claim data for the ERC20Incentive.
+   * Builds the claim data for the PointsIncentive.
    *
    * @public
-   * @returns {Promise<Hash>} A Promise that resolves to `zeroHash`, as PointsIncentive doesn't require specific claim data.
+   * @returns {Hash} A `zeroHash`, as PointsIncentive doesn't require specific claim data.
    * @description This function returns `zeroHash` because PointsIncentive doesn't use any specific claim data.
    */
   public buildClaimData() {

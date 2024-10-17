@@ -466,7 +466,7 @@ export class ERC20Incentive extends DeployableTarget<
    * Builds the claim data for the ERC20Incentive.
    *
    * @public
-   * @returns {Promise<Hash>} A Promise that resolves to `zeroHash`, as ERC20Incentive doesn't require specific claim data.
+   * @returns {Hash} A `zeroHash`, as ERC20Incentive doesn't require specific claim data.
    * @description This function returns `zeroHash` because ERC20Incentive doesn't use any specific claim data.
    */
   public buildClaimData() {

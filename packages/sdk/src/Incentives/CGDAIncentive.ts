@@ -449,7 +449,7 @@ export class CGDAIncentive extends DeployableTarget<
    * Builds the claim data for the CGDAIncentive.
    *
    * @public
-   * @returns {Promise<Hash>} A Promise that resolves to `zeroHash`, as CGDAIncentive doesn't require specific claim data.
+   * @returns {Hash} A `zeroHash`, as CGDAIncentive doesn't require specific claim data.
    * @description This function returns `zeroHash` because CGDAIncentive doesn't use any specific claim data.
    */
   public buildClaimData() {

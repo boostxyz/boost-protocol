@@ -1,5 +1,7 @@
 # @boostxyz/evm
 
+## 1.1.0-alpha.22
+
 ## 0.0.0-alpha.7
 
 ### Minor Changes

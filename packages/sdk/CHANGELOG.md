@@ -1,5 +1,16 @@
 # @boostxyz/sdk
 
+## 1.1.0-alpha.22
+
+### Minor Changes
+
+- 29e17b0: add buildClaimData method to incentives
+
+### Patch Changes
+
+- f0c615b: create and validate `anyActionParameter`
+  - @boostxyz/signatures@1.1.0-alpha.22
+
 ## 0.0.0-alpha.21
 
 ### Minor Changes

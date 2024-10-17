@@ -1,5 +1,22 @@
 # @boostxyz/sdk
 
+## 0.0.0-alpha.21
+
+### Minor Changes
+
+- 004140a: accept numerical strings for id in core.readBoost
+- 33c2c49: merge known signatures with signatures registry, add mint(address,uint256,address,uint256,address,string) function signature
+- 2377fa4: add `BoostCore.simulateCreateBoost`, minor refactor to encapsulate building the on chain create boost payload
+- be00de4: add BoostNotFoundError to read/get Boost for friendlier message
+- 494d87c: add initializeRaw for consistency with other clone methods
+- 0a0d35b: fix BoostRegisty.getClone method, it now returns the correct interface
+
+### Patch Changes
+
+- Updated dependencies [2dbb00c]
+- Updated dependencies [33c2c49]
+  - @boostxyz/signatures@0.0.0-alpha.7
+
 ## 0.0.0-alpha.20
 
 ### Minor Changes

@@ -12,5 +12,12 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["!@boostxyz/*", "@boostxyz/test"]
+  "ignore": [
+    "@boostxyz/test",
+    "agora-vote",
+    "delegate-action",
+    "ens-register",
+    "swap-specific-dex",
+    "zora-mint"
+  ]
 }

@@ -4,11 +4,11 @@ import {
   readRbacHasAnyRole,
   readRbacIsAuthorized,
   readRbacRolesOf,
-  simulateRbacGrantRoles,
-  simulateRbacRevokeRoles,
+  simulateRbacGrantManyRoles,
+  simulateRbacRevokeManyRoles,
   simulateRbacSetAuthorized,
-  writeRbacGrantRoles,
-  writeRbacRevokeRoles,
+  writeRbacGrantManyRoles,
+  writeRbacRevokeManyRoles,
   writeRbacSetAuthorized,
 } from '@boostxyz/evm';
 import type { Abi, Address, ContractEventName } from 'viem';
@@ -122,12 +122,14 @@ export class DeployableTargetWithRBAC<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async grantRoles(
+  public async grantManyRoles(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
+    params?: WriteParams<typeof rbacAbi, 'grantManyRoles'>,
   ) {
-    return await this.awaitResult(this.grantRolesRaw(addresses, roles, params));
+    return await this.awaitResult(
+      this.grantManyRolesRaw(addresses, roles, params),
+    );
   }
 
   /**
@@ -144,19 +146,19 @@ export class DeployableTargetWithRBAC<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async grantRolesRaw(
+  public async grantManyRolesRaw(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
+    params?: WriteParams<typeof rbacAbi, 'grantManyRoles'>,
   ) {
-    const { request, result } = await simulateRbacGrantRoles(this._config, {
+    const { request, result } = await simulateRbacGrantManyRoles(this._config, {
       address: this.assertValidAddress(),
       args: [addresses, roles],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
-    const hash = await writeRbacGrantRoles(
+    const hash = await writeRbacGrantManyRoles(
       this._config,
       // biome-ignore lint/suspicious/noExplicitAny: negligible low level lack of type intersection
       request as any,
@@ -178,13 +180,13 @@ export class DeployableTargetWithRBAC<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async revokeRoles(
+  public async revokeManyRoles(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
+    params?: WriteParams<typeof rbacAbi, 'revokeManyRoles'>,
   ) {
     return await this.awaitResult(
-      this.revokeRolesRaw(addresses, roles, params),
+      this.revokeManyRolesRaw(addresses, roles, params),
     );
   }
 
@@ -201,19 +203,22 @@ export class DeployableTargetWithRBAC<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async revokeRolesRaw(
+  public async revokeManyRolesRaw(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
+    params?: WriteParams<typeof rbacAbi, 'revokeManyRoles'>,
   ) {
-    const { request, result } = await simulateRbacRevokeRoles(this._config, {
-      address: this.assertValidAddress(),
-      args: [addresses, roles],
-      ...this.optionallyAttachAccount(),
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-    const hash = await writeRbacRevokeRoles(
+    const { request, result } = await simulateRbacRevokeManyRoles(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [addresses, roles],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeRbacRevokeManyRoles(
       this._config,
       // biome-ignore lint/suspicious/noExplicitAny: negligible low level lack of type intersection
       request as any,

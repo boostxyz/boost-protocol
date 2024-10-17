@@ -8,8 +8,8 @@ import {
   deployFixtures,
   freshBoost,
 } from '@boostxyz/test/helpers';
-import { LIST_MANAGER_ROLE } from '../AllowLists/SimpleAllowList';
 import { PointsIncentive } from './PointsIncentive';
+import { Roles } from '../Deployable/DeployableTargetWithRBAC';
 
 let fixtures: Fixtures;
 
@@ -57,9 +57,9 @@ describe('AllowListIncentive', () => {
     const boost = await freshBoost(fixtures, {
       incentives: [allowListIncentive],
     });
-    await allowList.grantRoles(
-      allowListIncentive.assertValidAddress(),
-      LIST_MANAGER_ROLE,
+    await allowList.grantManyRoles(
+      [allowListIncentive.assertValidAddress()],
+      [Roles.MANAGER],
     );
 
     const claimant = trustedSigner.account;
@@ -103,9 +103,9 @@ describe('AllowListIncentive', () => {
     const boost = await freshBoost(fixtures, {
       incentives: [allowListIncentive],
     });
-    await allowList.grantRoles(
-      allowListIncentive.assertValidAddress(),
-      LIST_MANAGER_ROLE,
+    await allowList.grantManyRoles(
+      [allowListIncentive.assertValidAddress()],
+      [Roles.MANAGER],
     );
     const incentiveQuantity = 1;
     const claimant = trustedSigner.account;

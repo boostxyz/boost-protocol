@@ -1,6 +1,7 @@
 {
   "name": "agora-vote",
   "version": "1.0.1-alpha.3",
+  "private": true,
   "scripts": {
     "test": "npx vitest",
     "test:ci": "CI=true npx vitest"

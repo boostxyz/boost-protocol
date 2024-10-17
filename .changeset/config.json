@@ -7,10 +7,10 @@
     }
   ],
   "commit": false,
-  "fixed": [],
+  "fixed": [["@boostxyz/*"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": ["!@boostxyz/*", "@boostxyz/test"]
 }

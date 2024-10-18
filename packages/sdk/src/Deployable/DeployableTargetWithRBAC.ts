@@ -113,7 +113,7 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.grantRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.grantManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
    * ```
    * @public
    * @async
@@ -137,7 +137,7 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.grantRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
+   * await rbac.grantManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
    *
    * @public
    * @async
@@ -171,7 +171,7 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.revokeRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
    *
    * @public
    * @async
@@ -195,7 +195,7 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.revokeRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
    * @public
    * @async
    * @param {Address[]} addresses

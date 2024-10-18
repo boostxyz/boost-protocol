@@ -20,7 +20,11 @@ contract AllowListIncentiveTest is Test {
         incentive = AllowListIncentive(LibClone.clone(address(new AllowListIncentive())));
         incentive.initialize(abi.encode(AllowListIncentive.InitPayload({allowList: allowList, limit: 10})));
 
-        allowList.grantRoles(address(incentive), 1 << 1);
+        address[] memory addresses = new address[](1);
+        addresses[0] = address(incentive);
+        uint256[] memory roles = new uint256[](1);
+        roles[0] = 2;
+        allowList.grantManyRoles(addresses, roles);
     }
 
     ////////////////////

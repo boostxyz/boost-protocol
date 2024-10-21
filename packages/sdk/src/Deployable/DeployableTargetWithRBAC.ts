@@ -5,10 +5,14 @@ import {
   readRbacIsAuthorized,
   readRbacRolesOf,
   simulateRbacGrantManyRoles,
+  simulateRbacGrantRoles,
   simulateRbacRevokeManyRoles,
+  simulateRbacRevokeRoles,
   simulateRbacSetAuthorized,
   writeRbacGrantManyRoles,
+  writeRbacGrantRoles,
   writeRbacRevokeManyRoles,
+  writeRbacRevokeRoles,
   writeRbacSetAuthorized,
 } from '@boostxyz/evm';
 import type { Abi, Address, ContractEventName } from 'viem';
@@ -105,6 +109,117 @@ export class DeployableTargetWithRBAC<
       ...(params as any),
     });
     const hash = await writeRbacSetAuthorized(this._config, request);
+    return { hash, result };
+  }
+
+  /**
+   * Grant permissions for a user on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.grantRoles('0xfoo', RbacRoles.MANAGER)
+   * ```
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {bigint} role
+   * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
+   * @returns {Promise<void>}
+   */
+  public async grantRoles(
+    address: Address,
+    role: bigint,
+    params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
+  ) {
+    return await this.awaitResult(this.grantRolesRaw(address, role, params));
+  }
+
+  /**
+   * Grant permissions for a user on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.grantRoles('0xfoo', Roles.MANAGER)
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {bigint} role
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async grantRolesRaw(
+    address: Address,
+    role: bigint,
+    params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
+  ) {
+    const { request, result } = await simulateRbacGrantRoles(this._config, {
+      address: this.assertValidAddress(),
+      args: [address, role],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+    const hash = await writeRbacGrantRoles(
+      this._config,
+      // biome-ignore lint/suspicious/noExplicitAny: negligible low level lack of type intersection
+      request as any,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Revoke permissions for a user on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.revokeRoles('0xfoo', RbacRoles.MANAGER)
+   *
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {bigint} role
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async revokeRoles(
+    address: Address,
+    role: bigint,
+    params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
+  ) {
+    return await this.awaitResult(this.revokeRolesRaw(address, role, params));
+  }
+
+  /**
+   * Revoke permissions for a user on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.revokeRoles('0xfoo', RbacRoles.MANAGER)
+   * @public
+   * @async
+   * @param {Address} address
+   * @param {bigint} role
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async revokeRolesRaw(
+    address: Address,
+    role: bigint,
+    params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
+  ) {
+    const { request, result } = await simulateRbacRevokeRoles(this._config, {
+      address: this.assertValidAddress(),
+      args: [address, role],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+    const hash = await writeRbacRevokeRoles(
+      this._config,
+      // biome-ignore lint/suspicious/noExplicitAny: negligible low level lack of type intersection
+      request as any,
+    );
     return { hash, result };
   }
 

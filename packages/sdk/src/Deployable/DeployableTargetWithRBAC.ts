@@ -122,13 +122,13 @@ export class DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {Address} address
-   * @param {bigint} role
+   * @param {Roles} role
    * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
    * @returns {Promise<void>}
    */
   public async grantRoles(
     address: Address,
-    role: bigint,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
   ) {
     return await this.awaitResult(this.grantRolesRaw(address, role, params));
@@ -144,13 +144,13 @@ export class DeployableTargetWithRBAC<
    * @public
    * @async
    * @param {Address} address
-   * @param {bigint} role
+   * @param {Roles} role
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async grantRolesRaw(
     address: Address,
-    role: bigint,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
   ) {
     const { request, result } = await simulateRbacGrantRoles(this._config, {
@@ -173,18 +173,18 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.revokeRoles('0xfoo', RbacRoles.MANAGER)
+   * await rbac.revokeRoles('0xfoo', Roles.MANAGER)
    *
    * @public
    * @async
    * @param {Address} address
-   * @param {bigint} role
+   * @param {Roles} role
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async revokeRoles(
     address: Address,
-    role: bigint,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
   ) {
     return await this.awaitResult(this.revokeRolesRaw(address, role, params));
@@ -195,17 +195,17 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.revokeRoles('0xfoo', RbacRoles.MANAGER)
+   * await rbac.revokeRoles('0xfoo', Roles.MANAGER)
    * @public
    * @async
    * @param {Address} address
-   * @param {bigint} role
+   * @param {Roles} role
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async revokeRolesRaw(
     address: Address,
-    role: bigint,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
   ) {
     const { request, result } = await simulateRbacRevokeRoles(this._config, {
@@ -228,12 +228,12 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.grantManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.grantManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
    * ```
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
+   * @param {Roles[]} roles
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
@@ -252,12 +252,12 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.grantManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.grantManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
    *
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
+   * @param {Roles[]} roles
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
@@ -286,12 +286,12 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
    *
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
+   * @param {Roles[]} roles
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
@@ -310,11 +310,11 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
    * @public
    * @async
    * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
+   * @param {Roles[]} roles
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
@@ -345,11 +345,11 @@ export class DeployableTargetWithRBAC<
    * Return an array of the roles assigned to the given account.
    * @example
    * ```ts
-   * (await rbac.rolesOf(0xfoo)).includes(RbacRoles.ADMIN)
+   * (await rbac.rolesOf(0xfoo)).includes(Roles.ADMIN)
    * @public
    * @param {Address} account
    * @param {?ReadParams} [params]
-   * @returns {Promise<Array<RbacRoles>>}
+   * @returns {Promise<Array<Roles>>}
    */
   public async rolesOf(
     account: Address,
@@ -372,10 +372,10 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.hasAnyRole(0xfoo, RbacRoles.ADMIN | RbacRoles.MANAGER)
+   * await rbac.hasAnyRole(0xfoo, Roles.ADMIN | Roles.MANAGER)
    * @public
    * @param {Address} account
-   * @param {RbacRoles} roles
+   * @param {Roles} roles
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
@@ -398,11 +398,11 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.hasAllRoles(0xfoo, RbacRoles.ADMIN & RbacRoles.MANAGER)
+   * await rbac.hasAllRoles(0xfoo, Roles.ADMIN & Roles.MANAGER)
    *
    * @public
    * @param {Address} account
-   * @param {RbacRoles} roles
+   * @param {Roles} roles
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */

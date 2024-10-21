@@ -117,7 +117,7 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.grantRoles('0xfoo', RbacRoles.MANAGER)
+   * await rbac.grantRoles('0xfoo', Roles.MANAGER)
    * ```
    * @public
    * @async

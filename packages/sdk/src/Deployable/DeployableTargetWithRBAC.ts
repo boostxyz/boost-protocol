@@ -140,7 +140,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.grantRoles('0xfoo', Roles.MANAGER)
-   *
+   * ```
    * @public
    * @async
    * @param {Address} address
@@ -174,7 +174,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.revokeRoles('0xfoo', Roles.MANAGER)
-   *
+   * ```
    * @public
    * @async
    * @param {Address} address
@@ -196,6 +196,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.revokeRoles('0xfoo', Roles.MANAGER)
+   * ```
    * @public
    * @async
    * @param {Address} address
@@ -253,7 +254,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.grantManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
-   *
+   * ```
    * @public
    * @async
    * @param {Address[]} addresses
@@ -287,7 +288,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.revokeManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
-   *
+   * ```
    * @public
    * @async
    * @param {Address[]} addresses
@@ -311,6 +312,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.revokeManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
+   * ```
    * @public
    * @async
    * @param {Address[]} addresses
@@ -346,6 +348,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * (await rbac.rolesOf(0xfoo)).includes(Roles.ADMIN)
+   * ```
    * @public
    * @param {Address} account
    * @param {?ReadParams} [params]
@@ -373,6 +376,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.hasAnyRole(0xfoo, Roles.ADMIN | Roles.MANAGER)
+   * ```
    * @public
    * @param {Address} account
    * @param {Roles} roles
@@ -399,7 +403,7 @@ export class DeployableTargetWithRBAC<
    * @example
    * ```ts
    * await rbac.hasAllRoles(0xfoo, Roles.ADMIN & Roles.MANAGER)
-   *
+   * ```
    * @public
    * @param {Address} account
    * @param {Roles} roles

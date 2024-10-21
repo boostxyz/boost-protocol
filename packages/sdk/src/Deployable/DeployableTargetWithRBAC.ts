@@ -402,7 +402,7 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.hasAllRoles(0xfoo, Roles.ADMIN & Roles.MANAGER)
+   * await rbac.hasAllRoles(0xfoo, Roles.ADMIN | Roles.MANAGER)
    * ```
    * @public
    * @param {Address} account

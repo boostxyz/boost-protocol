@@ -38,6 +38,7 @@ contract ModuleBaseDeployer is ScriptUtils {
     }
 
     function run() external {
+        console.log("deploying address: ", vm.addr(vm.envUint("SIGNER_PRIVATE_KEY")));
         BoostRegistry registry = _getRegistry();
         console.log("Boost Registry: ", address(registry));
 

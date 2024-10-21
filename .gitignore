@@ -23,6 +23,7 @@ packages/evm/deploys/componentInterfaces.json
 
 # evm package
 packages/evm/cache_forge/
+packages/evm/cache_hh/
 packages/evm/out/
 packages/evm/artifacts/
 

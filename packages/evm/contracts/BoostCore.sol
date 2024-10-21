@@ -248,7 +248,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId)
         external
         nonReentrant
-        returns (bool)
+        returns (uint256, address)
     {
         BoostLib.Boost memory boost = _boosts[boostId];
 
@@ -280,13 +280,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
             emit ProtocolFeesCollected(boostId, incentiveId, protocolFeeAmount, protocolFeeReceiver);
         }
 
-        bool success = boost.incentives[incentiveId].clawback(abi.encode(claim_));
+        (uint256 clawbackAmount, address asset) = boost.incentives[incentiveId].clawback(abi.encode(claim_));
         // Throw a custom error here
-        if (!success) {
+        if (clawbackAmount == 0) {
             revert BoostError.ClawbackFailed(msg.sender, data_);
         }
         incentive.protocolFeesRemaining -= protocolFeeAmount;
-        return true;
+        return (clawbackAmount, asset);
     }
 
     /// @notice Settle any outstanding protocol fees for a Boost incentive

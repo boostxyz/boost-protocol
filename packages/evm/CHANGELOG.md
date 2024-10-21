@@ -1,5 +1,13 @@
 # @boostxyz/evm
 
+## 1.1.0-alpha.22
+
+## 0.0.0-alpha.7
+
+### Minor Changes
+
+- 3bd41f4: feat(evm): deploy final V2 of protocol to Sepolia
+
 ## 0.0.0-alpha.6
 
 ### Patch Changes

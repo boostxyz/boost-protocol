@@ -54,7 +54,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
             revert BoostError.InsufficientFunds(address(init_.asset), available, init_.limit);
         }
 
-        asset = init_.asset;
+        asset = address(init_.asset);
         strategy = init_.strategy;
         tokenId = init_.tokenId;
         limit = init_.limit;
@@ -98,7 +98,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
             claimed[txHash] = true;
 
             // wake-disable-next-line reentrancy (not a risk here)
-            asset.safeTransferFrom(address(this), claimTarget, tokenId, 1, data_);
+            IERC1155(asset).safeTransferFrom(address(this), claimTarget, tokenId, 1, data_);
             emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, tokenId, uint256(1), data_));
 
             return true;
@@ -108,7 +108,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (bool) {
+    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
@@ -118,10 +118,10 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
 
         // Reclaim the incentive to the intended recipient
         // wake-disable-next-line reentrancy (not a risk here)
-        asset.safeTransferFrom(address(this), claim_.target, tokenId, amount, claim_.data);
+        IERC1155(asset).safeTransferFrom(address(this), claim_.target, tokenId, amount, claim_.data);
         emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, tokenId, amount, claim_.data));
 
-        return true;
+        return (amount, asset);
     }
 
     /// @notice Check if an incentive is claimable

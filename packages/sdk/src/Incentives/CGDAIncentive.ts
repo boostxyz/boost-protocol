@@ -20,6 +20,7 @@ import {
   type ContractEventName,
   type Hex,
   encodeAbiParameters,
+  zeroHash,
 } from 'viem';
 import { CGDAIncentive as CGDAIncentiveBases } from '../../dist/deployments.json';
 import type {
@@ -442,6 +443,17 @@ export class CGDAIncentive extends DeployableTarget<
       args: [prepareCGDAIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
+  }
+
+  /**
+   * Builds the claim data for the CGDAIncentive.
+   *
+   * @public
+   * @returns {Hash} A `zeroHash`, as CGDAIncentive doesn't require specific claim data.
+   * @description This function returns `zeroHash` because CGDAIncentive doesn't use any specific claim data.
+   */
+  public buildClaimData() {
+    return zeroHash;
   }
 }
 

@@ -95,7 +95,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (bool) {
+    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
@@ -105,7 +105,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
         asset.safeTransfer(claim_.target, amount);
         emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, amount));
 
-        return true;
+        return (amount, asset);
     }
 
     /// @inheritdoc AIncentive

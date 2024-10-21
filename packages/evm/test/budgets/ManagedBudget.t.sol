@@ -269,7 +269,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim 99 tokens from the budget
         data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 99 ether);
-        assertTrue(managedBudget.clawback(data));
+        assertGt(managedBudget.clawback(data), 0);
 
         // Ensure the budget has 1 token left
         assertEq(managedBudget.available(address(mockERC20)), 1 ether);
@@ -283,7 +283,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim 99 ETH from the budget
         data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(1), 99 ether);
-        assertTrue(managedBudget.clawback(data));
+        assertGt(managedBudget.clawback(data), 0);
 
         // Ensure the budget has 1 ETH left
         assertEq(managedBudget.available(address(0)), 1 ether);
@@ -314,7 +314,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
                 data: abi.encode(ABudget.ERC1155Payload({tokenId: 42, amount: 99, data: ""}))
             })
         );
-        assertTrue(managedBudget.clawback(data));
+        assertGt(managedBudget.clawback(data), 0);
 
         // Ensure the budget has 1 of token ID 42 left
         assertEq(managedBudget.available(address(mockERC1155), 42), 1);
@@ -331,7 +331,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
 
         // Reclaim all tokens from the budget
         data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 0);
-        assertTrue(managedBudget.clawback(data));
+        assertEq(managedBudget.clawback(data), 0);
 
         // Ensure the budget has no tokens left
         assertEq(managedBudget.available(address(mockERC20)), 0 ether);

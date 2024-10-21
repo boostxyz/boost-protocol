@@ -538,6 +538,11 @@ contract BoostCoreTest is Test {
         //bytes memory clawbackData = abi.encode(AIncentive.ClawbackPayload({target: recipient, data: abi.encode(0)}));
 
         // Call clawback
+        AIncentive.ClawbackPayload memory expectedPayload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(0)});
+        vm.expectRevert(
+            abi.encodeWithSelector(BoostError.ClawbackFailed.selector, address(budget), abi.encode(expectedPayload))
+        );
         budget.clawbackFromTarget(address(boostCore), abi.encode(0), boostId, incentiveId);
 
         // Assert that no balances have changed

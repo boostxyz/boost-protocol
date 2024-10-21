@@ -66,7 +66,7 @@ contract PointsIncentive is OwnableRoles, APointsIncentive {
 
     /// @inheritdoc AIncentive
     /// @dev Not a valid operation for this type of incentive
-    function clawback(bytes calldata) external pure override returns (bool) {
+    function clawback(bytes calldata) external pure override returns (uint256, address) {
         revert BoostError.NotImplemented();
     }
 

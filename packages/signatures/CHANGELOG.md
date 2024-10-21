@@ -1,5 +1,14 @@
 # @boostxyz/signatures
 
+## 1.1.0-alpha.22
+
+## 0.0.0-alpha.7
+
+### Minor Changes
+
+- 2dbb00c: add hex signatures as keys in .selectors to get name
+- 33c2c49: merge known signatures with signatures registry, add mint(address,uint256,address,uint256,address,string) function signature
+
 ## 0.0.0-alpha.6
 
 ### Minor Changes

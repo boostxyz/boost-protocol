@@ -68,7 +68,7 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     /// @notice Reclaim assets from the budget
     /// @param data_ The compressed data for the reclamation (amount, token address, token ID, etc.)
     /// @return True if the reclamation was successful
-    function clawback(bytes calldata data_) external virtual returns (bool);
+    function clawback(bytes calldata data_) external virtual returns (uint256);
 
     /// @notice Pull assets from an Incentive back into a budget
     /// @param target The address of the target contract to claw back from
@@ -81,7 +81,7 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
         external
         virtual
         onlyAuthorized
-        returns (bool)
+        returns (uint256, address)
     {
         AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({target: address(this), data: data_});
         return IClaw(target).clawback(abi.encode(payload), boostId, incentiveId);

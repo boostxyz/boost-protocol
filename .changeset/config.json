@@ -7,10 +7,17 @@
     }
   ],
   "commit": false,
-  "fixed": [],
+  "fixed": [["@boostxyz/*"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [
+    "@boostxyz/test",
+    "agora-vote",
+    "delegate-action",
+    "ens-register",
+    "swap-specific-dex",
+    "zora-mint"
+  ]
 }

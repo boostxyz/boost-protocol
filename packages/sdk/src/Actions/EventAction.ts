@@ -34,6 +34,7 @@ import {
   fromHex,
   isAddress,
   isAddressEqual,
+  zeroHash,
 } from 'viem';
 import { EventAction as EventActionBases } from '../../dist/deployments.json';
 import type {
@@ -817,6 +818,14 @@ export class EventAction extends DeployableTarget<
       | { log: EventLogs[0] }
       | { decodedArgs: readonly (string | bigint)[] },
   ): boolean {
+    if (
+      criteria.filterType === FilterType.EQUAL &&
+      criteria.fieldType === PrimitiveType.BYTES &&
+      criteria.fieldIndex === 255
+    ) {
+      return true;
+    }
+
     // Type narrow based on criteria.filterType
     switch (criteria.filterType) {
       case FilterType.EQUAL:
@@ -916,6 +925,7 @@ export class EventAction extends DeployableTarget<
 
   /**
    * Validates a {@link Log} against a given criteria.
+   * If the criteria's fieldIndex is 255, it is reserved for anyValidation
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {Log} log - The Viem event log.
@@ -925,7 +935,10 @@ export class EventAction extends DeployableTarget<
     criteria: Criteria,
     log: EventLogs[0],
   ): boolean {
-    if (!Array.isArray(log.args) || log.args.length <= criteria.fieldIndex) {
+    if (
+      !Array.isArray(log.args) ||
+      (log.args.length <= criteria.fieldIndex && criteria.fieldIndex !== 255)
+    ) {
       throw new DecodedArgsMalformedError({
         log,
         criteria,
@@ -933,7 +946,9 @@ export class EventAction extends DeployableTarget<
       });
     }
 
-    const fieldValue = log.args.at(criteria.fieldIndex);
+    const fieldValue =
+      criteria.fieldIndex === 255 ? zeroHash : log.args.at(criteria.fieldIndex);
+
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({ log, criteria, fieldValue });
     }
@@ -942,6 +957,7 @@ export class EventAction extends DeployableTarget<
 
   /**
    * Validates a function's decoded arguments against a given criteria.
+   * If the criteria's fieldIndex is 255, it is reserved for anyValidation
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {unknown[]} decodedArgs - The decoded arguments of the function call.
@@ -951,7 +967,8 @@ export class EventAction extends DeployableTarget<
     criteria: Criteria,
     decodedArgs: readonly (string | bigint)[],
   ): boolean {
-    const fieldValue = decodedArgs[criteria.fieldIndex];
+    const fieldValue =
+      criteria.fieldIndex === 255 ? zeroHash : decodedArgs[criteria.fieldIndex];
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({
         criteria,
@@ -1215,4 +1232,32 @@ export function prepareEventActionPayload({
       },
     ],
   );
+}
+
+/**
+ * Creates a default Criteria object that allows validation to pass. This is used if you don't care about targeting specific parameters in the action step.
+ *
+ * This function returns a Criteria object with the following properties:
+ * - filterType: Set to EQUAL for exact matching
+ * - fieldType: Set to BYTES to handle any data type
+ * - fieldIndex: Set to 255, which is typically used to indicate "any" or "all" in this context
+ * - filterData: Set to zeroHash (0x0000...0000)
+ *
+ * @returns {Criteria} A Criteria object that can be used to match any action parameter
+ *
+ * @example
+ * const anyCriteria = anyActionParameter();
+ * // Use this criteria in an ActionStep to match any parameter
+ * const actionStep = {
+ *   // ... other properties ...
+ *   actionParameter: anyCriteria
+ * };
+ */
+export function anyActionParameter(): Criteria {
+  return {
+    filterType: FilterType.EQUAL,
+    fieldType: PrimitiveType.BYTES,
+    fieldIndex: 255,
+    filterData: zeroHash,
+  };
 }

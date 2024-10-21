@@ -198,6 +198,67 @@ describe('BoostCore', () => {
     );
   });
 
+  test('can optionally supply a validator', async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+    const _boost = await core.createBoost({
+      protocolFee: 1n,
+      maxParticipants: 100n,
+      budget: budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      allowList: core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        core.ERC20Incentive({
+          asset: erc20.assertValidAddress(),
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
+        }),
+      ],
+    });
+    const boost = await core.readBoost(_boost.id);
+    expect(boost.validator).toBe(_boost.validator.assertValidAddress());
+  });
+
+  test('can simulate a boost creation', async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+    const simulated = await core.simulateCreateBoost({
+      protocolFee: 1n,
+      maxParticipants: 100n,
+      budget: budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      allowList: core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        core.ERC20Incentive({
+          asset: erc20.assertValidAddress(),
+          reward: parseEther('1'),
+          limit: 100n,
+          strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
+        }),
+      ],
+    });
+    expect(simulated.request.__mode).toBe('prepared')
+  });
+
   test('can reuse an existing action', async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;

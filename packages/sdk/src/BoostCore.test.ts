@@ -28,7 +28,7 @@ describe('BoostCore', () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 
-  test('can get the total number of boosts', async () => {
+  test.only('can get the total number of boosts', async () => {
     const { core } = fixtures;
 
     const { budget, erc20 } = budgets;

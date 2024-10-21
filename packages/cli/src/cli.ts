@@ -20,7 +20,7 @@ const args = arg({
   '--privateKey': String,
   '--out': String,
   '--cacheDir': String,
-  '--force': String,
+  '--force': Boolean,
   '--format': String,
   '-h': '--help',
   '-v': '--version',

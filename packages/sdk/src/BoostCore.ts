@@ -128,24 +128,24 @@ export { boostCoreAbi };
 export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 /**
- * The address of the deployed BoostCore instance. In prerelease mode, this will be its sepolia address
- *
- * @type {Address}
- */
-export const BOOST_CORE_ADDRESS =
-  (BoostCoreBases as Record<string, Address>)[__DEFAULT_CHAIN_ID__] ||
-  zeroAddress;
-
-/**
  * The fixed addresses for the deployed Boost Core.
  * By default, `new BoostCore` will use the address deployed to the currently connected chain, or `BOOST_CORE_ADDRESS` if not provided.
  *
  * @type {Record<number, Address>}
  */
 export const BOOST_CORE_ADDRESSES: Record<number, Address> = {
-  ...(BoostCoreBases as Record<number, Address>),
   31337: import.meta.env.VITE_BOOST_CORE_ADDRESS,
+  ...(BoostCoreBases as Record<number, Address>),
 };
+
+/**
+ * The address of the deployed BoostCore instance. In prerelease mode, this will be its sepolia address
+ *
+ * @type {Address}
+ */
+export const BOOST_CORE_ADDRESS =
+  BOOST_CORE_ADDRESSES[__DEFAULT_CHAIN_ID__ as unknown as number] ||
+  zeroAddress;
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.

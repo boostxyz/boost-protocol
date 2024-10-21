@@ -8,9 +8,6 @@
   "exclude": ["dist", "build", "node_modules", "src/**/*.test.ts"],
   "references": [
     {
-      "path": "../sdk/tsconfig.build.json"
-    },
-    {
       "path": "../evm"
     }
   ]

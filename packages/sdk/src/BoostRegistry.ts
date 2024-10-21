@@ -42,24 +42,24 @@ import {
 export { boostRegistryAbi };
 
 /**
- * The address of the deployed `BoostRegistry` instance. In prerelease mode, this will be its sepolia address
- *
- * @type {Address}
- */
-export const BOOST_REGISTRY_ADDRESS =
-  (BoostRegistryBases as Record<string, Address>)[__DEFAULT_CHAIN_ID__] ||
-  zeroAddress;
-
-/**
  * The fixed addresses for the deployed Boost Registry.
  * By default, `new BoostRegistry` will use the address deployed to the currently connected chain, or `BOOST_REGISTRY_ADDRESS` if not provided.
  *
  * @type {Record<number, Address>}
  */
 export const BOOST_REGISTRY_ADDRESSES: Record<number, Address> = {
-  ...(BoostRegistryBases as Record<number, Address>),
   31337: import.meta.env.VITE_BOOST_REGISTRY_ADDRESS,
+  ...(BoostRegistryBases as Record<number, Address>),
 };
+
+/**
+ * The address of the deployed `BoostRegistry` instance. In prerelease mode, this will be its sepolia address
+ *
+ * @type {Address}
+ */
+export const BOOST_REGISTRY_ADDRESS =
+  BOOST_REGISTRY_ADDRESSES[__DEFAULT_CHAIN_ID__ as unknown as number] ||
+  zeroAddress;
 
 /**
  * A record of `BoostRegistry` event names to `AbiEvent` objects for use with `getLogs`

@@ -310,6 +310,7 @@ export class SignerValidator extends DeployableTarget<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
+    31337: import.meta.env.VITE_SIGNER_VALIDATOR_BASE,
     ...(SignerValidatorBases as Record<number, Address>),
   };
   /**

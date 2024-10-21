@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import packageJson from './package.json';

@@ -136,7 +136,6 @@ export async function freshBoost(
 export function useTestFixtures(
   options: DeployableTestOptions = defaultOptions,
 ) {
-  console.log('!!!!!!!! test fixtures', BoostCore.addresses);
   return {
     registry: new BoostRegistry(options),
     core: new BoostCore(options),
@@ -169,7 +168,7 @@ export function deployFixtures(
   // if this VITE_TEST_NO_DEPLOY_FIXTURES is enabled, don't deploy new contracts
   if (import.meta.env.VITE_TEST_NO_DEPLOY_FIXTURES === 'true')
     return async function deployFixtures() {
-      return await useTestFixtures(options, chainId);
+      return await useTestFixtures(options);
     };
 
   return async function deployFixtures() {

@@ -334,8 +334,6 @@ export class BoostCore extends Deployable<
       desiredChainId,
     );
 
-    console.log('!!chainId', chainId);
-
     const boostFactory = createWriteContract({
       abi: boostCoreAbi,
       functionName: 'createBoost',
@@ -374,8 +372,8 @@ export class BoostCore extends Deployable<
       id: boostId,
       budget: payload.budget.at(boost.budget),
       action: payload.action.at(boost.action),
-      validator: payload.validator.at(boost.validator),
-      allowList: payload.allowList.at(boost.allowList),
+      validator: payload.validator!.at(boost.validator),
+      allowList: payload.allowList!.at(boost.allowList),
       incentives: payload.incentives.map((incentive, i) =>
         // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentive.at(boost.incentives.at(i)!),

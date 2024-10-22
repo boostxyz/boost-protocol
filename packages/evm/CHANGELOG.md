@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 1.1.0-alpha.23
+
+### Minor Changes
+
+- 839fe56: add "ManyRoles" methods to RBAC
+
 ## 1.1.0-alpha.22
 
 ## 0.0.0-alpha.7

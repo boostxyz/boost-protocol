@@ -1,5 +1,11 @@
 # @boostxyz/signatures
 
+## 1.1.0-alpha.23
+
+### Minor Changes
+
+- 807570f: add signatures for sound and zora
+
 ## 1.1.0-alpha.22
 
 ## 0.0.0-alpha.7

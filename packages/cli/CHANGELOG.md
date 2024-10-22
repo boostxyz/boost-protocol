@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 1.1.0-alpha.23
+
+### Minor Changes
+
+- 324a1c7: better support for pnpm linking w/ env specified contracts on all implementations
+
 ## 1.1.0-alpha.22
 
 ## 0.0.0-alpha.19

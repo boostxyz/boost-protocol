@@ -23,6 +23,7 @@ import {
   type ContractEventName,
   type Hex,
   encodeAbiParameters,
+  zeroAddress,
   zeroHash,
 } from 'viem';
 import { ERC20Incentive as ERC20IncentiveBases } from '../../dist/deployments.json';
@@ -78,11 +79,13 @@ export interface ERC20IncentivePayload {
    */
   limit: bigint;
   /**
-   * The entity that can `clawback` funds
+   * (Optional) The address of the entity that can trigger a raffle.
+   * If omitted, the incentive will have no manager with permissions to draw the raffle.
    *
    * @type {Address}
+   * @optional
    */
-  manager: Address;
+  manager?: Address;
 }
 
 /**
@@ -482,6 +485,7 @@ export class ERC20Incentive extends DeployableTarget<
  * @param {StrategyType} param0.strategy - The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
  * @param {bigint} param0.reward - The amount of the asset to distribute.
  * @param {bigint} param0.limit - How many times can this incentive be claimed.
+ * @param {Address} [param0.manager=zeroAddress] - The entity that can draw raffles - defaults to unset
  * @returns {Hex}
  */
 export function prepareERC20IncentivePayload({
@@ -489,6 +493,7 @@ export function prepareERC20IncentivePayload({
   strategy,
   reward,
   limit,
+  manager = zeroAddress,
 }: ERC20IncentivePayload) {
   return encodeAbiParameters(
     [
@@ -496,7 +501,8 @@ export function prepareERC20IncentivePayload({
       { type: 'uint8', name: 'strategy' },
       { type: 'uint256', name: 'reward' },
       { type: 'uint256', name: 'limit' },
+      { type: 'address', name: 'manager' },
     ],
-    [asset, strategy, reward, limit],
+    [asset, strategy, reward, limit, manager],
   );
 }

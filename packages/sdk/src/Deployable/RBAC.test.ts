@@ -42,7 +42,7 @@ describe('RBAC', () => {
       [Roles.ADMIN, Roles.MANAGER],
     );
     expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(true);
-    expect(await budget.hasAllRoles(manager, Roles.MANAGER & Roles.ADMIN)).toBe(true);
+    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(true);
   });
 
   test('can revoke many roles', async () => {

@@ -23,6 +23,7 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
         Strategy strategy;
         uint256 reward;
         uint256 limit;
+        address manager;
     }
 
     /// @notice Construct a new ERC20Incentive
@@ -50,7 +51,7 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
         reward = init_.reward;
         limit = init_.limit;
         _initializeOwner(msg.sender);
-        _setRoles(msg.sender, MANAGER_ROLE);
+        _setRoles(init_.manager, MANAGER_ROLE);
     }
 
     /// @inheritdoc AIncentive
@@ -96,7 +97,7 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
+    function clawback(bytes calldata data_) external override onlyOwner returns (uint256, address) {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 
@@ -135,7 +136,7 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
 
     /// @notice Draw a winner from the raffle
     /// @dev Only valid when the strategy is set to `Strategy.RAFFLE`
-    function drawRaffle() external override onlyOwner {
+    function drawRaffle() external override onlyRoles(MANAGER_ROLE) {
         if (strategy != Strategy.RAFFLE) revert BoostError.Unauthorized();
 
         LibPRNG.PRNG memory _prng = LibPRNG.PRNG({state: block.prevrandao + block.timestamp});

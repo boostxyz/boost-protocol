@@ -7,6 +7,7 @@ import {
 import { StrategyType } from '@boostxyz/sdk/claiming';
 import { selectors } from '@boostxyz/signatures/functions';
 import { accounts } from '@boostxyz/test/accounts';
+import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -173,7 +174,7 @@ describe('Boost with ENS Registration Incentive', () => {
     // Make sure that the transaction was sent as expected and validates the action
     expect(hash).toBeDefined();
 
-    const validation = await action.validateActionSteps({ hash });
+    const validation = await action.validateActionSteps({ hash, chainId: sepolia.id, knownSignatures: allKnownSignatures });
     expect(validation).toBe(true);
     // Generate the signature using the trusted signer
     const claimDataPayload = await boost.validator.encodeClaimData({

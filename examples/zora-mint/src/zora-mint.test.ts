@@ -7,6 +7,7 @@ import {
 import { StrategyType } from '@boostxyz/sdk/claiming';
 import { selectors } from '@boostxyz/signatures/events';
 import { accounts } from '@boostxyz/test/accounts';
+import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -163,6 +164,7 @@ describe('Boost with NFT Minting Incentive', () => {
     const validation = await action.validateActionSteps({
       hash: txHash,
       chainId,
+      knownSignatures: allKnownSignatures,
     });
     expect(validation).toBe(true);
     // Generate the signature using the trusted signer

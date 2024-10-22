@@ -7,6 +7,7 @@ import {
 import events from '@boostxyz/signatures/events';
 import functions from '@boostxyz/signatures/functions';
 import { accounts } from '@boostxyz/test/accounts';
+import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -148,6 +149,7 @@ describe('Boost with Voting Incentive', () => {
           asset: erc20.assertValidAddress(),
           reward: parseEther('0.1'),
           limit: parseEther('1'),
+          manager: owner,
         }),
       ],
     });
@@ -194,6 +196,7 @@ describe('Boost with Voting Incentive', () => {
     });
     const validation = await action.validateActionSteps({
       logs,
+      knownSignatures: allKnownSignatures,
     });
     expect(validation).toBe(true);
 

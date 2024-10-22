@@ -6,24 +6,15 @@ import {
   writeEventActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
-import events from '@boostxyz/signatures/events';
-import functions from '@boostxyz/signatures/functions';
-import {
-  GetTransactionReceiptParameters,
-  getTransaction,
-  getTransactionReceipt,
-} from '@wagmi/core';
+import { getTransaction, getTransactionReceipt } from '@wagmi/core';
 import { match } from 'ts-pattern';
 import {
-  type Abi,
   type AbiEvent,
   type AbiFunction,
   AbiItem,
   type Address,
-  type ContractEventName,
   type ContractFunctionName,
   type GetLogsReturnType,
-  type GetTransactionParameters,
   type Hex,
   type Log,
   type PublicClient,
@@ -55,7 +46,6 @@ import {
   ValidationAbiMissingError,
 } from '../errors';
 import {
-  type GetLogsParams,
   type Overwrite,
   type ReadParams,
   RegistryType,
@@ -227,14 +217,14 @@ export interface ActionStep {
  * Parameters for validating an action step.
  *
  * @typedef {Object} ValidateActionStepParams
- * @property {Record<Hex, AbiEvent | AbiFunction>} [knownSignatures] - Optional record of known events, keyed by 32 byte selectors.
+ * @property {Record<Hex, AbiEvent | AbiFunction>} [knownSignatures] - Record of known events, keyed by 32 byte selectors. You can use [@boostxyz/signatures](https://www.npmjs.com/package/@boostxyz/signatures) to assemble this parameter.
  * @property {AbiEvent | AbiFunction} [abiItem] - Optional ABI item definition.
  * @property {EventLogs} [logs] - Event logs to validate against. Required if 'hash' is not provided.
  * @property {Hex} [hash] - Transaction hash to validate against. Required if 'logs' is not provided.
  * @property {number} [chainId] - Chain ID for the transaction. Required if 'hash' is provided.
  */
 export type ValidateActionStepParams = {
-  knownSignatures?: Record<Hex, AbiEvent | AbiFunction>;
+  knownSignatures: Record<Hex, AbiEvent | AbiFunction>;
   abiItem?: AbiEvent | AbiFunction;
 } & ({ logs: EventLogs } | { hash: Hex; chainId: number });
 
@@ -506,8 +496,11 @@ export class EventAction extends DeployableTarget<
    * const params: ValidateActionStepParams = {
    *   hash: '0x5678...',
    *   chainId: 1,
-   *   knownSignatures?: {
-   *     '0x1234...': {}
+   *   knownSignatures: {
+   *     '0x1234...': {
+   *       type: 'event',
+   *       name: 'Transfer(...)'
+   *     }
    *   }
    * };
    * const claimantAddress = await eventAction.deriveActionClaimantFromTransaction(claimant, params);
@@ -527,13 +520,9 @@ export class EventAction extends DeployableTarget<
       let event: AbiEvent;
       if (params.abiItem) event = params.abiItem as AbiEvent;
       else {
-        const sigPool: Record<Hex, AbiEvent> = {
-          ...(events.abi as Record<Hex, AbiEvent>),
-          ...((params.knownSignatures as Record<Hex, AbiEvent>) || {}),
-        };
+        const sigPool = params.knownSignatures as Record<Hex, AbiEvent>;
         event = sigPool[signature] as AbiEvent;
       }
-
       if (!event) {
         throw new ValidationAbiMissingError(signature);
       }
@@ -579,10 +568,7 @@ export class EventAction extends DeployableTarget<
       let func: AbiFunction;
       if (params.abiItem) func = params.abiItem as AbiFunction;
       else {
-        const sigPool: Record<Hex, AbiFunction> = {
-          ...(functions.abi as Record<Hex, AbiFunction>),
-          ...((params.knownSignatures as Record<Hex, AbiFunction>) || {}),
-        };
+        const sigPool = params.knownSignatures as Record<Hex, AbiFunction>;
         func = sigPool[signature] as AbiFunction;
       }
       if (!func) {
@@ -665,10 +651,7 @@ export class EventAction extends DeployableTarget<
       let event: AbiEvent;
       if (params.abiItem) event = params.abiItem as AbiEvent;
       else {
-        const sigPool: Record<Hex, AbiEvent> = {
-          ...(events.abi as Record<Hex, AbiEvent>),
-          ...((params.knownSignatures as Record<Hex, AbiEvent>) || {}),
-        };
+        const sigPool = params.knownSignatures as Record<Hex, AbiEvent>;
         event = sigPool[signature] as AbiEvent;
       }
 
@@ -748,7 +731,7 @@ export class EventAction extends DeployableTarget<
    * @public
    * @param {ActionStep} actionStep - The action step containing the function to validate.
    * @param {Transaction} transaction - The transaction that will be validated against.
-   * @param {Object} [params] - Optional parameters for validation.
+   * @param {Object} [params] - Parameters for validation.
    * @param {AbiItem} [params.abiItem] - The ABI item for the function, if known.
    * @param {Record<Hex, AbiEvent | AbiFunction>} [params.knownSignatures] - A record of known signatures.
    * @returns {boolean} Returns true if the action function is valid, false otherwise.
@@ -758,18 +741,15 @@ export class EventAction extends DeployableTarget<
   public isActionFunctionValid(
     actionStep: ActionStep,
     transaction: Transaction,
-    params?: Pick<ValidateActionStepParams, 'abiItem' | 'knownSignatures'>,
+    params: Pick<ValidateActionStepParams, 'abiItem' | 'knownSignatures'>,
   ) {
     const criteria = actionStep.actionParameter;
     let signature = actionStep.signature;
 
     let func: AbiFunction;
-    if (params?.abiItem) func = params?.abiItem as AbiFunction;
+    if (params.abiItem) func = params?.abiItem as AbiFunction;
     else {
-      const sigPool: Record<Hex, AbiFunction> = {
-        ...(functions.abi as Record<Hex, AbiFunction>),
-        ...((params?.knownSignatures as Record<Hex, AbiFunction>) || {}),
-      };
+      const sigPool = params.knownSignatures as Record<Hex, AbiFunction>;
       func = sigPool[signature] as AbiFunction;
     }
     if (!func) {

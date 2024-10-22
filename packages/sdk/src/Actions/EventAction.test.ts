@@ -2,13 +2,11 @@ import { selectors as eventSelectors } from "@boostxyz/signatures/events";
 import { selectors as funcSelectors } from "@boostxyz/signatures/functions";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  type AbiEvent,
+  AbiEvent,
+  AbiFunction,
   type Address,
-  type GetLogsReturnType,
   type Hex,
-  type Log,
   isAddress,
-  pad,
   parseEther,
   toHex,
   zeroAddress,
@@ -37,6 +35,7 @@ import {
   Criteria,
   anyActionParameter,
 } from "./EventAction";
+import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 
 let fixtures: Fixtures,
   erc721: MockERC721,
@@ -414,7 +413,7 @@ describe("EventAction Event Selector", () => {
       const recipient = accounts[1].account;
       await erc721.approve(recipient, 1n);
       const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
-      expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
+      expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
     });
 
     test("can supply your own logs to validate against", async () => {
@@ -446,7 +445,7 @@ describe("EventAction Event Selector", () => {
         },
       ];
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
-      expect(await action.validateActionSteps({ hash, chainId, logs })).toBe(true);
+      expect(await action.validateActionSteps({ hash, chainId, logs, knownSignatures: allKnownSignatures })).toBe(true);
     });
 
     describe("string event actions", () => {
@@ -464,7 +463,7 @@ describe("EventAction Event Selector", () => {
         );
 
         const hash = await stringEmitterFixtures.emitIndexedString("Hello world");
-        await expect(() => action.validateActionSteps({ hash, chainId })).rejects.toThrowError(
+        await expect(() => action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).rejects.toThrowError(
           /Parameter is not transparently stored onchain/,
         );
       });
@@ -481,7 +480,7 @@ describe("EventAction Event Selector", () => {
           ),
         );
         const hash = await stringEmitterFixtures.emitString("Hello world");
-        expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
+        expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
       });
       test("can parse and validate regex for an emitted string event", async () => {
         const action = await loadFixture(
@@ -497,7 +496,7 @@ describe("EventAction Event Selector", () => {
         );
 
         const hash = await stringEmitterFixtures.emitString("Hello world");
-        expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
+        expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
       });
     });
 
@@ -510,6 +509,7 @@ describe("EventAction Event Selector", () => {
         await action.deriveActionClaimantFromTransaction(await action.getActionClaimant(), {
           hash,
           chainId,
+          knownSignatures: allKnownSignatures
         }),
       ).toBe(recipient);
     });
@@ -525,6 +525,7 @@ describe("EventAction Event Selector", () => {
         await action.deriveActionClaimantFromTransaction(await action.getActionClaimant(), {
           hash,
           chainId,
+          knownSignatures: allKnownSignatures
         }),
       ).toBe(recipient);
     });
@@ -534,7 +535,7 @@ describe("EventAction Event Selector", () => {
       const recipient = accounts[1].account;
       await erc721.approve(recipient, 1n);
       const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
-      expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
+      expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
     })
   });
 });
@@ -690,7 +691,7 @@ describe("EventAction Func Selector", () => {
     });
 
     expect(
-      await action.isActionStepValid(actionStep, { hash, chainId })
+      await action.isActionStepValid(actionStep, { hash, chainId, knownSignatures: allKnownSignatures })
     ).toBe(true);
   });
 
@@ -706,6 +707,7 @@ describe("EventAction Func Selector", () => {
     const criteriaMatch = await action.isActionStepValid(actionStep, {
       hash,
       chainId,
+      knownSignatures: allKnownSignatures
     });
 
     expect(criteriaMatch).toBe(true);
@@ -727,7 +729,7 @@ describe("EventAction Func Selector", () => {
     });
 
     try {
-      await action.isActionStepValid(invalidStep, { hash, chainId });
+      await action.isActionStepValid(invalidStep, { hash, chainId, knownSignatures: allKnownSignatures });
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toContain(
@@ -743,7 +745,7 @@ describe("EventAction Func Selector", () => {
       value: parseEther(".1"),
     });
 
-    expect(await action.validateActionSteps({ hash, chainId })).toBe(true);
+    expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
   })
 
   test("validates against NOT_EQUAL filter criteria", async () => {
@@ -760,6 +762,7 @@ describe("EventAction Func Selector", () => {
       await action.isActionStepValid(actionStep, {
         hash,
         chainId,
+        knownSignatures: allKnownSignatures
       }),
     ).toBe(true);
   });
@@ -784,6 +787,7 @@ describe("EventAction Func Selector", () => {
       await action.isActionStepValid(actionStep, {
         hash,
         chainId,
+        knownSignatures: allKnownSignatures
       }),
     ).toBe(true);
   });
@@ -807,6 +811,7 @@ describe("EventAction Func Selector", () => {
       await action.isActionStepValid(actionStep, {
         hash,
         chainId,
+        knownSignatures: allKnownSignatures
       }),
     ).toBe(true);
   });
@@ -822,6 +827,7 @@ describe("EventAction Func Selector", () => {
       await action.validateActionSteps({
         hash,
         chainId,
+        knownSignatures: allKnownSignatures
       }),
     ).toBe(true);
   });

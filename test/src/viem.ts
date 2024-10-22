@@ -1,12 +1,12 @@
 import { createConfig } from '@wagmi/core';
 import {
   http,
+  type TestClient,
   createTestClient,
   publicActions,
   walletActions,
   zeroAddress,
   zeroHash,
-  TestClient,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { arbitrum, base, hardhat, optimism, sepolia } from 'viem/chains';

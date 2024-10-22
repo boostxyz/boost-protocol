@@ -135,7 +135,6 @@ export async function freshBoost(
 
 export function useTestFixtures(
   options: DeployableTestOptions = defaultOptions,
-  chainId = 31337,
 ) {
   console.log('!!!!!!!! test fixtures', BoostCore.addresses);
   return {
@@ -167,15 +166,13 @@ export function deployFixtures(
   options: DeployableTestOptions = defaultOptions,
   chainId = 31337,
 ) {
-  // if this VITE_TEST_PREFER_ENV_DEPLOYMENTS is enabled, don't deploy new contracts
-  if (import.meta.env.VITE_TEST_PREFER_ENV_DEPLOYMENTS === 'true')
+  // if this VITE_TEST_NO_DEPLOY_FIXTURES is enabled, don't deploy new contracts
+  if (import.meta.env.VITE_TEST_NO_DEPLOY_FIXTURES === 'true')
     return async function deployFixtures() {
-      console.log('!! test fixtures');
-      return useTestFixtures(options, chainId);
+      return await useTestFixtures(options, chainId);
     };
 
   return async function deployFixtures() {
-    console.log('!! deploying');
     const { config, account } = options;
 
     const _registry = await new BoostRegistry({

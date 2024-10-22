@@ -32,9 +32,11 @@ describe('BoostCore', () => {
     const { core } = fixtures;
 
     const { budget, erc20 } = budgets;
+    console.log(await budget.assertValidAddress(), erc20.assertValidAddress())
+    console.log('!!!')
     await core.createBoost({
       protocolFee: 0n,
-      maxParticipants: 100n,
+      maxParticipants: 5n,
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -54,7 +56,7 @@ describe('BoostCore', () => {
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
           reward: parseEther('1'),
-          limit: 100n,
+          limit: 5n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
         }),

@@ -34,8 +34,8 @@ import { createConfig, deployContract } from '@wagmi/core';
 import type { Client, Hex } from 'viem';
 import {
   http,
-  createWalletClient,
   createTestClient,
+  createWalletClient,
   publicActions,
   walletActions,
 } from 'viem';

@@ -244,7 +244,7 @@ export type CreateBoostPayload = {
   budget: Budget;
   action: Action;
   validator?: Validator;
-  allowList: AllowList;
+  allowList?: AllowList;
   incentives: Array<Incentive>;
   protocolFee?: bigint;
   maxParticipants?: bigint;
@@ -334,6 +334,8 @@ export class BoostCore extends Deployable<
       desiredChainId,
     );
 
+    console.log('!!chainId', chainId);
+
     const boostFactory = createWriteContract({
       abi: boostCoreAbi,
       functionName: 'createBoost',
@@ -346,6 +348,8 @@ export class BoostCore extends Deployable<
       payload,
       options,
     );
+
+    console.log(onChainPayload);
 
     const boostHash = await boostFactory(options.config, {
       ...this.optionallyAttachAccount(options.account),
@@ -370,7 +374,7 @@ export class BoostCore extends Deployable<
       id: boostId,
       budget: payload.budget.at(boost.budget),
       action: payload.action.at(boost.action),
-      validator: payload.validator!.at(boost.validator),
+      validator: payload.validator.at(boost.validator),
       allowList: payload.allowList.at(boost.allowList),
       incentives: payload.incentives.map((incentive, i) =>
         // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
@@ -428,7 +432,7 @@ export class BoostCore extends Deployable<
     chainId: number,
     payload: CreateBoostPayload,
     options: DeployableOptions,
-  ): Promise<BoostPayload> {
+  ): Promise<Required<BoostPayload>> {
     if (!payload.owner) {
       payload.owner =
         this._account?.address ||
@@ -515,6 +519,10 @@ export class BoostCore extends Deployable<
       isBase: true,
       parameters: zeroHash,
     };
+    // if allowlist not provided, assume open allowlist
+    if (!payload.allowList) {
+      payload.allowList = this.OpenAllowList();
+    }
     if (payload.allowList.address) {
       const isBase = payload.allowList.isBase;
       allowListPayload = {

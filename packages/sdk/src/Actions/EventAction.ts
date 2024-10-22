@@ -217,7 +217,7 @@ export interface ActionStep {
  * Parameters for validating an action step.
  *
  * @typedef {Object} ValidateActionStepParams
- * @property {Record<Hex, AbiEvent | AbiFunction>} [knownSignatures] - Record of known events, keyed by 32 byte selectors. You can use [@boostxyz/signaturs](https://www.npmjs.com/package/@boostxyz/signatures) to assemble this parameter.
+ * @property {Record<Hex, AbiEvent | AbiFunction>} [knownSignatures] - Record of known events, keyed by 32 byte selectors. You can use [@boostxyz/signatures](https://www.npmjs.com/package/@boostxyz/signatures) to assemble this parameter.
  * @property {AbiEvent | AbiFunction} [abiItem] - Optional ABI item definition.
  * @property {EventLogs} [logs] - Event logs to validate against. Required if 'hash' is not provided.
  * @property {Hex} [hash] - Transaction hash to validate against. Required if 'logs' is not provided.

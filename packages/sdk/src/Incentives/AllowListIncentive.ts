@@ -97,6 +97,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
+    31337: import.meta.env.VITE_ALLOWLIST_INCENTIVE_BASE,
     ...(AllowListIncentiveBases as Record<number, Address>),
   };
   /**

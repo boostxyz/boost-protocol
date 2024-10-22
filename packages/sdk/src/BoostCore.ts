@@ -128,24 +128,24 @@ export { boostCoreAbi };
 export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
 
 /**
- * The address of the deployed BoostCore instance. In prerelease mode, this will be its sepolia address
- *
- * @type {Address}
- */
-export const BOOST_CORE_ADDRESS =
-  (BoostCoreBases as Record<string, Address>)[__DEFAULT_CHAIN_ID__] ||
-  zeroAddress;
-
-/**
  * The fixed addresses for the deployed Boost Core.
  * By default, `new BoostCore` will use the address deployed to the currently connected chain, or `BOOST_CORE_ADDRESS` if not provided.
  *
  * @type {Record<number, Address>}
  */
 export const BOOST_CORE_ADDRESSES: Record<number, Address> = {
-  ...(BoostCoreBases as Record<number, Address>),
   31337: import.meta.env.VITE_BOOST_CORE_ADDRESS,
+  ...(BoostCoreBases as Record<number, Address>),
 };
+
+/**
+ * The address of the deployed BoostCore instance. In prerelease mode, this will be its sepolia address
+ *
+ * @type {Address}
+ */
+export const BOOST_CORE_ADDRESS =
+  BOOST_CORE_ADDRESSES[__DEFAULT_CHAIN_ID__ as unknown as number] ||
+  zeroAddress;
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.
@@ -244,7 +244,7 @@ export type CreateBoostPayload = {
   budget: Budget;
   action: Action;
   validator?: Validator;
-  allowList: AllowList;
+  allowList?: AllowList;
   incentives: Array<Incentive>;
   protocolFee?: bigint;
   maxParticipants?: bigint;
@@ -347,6 +347,8 @@ export class BoostCore extends Deployable<
       options,
     );
 
+    console.log(onChainPayload);
+
     const boostHash = await boostFactory(options.config, {
       ...this.optionallyAttachAccount(options.account),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -371,7 +373,7 @@ export class BoostCore extends Deployable<
       budget: payload.budget.at(boost.budget),
       action: payload.action.at(boost.action),
       validator: payload.validator!.at(boost.validator),
-      allowList: payload.allowList.at(boost.allowList),
+      allowList: payload.allowList!.at(boost.allowList),
       incentives: payload.incentives.map((incentive, i) =>
         // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
         incentive.at(boost.incentives.at(i)!),
@@ -428,7 +430,7 @@ export class BoostCore extends Deployable<
     chainId: number,
     payload: CreateBoostPayload,
     options: DeployableOptions,
-  ): Promise<BoostPayload> {
+  ): Promise<Required<BoostPayload>> {
     if (!payload.owner) {
       payload.owner =
         this._account?.address ||
@@ -515,6 +517,10 @@ export class BoostCore extends Deployable<
       isBase: true,
       parameters: zeroHash,
     };
+    // if allowlist not provided, assume open allowlist
+    if (!payload.allowList) {
+      payload.allowList = this.OpenAllowList();
+    }
     if (payload.allowList.address) {
       const isBase = payload.allowList.isBase;
       allowListPayload = {

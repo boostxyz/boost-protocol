@@ -155,6 +155,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
+    31337: import.meta.env.VITE_CGDA_INCENTIVE_BASE,
     ...(CGDAIncentiveBases as Record<number, Address>),
   };
   /**

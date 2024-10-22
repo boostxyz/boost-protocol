@@ -91,6 +91,7 @@ export class SimpleDenyList<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
+    31337: import.meta.env.VITE_SIMPLE_DENYLIST_BASE,
     ...(SimpleDenyListBases as Record<number, Address>),
   };
   /**

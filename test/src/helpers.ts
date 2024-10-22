@@ -12,7 +12,6 @@ import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/Event
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
-import SimpleBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/SimpleBudget.sol/SimpleBudget.json';
 import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
@@ -134,12 +133,47 @@ export async function freshBoost(
   });
 }
 
+export function useTestFixtures(
+  options: DeployableTestOptions = defaultOptions,
+) {
+  return {
+    registry: new BoostRegistry(options),
+    core: new BoostCore(options),
+    bases: {
+      // ContractAction: typeof ContractAction;
+      EventAction,
+      // ERC721MintAction: typeof ERC721MintAction;
+      SimpleAllowList,
+      SimpleDenyList,
+      OpenAllowList,
+      // SimpleBudget: typeof SimpleBudget;
+      ManagedBudget,
+      // VestingBudget: typeof VestingBudget;
+      AllowListIncentive,
+      CGDAIncentive,
+      ERC20Incentive,
+      ERC20VariableIncentive,
+      ERC20VariableCriteriaIncentive,
+      // ERC1155Incentive: typeof ERC1155Incentive;
+      PointsIncentive,
+      SignerValidator,
+    },
+  };
+}
+
 export function deployFixtures(
   options: DeployableTestOptions = defaultOptions,
   chainId = 31337,
 ) {
+  // if this VITE_TEST_NO_DEPLOY_FIXTURES is enabled, don't deploy new contracts
+  if (import.meta.env.VITE_TEST_NO_DEPLOY_FIXTURES === 'true')
+    return async function deployFixtures() {
+      return await useTestFixtures(options);
+    };
+
   return async function deployFixtures() {
     const { config, account } = options;
+
     const _registry = await new BoostRegistry({
       address: null,
       ...options,

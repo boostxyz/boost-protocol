@@ -1,4 +1,4 @@
-import { accounts } from '@boostxyz/test/accounts';
+import { accounts } from "@boostxyz/test/accounts";
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -7,20 +7,20 @@ import {
   freshBoost,
   fundBudget,
   makeMockEventActionPayload,
-} from '@boostxyz/test/helpers';
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
-import { pad, parseEther, zeroAddress } from 'viem';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { ContractAction } from './Actions/ContractAction';
-import { BOOST_CORE_CLAIM_FEE } from './BoostCore';
-import type { ERC20Incentive } from './Incentives/ERC20Incentive';
-import { StrategyType } from './claiming';
-import { BoostNotFoundError, IncentiveNotCloneableError } from './errors';
-import { bytes4 } from './utils';
+} from "@boostxyz/test/helpers";
+import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
+import { pad, parseEther, zeroAddress } from "viem";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { ContractAction } from "./Actions/ContractAction";
+import { BOOST_CORE_CLAIM_FEE } from "./BoostCore";
+import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
+import { StrategyType } from "./claiming";
+import { BoostNotFoundError, IncentiveNotCloneableError } from "./errors";
+import { bytes4 } from "./utils";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
-describe('BoostCore', () => {
+describe("BoostCore", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
@@ -28,13 +28,13 @@ describe('BoostCore', () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 
-  test('can get the total number of boosts', async () => {
+  test("can get the total number of boosts", async () => {
     const { core } = fixtures;
 
     const { budget, erc20 } = budgets;
     await core.createBoost({
       protocolFee: 0n,
-      maxParticipants: 100n,
+      maxParticipants: 5n,
       budget: budget,
       action: core.EventAction(
         makeMockEventActionPayload(
@@ -53,8 +53,8 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
-          limit: 100n,
+          reward: parseEther("1"),
+          limit: 5n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
         }),
@@ -63,17 +63,17 @@ describe('BoostCore', () => {
     expect(await core.getBoostCount()).toBe(1n);
   });
 
-  test('throws a typed error if no boost exists', async () => {
+  test("throws a typed error if no boost exists", async () => {
     const { core } = fixtures;
     try {
-      await core.getBoost(1000n)
-    } catch(e) {
-      expect(e instanceof BoostNotFoundError).toBe(true)
-      expect(e.id).toBe('1000')
+      await core.getBoost(1000n);
+    } catch (e) {
+      expect(e instanceof BoostNotFoundError).toBe(true);
+      expect(e.id).toBe("1000");
     }
-  })
+  });
 
-  test('can successfully create a boost using all base contract implementations', async () => {
+  test("can successfully create a boost using all base contract implementations", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const boost = await core.createBoost({
@@ -97,7 +97,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -117,7 +117,7 @@ describe('BoostCore', () => {
     expect((await boost.action.target()).toLowerCase()).toBe(
       core.assertValidAddress().toLowerCase(),
     );
-    expect(await boost.action.selector()).toBe('0xdeadbeef');
+    expect(await boost.action.selector()).toBe("0xdeadbeef");
     expect(await boost.action.value()).toBe(0n);
 
     expect(boost.validator.address?.toLowerCase()).toBe(
@@ -150,12 +150,12 @@ describe('BoostCore', () => {
     expect((await incentive.asset()).toLowerCase()).toBe(
       erc20.address?.toLowerCase(),
     );
-    expect(await incentive.currentReward()).toBe(parseEther('1'));
+    expect(await incentive.currentReward()).toBe(parseEther("1"));
     expect(await incentive.limit()).toBe(100n);
     expect(await incentive.claims()).toBe(0n);
   });
 
-  test('can read the raw on chain representation of a boost', async () => {
+  test("can read the raw on chain representation of a boost", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const _boost = await core.createBoost({
@@ -179,7 +179,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -198,7 +198,7 @@ describe('BoostCore', () => {
     );
   });
 
-  test('can optionally supply a validator', async () => {
+  test("can optionally supply a validator", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const _boost = await core.createBoost({
@@ -218,7 +218,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -229,7 +229,7 @@ describe('BoostCore', () => {
     expect(boost.validator).toBe(_boost.validator.assertValidAddress());
   });
 
-  test('can simulate a boost creation', async () => {
+  test("can simulate a boost creation", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const simulated = await core.simulateCreateBoost({
@@ -249,25 +249,25 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
         }),
       ],
     });
-    expect(simulated.request.__mode).toBe('prepared')
+    expect(simulated.request.__mode).toBe("prepared");
   });
 
-  test('can reuse an existing action', async () => {
+  test("can reuse an existing action", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
     // allocate more funds to the budget
-    await erc20.mint(defaultOptions.account.address, parseEther('110'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
+    await erc20.mint(defaultOptions.account.address, parseEther("110"));
+    await erc20.approve(budget.assertValidAddress(), parseEther("110"));
     await budget.allocate({
-      amount: parseEther('110'),
+      amount: parseEther("110"),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
@@ -291,7 +291,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -312,7 +312,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -323,15 +323,15 @@ describe('BoostCore', () => {
     expect(onChainBoost.action).toBe(_boost.action.assertValidAddress());
   });
 
-  test('can reuse an existing validator', async () => {
+  test("can reuse an existing validator", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
-    await erc20.mint(defaultOptions.account.address, parseEther('110'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
+    await erc20.mint(defaultOptions.account.address, parseEther("110"));
+    await erc20.approve(budget.assertValidAddress(), parseEther("110"));
     await budget.allocate({
-      amount: parseEther('110'),
+      amount: parseEther("110"),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
@@ -355,7 +355,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -381,7 +381,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -392,15 +392,15 @@ describe('BoostCore', () => {
     expect(onChainBoost.validator).toBe(_boost.validator.assertValidAddress());
   });
 
-  test('can reuse an existing allowlist', async () => {
+  test("can reuse an existing allowlist", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
-    await erc20.mint(defaultOptions.account.address, parseEther('110'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
+    await erc20.mint(defaultOptions.account.address, parseEther("110"));
+    await erc20.approve(budget.assertValidAddress(), parseEther("110"));
     await budget.allocate({
-      amount: parseEther('110'),
+      amount: parseEther("110"),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
@@ -424,7 +424,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -450,7 +450,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -461,25 +461,25 @@ describe('BoostCore', () => {
     expect(onChainBoost.allowList).toBe(_boost.allowList.assertValidAddress());
   });
 
-  test('cannot reuse an existing incentive', async () => {
+  test("cannot reuse an existing incentive", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
     // allocate more erc20 funds to the budget from the owning accound
-    await erc20.mint(defaultOptions.account.address, parseEther('110'));
-    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
+    await erc20.mint(defaultOptions.account.address, parseEther("110"));
+    await erc20.approve(budget.assertValidAddress(), parseEther("110"));
     await budget.allocate({
-      amount: parseEther('110'),
+      amount: parseEther("110"),
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
 
     const incentive = core.ERC20Incentive({
       asset: erc20.assertValidAddress(),
-      reward: parseEther('1'),
+      reward: parseEther("1"),
       limit: 100n,
       strategy: StrategyType.POOL,
-          manager: budget.assertValidAddress(),
+      manager: budget.assertValidAddress(),
     });
     const _boost = await core.createBoost({
       budget: budget,
@@ -523,11 +523,11 @@ describe('BoostCore', () => {
     }
   });
 
-  test('can offer multiple incentives', async () => {
+  test("can offer multiple incentives", async () => {
     const { registry, core } = fixtures;
     const { budget, erc20, points, erc1155 } = budgets;
     const allowList = await registry.initialize(
-      'SharedAllowList',
+      "SharedAllowList",
       core.SimpleAllowList({
         owner: defaultOptions.account.address,
         allowed: [defaultOptions.account.address],
@@ -562,7 +562,7 @@ describe('BoostCore', () => {
     });
     const pointsIncentive = core.PointsIncentive({
       venue: points.assertValidAddress(),
-      selector: bytes4('issue(address,uint256)'),
+      selector: bytes4("issue(address,uint256)"),
       reward: 1n,
       limit: 10n,
     });
@@ -597,22 +597,22 @@ describe('BoostCore', () => {
     );
     expect(await cgdaIncentive.currentReward()).toEqual(1n);
     expect(
-      await (await allowListIncentive.allowList()).isAllowed(
-        defaultOptions.account.address,
-      ),
+      await (
+        await allowListIncentive.allowList()
+      ).isAllowed(defaultOptions.account.address),
     ).toEqual(true);
     expect(await pointsIncentive.reward()).toEqual(1n);
     expect(await pointsIncentive.currentReward()).toEqual(1n);
     expect(await pointsIncentive.limit()).toEqual(10n);
   });
 
-  test('can get  the protocol fee', async () => {
+  test("can get  the protocol fee", async () => {
     const { core } = fixtures;
 
     expect(await core.protocolFee()).toBe(1000n);
   });
 
-  test('can get the protocol fee receiver', async () => {
+  test("can get the protocol fee receiver", async () => {
     const { core } = fixtures;
 
     expect(await core.protocolFeeReceiver()).toBe(
@@ -620,7 +620,7 @@ describe('BoostCore', () => {
     );
   });
 
-  test('can set the protocol fee receiver', async () => {
+  test("can set the protocol fee receiver", async () => {
     const { core } = fixtures;
 
     await core.setProcolFeeReceiver(zeroAddress);
@@ -628,7 +628,7 @@ describe('BoostCore', () => {
     expect(await core.protocolFeeReceiver()).toBe(zeroAddress);
   });
 
-  test('binds all actions, budgets, allowlists, incentives, and validators to reuse core options and account', () => {
+  test("binds all actions, budgets, allowlists, incentives, and validators to reuse core options and account", () => {
     const { core } = fixtures;
 
     // const contractAction = core.ContractAction(zeroAddress);
@@ -710,7 +710,7 @@ describe('BoostCore', () => {
 
     const pointsIncentive = core.PointsIncentive({
       venue: zeroAddress,
-      selector: '0x',
+      selector: "0x",
       reward: 0n,
       limit: 0n,
     });
@@ -722,7 +722,7 @@ describe('BoostCore', () => {
     expect(signerValidator._account).toEqual(defaultOptions.account);
   });
 
-  test('can subscribe to contract events', async () => {
+  test("can subscribe to contract events", async () => {
     const subscription = vi.fn();
 
     const { core } = fixtures;
@@ -749,7 +749,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -764,7 +764,7 @@ describe('BoostCore', () => {
     expect(subscription).toHaveBeenCalledTimes(1);
   });
 
-  test('can set a passthrough auth scheme', async () => {
+  test("can set a passthrough auth scheme", async () => {
     const { core } = fixtures;
 
     const auth = core.PassthroughAuth();
@@ -776,7 +776,7 @@ describe('BoostCore', () => {
     expect(await core.isAuthorized(zeroAddress)).toBe(true);
   });
 
-  test('uses the provided validator when one is specified', async () => {
+  test("uses the provided validator when one is specified", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const customValidator = core.SignerValidator({
@@ -800,7 +800,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -813,7 +813,7 @@ describe('BoostCore', () => {
     expect(signers).toBe(true);
   });
 
-  test('creates a boost with a default validator when none is provided', async () => {
+  test("creates a boost with a default validator when none is provided", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const boost = await core.createBoost({
@@ -829,7 +829,7 @@ describe('BoostCore', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -848,7 +848,7 @@ describe('BoostCore', () => {
     expect(signer).toBe(true);
   });
 
-  test('can retrieve the BoostClaimed event from a transaction hash', async () => {
+  test("can retrieve the BoostClaimed event from a transaction hash", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!,
       // biome-ignore lint/style/noNonNullAssertion: we know this is defined
@@ -866,7 +866,7 @@ describe('BoostCore', () => {
     });
 
     const claimant = trustedSigner.account;
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
     const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
@@ -888,7 +888,7 @@ describe('BoostCore', () => {
     const claimInfo = await fixtures.core.getClaimFromTransaction({ hash });
     expect(claimInfo).toBeDefined();
     expect(claimInfo?.claimant).toBe(claimant);
-    expect(typeof claimInfo?.boostId).toBe('bigint');
+    expect(typeof claimInfo?.boostId).toBe("bigint");
     expect(claimInfo?.referrer).toBe(referrer);
   });
 });

@@ -31,8 +31,14 @@ import {
   getDeployedContractAddress,
 } from '@boostxyz/sdk';
 import { createConfig, deployContract } from '@wagmi/core';
-import type { Hex } from 'viem';
-import { http, createWalletClient } from 'viem';
+import type { Client, Hex } from 'viem';
+import {
+  http,
+  createTestClient,
+  createWalletClient,
+  publicActions,
+  walletActions,
+} from 'viem';
 import { type Address, privateKeyToAccount } from 'viem/accounts';
 import * as _chains from 'viem/chains';
 import type { Command } from '../utils';
@@ -52,6 +58,8 @@ export type DeployResult = {
   ALLOWLIST_INCENTIVE_BASE: string;
   CGDA_INCENTIVE_BASE: string;
   ERC20_INCENTIVE_BASE: string;
+  ERC20_VARIABLE_INCENTIVE_BASE: string;
+  ERC20_VARIABLE_CRITERIA_INCENTIVE_BASE: string;
   ERC1155_INCENTIVE_BASE: string;
   POINTS_INCENTIVE_BASE: string;
   SIGNER_VALIDATOR_BASE: string;
@@ -69,11 +77,24 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
   const chain = chains[_chain];
 
   const account = privateKeyToAccount(privateKey as Hex);
-  const client = createWalletClient({
-    account,
-    chain,
-    transport: http(),
-  });
+  let client: Client;
+  if (chain === chains.hardhat || chain === chains.anvil) {
+    client = createTestClient({
+      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
+      chain: chain,
+      mode: chain === chains.hardhat ? 'hardhat' : 'anvil',
+      account,
+      key: privateKey,
+    })
+      .extend(publicActions)
+      .extend(walletActions);
+  } else {
+    client = createWalletClient({
+      account,
+      chain,
+      transport: http(),
+    }).extend(publicActions);
+  }
   const config = createConfig({
     // biome-ignore lint/style/noNonNullAssertion: Chain is checked above, false error
     chains: [chain!],
@@ -85,13 +106,24 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
 
   const chainId = chain!.id!;
 
-  const registry = await (
+  const _registry = await (
     new BoostRegistry({
       address: null,
       ...options,
       // biome-ignore lint/suspicious/noExplicitAny: we know what we're doing
     }) as any
   ).deploy();
+
+  class TBoostRegistry extends BoostRegistry {
+    public static override addresses: Record<number, Address> = {
+      [chainId]: _registry.assertValidAddress(),
+    };
+  }
+
+  const registry = new TBoostRegistry({
+    ...options,
+    address: _registry.assertValidAddress(),
+  });
 
   const core = await (
     new BoostCore({
@@ -305,7 +337,7 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     await registry.register(
       deployable.registryType,
       name,
-      deployable.bases[chainId],
+      deployable.bases[chainId]!,
     );
   }
 

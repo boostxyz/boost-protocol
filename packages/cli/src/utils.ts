@@ -5,7 +5,7 @@ export type Options = {
   privateKey?: string;
   out?: string;
   cacheDir?: string;
-  force?: string;
+  force?: boolean;
   format?: 'env' | 'json';
 };
 

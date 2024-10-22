@@ -7,6 +7,7 @@ import {
 import { StrategyType } from '@boostxyz/sdk/claiming';
 import { selectors } from '@boostxyz/signatures/events';
 import { accounts } from '@boostxyz/test/accounts';
+import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -158,7 +159,7 @@ describe('Boost with Delegate Action Incentive', () => {
 
     // Make sure that the transaction was sent as expected and validates the action
     expect(testReceipt).toBeDefined();
-    const validation = await action.validateActionSteps();
+    const validation = await action.validateActionSteps({ hash: testReceipt, chainId: base.id, knownSignatures: allKnownSignatures });
     expect(validation).toBe(true);
     // Generate the signature using the trusted signer
     const claimDataPayload = await boost.validator.encodeClaimData({

@@ -32,6 +32,7 @@ import {
   fundBudget,
 } from '@boostxyz/test/helpers';
 import { setupConfig, testAccount } from '@boostxyz/test/viem';
+import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
 
 const walletClient = createTestClient({
   transport: http("http://127.0.0.1:8545"),
@@ -156,7 +157,7 @@ describe('Boost for Swapping on a Specific DEX (paraswap)', () => {
 
       // Make sure that the transaction was sent as expected and validates the action
       expect(hash).toBeDefined();
-      const validation = await action.validateActionSteps({ hash });
+      const validation = await action.validateActionSteps({ hash, chainId: arbitrum.id, knownSignatures: allKnownSignatures });
       expect(validation).toBe(true);
       // Generate the signature using the trusted signer
       const claimDataPayload = await boost.validator.encodeClaimData({

@@ -1,5 +1,4 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { isAddress } from 'viem';
 import { beforeAll, describe, expect, test } from 'vitest';
 import { accounts } from '@boostxyz/test/accounts';
 import {

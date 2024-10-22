@@ -1,12 +1,14 @@
 [
   "// Begin common builtin function signatures",
   "mint(address to, uint256 amount)",
-  "mint(address,uint256,address,uint256,address,string)",
+  "mint(address mintTo,uint256 quantity,address collection,uint256 tokenId,address mintReferral,string comment)",
   "mintPayable(address to, uint256 amount)",
   "execute(bytes commands,bytes[] inputs)",
   "register(string name,address owner,uint256 duration,bytes32 secret,address resolver,bytes[] data,bool reverseRecord,uint16 ownerControlledFuses)",
   "getVotes(address account, uint256 blockNumber) view returns (uint256)",
   "transferFrom(address,address,uint256)",
+  "mintTo((address,uint8,uint8,address,uint32,address,uint32,bytes32[],uint96,uint32,uint32,uint32,bytes,address,bytes32[],uint256))",
+  "buy1155(address erc20zAddress, uint256 num1155ToBuy, address recipient, address excessRefundRecipient, uint256 maxEthToSpend, uint160 sqrtPriceLimitX96)",
   "// Test function signatures",
   "mint(address)"
 ]

@@ -8,6 +8,6 @@ export default defineConfig({
   test: {
     fileParallelism: false,
     env: loadEnv('', process.cwd(), ''),
-    // globalSetup: ['../../test/src/setup.hardhat.ts'],
+    globalSetup: ['../../test/src/setup.hardhat.ts'],
   },
 });

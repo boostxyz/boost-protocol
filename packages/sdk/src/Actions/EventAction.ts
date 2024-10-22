@@ -366,7 +366,7 @@ export class EventAction extends DeployableTarget<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_CONTRACT_ACTION_BASE,
+    31337: import.meta.env.VITE_EVENT_ACTION_BASE,
     ...(EventActionBases as Record<number, Address>),
   };
   /**

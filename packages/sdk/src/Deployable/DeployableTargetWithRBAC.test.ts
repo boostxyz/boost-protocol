@@ -7,7 +7,7 @@ import {
   deployFixtures,
   freshManagedBudget,
 } from '@boostxyz/test/helpers';
-import { Roles } from '../Deployable/DeployableTargetWithRBAC';
+import { Roles } from './DeployableTargetWithRBAC';
 
 let fixtures: Fixtures;
 

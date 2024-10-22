@@ -20,6 +20,7 @@ describe('RBAC', () => {
   test('can grant roles', async () => {
     const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
     const manager = accounts[0].account;
+    expect(await budget.rolesOf(manager)).not.toContain(Roles.MANAGER);
     await budget.grantRoles(manager, Roles.MANAGER);
     expect(await budget.rolesOf(manager)).toContain(Roles.MANAGER);
   });
@@ -53,6 +54,8 @@ describe('RBAC', () => {
       [admin, manager],
       [Roles.ADMIN, Roles.MANAGER],
     );
+    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(true);
+    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(true);
     await budget.revokeManyRoles(
       [admin, manager],
       [Roles.ADMIN, Roles.MANAGER],
@@ -64,6 +67,7 @@ describe('RBAC', () => {
   test('can check for any role', async () => {
     const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
     const user = accounts[6].account;
+    expect(await budget.hasAnyRole(user, Roles.MANAGER | Roles.ADMIN)).toBe(false);
     await budget.grantRoles(user, Roles.MANAGER);
     expect(await budget.hasAnyRole(user, Roles.MANAGER | Roles.ADMIN)).toBe(true);
   });

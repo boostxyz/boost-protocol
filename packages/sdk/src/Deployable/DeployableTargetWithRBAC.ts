@@ -4,10 +4,14 @@ import {
   readRbacHasAnyRole,
   readRbacIsAuthorized,
   readRbacRolesOf,
+  simulateRbacGrantManyRoles,
   simulateRbacGrantRoles,
+  simulateRbacRevokeManyRoles,
   simulateRbacRevokeRoles,
   simulateRbacSetAuthorized,
+  writeRbacGrantManyRoles,
   writeRbacGrantRoles,
+  writeRbacRevokeManyRoles,
   writeRbacRevokeRoles,
   writeRbacSetAuthorized,
 } from '@boostxyz/evm';
@@ -109,49 +113,49 @@ export class DeployableTargetWithRBAC<
   }
 
   /**
-   * Grant many accounts permissions on the rbac.
+   * Grant permissions for a user on the rbac.
    *
    * @example
    * ```ts
-   * await rbac.grantRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.grantRoles('0xfoo', Roles.MANAGER)
    * ```
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
-   * @param {?WriteParams} [params]
+   * @param {Address} address
+   * @param {Roles} role
+   * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
    * @returns {Promise<void>}
    */
   public async grantRoles(
-    addresses: Address[],
-    roles: Roles[],
+    address: Address,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
   ) {
-    return await this.awaitResult(this.grantRolesRaw(addresses, roles, params));
+    return await this.awaitResult(this.grantRolesRaw(address, role, params));
   }
 
   /**
-   * Grant many accounts permissions on the rbac.
+   * Grant permissions for a user on the rbac.
    *
    * @example
    * ```ts
-   * await rbac.grantRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
-   *
+   * await rbac.grantRoles('0xfoo', Roles.MANAGER)
+   * ```
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
+   * @param {Address} address
+   * @param {Roles} role
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async grantRolesRaw(
-    addresses: Address[],
-    roles: Roles[],
+    address: Address,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
   ) {
     const { request, result } = await simulateRbacGrantRoles(this._config, {
       address: this.assertValidAddress(),
-      args: [addresses, roles],
+      args: [address, role],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -165,50 +169,49 @@ export class DeployableTargetWithRBAC<
   }
 
   /**
-   * Revoke many accounts' permissions on the rbac.
+   * Revoke permissions for a user on the rbac.
    *
    * @example
    * ```ts
-   * await rbac.revokeRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
-   *
+   * await rbac.revokeRoles('0xfoo', Roles.MANAGER)
+   * ```
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
+   * @param {Address} address
+   * @param {Roles} role
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
   public async revokeRoles(
-    addresses: Address[],
-    roles: Roles[],
+    address: Address,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
   ) {
-    return await this.awaitResult(
-      this.revokeRolesRaw(addresses, roles, params),
-    );
+    return await this.awaitResult(this.revokeRolesRaw(address, role, params));
   }
 
   /**
-   * Revoke many accounts' permissions on the rbac.
+   * Revoke permissions for a user on the rbac.
    *
    * @example
    * ```ts
-   * await rbac.revokeRoles(['0xfoo', '0xbar], [RbacRoles.MANAGER, RbacRoles.ADMIN])
+   * await rbac.revokeRoles('0xfoo', Roles.MANAGER)
+   * ```
    * @public
    * @async
-   * @param {Address[]} addresses
-   * @param {RbacRoles[]} roles
+   * @param {Address} address
+   * @param {Roles} role
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async revokeRolesRaw(
-    addresses: Address[],
-    roles: Roles[],
+    address: Address,
+    role: Roles,
     params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
   ) {
     const { request, result } = await simulateRbacRevokeRoles(this._config, {
       address: this.assertValidAddress(),
-      args: [addresses, roles],
+      args: [address, role],
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -222,14 +225,134 @@ export class DeployableTargetWithRBAC<
   }
 
   /**
+   * Grant many accounts permissions on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.grantManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
+   * ```
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {Roles[]} roles
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async grantManyRoles(
+    addresses: Address[],
+    roles: Roles[],
+    params?: WriteParams<typeof rbacAbi, 'grantManyRoles'>,
+  ) {
+    return await this.awaitResult(
+      this.grantManyRolesRaw(addresses, roles, params),
+    );
+  }
+
+  /**
+   * Grant many accounts permissions on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.grantManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
+   * ```
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {Roles[]} roles
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async grantManyRolesRaw(
+    addresses: Address[],
+    roles: Roles[],
+    params?: WriteParams<typeof rbacAbi, 'grantManyRoles'>,
+  ) {
+    const { request, result } = await simulateRbacGrantManyRoles(this._config, {
+      address: this.assertValidAddress(),
+      args: [addresses, roles],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+    const hash = await writeRbacGrantManyRoles(
+      this._config,
+      // biome-ignore lint/suspicious/noExplicitAny: negligible low level lack of type intersection
+      request as any,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Revoke many accounts' permissions on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
+   * ```
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {Roles[]} roles
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async revokeManyRoles(
+    addresses: Address[],
+    roles: Roles[],
+    params?: WriteParams<typeof rbacAbi, 'revokeManyRoles'>,
+  ) {
+    return await this.awaitResult(
+      this.revokeManyRolesRaw(addresses, roles, params),
+    );
+  }
+
+  /**
+   * Revoke many accounts' permissions on the rbac.
+   *
+   * @example
+   * ```ts
+   * await rbac.revokeManyRoles(['0xfoo', '0xbar], [Roles.MANAGER, Roles.ADMIN])
+   * ```
+   * @public
+   * @async
+   * @param {Address[]} addresses
+   * @param {Roles[]} roles
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async revokeManyRolesRaw(
+    addresses: Address[],
+    roles: Roles[],
+    params?: WriteParams<typeof rbacAbi, 'revokeManyRoles'>,
+  ) {
+    const { request, result } = await simulateRbacRevokeManyRoles(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [addresses, roles],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeRbacRevokeManyRoles(
+      this._config,
+      // biome-ignore lint/suspicious/noExplicitAny: negligible low level lack of type intersection
+      request as any,
+    );
+    return { hash, result };
+  }
+
+  /**
    * Return an array of the roles assigned to the given account.
    * @example
    * ```ts
-   * (await rbac.rolesOf(0xfoo)).includes(RbacRoles.ADMIN)
+   * (await rbac.rolesOf(0xfoo)).includes(Roles.ADMIN)
+   * ```
    * @public
    * @param {Address} account
    * @param {?ReadParams} [params]
-   * @returns {Promise<Array<RbacRoles>>}
+   * @returns {Promise<Array<Roles>>}
    */
   public async rolesOf(
     account: Address,
@@ -252,10 +375,11 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.hasAnyRole(0xfoo, RbacRoles.ADMIN | RbacRoles.MANAGER)
+   * await rbac.hasAnyRole(0xfoo, Roles.ADMIN | Roles.MANAGER)
+   * ```
    * @public
    * @param {Address} account
-   * @param {RbacRoles} roles
+   * @param {Roles} roles
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
@@ -278,11 +402,11 @@ export class DeployableTargetWithRBAC<
    *
    * @example
    * ```ts
-   * await rbac.hasAllRoles(0xfoo, RbacRoles.ADMIN & RbacRoles.MANAGER)
-   *
+   * await rbac.hasAllRoles(0xfoo, Roles.ADMIN | Roles.MANAGER)
+   * ```
    * @public
    * @param {Address} account
-   * @param {RbacRoles} roles
+   * @param {Roles} roles
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */

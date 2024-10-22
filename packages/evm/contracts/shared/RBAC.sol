@@ -52,7 +52,7 @@ contract RBAC is OwnableRoles {
     /// @notice Set roles for accounts authorized to use the resource
     /// @param accounts_ The accounts to assign the corresponding role by index
     /// @param roles_ The roles to assign
-    function grantRoles(address[] calldata accounts_, uint256[] calldata roles_)
+    function grantManyRoles(address[] calldata accounts_, uint256[] calldata roles_)
         external
         virtual
         onlyOwnerOrRoles(ADMIN_ROLE)
@@ -68,7 +68,7 @@ contract RBAC is OwnableRoles {
     /// @notice Revoke roles for accounts authorized to use the resource
     /// @param accounts_ The accounts to assign the corresponding role by index
     /// @param roles_ The roles to remove
-    function revokeRoles(address[] calldata accounts_, uint256[] calldata roles_)
+    function revokeManyRoles(address[] calldata accounts_, uint256[] calldata roles_)
         external
         virtual
         onlyOwnerOrRoles(ADMIN_ROLE)

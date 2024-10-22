@@ -21,10 +21,10 @@ contract RBACTest is Test {
     }
 
     ////////////////////////////////
-    // RBAC.grantRoles //
+    // RBAC.grantManyRoles //
     ////////////////////////////////
 
-    function testGrantRoles() public {
+    function testGrantManyRoles() public {
         // Ensure the contract authorizes an account
         address[] memory accounts = new address[](2);
         uint256[] memory authorized = new uint256[](2);
@@ -32,13 +32,13 @@ contract RBACTest is Test {
         authorized[0] = rbac.MANAGER_ROLE();
         accounts[1] = address(0xaaaa);
         authorized[1] = rbac.ADMIN_ROLE();
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
         assertTrue(rbac.hasAllRoles(address(0xc0ffee), rbac.MANAGER_ROLE()));
         assertTrue(rbac.hasAllRoles(address(0xaaaa), rbac.MANAGER_ROLE() & rbac.ADMIN_ROLE()));
         assertFalse(rbac.isAuthorized(address(0xdeadbeef)));
     }
 
-    function testGrantRoles_NotOwner() public {
+    function testGrantManyRoles_NotOwner() public {
         // Ensure the contract does not authorize an account if not called by the owner
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
@@ -47,16 +47,16 @@ contract RBACTest is Test {
         vm.prank(address(0xdeadbeef));
 
         vm.expectRevert(BoostError.Unauthorized.selector);
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
     }
 
-    function testGrantRoles_Manager() public {
+    function testGrantManyRoles_Manager() public {
         // Ensure the contract does not authorize accounts when called by a manager
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
         accounts[0] = address(0xdeadbeef);
         authorized[0] = rbac.MANAGER_ROLE();
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
 
         address[] memory accounts_ = new address[](1);
         uint256[] memory authorized_ = new uint256[](1);
@@ -65,16 +65,16 @@ contract RBACTest is Test {
 
         vm.prank(address(0xdeadbeef));
         vm.expectRevert(BoostError.Unauthorized.selector);
-        rbac.grantRoles(accounts_, authorized_);
+        rbac.grantManyRoles(accounts_, authorized_);
     }
 
-    function testGrantRoles_Admin() public {
+    function testGrantManyRoles_Admin() public {
         // Ensure the contract does not authorize accounts when called by a manager
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
         accounts[0] = address(0xdeadbeef);
         authorized[0] = rbac.ADMIN_ROLE();
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
 
         address[] memory accounts_ = new address[](1);
         uint256[] memory authorized_ = new uint256[](1);
@@ -82,22 +82,22 @@ contract RBACTest is Test {
         authorized_[0] = 1;
 
         vm.prank(address(0xdeadbeef));
-        rbac.grantRoles(accounts_, authorized_);
+        rbac.grantManyRoles(accounts_, authorized_);
     }
 
-    function testGrantRoles_LengthMismatch() public {
+    function testGrantManyRoles_LengthMismatch() public {
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](2);
 
         vm.expectRevert(BoostError.LengthMismatch.selector);
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
     }
 
     ////////////////////////////////
-    // RBAC.revokeRoles //
+    // RBAC.revokeManyRoles //
     ////////////////////////////////
 
-    function testRevokeRoles() public {
+    function testRevokeManyRoles() public {
         // Ensure the contract authorizes an account
         address[] memory accounts = new address[](2);
         uint256[] memory authorized = new uint256[](2);
@@ -105,16 +105,16 @@ contract RBACTest is Test {
         authorized[0] = rbac.MANAGER_ROLE();
         accounts[1] = address(0xaaaa);
         authorized[1] = rbac.ADMIN_ROLE();
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
         assertTrue(rbac.hasAllRoles(address(0xc0ffee), rbac.MANAGER_ROLE()));
         assertTrue(rbac.hasAllRoles(address(0xaaaa), rbac.MANAGER_ROLE() & rbac.ADMIN_ROLE()));
         assertFalse(rbac.isAuthorized(address(0xdeadbeef)));
-        rbac.revokeRoles(accounts, authorized);
+        rbac.revokeManyRoles(accounts, authorized);
         assertFalse(rbac.hasAllRoles(address(0xc0ffee), rbac.MANAGER_ROLE()));
         assertFalse(rbac.hasAnyRole(address(0xaaaa), rbac.ADMIN_ROLE() | rbac.MANAGER_ROLE()));
     }
 
-    function testRevokeRoles_NotOwner() public {
+    function testRevokeManyRoles_NotOwner() public {
         // Ensure the contract does not authorize an account if not called by the owner
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
@@ -123,40 +123,40 @@ contract RBACTest is Test {
 
         vm.prank(address(0xdeadbeef));
         vm.expectRevert(BoostError.Unauthorized.selector);
-        rbac.revokeRoles(accounts, authorized);
+        rbac.revokeManyRoles(accounts, authorized);
     }
 
-    function testRevokeRoles_Manager() public {
+    function testRevokeManyRoles_Manager() public {
         // Ensure the contract does not authorize accounts when called by a manager
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
         accounts[0] = address(0xdeadbeef);
         authorized[0] = rbac.MANAGER_ROLE();
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
 
         vm.prank(address(0xdeadbeef));
         vm.expectRevert(BoostError.Unauthorized.selector);
-        rbac.revokeRoles(accounts, authorized);
+        rbac.revokeManyRoles(accounts, authorized);
     }
 
-    function testRevokeRoles_Admin() public {
+    function testRevokeManyRoles_Admin() public {
         // Ensure the contract does authorizes revocation when called by an admin
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](1);
         accounts[0] = address(0xdeadbeef);
         authorized[0] = rbac.ADMIN_ROLE();
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
 
         vm.prank(address(0xdeadbeef));
-        rbac.revokeRoles(accounts, authorized);
+        rbac.revokeManyRoles(accounts, authorized);
     }
 
-    function testRevokeRoles_LengthMismatch() public {
+    function testRevokeManyRoles_LengthMismatch() public {
         address[] memory accounts = new address[](1);
         uint256[] memory authorized = new uint256[](2);
 
         vm.expectRevert(BoostError.LengthMismatch.selector);
-        rbac.revokeRoles(accounts, authorized);
+        rbac.revokeManyRoles(accounts, authorized);
     }
 
     ////////////////////////////////
@@ -212,7 +212,7 @@ contract RBACTest is Test {
         uint256[] memory authorized = new uint256[](1);
         accounts[0] = address(0xdeadbeef);
         authorized[0] = rbac.ADMIN_ROLE();
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
 
         vm.prank(address(0xdeadbeef));
 
@@ -265,7 +265,7 @@ contract RBACTest is Test {
         accounts[1] = address(0xb33f);
         authorized[1] = 2;
 
-        rbac.grantRoles(accounts, authorized);
+        rbac.grantManyRoles(accounts, authorized);
 
         assertTrue(rbac.isAuthorized(address(0xc0ffee)));
         assertTrue(rbac.isAuthorized(address(0xb33f)));

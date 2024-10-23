@@ -22,7 +22,7 @@ contract FlexibleFeeBudget is ManagedBudget {
 
     /// @dev Emitted when the management fee is set or updated
     event ManagementFeeSet(uint256 newFee);
-    
+
     /// @dev Emitted when management fee is paid
     event ManagementFeePaid(uint256 indexed boostId, address indexed manager, uint256 amount);
 

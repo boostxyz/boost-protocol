@@ -15,6 +15,8 @@ import {
   decodeFunctionData,
   encodeAbiParameters,
   parseEventLogs,
+  zeroAddress,
+  zeroHash,
 } from 'viem';
 import { ERC20VariableCriteriaIncentive as ERC20VariableCriteriaIncentiveBases } from '../../dist/deployments.json';
 import { SignatureType } from '../Actions/EventAction';
@@ -161,7 +163,13 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
       const transactionReceipt = await getTransactionReceipt(this._config, {
         hash,
       });
-
+      if (criteria.fieldIndex === 255) {
+        const totalCost =
+          transactionReceipt.gasUsed * transactionReceipt.effectiveGasPrice + // Normal gas cost
+          (transactionReceipt.blobGasUsed ?? 0n) *
+            (transactionReceipt.blobGasPrice ?? 0n); // Blob gas cost - account for potential undefined values
+        return totalCost;
+      }
       const logs = transactionReceipt.logs;
 
       if (logs.length === 0) {
@@ -230,6 +238,7 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
       );
     }
   }
+
   /**
    * @inheritdoc
    *
@@ -268,6 +277,40 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
       [rewardAmount],
     );
   }
+}
+
+/**
+ * Creates an IncentiveCriteria object representing a gas rebate incentive.
+ * This object defines a variable incentive criteria where the criteria will be the gas spent.
+ *
+ * The criteria uses a signatureType of EVENT, with a special `fieldIndex` of 255, which indicates
+ * that the entire gas cost of the transaction will be used as the scalar value. If you don't want to
+ * rebate the entire gas cost, you can use a reward value on the incentive..
+ *
+ * - `criteriaType`: EVENT, indicating it's based on event logs.
+ * - `signature`: A zeroed signature (0x0000...0000), matching any event.
+ * - `fieldIndex`: 255, indicating the use of transaction gas cost.
+ * - `targetContract`: A zeroed address (0x0000...0000), applicable to any contract.
+ *
+ * @returns {IncentiveCriteria} Returns an IncentiveCriteria object for a gas rebate.
+ *
+ * @example
+ * const incentive = gasRebateIncentiveCriteria();
+ * const actionPayload = {
+ *   criteria: incentive,
+ *   asset: "0xAssetAddress",
+ *   reward: 0, // Set to zero to rebate the entire gas cost
+ *   limit: BigInt(1000) // This is the total spend limit for the incentive
+ * };
+ * deployIncentive(actionPayload);
+ */
+export function gasRebateIncentiveCriteria(): IncentiveCriteria {
+  return {
+    criteriaType: SignatureType.EVENT,
+    signature: zeroHash,
+    fieldIndex: 255,
+    targetContract: zeroAddress,
+  };
 }
 
 /**

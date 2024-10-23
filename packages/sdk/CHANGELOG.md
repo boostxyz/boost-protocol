@@ -1,5 +1,18 @@
 # @boostxyz/sdk
 
+## 1.1.0-alpha.23
+
+### Minor Changes
+
+- 9860502: make `ValidationActionStepParams.knownSignatures` mandatory. Cuts down on size via dep removal, better dx
+- 839fe56: add "ManyRoles" methods to RBAC
+- 324a1c7: better support for pnpm linking w/ env specified contracts on all implementations
+
+### Patch Changes
+
+- Updated dependencies [807570f]
+  - @boostxyz/signatures@1.1.0-alpha.23
+
 ## 1.1.0-alpha.22
 
 ### Minor Changes

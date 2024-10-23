@@ -23,7 +23,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     IncentiveBits.IncentiveMap _used;
 
     /// @dev address allowed to call validate
-    address private _validatorCaller;
+    address internal _validatorCaller;
 
     bytes32 internal constant _SIGNER_VALIDATOR_TYPEHASH =
         keccak256("SignerValidatorData(uint256 boostId,uint8 incentiveQuantity,address claimant,bytes incentiveData)");
@@ -49,7 +49,8 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     /// Validate that the action has been completed successfully by constructing a payload and checking the signature against it
     /// @inheritdoc AValidator
     function validate(uint256 boostId, uint256 incentiveId, address claimant, bytes calldata claimData)
-        external
+        public
+        virtual
         override
         returns (bool)
     {
@@ -103,7 +104,13 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
         );
     }
 
-    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+    function _domainNameAndVersion()
+        internal
+        pure
+        virtual
+        override
+        returns (string memory name, string memory version)
+    {
         name = "SignerValidator";
         version = "1";
     }

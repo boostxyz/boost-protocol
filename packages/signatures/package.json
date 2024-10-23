@@ -1,7 +1,7 @@
 {
   "name": "@boostxyz/signatures",
   "version": "1.1.0-alpha.22",
-  "description": "An offline database of builtin bytes4 selectors and their corresponding abi items",
+  "description": "An offline database of builtin selectors and their corresponding abi items",
   "repository": "https://github.com/boostxyz/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "type": "module",
@@ -28,6 +28,12 @@
       "require": "./dist/functions.json",
       "import": "./dist/functions.json",
       "node": "./dist/functions.json"
+    },
+    "./lib": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "node": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {

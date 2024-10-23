@@ -1,5 +1,7 @@
 # @boostxyz/cli
 
+## 1.1.0-alpha.24
+
 ## 1.1.0-alpha.23
 
 ### Minor Changes

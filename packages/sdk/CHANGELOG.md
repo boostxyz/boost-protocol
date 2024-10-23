@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 1.1.0-alpha.24
+
+### Minor Changes
+
+- 0101059: add `transactionSenderClaimant(): ActionClaimant` utility
+
 ## 1.1.0-alpha.23
 
 ### Minor Changes

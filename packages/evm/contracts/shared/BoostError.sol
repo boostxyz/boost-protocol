@@ -42,4 +42,7 @@ library BoostError {
     error IncentiveClaimed(uint8 incentiveId);
 
     error ClawbackFailed(address caller, bytes data);
+
+    /// @notice thrown when an address has claimed the maximum possible quantity
+    error MaximumClaimed(address claimant);
 }

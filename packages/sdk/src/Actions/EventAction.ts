@@ -25,6 +25,7 @@ import {
   fromHex,
   isAddress,
   isAddressEqual,
+  zeroAddress,
   zeroHash,
 } from 'viem';
 import { EventAction as EventActionBases } from '../../dist/deployments.json';
@@ -482,6 +483,8 @@ export class EventAction extends DeployableTarget<
   /**
    * Derives the action claimant address from a transaction based on the provided ActionClaimant configuration.
    * This method supports both event-based and function-based claimant derivation.
+   * **Important**: The claimant is considered to be `msg.sender` or `transaction.from` when `claimant.signature` is `zeroHash` or `claimant.fieldIndex` is 255.
+   * This may have unintended side effects for cross-chain operations where the sender could be an exit node's address.
    *
    ** @example
    * // Example usage
@@ -516,6 +519,29 @@ export class EventAction extends DeployableTarget<
     params: ValidateActionStepParams,
   ): Promise<Address | undefined> {
     const signature = claimant.signature;
+
+    // find message sender and return it
+    // WARNING: this is error prone in bridged transactions, as from will be exit node
+    if (signature === zeroHash || claimant.fieldIndex === 255) {
+      if ('hash' in params) {
+        const transaction = await getTransaction(this._config, {
+          hash: params.hash,
+        });
+        return transaction.from;
+      }
+      if ('logs' in params) {
+        for (let log of params.logs) {
+          if (log.transactionHash) {
+            const transaction = await getTransaction(this._config, {
+              hash: log.transactionHash,
+            });
+            return transaction.from;
+          }
+        }
+      }
+      return undefined;
+    }
+
     if (claimant.signatureType === SignatureType.EVENT) {
       let event: AbiEvent;
       if (params.abiItem) event = params.abiItem as AbiEvent;
@@ -1240,5 +1266,40 @@ export function anyActionParameter(): Criteria {
     fieldType: PrimitiveType.BYTES,
     fieldIndex: 255,
     filterData: zeroHash,
+  };
+}
+
+/**
+ * Creates an ActionClaimant object that represents the msg.sender as the claimant.
+ * This function is useful when you want to set up an action where the transaction sender
+ * (msg.sender in Solidity terms) is always considered the valid claimant, regardless of
+ * the event or function parameters.
+ *
+ * The returned ActionClaimant has the following properties:
+ * - signatureType: Set to SignatureType.EVENT (though it doesn't matter for this case)
+ * - signature: Set to zeroHash (0x0000...0000)
+ * - fieldIndex: Set to 255, indicating "any" field
+ * - targetContract: Set to zeroAddress (0x0000...0000)
+ * - chainid: Set to 0, indicating it's valid for any chain
+ *
+ * @returns {ActionClaimant} An ActionClaimant object representing the msg.sender
+ *
+ * @example
+ * const eventAction = new EventAction();
+ * const payload: EventActionPayload = {
+ *   actionClaimant: msgSenderClaimant(),
+ *   actionSteps: [
+ *     // ... define your action steps here
+ *   ]
+ * };
+ * await eventAction.deploy(payload);
+ */
+export function msgSenderClaimant(): ActionClaimant {
+  return {
+    signatureType: SignatureType.EVENT,
+    signature: zeroHash,
+    fieldIndex: 255,
+    targetContract: zeroAddress,
+    chainid: 0,
   };
 }

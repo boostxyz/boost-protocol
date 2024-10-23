@@ -7,15 +7,16 @@ import {
   type Address,
   type Hex,
   isAddress,
+  isAddressEqual,
   parseEther,
   toHex,
   zeroAddress,
   zeroHash,
-} from 'viem';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC20 } from '@boostxyz/test/MockERC20';
-import type { MockERC721 } from '@boostxyz/test/MockERC721';
-import { accounts } from '@boostxyz/test/accounts';
+} from "viem";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import type { MockERC20 } from "@boostxyz/test/MockERC20";
+import type { MockERC721 } from "@boostxyz/test/MockERC721";
+import { accounts } from "@boostxyz/test/accounts";
 import {
   type Fixtures,
   type StringEmitterFixtures,
@@ -24,7 +25,7 @@ import {
   fundErc20,
   deployStringEmitterMock,
   fundErc721,
-} from '@boostxyz/test/helpers';
+} from "@boostxyz/test/helpers";
 import {
   EventAction,
   type EventLogs,
@@ -34,6 +35,7 @@ import {
   SignatureType,
   Criteria,
   anyActionParameter,
+  transactionSenderClaimant,
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 
@@ -82,14 +84,18 @@ function basicErc721TransferAction(
 }
 
 function basicErc721TransferActionWithEmptyActionParameter(erc721: MockERC721) {
-  const eventActionPayload = basicErc721TransferAction(erc721)
+  const eventActionPayload = basicErc721TransferAction(erc721);
   if (eventActionPayload.actionSteps[0]?.actionParameter) {
-    eventActionPayload.actionSteps[0].actionParameter = anyActionParameter()
+    eventActionPayload.actionSteps[0].actionParameter = anyActionParameter();
   }
-  return eventActionPayload
+  return eventActionPayload;
 }
 
-function cloneEventAction(fixtures: Fixtures, erc721: MockERC721, eventActionPayload = basicErc721TransferAction(erc721)) {
+function cloneEventAction(
+  fixtures: Fixtures,
+  erc721: MockERC721,
+  eventActionPayload = basicErc721TransferAction(erc721),
+) {
   return function cloneEventAction() {
     return fixtures.registry.initialize(
       crypto.randomUUID(),
@@ -128,11 +134,11 @@ function basicErc721MintFuncAction(
 }
 
 function basicErc721MintFuncActionWithEmptyActionParameter(erc721: MockERC721) {
-  const eventActionPayload = basicErc721MintFuncAction(erc721)
+  const eventActionPayload = basicErc721MintFuncAction(erc721);
   if (eventActionPayload.actionSteps[0]?.actionParameter) {
-    eventActionPayload.actionSteps[0].actionParameter = anyActionParameter()
+    eventActionPayload.actionSteps[0].actionParameter = anyActionParameter();
   }
-  return eventActionPayload
+  return eventActionPayload;
 }
 
 function basicErc20MintFuncAction(erc20: MockERC20): EventActionPayloadSimple {
@@ -244,14 +250,15 @@ function cloneFunctionAction20(fixtures: Fixtures, erc20: MockERC20) {
   };
 }
 
-function cloneFunctionAction(fixtures: Fixtures, erc721: MockERC721, eventActionPayload = basicErc721MintFuncAction(erc721)) {
+function cloneFunctionAction(
+  fixtures: Fixtures,
+  erc721: MockERC721,
+  eventActionPayload = basicErc721MintFuncAction(erc721),
+) {
   return function cloneFunctionAction() {
     return fixtures.registry.clone(
       crypto.randomUUID(),
-      new fixtures.bases.EventAction(
-        defaultOptions,
-        eventActionPayload
-      ),
+      new fixtures.bases.EventAction(defaultOptions, eventActionPayload),
     );
   };
 }
@@ -272,7 +279,7 @@ function createMockCriteria(
   filterType: FilterType,
   fieldType: PrimitiveType,
   filterData: Hex,
-  fieldIndex: number = 0
+  fieldIndex: number = 0,
 ): Criteria {
   return {
     filterType,
@@ -412,12 +419,23 @@ describe("EventAction Event Selector", () => {
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       const recipient = accounts[1].account;
       await erc721.approve(recipient, 1n);
-      const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
-      expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
+      const { hash } = await erc721.transferFromRaw(
+        defaultOptions.account.address,
+        recipient,
+        1n,
+      );
+      expect(
+        await action.validateActionSteps({
+          hash,
+          chainId,
+          knownSignatures: allKnownSignatures,
+        }),
+      ).toBe(true);
     });
 
     test("can supply your own logs to validate against", async () => {
-      const hash = "0xff0e6ab0c4961ec14b7b40afec83ed7d7a77582683512a262e641d21f82efea5"
+      const hash =
+        "0xff0e6ab0c4961ec14b7b40afec83ed7d7a77582683512a262e641d21f82efea5";
       const logs: EventLogs = [
         {
           eventName: "Transfer",
@@ -445,7 +463,14 @@ describe("EventAction Event Selector", () => {
         },
       ];
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
-      expect(await action.validateActionSteps({ hash, chainId, logs, knownSignatures: allKnownSignatures })).toBe(true);
+      expect(
+        await action.validateActionSteps({
+          hash,
+          chainId,
+          logs,
+          knownSignatures: allKnownSignatures,
+        }),
+      ).toBe(true);
     });
 
     describe("string event actions", () => {
@@ -462,10 +487,15 @@ describe("EventAction Event Selector", () => {
           ),
         );
 
-        const hash = await stringEmitterFixtures.emitIndexedString("Hello world");
-        await expect(() => action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).rejects.toThrowError(
-          /Parameter is not transparently stored onchain/,
-        );
+        const hash =
+          await stringEmitterFixtures.emitIndexedString("Hello world");
+        await expect(() =>
+          action.validateActionSteps({
+            hash,
+            chainId,
+            knownSignatures: allKnownSignatures,
+          }),
+        ).rejects.toThrowError(/Parameter is not transparently stored onchain/);
       });
       test("can parse and validate contains for an emitted string event", async () => {
         const action = await loadFixture(
@@ -480,7 +510,13 @@ describe("EventAction Event Selector", () => {
           ),
         );
         const hash = await stringEmitterFixtures.emitString("Hello world");
-        expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
+        expect(
+          await action.validateActionSteps({
+            hash,
+            chainId,
+            knownSignatures: allKnownSignatures,
+          }),
+        ).toBe(true);
       });
       test("can parse and validate regex for an emitted string event", async () => {
         const action = await loadFixture(
@@ -496,21 +532,63 @@ describe("EventAction Event Selector", () => {
         );
 
         const hash = await stringEmitterFixtures.emitString("Hello world");
-        expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
+        expect(
+          await action.validateActionSteps({
+            hash,
+            chainId,
+            knownSignatures: allKnownSignatures,
+          }),
+        ).toBe(true);
       });
+    });
+
+    test("can derive a transaction sender claimant from an event action", async () => {
+      const action = await loadFixture(
+        cloneEventAction(fixtures, erc721, {
+          ...basicErc721TransferAction(erc721),
+          actionClaimant: transactionSenderClaimant(),
+        }),
+      );
+      const recipient = accounts[1].account;
+      await erc721.approve(recipient, 1n);
+      const { hash } = await erc721.transferFromRaw(
+        defaultOptions.account.address,
+        recipient,
+        1n,
+      );
+      expect(
+        isAddressEqual(
+          (await action.deriveActionClaimantFromTransaction(
+            await action.getActionClaimant(),
+            {
+              hash,
+              chainId,
+              knownSignatures: allKnownSignatures,
+            },
+          ))!,
+          defaultOptions.account.address,
+        ),
+      ).toBe(true);
     });
 
     test("can derive the claimant from an event action", async () => {
       const action = await loadFixture(cloneEventAction(fixtures, erc721));
       const recipient = accounts[1].account;
       await erc721.approve(recipient, 1n);
-      const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
+      const { hash } = await erc721.transferFromRaw(
+        defaultOptions.account.address,
+        recipient,
+        1n,
+      );
       expect(
-        await action.deriveActionClaimantFromTransaction(await action.getActionClaimant(), {
-          hash,
-          chainId,
-          knownSignatures: allKnownSignatures
-        }),
+        await action.deriveActionClaimantFromTransaction(
+          await action.getActionClaimant(),
+          {
+            hash,
+            chainId,
+            knownSignatures: allKnownSignatures,
+          },
+        ),
       ).toBe(recipient);
     });
 
@@ -522,149 +600,310 @@ describe("EventAction Event Selector", () => {
       });
 
       expect(
-        await action.deriveActionClaimantFromTransaction(await action.getActionClaimant(), {
-          hash,
-          chainId,
-          knownSignatures: allKnownSignatures
-        }),
+        await action.deriveActionClaimantFromTransaction(
+          await action.getActionClaimant(),
+          {
+            hash,
+            chainId,
+            knownSignatures: allKnownSignatures,
+          },
+        ),
       ).toBe(recipient);
     });
 
-    test('validates empty actionParameter', async () => {
-      const action = await loadFixture(cloneEventAction(fixtures, erc721, basicErc721TransferActionWithEmptyActionParameter(erc721)))
+    test("validates empty actionParameter", async () => {
+      const action = await loadFixture(
+        cloneEventAction(
+          fixtures,
+          erc721,
+          basicErc721TransferActionWithEmptyActionParameter(erc721),
+        ),
+      );
       const recipient = accounts[1].account;
       await erc721.approve(recipient, 1n);
-      const { hash } = await erc721.transferFromRaw(defaultOptions.account.address, recipient, 1n);
-      expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
-    })
+      const { hash } = await erc721.transferFromRaw(
+        defaultOptions.account.address,
+        recipient,
+        1n,
+      );
+      expect(
+        await action.validateActionSteps({
+          hash,
+          chainId,
+          knownSignatures: allKnownSignatures,
+        }),
+      ).toBe(true);
+    });
   });
 });
 
 describe("validateFieldAgainstCriteria unit tests", () => {
-  let action: EventAction
+  let action: EventAction;
   beforeAll(async () => {
     action = await loadFixture(cloneEventAction(fixtures, erc721));
   });
-  const mockAddress = '0x1234567890abcdef1234567890abcdef12345678';
-  const mockInput = { decodedArgs: ['not used'] };
+  const mockAddress = "0x1234567890abcdef1234567890abcdef12345678";
+  const mockInput = { decodedArgs: ["not used"] };
 
-  test('should return true for EQUAL filter type with ADDRESS field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.ADDRESS, mockAddress);
-    const result = action.validateFieldAgainstCriteria(mockCriteria, mockAddress, mockInput);
+  test("should return true for EQUAL filter type with ADDRESS field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.EQUAL,
+      PrimitiveType.ADDRESS,
+      mockAddress,
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      mockAddress,
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should return true for EQUAL filter type with UINT field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.UINT, '0xc8');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+  test("should return true for EQUAL filter type with UINT field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.EQUAL,
+      PrimitiveType.UINT,
+      "0xc8",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      200n,
+      mockInput,
+    );
     expect(result).toBe(true);
   });
-  test('should return true for EQUAL filter type with STRING field type when values match', () => {
+  test("should return true for EQUAL filter type with STRING field type when values match", () => {
     // Decoded value: 'hello'
-    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.STRING, '0x68656c6c6f');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 'hello', mockInput);
+    const mockCriteria = createMockCriteria(
+      FilterType.EQUAL,
+      PrimitiveType.STRING,
+      "0x68656c6c6f",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      "hello",
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should return false for EQUAL filter type with STRING field type when values do not match', () => {
+  test("should return false for EQUAL filter type with STRING field type when values do not match", () => {
     // Decoded value: 'hello'
-    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.STRING, '0x68656c6c6f');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 'world', mockInput);
+    const mockCriteria = createMockCriteria(
+      FilterType.EQUAL,
+      PrimitiveType.STRING,
+      "0x68656c6c6f",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      "world",
+      mockInput,
+    );
     expect(result).toBe(false);
   });
 
-  test('should return true for EQUAL filter type with BYTES field type when values match', () => {
+  test("should return true for EQUAL filter type with BYTES field type when values match", () => {
     // Decoded value: '0x68656c6c6f' (hex for 'hello')
-    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.BYTES, '0x68656c6c6f');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, '0x68656c6c6f', mockInput);
+    const mockCriteria = createMockCriteria(
+      FilterType.EQUAL,
+      PrimitiveType.BYTES,
+      "0x68656c6c6f",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      "0x68656c6c6f",
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should return false for EQUAL filter type with BYTES field type when values do not match', () => {
+  test("should return false for EQUAL filter type with BYTES field type when values do not match", () => {
     // Decoded value: '0x68656c6c6f' (hex for 'hello')
-    const mockCriteria = createMockCriteria(FilterType.EQUAL, PrimitiveType.BYTES, '0x68656c6c6f');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, '0x776f726c64', mockInput); // hex for 'world'
+    const mockCriteria = createMockCriteria(
+      FilterType.EQUAL,
+      PrimitiveType.BYTES,
+      "0x68656c6c6f",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      "0x776f726c64",
+      mockInput,
+    ); // hex for 'world'
     expect(result).toBe(false);
   });
 
-  test('should return false for NOT_EQUAL filter type with ADDRESS field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.NOT_EQUAL, PrimitiveType.ADDRESS, mockAddress);
-    const result = action.validateFieldAgainstCriteria(mockCriteria, zeroAddress, mockInput);
+  test("should return false for NOT_EQUAL filter type with ADDRESS field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.NOT_EQUAL,
+      PrimitiveType.ADDRESS,
+      mockAddress,
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      zeroAddress,
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should return true for NOT_EQUAL filter type with UINT field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.NOT_EQUAL, PrimitiveType.UINT, '0xc9');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+  test("should return true for NOT_EQUAL filter type with UINT field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.NOT_EQUAL,
+      PrimitiveType.UINT,
+      "0xc9",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      200n,
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should throw InvalidNumericalCriteriaError for GREATER_THAN filter type with non-uint field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.GREATER_THAN, PrimitiveType.STRING, '0x100');
-    expect(() => action.validateFieldAgainstCriteria(mockCriteria, '200', mockInput)).toThrow('non-numerical criteria');
+  test("should throw InvalidNumericalCriteriaError for GREATER_THAN filter type with non-uint field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.GREATER_THAN,
+      PrimitiveType.STRING,
+      "0x100",
+    );
+    expect(() =>
+      action.validateFieldAgainstCriteria(mockCriteria, "200", mockInput),
+    ).toThrow("non-numerical criteria");
   });
 
-  test('should return true for GREATER_THAN filter type with UINT field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.GREATER_THAN, PrimitiveType.UINT, '0x64');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+  test("should return true for GREATER_THAN filter type with UINT field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.GREATER_THAN,
+      PrimitiveType.UINT,
+      "0x64",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      200n,
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should return true for CONTAINS filter type with STRING field type', () => {
+  test("should return true for CONTAINS filter type with STRING field type", () => {
     // Decoded value: 'hello'
-    const mockCriteria = createMockCriteria(FilterType.CONTAINS, PrimitiveType.STRING, '0x68656c6c6f');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 'hello world', mockInput);
+    const mockCriteria = createMockCriteria(
+      FilterType.CONTAINS,
+      PrimitiveType.STRING,
+      "0x68656c6c6f",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      "hello world",
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should return true for CONTAINS filter type with BYTES field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.CONTAINS, PrimitiveType.BYTES, '0xbeef');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, '0xdeadbeef', mockInput);
+  test("should return true for CONTAINS filter type with BYTES field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.CONTAINS,
+      PrimitiveType.BYTES,
+      "0xbeef",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      "0xdeadbeef",
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should throw FieldValueNotComparableError for CONTAINS filter type with non-string/bytes field type', () => {
+  test("should throw FieldValueNotComparableError for CONTAINS filter type with non-string/bytes field type", () => {
     // Decoded value: 123
-    const mockCriteria = createMockCriteria(FilterType.CONTAINS, PrimitiveType.UINT, '0x7b');
-    expect(() => action.validateFieldAgainstCriteria(mockCriteria, 123n, mockInput)).toThrow(/only .* bytes or string/);
+    const mockCriteria = createMockCriteria(
+      FilterType.CONTAINS,
+      PrimitiveType.UINT,
+      "0x7b",
+    );
+    expect(() =>
+      action.validateFieldAgainstCriteria(mockCriteria, 123n, mockInput),
+    ).toThrow(/only .* bytes or string/);
   });
 
-  test('should throw UnrecognizedFilterTypeError for unrecognized filter type', () => {
-    const mockCriteria = createMockCriteria(6 as FilterType, PrimitiveType.STRING, '0x74657374'); // Decoded value: 'test'
-    expect(() => action.validateFieldAgainstCriteria(mockCriteria, 'test', mockInput)).toThrow('Invalid FilterType');
+  test("should throw UnrecognizedFilterTypeError for unrecognized filter type", () => {
+    const mockCriteria = createMockCriteria(
+      6 as FilterType,
+      PrimitiveType.STRING,
+      "0x74657374",
+    ); // Decoded value: 'test'
+    expect(() =>
+      action.validateFieldAgainstCriteria(mockCriteria, "test", mockInput),
+    ).toThrow("Invalid FilterType");
   });
 
-  test('should return true for LESS_THAN filter type with UINT field type', () => {
+  test("should return true for LESS_THAN filter type with UINT field type", () => {
     // Decoded value: 200
-    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.UINT, '0xc8');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 100n, mockInput);
+    const mockCriteria = createMockCriteria(
+      FilterType.LESS_THAN,
+      PrimitiveType.UINT,
+      "0xc8",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      100n,
+      mockInput,
+    );
     expect(result).toBe(true);
   });
 
-  test('should return false for LESS_THAN filter type with UINT field type when value is greater', () => {
+  test("should return false for LESS_THAN filter type with UINT field type when value is greater", () => {
     // Decoded value: 100
-    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.UINT, '0x64');
-    const result = action.validateFieldAgainstCriteria(mockCriteria, 200n, mockInput);
+    const mockCriteria = createMockCriteria(
+      FilterType.LESS_THAN,
+      PrimitiveType.UINT,
+      "0x64",
+    );
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      200n,
+      mockInput,
+    );
     expect(result).toBe(false);
   });
 
-  test('should throw InvalidNumericalCriteriaError for LESS_THAN filter type with non-uint field type', () => {
+  test("should throw InvalidNumericalCriteriaError for LESS_THAN filter type with non-uint field type", () => {
     // Decoded value: 100
-    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.STRING, '0x64');
-    expect(() => action.validateFieldAgainstCriteria(mockCriteria, '50', mockInput)).toThrow('non-numerical');
+    const mockCriteria = createMockCriteria(
+      FilterType.LESS_THAN,
+      PrimitiveType.STRING,
+      "0x64",
+    );
+    expect(() =>
+      action.validateFieldAgainstCriteria(mockCriteria, "50", mockInput),
+    ).toThrow("non-numerical");
   });
 
-  test('should throw InvalidNumericalCriteriaError for LESS_THAN filter type with ADDRESS field type', () => {
-    const mockCriteria = createMockCriteria(FilterType.LESS_THAN, PrimitiveType.ADDRESS, '0x1234567890abcdef1234567890abcdef12345678');
-    expect(() => action.validateFieldAgainstCriteria(mockCriteria, '0x1234567890abcdef1234567890abcdef12345678', mockInput)).toThrow('non-numerical');
+  test("should throw InvalidNumericalCriteriaError for LESS_THAN filter type with ADDRESS field type", () => {
+    const mockCriteria = createMockCriteria(
+      FilterType.LESS_THAN,
+      PrimitiveType.ADDRESS,
+      "0x1234567890abcdef1234567890abcdef12345678",
+    );
+    expect(() =>
+      action.validateFieldAgainstCriteria(
+        mockCriteria,
+        "0x1234567890abcdef1234567890abcdef12345678",
+        mockInput,
+      ),
+    ).toThrow("non-numerical");
   });
 
-  test('should return true for anyActionParameter', async () => {
-    const mockCriteria = anyActionParameter()
-    const result = action.validateFieldAgainstCriteria(mockCriteria, zeroHash, mockInput)
-    expect(result).toBe(true)
-  })
-})
+  test("should return true for anyActionParameter", async () => {
+    const mockCriteria = anyActionParameter();
+    const result = action.validateFieldAgainstCriteria(
+      mockCriteria,
+      zeroHash,
+      mockInput,
+    );
+    expect(result).toBe(true);
+  });
+});
 
 describe("EventAction Func Selector", () => {
   beforeEach(async () => {
@@ -684,21 +923,25 @@ describe("EventAction Func Selector", () => {
   test("validates function action step with correct hash", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
-    const actionStep = actionSteps[0]!
+    const actionStep = actionSteps[0]!;
     const recipient = accounts[1].account;
     const { hash } = await erc721.mintRaw(recipient, {
       value: parseEther(".1"),
     });
 
     expect(
-      await action.isActionStepValid(actionStep, { hash, chainId, knownSignatures: allKnownSignatures })
+      await action.isActionStepValid(actionStep, {
+        hash,
+        chainId,
+        knownSignatures: allKnownSignatures,
+      }),
     ).toBe(true);
   });
 
   test("validates function step with EQUAL filter", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
     const actionSteps = await action.getActionSteps();
-    const actionStep = actionSteps[0]!
+    const actionStep = actionSteps[0]!;
     const recipient = accounts[1].account;
     const { hash } = await erc721.mintRaw(recipient, {
       value: parseEther(".1"),
@@ -707,7 +950,7 @@ describe("EventAction Func Selector", () => {
     const criteriaMatch = await action.isActionStepValid(actionStep, {
       hash,
       chainId,
-      knownSignatures: allKnownSignatures
+      knownSignatures: allKnownSignatures,
     });
 
     expect(criteriaMatch).toBe(true);
@@ -729,7 +972,11 @@ describe("EventAction Func Selector", () => {
     });
 
     try {
-      await action.isActionStepValid(invalidStep, { hash, chainId, knownSignatures: allKnownSignatures });
+      await action.isActionStepValid(invalidStep, {
+        hash,
+        chainId,
+        knownSignatures: allKnownSignatures,
+      });
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toContain(
@@ -738,15 +985,27 @@ describe("EventAction Func Selector", () => {
     }
   });
 
-  test('validates empty actionParameter', async () => {
-    const action = await loadFixture(cloneFunctionAction(fixtures, erc721, basicErc721MintFuncActionWithEmptyActionParameter(erc721)))
+  test("validates empty actionParameter", async () => {
+    const action = await loadFixture(
+      cloneFunctionAction(
+        fixtures,
+        erc721,
+        basicErc721MintFuncActionWithEmptyActionParameter(erc721),
+      ),
+    );
     const recipient = accounts[1].account;
     const { hash } = await erc721.mintRaw(recipient, {
       value: parseEther(".1"),
     });
 
-    expect(await action.validateActionSteps({ hash, chainId, knownSignatures: allKnownSignatures })).toBe(true);
-  })
+    expect(
+      await action.validateActionSteps({
+        hash,
+        chainId,
+        knownSignatures: allKnownSignatures,
+      }),
+    ).toBe(true);
+  });
 
   test("validates against NOT_EQUAL filter criteria", async () => {
     const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
@@ -762,7 +1021,7 @@ describe("EventAction Func Selector", () => {
       await action.isActionStepValid(actionStep, {
         hash,
         chainId,
-        knownSignatures: allKnownSignatures
+        knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
   });
@@ -787,7 +1046,7 @@ describe("EventAction Func Selector", () => {
       await action.isActionStepValid(actionStep, {
         hash,
         chainId,
-        knownSignatures: allKnownSignatures
+        knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
   });
@@ -811,7 +1070,7 @@ describe("EventAction Func Selector", () => {
       await action.isActionStepValid(actionStep, {
         hash,
         chainId,
-        knownSignatures: allKnownSignatures
+        knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
   });
@@ -827,7 +1086,7 @@ describe("EventAction Func Selector", () => {
       await action.validateActionSteps({
         hash,
         chainId,
-        knownSignatures: allKnownSignatures
+        knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
   });

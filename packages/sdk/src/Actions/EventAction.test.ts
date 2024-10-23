@@ -35,7 +35,7 @@ import {
   SignatureType,
   Criteria,
   anyActionParameter,
-  msgSenderClaimant,
+  transactionSenderClaimant,
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 
@@ -542,11 +542,11 @@ describe("EventAction Event Selector", () => {
       });
     });
 
-    test("can derive a message sender claimant from an event action", async () => {
+    test("can derive a transaction sender claimant from an event action", async () => {
       const action = await loadFixture(
         cloneEventAction(fixtures, erc721, {
           ...basicErc721TransferAction(erc721),
-          actionClaimant: msgSenderClaimant(),
+          actionClaimant: transactionSenderClaimant(),
         }),
       );
       const recipient = accounts[1].account;

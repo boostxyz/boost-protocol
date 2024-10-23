@@ -483,8 +483,8 @@ export class EventAction extends DeployableTarget<
   /**
    * Derives the action claimant address from a transaction based on the provided ActionClaimant configuration.
    * This method supports both event-based and function-based claimant derivation.
-   * **Important**: The claimant is considered to be `msg.sender` or `transaction.from` when `claimant.signature` is `zeroHash` or `claimant.fieldIndex` is 255.
-   * This may have unintended side effects for cross-chain operations where the sender could be an exit node's address.
+   * **Important**: The claimant is considered to be `transaction.from` when `claimant.fieldIndex` is 255.
+   * This may have unintended side effects for bridged transactions and SCW transactions, so these are considered unsupported use cases for the time being.
    *
    ** @example
    * // Example usage
@@ -518,11 +518,9 @@ export class EventAction extends DeployableTarget<
     claimant: ActionClaimant,
     params: ValidateActionStepParams,
   ): Promise<Address | undefined> {
-    const signature = claimant.signature;
-
     // find message sender and return it
-    // WARNING: this is error prone in bridged transactions, as from will be exit node
-    if (signature === zeroHash || claimant.fieldIndex === 255) {
+    // WARNING: this is error prone in bridged transactions and SCW transactions, as this will return exit node
+    if (claimant.fieldIndex === 255) {
       if ('hash' in params) {
         const transaction = await getTransaction(this._config, {
           hash: params.hash,
@@ -541,6 +539,8 @@ export class EventAction extends DeployableTarget<
       }
       return undefined;
     }
+
+    const signature = claimant.signature;
 
     if (claimant.signatureType === SignatureType.EVENT) {
       let event: AbiEvent;
@@ -1270,10 +1270,9 @@ export function anyActionParameter(): Criteria {
 }
 
 /**
- * Creates an ActionClaimant object that represents the msg.sender as the claimant.
- * This function is useful when you want to set up an action where the transaction sender
- * (msg.sender in Solidity terms) is always considered the valid claimant, regardless of
- * the event or function parameters.
+ * Creates an ActionClaimant object that represents the transaction sender as the claimant.
+ * This function is useful when you want to set up an action where the transaction sender is always considered the valid claimant,
+ * regardless of the event or function parameters.
  *
  * The returned ActionClaimant has the following properties:
  * - signatureType: Set to SignatureType.EVENT (though it doesn't matter for this case)
@@ -1287,14 +1286,14 @@ export function anyActionParameter(): Criteria {
  * @example
  * const eventAction = new EventAction();
  * const payload: EventActionPayload = {
- *   actionClaimant: msgSenderClaimant(),
+ *   actionClaimant: transactionSenderClaimant(),
  *   actionSteps: [
  *     // ... define your action steps here
  *   ]
  * };
  * await eventAction.deploy(payload);
  */
-export function msgSenderClaimant(): ActionClaimant {
+export function transactionSenderClaimant(): ActionClaimant {
   return {
     signatureType: SignatureType.EVENT,
     signature: zeroHash,

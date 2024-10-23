@@ -2,4 +2,4 @@
 "@boostxyz/sdk": minor
 ---
 
-add `msgSenderClaimant(): ActionClaimant` utility
+add `transactionSenderClaimant(): ActionClaimant` utility

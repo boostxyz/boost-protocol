@@ -15,14 +15,15 @@ import {
   fundErc721,
 } from '@boostxyz/test/helpers';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { type Hex, isAddress, parseEther } from 'viem';
+import { type Hex, isAddress, parseEther, zeroAddress, zeroAddress, zeroHash } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { SignatureType } from '../Actions/EventAction';
 import type { Boost } from '../Boost';
-import type {
-  ERC20VariableCriteriaIncentive,
-  ERC20VariableCriteriaIncentivePayload,
-  IncentiveCriteria,
+import {
+  gasRebateIncentiveCriteria,
+  type ERC20VariableCriteriaIncentive,
+  type ERC20VariableCriteriaIncentivePayload,
+  type IncentiveCriteria,
 } from './ERC20VariableCriteriaIncentive';
 
 /**
@@ -156,6 +157,41 @@ describe('ERC20VariableCriteriaIncentive', () => {
       const scalar = await erc20Incentive.getIncentiveScalar({ hash });
 
       expect(scalar).toBe(1n);
+    });
+
+    test('gasRebateIncentiveCriteria generates correct incentive criteria', async () => {
+      // Ensure that the gasRebateIncentiveCriteria returns the correct structure
+      const gasRebateCriteria = gasRebateIncentiveCriteria();
+
+      erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentive({
+        asset: budgets.erc20.assertValidAddress(),
+        reward: 1n,
+        limit: 1n,
+        criteria: gasRebateCriteria,
+      });
+      
+    
+    
+      // Validate the returned structure against the expected criteria values
+      expect(gasRebateCriteria).toEqual({
+        criteriaType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: 255,
+        targetContract: zeroAddress,
+      });
+    
+      boost = await freshBoost(fixtures, {
+        budget: budgets.budget,
+        incentives: [erc20Incentive],
+      });
+    
+      // Validate that the deployed incentive has the correct criteria set up
+      const deployedIncentive = await boost.incentives[0] as ERC20VariableCriteriaIncentive;
+      const deployedCriteria = await deployedIncentive.getIncentiveCriteria();
+      expect(deployedCriteria.criteriaType).toBe(SignatureType.EVENT);
+      expect(deployedCriteria.signature).toBe(zeroHash);
+      expect(deployedCriteria.fieldIndex).toBe(255);
+      expect(deployedCriteria.targetContract).toBe(zeroAddress);
     });
 
     test('should throw NoMatchingLogsError for event criteria with no matching logs', async () => {

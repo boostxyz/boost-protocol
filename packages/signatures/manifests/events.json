@@ -11,6 +11,7 @@
   "ZoraTimedSaleStrategyRewards(address indexed,uint256 indexed,address,uint256,address,uint256,address,uint256,address,uint256,address,uint256)",
   "BoostClaimed(uint256 indexed,uint256 indexed,address indexed,address,bytes)",
   "BoostCreated(uint256 indexed,address indexed,address indexed,uint256,address,address,address)",
+  "SecondaryBuy(address indexed,address indexed,address indexed,uint256,uint256)",
   "// Test signatures",
   "InfoIndexed(address indexed,string indexed)",
   "Info(address,string)"

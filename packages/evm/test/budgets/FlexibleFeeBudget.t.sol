@@ -35,9 +35,9 @@ contract FlexibleFeeBudgetTest is Test {
         assertEq(budget.reservedFunds(), 0, "Initial reserved funds should be 0");
     }
 
-    ///////////////////////////////////////////
-    // ManagedBudgetWithFees.setManagementFee //
-    ////////////////////////////////////////////
+    ////////////////////////////////////////
+    // FlexibleFeeBudget.setManagementFee //
+    ////////////////////////////////////////
 
     function testSetManagementFee() public {
         // Simulate a transaction from the owner of the budget contract
@@ -85,9 +85,9 @@ contract FlexibleFeeBudgetTest is Test {
         budget.setManagementFee(10001);
     }
 
-    /////////////////////////////////////
-    // ManagedBudgetWithFees.available //
-    /////////////////////////////////////
+    /////////////////////////////////
+    // FlexibleFeeBudget.available //
+    /////////////////////////////////
 
     function testAvailable_WithNoFees() public {
         // Allocate tokens to budget

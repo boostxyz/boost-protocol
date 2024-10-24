@@ -12,6 +12,7 @@ import ERC20VariableCriteriaIncentiveArtifact from '@boostxyz/evm/artifacts/cont
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
+import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import {
   AllowListIncentive,
@@ -23,6 +24,7 @@ import {
   ERC20VariableCriteriaIncentive,
   ERC20VariableIncentive,
   EventAction,
+  LimitedSignerValidator,
   ManagedBudget,
   PointsIncentive,
   SignerValidator,
@@ -63,6 +65,7 @@ export type DeployResult = {
   ERC1155_INCENTIVE_BASE: string;
   POINTS_INCENTIVE_BASE: string;
   SIGNER_VALIDATOR_BASE: string;
+  LIMITED_SIGNER_VALIDATOR_BASE: string;
 };
 
 export const deploy: Command<DeployResult> = async function deploy(opts) {
@@ -263,6 +266,15 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     }),
   );
 
+  const limitedSignerValidatorBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: LimitedSignerValidatorArtifact.abi,
+      bytecode: LimitedSignerValidatorArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+
   const bases = {
     // ContractAction: class TContractAction extends ContractAction {
     //   public static override base = contractActionBase;
@@ -331,6 +343,11 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
         [chainId]: signerValidatorBase,
       } as Record<number, Address>;
     },
+    LimitedSignerValidator: class TLimitedSignerValidator extends LimitedSignerValidator {
+      public static override bases: Record<number, Address> = {
+        [chainId]: limitedSignerValidatorBase,
+      } as Record<number, Address>;
+    },
   };
 
   for (const [name, deployable] of Object.entries(bases)) {
@@ -359,5 +376,6 @@ export const deploy: Command<DeployResult> = async function deploy(opts) {
     ERC1155_INCENTIVE_BASE: erc1155IncentiveBase,
     POINTS_INCENTIVE_BASE: pointsIncentiveBase,
     SIGNER_VALIDATOR_BASE: signerValidatorBase,
+    LIMITED_SIGNER_VALIDATOR_BASE: limitedSignerValidatorBase,
   };
 };

@@ -1,12 +1,17 @@
 import { aValidatorAbi } from '@boostxyz/evm';
-import { ASignerValidator } from '@boostxyz/evm/deploys/componentInterfaces.json';
+import {
+  ASignerValidator,
+  // TODO: bring this back in
+  // ALimitedSignerValidator,
+} from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
+import { LimitedSignerValidator } from './LimitedSignerValidator';
 import { SignerValidator } from './SignerValidator';
 
-export { SignerValidator };
+export { SignerValidator, LimitedSignerValidator };
 
 /**
  * A union type representing all valid protocol Validator implementations
@@ -14,7 +19,7 @@ export { SignerValidator };
  * @export
  * @typedef {Validator}
  */
-export type Validator = SignerValidator;
+export type Validator = SignerValidator | LimitedSignerValidator;
 
 /**
  * A map of Validator component interfaces to their constructors.
@@ -23,6 +28,8 @@ export type Validator = SignerValidator;
  */
 export const ValidatorByComponentInterface = {
   [ASignerValidator as Hex]: SignerValidator,
+  // TODO bring this back in
+  // [ALimitedSignerValidator as Hex]: LimitedSignerValidator,
 };
 
 /**

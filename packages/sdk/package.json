@@ -189,6 +189,12 @@
       "import": "./dist/Validators/SignerValidator.js",
       "node": "./dist/Validators/SignerValidator.js",
       "types": "./dist/Validators/SignerValidator.d.ts"
+    },
+    "./Validators/LimitedSignerValidator": {
+      "require": "./dist/Validators/LimitedSignerValidator.cjs",
+      "import": "./dist/Validators/LimitedSignerValidator.js",
+      "node": "./dist/Validators/LimitedSignerValidator.js",
+      "types": "./dist/Validators/LimitedSignerValidator.d.ts"
     }
   },
   "scripts": {

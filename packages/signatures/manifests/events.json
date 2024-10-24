@@ -9,6 +9,8 @@
   "Minted(uint8,address,uint256,uint256)",
   "Minted(address indexed,uint8,uint8,address indexed,(uint32,uint256,address,uint32,uint32,uint32,address,bool,uint256,uint256,uint256,uint256,uint256),uint256 indexed)",
   "ZoraTimedSaleStrategyRewards(address indexed,uint256 indexed,address,uint256,address,uint256,address,uint256,address,uint256,address,uint256)",
+  "BoostClaimed(uint256 indexed,uint256 indexed,address indexed,address,bytes)",
+  "BoostCreated(uint256 indexed,address indexed,address indexed,uint256,address,address,address)",
   "// Test signatures",
   "InfoIndexed(address indexed,string indexed)",
   "Info(address,string)"

@@ -47,6 +47,7 @@ import {
   ValidationAbiMissingError,
 } from '../errors';
 import {
+  CheatCodes,
   type Overwrite,
   type ReadParams,
   RegistryType,
@@ -484,7 +485,7 @@ export class EventAction extends DeployableTarget<
   /**
    * Derives the action claimant address from a transaction based on the provided ActionClaimant configuration.
    * This method supports both event-based and function-based claimant derivation.
-   * **Important**: The claimant is considered to be `transaction.from` when `claimant.fieldIndex` is 255.
+   * **Important**: The claimant is considered to be `transaction.from` when `claimant.fieldIndex` is 255 using CheatCodes enum.
    * This may have unintended side effects for bridged transactions and SCW transactions, so these are considered unsupported use cases for the time being.
    *
    ** @example
@@ -521,7 +522,7 @@ export class EventAction extends DeployableTarget<
   ): Promise<Address | undefined> {
     // find message sender and return it
     // WARNING: this is error prone in bridged transactions and SCW transactions, as this will return exit node
-    if (claimant.fieldIndex === 255) {
+    if (claimant.fieldIndex === CheatCodes.TX_SENDER_CLAIMANT) {
       if ('hash' in params) {
         const transaction = await getTransaction(this._config, {
           hash: params.hash,
@@ -824,7 +825,7 @@ export class EventAction extends DeployableTarget<
     if (
       criteria.filterType === FilterType.EQUAL &&
       criteria.fieldType === PrimitiveType.BYTES &&
-      criteria.fieldIndex === 255
+      criteria.fieldIndex === CheatCodes.ANY_ACTION_PARAM
     ) {
       return true;
     }
@@ -928,7 +929,7 @@ export class EventAction extends DeployableTarget<
 
   /**
    * Validates a {@link Log} against a given criteria.
-   * If the criteria's fieldIndex is 255, it is reserved for anyValidation
+   * If the criteria's fieldIndex is 255 (using CheatCodes enum), it is reserved for anyValidation
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {Log} log - The Viem event log.
@@ -940,7 +941,8 @@ export class EventAction extends DeployableTarget<
   ): boolean {
     if (
       !Array.isArray(log.args) ||
-      (log.args.length <= criteria.fieldIndex && criteria.fieldIndex !== 255)
+      (log.args.length <= criteria.fieldIndex &&
+        criteria.fieldIndex !== CheatCodes.ANY_ACTION_PARAM)
     ) {
       throw new DecodedArgsMalformedError({
         log,
@@ -950,7 +952,9 @@ export class EventAction extends DeployableTarget<
     }
 
     const fieldValue =
-      criteria.fieldIndex === 255 ? zeroHash : log.args.at(criteria.fieldIndex);
+      criteria.fieldIndex === CheatCodes.ANY_ACTION_PARAM
+        ? zeroHash
+        : log.args.at(criteria.fieldIndex);
 
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({ log, criteria, fieldValue });
@@ -960,7 +964,7 @@ export class EventAction extends DeployableTarget<
 
   /**
    * Validates a function's decoded arguments against a given criteria.
-   * If the criteria's fieldIndex is 255, it is reserved for anyValidation
+   * If the criteria's fieldIndex is 255 (using CheatCodes enum), it is reserved for anyValidation
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {unknown[]} decodedArgs - The decoded arguments of the function call.
@@ -971,7 +975,9 @@ export class EventAction extends DeployableTarget<
     decodedArgs: readonly (string | bigint)[],
   ): boolean {
     const fieldValue =
-      criteria.fieldIndex === 255 ? zeroHash : decodedArgs[criteria.fieldIndex];
+      criteria.fieldIndex === CheatCodes.ANY_ACTION_PARAM
+        ? zeroHash
+        : decodedArgs[criteria.fieldIndex];
     if (fieldValue === undefined) {
       throw new FieldValueUndefinedError({
         criteria,
@@ -1243,7 +1249,7 @@ export function prepareEventActionPayload({
  * This function returns a Criteria object with the following properties:
  * - filterType: Set to EQUAL for exact matching
  * - fieldType: Set to BYTES to handle any data type
- * - fieldIndex: Set to 255, which is typically used to indicate "any" or "all" in this context
+ * - fieldIndex: Set to 255, which is typically used to indicate "any" or "all" in this context using CheatCodes enum
  * - filterData: Set to zeroHash (0x0000...0000)
  *
  * @returns {Criteria} A Criteria object that can be used to match any action parameter
@@ -1260,7 +1266,7 @@ export function anyActionParameter(): Criteria {
   return {
     filterType: FilterType.EQUAL,
     fieldType: PrimitiveType.BYTES,
-    fieldIndex: 255,
+    fieldIndex: CheatCodes.ANY_ACTION_PARAM,
     filterData: zeroHash,
   };
 }
@@ -1273,7 +1279,7 @@ export function anyActionParameter(): Criteria {
  * The returned ActionClaimant has the following properties:
  * - signatureType: Set to SignatureType.EVENT (though it doesn't matter for this case)
  * - signature: Set to zeroHash (0x0000...0000)
- * - fieldIndex: Set to 255, indicating "any" field
+ * - fieldIndex: Set to 255, indicating "any" field using CheatCodes enum
  * - targetContract: Set to zeroAddress (0x0000...0000)
  * - chainid: Set to 0, indicating it's valid for any chain
  *
@@ -1293,7 +1299,7 @@ export function transactionSenderClaimant(): ActionClaimant {
   return {
     signatureType: SignatureType.EVENT,
     signature: zeroHash,
-    fieldIndex: 255,
+    fieldIndex: CheatCodes.TX_SENDER_CLAIMANT,
     targetContract: zeroAddress,
     chainid: 0,
   };

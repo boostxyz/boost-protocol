@@ -44,6 +44,17 @@ export enum RegistryType {
 }
 
 /**
+ * Enum encapsulating all the different cheat codes for criteria modules.
+ * @export
+ * @enum {number}
+ */
+export enum CheatCodes {
+  ANY_ACTION_PARAM = 255,
+  TX_SENDER_CLAIMANT = 255,
+  GAS_REBATE_INCENTIVE = 255,
+}
+
+/**
  * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.
  * See (writeContract)[https://viem.sh/docs/contract/writeContract]
  *

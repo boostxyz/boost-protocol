@@ -94,6 +94,10 @@ import {
   type PointsIncentivePayload,
 } from './Incentives/PointsIncentive';
 import {
+  LimitedSignerValidator,
+  type LimitedSignerValidatorPayload,
+} from './Validators/LimitedSignerValidator';
+import {
   SignerValidator,
   type SignerValidatorPayload,
 } from './Validators/SignerValidator';
@@ -1366,6 +1370,29 @@ export class BoostCore extends Deployable<
     isBase?: boolean,
   ) {
     return new SignerValidator(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
+
+  /**
+   * Bound {@link LimitedSignerValidator} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const validator = core.LimitedSignerValidator({ ... }) // is roughly equivalent to
+   * const validator = new LimitedSignerValidator({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<LimitedSignerValidatorPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {LimitedSignerValidator}
+   */
+  LimitedSignerValidator(
+    options: DeployablePayloadOrAddress<LimitedSignerValidatorPayload>,
+    isBase?: boolean,
+  ) {
+    return new LimitedSignerValidator(
       { config: this._config, account: this._account },
       options,
       isBase,

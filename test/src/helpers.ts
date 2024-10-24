@@ -20,6 +20,7 @@ import ERC20VariableCriteriaIncentiveArtifact from '@boostxyz/evm/artifacts/cont
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
+import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { deployContract, simulateContract, writeContract } from '@wagmi/core';
@@ -56,6 +57,8 @@ import {
   EventAction,
   type EventActionPayload,
   FilterType,
+  LimitedSignerValidator,
+  type LimitedSignerValidatorPayload,
   ManagedBudget,
   type ManagedBudgetPayload,
   ManagedBudgetRoles,
@@ -324,6 +327,15 @@ export function deployFixtures(
       }),
     );
 
+    const limitedSignerValidatorBase = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: LimitedSignerValidatorArtifact.abi,
+        bytecode: LimitedSignerValidatorArtifact.bytecode as Hex,
+        account,
+      }),
+    );
+
     const bases = {
       // ContractAction: class TContractAction extends ContractAction {
       //   public static override bases: Record<number, Address> = {
@@ -410,6 +422,11 @@ export function deployFixtures(
           [chainId]: signerValidatorBase,
         };
       },
+      LimitedSignerValidator: class TLimitedSignerValidator extends LimitedSignerValidator {
+        public static override bases: Record<number, Address> = {
+          [chainId]: limitedSignerValidatorBase,
+        };
+      },
       // biome-ignore lint/suspicious/noExplicitAny: test helpers, everything is permitted
     } as any as {
       // ContractAction: typeof ContractAction;
@@ -429,6 +446,7 @@ export function deployFixtures(
       // ERC1155Incentive: typeof ERC1155Incentive;
       PointsIncentive: typeof PointsIncentive;
       SignerValidator: typeof SignerValidator;
+      LimitedSignerValidator: typeof LimitedSignerValidator;
     };
 
     for (const [name, deployable] of Object.entries(bases)) {
@@ -566,6 +584,16 @@ export function deployFixtures(
         isBase?: boolean,
       ) {
         return new bases.SignerValidator(
+          { config: this._config, account: this._account },
+          options,
+          isBase,
+        );
+      }
+      override LimitedSignerValidator(
+        options: DeployablePayloadOrAddress<LimitedSignerValidatorPayload>,
+        isBase?: boolean,
+      ) {
+        return new bases.LimitedSignerValidator(
           { config: this._config, account: this._account },
           options,
           isBase,

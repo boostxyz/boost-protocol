@@ -5,10 +5,11 @@ import {ManagedBudget} from "./ManagedBudget.sol";
 
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IFlexibleFee} from "./IFlexibleFee.sol";
 
 /// @title ManagedBudget with Flexible Fee Management
 /// @notice Extends ManagedBudget to support flexible fee structures
-contract FlexibleFeeBudget is ManagedBudget {
+contract FlexibleFeeBudget is ManagedBudget, IFlexibleFee {
     using SafeTransferLib for address;
 
     /// @dev The management fee percentage (in basis points, i.e., 100 = 1%)
@@ -19,12 +20,6 @@ contract FlexibleFeeBudget is ManagedBudget {
 
     /// @dev Total amount of funds reserved for management fees
     uint256 public reservedFunds;
-
-    /// @dev Emitted when the management fee is set or updated
-    event ManagementFeeSet(uint256 newFee);
-
-    /// @dev Emitted when management fee is paid
-    event ManagementFeePaid(uint256 indexed boostId, address indexed manager, uint256 amount);
 
     /// @notice Override available to account for reserved fees
     function available(address asset_) public view virtual override returns (uint256) {

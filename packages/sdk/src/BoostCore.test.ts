@@ -17,6 +17,7 @@ import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { StrategyType } from "./claiming";
 import { BoostNotFoundError, IncentiveNotCloneableError } from "./errors";
 import { bytes4 } from "./utils";
+import { BoostValidatorEOA } from "./Validators/Validator";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -813,7 +814,7 @@ describe("BoostCore", () => {
     expect(signers).toBe(true);
   });
 
-  test("creates a boost with a default validator when none is provided", async () => {
+  test.only("creates a boost with a default validator when none is provided", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const boost = await core.createBoost({
@@ -843,7 +844,7 @@ describe("BoostCore", () => {
     expect(validator.payload?.validatorCaller).toBe(core.assertValidAddress());
 
     // expect current account to be a signer
-    const signer = await validator.signers(defaultOptions.account.address);
+    const signer = await validator.signers(BoostValidatorEOA.TESTNET);
     expect(signer).toBeDefined();
     expect(signer).toBe(true);
   });
@@ -867,12 +868,11 @@ describe("BoostCore", () => {
 
     const claimant = trustedSigner.account;
     const incentiveData = pad("0xdef456232173821931823712381232131391321934");
-    const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
     });

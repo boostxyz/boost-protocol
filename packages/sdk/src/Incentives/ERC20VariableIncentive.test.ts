@@ -1,8 +1,8 @@
-import { readMockErc20BalanceOf } from '@boostxyz/evm';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { encodeAbiParameters, isAddress, parseEther, zeroAddress } from 'viem';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import { accounts } from '@boostxyz/test/accounts';
+import { readMockErc20BalanceOf } from "@boostxyz/evm";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { encodeAbiParameters, isAddress, parseEther, zeroAddress } from "viem";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import { accounts } from "@boostxyz/test/accounts";
 import {
   type BudgetFixtures,
   type Fixtures,
@@ -10,14 +10,14 @@ import {
   deployFixtures,
   freshBoost,
   fundBudget,
-} from '@boostxyz/test/helpers';
-import { ERC20VariableIncentive } from './ERC20VariableIncentive';
+} from "@boostxyz/test/helpers";
+import { ERC20VariableIncentive } from "./ERC20VariableIncentive";
 
-const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
+const BOOST_CORE_CLAIM_FEE = parseEther("0.000075");
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
-describe('ERC20VariableIncentive', () => {
+describe("ERC20VariableIncentive", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
@@ -26,7 +26,7 @@ describe('ERC20VariableIncentive', () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 
-  test('can successfully be deployed', async () => {
+  test("can successfully be deployed", async () => {
     const action = new ERC20VariableIncentive(defaultOptions, {
       asset: zeroAddress,
       reward: 1n,
@@ -37,7 +37,7 @@ describe('ERC20VariableIncentive', () => {
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 
-  test('can claim', async () => {
+  test("can claim", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!,
       // biome-ignore lint/style/noNonNullAssertion: we know this is defined
@@ -57,12 +57,11 @@ describe('ERC20VariableIncentive', () => {
     });
 
     const claimant = trustedSigner.account;
-    const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
-      incentiveData: erc20VariableIncentive.buildClaimData(parseEther('1')),
+      incentiveData: erc20VariableIncentive.buildClaimData(parseEther("1")),
       chainId: defaultOptions.config.chains[0].id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
     });
@@ -81,7 +80,7 @@ describe('ERC20VariableIncentive', () => {
     ).toBe(1n);
   });
 
-  test('cannot claim twice', async () => {
+  test("cannot claim twice", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
@@ -101,12 +100,11 @@ describe('ERC20VariableIncentive', () => {
     });
 
     const claimant = trustedSigner.account;
-    const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
-      incentiveData: erc20VariableIncentive.buildClaimData(parseEther('1')),
+      incentiveData: erc20VariableIncentive.buildClaimData(parseEther("1")),
       chainId: defaultOptions.config.chains[0].id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
     });

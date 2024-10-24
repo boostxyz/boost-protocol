@@ -1,6 +1,10 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalPassThroughEnv": ["VITE_ALCHEMY_API_KEY"],
+  "globalPassThroughEnv": [
+    "VITE_ALCHEMY_API_KEY",
+    "VITE_BOOST_TESTNET_SIGNER_EOA",
+    "VITE_BOOST_MAINNET_SIGNER_EOA"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

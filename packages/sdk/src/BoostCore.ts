@@ -21,6 +21,7 @@ import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostC
 import {
   type GetTransactionReceiptParameters,
   getAccount,
+  getChains,
   getTransactionReceipt,
   waitForTransactionReceipt,
 } from '@wagmi/core';
@@ -101,13 +102,18 @@ import {
   SignerValidator,
   type SignerValidatorPayload,
 } from './Validators/SignerValidator';
-import { type Validator, validatorFromAddress } from './Validators/Validator';
+import {
+  BoostValidatorEOA,
+  type Validator,
+  validatorFromAddress,
+} from './Validators/Validator';
 import {
   BoostCoreNoIdentifierEmitted,
   BoostNotFoundError,
   BudgetMustAuthorizeBoostCore,
   DeployableUnknownOwnerProvidedError,
   IncentiveNotCloneableError,
+  InvalidProtocolChainIdError,
   MustInitializeBudgetError,
 } from './errors';
 import {
@@ -351,8 +357,6 @@ export class BoostCore extends Deployable<
       options,
     );
 
-    console.log(onChainPayload);
-
     const boostHash = await boostFactory(options.config, {
       ...this.optionallyAttachAccount(options.account),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -445,9 +449,23 @@ export class BoostCore extends Deployable<
       }
     }
 
+    // If not providing a custom validator, use either Boost's mainnet or testnet EOA, depending on provided chain id and given chain configurations
     if (!payload.validator) {
+      const chains = getChains(options.config).filter(
+        (chain) => !!BOOST_CORE_ADDRESSES[chain.id],
+      );
+      const chain = chains.find(({ id }) => id === chainId);
+      if (!chain)
+        throw new InvalidProtocolChainIdError(
+          chainId,
+          chains.map(({ id }) => id),
+        );
       payload.validator = this.SignerValidator({
-        signers: [payload.owner],
+        signers: [
+          (chain.testnet
+            ? BoostValidatorEOA.TESTNET
+            : BoostValidatorEOA.MAINNET) as unknown as Address,
+        ],
         validatorCaller: coreAddress,
       });
     }

@@ -814,7 +814,7 @@ describe("BoostCore", () => {
     expect(signers).toBe(true);
   });
 
-  test.only("creates a boost with a default validator when none is provided", async () => {
+  test("creates a boost with a default validator when none is provided", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const boost = await core.createBoost({

@@ -452,17 +452,18 @@ export class BoostCore extends Deployable<
     // If not providing a custom validator, use either Boost's mainnet or testnet EOA, depending on provided chain id and given chain configurations
     if (!payload.validator) {
       const chains = getChains(options.config).filter(
-        (chain) => !!BOOST_CORE_ADDRESSES[chain.id],
+        (chain) => !!this.addresses[chain.id] && chain.id === chainId,
       );
-      const chain = chains.find(({ id }) => id === chainId);
+      const chain = chains.at(0);
       if (!chain)
         throw new InvalidProtocolChainIdError(
           chainId,
-          chains.map(({ id }) => id),
+          Object.keys(this.addresses),
         );
+      const testnet = chain.testnet || chain.id === 31337;
       payload.validator = this.SignerValidator({
         signers: [
-          (chain.testnet
+          (testnet
             ? BoostValidatorEOA.TESTNET
             : BoostValidatorEOA.MAINNET) as unknown as Address,
         ],

@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 2.0.0-alpha.24
+
+### Major Changes
+
+- b9ac73b: LimitedSignerValidator implemented with SDK support
+
 ## 1.1.0-alpha.23
 
 ### Minor Changes

@@ -1,5 +1,21 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.25
+
+### Major Changes
+
+- 5a51804: make `ValidateActionStepsParams.chainId` mandatory to skirt sender, logs weirdness
+
+### Minor Changes
+
+- 43d7fe2: add `BoostValidatorEOA` to `Validator` module, use as default signer in `core.createBoost`
+- 5a6d1e6: refactor ERC20VariableCriteria to extend ERC20Variable to fix missing methods, remove dependence on signatures package like EventAction
+
+### Patch Changes
+
+- 449cf4b: [BOOST-4842] feat(sdk): add gas used setting for variable incentives sdk helpers
+- b9ac73b: LimitedSignerValidator implemented with SDK support
+
 ## 1.1.0-alpha.24
 
 ### Minor Changes

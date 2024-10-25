@@ -603,9 +603,8 @@ export async function prepareSignerValidatorClaimDataPayload({
     },
   };
 
-  const trustedSignature = await signTypedData({
+  const trustedSignature = await signer.privateKey.signTypedData({
     ...typedData,
-    privateKey: signer.key,
   });
 
   // Prepare the claim data payload using the new helper

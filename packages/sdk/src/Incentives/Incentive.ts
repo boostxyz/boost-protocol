@@ -4,6 +4,7 @@ import {
   ACGDAIncentive,
   AERC20Incentive,
   AERC20VariableIncentive,
+  // AERC20VariableCriteriaIncentive
   APointsIncentive,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
@@ -13,7 +14,7 @@ import { InvalidComponentInterfaceError } from '../errors';
 import { AllowListIncentive } from './AllowListIncentive';
 import { CGDAIncentive } from './CGDAIncentive';
 import { ERC20Incentive } from './ERC20Incentive';
-import type { ERC20VariableCriteriaIncentive } from './ERC20VariableCriteriaIncentive';
+import { ERC20VariableCriteriaIncentive } from './ERC20VariableCriteriaIncentive';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
 // import { ERC1155Incentive } from './ERC1155Incentive';
 import { PointsIncentive } from './PointsIncentive';
@@ -25,6 +26,7 @@ export {
   ERC20Incentive,
   PointsIncentive,
   ERC20VariableIncentive,
+  ERC20VariableCriteriaIncentive,
 };
 
 /**
@@ -54,6 +56,7 @@ export const IncentiveByComponentInterface = {
   // [AERC1155Incentive as Hex]: ERC1155Incentive,
   [ACGDAIncentive as Hex]: CGDAIncentive,
   [AERC20VariableIncentive as Hex]: ERC20VariableIncentive,
+  // [AERC20VariableCriteriaIncentive as Hex]: ERC20VariableCriteriaIncentive
 };
 
 /**

@@ -3,15 +3,12 @@ import {
   readErc20VariableCriteriaIncentiveGetIncentiveCriteria,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
-import events from '@boostxyz/signatures/events';
-import functions from '@boostxyz/signatures/functions';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
 import {
   type AbiEvent,
   type AbiFunction,
   type Address,
   type Hex,
-  type Log,
   decodeFunctionData,
   encodeAbiParameters,
   parseEventLogs,
@@ -24,16 +21,16 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   DecodedArgsError,
-  FieldActionValidationError,
   IncentiveCriteriaNotFoundError,
   InvalidCriteriaTypeError,
   NoMatchingLogsError,
 } from '../errors';
 import { CheatCodes, type ReadParams } from '../utils';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
+
+export { erc20VariableCriteriaIncentiveAbi };
 
 export interface ERC20VariableCriteriaIncentivePayload {
   /**
@@ -96,16 +93,24 @@ export interface ReadIncentiveCriteriaParams
   > {}
 
 export interface GetIncentiveScalarParams {
+  chainId: number;
   hash: Hex;
+  knownSignatures: Record<Hex, AbiFunction | AbiEvent>;
 }
 
 /**
  * Extended ERC20 Variable Criteria Incentive class that fetches incentive criteria and scalar
+ *
+ * @export
+ * @class ERC20VariableCriteriaIncentive
+ * @typedef {ERC20VariableCriteriaIncentive}
+ * @extends {ERC20VariableIncentive<ERC20VariableCriteriaIncentivePayload, typeof erc20VariableCriteriaIncentiveAbi>}
  */
-export class ERC20VariableCriteriaIncentive extends DeployableTarget<
+export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
   ERC20VariableCriteriaIncentivePayload,
   typeof erc20VariableCriteriaIncentiveAbi
 > {
+  //@ts-expect-error instantiated correctly
   public override readonly abi = erc20VariableCriteriaIncentiveAbi;
   /**
    * @inheritdoc
@@ -126,15 +131,22 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
   /**
    * Fetches the IncentiveCriteria struct from the contract
    *
+   * @param {?ReadParams} [params]
    * @returns {Promise<IncentiveCriteria>} Incentive criteria structure
    * @throws {IncentiveCriteriaNotFoundError}
    */
-  public async getIncentiveCriteria(): Promise<IncentiveCriteria> {
+  public async getIncentiveCriteria(
+    params?: ReadParams<
+      typeof erc20VariableCriteriaIncentiveAbi,
+      'getIncentiveCriteria'
+    >,
+  ): Promise<IncentiveCriteria> {
     try {
       const criteria =
         await readErc20VariableCriteriaIncentiveGetIncentiveCriteria(
           this._config,
           {
+            ...params,
             address: this.assertValidAddress(),
           },
         );
@@ -149,18 +161,21 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
    * Fetches the incentive scalar from a transaction hash
    *
    * @param {GetIncentiveScalarParams} params
+   * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    * @throws {InvalidCriteriaTypeError | NoMatchingLogsError | DecodedArgsError}
    */
-  public async getIncentiveScalar({
-    hash,
-  }: GetIncentiveScalarParams): Promise<bigint> {
-    const criteria = await this.getIncentiveCriteria();
-    const transaction = await getTransaction(this._config, {
-      hash,
-    });
+  public async getIncentiveScalar(
+    { chainId, hash, knownSignatures }: GetIncentiveScalarParams,
+    params?: ReadParams<
+      typeof erc20VariableCriteriaIncentiveAbi,
+      'getIncentiveCriteria'
+    >,
+  ): Promise<bigint> {
+    const criteria = await this.getIncentiveCriteria(params);
     if (criteria.criteriaType === SignatureType.EVENT) {
       const transactionReceipt = await getTransactionReceipt(this._config, {
+        chainId,
         hash,
       });
       if (criteria.fieldIndex === CheatCodes.GAS_REBATE_INCENTIVE) {
@@ -181,9 +196,7 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
       // Decode the event log
       try {
         // Decode function data
-        const eventAbi = (events.abi as Record<Hex, AbiEvent>)[
-          criteria.signature
-        ] as AbiEvent;
+        const eventAbi = knownSignatures[criteria.signature] as AbiEvent;
         const decodedEvents = parseEventLogs({
           abi: [eventAbi],
           logs,
@@ -210,12 +223,13 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
       }
     } else if (criteria.criteriaType === SignatureType.FUNC) {
       // Fetch the transaction data
+      const transaction = await getTransaction(this._config, {
+        chainId,
+        hash,
+      });
       try {
         // Decode function data
-        const func = (functions.abi as Record<Hex, AbiFunction>)[
-          criteria.signature
-        ] as AbiFunction;
-
+        const func = knownSignatures[criteria.signature] as AbiFunction;
         const decodedFunction = decodeFunctionData({
           abi: [func],
           data: transaction.input,
@@ -261,21 +275,6 @@ export class ERC20VariableCriteriaIncentive extends DeployableTarget<
       args: [prepareERC20VariableCriteriaIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
-  }
-
-  /**
-   * Builds the claim data for the ERC20VariableCriteriaIncentive.
-   *
-   * @public
-   * @param {bigint} rewardAmount
-   * @returns {Hex} Returns the encoded claim data
-   * @description This function returns the encoded claim data for the ERC20VariableCriteriaIncentive.
-   */
-  public buildClaimData(rewardAmount: bigint) {
-    return encodeAbiParameters(
-      [{ type: 'uint256', name: 'rewardAmount' }],
-      [rewardAmount],
-    );
   }
 }
 

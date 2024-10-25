@@ -166,6 +166,18 @@
       "node": "./dist/Incentives/ERC20Incentive.js",
       "types": "./dist/Incentives/ERC20Incentive.d.ts"
     },
+    "./Incentives/ERC20VariableIncentive": {
+      "require": "./dist/Incentives/ERC20VariableIncentive.cjs",
+      "import": "./dist/Incentives/ERC20VariableIncentive.js",
+      "node": "./dist/Incentives/ERC20VariableIncentive.js",
+      "types": "./dist/Incentives/ERC20VariableIncentive.d.ts"
+    },
+    "./Incentives/ERC20VariableCriteriaIncentive": {
+      "require": "./dist/Incentives/ERC20VariableCriteriaIncentive.cjs",
+      "import": "./dist/Incentives/ERC20VariableCriteriaIncentive.js",
+      "node": "./dist/Incentives/ERC20VariableCriteriaIncentive.js",
+      "types": "./dist/Incentives/ERC20VariableCriteriaIncentive.d.ts"
+    },
     "./Incentives/Incentive": {
       "require": "./dist/Incentives/Incentive.cjs",
       "import": "./dist/Incentives/Incentive.js",
@@ -211,12 +223,10 @@
     "typedoc": "npx typedoc --tsconfig ./tsconfig.build.json --sort required-first --sort visibility --sort kind"
   },
   "dependencies": {
-    "@boostxyz/signatures": "workspace:*",
     "ts-pattern": "5.4.0"
   },
   "optionalDependencies": {
-    "@boostxyz/evm": "workspace:*",
-    "@boostxyz/signatures": "workspace:*"
+    "@boostxyz/evm": "workspace:*"
   },
   "peerDependencies": {
     "@wagmi/core": "2.x",

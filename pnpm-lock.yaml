@@ -220,9 +220,6 @@ importers:
       '@boostxyz/evm':
         specifier: workspace:*
         version: link:../evm
-      '@boostxyz/signatures':
-        specifier: workspace:*
-        version: link:../signatures
 
   packages/signatures: {}
 

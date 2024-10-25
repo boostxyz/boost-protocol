@@ -823,7 +823,7 @@ export class BoostCore extends Deployable<
       budget,
       validator,
       allowList,
-      incentives,
+      incentives: incentives as Incentive[],
       protocolFee,
       maxParticipants,
       owner,

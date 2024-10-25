@@ -16,6 +16,7 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import {
+  type Abi,
   type Address,
   type ContractEventName,
   type Hex,
@@ -86,17 +87,20 @@ export type ERC20VariableIncentiveLog<
 > = GenericLog<typeof erc20VariableIncentiveAbi, event>;
 
 /**
- *  A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
+ * A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
  *
  * @export
  * @class ERC20VariableIncentive
  * @typedef {ERC20VariableIncentive}
- * @extends {DeployableTarget<ERC20VariableIncentivePayload>}
+ * @template [Payload=ERC20VariableIncentivePayload | undefined]
+ * @template {Abi} [ABI=typeof erc20VariableIncentiveAbi]
+ * @extends {DeployableTarget<ERC20VariableIncentivePayload, ABI>}
  */
-export class ERC20VariableIncentive extends DeployableTarget<
-  ERC20VariableIncentivePayload,
-  typeof erc20VariableIncentiveAbi
-> {
+export class ERC20VariableIncentive<
+  Payload = ERC20VariableIncentivePayload | undefined,
+  ABI extends Abi = typeof erc20VariableIncentiveAbi,
+> extends DeployableTarget<Payload, ABI> {
+  //@ts-expect-error it is instantiated correctly
   public override readonly abi = erc20VariableIncentiveAbi;
   /**
    * @inheritdoc
@@ -403,7 +407,7 @@ export class ERC20VariableIncentive extends DeployableTarget<
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: ERC20VariableIncentivePayload,
+    _payload?: Payload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [payload, options] = this.validateDeploymentConfig(
@@ -413,7 +417,11 @@ export class ERC20VariableIncentive extends DeployableTarget<
     return {
       abi: erc20VariableIncentiveAbi,
       bytecode: bytecode as Hex,
-      args: [prepareERC20VariableIncentivePayload(payload)],
+      args: [
+        prepareERC20VariableIncentivePayload(
+          payload as ERC20VariableIncentivePayload,
+        ),
+      ],
       ...this.optionallyAttachAccount(options.account),
     };
   }

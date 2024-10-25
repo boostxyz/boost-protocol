@@ -1,4 +1,3 @@
-import { Mock } from 'node:test';
 import { selectors as eventSelectors } from '@boostxyz/signatures/events';
 import { selectors as funcSelectors } from '@boostxyz/signatures/functions';
 import type { MockERC20 } from '@boostxyz/test/MockERC20';
@@ -15,16 +14,17 @@ import {
   fundErc721,
 } from '@boostxyz/test/helpers';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { type Hex, isAddress, parseEther, zeroAddress, zeroAddress, zeroHash } from 'viem';
+import { type Hex, isAddress, parseEther, zeroAddress, zeroHash } from 'viem';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { SignatureType } from '../Actions/EventAction';
 import type { Boost } from '../Boost';
 import {
-  gasRebateIncentiveCriteria,
   type ERC20VariableCriteriaIncentive,
   type ERC20VariableCriteriaIncentivePayload,
   type IncentiveCriteria,
+  gasRebateIncentiveCriteria,
 } from './ERC20VariableCriteriaIncentive';
+import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
 
 /**
  * A basic ERC721 mint scalar criteria for testing
@@ -131,7 +131,11 @@ describe('ERC20VariableCriteriaIncentive', () => {
         recipient,
         1n,
       );
-      const scalar = await erc20Incentive.getIncentiveScalar({ hash });
+      const scalar = await erc20Incentive.getIncentiveScalar({
+        hash,
+        chainId: 31337,
+        knownSignatures: allKnownSignatures
+      });
 
       expect(scalar).toBe(1n);
     });
@@ -154,7 +158,11 @@ describe('ERC20VariableCriteriaIncentive', () => {
         recipient,
         1n,
       );
-      const scalar = await erc20Incentive.getIncentiveScalar({ hash });
+      const scalar = await erc20Incentive.getIncentiveScalar({
+        hash,
+        chainId: 31337,
+        knownSignatures: allKnownSignatures
+      });
 
       expect(scalar).toBe(1n);
     });
@@ -169,9 +177,9 @@ describe('ERC20VariableCriteriaIncentive', () => {
         limit: 1n,
         criteria: gasRebateCriteria,
       });
-      
-    
-    
+
+
+
       // Validate the returned structure against the expected criteria values
       expect(gasRebateCriteria).toEqual({
         criteriaType: SignatureType.EVENT,
@@ -179,12 +187,12 @@ describe('ERC20VariableCriteriaIncentive', () => {
         fieldIndex: 255,
         targetContract: zeroAddress,
       });
-    
+
       boost = await freshBoost(fixtures, {
         budget: budgets.budget,
         incentives: [erc20Incentive],
       });
-    
+
       // Validate that the deployed incentive has the correct criteria set up
       const deployedIncentive = await boost.incentives[0] as ERC20VariableCriteriaIncentive;
       const deployedCriteria = await deployedIncentive.getIncentiveCriteria();
@@ -200,7 +208,11 @@ describe('ERC20VariableCriteriaIncentive', () => {
       const { hash } = await erc20.mintRaw(recipient, parseEther('100'));
 
       try {
-        await erc20Incentive.getIncentiveScalar({ hash });
+        await erc20Incentive.getIncentiveScalar({
+          hash,
+          chainId: 31337,
+          knownSignatures: allKnownSignatures
+        });
       } catch (e) {
         expect((e as Error).name).toBe('DecodedArgsError');
       }
@@ -211,7 +223,11 @@ describe('ERC20VariableCriteriaIncentive', () => {
       const { hash } = await erc20.mintRaw(recipient, parseEther('100'));
 
       try {
-        await erc20Incentive.getIncentiveScalar({ hash });
+        await erc20Incentive.getIncentiveScalar({
+          hash,
+          chainId: 31337,
+          knownSignatures: allKnownSignatures
+        });
       } catch (e) {
         expect((e as Error).name).toBe('DecodedArgsError');
       }

@@ -1,5 +1,7 @@
 # @boostxyz/cli
 
+## 1.1.0-alpha.27
+
 ## 1.1.0-alpha.26
 
 ## 1.1.0-alpha.25

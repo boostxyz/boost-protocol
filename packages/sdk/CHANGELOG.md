@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.27
+
+### Minor Changes
+
+- 1c9a128: must supply chainId in `transactionSenderClaimant`
+- 1c9a128: accept `GetTransactionParameters` in `ValidateActionStepParams` to fix retroactive Boost completion
+
 ## 2.0.0-alpha.26
 
 ### Patch Changes

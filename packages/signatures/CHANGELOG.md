@@ -1,5 +1,11 @@
 # @boostxyz/signatures
 
+## 1.1.0-alpha.24
+
+### Minor Changes
+
+- 279e458: add BoostCreated and BoostClaimed events
+
 ## 1.1.0-alpha.23
 
 ### Minor Changes

@@ -1,5 +1,18 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.25
+
+### Major Changes
+
+- 5a51804: make `ValidateActionStepsParams.chainId` mandatory to skirt sender, logs weirdness
+
+### Patch Changes
+
+- 449cf4b: [BOOST-4842] feat(sdk): add gas used setting for variable incentives sdk helpers
+- b9ac73b: LimitedSignerValidator implemented with SDK support
+- Updated dependencies [279e458]
+  - @boostxyz/signatures@1.1.0-alpha.24
+
 ## 1.1.0-alpha.24
 
 ### Minor Changes

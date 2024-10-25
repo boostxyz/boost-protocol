@@ -222,12 +222,13 @@ export interface ActionStep {
  * @property {AbiEvent | AbiFunction} [abiItem] - Optional ABI item definition.
  * @property {EventLogs} [logs] - Event logs to validate against. Required if 'hash' is not provided.
  * @property {Hex} [hash] - Transaction hash to validate against. Required if 'logs' is not provided.
- * @property {number} [chainId] - Chain ID for the transaction. Required if 'hash' is provided.
+ * @property {number} [chainId] - Chain ID for the transaction.
  */
 export type ValidateActionStepParams = {
   knownSignatures: Record<Hex, AbiEvent | AbiFunction>;
   abiItem?: AbiEvent | AbiFunction;
-} & ({ logs: EventLogs } | { hash: Hex; chainId: number });
+  chainId: number;
+} & ({ logs: EventLogs } | { hash: Hex });
 
 /**
  * You can either supply a simplified version of the payload, or one that explicitly declares action steps.
@@ -524,6 +525,7 @@ export class EventAction extends DeployableTarget<
       if ('hash' in params) {
         const transaction = await getTransaction(this._config, {
           hash: params.hash,
+          chainId: params.chainId,
         });
         return transaction.from;
       }
@@ -532,6 +534,7 @@ export class EventAction extends DeployableTarget<
           if (log.transactionHash) {
             const transaction = await getTransaction(this._config, {
               hash: log.transactionHash,
+              chainId: claimant.chainid,
             });
             return transaction.from;
           }
@@ -582,13 +585,10 @@ export class EventAction extends DeployableTarget<
       }
       return address;
     }
-    if (
-      claimant.signatureType === SignatureType.FUNC &&
-      'hash' in params &&
-      'chainId' in params
-    ) {
+    if (claimant.signatureType === SignatureType.FUNC && 'hash' in params) {
       const transaction = await getTransaction(this._config, {
         hash: params.hash,
+        chainId: params.chainId,
       });
       if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
       let func: AbiFunction;
@@ -698,11 +698,9 @@ export class EventAction extends DeployableTarget<
         return this.isActionEventValid(actionStep, params.logs);
       }
 
-      const client = this._config.getClient({
-        chainId: params.chainId,
-      }) as PublicClient;
-      const receipt = await client.getTransactionReceipt({
+      const receipt = await getTransactionReceipt(this._config, {
         hash: params.hash,
+        chainId: params.chainId,
       });
       const decodedLogs = receipt.logs.map((log) => {
         const { eventName, args } = decodeEventLog({
@@ -718,11 +716,9 @@ export class EventAction extends DeployableTarget<
     }
     if (actionStep.signatureType === SignatureType.FUNC) {
       if ('hash' in params && 'chainId' in params) {
-        const client = this._config.getClient({
-          chainId: params.chainId,
-        }) as PublicClient;
-        const transaction = await client.getTransaction({
+        const transaction = await getTransaction(this._config, {
           hash: params.hash,
+          chainId: params.chainId,
         });
         return this.isActionFunctionValid(actionStep, transaction, params);
       }

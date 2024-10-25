@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.26
+
+### Patch Changes
+
+- d8f0d27: Replace signTypedData util with PrivateKeyAccount's signTypedData
+
 ## 2.0.0-alpha.25
 
 ### Major Changes

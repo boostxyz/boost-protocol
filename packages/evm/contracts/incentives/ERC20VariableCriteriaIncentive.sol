@@ -5,7 +5,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
+import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
@@ -17,24 +17,8 @@ enum SignatureType {
 
 /// @title ERC20 Incentive with Variable Criteria-Based Rewards
 /// @notice Extends the ERC20VariableIncentive to include incentive variability criteria on-chain
-contract ERC20VariableCriteriaIncentive is ERC20VariableIncentive {
+contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
     using SafeTransferLib for address;
-
-    struct IncentiveCriteria {
-        SignatureType criteriaType;
-        bytes32 signature;
-        uint8 fieldIndex; // The field index from where to extract the scalar value
-        address targetContract; // Contract where this event/function should be called/emitted
-    }
-
-    IncentiveCriteria public incentiveCriteria;
-
-    struct InitPayloadExtended {
-        address asset;
-        uint256 reward;
-        uint256 limit;
-        IncentiveCriteria criteria;
-    }
 
     /// @notice Initialize the ERC20VariableCriteriaIncentive with IncentiveCriteria
     /// @param data_ The encoded initialization data `(address asset, uint256 reward, uint256 limit, IncentiveCriteria criteria)`
@@ -65,7 +49,7 @@ contract ERC20VariableCriteriaIncentive is ERC20VariableIncentive {
 
     /// @notice Returns the incentive criteria
     /// @return The stored IncentiveCriteria struct
-    function getIncentiveCriteria() external view returns (IncentiveCriteria memory) {
+    function getIncentiveCriteria() external view override returns (IncentiveCriteria memory) {
         return incentiveCriteria;
     }
 }

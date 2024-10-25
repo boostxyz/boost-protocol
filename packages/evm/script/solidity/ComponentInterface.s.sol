@@ -47,6 +47,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAPointsIncentive();
         _getInterfaceASimpleAllowList();
         _getInterfaceASimpleDenyList();
+        _getInterfaceAERC20VariableCriteriaIncentive();
 
         _saveJson();
     }
@@ -112,6 +113,11 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAERC20VariableIncentive() internal {
         string memory interfaceId = uint256(uint32(type(AERC20VariableIncentive).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AERC20VariableIncentive", interfaceId);
+    }
+    
+    function _getInterfaceAERC20VariableCriteriaIncentive() internal {
+        string memory interfaceId = uint256(uint32(type(AERC20VariableIncentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AERC20VariableCriteriaIncentive", interfaceId);
     }
 
     function _getInterfaceAPointsIncentive() internal {

@@ -3,6 +3,7 @@ import {
   AAllowListIncentive,
   ACGDAIncentive,
   AERC20Incentive,
+  AERC20VariableCriteriaIncentive,
   AERC20VariableIncentive,
   // AERC20VariableCriteriaIncentive
   APointsIncentive,
@@ -47,7 +48,7 @@ export type Incentive =
 /**
  * A map of Incentive component interfaces to their constructors.
  *
- * @type {{ "0xc5b24b8e": typeof PointsIncentive; "0x8c901437": typeof ERC20Incentive; "0x4414fbb4": typeof AllowListIncentive; "0xa39e44d9": typeof CGDAIncentive; "0xa8e4af1e": typeof ERC20VariableIncentive }}
+ * @type {{ "0xc5b24b8e": typeof PointsIncentive; "0x8c901437": typeof ERC20Incentive; "0x4414fbb4": typeof AllowListIncentive; "0xa39e44d9": typeof CGDAIncentive; "0xa8e4af1e": typeof ERC20VariableIncentive; "0x90318111": typeof ERC20VariableCriteriaIncentive }}
  */
 export const IncentiveByComponentInterface = {
   [APointsIncentive as Hex]: PointsIncentive,
@@ -56,7 +57,7 @@ export const IncentiveByComponentInterface = {
   // [AERC1155Incentive as Hex]: ERC1155Incentive,
   [ACGDAIncentive as Hex]: CGDAIncentive,
   [AERC20VariableIncentive as Hex]: ERC20VariableIncentive,
-  // [AERC20VariableCriteriaIncentive as Hex]: ERC20VariableCriteriaIncentive
+  [AERC20VariableCriteriaIncentive as Hex]: ERC20VariableCriteriaIncentive,
 };
 
 /**

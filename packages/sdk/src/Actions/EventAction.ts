@@ -15,9 +15,9 @@ import {
   type Address,
   type ContractFunctionName,
   type GetLogsReturnType,
+  type GetTransactionParameters,
   type Hex,
   type Log,
-  type PublicClient,
   type Transaction,
   decodeEventLog,
   decodeFunctionData,
@@ -227,7 +227,7 @@ export interface ActionStep {
 export type ValidateActionStepParams = {
   knownSignatures: Record<Hex, AbiEvent | AbiFunction>;
   abiItem?: AbiEvent | AbiFunction;
-} & ({ logs: EventLogs } | { hash: Hex });
+} & ({ logs: EventLogs } | (GetTransactionParameters & { hash: Hex }));
 
 /**
  * You can either supply a simplified version of the payload, or one that explicitly declares action steps.
@@ -523,7 +523,7 @@ export class EventAction extends DeployableTarget<
     if (claimant.fieldIndex === CheatCodes.TX_SENDER_CLAIMANT) {
       if ('hash' in params) {
         const transaction = await getTransaction(this._config, {
-          hash: params.hash,
+          ...params,
           chainId: claimant.chainid,
         });
         return transaction.from;
@@ -532,6 +532,7 @@ export class EventAction extends DeployableTarget<
         for (let log of params.logs) {
           if (log.transactionHash) {
             const transaction = await getTransaction(this._config, {
+              ...params,
               hash: log.transactionHash,
               chainId: claimant.chainid,
             });
@@ -567,7 +568,10 @@ export class EventAction extends DeployableTarget<
         }
         return address;
       }
-      const receipt = await getTransactionReceipt(this._config, params);
+      const receipt = await getTransactionReceipt(this._config, {
+        ...params,
+        chainId: claimant.chainid,
+      });
       const decodedLogs = receipt.logs.map((log) => {
         const { eventName, args } = decodeEventLog({
           abi: [event],
@@ -586,7 +590,7 @@ export class EventAction extends DeployableTarget<
     }
     if (claimant.signatureType === SignatureType.FUNC && 'hash' in params) {
       const transaction = await getTransaction(this._config, {
-        hash: params.hash,
+        ...params,
         chainId: claimant.chainid,
       });
       if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
@@ -698,7 +702,7 @@ export class EventAction extends DeployableTarget<
       }
 
       const receipt = await getTransactionReceipt(this._config, {
-        hash: params.hash,
+        ...params,
         chainId: actionStep.chainid,
       });
       const decodedLogs = receipt.logs.map((log) => {
@@ -714,9 +718,9 @@ export class EventAction extends DeployableTarget<
       return this.isActionEventValid(actionStep, decodedLogs);
     }
     if (actionStep.signatureType === SignatureType.FUNC) {
-      if ('hash' in params && 'chainId' in params) {
+      if ('hash' in params) {
         const transaction = await getTransaction(this._config, {
-          hash: params.hash,
+          ...params,
           chainId: actionStep.chainid,
         });
         return this.isActionFunctionValid(actionStep, transaction, params);

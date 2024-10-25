@@ -578,14 +578,13 @@ export async function prepareSignerValidatorClaimDataPayload({
   claimant,
   boostId,
 }: SignerValidatorClaimDataParams): Promise<Hex> {
-  const domain = {
-    name: 'SignerValidator',
-    version: '1',
-    chainId: chainId,
-    verifyingContract: validator,
-  };
-  const typedData = {
-    domain,
+  const trustedSignature = await signer.privateKey.signTypedData({
+    domain: {
+      name: 'SignerValidator',
+      version: '1',
+      chainId: chainId,
+      verifyingContract: validator,
+    },
     types: {
       SignerValidatorData: [
         { name: 'boostId', type: 'uint256' },
@@ -601,10 +600,6 @@ export async function prepareSignerValidatorClaimDataPayload({
       claimant,
       incentiveData: incentiveData,
     },
-  };
-
-  const trustedSignature = await signer.privateKey.signTypedData({
-    ...typedData,
   });
 
   // Prepare the claim data payload using the new helper

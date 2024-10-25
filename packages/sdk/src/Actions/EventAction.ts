@@ -223,12 +223,10 @@ export interface ActionStep {
  * @property {AbiEvent | AbiFunction} [abiItem] - Optional ABI item definition.
  * @property {EventLogs} [logs] - Event logs to validate against. Required if 'hash' is not provided.
  * @property {Hex} [hash] - Transaction hash to validate against. Required if 'logs' is not provided.
- * @property {number} [chainId] - Chain ID for the transaction.
  */
 export type ValidateActionStepParams = {
   knownSignatures: Record<Hex, AbiEvent | AbiFunction>;
   abiItem?: AbiEvent | AbiFunction;
-  chainId: number;
 } & ({ logs: EventLogs } | { hash: Hex });
 
 /**
@@ -526,7 +524,7 @@ export class EventAction extends DeployableTarget<
       if ('hash' in params) {
         const transaction = await getTransaction(this._config, {
           hash: params.hash,
-          chainId: params.chainId,
+          chainId: claimant.chainid,
         });
         return transaction.from;
       }
@@ -589,7 +587,7 @@ export class EventAction extends DeployableTarget<
     if (claimant.signatureType === SignatureType.FUNC && 'hash' in params) {
       const transaction = await getTransaction(this._config, {
         hash: params.hash,
-        chainId: params.chainId,
+        chainId: claimant.chainid,
       });
       if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
       let func: AbiFunction;
@@ -701,7 +699,7 @@ export class EventAction extends DeployableTarget<
 
       const receipt = await getTransactionReceipt(this._config, {
         hash: params.hash,
-        chainId: params.chainId,
+        chainId: actionStep.chainid,
       });
       const decodedLogs = receipt.logs.map((log) => {
         const { eventName, args } = decodeEventLog({
@@ -719,7 +717,7 @@ export class EventAction extends DeployableTarget<
       if ('hash' in params && 'chainId' in params) {
         const transaction = await getTransaction(this._config, {
           hash: params.hash,
-          chainId: params.chainId,
+          chainId: actionStep.chainid,
         });
         return this.isActionFunctionValid(actionStep, transaction, params);
       }
@@ -1281,8 +1279,9 @@ export function anyActionParameter(): Criteria {
  * - signature: Set to zeroHash (0x0000...0000)
  * - fieldIndex: Set to 255, indicating "any" field using CheatCodes enum
  * - targetContract: Set to zeroAddress (0x0000...0000)
- * - chainid: Set to 0, indicating it's valid for any chain
+ * - chainid:  The chain ID on which the transaction is sent, should match the chain ID for the action's {@link ActionStep}
  *
+ * @param {number} chainId - The chain ID on which the transaction is sent, should match the chain ID for the action's {@link ActionStep}
  * @returns {ActionClaimant} An ActionClaimant object representing the msg.sender
  *
  * @example
@@ -1295,12 +1294,12 @@ export function anyActionParameter(): Criteria {
  * };
  * await eventAction.deploy(payload);
  */
-export function transactionSenderClaimant(): ActionClaimant {
+export function transactionSenderClaimant(chainId: number): ActionClaimant {
   return {
     signatureType: SignatureType.EVENT,
     signature: zeroHash,
     fieldIndex: CheatCodes.TX_SENDER_CLAIMANT,
     targetContract: zeroAddress,
-    chainid: 0,
+    chainid: chainId,
   };
 }

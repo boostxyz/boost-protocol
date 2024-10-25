@@ -38,6 +38,7 @@ import {
   transactionSenderClaimant,
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
+import { getTransactionReceipt } from "@wagmi/core";
 
 let fixtures: Fixtures,
   erc721: MockERC721,
@@ -427,7 +428,6 @@ describe("EventAction Event Selector", () => {
       expect(
         await action.validateActionSteps({
           hash,
-          chainId,
           knownSignatures: allKnownSignatures,
         }),
       ).toBe(true);
@@ -466,7 +466,6 @@ describe("EventAction Event Selector", () => {
       expect(
         await action.validateActionSteps({
           hash,
-          chainId,
           logs,
           knownSignatures: allKnownSignatures,
         }),
@@ -492,7 +491,6 @@ describe("EventAction Event Selector", () => {
         await expect(() =>
           action.validateActionSteps({
             hash,
-            chainId,
             knownSignatures: allKnownSignatures,
           }),
         ).rejects.toThrowError(/Parameter is not transparently stored onchain/);
@@ -513,7 +511,6 @@ describe("EventAction Event Selector", () => {
         expect(
           await action.validateActionSteps({
             hash,
-            chainId,
             knownSignatures: allKnownSignatures,
           }),
         ).toBe(true);
@@ -535,7 +532,6 @@ describe("EventAction Event Selector", () => {
         expect(
           await action.validateActionSteps({
             hash,
-            chainId,
             knownSignatures: allKnownSignatures,
           }),
         ).toBe(true);
@@ -562,7 +558,6 @@ describe("EventAction Event Selector", () => {
             await action.getActionClaimant(),
             {
               hash,
-              chainId,
               knownSignatures: allKnownSignatures,
             },
           ))!,
@@ -585,7 +580,6 @@ describe("EventAction Event Selector", () => {
           await action.getActionClaimant(),
           {
             hash,
-            chainId,
             knownSignatures: allKnownSignatures,
           },
         ),
@@ -604,11 +598,63 @@ describe("EventAction Event Selector", () => {
           await action.getActionClaimant(),
           {
             hash,
-            chainId,
             knownSignatures: allKnownSignatures,
           },
         ),
       ).toBe(recipient);
+    });
+
+    test("can derive the claimant from a function action only if tx block number is gte than `notBeforeBlockNumber`", async () => {
+      const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
+      const recipient = accounts[1].account;
+      const { hash } = await erc721.mintRaw(recipient, {
+        value: parseEther(".1"),
+      });
+
+      const receipt = await getTransactionReceipt(defaultOptions.config, {
+        hash,
+      });
+
+      expect(
+        await action.deriveActionClaimantFromTransaction(
+          await action.getActionClaimant(),
+          {
+            hash,
+            knownSignatures: allKnownSignatures,
+            notBeforeBlockNumber: 1n,
+          },
+        ),
+      ).toBe(recipient);
+      expect(
+        await action.deriveActionClaimantFromTransaction(
+          await action.getActionClaimant(),
+          {
+            hash,
+            knownSignatures: allKnownSignatures,
+            notBeforeBlockNumber: receipt.blockNumber,
+          },
+        ),
+      ).toBe(recipient);
+      expect(
+        await action.deriveActionClaimantFromTransaction(
+          await action.getActionClaimant(),
+          {
+            hash,
+            knownSignatures: allKnownSignatures,
+            notBeforeBlockNumber: receipt.blockNumber + 1n,
+          },
+        ),
+      ).toBe(undefined);
+      expect(
+        await action.deriveActionClaimantFromTransaction(
+          await action.getActionClaimant(),
+          {
+            hash,
+            knownSignatures: allKnownSignatures,
+            notBeforeBlockNumber: BigInt(Number.MAX_SAFE_INTEGER),
+          },
+        ),
+      ).toBe(undefined);
     });
 
     test("validates empty actionParameter", async () => {
@@ -629,7 +675,6 @@ describe("EventAction Event Selector", () => {
       expect(
         await action.validateActionSteps({
           hash,
-          chainId,
           knownSignatures: allKnownSignatures,
         }),
       ).toBe(true);
@@ -932,10 +977,55 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.isActionStepValid(actionStep, {
         hash,
-        chainId,
         knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
+  });
+
+  test("validates action step with `notBeforeBlockNumber` lower than tx blockNumber", async () => {
+    const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
+    const actionSteps = await action.getActionSteps();
+    const actionStep = actionSteps[0]!;
+    const recipient = accounts[1].account;
+    const { hash } = await erc721.mintRaw(recipient, {
+      value: parseEther(".1"),
+    });
+
+    const criteriaMatch = await action.isActionStepValid(actionStep, {
+      notBeforeBlockNumber: BigInt(Number.MAX_SAFE_INTEGER),
+      hash,
+      knownSignatures: allKnownSignatures,
+    });
+
+    expect(criteriaMatch).toBe(false);
+  });
+
+  test("validates action step with `notBeforeBlockNumber` greater than/equal to tx blockNumber", async () => {
+    const action = await loadFixture(cloneFunctionAction(fixtures, erc721));
+    const actionSteps = await action.getActionSteps();
+    const actionStep = actionSteps[0]!;
+    const recipient = accounts[1].account;
+    const { hash } = await erc721.mintRaw(recipient, {
+      value: parseEther(".1"),
+    });
+    const receipt = await getTransactionReceipt(defaultOptions.config, {
+      hash,
+    });
+
+    const eqMatch = await action.isActionStepValid(actionStep, {
+      notBeforeBlockNumber: receipt.blockNumber,
+      hash,
+      knownSignatures: allKnownSignatures,
+    });
+
+    expect(eqMatch).toBe(true);
+    const gtMatch = await action.isActionStepValid(actionStep, {
+      notBeforeBlockNumber: receipt.blockNumber - 1n,
+      hash,
+      knownSignatures: allKnownSignatures,
+    });
+
+    expect(gtMatch).toBe(true);
   });
 
   test("validates function step with EQUAL filter", async () => {
@@ -949,7 +1039,6 @@ describe("EventAction Func Selector", () => {
 
     const criteriaMatch = await action.isActionStepValid(actionStep, {
       hash,
-      chainId,
       knownSignatures: allKnownSignatures,
     });
 
@@ -974,7 +1063,6 @@ describe("EventAction Func Selector", () => {
     try {
       await action.isActionStepValid(invalidStep, {
         hash,
-        chainId,
         knownSignatures: allKnownSignatures,
       });
     } catch (e) {
@@ -1001,7 +1089,6 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.validateActionSteps({
         hash,
-        chainId,
         knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
@@ -1020,7 +1107,6 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.isActionStepValid(actionStep, {
         hash,
-        chainId,
         knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
@@ -1045,7 +1131,6 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.isActionStepValid(actionStep, {
         hash,
-        chainId,
         knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
@@ -1069,7 +1154,6 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.isActionStepValid(actionStep, {
         hash,
-        chainId,
         knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);
@@ -1085,7 +1169,6 @@ describe("EventAction Func Selector", () => {
     expect(
       await action.validateActionSteps({
         hash,
-        chainId,
         knownSignatures: allKnownSignatures,
       }),
     ).toBe(true);

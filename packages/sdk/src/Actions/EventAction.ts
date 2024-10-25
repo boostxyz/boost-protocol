@@ -227,6 +227,7 @@ export interface ActionStep {
 export type ValidateActionStepParams = {
   knownSignatures: Record<Hex, AbiEvent | AbiFunction>;
   abiItem?: AbiEvent | AbiFunction;
+  notBeforeBlockNumber?: bigint;
 } & ({ logs: EventLogs } | (GetTransactionParameters & { hash: Hex }));
 
 /**
@@ -526,6 +527,12 @@ export class EventAction extends DeployableTarget<
           ...params,
           chainId: claimant.chainid,
         });
+        if (
+          params.notBeforeBlockNumber &&
+          transaction.blockNumber < params.notBeforeBlockNumber
+        ) {
+          return undefined;
+        }
         return transaction.from;
       }
       if ('logs' in params) {
@@ -536,6 +543,12 @@ export class EventAction extends DeployableTarget<
               hash: log.transactionHash,
               chainId: claimant.chainid,
             });
+            if (
+              params.notBeforeBlockNumber &&
+              transaction.blockNumber < params.notBeforeBlockNumber
+            ) {
+              return undefined;
+            }
             return transaction.from;
           }
         }
@@ -572,6 +585,12 @@ export class EventAction extends DeployableTarget<
         ...params,
         chainId: claimant.chainid,
       });
+      if (
+        params.notBeforeBlockNumber &&
+        receipt.blockNumber < params.notBeforeBlockNumber
+      ) {
+        return undefined;
+      }
       const decodedLogs = receipt.logs.map((log) => {
         const { eventName, args } = decodeEventLog({
           abi: [event],
@@ -593,6 +612,12 @@ export class EventAction extends DeployableTarget<
         ...params,
         chainId: claimant.chainid,
       });
+      if (
+        params.notBeforeBlockNumber &&
+        transaction.blockNumber < params.notBeforeBlockNumber
+      ) {
+        return undefined;
+      }
       if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
       let func: AbiFunction;
       if (params.abiItem) func = params.abiItem as AbiFunction;
@@ -705,6 +730,8 @@ export class EventAction extends DeployableTarget<
         ...params,
         chainId: actionStep.chainid,
       });
+      if (params.notBeforeBlockNumber)
+        return receipt.blockNumber >= params.notBeforeBlockNumber;
       const decodedLogs = receipt.logs.map((log) => {
         const { eventName, args } = decodeEventLog({
           abi: [event],
@@ -723,6 +750,8 @@ export class EventAction extends DeployableTarget<
           ...params,
           chainId: actionStep.chainid,
         });
+        if (params.notBeforeBlockNumber)
+          return transaction.blockNumber >= params.notBeforeBlockNumber;
         return this.isActionFunctionValid(actionStep, transaction, params);
       }
     }

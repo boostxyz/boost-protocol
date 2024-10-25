@@ -42,7 +42,7 @@ abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
     /// @param interfaceId The ID of the interface to check
     /// @return True if the interface is supported, false otherwise
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(AERC20VariableCriteriaIncentive).interfaceId;
+        return interfaceId == type(AERC20VariableCriteriaIncentive).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @notice Abstract function to get the component interface ID

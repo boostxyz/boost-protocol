@@ -23,6 +23,8 @@ const allExports = [
   "ERC20VariableCriteriaIncentive",
   "PointsIncentive",
   "SignerValidator",
+  "LimitedSignerValidator",
+  "BoostValidatorEOA",
   "BoostCoreNoIdentifierEmitted",
   "ContractAddressRequiredError",
   "DeployableAlreadyDeployedError",

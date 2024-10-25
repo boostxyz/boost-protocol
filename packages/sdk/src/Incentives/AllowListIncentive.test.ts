@@ -1,15 +1,15 @@
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { isAddress, pad, parseEther, zeroAddress } from 'viem';
-import { beforeAll, describe, expect, test } from 'vitest';
-import { accounts } from '@boostxyz/test/accounts';
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { isAddress, pad, parseEther, zeroAddress } from "viem";
+import { beforeAll, describe, expect, test } from "vitest";
+import { accounts } from "@boostxyz/test/accounts";
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
   freshBoost,
-} from '@boostxyz/test/helpers';
-import { PointsIncentive } from './PointsIncentive';
-import { Roles } from '../Deployable/DeployableTargetWithRBAC';
+} from "@boostxyz/test/helpers";
+import { PointsIncentive } from "./PointsIncentive";
+import { Roles } from "../Deployable/DeployableTargetWithRBAC";
 
 let fixtures: Fixtures;
 
@@ -25,15 +25,15 @@ function freshAllowList(fixtures: Fixtures) {
   };
 }
 
-describe('AllowListIncentive', () => {
+describe("AllowListIncentive", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
 
-  test('can successfully be deployed', async () => {
+  test("can successfully be deployed", async () => {
     const action = new PointsIncentive(defaultOptions, {
       venue: zeroAddress,
-      selector: '0xdeadb33f',
+      selector: "0xdeadb33f",
       reward: 1n,
       limit: 1n,
     });
@@ -41,7 +41,7 @@ describe('AllowListIncentive', () => {
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 
-  test('can claim', async () => {
+  test("can claim", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)?.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
@@ -63,15 +63,14 @@ describe('AllowListIncentive', () => {
     );
 
     const claimant = trustedSigner.account;
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
     console.log(claimant);
 
-    const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
     });
@@ -82,12 +81,12 @@ describe('AllowListIncentive', () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: parseEther('0.000075'), account: trustedSigner.privateKey },
+      { value: parseEther("0.000075"), account: trustedSigner.privateKey },
     );
     expect(await allowList.isAllowed(trustedSigner.account)).toBe(true);
   });
 
-  test('cannot claim twice', async () => {
+  test("cannot claim twice", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)?.account!;
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
@@ -107,16 +106,15 @@ describe('AllowListIncentive', () => {
       [allowListIncentive.assertValidAddress()],
       [Roles.MANAGER],
     );
-    const incentiveQuantity = 1;
     const claimant = trustedSigner.account;
-    const incentiveData = pad('0xdef456232173821931823712381232131391321934');
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
     console.log(claimant);
 
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
     });
@@ -126,7 +124,7 @@ describe('AllowListIncentive', () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: parseEther('0.000075'), account: trustedSigner.privateKey },
+      { value: parseEther("0.000075"), account: trustedSigner.privateKey },
     );
     try {
       await fixtures.core.claimIncentive(
@@ -134,7 +132,7 @@ describe('AllowListIncentive', () => {
         0n,
         referrer,
         claimDataPayload,
-        { value: parseEther('0.000075'), account: trustedSigner.privateKey },
+        { value: parseEther("0.000075"), account: trustedSigner.privateKey },
       );
     } catch (e) {
       expect(e).toBeInstanceOf(Error);

@@ -53,12 +53,11 @@ describe("PointsIncentive", () => {
 
     const claimant = trustedSigner.account;
     const incentiveData = pad("0xdef456232173821931823712381232131391321934");
-    const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
     });
@@ -72,7 +71,7 @@ describe("PointsIncentive", () => {
       boost.id,
       0n,
       referrer,
-      claimDataPayload
+      claimDataPayload,
     );
     expect(
       await readPointsBalanceOf(defaultOptions.config, {
@@ -101,12 +100,11 @@ describe("PointsIncentive", () => {
 
     const claimant = trustedSigner.account;
     const incentiveData = pad("0xdef456232173821931823712381232131391321934");
-    const incentiveQuantity = 1;
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: defaultOptions.config.chains[0].id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
     });

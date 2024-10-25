@@ -60,3 +60,23 @@ export async function validatorFromAddress(
   }
   return new Ctor(options, address);
 }
+
+/**
+ * An enum of verified Boost Validator EOA (Externally Owned Account) addresses used by the Boost protocol
+ * for validating transactions on mainnet and testnet environments.
+ *
+ * @example
+ * ```typescript
+ * // Initialize a SignerValidator using the pre-configured EOA address of a verified Boost validator.
+ * // If no validator is provided to core.createBoost(...), then this is what will be used by default.
+ * const validator = core.SignerValidator({
+ *   signers: [BoostValidatorEOA.[TESTNET | MAINNET]],
+ *   validatorCaller: core.assertValidAddress()
+ * })
+ * ```
+ * @enum {Address}
+ */
+export const BoostValidatorEOA = {
+  MAINNET: import.meta.env.VITE_BOOST_MAINNET_SIGNER_EOA as Address,
+  TESTNET: import.meta.env.VITE_BOOST_TESTNET_SIGNER_EOA as Address,
+};

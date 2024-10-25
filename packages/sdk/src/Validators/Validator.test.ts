@@ -1,8 +1,9 @@
+import { isAddress } from 'viem';
 import { describe, expect, test } from 'vitest';
 import { defaultOptions } from '@boostxyz/test/helpers';
 import { testAccount } from '@boostxyz/test/viem';
 import { SignerValidator } from './SignerValidator';
-import { validatorFromAddress } from './Validator';
+import { BoostValidatorEOA, validatorFromAddress } from './Validator';
 
 describe('Validator', () => {
   test('can automatically instantiate SignerValidator given an address', async () => {
@@ -18,4 +19,9 @@ describe('Validator', () => {
       ),
     ).toBeInstanceOf(SignerValidator);
   });
+
+  test('Boost EOAs are defined', () => {
+    expect(isAddress(BoostValidatorEOA.TESTNET)).toBe(true)
+    // expect(isAddress(BoostValidatorEOA.MAINNET)).toBe(true)
+  })
 });

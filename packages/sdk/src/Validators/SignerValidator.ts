@@ -184,7 +184,7 @@ export interface SignerValidatorClaimDataParams {
    */
   validator: Address;
   /**
-   * The incentive quantity.
+   * The total number of incentives on the Boost
    *
    * @type {number}
    */
@@ -226,7 +226,7 @@ export interface SignerValidatorInputParams {
   signature: Hex;
 
   /**
-   * The incentive quantity.
+   * The total number of incentives on the Boost
    *
    * @type {number}
    */

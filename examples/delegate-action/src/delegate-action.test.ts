@@ -3,23 +3,23 @@ import {
   FilterType,
   PrimitiveType,
   SignatureType,
-} from '@boostxyz/sdk';
-import { StrategyType } from '@boostxyz/sdk/claiming';
-import { selectors } from '@boostxyz/signatures/events';
-import { accounts } from '@boostxyz/test/accounts';
-import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
+} from "@boostxyz/sdk";
+import { StrategyType } from "@boostxyz/sdk/claiming";
+import { selectors } from "@boostxyz/signatures/events";
+import { accounts } from "@boostxyz/test/accounts";
+import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import {
   type BudgetFixtures,
   type Fixtures,
   deployFixtures,
   fundBudget,
-} from '@boostxyz/test/helpers';
-import { setupConfig, testAccount } from '@boostxyz/test/viem';
+} from "@boostxyz/test/helpers";
+import { setupConfig, testAccount } from "@boostxyz/test/viem";
 import {
   loadFixture,
   mine,
   reset,
-} from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+} from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import {
   http,
   type Address,
@@ -29,38 +29,36 @@ import {
   parseEther,
   publicActions,
   walletActions,
-} from 'viem';
-import { base } from 'viem/chains';
-import { beforeAll, describe, expect, test } from 'vitest';
+} from "viem";
+import { base } from "viem/chains";
+import { beforeAll, describe, expect, test } from "vitest";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the Wormhole (W) token contract we're going to push delegate transaction against
-const targetContract = '0xB0fFa8000886e57F86dd5264b9582b2Ad87b2b91' as Address;
+const targetContract = "0xB0fFa8000886e57F86dd5264b9582b2Ad87b2b91" as Address;
 // We take the raw inputData off of an existing historical transaction
 // https://basescan.org/tx/0xd680f8ba2ec95d01822554850d0e976839138f1583b838872e042e3b04b7eafb
 const inputData =
-  '0x5c19a95c00000000000000000000000071cb1dc5ae0389f1828a5dfefb8476bd3bea2af2';
+  "0x5c19a95c00000000000000000000000071cb1dc5ae0389f1828a5dfefb8476bd3bea2af2";
 // For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
-const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-// This is only for a single incentive boost
-const incentiveQuantity = 1;
+const incentiveData = pad("0xdef456232173821931823712381232131391321934");
 const referrer = accounts[1].account;
 
 // We take the address of the imposter from the transaction above
-const boostImpostor = '0xb629c117faB3BAa951a220F2175A02a4bDbCf734' as Address; // from address
-const delegatee = '0x71CB1dc5AE0389F1828a5dFefB8476bd3BEA2AF2' as Address;
+const boostImpostor = "0xb629c117faB3BAa951a220F2175A02a4bDbCf734" as Address; // from address
+const delegatee = "0x71CB1dc5AE0389F1828a5dFefB8476bd3BEA2AF2" as Address;
 const trustedSigner = accounts[0];
 const BASE_CHAIN_URL =
-  'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
+  "https://base-mainnet.g.alchemy.com/v2/" + process.env.VITE_ALCHEMY_API_KEY;
 const BASE_CHAIN_BLOCK = 20160592;
 const selector = selectors[
-  'DelegateChanged(address indexed,address indexed,address indexed)'
+  "DelegateChanged(address indexed,address indexed,address indexed)"
 ] as Hex;
 
 const walletClient = createTestClient({
-  transport: http('http://127.0.0.1:8545'),
+  transport: http("http://127.0.0.1:8545"),
   chain: base,
-  mode: 'hardhat',
+  mode: "hardhat",
 })
   .extend(publicActions)
   .extend(walletActions);
@@ -70,14 +68,14 @@ const defaultOptions = {
   config: setupConfig(walletClient),
 };
 
-describe('Boost with Delegate Action Incentive', () => {
+describe("Boost with Delegate Action Incentive", () => {
   beforeAll(async () => {
     await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
     fixtures = await loadFixture(deployFixtures(defaultOptions, 8453));
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 
-  test('should create a boost for incentivizing delegation to a specific address', async () => {
+  test("should create a boost for incentivizing delegation to a specific address", async () => {
     const { budget, erc20 } = budgets;
     const { core } = fixtures;
 
@@ -130,7 +128,7 @@ describe('Boost with Delegate Action Incentive', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 100n,
           strategy: StrategyType.POOL,
         }),
@@ -148,7 +146,7 @@ describe('Boost with Delegate Action Incentive', () => {
     });
     await walletClient.setBalance({
       address: boostImpostor,
-      value: parseEther('10'),
+      value: parseEther("10"),
     });
     const testReceipt = await walletClient.sendTransaction({
       data: inputData,
@@ -159,14 +157,18 @@ describe('Boost with Delegate Action Incentive', () => {
 
     // Make sure that the transaction was sent as expected and validates the action
     expect(testReceipt).toBeDefined();
-    const validation = await action.validateActionSteps({ hash: testReceipt, chainId: base.id, knownSignatures: allKnownSignatures });
+    const validation = await action.validateActionSteps({
+      hash: testReceipt,
+      chainId: base.id,
+      knownSignatures: allKnownSignatures,
+    });
     expect(validation).toBe(true);
     // Generate the signature using the trusted signer
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData,
       chainId: base.id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant: boostImpostor,
       boostId: boost.id,
     });
@@ -178,7 +180,7 @@ describe('Boost with Delegate Action Incentive', () => {
       referrer,
       claimDataPayload,
       boostImpostor,
-      { value: parseEther('0.000075') },
+      { value: parseEther("0.000075") },
     );
   });
 });

@@ -3,23 +3,23 @@ import {
   FilterType,
   PrimitiveType,
   SignatureType,
-} from '@boostxyz/sdk';
-import events from '@boostxyz/signatures/events';
-import functions from '@boostxyz/signatures/functions';
-import { accounts } from '@boostxyz/test/accounts';
-import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
+} from "@boostxyz/sdk";
+import events from "@boostxyz/signatures/events";
+import functions from "@boostxyz/signatures/functions";
+import { accounts } from "@boostxyz/test/accounts";
+import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import {
   type BudgetFixtures,
   type Fixtures,
   deployFixtures,
   fundBudget,
-} from '@boostxyz/test/helpers';
-import { setupConfig, testAccount } from '@boostxyz/test/viem';
+} from "@boostxyz/test/helpers";
+import { setupConfig, testAccount } from "@boostxyz/test/viem";
 import {
   loadFixture,
   mine,
   reset,
-} from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+} from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import {
   http,
   type AbiEvent,
@@ -31,14 +31,14 @@ import {
   publicActions,
   toHex,
   walletActions,
-} from 'viem';
-import { optimism } from 'viem/chains';
-import { beforeAll, describe, expect, test } from 'vitest';
+} from "viem";
+import { optimism } from "viem/chains";
+import { beforeAll, describe, expect, test } from "vitest";
 
 const walletClient = createTestClient({
-  transport: http('http://127.0.0.1:8545'),
+  transport: http("http://127.0.0.1:8545"),
   chain: optimism,
-  mode: 'hardhat',
+  mode: "hardhat",
 })
   .extend(publicActions)
   .extend(walletActions);
@@ -50,24 +50,22 @@ const defaultOptions = {
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the Agora contract we're going to push a transaction against
-const targetContract: Address = '0xcDF27F107725988f2261Ce2256bDfCdE8B382B10';
+const targetContract: Address = "0xcDF27F107725988f2261Ce2256bDfCdE8B382B10";
 // We take the raw inputData off of an existing historical transaction
 // https://optimistic.etherscan.io/tx/0x3d281344e4d0578dfc5af517c59e87770d4ded9465456cee0bd1e93484976e88
 const inputData =
-  '0x5678138877d106504340c0bb50e5748cc9bd714e946816c7726ae7b15f132a7daa0705c40000000000000000000000000000000000000000000000000000000000000001';
-// This is only for a single incentive boost
-const incentiveQuantity = 1;
+  "0x5678138877d106504340c0bb50e5748cc9bd714e946816c7726ae7b15f132a7daa0705c40000000000000000000000000000000000000000000000000000000000000001";
 const referrer = accounts[1].account;
 
 // We take the address of the imposter from the transaction above
-const boostImpostor: Address = '0xc47F2266b6076b79C0a6a9906C6592b34C03c914';
+const boostImpostor: Address = "0xc47F2266b6076b79C0a6a9906C6592b34C03c914";
 const trustedSigner = accounts[0];
-const OPT_CHAIN_BLOCK = BigInt('125541463');
+const OPT_CHAIN_BLOCK = BigInt("125541463");
 const selector = events.selectors[
-  'VoteCast(address indexed,uint256,uint8,uint256,string)'
+  "VoteCast(address indexed,uint256,uint8,uint256,string)"
 ] as Hex;
 
-describe('Boost with Voting Incentive', () => {
+describe("Boost with Voting Incentive", () => {
   beforeAll(async () => {
     await walletClient.reset({
       jsonRpcUrl: optimism.rpcUrls.default.http[0],
@@ -77,7 +75,7 @@ describe('Boost with Voting Incentive', () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 
-  test('should create a boost for incentivizing votes', async () => {
+  test("should create a boost for incentivizing votes", async () => {
     const { budget, erc20 } = budgets;
     const { core } = fixtures;
 
@@ -96,7 +94,7 @@ describe('Boost with Voting Incentive', () => {
         fieldIndex: 1, // Targeting the 'proposalId' uint
         filterData: toHex(
           BigInt(
-            '54194543592303757979358957212312678549449891089859364558242427871997305750980',
+            "54194543592303757979358957212312678549449891089859364558242427871997305750980",
           ),
         ), // Filtering based on the proposal id
       },
@@ -147,8 +145,8 @@ describe('Boost with Voting Incentive', () => {
       incentives: [
         core.ERC20VariableIncentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('0.1'),
-          limit: parseEther('1'),
+          reward: parseEther("0.1"),
+          limit: parseEther("1"),
           manager: owner,
         }),
       ],
@@ -166,7 +164,7 @@ describe('Boost with Voting Incentive', () => {
     });
     await walletClient.setBalance({
       address: boostImpostor,
-      value: parseEther('10'),
+      value: parseEther("10"),
     });
 
     const txHash = await walletClient.sendTransaction({
@@ -192,7 +190,7 @@ describe('Boost with Voting Incentive', () => {
       address: targetContract,
       event,
       fromBlock: OPT_CHAIN_BLOCK,
-      toBlock: 'latest',
+      toBlock: "latest",
     });
     const validation = await action.validateActionSteps({
       logs,
@@ -203,31 +201,31 @@ describe('Boost with Voting Incentive', () => {
     const getVotesAbi =
       functions.abi[
         functions.selectors[
-          'getVotes(address account, uint256 blockNumber) view returns (uint256)'
-        ] as '0x00000000000000000000000000000000000000000000000000000000eb9019d4'
+          "getVotes(address account, uint256 blockNumber) view returns (uint256)"
+        ] as "0x00000000000000000000000000000000000000000000000000000000eb9019d4"
       ];
     const amountOfVotes = (await walletClient.readContract({
-      address: '0xcdf27f107725988f2261ce2256bdfcde8b382b10',
+      address: "0xcdf27f107725988f2261ce2256bdfcde8b382b10",
       abi: [getVotesAbi],
-      functionName: 'getVotes',
+      functionName: "getVotes",
       args: [boostImpostor, txReceipt.blockNumber],
     })) as bigint;
 
     // If the amountOfVotes is greater than 100, then the reward should be 0.1 ETH, otherwise it will be 0.01 ETH
     const rewardAmount =
-      amountOfVotes >= parseEther('100')
-        ? parseEther('0.1')
-        : parseEther('0.01');
+      amountOfVotes >= parseEther("100")
+        ? parseEther("0.1")
+        : parseEther("0.01");
 
     // Generate the signature using the trusted signer
     const claimDataPayload = await boost.validator.encodeClaimData({
       signer: trustedSigner,
       incentiveData: encodeAbiParameters(
-        [{ name: '', type: 'uint256' }],
+        [{ name: "", type: "uint256" }],
         [rewardAmount],
       ),
       chainId: optimism.id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant: boostImpostor,
       boostId: boost.id,
     });
@@ -239,7 +237,7 @@ describe('Boost with Voting Incentive', () => {
       referrer,
       claimDataPayload,
       boostImpostor,
-      { value: parseEther('0.000075') },
+      { value: parseEther("0.000075") },
     );
   });
 });

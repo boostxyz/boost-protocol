@@ -3,23 +3,23 @@ import {
   FilterType,
   PrimitiveType,
   SignatureType,
-} from '@boostxyz/sdk';
-import { StrategyType } from '@boostxyz/sdk/claiming';
-import { selectors } from '@boostxyz/signatures/events';
-import { accounts } from '@boostxyz/test/accounts';
-import { allKnownSignatures } from '@boostxyz/test/allKnownSignatures';
+} from "@boostxyz/sdk";
+import { StrategyType } from "@boostxyz/sdk/claiming";
+import { selectors } from "@boostxyz/signatures/events";
+import { accounts } from "@boostxyz/test/accounts";
+import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import {
   type BudgetFixtures,
   type Fixtures,
   deployFixtures,
   fundBudget,
-} from '@boostxyz/test/helpers';
-import { setupConfig, testAccount } from '@boostxyz/test/viem';
+} from "@boostxyz/test/helpers";
+import { setupConfig, testAccount } from "@boostxyz/test/viem";
 import {
   loadFixture,
   mine,
   reset,
-} from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
+} from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import {
   http,
   type Address,
@@ -29,14 +29,14 @@ import {
   parseEther,
   publicActions,
   walletActions,
-} from 'viem';
-import { base } from 'viem/chains';
-import { beforeAll, describe, expect, test } from 'vitest';
+} from "viem";
+import { base } from "viem/chains";
+import { beforeAll, describe, expect, test } from "vitest";
 
 const walletClient = createTestClient({
-  transport: http('http://127.0.0.1:8545'),
+  transport: http("http://127.0.0.1:8545"),
   chain: base,
-  mode: 'hardhat',
+  mode: "hardhat",
 })
   .extend(publicActions)
   .extend(walletActions);
@@ -48,35 +48,33 @@ const defaultOptions = {
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 // This is the zora contract we're going to push a transaction against
-const targetContract: Address = '0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae';
+const targetContract: Address = "0x9D2FC5fFE5939Efd1d573f975BC5EEFd364779ae";
 // We take the raw inputData off of an existing historical transaction
 // https://basescan.org/tx/0x17a4d7e08acec16f385d2a038b948359919e3675eca22a09789b462a9178a769
 const inputData =
-  '0x359f130200000000000000000000000004e2516a2c207e84a1839755675dfd8ef6302f0a0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000084dc02a3b41ff6fb0b9288234b2b8051b641bf00';
+  "0x359f130200000000000000000000000004e2516a2c207e84a1839755675dfd8ef6302f0a0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000084dc02a3b41ff6fb0b9288234b2b8051b641bf00";
 // For this test the incentiveData doesn't matter but we'll use a random value to ensure the signing is working as expected
-const incentiveData = pad('0xdef456232173821931823712381232131391321934');
-// This is only for a single incentive boost
-const incentiveQuantity = 1;
+const incentiveData = pad("0xdef456232173821931823712381232131391321934");
 const referrer = accounts[1].account;
 
 // We take the address of the imposter from the transaction above
-const boostImpostor = '0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00' as Address;
+const boostImpostor = "0x84DC02a3B41ff6Fb0B9288234B2B8051B641bF00" as Address;
 const trustedSigner = accounts[0];
 const BASE_CHAIN_URL =
-  'https://base-mainnet.g.alchemy.com/v2/' + process.env.VITE_ALCHEMY_API_KEY;
+  "https://base-mainnet.g.alchemy.com/v2/" + process.env.VITE_ALCHEMY_API_KEY;
 const BASE_CHAIN_BLOCK = 17519193;
 const selector = selectors[
-  'Purchased(address indexed,address indexed,uint256 indexed,uint256,uint256)'
+  "Purchased(address indexed,address indexed,uint256 indexed,uint256,uint256)"
 ] as Hex;
 
-describe('Boost with NFT Minting Incentive', () => {
+describe("Boost with NFT Minting Incentive", () => {
   beforeAll(async () => {
     await reset(BASE_CHAIN_URL, BASE_CHAIN_BLOCK);
     fixtures = await loadFixture(deployFixtures(defaultOptions, 8453));
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });
 
-  test('should create a boost for incentivizing NFT minting', async () => {
+  test("should create a boost for incentivizing NFT minting", async () => {
     const { budget, erc20 } = budgets;
     const { core } = fixtures;
 
@@ -129,7 +127,7 @@ describe('Boost with NFT Minting Incentive', () => {
       incentives: [
         core.ERC20Incentive({
           asset: erc20.assertValidAddress(),
-          reward: parseEther('1'),
+          reward: parseEther("1"),
           limit: 90n,
           strategy: StrategyType.POOL,
           manager: budget.assertValidAddress(),
@@ -149,13 +147,13 @@ describe('Boost with NFT Minting Incentive', () => {
     });
     await walletClient.setBalance({
       address: boostImpostor,
-      value: parseEther('10'),
+      value: parseEther("10"),
     });
     const txHash = await walletClient.sendTransaction({
       data: inputData,
       account: boostImpostor,
       to: targetContract,
-      value: parseEther('0.029777'),
+      value: parseEther("0.029777"),
     });
     const chainId = await walletClient.getChainId();
 
@@ -172,7 +170,7 @@ describe('Boost with NFT Minting Incentive', () => {
       signer: trustedSigner,
       incentiveData,
       chainId: base.id,
-      incentiveQuantity,
+      incentiveQuantity: boost.incentives.length,
       claimant: boostImpostor,
       boostId: boost.id,
     });
@@ -184,7 +182,7 @@ describe('Boost with NFT Minting Incentive', () => {
       referrer,
       claimDataPayload,
       boostImpostor,
-      { value: parseEther('0.000075') },
+      { value: parseEther("0.000075") },
     );
   });
 });

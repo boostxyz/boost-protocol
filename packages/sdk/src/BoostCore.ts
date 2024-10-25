@@ -458,7 +458,7 @@ export class BoostCore extends Deployable<
       if (!chain)
         throw new InvalidProtocolChainIdError(
           chainId,
-          Object.keys(this.addresses),
+          Object.keys(this.addresses).map(Number),
         );
       const testnet = chain.testnet || chain.id === 31337;
       payload.validator = this.SignerValidator({

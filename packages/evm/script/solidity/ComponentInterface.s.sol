@@ -20,6 +20,7 @@ import {ACGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 import {AERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {AERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
+import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
 import {APointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 
 import {ASimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
@@ -116,7 +117,7 @@ contract LogComponentInterface is ScriptUtils {
     }
     
     function _getInterfaceAERC20VariableCriteriaIncentive() internal {
-        string memory interfaceId = uint256(uint32(type(AERC20VariableIncentive).interfaceId)).toHexString(4);
+        string memory interfaceId = uint256(uint32(type(AERC20VariableCriteriaIncentive).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AERC20VariableCriteriaIncentive", interfaceId);
     }
 

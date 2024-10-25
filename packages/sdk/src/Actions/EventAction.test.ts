@@ -546,7 +546,7 @@ describe("EventAction Event Selector", () => {
       const action = await loadFixture(
         cloneEventAction(fixtures, erc721, {
           ...basicErc721TransferAction(erc721),
-          actionClaimant: transactionSenderClaimant(),
+          actionClaimant: transactionSenderClaimant(chainId),
         }),
       );
       const recipient = accounts[1].account;

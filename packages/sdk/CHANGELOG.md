@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.28
+
+### Minor Changes
+
+- 818ab69: add `ValidateActionStepParams.notBeforeBlockNumber` bigint to support retroactive boost fixes
+
 ## 2.0.0-alpha.27
 
 ### Minor Changes

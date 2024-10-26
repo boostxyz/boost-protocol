@@ -25,6 +25,7 @@ import {
   fromHex,
   isAddress,
   isAddressEqual,
+  toEventSelector,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -591,14 +592,16 @@ export class EventAction extends DeployableTarget<
       ) {
         return undefined;
       }
-      const decodedLogs = receipt.logs.map((log) => {
-        const { eventName, args } = decodeEventLog({
-          abi: [event],
-          data: log.data,
-          topics: log.topics,
+      const decodedLogs = receipt.logs
+        .filter((log) => log.topics[0] === toEventSelector(event))
+        .map((log) => {
+          const { eventName, args } = decodeEventLog({
+            abi: [event],
+            data: log.data,
+            topics: log.topics,
+          });
+          return { ...log, eventName, args };
         });
-        return { ...log, eventName, args };
-      });
 
       for (let log of decodedLogs) {
         if (!isAddressEqual(log.address, claimant.targetContract)) continue;
@@ -732,15 +735,17 @@ export class EventAction extends DeployableTarget<
       });
       if (params.notBeforeBlockNumber)
         return receipt.blockNumber >= params.notBeforeBlockNumber;
-      const decodedLogs = receipt.logs.map((log) => {
-        const { eventName, args } = decodeEventLog({
-          abi: [event],
-          data: log.data,
-          topics: log.topics,
-        });
+      const decodedLogs = receipt.logs
+        .filter((log) => log.topics[0] === toEventSelector(event))
+        .map((log) => {
+          const { eventName, args } = decodeEventLog({
+            abi: [event],
+            data: log.data,
+            topics: log.topics,
+          });
 
-        return { ...log, eventName, args };
-      });
+          return { ...log, eventName, args };
+        });
 
       return this.isActionEventValid(actionStep, decodedLogs);
     }

@@ -24,7 +24,9 @@ abstract contract AEventAction is AAction {
         GREATER_THAN,
         LESS_THAN,
         CONTAINS,
-        REGEX
+        REGEX,
+        GREATER_THAN_OR_EQUAL,
+        LESS_THAN_OR_EQUAL
     }
 
     enum PrimitiveType {

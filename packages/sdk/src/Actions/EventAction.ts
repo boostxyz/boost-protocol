@@ -72,6 +72,8 @@ export enum FilterType {
   LESS_THAN = 3,
   CONTAINS = 4,
   REGEX = 5,
+  GREATER_THAN_OR_EQUAL = 6,
+  LESS_THAN_OR_EQUAL = 7,
 }
 
 /**
@@ -908,10 +910,28 @@ export class EventAction extends DeployableTarget<
           criteria,
           fieldValue,
         });
+      case FilterType.GREATER_THAN_OR_EQUAL:
+        if (criteria.fieldType === PrimitiveType.UINT) {
+          return BigInt(fieldValue) >= BigInt(criteria.filterData);
+        }
+        throw new InvalidNumericalCriteriaError({
+          ...input,
+          criteria,
+          fieldValue,
+        });
 
       case FilterType.LESS_THAN:
         if (criteria.fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) < BigInt(criteria.filterData);
+        }
+        throw new InvalidNumericalCriteriaError({
+          ...input,
+          criteria,
+          fieldValue,
+        });
+      case FilterType.LESS_THAN_OR_EQUAL:
+        if (criteria.fieldType === PrimitiveType.UINT) {
+          return BigInt(fieldValue) <= BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
           ...input,

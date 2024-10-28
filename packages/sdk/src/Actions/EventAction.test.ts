@@ -873,7 +873,7 @@ describe("validateFieldAgainstCriteria unit tests", () => {
 
   test("should throw UnrecognizedFilterTypeError for unrecognized filter type", () => {
     const mockCriteria = createMockCriteria(
-      6 as FilterType,
+      8 as FilterType,
       PrimitiveType.STRING,
       "0x74657374",
     ); // Decoded value: 'test'

@@ -503,13 +503,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
         ABudget.AssetType assetType,
         bytes memory extraData
     ) internal {
-        bytes memory data;
         uint256 tokenId;
 
         if (assetType == ABudget.AssetType.ERC1155) {
             (tokenId,) = abi.decode(extraData, (uint256, bytes));
-        } else {
-            data = extraData; // For ERC20 or ETH, the data remains as is (likely empty)
         }
 
         IncentiveDisbursalInfo memory info = IncentiveDisbursalInfo(

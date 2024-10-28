@@ -151,7 +151,7 @@ contract EndToEndBasic is Test {
         // can clawback funds from incentive
         budget.clawbackFromTarget(address(core), abi.encode(500 ether), boostId, incentiveId);
         // Should recover the full budget including the protocol fee
-        assertEq(erc20.balanceOf(address(budget)), 550 ether);
+        assertEq(erc20.balanceOf(address(budget)), 600 ether);
     }
 
     /// @notice As a user, I want to complete a Boost so that I can earn the rewards.
@@ -229,7 +229,7 @@ contract EndToEndBasic is Test {
     function _when_I_allocate_assets_to_my_budget(ABudget budget) internal {
         // "When I allocate assets to my budget"
         // "And the asset is an ERC20 token"
-        erc20.approve(address(budget), 550 ether);
+        erc20.approve(address(budget), 600 ether);
         assertTrue(
             budget.allocate(
                 abi.encode(
@@ -237,15 +237,15 @@ contract EndToEndBasic is Test {
                         assetType: ABudget.AssetType.ERC20,
                         asset: address(erc20),
                         target: address(this),
-                        data: abi.encode(ABudget.FungiblePayload({amount: 550 ether}))
+                        data: abi.encode(ABudget.FungiblePayload({amount: 600 ether}))
                     })
                 )
             )
         );
 
         // "Then my budget's balance should reflect the transferred amount"
-        assertEq(erc20.balanceOf(address(budget)), 550 ether);
-        assertEq(budget.available(address(erc20)), 550 ether);
+        assertEq(erc20.balanceOf(address(budget)), 600 ether);
+        assertEq(budget.available(address(erc20)), 600 ether);
 
         // "When I allocate assets to my budget"
         // "And the asset is ETH"

@@ -1,6 +1,7 @@
 import {
   erc20VariableCriteriaIncentiveAbi,
   readErc20VariableCriteriaIncentiveGetIncentiveCriteria,
+  readErc20VariableCriteriaIncentiveGetMaxReward,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
@@ -51,6 +52,13 @@ export interface ERC20VariableCriteriaIncentivePayload {
    * @type {bigint}
    */
   limit: bigint;
+  /**
+   * The total amount claimable in a single claim or maximum per-action reward.
+   *
+   * @type {bigint}
+   * @optional
+   */
+  maxReward: bigint;
   /**
    * The criteria for the incentive that determines how the reward is distributed.
    *
@@ -155,6 +163,30 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
     } catch (e) {
       throw new IncentiveCriteriaNotFoundError(e as Error);
     }
+  }
+
+  /**
+   * Fetches the IncentiveCriteria struct from the contract
+   *
+   * @param {?ReadParams} [params]
+   * @returns {Promise<IncentiveCriteria>} Incentive criteria structure
+   * @throws {IncentiveCriteriaNotFoundError}
+   */
+  public async getMaxReward(
+    params?: ReadParams<
+      typeof erc20VariableCriteriaIncentiveAbi,
+      'getIncentiveCriteria'
+    >,
+  ): Promise<bigint> {
+    const maxReward = await readErc20VariableCriteriaIncentiveGetMaxReward(
+      this._config,
+      {
+        ...params,
+        address: this.assertValidAddress(),
+      },
+    );
+
+    return maxReward;
   }
 
   /**
@@ -319,6 +351,7 @@ export function gasRebateIncentiveCriteria(): IncentiveCriteria {
  * @param {Address} param0.asset - The address of the ERC20 asset to incentivize.
  * @param {bigint} param0.reward - The reward amount to distribute per action.
  * @param {bigint} param0.limit - The total limit of the asset distribution.
+ * @param {bigint} param0.maxReward - The maximum value claimable from a single completion.
  * @param {IncentiveCriteria} param0.criteria - The incentive criteria for reward distribution.
  * @returns {Hex}
  */
@@ -326,6 +359,7 @@ export function prepareERC20VariableCriteriaIncentivePayload({
   asset,
   reward,
   limit,
+  maxReward = 0n,
   criteria,
 }: ERC20VariableCriteriaIncentivePayload) {
   return encodeAbiParameters(
@@ -336,6 +370,7 @@ export function prepareERC20VariableCriteriaIncentivePayload({
         components: [
           { type: 'address', name: 'asset' },
           { type: 'uint256', name: 'reward' },
+          { type: 'uint256', name: 'maxReward' },
           { type: 'uint256', name: 'limit' },
           {
             type: 'tuple',
@@ -355,6 +390,7 @@ export function prepareERC20VariableCriteriaIncentivePayload({
         asset: asset,
         reward: reward,
         limit: limit,
+        maxReward: maxReward,
         criteria: {
           criteriaType: criteria.criteriaType,
           signature: criteria.signature,

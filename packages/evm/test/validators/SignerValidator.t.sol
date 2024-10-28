@@ -125,6 +125,38 @@ contract SignerValidatorTest is Test {
         assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
+    function testValidate_MalleableSignature() public {
+        uint256 boostId = 5;
+        uint256 incentiveId = 1;
+        uint8 incentiveQuantity = 2;
+        address claimant = makeAddr("claimant");
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(testSignerKey, msgHash);
+
+        bytes memory originalSignature = _packSignature(v, r, s);
+
+        s = bytes32(uint256(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141) - uint256(s));
+
+        if (v == 27) {
+            v = 28;
+        } else {
+            v = 27;
+        }
+
+        ASignerValidator.SignerValidatorInputParams memory validatorData =
+            ASignerValidator.SignerValidatorInputParams(testSigner, _packSignature(v, r, s), incentiveQuantity);
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
+
+        // attempt to replay the signature
+        validatorData = ASignerValidator.SignerValidatorInputParams(testSigner, originalSignature, incentiveQuantity);
+        claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+
+        vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveClaimed.selector, incentiveId));
+        validator.validate(boostId, incentiveId, claimant, claimData);
+    }
+
     function testValidate_UnauthorizerCaller() public {
         address badCaller = makeAddr("badValidatorCaller");
 

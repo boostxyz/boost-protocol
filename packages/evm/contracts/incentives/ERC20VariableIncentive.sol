@@ -59,7 +59,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
     /// @notice Claim the incentive with variable rewards
     /// @param data_ The data payload for the incentive claim `(uint256signedAmount)`
     /// @return True if the incentive was successfully claimed
-    function claim(address claimTarget, bytes calldata data_) external override onlyOwner returns (bool) {
+    function claim(address claimTarget, bytes calldata data_) external virtual override onlyOwner returns (bool) {
         BoostClaimData memory boostClaimData = abi.decode(data_, (BoostClaimData));
         uint256 signedAmount = abi.decode(boostClaimData.incentiveData, (uint256));
         uint256 claimAmount;

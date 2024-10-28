@@ -18,6 +18,8 @@ enum SignatureType {
 abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
     using SafeTransferLib for address;
 
+    uint256 public maxReward;
+
     struct IncentiveCriteria {
         SignatureType criteriaType;
         bytes32 signature;
@@ -31,12 +33,17 @@ abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
         address asset;
         uint256 reward;
         uint256 limit;
+        uint256 maxReward;
         IncentiveCriteria criteria;
     }
 
     /// @notice Returns the incentive criteria (abstract)
     /// @return The stored IncentiveCriteria struct
     function getIncentiveCriteria() external view virtual returns (IncentiveCriteria memory);
+
+    function getMaxReward() external view virtual returns (uint256) {
+        return maxReward;
+    }
 
     /// @notice Checks if a specific interface is supported
     /// @param interfaceId The ID of the interface to check

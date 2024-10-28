@@ -29,6 +29,7 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
         address asset_ = init_.asset;
         uint256 reward_ = init_.reward;
         uint256 limit_ = init_.limit;
+        uint256 maxReward_ = init_.maxReward;
         IncentiveCriteria memory criteria_ = init_.criteria;
 
         if (limit_ == 0) revert BoostError.InvalidInitialization();
@@ -41,6 +42,7 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
         asset = asset_;
         reward = reward_;
         limit = limit_;
+        maxReward = maxReward_;
         totalClaimed = 0;
         incentiveCriteria = criteria_;
 
@@ -51,5 +53,33 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
     /// @return The stored IncentiveCriteria struct
     function getIncentiveCriteria() external view override returns (IncentiveCriteria memory) {
         return incentiveCriteria;
+    }
+
+    /// @notice Claim the incentive with variable rewards
+    /// @param data_ The data payload for the incentive claim `(uint256signedAmount)`
+    /// @return True if the incentive was successfully claimed
+    function claim(address claimTarget, bytes calldata data_) external override onlyOwner returns (bool) {
+        BoostClaimData memory boostClaimData = abi.decode(data_, (BoostClaimData));
+        uint256 signedAmount = abi.decode(boostClaimData.incentiveData, (uint256));
+        uint256 claimAmount;
+        if (!_isClaimable(claimTarget)) revert NotClaimable();
+
+        if (reward == 0) {
+            claimAmount = signedAmount;
+        } else {
+            // NOTE: this is assuming that the signed scalar is in ETH decimal format
+            claimAmount = reward * signedAmount / 1e18;
+        }
+        if (maxReward != 0 && claimAmount > maxReward) {
+            claimAmount = maxReward;
+        }
+
+        if (totalClaimed + claimAmount > limit) revert ClaimFailed();
+
+        totalClaimed += claimAmount;
+        asset.safeTransfer(claimTarget, claimAmount);
+
+        emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, claimAmount));
+        return true;
     }
 }

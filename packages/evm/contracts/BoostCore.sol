@@ -140,7 +140,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         // Setup the Boost components
         boost.action = AAction(_makeTarget(type(AAction).interfaceId, payload_.action, true));
         boost.allowList = AAllowList(_makeTarget(type(AAllowList).interfaceId, payload_.allowList, true));
-        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget);
+        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget, payload_.protocolFee);
         boost.validator = AValidator(
             payload_.validator.instance == address(0)
                 ? boost.action.supportsInterface(type(AValidator).interfaceId) ? address(boost.action) : address(0)
@@ -381,7 +381,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param targets_ The set of incentives {Target<AIncentive>[]}
     /// @param budget_ The ABudget from which to allocate the incentives
     /// @return newIncentives The set of initialized incentives {AIncentive[]}
-    function _makeIncentives(BoostLib.Target[] memory targets_, ABudget budget_)
+    function _makeIncentives(BoostLib.Target[] memory targets_, ABudget budget_, uint64 protocolFee_)
         internal
         returns (AIncentive[] memory newIncentives)
     {
@@ -401,7 +401,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             // Get the preflight data for the protocol fee and original disbursement
             bytes memory preflight = newIncentives[i].preflight(targets_[i].parameters);
             if (preflight.length != 0) {
-                (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight);
+                (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
                 // Protocol Fee disbursal
                 // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
                 if (!budget_.disburse(disbursal)) {
@@ -414,7 +414,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 // decode the preflight data to extract the transfer details
                 ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
                 _addIncentive(
-                    _boosts.length - 1, i, request.asset, feeAmount, request.assetType, targets_[i].parameters
+                    _boosts.length - 1,
+                    i,
+                    request.asset,
+                    feeAmount,
+                    protocolFee_,
+                    request.assetType,
+                    targets_[i].parameters
                 );
             }
 
@@ -427,16 +433,21 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Internal helper function to calculate the protocol fee and prepare the modified disbursal
     /// @param preflight The encoded data for the original disbursement
     /// @return The modified preflight data for the protocol fee disbursement
-    function _getFeeDisbursal(bytes memory preflight) internal view returns (bytes memory, uint256) {
+    function _getFeeDisbursal(bytes memory preflight, uint64 _protocolFee)
+        internal
+        view
+        returns (bytes memory, uint256)
+    {
         // Decode the preflight data to extract the transfer details
         ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
+        uint64 totalFee = _protocolFee + protocolFee;
 
         if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
             // Decode the fungible payload
             ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
 
             // Calculate the protocol fee based on BIPS
-            uint256 feeAmount = (payload.amount * protocolFee) / FEE_DENOMINATOR;
+            uint256 feeAmount = (payload.amount * totalFee) / FEE_DENOMINATOR;
 
             // Create a new fungible payload for the protocol fee
             ABudget.FungiblePayload memory feePayload = ABudget.FungiblePayload({amount: feeAmount});
@@ -452,7 +463,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
 
             // Calculate the protocol fee based on BIPS
-            uint256 feeAmount = (payload.amount * protocolFee) / FEE_DENOMINATOR;
+            uint256 feeAmount = (payload.amount * totalFee) / FEE_DENOMINATOR;
 
             // Create a new ERC1155 payload for the protocol fee
             ABudget.ERC1155Payload memory feePayload = ABudget.ERC1155Payload({
@@ -500,6 +511,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 incentiveId,
         address asset,
         uint256 totalProtocolFees,
+        uint256 additionalProtocolFee,
         ABudget.AssetType assetType,
         bytes memory extraData
     ) internal {
@@ -516,7 +528,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             assetType,
             asset,
             totalProtocolFees,
-            protocolFee, // We store the current protocol fee in case it changes in the future
+            protocolFee + additionalProtocolFee, // We store the current protocol fee in case it changes in the future
             tokenId
         );
 

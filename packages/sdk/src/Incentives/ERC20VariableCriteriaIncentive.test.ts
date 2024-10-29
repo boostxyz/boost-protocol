@@ -100,7 +100,6 @@ describe('ERC20VariableCriteriaIncentive', () => {
       asset: budgets.erc20.assertValidAddress(),
       reward: 1n,
       limit: 1n,
-      maxReward: 0n,
       criteria: basicErc721TransferScalarCriteria(erc721),
     });
 

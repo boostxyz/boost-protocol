@@ -58,7 +58,7 @@ export interface ERC20VariableCriteriaIncentivePayload {
    * @type {bigint}
    * @optional
    */
-  maxReward: bigint;
+  maxReward?: bigint;
   /**
    * The criteria for the incentive that determines how the reward is distributed.
    *
@@ -370,8 +370,8 @@ export function prepareERC20VariableCriteriaIncentivePayload({
         components: [
           { type: 'address', name: 'asset' },
           { type: 'uint256', name: 'reward' },
-          { type: 'uint256', name: 'maxReward' },
           { type: 'uint256', name: 'limit' },
+          { type: 'uint256', name: 'maxReward' },
           {
             type: 'tuple',
             name: 'criteria',

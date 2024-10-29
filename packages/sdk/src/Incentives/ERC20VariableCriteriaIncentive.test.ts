@@ -75,6 +75,7 @@ export function basicErc721TransferScalarPayload(
     asset: erc721.assertValidAddress(),
     reward: 1n,
     limit: 1n,
+    maxReward: 0n,
     criteria: basicErc721TransferScalarCriteria(erc721),
   };
 }
@@ -99,6 +100,7 @@ describe('ERC20VariableCriteriaIncentive', () => {
       asset: budgets.erc20.assertValidAddress(),
       reward: 1n,
       limit: 1n,
+      maxReward: 0n,
       criteria: basicErc721TransferScalarCriteria(erc721),
     });
 
@@ -145,6 +147,7 @@ describe('ERC20VariableCriteriaIncentive', () => {
         asset: budgets.erc20.assertValidAddress(),
         reward: 1n,
         limit: 1n,
+        maxReward: 0n,
         criteria: basicErc721MintScalarCriteria(erc721),
       });
 
@@ -175,6 +178,7 @@ describe('ERC20VariableCriteriaIncentive', () => {
         asset: budgets.erc20.assertValidAddress(),
         reward: 1n,
         limit: 1n,
+        maxReward: 0n,
         criteria: gasRebateCriteria,
       });
 

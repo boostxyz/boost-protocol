@@ -78,7 +78,7 @@ describe("BoostCore", () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const boost = await core.createBoost({
-      protocolFee: 1n,
+      protocolFee: 0n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -160,7 +160,7 @@ describe("BoostCore", () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const _boost = await core.createBoost({
-      protocolFee: 1n,
+      protocolFee: 0n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -188,7 +188,7 @@ describe("BoostCore", () => {
       ],
     });
     const boost = await core.readBoost(_boost.id);
-    expect(boost.protocolFee).toBe(1001n);
+    expect(boost.protocolFee).toBe(1000n);
     expect(boost.maxParticipants).toBe(100n);
     expect(boost.budget).toBe(_boost.budget.assertValidAddress());
     expect(boost.action).toBe(_boost.action.assertValidAddress());
@@ -203,7 +203,7 @@ describe("BoostCore", () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const _boost = await core.createBoost({
-      protocolFee: 1n,
+      protocolFee: 0n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -234,7 +234,7 @@ describe("BoostCore", () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
     const simulated = await core.simulateCreateBoost({
-      protocolFee: 1n,
+      protocolFee: 0n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -569,7 +569,7 @@ describe("BoostCore", () => {
     });
 
     await core.createBoost({
-      protocolFee: 1n,
+      protocolFee: 0n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(
@@ -730,7 +730,7 @@ describe("BoostCore", () => {
     core.subscribe(subscription, { pollingInterval: 100 });
     const { budget, erc20 } = budgets;
     await core.createBoost({
-      protocolFee: 1n,
+      protocolFee: 0n,
       maxParticipants: 100n,
       budget: budget,
       action: core.EventAction(

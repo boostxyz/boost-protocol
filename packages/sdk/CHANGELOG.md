@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.29
+
+### Patch Changes
+
+- 953fb62: fixes `DecodeLogTopicsMismatch` error
+
 ## 2.0.0-alpha.28
 
 ### Minor Changes

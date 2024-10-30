@@ -1,5 +1,12 @@
 # @boostxyz/evm
 
+## 2.0.0-alpha.25
+
+### Minor Changes
+
+- 8813e6d: [ADHOC] chore: deploy contracts to sepolia and base sepolia
+  Includes changes to variable criteria incentive for max rewards and core protocol fee handling
+
 ## 2.0.0-alpha.24
 
 ### Major Changes

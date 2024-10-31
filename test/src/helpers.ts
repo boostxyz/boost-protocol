@@ -24,7 +24,13 @@ import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/va
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { deployContract, simulateContract, writeContract } from '@wagmi/core';
-import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
+import {
+  type Abi,
+  type Address,
+  type Hex,
+  parseEther,
+  zeroAddress,
+} from 'viem';
 import {
   type ActionStep,
   AllowListIncentive,
@@ -46,8 +52,10 @@ import {
   // type ERC1155IncentivePayload,
   // SimpleBudget,
   // type SimpleBudgetPayload,
+  type Deployable,
   type DeployableOptions,
   type DeployablePayloadOrAddress,
+  DeployableTarget,
   ERC20Incentive,
   type ERC20IncentivePayload,
   ERC20VariableCriteriaIncentive,
@@ -110,7 +118,7 @@ export async function freshBoost(
   );
   return core.createBoost({
     protocolFee: options.protocolFee || 1n,
-    maxParticipants: options.protocolFee || 100n,
+    maxParticipants: options.maxParticipants || 100n,
     budget: options.budget || budget,
     action:
       options.action ||

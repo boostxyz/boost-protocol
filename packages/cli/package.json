@@ -45,12 +45,17 @@
     }
   },
   "scripts": {
-    "build": "vite build && tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "build": "vite build",
+    "check:ts": "tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
     "dev": "vite build --watch",
     "clean": "rm -rf dist"
   },
   "optionalDependencies": {
-    "@boostxyz/sdk": "workspace:*",
-    "@boostxyz/evm": "workspace:*"
+    "@boostxyz/evm": "workspace:*",
+    "@boostxyz/sdk": "workspace:*"
+  },
+  "dependencies": {
+    "viem": "2.21.16",
+    "zod": "3.23.8"
   }
 }

@@ -45,12 +45,19 @@ export enum RegistryType {
 
 /**
  * Enum encapsulating all the different cheat codes for criteria modules.
+ * An Event Action action step criteria with a `fieldIndex` set to `CheatCodes.ANY_ACTION_PARAM`, fieldType set to `PrimitiveType.BYTES`, and `filterType` set to `FilterType.EQUAL` will always return true when validating the field, regardless of inputs
+ * An Event Action `ActionClaimant` with a `fieldIndex` set to `CheatCodes.TX_SENDER_CLAIMANT`, will always validate with the sender of a given transaction.
+ *
+ *
  * @export
  * @enum {number}
  */
 export enum CheatCodes {
+  /* An Event Action action step criteria with a `fieldIndex` set to `CheatCodes.ANY_ACTION_PARAM`, fieldType set to `PrimitiveType.BYTES`, and `filterType` set to `FilterType.EQUAL` will always return true when validating the field, regardless of inputs */
   ANY_ACTION_PARAM = 255,
+  /* An Event Action `ActionClaimant` with a `fieldIndex` set to `CheatCodes.TX_SENDER_CLAIMANT`, will always validate with the sender of a given transaction. */
   TX_SENDER_CLAIMANT = 255,
+  /* For use with `ERC20VariableCriteriaIncentive`, if the criteria's `fieldIndex` is set to `CheatCodes.GAS_REBATE_INCENTIVE`, will claim an incentive amount equal to the transaction's gas used. */
   GAS_REBATE_INCENTIVE = 255,
 }
 

@@ -15,6 +15,7 @@ docs
 .boost
 
 **/.vscode
+**/boost_seeds
 
 # don't commit local testnet deploys
 packages/evm/deploys/31337.json

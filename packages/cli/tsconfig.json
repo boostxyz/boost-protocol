@@ -9,6 +9,7 @@
   "references": [
     {
       "path": "../evm"
-    }
+    },
+    { "path": "../../test" }
   ]
 }

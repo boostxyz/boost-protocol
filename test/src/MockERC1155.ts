@@ -1,8 +1,6 @@
 import {
   mockErc1155Abi,
-  simulateMockErc1155Burn,
   simulateMockErc1155Mint,
-  writeMockErc1155Burn,
   writeMockErc1155Mint,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC1155.json';

@@ -11,7 +11,6 @@ import { commands } from './index';
 import { type Options, envToObject, objectToEnv, validateJson } from './utils';
 
 type validCommands = keyof typeof commands;
-const validCommands = Object.keys(commands);
 
 const args = arg({
   '--help': Boolean,
@@ -26,21 +25,20 @@ const args = arg({
   '-v': '--version',
 });
 
-async function main() {
+async function main(): Promise<number | undefined> {
   const { _, ..._options } = args;
   const command = _.at(0) as validCommands;
   if (args['--version']) {
     console.log(version);
-    return;
+    return 0;
   }
   if (args['--help']) {
     console.log(help);
-    return;
+    return 0;
   }
   if (!command || !commands[command]) {
-    throw new Error(
-      `No valid command provided, valid commands are ${validCommands.join(', ')}`,
-    );
+    console.log(help);
+    return 127;
   }
   const options: Options = {
     help: _options['--help'],
@@ -118,7 +116,7 @@ async function main() {
 }
 
 main()
-  .then(() => process.exit(0))
+  .then((result = 0) => process.exit(result))
   .catch((e) => {
     console.error(e);
     process.exit(1);

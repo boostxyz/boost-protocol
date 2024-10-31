@@ -30,8 +30,8 @@ export default {
         return `${moduleDirectories[name] ? moduleDirectories[name] + '/' : ''}${name}.${module === 'es' ? 'js' : 'cjs'}`;
       },
     },
-  },
-  define: {
-    __DEFAULT_CHAIN_ID__: 31337,
+    define: {
+      __DEFAULT_CHAIN_ID__: 31337,
+    },
   },
 };

@@ -21,6 +21,8 @@ const args = arg({
   '--cacheDir': String,
   '--force': Boolean,
   '--format': String,
+  '--from': String,
+  '--generate-seed': String || Boolean,
   '-h': '--help',
   '-v': '--version',
 });
@@ -48,6 +50,8 @@ async function main(): Promise<number | undefined> {
     out: _options['--out'],
     cacheDir: _options['--cacheDir'],
     force: _options['--force'],
+    from: _options['--from'],
+    generateSeed: _options['--generate-seed'],
     format: _options['--format'] as Options['format'],
   };
   // Default format to .env syntax
@@ -70,7 +74,7 @@ async function main(): Promise<number | undefined> {
   }
 
   // cached result will either be stringified json, or env formatted string
-  let cachedResult = '';
+  let cachedResult;
   // if we're forcing, always run command, otherwise try to read
   if (options.force) {
     cachedResult = await runCommandAndFormat();
@@ -95,7 +99,7 @@ async function main(): Promise<number | undefined> {
   }
 
   // if for some reason there's no cached result, throw
-  if (!cachedResult) {
+  if (typeof cachedResult == undefined) {
     throw new Error(
       `No result found after cache and command operations. This shouldn't happen.`,
     );

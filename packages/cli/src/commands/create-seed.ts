@@ -44,24 +44,34 @@ import {
   zeroAddress,
 } from 'viem';
 import { type ZodType, type ZodTypeDef, z } from 'zod';
-import type { Command } from '../utils';
+import type { Command, Options } from '../utils';
 export type SeedResult = {
-  success: boolean;
+  success?: boolean;
 };
-export const seed: Command<SeedResult> = async function seed() {
+export const seed: Command<SeedResult> = async function seed({
+  from,
+  generateSeed,
+}: Options) {
+  if (!from || generateSeed) {
+    const seedLocation = generateSeed ?? './boost_seeds/defaultSeed.json';
+    console.warn(
+      'writing default seed file to: ',
+      path.join(process.cwd(), seedLocation),
+    );
+    await fs.mkdir(path.dirname(seedLocation), { recursive: true });
+    await fs.writeFile(
+      seedLocation,
+      JSON.stringify(defaultBoostConfig, bigintReplacer, 2),
+    );
+    return {};
+  }
+
+  const parseResult = await getSeed(from);
+
   const fixtures = await deployFixtures(defaultOptions)();
   const { budget } = await fundBudget(defaultOptions, fixtures);
 
-  /*
-    TODO
-    1. implement onboarding that generates default config
-    2. implement --config flag that pulls the config
-    3. route actions to the correct constructor
-    4. fix signatures to parse out hex from abi items
-  */
-
-  const parseResult = zBoostConfigSeed.parse(defaultBoostConfig);
-  console.log({ parseResult, accounts });
+  console.log({ parseResult });
   await fixtures.core.createBoost({
     protocolFee: parseResult.protocolFee,
     maxParticipants: parseResult.maxParticipants,
@@ -72,13 +82,18 @@ export const seed: Command<SeedResult> = async function seed() {
     incentives: [],
   });
 
-  // await fs.mkdir("./boost_seeds", {recursive: true})
-  // await fs.writeFile("./boost_seeds/defaultSeed.json", JSON.stringify(defaultBoostConfig, bigintReplacer, 2))
-
   return {
     success: true,
   };
 };
+
+async function getSeed(seedPath: string) {
+  const unparsedPayload = await fs.readFile(path.normalize(seedPath), {
+    encoding: 'utf8',
+  });
+
+  return zBoostConfigSeed.parse(JSON.parse(unparsedPayload));
+}
 
 const defaultBoostConfig: BoostConfig = {
   protocolFee: 12n,

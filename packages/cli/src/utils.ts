@@ -7,6 +7,8 @@ export type Options = {
   cacheDir?: string;
   force?: boolean;
   format?: 'env' | 'json';
+  from?: string;
+  generateSeed?: string;
 };
 
 export type Command<T extends Record<string, unknown> = {}> = (

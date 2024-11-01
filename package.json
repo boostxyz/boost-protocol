@@ -24,7 +24,7 @@
     "test:ci": "turbo run test:ci"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.8.1",
+    "@biomejs/biome": "1.9.4",
     "@boostxyz/cli": "workspace:*",
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.8",

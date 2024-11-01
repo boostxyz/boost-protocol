@@ -22,7 +22,8 @@ const args = arg({
   '--force': Boolean,
   '--format': String,
   '--from': String,
-  '--generate-seed': String || Boolean,
+  '--generate-seed': String,
+  '--generate-erc20': Boolean,
   '-h': '--help',
   '-v': '--version',
 });
@@ -52,6 +53,7 @@ async function main(): Promise<number | undefined> {
     force: _options['--force'],
     from: _options['--from'],
     generateSeed: _options['--generate-seed'],
+    generateERC20: _options['--generate-erc20'],
     format: _options['--format'] as Options['format'],
   };
   // Default format to .env syntax
@@ -106,8 +108,8 @@ async function main(): Promise<number | undefined> {
   }
 
   // Cache result
-  await fs.mkdir(cacheDir, { recursive: true });
-  await fs.writeFile(cachedResultPath, cachedResult, { encoding: 'utf8' });
+  //await fs.mkdir(cacheDir, { recursive: true });
+  //await fs.writeFile(cachedResultPath, cachedResult, { encoding: 'utf8' });
 
   // If specifying an outfile
   if (options.out) {

@@ -9,6 +9,7 @@ export type Options = {
   format?: 'env' | 'json';
   from?: string;
   generateSeed?: string;
+  generateERC20?: boolean;
 };
 
 export type Command<T extends Record<string, unknown> = {}> = (

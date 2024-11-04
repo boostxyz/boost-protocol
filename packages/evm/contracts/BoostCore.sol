@@ -87,7 +87,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     address private constant ZERO_ADDRESS = address(0);
 
     // @notice The set of incentives for the Boost
-    mapping(bytes32 => IncentiveDisbursalInfo) public incentives;
+    mapping(bytes32 => IncentiveDisbursalInfo) public incentivesFeeInfo;
 
     modifier canCreateBoost(address sender) {
         if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
@@ -190,7 +190,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     ) public payable nonReentrant {
         BoostLib.Boost storage boost = _boosts[boostId_];
         bytes32 key = _generateKey(boostId_, incentiveId_);
-        IncentiveDisbursalInfo storage incentive = incentives[key];
+        IncentiveDisbursalInfo storage incentive = incentivesFeeInfo[key];
 
         // Validate the claimant against the allow list and the validator
         if (!boost.allowList.isAllowed(claimant, data_)) revert BoostError.Unauthorized();
@@ -239,8 +239,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice Get the incentives for a Boost
     /// @param key The key composed of the Boost ID and the Incentive ID - keccak256(abi.encodePacked(boostId, incentiveId))
-    function getIncentive(bytes32 key) external view returns (IncentiveDisbursalInfo memory) {
-        return incentives[key];
+    function getIncentiveFeesInfo(bytes32 key) external view returns (IncentiveDisbursalInfo memory) {
+        return incentivesFeeInfo[key];
     }
 
     /// @notice Returns the protocol fee and any remaining incentive value to the owner or budget
@@ -258,7 +258,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         // Generate the unique key for the incentive
         bytes32 key = _generateKey(boostId, incentiveId);
-        IncentiveDisbursalInfo storage incentive = incentives[key];
+        IncentiveDisbursalInfo storage incentive = incentivesFeeInfo[key];
 
         // Decode the data for clawback
         AIncentive.ClawbackPayload memory claim_ = abi.decode(data_, (AIncentive.ClawbackPayload));
@@ -295,7 +295,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     function settleProtocolFees(uint256 boostId, uint256 incentiveId) external nonReentrant {
         // Generate the unique key for the incentive
         bytes32 key = _generateKey(boostId, incentiveId);
-        IncentiveDisbursalInfo storage incentive = incentives[key];
+        IncentiveDisbursalInfo storage incentive = incentivesFeeInfo[key];
 
         // Get the expected balance based on protocolFeesRemaining and the specific incentive.protocolFee
         uint256 expectedFeeBalance = (incentive.protocolFeesRemaining * FEE_DENOMINATOR) / incentive.protocolFee;
@@ -529,7 +529,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             tokenId
         );
 
-        incentives[_generateKey(boostId, incentiveId)] = info;
+        incentivesFeeInfo[_generateKey(boostId, incentiveId)] = info;
     }
 
     // Helper function to get the balance of the asset depending on its type

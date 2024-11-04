@@ -84,15 +84,19 @@ export const seed: Command<SeedResult> = async function seed({
   const parseResult = await getSeed(from);
 
   const fixtures = await deployFixtures(defaultOptions)();
+
   const { budget } = await fundBudget(
     defaultOptions,
     fixtures,
     new MockERC20(defaultOptions, parseResult.asset),
   );
 
-  const incentives = parseResult.incentives.map((incentive) =>
-    fixtures.core.ERC20Incentive(incentive),
-  );
+  const incentivePromises = parseResult.incentives.map(async (incentive) => {
+    await fundBudgetForIncentive(fixtures, budget, incentive);
+    return fixtures.core.ERC20Incentive(incentive);
+  });
+
+  const incentives = await Promise.all(incentivePromises);
 
   await fixtures.core.createBoost({
     protocolFee: parseResult.protocolFee,
@@ -108,6 +112,23 @@ export const seed: Command<SeedResult> = async function seed({
     success: true,
   };
 };
+
+async function fundBudgetForIncentive(
+  fixtures: Fixtures,
+  budget: Budget,
+  { asset, limit }: { asset?: Address; limit?: bigint },
+) {
+  if (asset && limit) {
+    let erc20 = new MockERC20(defaultOptions, asset);
+    await fundBudget(
+      defaultOptions,
+      fixtures,
+      erc20,
+      budget,
+      parseEther(limit.toString()),
+    );
+  }
+}
 
 async function getSeed(seedPath: string) {
   const unparsedPayload = await fs.readFile(path.normalize(seedPath), {
@@ -338,26 +359,16 @@ async function fundBudget(
   fixtures: Fixtures,
   erc20: MockERC20,
   budget?: Budget,
-  amount = 110n,
+  amount = parseEther('110'),
 ) {
   if (!budget) budget = await freshManagedBudget(options, fixtures)();
-  await fundErc20(options, erc20, [], parseEther(amount.toString()))();
+  //await fundErc20(options, erc20, [], parseEther(amount.toString()))();
+  console.log(`minting ${amount} to ${options.account.address}`);
+  await erc20.mint(options.account.address, amount);
 
-  await budget.allocate(
-    {
-      amount: parseEther('1.0'),
-      asset: zeroAddress,
-      target: options.account.address,
-    },
-    { value: parseEther('1.0') },
-  );
-
-  await erc20.approve(
-    budget.assertValidAddress(),
-    parseEther(amount.toString()),
-  );
+  await erc20.approve(budget.assertValidAddress(), amount);
   await budget.allocate({
-    amount: parseEther(amount.toString()),
+    amount,
     asset: erc20.assertValidAddress(),
     target: options.account.address,
   });

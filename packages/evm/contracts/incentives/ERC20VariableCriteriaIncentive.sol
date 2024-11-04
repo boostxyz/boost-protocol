@@ -23,7 +23,6 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
     /// @notice Initialize the ERC20VariableCriteriaIncentive with IncentiveCriteria
     /// @param data_ The encoded initialization data `(address asset, uint256 reward, uint256 limit, IncentiveCriteria criteria)`
     function initialize(bytes calldata data_) public override initializer {
-        _initializeOwner(msg.sender);
         InitPayloadExtended memory init_ = abi.decode(data_, (InitPayloadExtended));
 
         address asset_ = init_.asset;
@@ -47,6 +46,7 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
         incentiveCriteria = criteria_;
 
         _initializeOwner(msg.sender);
+        _setRoles(msg.sender, MANAGER_ROLE);
     }
 
     /// @notice Returns the incentive criteria

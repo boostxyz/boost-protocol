@@ -61,11 +61,11 @@ import {
   type LimitedSignerValidatorPayload,
   ManagedBudget,
   type ManagedBudgetPayload,
-  ManagedBudgetRoles,
   OpenAllowList,
   PointsIncentive,
   type PointsIncentivePayload,
   PrimitiveType,
+  Roles,
   SignatureType,
   SignerValidator,
   type SignerValidatorPayload,
@@ -779,7 +779,7 @@ export function freshManagedBudget(
           options.account.address,
           fixtures.core.assertValidAddress(),
         ],
-        roles: [ManagedBudgetRoles.ADMIN, ManagedBudgetRoles.MANAGER],
+        roles: [Roles.ADMIN, Roles.MANAGER],
       }),
     );
   };

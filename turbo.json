@@ -18,8 +18,13 @@
         "deploys/**"
       ]
     },
-    "signatures#build": {
+    "@boostxyz/signatures#build": {
       "inputs": ["manifests"],
+      "outputs": ["dist/**"]
+    },
+    "@boostxyz/sdk#build": {
+      "dependsOn": ["^build", "@boostxyz/evm#build"],
+      "inputs": [".env", "src"],
       "outputs": ["dist/**"]
     },
     "lint:ci": {},

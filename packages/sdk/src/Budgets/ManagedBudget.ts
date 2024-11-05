@@ -28,7 +28,10 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableTargetWithRBAC } from '../Deployable/DeployableTargetWithRBAC';
+import {
+  DeployableTargetWithRBAC,
+  type Roles,
+} from '../Deployable/DeployableTargetWithRBAC';
 import {
   DeployableUnknownOwnerProvidedError,
   UnknownTransferPayloadSupplied,
@@ -71,9 +74,9 @@ export interface ManagedBudgetPayload {
   /**
    * List of roles to assign to the corresponding account by index.
    *
-   * @type {ManagedBudgetRoles[]}
+   * @type {Roles[]}
    */
-  roles: ManagedBudgetRoles[];
+  roles: Roles[];
 }
 
 /**
@@ -81,6 +84,7 @@ export interface ManagedBudgetPayload {
  * `MANAGER` can disburse funds.
  * `ADMIN` can additionally manage authorized users on the budget.
  *
+ * @deprecated use {@link Roles} instead
  * @export
  * @type {{ readonly MANAGER: 1n; readonly ADMIN_ROLE: 2n; }}
  * @enum {bigint}

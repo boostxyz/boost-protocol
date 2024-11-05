@@ -17,13 +17,12 @@ const args = arg({
   '--version': Boolean,
   '--chain': String,
   '--privateKey': String,
+  '--mnemonic': String,
   '--out': String,
   '--cacheDir': String,
   '--force': Boolean,
   '--format': String,
   '--from': String,
-  '--generate-seed': String,
-  '--generate-erc20': Boolean,
   '-h': '--help',
   '-v': '--version',
 });
@@ -48,12 +47,10 @@ async function main(): Promise<number | undefined> {
     version: _options['--version'],
     chain: _options['--chain'],
     privateKey: _options['--privateKey'],
+    mnemonic: _options['--mnemonic'],
     out: _options['--out'],
     cacheDir: _options['--cacheDir'],
     force: _options['--force'],
-    from: _options['--from'],
-    generateSeed: _options['--generate-seed'],
-    generateERC20: _options['--generate-erc20'],
     format: _options['--format'] as Options['format'],
   };
   // Default format to .env syntax
@@ -64,12 +61,12 @@ async function main(): Promise<number | undefined> {
     ? path.resolve(process.cwd(), options.cacheDir)
     : options.cacheDir || path.resolve(process.cwd(), './.boost');
   // Build a cache key resembling - 'deploy-v0-0-mainnet-00000'
-  const cacheKey = `${command}-v${sdkVersion.split('.').slice(0, 2).join('-')}-${options.chain}-${options.privateKey?.slice(options.privateKey.length - 5)}`;
+  const cacheKey = `${_.join('-')}-v${sdkVersion.split('.').slice(0, 2).join('-')}-${options.chain}-${options?.privateKey ? options.privateKey?.slice(options.privateKey.length - 5) : options.mnemonic?.split(' ').at(-1) || ''}`;
   const cachedResultPath = path.resolve(cacheDir, cacheKey);
 
   // run command and format result for cache
   async function runCommandAndFormat() {
-    const result = await commands[command](options);
+    const result = await commands[command](_.slice(1), options);
     return options.format === 'env'
       ? objectToEnv(result)
       : JSON.stringify(result, null, 2);

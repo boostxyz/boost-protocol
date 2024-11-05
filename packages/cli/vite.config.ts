@@ -7,11 +7,11 @@ const moduleDirectories = Object.keys(packageJson.exports).reduce(
     // remove .
     parts.shift();
     // get the module's name
-    const mod = parts.pop();
+    const mod = parts.pop()!;
     acc[mod] = parts.join('/');
     return acc;
   },
-  {},
+  {} as Record<string, string>,
 );
 
 /** @type {import('vite').UserConfig} */
@@ -19,12 +19,12 @@ export default {
   build: {
     minify: true,
     rollupOptions: {
-      external: [/node/],
+      external: [/node/, /^@boostxyz\/sdk/],
     },
     lib: {
       entry: Object.values(packageJson.exports),
       name: 'BoostCLI',
-      fileName: (module, name) => {
+      fileName: (module: 'es' | 'cjs', name: string) => {
         if (name === 'index')
           return `${name}.${module === 'es' ? 'js' : 'cjs'}`;
         return `${moduleDirectories[name] ? moduleDirectories[name] + '/' : ''}${name}.${module === 'es' ? 'js' : 'cjs'}`;

@@ -4,8 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-pnpmfileChecksum: fy4ej3egygltgc2fqpazuwwtfi
-
 importers:
 
   .:
@@ -206,9 +204,6 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@boostxyz/evm':
-        specifier: workspace:*
-        version: link:../evm
       '@wagmi/core':
         specifier: 2.x
         version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.2)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.2)(utf-8-validate@6.0.4)(zod@3.23.8))

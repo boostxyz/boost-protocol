@@ -1,5 +1,15 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.31
+
+### Minor Changes
+
+- 95240eb: deprecate ManagedBudgetRoles enum for RBAC Roles
+
+### Patch Changes
+
+- 5473021: remove evm as optional dependency
+
 ## 2.0.0-alpha.30
 
 ## 2.0.0-alpha.29

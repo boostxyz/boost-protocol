@@ -324,19 +324,19 @@ export class BoostCore extends Deployable<
   /**
    * Create a new Boost.
    *
+   *
    * @public
    * @async
    * @param {CreateBoostPayload} _boostPayload
-   * @param {?DeployableOptions} [_params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<Boost>}
    */
   public async createBoost(
     _boostPayload: CreateBoostPayload,
-    _params?: DeployableOptions &
-      WriteParams<typeof boostCoreAbi, 'createBoost'>,
+    _params?: WriteParams<typeof boostCoreAbi, 'createBoost'>,
   ) {
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload, _params);
+      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
     const desiredChainId = _params?.chain?.id || _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,
@@ -398,16 +398,15 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {CreateBoostPayload} _boostPayload
-   * @param {?DeployableOptions} [_params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<SimulateContractReturnType>}
    */
   public async simulateCreateBoost(
     _boostPayload: CreateBoostPayload,
-    _params?: DeployableOptions &
-      WriteParams<typeof boostCoreAbi, 'createBoost'>,
+    _params?: WriteParams<typeof boostCoreAbi, 'createBoost'>,
   ) {
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload, _params);
+      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
     const desiredChainId = _params?.chain?.id || _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,

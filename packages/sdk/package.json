@@ -225,9 +225,6 @@
   "dependencies": {
     "ts-pattern": "5.4.0"
   },
-  "optionalDependencies": {
-    "@boostxyz/evm": "workspace:*"
-  },
   "peerDependencies": {
     "@wagmi/core": "2.x",
     "abitype": "1",

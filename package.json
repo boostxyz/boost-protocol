@@ -36,6 +36,7 @@
     "@types/node": "^20.16.10",
     "@vitest/coverage-v8": "^2.1.1",
     "@wagmi/core": "2.13.8",
+    "abitype": "^1.0.6",
     "arg": "^5.0.2",
     "danger": "^12.3.3",
     "dotenv": "16.4.5",
@@ -50,6 +51,7 @@
     "typescript": "^5.6.2",
     "viem": "2.21.16",
     "vite": "^5.4.8",
-    "vitest": "^2.1.1"
+    "vitest": "^2.1.1",
+    "zod": "3.23.8"
   }
 }

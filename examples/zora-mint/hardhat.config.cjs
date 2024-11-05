@@ -9,6 +9,7 @@ module.exports = {
         url:
           'https://base-mainnet.g.alchemy.com/v2/' +
           process.env.VITE_ALCHEMY_API_KEY,
+        blockNumber: 17519193,
       },
     },
   },

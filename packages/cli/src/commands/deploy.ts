@@ -41,11 +41,13 @@ import {
   publicActions,
   walletActions,
 } from 'viem';
-import { type Address, privateKeyToAccount } from 'viem/accounts';
-import * as _chains from 'viem/chains';
-import type { Command } from '../utils';
+import {
+  type Address,
+  mnemonicToAccount,
+  privateKeyToAccount,
+} from 'viem/accounts';
 
-const chains = _chains as Record<string, _chains.Chain>;
+import { Chains, type Command, getDeployableOptions } from '../utils';
 
 export type DeployResult = {
   BOOST_CORE_ADDRESS: string;
@@ -68,45 +70,28 @@ export type DeployResult = {
   LIMITED_SIGNER_VALIDATOR_BASE: string;
 };
 
-export const deploy: Command<DeployResult> = async function deploy(opts) {
+export const deploy: Command<DeployResult> = async function deploy(
+  _positionals,
+  opts,
+) {
   const privateKey = opts.privateKey,
+    mnemonic = opts.mnemonic,
     _chain = opts.chain;
-  if (!privateKey)
-    throw new Error('Must provide `--privateKey` to deploy contracts');
-  if (!_chain || !chains[_chain])
+  if (!privateKey && !mnemonic)
+    throw new Error(
+      'Must provide `--privateKey` or `--mnemonic` to deploy contracts',
+    );
+  if (!_chain || !Chains[_chain])
     throw new Error(
       `Must provide valid \`--chain\` to specify target deployment chain, valid chains are ${Object.keys(chains)}`,
     );
-  const chain = chains[_chain];
 
-  const account = privateKeyToAccount(privateKey as Hex);
-  let client: Client;
-  if (chain === chains.hardhat || chain === chains.anvil) {
-    client = createTestClient({
-      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
-      chain: chain,
-      mode: chain === chains.hardhat ? 'hardhat' : 'anvil',
-      account,
-      key: privateKey,
-    })
-      .extend(publicActions)
-      .extend(walletActions);
-  } else {
-    client = createWalletClient({
-      account,
-      chain,
-      transport: http(),
-    }).extend(publicActions);
-  }
-  const config = createConfig({
-    // biome-ignore lint/style/noNonNullAssertion: Chain is checked above, false error
-    chains: [chain!],
-    // biome-ignore lint/suspicious/noExplicitAny: Client will not be undefined
-    client: () => client as any,
+  const [options, chain] = getDeployableOptions({
+    chain: _chain,
+    privateKey,
+    mnemonic,
   });
-
-  const options: DeployableOptions = { config, account };
-
+  const { config, account } = options;
   const chainId = chain!.id!;
 
   const _registry = await (

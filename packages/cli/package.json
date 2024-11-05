@@ -15,35 +15,34 @@
   "bin": {
     "boost": "dist/cli.js"
   },
+  "access": "public",
   "exports": {
-    ".": "./src/index.ts",
-    "./cli": "./src/cli.ts",
-    "./commands/deploy": "./src/commands/deploy.ts"
-  },
-  "license": "GPL-3.0-or-later",
-  "publishConfig": {
-    "access": "public",
-    "exports": {
-      ".": {
-        "require": "./dist/index.cjs",
-        "import": "./dist/index.js",
-        "node": "./dist/index.js",
-        "types": "./dist/index.d.ts"
-      },
-      "./cli": {
-        "require": "./dist/cli.cjs",
-        "import": "./dist/cli.js",
-        "node": "./dist/cli.js",
-        "types": "./dist/cli.d.ts"
-      },
-      "./commands/deploy": {
-        "require": "./dist/commands/deploy.cjs",
-        "import": "./dist/commands/deploy.js",
-        "node": "./dist/commands/deploy.js",
-        "types": "./dist/commands/deploy.d.ts"
-      }
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "node": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "require": "./dist/cli.cjs",
+      "import": "./dist/cli.js",
+      "node": "./dist/cli.js",
+      "types": "./dist/cli.d.ts"
+    },
+    "./commands/deploy": {
+      "require": "./dist/commands/deploy.cjs",
+      "import": "./dist/commands/deploy.js",
+      "node": "./dist/commands/deploy.js",
+      "types": "./dist/commands/deploy.d.ts"
+    },
+    "./commands/seed": {
+      "require": "./dist/commands/seed.cjs",
+      "import": "./dist/commands/seed.js",
+      "node": "./dist/commands/seed.js",
+      "types": "./dist/commands/seed.d.ts"
     }
   },
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "vite build",
     "check:ts": "tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
@@ -51,11 +50,9 @@
     "clean": "rm -rf dist"
   },
   "optionalDependencies": {
-    "@boostxyz/evm": "workspace:*",
-    "@boostxyz/sdk": "workspace:*"
+    "@boostxyz/sdk": "*"
   },
   "dependencies": {
-    "viem": "2.21.16",
-    "zod": "3.23.8"
+    "@inquirer/prompts": "^7.0.1"
   }
 }

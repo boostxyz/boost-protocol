@@ -45,8 +45,12 @@ export async function setup({}: GlobalSetupContext) {
   if (pids.length)
     console.log('hardhat process already running, not starting a new one');
   else {
-    proc = await createHardhatProcess();
-    console.log('hardhat started successfully');
+    try {
+      proc = await createHardhatProcess();
+      console.log('hardhat started successfully');
+    } catch (_e) {
+      console.warn('hardhat may already be running');
+    }
   }
 
   return function () {

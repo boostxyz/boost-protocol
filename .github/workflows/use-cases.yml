@@ -10,7 +10,6 @@ jobs:
     timeout-minutes: 15
     env:
       VITE_ALCHEMY_API_KEY: ${{ secrets.VITE_ALCHEMY_API_KEY }}
-      HARDHAT_KEEPALIVE: 'true'
 
     steps:
       - name: Checkout
@@ -32,4 +31,4 @@ jobs:
           file_name: .env
 
       - name: Run tests
-        run: npx hardhat node & npx turbo test:ci --cache-dir=".cache" --concurrency=1 --filter="./examples/*"; kill $(lsof -t -i:8545) || true; exit ${PIPESTATUS[0]}
+        run: npx turbo test:ci --cache-dir=".cache" --concurrency=1 --filter="./examples/*"

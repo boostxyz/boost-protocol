@@ -69,6 +69,9 @@ describe("Boost with ENS Registration Incentive", () => {
     .extend(walletActions);
 
   beforeAll(async () => {
+    console.log(
+      await walletClient.getBalance({ address: trustedSigner.account }),
+    );
     await walletClient.reset({
       jsonRpcUrl: CHAIN_URL,
       blockNumber: CHAIN_BLOCK,
@@ -115,8 +118,7 @@ describe("Boost with ENS Registration Incentive", () => {
 
     // Create the boost using the custom EventAction
     await core.createBoost({
-      protocolFee: 250n,
-      maxParticipants: 100n,
+      maxParticipants: 10n,
       budget: budget,
       action: eventAction,
       validator: core.SignerValidator({

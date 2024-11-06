@@ -6,7 +6,11 @@ import {
   writeEventActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
-import { getTransaction, getTransactionReceipt } from '@wagmi/core';
+import {
+  type GetTransactionParameters,
+  getTransaction,
+  getTransactionReceipt,
+} from '@wagmi/core';
 import { match } from 'ts-pattern';
 import {
   type AbiEvent,
@@ -15,7 +19,6 @@ import {
   type Address,
   type ContractFunctionName,
   type GetLogsReturnType,
-  type GetTransactionParameters,
   type Hex,
   type Log,
   type Transaction,

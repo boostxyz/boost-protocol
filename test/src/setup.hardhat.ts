@@ -52,7 +52,7 @@ function createHardhatProcess(): Promise<ChildProcessWithoutNullStreams> {
   });
 }
 
-export async function setup({}: GlobalSetupContext) {
+export async function setup() {
   const pids = await findProcess('port', 8545);
   let proc: ChildProcessWithoutNullStreams;
   if (pids.length)

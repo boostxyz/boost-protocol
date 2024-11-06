@@ -615,7 +615,7 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {bigint} boostId
-   * @param {bigint} incentiveId
+   * @param {bigint | number} incentiveId - Will be converted to bigint if given a number
    * @param {Address} address
    * @param {Hex} data
    * @param {?WriteParams} [params]
@@ -623,13 +623,19 @@ export class BoostCore extends Deployable<
    */
   public async claimIncentive(
     boostId: bigint,
-    incentiveId: bigint,
+    incentiveId: bigint | number,
     address: Address,
     data: Hex,
     params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
   ) {
     return await this.awaitResult(
-      this.claimIncentiveRaw(boostId, incentiveId, address, data, params),
+      this.claimIncentiveRaw(
+        boostId,
+        BigInt(incentiveId),
+        address,
+        data,
+        params,
+      ),
     );
   }
 
@@ -676,7 +682,7 @@ export class BoostCore extends Deployable<
    * @public
    * @async
    * @param {bigint} boostId
-   * @param {bigint} incentiveId
+   * @param {bigint} incentiveId - Will be converted to bigint if given a number
    * @param {Address} referrer
    * @param {Hex} data
    * @param {Address} claimant
@@ -685,7 +691,7 @@ export class BoostCore extends Deployable<
    */
   public async claimIncentiveFor(
     boostId: bigint,
-    incentiveId: bigint,
+    incentiveId: bigint | number,
     referrer: Address,
     data: Hex,
     claimant: Address,
@@ -694,7 +700,7 @@ export class BoostCore extends Deployable<
     return await this.awaitResult(
       this.claimIncentiveForRaw(
         boostId,
-        incentiveId,
+        BigInt(incentiveId),
         referrer,
         data,
         claimant,

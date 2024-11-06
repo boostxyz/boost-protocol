@@ -113,7 +113,6 @@ describe("Boost with Delegate Action Incentive", () => {
     const eventAction = core.EventAction(eventActionPayload);
     // Create the boost using the custom EventAction
     await core.createBoost({
-      protocolFee: 250n,
       maxParticipants: 10n,
       budget: budget, // Use the ManagedBudget
       action: eventAction, // Pass the manually created EventAction

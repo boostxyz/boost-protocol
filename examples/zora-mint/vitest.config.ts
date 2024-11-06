@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     fileParallelism: false,
     env: loadEnv('', process.cwd(), ''),
-    globalSetup: process.env.CI ? [] : ['../../test/src/setup.hardhat.ts'],
+    globalSetup: ['../../test/src/setup.hardhat.ts'],
     hookTimeout: 30_000,
     testTimeout: 30_000,
   },

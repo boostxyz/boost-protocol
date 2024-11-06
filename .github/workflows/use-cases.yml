@@ -10,6 +10,7 @@ jobs:
     timeout-minutes: 15
     env:
       VITE_ALCHEMY_API_KEY: ${{ secrets.VITE_ALCHEMY_API_KEY }}
+      HARDHAT_KEEPALIVE: true
 
     steps:
       - name: Checkout

@@ -114,7 +114,7 @@ describe("Boost with Delegate Action Incentive", () => {
     // Create the boost using the custom EventAction
     await core.createBoost({
       protocolFee: 250n,
-      maxParticipants: 100n,
+      maxParticipants: 10n,
       budget: budget, // Use the ManagedBudget
       action: eventAction, // Pass the manually created EventAction
       validator: core.SignerValidator({

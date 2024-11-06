@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "test": "npx vitest",
-    "test:ci": "npx hardhat node & CI=true npx vitest; kill $(lsof -t -i:8545) || true; exit $(PIPESTATUS[0])"
+    "test:ci": "npx hardhat node & CI=true npx vitest; kill $(lsof -t -i:8545) || true; exit ${PIPESTATUS[0]}"
   },
   "author": "",
   "license": "ISC",

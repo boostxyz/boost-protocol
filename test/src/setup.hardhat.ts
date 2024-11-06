@@ -25,8 +25,7 @@ function createHardhatProcess(): Promise<ChildProcessWithoutNullStreams> {
     const hardhatProcess = spawn('npx', ['hardhat', 'node']);
 
     hardhatProcess.stdout.on('data', (d) => {
-      console.log(d);
-      if (d.includes('WARNING')) {
+      if (d.toString().includes('WARNING')) {
         resolve(hardhatProcess);
       }
     });

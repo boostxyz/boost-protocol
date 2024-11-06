@@ -24,8 +24,11 @@ function createHardhatProcess(): Promise<ChildProcessWithoutNullStreams> {
   return new Promise((resolve, reject) => {
     const hardhatProcess = spawn('npx', ['hardhat', 'node']);
 
-    hardhatProcess.stdout.on('data', () => {
-      resolve(hardhatProcess);
+    hardhatProcess.stdout.on('data', (d) => {
+      console.log(d);
+      if (d.includes('WARNING')) {
+        resolve(hardhatProcess);
+      }
     });
 
     hardhatProcess.stderr.on('data', (data) => {
@@ -54,7 +57,7 @@ export async function setup({}: GlobalSetupContext) {
   }
 
   return function () {
-    if (!process.env.HARDHAT_KEEPALIVE && proc && !proc.killed) {
+    if (proc && !proc.killed) {
       proc.kill();
     }
   };

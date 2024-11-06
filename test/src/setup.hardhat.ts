@@ -24,20 +24,31 @@ function createHardhatProcess(): Promise<ChildProcessWithoutNullStreams> {
   return new Promise((resolve, reject) => {
     const hardhatProcess = spawn('npx', ['hardhat', 'node']);
 
-    hardhatProcess.stdout.on('data', (d) => {
+    function onData(d) {
       if (d.toString().includes('WARNING')) {
+        cleanup();
         resolve(hardhatProcess);
       }
-    });
+    }
 
-    hardhatProcess.stderr.on('data', (data) => {
-      console.error('stderr', data.toString());
-      reject(data);
-    });
+    function onError(d) {
+      cleanup();
+      reject(d);
+    }
 
-    hardhatProcess.on('close', () => {
+    function onClose() {
+      cleanup();
       console.log(`hardhat process closed`);
-    });
+    }
+
+    function cleanup() {
+      hardhatProcess.stdout.off('data', onData);
+      hardhatProcess.stderr.off('data', onError);
+    }
+
+    hardhatProcess.stdout.on('data', onData);
+    hardhatProcess.stderr.on('data', onError);
+    hardhatProcess.on('close', onClose);
   });
 }
 

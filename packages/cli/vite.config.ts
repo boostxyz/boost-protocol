@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import packageJson from './package.json';
 
 const moduleDirectories = Object.keys(packageJson.exports).reduce(
@@ -22,7 +23,9 @@ export default {
       external: [/node/, /^@boostxyz\/sdk/],
     },
     lib: {
-      entry: Object.values(packageJson.exports),
+      entry: Object.keys(packageJson.exports)
+        .filter((exportName) => !exportName.endsWith('.json'))
+        .map((mod) => resolve('./src', `${mod === '.' ? 'index' : mod}.ts`)),
       name: 'BoostCLI',
       fileName: (module: 'es' | 'cjs', name: string) => {
         if (name === 'index')

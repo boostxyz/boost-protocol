@@ -20,6 +20,7 @@ export type Options = {
   chain?: string;
   privateKey?: string;
   mnemonic?: string;
+  rpcUrl?: string;
   out?: string;
   cacheDir?: string;
   force?: boolean;
@@ -65,12 +66,16 @@ export function getDeployableOptions({
   chain: _chain,
   privateKey,
   mnemonic,
+  rpcUrl,
 }: {
   chain: string;
   privateKey?: string;
   mnemonic?: string;
+  rpcUrl?: string;
 }) {
   const chain = Chains[_chain];
+
+  if (!chain) throw new Error(`No matching chain for ${chain}`);
 
   const account = privateKey
     ? privateKeyToAccount(privateKey as Hex)
@@ -78,7 +83,7 @@ export function getDeployableOptions({
   let client: Client;
   if (chain === Chains.hardhat || chain === Chains.anvil) {
     client = createTestClient({
-      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
+      transport: http(rpcUrl ?? 'http://127.0.0.1:8545', { retryCount: 0 }),
       chain: chain,
       mode: chain === Chains.hardhat ? 'hardhat' : 'anvil',
       account,
@@ -90,12 +95,11 @@ export function getDeployableOptions({
     client = createWalletClient({
       account,
       chain,
-      transport: http(),
+      transport: rpcUrl ? http(rpcUrl, { retryCount: 0 }) : http(),
     }).extend(publicActions);
   }
   const config = createConfig({
-    // biome-ignore lint/style/noNonNullAssertion: Chain is checked above, false error
-    chains: [chain!],
+    chains: [chain],
     // biome-ignore lint/suspicious/noExplicitAny: Client will not be undefined
     client: () => client as any,
   });

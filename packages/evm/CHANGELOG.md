@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 2.0.0-alpha.26
+
+### Patch Changes
+
+- 8101b27: chore: deploy contracts 11-7
+
 ## 2.0.0-alpha.25
 
 ### Minor Changes

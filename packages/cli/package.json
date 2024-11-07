@@ -50,7 +50,7 @@
     "clean": "rm -rf dist"
   },
   "optionalDependencies": {
-    "@boostxyz/sdk": "*"
+    "@boostxyz/sdk": "workspace:*"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.0.1"

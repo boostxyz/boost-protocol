@@ -51,8 +51,5 @@
   },
   "optionalDependencies": {
     "@boostxyz/sdk": "workspace:*"
-  },
-  "dependencies": {
-    "@inquirer/prompts": "^7.0.1"
   }
 }

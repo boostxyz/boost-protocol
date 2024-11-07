@@ -1,9 +1,6 @@
-import assert from 'node:assert';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {
-  type ActionClaimant,
-  type ActionStep,
   type AllowList,
   type AllowListIncentivePayload,
   BOOST_CORE_ADDRESSES,
@@ -11,7 +8,6 @@ import {
   BoostCore,
   BoostRegistry,
   type Budget,
-  type Criteria,
   type DeployablePayloadOrAddress,
   type ERC20IncentivePayload,
   type ERC20VariableCriteriaIncentivePayload,
@@ -20,8 +16,8 @@ import {
   FilterType,
   type ManagedBudget,
   type ManagedBudgetPayload,
-  ManagedBudgetRoles,
   PrimitiveType,
+  Roles,
   SignatureType,
   type SignerValidatorPayload,
   type SimpleAllowListPayload,
@@ -32,15 +28,10 @@ import { allowListFromAddress } from '@boostxyz/sdk';
 import { MockERC20 } from '@boostxyz/test/MockERC20';
 import { accounts } from '@boostxyz/test/accounts';
 import {
-  type BudgetFixtures,
   type DeployableTestOptions,
-  type Fixtures,
   defaultOptions,
-  deployFixtures,
-  freshManagedBudget,
-  fundErc20,
 } from '@boostxyz/test/helpers';
-import { SolidityBytes } from 'abitype/zod';
+import { Config, deepEqual } from '@wagmi/core';
 import {
   type Address,
   type Hex,
@@ -48,12 +39,11 @@ import {
   isHex,
   pad,
   parseEther,
-  size,
   toEventSelector,
   toFunctionSelector,
   zeroAddress,
 } from 'viem';
-import { type ZodType, type ZodTypeDef, z } from 'zod';
+import { z } from 'zod';
 import { type Command, type Options, getDeployableOptions } from '../utils';
 export type SeedResult = {
   erc20?: Address;
@@ -85,7 +75,7 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
   }
 
   if (positionals.at(0) === 'erc20') {
-    let erc20 = new MockERC20(defaultOptions, {});
+    let erc20 = new MockERC20({ config, account }, {});
     await erc20.deploy();
     return {
       erc20: erc20.assertValidAddress(),
@@ -129,13 +119,13 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
     if (typeof template.budget === 'string' && isAddress(template.budget))
       budget = core.ManagedBudget(template.budget);
     // TODO: create budget from Core
-    else if (sharedBudgetConfig === template.budget && sharedBudget) {
+    else if (deepEqual(sharedBudgetConfig, template.budget) && sharedBudget) {
       budget = sharedBudget;
     } else {
       const payload = {
         ...template.budget,
         authorized: [...template.budget.authorized, coreAddress],
-        roles: [...template.budget.roles, ManagedBudgetRoles.MANAGER],
+        roles: [...template.budget.roles, Roles.MANAGER],
       } satisfies ManagedBudgetPayload;
       budget = await registry.initialize(
         crypto.randomUUID(),
@@ -158,17 +148,26 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
             amount += incentive.reward * incentive.limit;
           }
           if (incentive.mintableMockAsset)
-            await fundBudgetForIncentive(budget, amount, incentive.asset);
+            await fundBudgetForIncentive(budget, amount, incentive.asset, {
+              config,
+              account,
+            });
           return core.ERC20Incentive(incentive);
         case 'ERC20VariableCriteriaIncentive':
           amount += incentive.limit;
           if (incentive.mintableMockAsset)
-            await fundBudgetForIncentive(budget, amount, incentive.asset);
+            await fundBudgetForIncentive(budget, amount, incentive.asset, {
+              config,
+              account,
+            });
           return core.ERC20VariableCriteriaIncentive(incentive);
         case 'ERC20VariableIncentive':
           amount += incentive.limit;
           if (incentive.mintableMockAsset)
-            await fundBudgetForIncentive(budget, amount, incentive.asset);
+            await fundBudgetForIncentive(budget, amount, incentive.asset, {
+              config,
+              account,
+            });
           return core.ERC20VariableIncentive(incentive);
       }
     });
@@ -196,15 +195,11 @@ async function fundBudgetForIncentive(
   budget: Budget,
   amount: bigint,
   asset: Address,
+  options: DeployableTestOptions,
 ) {
   if (asset && amount) {
-    let erc20 = new MockERC20(defaultOptions, asset);
-    await fundBudget(
-      defaultOptions,
-      erc20,
-      budget,
-      parseEther(amount.toString()),
-    );
+    let erc20 = new MockERC20(options, asset);
+    await fundBudget(options, erc20, budget, parseEther(amount.toString()));
   }
 }
 
@@ -239,7 +234,7 @@ const ManagedBudgetRoleSchema = z.coerce
   .min(1)
   .max(2)
   .transform(BigInt)
-  .pipe(z.custom<ManagedBudgetRoles>());
+  .pipe(z.custom<Roles>());
 
 export const ManagedBudgetSchema = z
   .object({
@@ -422,8 +417,7 @@ async function fundBudget(
   budget: Budget,
   amount = parseEther('110'),
 ) {
-  //await fundErc20(options, erc20, [], parseEther(amount.toString()))();
-  console.log(`minting ${amount} to ${options.account.address}`);
+  console.warn(`minting ${amount} to ${options.account.address}`);
   await erc20.mint(options.account.address, amount);
 
   await erc20.approve(budget.assertValidAddress(), amount);
@@ -453,7 +447,7 @@ export function makeSeed({
       type: 'ManagedBudget',
       owner: account,
       authorized: [account],
-      roles: [ManagedBudgetRoles.MANAGER],
+      roles: [Roles.MANAGER],
     },
     action: {
       type: 'EventAction',

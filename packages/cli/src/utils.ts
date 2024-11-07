@@ -104,5 +104,5 @@ export function getDeployableOptions({
     client: () => client as any,
   });
 
-  return [{ config, account } as DeployableOptions, chain] as const;
+  return [{ config, account }, chain] as const;
 }

@@ -145,6 +145,39 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         assertTrue(incentive.isClaimable(CLAIM_RECIPIENT, claimData));
     }
 
+    function testClaim() public {
+        // Define the IncentiveCriteria struct
+        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+            .IncentiveCriteria({
+            criteriaType: SignatureType.EVENT,
+            signature: keccak256("Transfer(address,address,uint256)"),
+            fieldIndex: 2,
+            targetContract: address(mockAsset)
+        });
+        // Initialize the ERC20VariableIncentive with reward and maxReward constraints
+        uint256 reward = 0; // set to zero to test maxReward cap
+        uint256 maxReward = 1.5 ether; // Set a max reward cap
+        address CLAIM_RECIPIENT = makeAddr("CLAIM_RECIPIENT");
+        _initialize(address(mockAsset), reward, 2 ether, maxReward, criteria);
+
+        // Encode a claim with signedAmount exceeding the maxReward cap
+        uint256 signedAmount = 2 ether; // Exceeds maxReward
+        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(hex"", abi.encode(signedAmount)));
+
+        vm.expectEmit(true, false, false, true);
+        emit AIncentive.Claimed(
+            CLAIM_RECIPIENT, abi.encodePacked(address(mockAsset), CLAIM_RECIPIENT, uint256(1.5 ether))
+        );
+
+        // Attempt to claim
+        incentive.claim(CLAIM_RECIPIENT, claimData);
+
+        // Check the claim status and balance
+        assertEq(mockAsset.balanceOf(CLAIM_RECIPIENT), 1.5 ether);
+        assertEq(incentive.claims(), 1);
+        assertTrue(incentive.isClaimable(CLAIM_RECIPIENT, abi.encode(1 ether)));
+    }
+
     /////////////////////////////////////////////////////////
     // ERC20VariableCriteriaIncentive.getIncentiveCriteria //
     /////////////////////////////////////////////////////////

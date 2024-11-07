@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.32
+
+### Minor Changes
+
+- a5e3376: Bump SDK to build in new contracts and release
+
 ## 2.0.0-alpha.31
 
 ### Minor Changes

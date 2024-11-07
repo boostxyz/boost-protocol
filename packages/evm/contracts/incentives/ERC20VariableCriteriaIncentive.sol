@@ -77,6 +77,7 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
         if (totalClaimed + claimAmount > limit) revert ClaimFailed();
 
         totalClaimed += claimAmount;
+        claims += 1;
         asset.safeTransfer(claimTarget, claimAmount);
 
         emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, claimAmount));

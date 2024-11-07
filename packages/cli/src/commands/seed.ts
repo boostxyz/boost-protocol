@@ -1,12 +1,18 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import assert from 'node:assert';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import {
+  type ActionClaimant,
+  type ActionStep,
   type AllowList,
   type AllowListIncentivePayload,
-  BOOST_CORE_ADDRESS,
   BOOST_CORE_ADDRESSES,
+  BOOST_REGISTRY_ADDRESSES,
   BoostCore,
+  BoostRegistry,
   type Budget,
+  type Criteria,
+  type DeployablePayloadOrAddress,
   type ERC20IncentivePayload,
   type ERC20VariableCriteriaIncentivePayload,
   type ERC20VariableIncentivePayload,
@@ -14,76 +20,90 @@ import {
   FilterType,
   type ManagedBudget,
   type ManagedBudgetPayload,
+  ManagedBudgetRoles,
   PrimitiveType,
-  Roles,
   SignatureType,
   type SignerValidatorPayload,
   type SimpleAllowListPayload,
   type SimpleDenyListPayload,
   StrategyType,
-  allowListFromAddress,
-} from "@boostxyz/sdk";
-import { MockERC20 } from "@boostxyz/test/MockERC20";
-import { accounts } from "@boostxyz/test/accounts";
+} from '@boostxyz/sdk';
+import { allowListFromAddress } from '@boostxyz/sdk';
+import { MockERC20 } from '@boostxyz/test/MockERC20';
+import { accounts } from '@boostxyz/test/accounts';
 import {
   type BudgetFixtures,
   type DeployableTestOptions,
   type Fixtures,
   defaultOptions,
+  deployFixtures,
   freshManagedBudget,
   fundErc20,
-} from "@boostxyz/test/helpers";
-import { Address as AddressSchema, SolidityBytes } from "abitype/zod";
+} from '@boostxyz/test/helpers';
+import { SolidityBytes } from 'abitype/zod';
 import {
   type Address,
   type Hex,
   isAddress,
+  isHex,
   pad,
   parseEther,
+  size,
   toEventSelector,
   toFunctionSelector,
   zeroAddress,
-} from "viem";
-import * as _chains from "viem/chains";
-import { z } from "zod";
-import { type Command, type Options, getDeployableOptions } from "../utils";
-
-const chains = _chains as Record<string, _chains.Chain>;
-
+} from 'viem';
+import { type ZodType, type ZodTypeDef, z } from 'zod';
+import { type Command, type Options, getDeployableOptions } from '../utils';
 export type SeedResult = {
   erc20?: Address;
-  success?: boolean;
+  boostIds?: string[];
 };
 
-export const seed: Command<any> = async function seed(
+const DEFAULT_MNEMONIC =
+  'test test test test test test test test test test test junk';
+
+export const seed: Command<SeedResult | BoostConfig> = async function seed(
   positionals,
   options: Options,
 ) {
   const privateKey = options.privateKey,
-    mnemonic = options.mnemonic,
-    _chain = options.chain;
-  if (!privateKey && !mnemonic)
-    throw new Error(
-      "Must provide `--privateKey` or `--mnemonic` to deploy contracts",
-    );
-  if (!_chain || !chains[_chain])
-    throw new Error(
-      `Must provide valid \`--chain\` to specify target deployment chain, valid chains are ${Object.keys(chains)}`,
-    );
+    mnemonic = options.mnemonic ?? DEFAULT_MNEMONIC,
+    _chain = options.chain || 'anvil';
+
   const [{ config, account }, chain] = getDeployableOptions({
     chain: _chain,
+    rpcUrl: options.rpcUrl,
     privateKey,
     mnemonic,
   });
-  const chainId = chain!.id!;
 
-  if (positionals.at(0) === "generate") {
+  const chainId = chain.id;
+
+  if (positionals.at(0) === 'generate') {
     return makeSeed({ account: account?.address, chainId });
   }
 
-  if (positionals.at(0) === "erc20") {
-    return;
+  if (positionals.at(0) === 'erc20') {
+    let erc20 = new MockERC20(defaultOptions, {});
+    await erc20.deploy();
+    return {
+      erc20: erc20.assertValidAddress(),
+    };
   }
+
+  const registryAddress = BOOST_REGISTRY_ADDRESSES[chainId];
+  if (!registryAddress) {
+    throw new Error(
+      `Unable to select a deployed BoostRegistry with chain ID ${chainId}`,
+    );
+  }
+
+  const registry = new BoostRegistry({
+    config,
+    account,
+    address: registryAddress,
+  });
 
   const coreAddress = BOOST_CORE_ADDRESSES[chainId];
   if (!coreAddress) {
@@ -98,184 +118,176 @@ export const seed: Command<any> = async function seed(
     address: coreAddress,
   });
 
-  if (!positionals.length) throw new Error("No seed provided");
+  if (!positionals.length) throw new Error('No seed provided');
   const templates = await Promise.all(positionals.map(getSeed));
 
-  const assets: Record<Address, bigint> = {};
-
+  let sharedBudget: ManagedBudget | undefined;
+  let sharedBudgetConfig: ManagedBudgetPayload | undefined;
+  const boostIds: string[] = [];
   for (const template of templates) {
-    const incentives = template.incentives.map((incentive) => {
-      const asset = (incentive as any).asset as Address;
-      if (!assets[asset]) assets[asset] = 0n;
+    let budget: ManagedBudget;
+    if (typeof template.budget === 'string' && isAddress(template.budget))
+      budget = core.ManagedBudget(template.budget);
+    // TODO: create budget from Core
+    else if (sharedBudgetConfig === template.budget && sharedBudget) {
+      budget = sharedBudget;
+    } else {
+      const payload = {
+        ...template.budget,
+        authorized: [...template.budget.authorized, coreAddress],
+        roles: [...template.budget.roles, ManagedBudgetRoles.MANAGER],
+      } satisfies ManagedBudgetPayload;
+      budget = await registry.initialize(
+        crypto.randomUUID(),
+        core.ManagedBudget(payload),
+      );
+      sharedBudget = budget;
+      sharedBudgetConfig = template.budget;
+    }
+
+    const incentivePromises = template.incentives.map(async (incentive) => {
+      let amount = 0n;
       switch (incentive.type) {
-        case "AllowListIncentive":
+        case 'AllowListIncentive':
           return core.AllowListIncentive(incentive);
-        case "ERC20Incentive":
+        case 'ERC20Incentive':
           if (incentive.strategy === StrategyType.RAFFLE) {
-            assets[asset] += incentive.reward;
+            amount += incentive.reward;
           }
           if (incentive.strategy === StrategyType.POOL) {
-            assets[asset] += incentive.reward * incentive.limit;
+            amount += incentive.reward * incentive.limit;
           }
+          if (incentive.mintableMockAsset)
+            await fundBudgetForIncentive(budget, amount, incentive.asset);
           return core.ERC20Incentive(incentive);
-        case "ERC20VariableCriteriaIncentive":
-          assets[asset] += incentive.limit;
+        case 'ERC20VariableCriteriaIncentive':
+          amount += incentive.limit;
+          if (incentive.mintableMockAsset)
+            await fundBudgetForIncentive(budget, amount, incentive.asset);
           return core.ERC20VariableCriteriaIncentive(incentive);
-        case "ERC20VariableIncentive":
-          assets[asset] += incentive.limit;
+        case 'ERC20VariableIncentive':
+          amount += incentive.limit;
+          if (incentive.mintableMockAsset)
+            await fundBudgetForIncentive(budget, amount, incentive.asset);
           return core.ERC20VariableIncentive(incentive);
       }
     });
 
-    let budget: Address | ManagedBudget;
-    if (typeof template.budget === "string" && isAddress(template.budget))
-      budget = template.budget;
-    const result = await fundBudget(
-      defaultOptions,
-      fixtures,
-      new MockERC20(defaultOptions, template.asset),
-    );
-    budget = result.budget;
+    const incentives = await Promise.all(incentivePromises);
 
-    await core.createBoost({
+    const boost = await core.createBoost({
       protocolFee: template.protocolFee,
       maxParticipants: template.maxParticipants,
-      budget: template.budget,
+      budget: budget,
       action: core.EventAction(template.action as EventActionPayload),
       validator: core.SignerValidator(template.validator),
       allowList: await getAllowList(template, { core }),
       incentives,
     });
+    boostIds.push(boost.id.toString());
   }
 
   return {
-    success: true,
+    boostIds,
   };
 };
 
+async function fundBudgetForIncentive(
+  budget: Budget,
+  amount: bigint,
+  asset: Address,
+) {
+  if (asset && amount) {
+    let erc20 = new MockERC20(defaultOptions, asset);
+    await fundBudget(
+      defaultOptions,
+      erc20,
+      budget,
+      parseEther(amount.toString()),
+    );
+  }
+}
+
 async function getSeed(seedPath: string) {
   const unparsedPayload = await fs.readFile(path.normalize(seedPath), {
-    encoding: "utf8",
+    encoding: 'utf8',
   });
 
   return BoostSeedConfigSchema.parse(JSON.parse(unparsedPayload));
 }
 
-export function makeSeed({
-  asset = "0xf3B2d0E4f2d8F453DBCc278b10e88b20d7f19f8D",
-  account = accounts[0].account,
-  chainId = 11155111,
-}: {
-  asset?: Address;
-  account?: Address;
-  chainId: number;
-}): BoostConfig {
-  return {
-    protocolFee: 0n,
-    maxParticipants: 10n,
-    budget: {
-      type: "ManagedBudget",
-      owner: account,
-      authorized: [account],
-      roles: [Roles.MANAGER],
-    },
-    action: {
-      type: "EventAction",
-      actionClaimant: {
-        signatureType: SignatureType.FUNC,
-        signature: "function mint(address to, uint256 amount)" as Hex,
-        fieldIndex: 0,
-        targetContract: zeroAddress,
-        chainid: chainId,
-      },
-      actionSteps: [
-        {
-          signature: "event Minted(address to, uint256 amount)" as Hex,
-          signatureType: SignatureType.FUNC,
-          actionType: 0,
-          targetContract: zeroAddress,
-          chainid: chainId,
-          actionParameter: {
-            filterType: FilterType.EQUAL,
-            fieldType: PrimitiveType.ADDRESS,
-            fieldIndex: 0,
-            filterData: account,
-          },
-        },
-      ],
-    },
-    validator: undefined,
-    allowList: {
-      type: "SimpleDenyList",
-      owner: account,
-      denied: [],
-    },
-    incentives: [
-      {
-        type: "ERC20Incentive",
-        asset: asset,
-        strategy: 0,
-        reward: 1n,
-        limit: 1n,
-        manager: account,
-      },
-    ],
-  };
-}
+const zHexSchema = z.custom<`0x${string}`>(isHex, 'invalid Hex payload');
 
-type Identifiable<T> = T & { type: string };
-type BoostConfig = {
-  protocolFee: bigint;
-  maxParticipants: bigint;
-  budget: Address | Identifiable<ManagedBudgetPayload>;
-  action: Address | Identifiable<EventActionPayload>;
-  validator?: Address | Identifiable<SignerValidatorPayload>;
-  allowList:
-    | Address
-    | Identifiable<SimpleDenyListPayload | SimpleAllowListPayload>;
-  incentives: Identifiable<
-    | AllowListIncentivePayload
-    | ERC20IncentivePayload
-    | ERC20VariableCriteriaIncentivePayload
-    | ERC20VariableIncentivePayload
-  >[];
-};
+const AddressSchema = z
+  .string()
+  .transform((val, ctx) => {
+    const regex = /^0x[a-fA-F0-9]{40}$/;
 
-const RolesSchema = z.coerce
+    if (!regex.test(val)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid Address ${val}`,
+      });
+    }
+
+    return val;
+  })
+  .pipe(z.custom<Address>(isAddress, 'invalid eth address'));
+
+const ManagedBudgetRoleSchema = z.coerce
   .number()
   .min(1)
   .max(2)
   .transform(BigInt)
-  .pipe(z.custom<Roles>());
+  .pipe(z.custom<ManagedBudgetRoles>());
 
 export const ManagedBudgetSchema = z
   .object({
-    type: z.literal("ManagedBudget"),
+    type: z.literal('ManagedBudget'),
     owner: AddressSchema,
     authorized: z.array(AddressSchema),
-    roles: z.array(RolesSchema),
+    roles: z.array(ManagedBudgetRoleSchema),
   })
   .refine(
     (b) => b.authorized.length === b.roles.length,
-    "length mismatch authorized and roles",
+    'length mismatch authorized and roles',
   );
 
-const AbiSignatureSchema = z.custom<`0x${string}`>().pipe(
+const zAbiItemSchema = z.custom<`0x${string}`>().pipe(
   z
     .string()
     .regex(/^(event|function) .*/, {
-      message: "signature must start with `event` or function`",
+      message: 'signature must start with `event` or function`',
     })
-    .transform((sig: string) => {
-      if (sig.startsWith("event")) return pad(toFunctionSelector(sig)) as Hex;
-      if (sig.startsWith("function")) return toEventSelector(sig) as Hex;
-      throw new Error("unreachable");
+    .transform((sig) => {
+      if (sig.startsWith('event')) return pad(toFunctionSelector(sig)) as Hex;
+      if (sig.startsWith('function')) return toEventSelector(sig) as Hex;
+      throw new Error('unreachable');
     }),
 );
 
+type Identifiable<T> = T & { type: string };
+type BoostConfig = {
+  asset: Address;
+  protocolFee: bigint;
+  maxParticipants: bigint;
+  budget: DeployablePayloadOrAddress<Identifiable<ManagedBudgetPayload>>;
+  action: DeployablePayloadOrAddress<Identifiable<EventActionPayload>>;
+  validator: DeployablePayloadOrAddress<Identifiable<SignerValidatorPayload>>;
+  allowList: DeployablePayloadOrAddress<
+    Identifiable<SimpleDenyListPayload> | Identifiable<SimpleAllowListPayload>
+  >;
+  incentives: (
+    | Identifiable<AllowListIncentivePayload>
+    | Identifiable<ERC20IncentivePayload>
+    | Identifiable<ERC20VariableCriteriaIncentivePayload>
+    | Identifiable<ERC20VariableIncentivePayload>
+  )[];
+};
+
 export const ActionClaimantSchema = z.object({
   signatureType: z.nativeEnum(SignatureType),
-  signature: AbiSignatureSchema,
+  signature: zAbiItemSchema,
   fieldIndex: z.number().nonnegative(),
   targetContract: AddressSchema,
   chainid: z.number().nonnegative(),
@@ -285,11 +297,11 @@ export const ActionStepCriteriaSchema = z.object({
   filterType: z.nativeEnum(FilterType),
   fieldType: z.nativeEnum(PrimitiveType),
   fieldIndex: z.number().nonnegative(),
-  filterData: SolidityBytes,
+  filterData: zHexSchema,
 });
 
 export const ActionStepSchema = z.object({
-  signature: AbiSignatureSchema,
+  signature: zAbiItemSchema,
   signatureType: z.nativeEnum(SignatureType),
   actionType: z.number().optional(),
   targetContract: AddressSchema,
@@ -298,38 +310,39 @@ export const ActionStepSchema = z.object({
 });
 
 export const EventActionSchema = z.object({
-  type: z.literal("EventAction"),
+  type: z.literal('EventAction'),
   actionClaimant: ActionClaimantSchema,
   actionSteps: z.array(ActionStepSchema).max(4),
 });
 
 export const SignerValidatorSchema = z.object({
-  type: z.literal("SignerValidator"),
+  type: z.literal('SignerValidator'),
   signers: z.array(AddressSchema),
   validatorCaller: AddressSchema,
 });
 
 export const SimpleDenyListSchema = z.object({
-  type: z.literal("SimpleDenyList"),
+  type: z.literal('SimpleDenyList'),
   owner: AddressSchema,
   denied: z.array(AddressSchema),
 });
 
 export const SimpleAllowListSchema = z.object({
-  type: z.literal("SimpleAllowList"),
+  type: z.literal('SimpleAllowList'),
   owner: AddressSchema,
   allowed: z.array(AddressSchema),
 });
 
 export const AllowListIncentiveSchema = z.object({
-  type: z.literal("AllowListIncentive"),
+  type: z.literal('AllowListIncentive'),
   allowList: AddressSchema,
   limit: z.coerce.bigint(),
 });
 
 export const ERC20IncentiveSchema = z.object({
-  type: z.literal("ERC20Incentive"),
+  type: z.literal('ERC20Incentive'),
   asset: AddressSchema,
+  mintableMockAsset: z.boolean().default(true),
   strategy: z.nativeEnum(StrategyType),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
@@ -337,8 +350,9 @@ export const ERC20IncentiveSchema = z.object({
 });
 
 export const ERC20VariableIncentiveSchema = z.object({
-  type: z.literal("ERC20VariableIncentive"),
+  type: z.literal('ERC20VariableIncentive'),
   asset: AddressSchema,
+  mintableMockAsset: z.boolean().default(true),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
   manager: AddressSchema,
@@ -346,14 +360,15 @@ export const ERC20VariableIncentiveSchema = z.object({
 
 export const IncentiveCriteriaSchema = z.object({
   criteriaType: z.nativeEnum(SignatureType),
-  signature: AbiSignatureSchema,
+  signature: zAbiItemSchema,
   fieldIndex: z.number().nonnegative(),
   targetContract: AddressSchema,
 });
 
 export const ERC20VariableCriteriaIncentiveSchema = z.object({
-  type: z.literal("ERC20VariableCriteriaIncentive"),
+  type: z.literal('ERC20VariableCriteriaIncentive'),
   asset: AddressSchema,
+  mintableMockAsset: z.boolean().default(true),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
   manager: AddressSchema.optional(),
@@ -385,50 +400,105 @@ async function getAllowList(
   { allowList }: z.infer<typeof BoostSeedConfigSchema>,
   { core }: { core: BoostCore },
 ): Promise<AllowList> {
-  if (typeof allowList === "string" && isAddress(allowList))
+  if (typeof allowList === 'string' && isAddress(allowList))
     return await allowListFromAddress(
       //@ts-expect-error i do what i want
       { config: core._config, account: core._account },
       allowList,
     );
   switch (allowList.type) {
-    case "SimpleAllowList":
+    case 'SimpleAllowList':
       return core.SimpleAllowList(allowList as SimpleAllowListPayload);
-    case "SimpleDenyList":
+    case 'SimpleDenyList':
       return core.SimpleDenyList(allowList as SimpleDenyListPayload);
     default:
-      throw new Error("unusupported AllowList:," + allowList);
+      throw new Error('unusupported AllowList: ' + allowList);
   }
 }
 
 async function fundBudget(
   options: DeployableTestOptions,
-  fixtures: Fixtures,
   erc20: MockERC20,
-  budget?: Budget,
-  amount = 110n,
+  budget: Budget,
+  amount = parseEther('110'),
 ) {
-  if (!budget) budget = await freshManagedBudget(options, fixtures)();
-  await fundErc20(options, erc20, [], parseEther(amount.toString()))();
+  //await fundErc20(options, erc20, [], parseEther(amount.toString()))();
+  console.log(`minting ${amount} to ${options.account.address}`);
+  await erc20.mint(options.account.address, amount);
 
-  await budget.allocate(
-    {
-      amount: parseEther("1.0"),
-      asset: zeroAddress,
-      target: options.account.address,
-    },
-    { value: parseEther("1.0") },
-  );
-
-  await erc20.approve(
-    budget.assertValidAddress(),
-    parseEther(amount.toString()),
-  );
+  await erc20.approve(budget.assertValidAddress(), amount);
   await budget.allocate({
-    amount: parseEther(amount.toString()),
+    amount,
     asset: erc20.assertValidAddress(),
     target: options.account.address,
   });
 
-  return { budget, erc20 } as BudgetFixtures;
+  return { budget, erc20 };
+}
+
+export function makeSeed({
+  asset = '0xf3B2d0E4f2d8F453DBCc278b10e88b20d7f19f8D',
+  account = accounts[0].account,
+  chainId,
+}: {
+  asset?: Address;
+  account?: Address;
+  chainId: number;
+}): BoostConfig {
+  return {
+    asset,
+    protocolFee: 0n,
+    maxParticipants: 10n,
+    budget: {
+      type: 'ManagedBudget',
+      owner: account,
+      authorized: [account],
+      roles: [ManagedBudgetRoles.MANAGER],
+    },
+    action: {
+      type: 'EventAction',
+      actionClaimant: {
+        signatureType: SignatureType.FUNC,
+        signature: 'function mint(address to, uint256 amount)' as Hex,
+        fieldIndex: 0,
+        targetContract: zeroAddress,
+        chainid: chainId,
+      },
+      actionSteps: [
+        {
+          signature: 'event Minted(address to, uint256 amount)' as Hex,
+          signatureType: SignatureType.FUNC,
+          actionType: 0,
+          targetContract: zeroAddress,
+          chainid: chainId,
+          actionParameter: {
+            filterType: FilterType.EQUAL,
+            fieldType: PrimitiveType.ADDRESS,
+            fieldIndex: 0,
+            filterData: account,
+          },
+        },
+      ],
+    },
+    validator: {
+      type: 'SignerValidator',
+      signers: [account],
+      validatorCaller: account,
+    },
+    allowList: {
+      type: 'SimpleDenyList',
+      owner: account,
+      denied: [],
+    },
+    incentives: [
+      {
+        type: 'ERC20Incentive',
+        asset: asset,
+        strategy: 0,
+        reward: 1n,
+        limit: 1n,
+        manager: account,
+      },
+    ],
+  };
 }

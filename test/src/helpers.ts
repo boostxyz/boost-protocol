@@ -860,7 +860,7 @@ export function fundErc20(
   return async function fundErc20() {
     if (!erc20) erc20 = await freshERC20();
     for (const address of [options.account.address, ...(funded ?? [])]) {
-      console.log(`minting ${amount} to ${address}`);
+      console.warn(`minting ${amount} to ${address}`);
       await erc20.mint(address, amount);
       const balance = await readMockErc20BalanceOf(options.config, {
         address: erc20.assertValidAddress(),

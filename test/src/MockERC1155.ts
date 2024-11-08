@@ -17,7 +17,7 @@ export class MockERC1155 extends Deployable<unknown, typeof mockErc1155Abi> {
     address: Address,
     id: bigint,
     amount: bigint,
-    params: WriteParams<typeof mockErc1155Abi, 'mint'> = {},
+    params: WriteParams = {},
   ) {
     return await this.awaitResult(this.mintRaw(address, id, amount, params));
   }
@@ -26,7 +26,7 @@ export class MockERC1155 extends Deployable<unknown, typeof mockErc1155Abi> {
     address: Address,
     id: bigint,
     amount: bigint,
-    params: WriteParams<typeof mockErc1155Abi, 'mint'> = {},
+    params: WriteParams = {},
   ) {
     const { request, result } = await simulateMockErc1155Mint(this._config, {
       address: this.assertValidAddress(),
@@ -43,7 +43,7 @@ export class MockERC1155 extends Deployable<unknown, typeof mockErc1155Abi> {
     address: Address,
     id: bigint,
     amount: bigint,
-    params: WriteParams<typeof mockErc1155Abi, 'burn'> = {},
+    params: WriteParams = {},
   ) {
     return await this.awaitResult(this.burnRaw(address, id, amount, params));
   }
@@ -52,7 +52,7 @@ export class MockERC1155 extends Deployable<unknown, typeof mockErc1155Abi> {
     address: Address,
     id: bigint,
     amount: bigint,
-    params: WriteParams<typeof mockErc1155Abi, 'burn'> = {},
+    params: WriteParams = {},
   ) {
     const { request, result } = await simulateMockErc1155Burn(this._config, {
       address: this.assertValidAddress(),

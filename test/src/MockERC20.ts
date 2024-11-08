@@ -19,10 +19,7 @@ import {
 import type { Address, Hex } from 'viem';
 
 export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
-  public async balanceOf(
-    account: Address,
-    params?: WriteParams<typeof mockErc20Abi, 'balanceOf'>,
-  ) {
+  public async balanceOf(account: Address, params?: WriteParams) {
     return await readMockErc20BalanceOf(this._config, {
       address: this.assertValidAddress(),
       args: [account],
@@ -34,7 +31,7 @@ export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
   public async allowance(
     owner: Address,
     spender: Address,
-    params?: WriteParams<typeof mockErc20Abi, 'allowance'>,
+    params?: WriteParams,
   ) {
     return await readMockErc20Allowance(this._config, {
       address: this.assertValidAddress(),
@@ -44,18 +41,14 @@ export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
     });
   }
 
-  public async approve(
-    address: Address,
-    value: bigint,
-    params?: WriteParams<typeof mockErc20Abi, 'approve'>,
-  ) {
+  public async approve(address: Address, value: bigint, params?: WriteParams) {
     return await this.awaitResult(this.approveRaw(address, value, params));
   }
 
   public async approveRaw(
     address: Address,
     value: bigint,
-    params?: WriteParams<typeof mockErc20Abi, 'approve'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateMockErc20Approve(this._config, {
       address: this.assertValidAddress(),
@@ -68,19 +61,11 @@ export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
     return { hash, result };
   }
 
-  public async mint(
-    address: Address,
-    value: bigint,
-    params?: WriteParams<typeof mockErc20Abi, 'mint'>,
-  ) {
+  public async mint(address: Address, value: bigint, params?: WriteParams) {
     return await this.awaitResult(this.mintRaw(address, value, params));
   }
 
-  public async mintRaw(
-    address: Address,
-    value: bigint,
-    params?: WriteParams<typeof mockErc20Abi, 'mint'>,
-  ) {
+  public async mintRaw(address: Address, value: bigint, params?: WriteParams) {
     const { request, result } = await simulateMockErc20Mint(this._config, {
       address: this.assertValidAddress(),
       args: [address, value],
@@ -95,7 +80,7 @@ export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
   public async mintPayable(
     address: Address,
     value: bigint,
-    params?: WriteParams<typeof mockErc20Abi, 'mintPayable'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       // biome-ignore lint/suspicious/noExplicitAny: this is a mock contract, it's fine
@@ -105,7 +90,7 @@ export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
   public async mintPayableRaw(
     address: Address,
     value: bigint,
-    params: WriteParams<typeof mockErc20Abi, 'mintPayable'>,
+    params: WriteParams,
   ) {
     const { request, result } = await simulateMockErc20MintPayable(
       this._config,

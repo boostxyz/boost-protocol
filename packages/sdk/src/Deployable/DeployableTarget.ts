@@ -177,10 +177,7 @@ export class DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the contract supports the interface
    */
-  public async supportsInterface(
-    interfaceId: Hex,
-    params?: ReadParams<typeof aCloneableAbi, 'supportsInterface'>,
-  ) {
+  public async supportsInterface(interfaceId: Hex, params?: ReadParams) {
     return await readACloneableSupportsInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -199,9 +196,7 @@ export class DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
-  public async getComponentInterface(
-    params?: ReadParams<typeof aCloneableAbi, 'getComponentInterface'>,
-  ) {
+  public async getComponentInterface(params?: ReadParams) {
     return await readACloneableGetComponentInterface(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),

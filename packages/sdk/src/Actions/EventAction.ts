@@ -13,7 +13,6 @@ import {
   type AbiFunction,
   AbiItem,
   type Address,
-  type ContractFunctionName,
   type GetLogsReturnType,
   type GetTransactionParameters,
   type Hex,
@@ -323,17 +322,6 @@ export interface EventActionPayloadRaw {
 export type EventLogs = GetLogsReturnType<AbiEvent, AbiEvent[], true>;
 
 /**
- * Getter params from the event action contract
- *
- * @export
- * @typedef {ReadEventActionParams}
- * @param {fnName} fnName - The getter function name
- */
-export type ReadEventActionParams<
-  fnName extends ContractFunctionName<typeof eventActionAbi, 'pure' | 'view'>,
-> = ReadParams<typeof eventActionAbi, fnName>;
-
-/**
  * A generic event action
  *
  * @export
@@ -382,10 +370,7 @@ export class EventAction extends DeployableTarget<
    * @param {?ReadEventActionParams<'getActionStep'>} [params]
    * @returns {Promise<ActionStep>}
    */
-  public async getActionStep(
-    index: number,
-    params?: ReadEventActionParams<'getActionStep'>,
-  ) {
+  public async getActionStep(index: number, params?: ReadParams) {
     const steps = await this.getActionSteps(params);
     return steps.at(index);
   }
@@ -398,9 +383,7 @@ export class EventAction extends DeployableTarget<
    * @param {?ReadEventActionParams<'getActionSteps'>} [params]
    * @returns {Promise<ActionStep[]>}
    */
-  public async getActionSteps(
-    params?: ReadEventActionParams<'getActionSteps'>,
-  ) {
+  public async getActionSteps(params?: ReadParams) {
     const steps = (await readEventActionGetActionSteps(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -418,9 +401,7 @@ export class EventAction extends DeployableTarget<
    * @param {?ReadEventActionParams<'getActionStepsCount'>} [params]
    * @returns {Promise<bigint>}
    */
-  public async getActionStepsCount(
-    params?: ReadEventActionParams<'getActionStepsCount'>,
-  ) {
+  public async getActionStepsCount(params?: ReadParams) {
     const steps = await this.getActionSteps(params);
     return steps.length;
   }
@@ -433,9 +414,7 @@ export class EventAction extends DeployableTarget<
    * @param {?ReadEventActionParams<'getActionClaimant'>} [params]
    * @returns {Promise<ActionClaimant>}
    */
-  public async getActionClaimant(
-    params?: ReadEventActionParams<'getActionClaimant'>,
-  ): Promise<ActionClaimant> {
+  public async getActionClaimant(params?: ReadParams): Promise<ActionClaimant> {
     const result = (await readEventActionGetActionClaimant(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -453,10 +432,7 @@ export class EventAction extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
-  public async execute(
-    data: Hex,
-    params?: WriteParams<typeof eventActionAbi, 'execute'>,
-  ) {
+  public async execute(data: Hex, params?: WriteParams) {
     return await this.awaitResult(this.executeRaw(data, params));
   }
 
@@ -469,10 +445,7 @@ export class EventAction extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
-  public async executeRaw(
-    data: Hex,
-    params?: WriteParams<typeof eventActionAbi, 'execute'>,
-  ) {
+  public async executeRaw(data: Hex, params?: WriteParams) {
     const { request, result } = await simulateEventActionExecute(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),

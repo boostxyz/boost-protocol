@@ -148,7 +148,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public owner(params?: ReadParams<typeof vestingBudgetAbi, 'owner'>) {
+  public owner(params?: ReadParams) {
     return readVestingBudgetOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -164,7 +164,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public start(params?: ReadParams<typeof vestingBudgetAbi, 'start'>) {
+  public start(params?: ReadParams) {
     return readVestingBudgetStart(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -180,7 +180,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public duration(params?: ReadParams<typeof vestingBudgetAbi, 'duration'>) {
+  public duration(params?: ReadParams) {
     return readVestingBudgetDuration(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -196,7 +196,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public cliff(params?: ReadParams<typeof vestingBudgetAbi, 'cliff'>) {
+  public cliff(params?: ReadParams) {
     return readVestingBudgetCliff(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -218,7 +218,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async allocate(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.allocateRaw(transfer, params));
   }
@@ -236,7 +236,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async allocateRaw(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'allocate'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateVestingBudgetAllocate(
       this._config,
@@ -266,7 +266,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async clawback(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'clawback'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.clawbackRaw(transfer, params));
   }
@@ -285,7 +285,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async clawbackRaw(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'clawback'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateVestingBudgetClawback(
       this._config,
@@ -313,7 +313,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async disburse(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.disburseRaw(transfer, params));
   }
@@ -330,7 +330,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async disburseRaw(
     transfer: FungibleTransferPayload,
-    params?: WriteParams<typeof vestingBudgetAbi, 'disburse'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateVestingBudgetDisburse(
       this._config,
@@ -357,7 +357,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async disburseBatch(
     transfers: FungibleTransferPayload[],
-    params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
@@ -373,7 +373,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    */
   public async disburseBatchRaw(
     transfers: FungibleTransferPayload[],
-    params?: WriteParams<typeof vestingBudgetAbi, 'disburseBatch'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateVestingBudgetDisburseBatch(
       this._config,
@@ -396,7 +396,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public end(params?: ReadParams<typeof vestingBudgetAbi, 'end'>) {
+  public end(params?: ReadParams) {
     return readVestingBudgetEnd(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -414,10 +414,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public total(
-    asset: Address = zeroAddress,
-    params?: ReadParams<typeof vestingBudgetAbi, 'total'>,
-  ) {
+  public total(asset: Address = zeroAddress, params?: ReadParams) {
     return readVestingBudgetTotal(this._config, {
       address: this.assertValidAddress(),
       args: [asset],
@@ -435,10 +432,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The amount of assets currently available for distribution
    */
-  public available(
-    asset: Address = zeroAddress,
-    params?: ReadParams<typeof vestingBudgetAbi, 'available'>,
-  ) {
+  public available(asset: Address = zeroAddress, params?: ReadParams) {
     return readVestingBudgetAvailable(this._config, {
       address: this.assertValidAddress(),
       args: [asset],
@@ -455,10 +449,7 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The amount of assets distributed
    */
-  public distributed(
-    asset: Address = zeroAddress,
-    params?: ReadParams<typeof vestingBudgetAbi, 'distributed'>,
-  ) {
+  public distributed(asset: Address = zeroAddress, params?: ReadParams) {
     return readVestingBudgetDistributed(this._config, {
       address: this.assertValidAddress(),
       args: [asset],

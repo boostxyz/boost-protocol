@@ -119,9 +119,7 @@ export class ContractAction<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async chainId(
-    params?: ReadParams<typeof contractActionAbi, 'chainId'>,
-  ) {
+  public async chainId(params?: ReadParams) {
     return await readContractActionChainId(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -138,7 +136,7 @@ export class ContractAction<
    * @param {?ReadParams} [params]
    * @returns {Promise<`0x${string}`>}
    */
-  public async target(params?: ReadParams<typeof contractActionAbi, 'target'>) {
+  public async target(params?: ReadParams) {
     return await readContractActionTarget(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -156,9 +154,7 @@ export class ContractAction<
    * @param {?ReadParams} [params]
    * @returns {Promise<`0x${string}`>}
    */
-  public async selector(
-    params?: ReadParams<typeof contractActionAbi, 'selector'>,
-  ) {
+  public async selector(params?: ReadParams) {
     return await readContractActionSelector(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -175,7 +171,7 @@ export class ContractAction<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async value(params?: ReadParams<typeof contractActionAbi, 'value'>) {
+  public async value(params?: ReadParams) {
     return await readContractActionValue(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -193,10 +189,7 @@ export class ContractAction<
    * @param {?WriteParams} [params]
    * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
-  public async execute(
-    data: Hex,
-    params?: WriteParams<typeof contractActionAbi, 'execute'>,
-  ) {
+  public async execute(data: Hex, params?: WriteParams) {
     return await this.awaitResult(this.executeRaw(data, params));
   }
 
@@ -209,10 +202,7 @@ export class ContractAction<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
-  public async executeRaw(
-    data: Hex,
-    params?: WriteParams<typeof contractActionAbi, 'execute'>,
-  ) {
+  public async executeRaw(data: Hex, params?: WriteParams) {
     const { request, result } = await simulateContractActionExecute(
       this._config,
       {
@@ -236,10 +226,7 @@ export class ContractAction<
    * @param {?ReadParams} [params]
    * @returns {Promise<`0x${string}`>}
    */
-  public async prepare(
-    calldata: Hex,
-    params?: ReadParams<typeof contractActionAbi, 'prepare'>,
-  ) {
+  public async prepare(calldata: Hex, params?: ReadParams) {
     return await readContractActionPrepare(this._config, {
       address: this.assertValidAddress(),
       args: [calldata],

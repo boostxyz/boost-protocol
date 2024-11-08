@@ -119,9 +119,7 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>} - The address of the owner
    */
-  public async owner(
-    params?: ReadParams<typeof simpleAllowListAbi, 'owner'>,
-  ): Promise<Address> {
+  public async owner(params?: ReadParams): Promise<Address> {
     return await readSimpleAllowListOwner(this._config, {
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -142,7 +140,7 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    */
   public async isAllowed(
     address: Address,
-    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
+    params?: ReadParams,
   ): Promise<boolean> {
     return await readSimpleAllowListIsAllowed(this._config, {
       address: this.assertValidAddress(),
@@ -167,7 +165,7 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
   public async setAllowed(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof simpleAllowListAbi, 'setAllowed'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.setAllowedRaw(addresses, allowed, params),
@@ -188,7 +186,7 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
   public async setAllowedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params?: ReadParams<typeof simpleAllowListAbi, 'setAllowed'>,
+    params?: ReadParams,
   ) {
     const { request, result } = await simulateSimpleAllowListSetAllowed(
       this._config,

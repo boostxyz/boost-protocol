@@ -339,10 +339,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async signers(
-    address: Address,
-    params?: ReadParams<typeof limitedSignerValidatorAbi, 'signers'>,
-  ) {
+  public async signers(address: Address, params?: ReadParams) {
     return await readLimitedSignerValidatorSigners(this._config, {
       address: this.assertValidAddress(),
       args: [address],
@@ -362,7 +359,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    */
   public async hashSignerData(
     payload: LimitedSignerValidatorSignaturePayload,
-    params?: ReadParams<typeof limitedSignerValidatorAbi, 'hashSignerData'>,
+    params?: ReadParams,
   ) {
     return await readLimitedSignerValidatorHashSignerData(this._config, {
       address: this.assertValidAddress(),
@@ -388,7 +385,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    */
   protected async validate(
     payload: LimitedSignerValidatorValidatePayload,
-    params?: WriteParams<typeof limitedSignerValidatorAbi, 'validate'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.validateRaw(payload, params));
   }
@@ -404,7 +401,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    */
   protected async validateRaw(
     payload: LimitedSignerValidatorValidatePayload,
-    params?: ReadParams<typeof limitedSignerValidatorAbi, 'validate'>,
+    params?: ReadParams,
   ) {
     const { request, result } = await simulateLimitedSignerValidatorValidate(
       this._config,
@@ -441,7 +438,7 @@ export class LimitedSignerValidator extends DeployableTarget<
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof limitedSignerValidatorAbi, 'setAuthorized'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.setAuthorizedRaw(addresses, allowed, params),
@@ -461,7 +458,7 @@ export class LimitedSignerValidator extends DeployableTarget<
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof limitedSignerValidatorAbi, 'setAuthorized'>,
+    params?: WriteParams,
   ) {
     const { request, result } =
       await simulateLimitedSignerValidatorSetAuthorized(this._config, {
@@ -487,13 +484,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async setValidatorCallerRaw(
-    address: Address,
-    params?: WriteParams<
-      typeof limitedSignerValidatorAbi,
-      'setValidatorCaller'
-    >,
-  ) {
+  public async setValidatorCallerRaw(address: Address, params?: WriteParams) {
     const { request, result } =
       await simulateLimitedSignerValidatorSetValidatorCaller(this._config, {
         address: this.assertValidAddress(),
@@ -518,13 +509,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async setValidatorCaller(
-    address: Address,
-    params?: WriteParams<
-      typeof limitedSignerValidatorAbi,
-      'setValidatorCaller'
-    >,
-  ) {
+  public async setValidatorCaller(address: Address, params?: WriteParams) {
     return await this.awaitResult(this.setValidatorCallerRaw(address, params));
   }
 

@@ -331,10 +331,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async signers(
-    address: Address,
-    params?: ReadParams<typeof signerValidatorAbi, 'signers'>,
-  ) {
+  public async signers(address: Address, params?: ReadParams) {
     return await readSignerValidatorSigners(this._config, {
       address: this.assertValidAddress(),
       args: [address],
@@ -354,7 +351,7 @@ export class SignerValidator extends DeployableTarget<
    */
   public async hashSignerData(
     payload: SignerValidatorSignaturePayload,
-    params?: ReadParams<typeof signerValidatorAbi, 'hashSignerData'>,
+    params?: ReadParams,
   ) {
     return await readSignerValidatorHashSignerData(this._config, {
       address: this.assertValidAddress(),
@@ -380,7 +377,7 @@ export class SignerValidator extends DeployableTarget<
    */
   protected async validate(
     payload: SignerValidatorValidatePayload,
-    params?: WriteParams<typeof signerValidatorAbi, 'validate'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.validateRaw(payload, params));
   }
@@ -396,7 +393,7 @@ export class SignerValidator extends DeployableTarget<
    */
   protected async validateRaw(
     payload: SignerValidatorValidatePayload,
-    params?: ReadParams<typeof signerValidatorAbi, 'validate'>,
+    params?: ReadParams,
   ) {
     const { request, result } = await simulateSignerValidatorValidate(
       this._config,
@@ -430,7 +427,7 @@ export class SignerValidator extends DeployableTarget<
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof signerValidatorAbi, 'setAuthorized'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.setAuthorizedRaw(addresses, allowed, params),
@@ -450,7 +447,7 @@ export class SignerValidator extends DeployableTarget<
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof signerValidatorAbi, 'setAuthorized'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateSignerValidatorSetAuthorized(
       this._config,
@@ -475,10 +472,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async setValidatorCallerRaw(
-    address: Address,
-    params?: WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>,
-  ) {
+  public async setValidatorCallerRaw(address: Address, params?: WriteParams) {
     const { request, result } = await simulateSignerValidatorSetValidatorCaller(
       this._config,
       {
@@ -505,10 +499,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async setValidatorCaller(
-    address: Address,
-    params?: WriteParams<typeof signerValidatorAbi, 'setValidatorCaller'>,
-  ) {
+  public async setValidatorCaller(address: Address, params?: WriteParams) {
     return await this.awaitResult(this.setValidatorCallerRaw(address, params));
   }
 

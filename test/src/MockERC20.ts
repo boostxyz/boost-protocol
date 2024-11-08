@@ -1,5 +1,7 @@
 import {
   mockErc20Abi,
+  readMockErc20Allowance,
+  readMockErc20BalanceOf,
   simulateMockErc20Approve,
   simulateMockErc20Mint,
   simulateMockErc20MintPayable,
@@ -17,6 +19,31 @@ import {
 import type { Address, Hex } from 'viem';
 
 export class MockERC20 extends Deployable<unknown, typeof mockErc20Abi> {
+  public async balanceOf(
+    account: Address,
+    params?: WriteParams<typeof mockErc20Abi, 'balanceOf'>,
+  ) {
+    return await readMockErc20BalanceOf(this._config, {
+      address: this.assertValidAddress(),
+      args: [account],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  public async allowance(
+    owner: Address,
+    spender: Address,
+    params?: WriteParams<typeof mockErc20Abi, 'allowance'>,
+  ) {
+    return await readMockErc20Allowance(this._config, {
+      address: this.assertValidAddress(),
+      args: [owner, spender],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
   public async approve(
     address: Address,
     value: bigint,

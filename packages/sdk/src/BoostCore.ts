@@ -25,7 +25,6 @@ import {
   getTransactionReceipt,
   waitForTransactionReceipt,
 } from '@wagmi/core';
-import type { SimulateContractReturnType } from '@wagmi/core/actions';
 import { createWriteContract } from '@wagmi/core/codegen';
 import {
   type Address,

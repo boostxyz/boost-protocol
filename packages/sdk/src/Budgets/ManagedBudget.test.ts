@@ -1,10 +1,10 @@
-import { writeMockErc1155SetApprovalForAll } from '@boostxyz/evm';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { isAddress, parseEther, zeroAddress } from 'viem';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
-import type { MockERC20 } from '@boostxyz/test/MockERC20';
-import type { MockERC1155 } from '@boostxyz/test/MockERC1155';
-import { accounts } from '@boostxyz/test/accounts';
+import { writeMockErc1155SetApprovalForAll } from "@boostxyz/evm";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { isAddress, parseEther, zeroAddress } from "viem";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import type { MockERC20 } from "@boostxyz/test/MockERC20";
+import type { MockERC1155 } from "@boostxyz/test/MockERC1155";
+import { accounts } from "@boostxyz/test/accounts";
 import {
   type Fixtures,
   defaultOptions,
@@ -13,10 +13,10 @@ import {
   fundErc20,
   fundErc1155,
   fundManagedBudget,
-} from '@boostxyz/test/helpers';
-import { testAccount } from '@boostxyz/test/viem';
-import { ManagedBudget } from './ManagedBudget';
-import { Roles } from '../Deployable/DeployableTargetWithRBAC';
+} from "@boostxyz/test/helpers";
+import { testAccount } from "@boostxyz/test/viem";
+import { ManagedBudget } from "./ManagedBudget";
+import { Roles } from "../Deployable/DeployableTargetWithRBAC";
 
 let fixtures: Fixtures,
   budget: ManagedBudget,
@@ -27,8 +27,8 @@ beforeAll(async () => {
   fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
-describe('ManagedBudget', () => {
-  test('can successfully be deployed', async () => {
+describe("ManagedBudget", () => {
+  test("can successfully be deployed", async () => {
     const action = new ManagedBudget(defaultOptions, {
       owner: testAccount.address,
       authorized: [],
@@ -38,7 +38,7 @@ describe('ManagedBudget', () => {
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
 
-  test('can grant manager role to many users', async () => {
+  test("can grant manager role to many users", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
@@ -46,15 +46,11 @@ describe('ManagedBudget', () => {
     const two = accounts[2].account;
     await budget.setAuthorized([one, two], [true, true]);
     expect(await budget.hasAllRoles(one, Roles.ADMIN)).toBe(false);
-    expect(await budget.hasAllRoles(one, Roles.MANAGER)).toBe(
-      true,
-    );
-    expect(await budget.hasAllRoles(two, Roles.MANAGER)).toBe(
-      true,
-    );
+    expect(await budget.hasAllRoles(one, Roles.MANAGER)).toBe(true);
+    expect(await budget.hasAllRoles(two, Roles.MANAGER)).toBe(true);
   });
 
-  test('can grant role', async () => {
+  test("can grant role", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
@@ -64,7 +60,7 @@ describe('ManagedBudget', () => {
     expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(true);
   });
 
-  test('can revoke role', async () => {
+  test("can revoke role", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
@@ -78,54 +74,40 @@ describe('ManagedBudget', () => {
     expect(await budget.hasAllRoles(manager, Roles.ADMIN)).toBe(false);
   });
 
-  test('can grant many roles', async () => {
+  test("can grant many roles", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
     const admin = accounts[1].account;
     const manager = accounts[2].account;
-    await budget.grantManyRoles(
-      [admin, manager],
-      [Roles.ADMIN, Roles.MANAGER],
-    );
-    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(
-      true,
-    );
-    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(
-      true,
-    );
+    await budget.grantManyRoles([admin, manager], [Roles.ADMIN, Roles.MANAGER]);
+    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(true);
+    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(true);
   });
 
-  test('can revoke many roles', async () => {
+  test("can revoke many roles", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
     const admin = accounts[1].account;
     const manager = accounts[2].account;
-    await budget.grantManyRoles(
-      [admin, manager],
-      [Roles.ADMIN, Roles.MANAGER],
-    );
+    await budget.grantManyRoles([admin, manager], [Roles.ADMIN, Roles.MANAGER]);
     await budget.revokeManyRoles(
       [admin, manager],
       [Roles.ADMIN, Roles.MANAGER],
     );
-    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(
-      false,
-    );
-    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(
-      false,
-    );
+    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(false);
+    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(false);
   });
 
-  test('can be owned', async () => {
+  test("can be owned", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
     expect(await budget.owner()).toBe(defaultOptions.account.address);
   });
 
-  test('can have authorized users', async () => {
+  test("can have authorized users", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
@@ -135,47 +117,47 @@ describe('ManagedBudget', () => {
     expect(await budget.isAuthorized(zeroAddress)).toBe(false);
   });
 
-  test('can have no initial balance', async () => {
+  test("can have no initial balance", async () => {
     const budget = await loadFixture(
       freshManagedBudget(defaultOptions, fixtures),
     );
     expect(await budget.available()).toBe(0n);
   });
 
-  describe('can allocate', () => {
+  describe("can allocate", () => {
     beforeEach(async () => {
       budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
       erc20 = await loadFixture(fundErc20(defaultOptions));
       erc1155 = await loadFixture(fundErc1155(defaultOptions));
     });
 
-    test('native assets', async () => {
+    test("native assets", async () => {
       await budget.allocate(
         {
-          amount: parseEther('1.0'),
+          amount: parseEther("1.0"),
           asset: zeroAddress,
           target: defaultOptions.account.address,
         },
         {
-          value: parseEther('1.0'),
+          value: parseEther("1.0"),
         },
       );
-      expect(await budget.available()).toBe(parseEther('1.0'));
+      expect(await budget.available()).toBe(parseEther("1.0"));
     });
 
-    test('erc20', async () => {
-      await erc20.approve(budget.assertValidAddress(), parseEther('110'));
+    test("erc20", async () => {
+      await erc20.approve(budget.assertValidAddress(), parseEther("110"));
       await budget.allocate({
-        amount: parseEther('110'),
+        amount: parseEther("110"),
         asset: erc20.assertValidAddress(),
         target: defaultOptions.account.address,
       });
       expect(await budget.available(erc20.assertValidAddress())).toBe(
-        parseEther('110'),
+        parseEther("110"),
       );
     });
 
-    test('erc1155', async () => {
+    test("erc1155", async () => {
       await writeMockErc1155SetApprovalForAll(defaultOptions.config, {
         args: [budget.assertValidAddress(), true],
         address: erc1155.assertValidAddress(),
@@ -193,7 +175,7 @@ describe('ManagedBudget', () => {
     });
   });
 
-  describe('can disburse', () => {
+  describe("can disburse", () => {
     beforeEach(async () => {
       const budgetFixtures = await loadFixture(
         fundManagedBudget(defaultOptions, fixtures),
@@ -203,9 +185,9 @@ describe('ManagedBudget', () => {
       erc1155 = budgetFixtures.erc1155;
     });
 
-    test('native assets', async () => {
+    test("native assets", async () => {
       await budget.disburse({
-        amount: parseEther('1.0'),
+        amount: parseEther("1.0"),
         asset: zeroAddress,
         target: defaultOptions.account.address,
       });
@@ -213,19 +195,19 @@ describe('ManagedBudget', () => {
       expect(await budget.available()).toBe(0n);
     });
 
-    test('erc20 assets', async () => {
+    test("erc20 assets", async () => {
       await budget.disburse({
-        amount: parseEther('10'),
+        amount: parseEther("10"),
         asset: erc20.assertValidAddress(),
         target: defaultOptions.account.address,
       });
 
       expect(await budget.available(erc20.assertValidAddress())).toBe(
-        parseEther('100'),
+        parseEther("100"),
       );
     });
 
-    test('erc1155 assets', async () => {
+    test("erc1155 assets", async () => {
       await budget.disburse({
         tokenId: 1n,
         amount: 5n,

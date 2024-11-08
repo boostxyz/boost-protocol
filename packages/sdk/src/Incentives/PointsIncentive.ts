@@ -130,9 +130,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async claims(
-    params?: ReadParams<typeof pointsIncentiveAbi, 'claims'>,
-  ) {
+  public async claims(params?: ReadParams) {
     return await readPointsIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -149,9 +147,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The current reward
    */
-  public async currentReward(
-    params?: ReadParams<typeof pointsIncentiveAbi, 'currentReward'>,
-  ) {
+  public async currentReward(params?: ReadParams) {
     return await readPointsIncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -168,9 +164,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} The reward amount issued for each claim
    */
-  public async reward(
-    params?: ReadParams<typeof pointsIncentiveAbi, 'reward'>,
-  ) {
+  public async reward(params?: ReadParams) {
     return await readPointsIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -188,10 +182,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async claimed(
-    address: Address,
-    params?: ReadParams<typeof pointsIncentiveAbi, 'claimed'>,
-  ) {
+  public async claimed(address: Address, params?: ReadParams) {
     return await readPointsIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
@@ -208,7 +199,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async venue(params?: ReadParams<typeof pointsIncentiveAbi, 'venue'>) {
+  public async venue(params?: ReadParams) {
     return await readPointsIncentiveVenue(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -224,7 +215,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async limit(params?: ReadParams<typeof pointsIncentiveAbi, 'limit'>) {
+  public async limit(params?: ReadParams) {
     return await readPointsIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -240,9 +231,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
-  public async selector(
-    params?: ReadParams<typeof pointsIncentiveAbi, 'selector'>,
-  ) {
+  public async selector(params?: ReadParams) {
     return await readPointsIncentiveSelector(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -259,10 +248,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} -  True if the incentive was successfully claimed
    */
-  protected async claim(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
-  ) {
+  protected async claim(payload: ClaimPayload, params?: WriteParams) {
     return await this.awaitResult(this.claimRaw(payload, params));
   }
 
@@ -275,10 +261,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} -  True if the incentive was successfully claimed
    */
-  protected async claimRaw(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof pointsIncentiveAbi, 'claim'>,
-  ) {
+  protected async claimRaw(payload: ClaimPayload, params?: WriteParams) {
     const { request, result } = await simulatePointsIncentiveClaim(
       this._config,
       {
@@ -304,10 +287,7 @@ export class PointsIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} -  True if the incentive is claimable based on the data payload
    */
-  public async isClaimable(
-    payload: ClaimPayload,
-    params?: ReadParams<typeof pointsIncentiveAbi, 'isClaimable'>,
-  ) {
+  public async isClaimable(payload: ClaimPayload, params?: ReadParams) {
     return await readPointsIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],

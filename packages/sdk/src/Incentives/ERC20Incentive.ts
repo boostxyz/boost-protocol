@@ -144,7 +144,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async owner(params?: ReadParams<typeof erc20IncentiveAbi, 'owner'>) {
+  public async owner(params?: ReadParams) {
     return await readErc20IncentiveOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -161,9 +161,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>} - The current reward
    */
-  public async currentReward(
-    params?: ReadParams<typeof erc20IncentiveAbi, 'currentReward'>,
-  ) {
+  public async currentReward(params?: ReadParams) {
     return await readErc20IncentiveCurrentReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -180,7 +178,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async claims(params?: ReadParams<typeof erc20IncentiveAbi, 'claims'>) {
+  public async claims(params?: ReadParams) {
     return await readErc20IncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -198,10 +196,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async claimed(
-    address: Address,
-    params?: ReadParams<typeof erc20IncentiveAbi, 'claimed'>,
-  ) {
+  public async claimed(address: Address, params?: ReadParams) {
     return await readErc20IncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
@@ -218,7 +213,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async asset(params?: ReadParams<typeof erc20IncentiveAbi, 'asset'>) {
+  public async asset(params?: ReadParams) {
     return await readErc20IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -234,9 +229,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<StrategyType>}
    */
-  public strategy(
-    params?: ReadParams<typeof erc20IncentiveAbi, 'strategy'>,
-  ): Promise<StrategyType> {
+  public strategy(params?: ReadParams): Promise<StrategyType> {
     return readErc20IncentiveStrategy(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -252,7 +245,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async reward(params?: ReadParams<typeof erc20IncentiveAbi, 'reward'>) {
+  public async reward(params?: ReadParams) {
     return await readErc20IncentiveReward(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -268,7 +261,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async limit(params?: ReadParams<typeof erc20IncentiveAbi, 'limit'>) {
+  public async limit(params?: ReadParams) {
     return await readErc20IncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -285,10 +278,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async entries(
-    i: bigint,
-    params?: ReadParams<typeof erc20IncentiveAbi, 'entries'>,
-  ) {
+  public async entries(i: bigint, params?: ReadParams) {
     return await readErc20IncentiveEntries(this._config, {
       address: this.assertValidAddress(),
       args: [i],
@@ -306,10 +296,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - Returns true if successfully claimed
    */
-  protected async claim(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
-  ) {
+  protected async claim(payload: ClaimPayload, params?: WriteParams) {
     return await this.awaitResult(this.claimRaw(payload, params));
   }
 
@@ -322,10 +309,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - Returns true if successfully claimed
    */
-  protected async claimRaw(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc20IncentiveAbi, 'claim'>,
-  ) {
+  protected async claimRaw(payload: ClaimPayload, params?: WriteParams) {
     const { request, result } = await simulateErc20IncentiveClaim(
       this._config,
       {
@@ -349,10 +333,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} -  True if the assets were successfully clawbacked
    */
-  public async clawback(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc20IncentiveAbi, 'clawback'>,
-  ) {
+  public async clawback(payload: ClaimPayload, params?: WriteParams) {
     return await this.awaitResult(this.clawbackRaw(payload, params));
   }
 
@@ -365,10 +346,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} -  True if the assets were successfully clawbacked
    */
-  public async clawbackRaw(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc20IncentiveAbi, 'clawback'>,
-  ) {
+  public async clawbackRaw(payload: ClaimPayload, params?: WriteParams) {
     const { request, result } = await simulateErc20IncentiveClawback(
       this._config,
       {
@@ -392,10 +370,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} = True if the incentive is claimable based on the data payload
    */
-  public async isClaimable(
-    payload: ClaimPayload,
-    params?: ReadParams<typeof erc20IncentiveAbi, 'isClaimable'>,
-  ) {
+  public async isClaimable(payload: ClaimPayload, params?: ReadParams) {
     return await readErc20IncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
@@ -412,9 +387,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async drawRaffle(
-    params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
-  ) {
+  public async drawRaffle(params?: WriteParams) {
     return await this.awaitResult(this.drawRaffleRaw(params));
   }
 
@@ -426,9 +399,7 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async drawRaffleRaw(
-    params?: WriteParams<typeof erc20IncentiveAbi, 'drawRaffle'>,
-  ) {
+  public async drawRaffleRaw(params?: WriteParams) {
     const { request, result } = await simulateErc20IncentiveDrawRaffle(
       this._config,
       {

@@ -1,8 +1,8 @@
 import {
   type Config,
   type ReadContractParameters,
+  type SimulateContractParameters,
   type WatchContractEventParameters,
-  type WriteContractParameters,
   getAccount,
   getClient,
   waitForTransactionReceipt,
@@ -23,7 +23,6 @@ import type {
 import { isHex, keccak256, slice, toHex } from 'viem';
 import {
   InvalidProtocolChainIdError,
-  NoConnectedChainIdError,
   NoContractAddressUponReceiptError,
 } from './errors';
 
@@ -70,14 +69,8 @@ export enum CheatCodes {
  * @template {Abi} abi
  * @template {ContractFunctionName<abi>} functionName
  */
-export type WriteParams<
-  abi extends Abi = Abi,
-  functionName extends ContractFunctionName<abi> = ContractFunctionName<abi>,
-> = Partial<
-  Omit<
-    WriteContractParameters<abi, functionName>,
-    'address' | 'args' | 'functionName' | 'abi'
-  >
+export type WriteParams = Partial<
+  Omit<SimulateContractParameters, 'address' | 'args' | 'functionName' | 'abi'>
 >;
 
 /**
@@ -89,14 +82,8 @@ export type WriteParams<
  * @template {Abi} abi
  * @template {ContractFunctionName<abi>} functionName
  */
-export type ReadParams<
-  abi extends Abi,
-  functionName extends ContractFunctionName<abi>,
-> = Partial<
-  Omit<
-    ReadContractParameters<abi, functionName>,
-    'address' | 'args' | 'functionName' | 'abi'
-  >
+export type ReadParams = Partial<
+  Omit<ReadContractParameters, 'address' | 'args' | 'functionName' | 'abi'>
 >;
 
 /**

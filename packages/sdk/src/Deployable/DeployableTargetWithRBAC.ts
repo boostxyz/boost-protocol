@@ -78,7 +78,7 @@ export class DeployableTargetWithRBAC<
   public async setAuthorized(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof rbacAbi, 'setAuthorized'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.setAuthorizedRaw(addresses, allowed, params),
@@ -99,7 +99,7 @@ export class DeployableTargetWithRBAC<
   public async setAuthorizedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof rbacAbi, 'setAuthorized'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateRbacSetAuthorized(this._config, {
       address: this.assertValidAddress(),
@@ -123,14 +123,10 @@ export class DeployableTargetWithRBAC<
    * @async
    * @param {Address} address
    * @param {Roles} role
-   * @param {?WriteParams<typeof rbacAbi, 'grantRoles'>} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async grantRoles(
-    address: Address,
-    role: Roles,
-    params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
-  ) {
+  public async grantRoles(address: Address, role: Roles, params?: WriteParams) {
     return await this.awaitResult(this.grantRolesRaw(address, role, params));
   }
 
@@ -151,7 +147,7 @@ export class DeployableTargetWithRBAC<
   public async grantRolesRaw(
     address: Address,
     role: Roles,
-    params?: WriteParams<typeof rbacAbi, 'grantRoles'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateRbacGrantRoles(this._config, {
       address: this.assertValidAddress(),
@@ -185,7 +181,7 @@ export class DeployableTargetWithRBAC<
   public async revokeRoles(
     address: Address,
     role: Roles,
-    params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.revokeRolesRaw(address, role, params));
   }
@@ -207,7 +203,7 @@ export class DeployableTargetWithRBAC<
   public async revokeRolesRaw(
     address: Address,
     role: Roles,
-    params?: WriteParams<typeof rbacAbi, 'revokeRoles'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateRbacRevokeRoles(this._config, {
       address: this.assertValidAddress(),
@@ -241,7 +237,7 @@ export class DeployableTargetWithRBAC<
   public async grantManyRoles(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'grantManyRoles'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.grantManyRolesRaw(addresses, roles, params),
@@ -265,7 +261,7 @@ export class DeployableTargetWithRBAC<
   public async grantManyRolesRaw(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'grantManyRoles'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateRbacGrantManyRoles(this._config, {
       address: this.assertValidAddress(),
@@ -299,7 +295,7 @@ export class DeployableTargetWithRBAC<
   public async revokeManyRoles(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'revokeManyRoles'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.revokeManyRolesRaw(addresses, roles, params),
@@ -323,7 +319,7 @@ export class DeployableTargetWithRBAC<
   public async revokeManyRolesRaw(
     addresses: Address[],
     roles: Roles[],
-    params?: WriteParams<typeof rbacAbi, 'revokeManyRoles'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateRbacRevokeManyRoles(
       this._config,
@@ -354,10 +350,7 @@ export class DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<Array<Roles>>}
    */
-  public async rolesOf(
-    account: Address,
-    params?: ReadParams<typeof rbacAbi, 'rolesOf'>,
-  ) {
+  public async rolesOf(account: Address, params?: ReadParams) {
     const roles = await readRbacRolesOf(this._config, {
       address: this.assertValidAddress(),
       args: [account],
@@ -383,11 +376,7 @@ export class DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public hasAnyRole(
-    account: Address,
-    roles: Roles,
-    params?: ReadParams<typeof rbacAbi, 'hasAnyRole'>,
-  ) {
+  public hasAnyRole(account: Address, roles: Roles, params?: ReadParams) {
     return readRbacHasAnyRole(this._config, {
       address: this.assertValidAddress(),
       args: [account, roles],
@@ -410,11 +399,7 @@ export class DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public hasAllRoles(
-    account: Address,
-    roles: Roles,
-    params?: ReadParams<typeof rbacAbi, 'hasAllRoles'>,
-  ) {
+  public hasAllRoles(account: Address, roles: Roles, params?: ReadParams) {
     return readRbacHasAllRoles(this._config, {
       address: this.assertValidAddress(),
       args: [account, roles],
@@ -432,10 +417,7 @@ export class DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>} - True if the account is authorized
    */
-  public isAuthorized(
-    account: Address,
-    params?: ReadParams<typeof rbacAbi, 'isAuthorized'>,
-  ) {
+  public isAuthorized(account: Address, params?: ReadParams) {
     return readRbacIsAuthorized(this._config, {
       address: this.assertValidAddress(),
       args: [account],

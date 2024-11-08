@@ -30,6 +30,7 @@ import {
   type HashAndSimulatedResult,
   type ReadParams,
   type RegistryType,
+  type SimulateParams,
   type WriteParams,
   assertValidAddressByChainId,
 } from './utils';
@@ -253,7 +254,7 @@ export class BoostRegistry extends Deployable<
     registryType: RegistryType,
     name: string,
     implementation: Address,
-    params?: WriteParams<typeof boostRegistryAbi, 'register'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.registerRaw(registryType, name, implementation, params),
@@ -274,7 +275,7 @@ export class BoostRegistry extends Deployable<
     registryType: RegistryType,
     name: string,
     implementation: Address,
-    params?: WriteParams<typeof boostRegistryAbi, 'register'>,
+    params?: SimulateParams,
   ) {
     const { request, result } = await simulateBoostRegistryRegister(
       this._config,
@@ -282,7 +283,7 @@ export class BoostRegistry extends Deployable<
         ...assertValidAddressByChainId(
           this._config,
           this.addresses,
-          params?.chain?.id || params?.chainId,
+          params?.chainId,
         ),
         args: [registryType, name, implementation],
         ...this.optionallyAttachAccount(),
@@ -310,7 +311,7 @@ export class BoostRegistry extends Deployable<
   public initialize<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
-    params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
+    params?: WriteParams,
   ): Promise<Target> {
     return this.clone(displayName, target, params);
   }
@@ -330,7 +331,7 @@ export class BoostRegistry extends Deployable<
   public async initializeRaw<Target extends DeployableTarget<unknown, Abi>>(
     displayName: string,
     target: Target,
-    params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
+    params?: WriteParams,
   ): Promise<HashAndSimulatedResult<Address> & { target: Target }> {
     const { hash, result } = await this.deployCloneRaw(
       displayName,
@@ -355,7 +356,7 @@ export class BoostRegistry extends Deployable<
   public async clone<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
-    params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
+    params?: WriteParams,
   ): Promise<Target> {
     const instance = await this.deployClone(displayName, target, params);
     return target.at(instance);
@@ -376,7 +377,7 @@ export class BoostRegistry extends Deployable<
   public async deployClone<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
-    params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
+    params?: WriteParams,
   ): Promise<Address> {
     return await this.awaitResult(
       this.deployCloneRaw(displayName, target, params),
@@ -396,7 +397,7 @@ export class BoostRegistry extends Deployable<
   public async deployCloneRaw<Target extends DeployableTarget<any, any>>(
     displayName: string,
     target: Target,
-    params?: WriteParams<typeof boostRegistryAbi, 'deployClone'>,
+    params?: WriteParams,
   ): Promise<HashAndSimulatedResult<Address>> {
     const payload = target.buildParameters(undefined, {
       config: this._config,
@@ -435,10 +436,7 @@ export class BoostRegistry extends Deployable<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>} - The address of the implementation
    */
-  public async getBaseImplementation(
-    identifier: Hex,
-    params?: ReadParams<typeof boostRegistryAbi, 'getBaseImplementation'>,
-  ) {
+  public async getBaseImplementation(identifier: Hex, params?: ReadParams) {
     return await readBoostRegistryGetBaseImplementation(this._config, {
       ...assertValidAddressByChainId(
         this._config,
@@ -461,10 +459,7 @@ export class BoostRegistry extends Deployable<
    * @param {?ReadParams} [params]
    * @returns {Promise<Clone>} - The on-chain representation of the clone
    */
-  public async getClone(
-    identifier: Hex,
-    params?: ReadParams<typeof boostRegistryAbi, 'getClone'>,
-  ): Promise<Clone> {
+  public async getClone(identifier: Hex, params?: ReadParams): Promise<Clone> {
     return await readBoostRegistryGetClone(this._config, {
       ...assertValidAddressByChainId(
         this._config,
@@ -487,10 +482,7 @@ export class BoostRegistry extends Deployable<
    * @param {?ReadParams} [params]
    * @returns {Promise<Hex[]>} - The list of deployed clones for the given deployer
    */
-  public async getClones(
-    deployer: Address,
-    params?: ReadParams<typeof boostRegistryAbi, 'getClones'>,
-  ) {
+  public async getClones(deployer: Address, params?: ReadParams) {
     return await readBoostRegistryGetClones(this._config, {
       ...assertValidAddressByChainId(
         this._config,
@@ -521,7 +513,7 @@ export class BoostRegistry extends Deployable<
     base: Address,
     deployer: Address,
     displayName: string,
-    params?: ReadParams<typeof boostRegistryAbi, 'getCloneIdentifier'>,
+    params?: ReadParams,
   ) {
     return await readBoostRegistryGetCloneIdentifier(this._config, {
       ...assertValidAddressByChainId(
@@ -549,7 +541,7 @@ export class BoostRegistry extends Deployable<
   public async getIdentifier(
     registryType: RegistryType,
     displayName: string,
-    params?: ReadParams<typeof boostRegistryAbi, 'getIdentifier'>,
+    params?: ReadParams,
   ) {
     return await readBoostRegistryGetCloneIdentifier(this._config, {
       ...assertValidAddressByChainId(

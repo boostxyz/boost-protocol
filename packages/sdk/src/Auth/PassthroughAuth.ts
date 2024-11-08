@@ -44,10 +44,7 @@ export class PassthroughAuth extends Deployable<
 > {
   public override readonly abi = passthroughAuthAbi;
 
-  public async isAuthorized(
-    address: Address,
-    params?: ReadParams<typeof passthroughAuthAbi, 'isAuthorized'>,
-  ) {
+  public async isAuthorized(address: Address, params?: ReadParams) {
     return await readPassthroughAuthIsAuthorized(this._config, {
       address: this.assertValidAddress(),
       args: [address],

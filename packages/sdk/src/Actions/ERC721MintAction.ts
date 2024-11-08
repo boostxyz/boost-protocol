@@ -99,10 +99,7 @@ export class ERC721MintAction extends ContractAction<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async validated(
-    token: bigint,
-    params?: ReadParams<typeof erc721MintActionAbi, 'validated'>,
-  ) {
+  public async validated(token: bigint, params?: ReadParams) {
     return await readErc721MintActionValidated(this._config, {
       address: this.assertValidAddress(),
       ...this.optionallyAttachAccount(),
@@ -121,10 +118,7 @@ export class ERC721MintAction extends ContractAction<
    * @param {?WriteParams} [params]
    * @returns {Promise<readonly [boolean, `0x${string}`]>}
    */
-  public override async execute(
-    data: Hex,
-    params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
-  ) {
+  public override async execute(data: Hex, params?: WriteParams) {
     return await this.awaitResult(this.executeRaw(data, params));
   }
 
@@ -137,10 +131,7 @@ export class ERC721MintAction extends ContractAction<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: readonly [boolean, `0x${string}`]; }>}
    */
-  public override async executeRaw(
-    data: Hex,
-    params?: WriteParams<typeof erc721MintActionAbi, 'execute'>,
-  ) {
+  public override async executeRaw(data: Hex, params?: WriteParams) {
     const { request, result } = await simulateErc721MintActionExecute(
       this._config,
       {
@@ -164,10 +155,7 @@ export class ERC721MintAction extends ContractAction<
    * @param {?ReadParams} [params]
    * @returns {Promise<`0x${string}`>}
    */
-  public override async prepare(
-    data: Hex,
-    params?: ReadParams<typeof erc721MintActionAbi, 'prepare'>,
-  ) {
+  public override async prepare(data: Hex, params?: ReadParams) {
     return await readErc721MintActionPrepare(this._config, {
       address: this.assertValidAddress(),
       args: [data],
@@ -190,7 +178,7 @@ export class ERC721MintAction extends ContractAction<
   protected async validate(
     holder: Address,
     tokenId: bigint,
-    params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.validateRaw(holder, tokenId, params));
   }
@@ -208,7 +196,7 @@ export class ERC721MintAction extends ContractAction<
   protected async validateRaw(
     holder: Address,
     tokenId: bigint,
-    params?: WriteParams<typeof erc721MintActionAbi, 'validate'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateErc721MintActionValidate(
       this._config,

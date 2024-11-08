@@ -17,18 +17,14 @@ import {
 import type { Address, Hex } from 'viem';
 
 export class MockERC721 extends Deployable<unknown, typeof mockErc721Abi> {
-  public async approve(
-    address: Address,
-    amount: bigint,
-    params?: WriteParams<typeof mockErc721Abi, 'approve'>,
-  ) {
+  public async approve(address: Address, amount: bigint, params?: WriteParams) {
     return await this.awaitResult(this.approveRaw(address, amount, params));
   }
 
   public async approveRaw(
     address: Address,
     amount: bigint,
-    params?: WriteParams<typeof mockErc721Abi, 'mint'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateMockErc721Approve(this._config, {
       address: this.assertValidAddress(),
@@ -45,7 +41,7 @@ export class MockERC721 extends Deployable<unknown, typeof mockErc721Abi> {
     from: Address,
     to: Address,
     id: bigint,
-    params?: WriteParams<typeof mockErc721Abi, 'transferFrom'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.transferFromRaw(from, to, id, params));
   }
@@ -54,7 +50,7 @@ export class MockERC721 extends Deployable<unknown, typeof mockErc721Abi> {
     from: Address,
     to: Address,
     id: bigint,
-    params?: WriteParams<typeof mockErc721Abi, 'transferFrom'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateMockErc721TransferFrom(
       this._config,
@@ -70,17 +66,11 @@ export class MockERC721 extends Deployable<unknown, typeof mockErc721Abi> {
     return { hash, result };
   }
 
-  public async mint(
-    address: Address,
-    params?: WriteParams<typeof mockErc721Abi, 'mint'>,
-  ) {
+  public async mint(address: Address, params?: WriteParams) {
     return await this.awaitResult(this.mintRaw(address, params));
   }
 
-  public async mintRaw(
-    address: Address,
-    params?: WriteParams<typeof mockErc721Abi, 'mint'>,
-  ) {
+  public async mintRaw(address: Address, params?: WriteParams) {
     const { request, result } = await simulateMockErc721Mint(this._config, {
       address: this.assertValidAddress(),
       args: [address],

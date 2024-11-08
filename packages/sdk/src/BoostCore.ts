@@ -332,7 +332,7 @@ export class BoostCore extends Deployable<
    */
   public async createBoost(
     _boostPayload: CreateBoostPayload,
-    _params?: WriteParams<typeof boostCoreAbi, 'createBoost'>,
+    _params?: WriteParams,
   ) {
     const [payload, options] =
       this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
@@ -402,7 +402,7 @@ export class BoostCore extends Deployable<
    */
   public async simulateCreateBoost(
     _boostPayload: CreateBoostPayload,
-    _params?: WriteParams<typeof boostCoreAbi, 'createBoost'>,
+    _params?: WriteParams,
   ) {
     const [payload, options] =
       this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
@@ -625,7 +625,7 @@ export class BoostCore extends Deployable<
     incentiveId: bigint,
     address: Address,
     data: Hex,
-    params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.claimIncentiveRaw(boostId, incentiveId, address, data, params),
@@ -649,7 +649,7 @@ export class BoostCore extends Deployable<
     incentiveId: bigint,
     referrer: Address,
     data: Hex,
-    params?: WriteParams<typeof boostCoreAbi, 'claimIncentive'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateBoostCoreClaimIncentive(
       this._config,
@@ -688,7 +688,7 @@ export class BoostCore extends Deployable<
     referrer: Address,
     data: Hex,
     claimant: Address,
-    params?: WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.claimIncentiveForRaw(
@@ -721,7 +721,7 @@ export class BoostCore extends Deployable<
     referrer: Address,
     data: Hex,
     claimant: Address,
-    params?: WriteParams<typeof boostCoreAbi, 'claimIncentiveFor'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateBoostCoreClaimIncentiveFor(
       this._config,
@@ -753,7 +753,7 @@ export class BoostCore extends Deployable<
    */
   public async readBoost(
     _id: string | bigint,
-    params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
+    params?: ReadParams,
   ): Promise<RawBoost> {
     try {
       let id: bigint;
@@ -789,10 +789,7 @@ export class BoostCore extends Deployable<
    * @returns {Promise<Boost>}
    * @throws {@link BoostNotFoundError}
    */
-  public async getBoost(
-    _id: string | bigint,
-    params?: ReadParams<typeof boostCoreAbi, 'getBoost'>,
-  ) {
+  public async getBoost(_id: string | bigint, params?: ReadParams) {
     let id: bigint;
     if (typeof _id === 'string') {
       id = BigInt(_id);
@@ -836,9 +833,7 @@ export class BoostCore extends Deployable<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async getBoostCount(
-    params?: ReadParams<typeof boostCoreAbi, 'getBoostCount'>,
-  ) {
+  public async getBoostCount(params?: ReadParams) {
     return await readBoostCoreGetBoostCount(this._config, {
       ...assertValidAddressByChainId(
         this._config,
@@ -859,13 +854,12 @@ export class BoostCore extends Deployable<
    * @async
    * @param {Address} address
    * @param {?ReadParams &
-   *       ReadParams<typeof iAuthAbi, 'isAuthorized'>} [params]
+   *       ReadParams} [params]
    * @returns {Promise<boolean>}
    */
   public async isAuthorized(
     address: Address,
-    params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'> &
-      ReadParams<typeof iAuthAbi, 'isAuthorized'>,
+    params?: ReadParams & ReadParams,
   ) {
     const auth = await this.createBoostAuth(params);
     return readIAuthIsAuthorized(this._config, {
@@ -885,9 +879,7 @@ export class BoostCore extends Deployable<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async createBoostAuth(
-    params?: ReadParams<typeof boostCoreAbi, 'createBoostAuth'>,
-  ) {
+  public async createBoostAuth(params?: ReadParams) {
     return await readBoostCoreCreateBoostAuth(this._config, {
       ...assertValidAddressByChainId(
         this._config,
@@ -910,10 +902,7 @@ export class BoostCore extends Deployable<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async setCreateBoostAuth(
-    auth: Auth,
-    params?: WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>,
-  ) {
+  public async setCreateBoostAuth(auth: Auth, params?: WriteParams) {
     return await this.awaitResult(
       this.setCreateBoostAuthRaw(auth.assertValidAddress(), {
         ...params,
@@ -930,10 +919,7 @@ export class BoostCore extends Deployable<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async setCreateBoostAuthRaw(
-    address: Address,
-    params?: WriteParams<typeof boostCoreAbi, 'setCreateBoostAuth'>,
-  ) {
+  public async setCreateBoostAuthRaw(address: Address, params?: WriteParams) {
     const { request, result } = await simulateBoostCoreSetCreateBoostAuth(
       this._config,
       {
@@ -960,9 +946,7 @@ export class BoostCore extends Deployable<
    * @param {?ReadParams} [params]
    * @returns {unknown}
    */
-  public async protocolFee(
-    params?: ReadParams<typeof boostCoreAbi, 'protocolFee'>,
-  ) {
+  public async protocolFee(params?: ReadParams) {
     return await readBoostCoreProtocolFee(this._config, {
       ...assertValidAddressByChainId(
         this._config,
@@ -984,9 +968,7 @@ export class BoostCore extends Deployable<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async protocolFeeReceiver(
-    params?: ReadParams<typeof boostCoreAbi, 'protocolFeeReceiver'>,
-  ) {
+  public async protocolFeeReceiver(params?: ReadParams) {
     return await readBoostCoreProtocolFeeReceiver(this._config, {
       ...assertValidAddressByChainId(
         this._config,
@@ -1009,10 +991,7 @@ export class BoostCore extends Deployable<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async setProcolFeeReceiver(
-    address: Address,
-    params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
-  ) {
+  public async setProcolFeeReceiver(address: Address, params?: WriteParams) {
     return await this.awaitResult(
       this.setProcolFeeReceiverRaw(address, {
         ...params,
@@ -1029,10 +1008,7 @@ export class BoostCore extends Deployable<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async setProcolFeeReceiverRaw(
-    address: Address,
-    params?: WriteParams<typeof boostCoreAbi, 'setProtocolFeeReceiver'>,
-  ) {
+  public async setProcolFeeReceiverRaw(address: Address, params?: WriteParams) {
     const { request, result } = await simulateBoostCoreSetProtocolFeeReceiver(
       this._config,
       {

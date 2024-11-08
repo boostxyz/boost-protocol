@@ -111,9 +111,7 @@ export class SimpleDenyList<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>} - The address of the owner
    */
-  public async owner(
-    params?: ReadParams<typeof simpleDenyListAbi, 'owner'>,
-  ): Promise<Address> {
+  public async owner(params?: ReadParams): Promise<Address> {
     return await readSimpleAllowListOwner(this._config, {
       ...this.optionallyAttachAccount(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -134,7 +132,7 @@ export class SimpleDenyList<
    */
   public async isAllowed(
     address: Address,
-    params?: ReadParams<typeof simpleDenyListAbi, 'isAllowed'>,
+    params?: ReadParams,
   ): Promise<boolean> {
     return await readSimpleDenyListIsAllowed(this._config, {
       address: this.assertValidAddress(),
@@ -158,7 +156,7 @@ export class SimpleDenyList<
   public async setDenied(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof simpleDenyListAbi, 'setDenied'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.setDeniedRaw(addresses, allowed, params),
@@ -178,7 +176,7 @@ export class SimpleDenyList<
   public async setDeniedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params?: WriteParams<typeof simpleDenyListAbi, 'setDenied'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateSimpleDenyListSetDenied(
       this._config,

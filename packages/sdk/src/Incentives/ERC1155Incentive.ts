@@ -149,9 +149,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async claims(
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'claims'>,
-  ) {
+  public async claims(params?: ReadParams) {
     return await readErc1155IncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -168,9 +166,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async reward(
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'reward'>,
-  ) {
+  public async reward(params?: ReadParams) {
     return await readErc1155IncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -188,10 +184,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async claimed(
-    address: Address,
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'claimed'>,
-  ) {
+  public async claimed(address: Address, params?: ReadParams) {
     return await readErc1155IncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
@@ -208,7 +201,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async asset(params?: ReadParams<typeof erc1155IncentiveAbi, 'asset'>) {
+  public async asset(params?: ReadParams) {
     return await readErc1155IncentiveAsset(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -224,9 +217,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<StrategyType>}
    */
-  public strategy(
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'strategy'>,
-  ): Promise<StrategyType> {
+  public strategy(params?: ReadParams): Promise<StrategyType> {
     return readErc1155IncentiveStrategy(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -242,7 +233,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {unknown}
    */
-  public async limit(params?: ReadParams<typeof erc1155IncentiveAbi, 'limit'>) {
+  public async limit(params?: ReadParams) {
     return await readErc1155IncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -258,9 +249,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async tokenId(
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'tokenId'>,
-  ) {
+  public async tokenId(params?: ReadParams) {
     return await readErc1155IncentiveTokenId(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -276,9 +265,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
-  public async extraData(
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'extraData'>,
-  ) {
+  public async extraData(params?: ReadParams) {
     return await readErc1155IncentiveExtraData(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -295,10 +282,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>}
    */
-  protected async claim(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
-  ) {
+  protected async claim(payload: ClaimPayload, params?: WriteParams) {
     return await this.awaitResult(this.claimRaw(payload, params));
   }
 
@@ -311,10 +295,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>}
    */
-  protected async claimRaw(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc1155IncentiveAbi, 'claim'>,
-  ) {
+  protected async claimRaw(payload: ClaimPayload, params?: WriteParams) {
     const { request, result } = await simulateErc1155IncentiveClaim(
       this._config,
       {
@@ -338,10 +319,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async clawback(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc1155IncentiveAbi, 'clawback'>,
-  ) {
+  public async clawback(payload: ClaimPayload, params?: WriteParams) {
     return await this.awaitResult(this.clawbackRaw(payload, params));
   }
 
@@ -354,10 +332,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>}
    */
-  public async clawbackRaw(
-    payload: ClaimPayload,
-    params?: WriteParams<typeof erc1155IncentiveAbi, 'clawback'>,
-  ) {
+  public async clawbackRaw(payload: ClaimPayload, params?: WriteParams) {
     const { request, result } = await simulateErc1155IncentiveClawback(
       this._config,
       {
@@ -381,10 +356,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async isClaimable(
-    payload: ClaimPayload,
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'isClaimable'>,
-  ) {
+  public async isClaimable(payload: ClaimPayload, params?: ReadParams) {
     return await readErc1155IncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
       args: [prepareClaimPayload(payload)],
@@ -402,10 +374,7 @@ export class ERC1155Incentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
-  public async preflight(
-    data: ERC1155IncentivePayload,
-    params?: ReadParams<typeof erc1155IncentiveAbi, 'preflight'>,
-  ) {
+  public async preflight(data: ERC1155IncentivePayload, params?: ReadParams) {
     return await readErc1155IncentivePreflight(this._config, {
       address: this.assertValidAddress(),
       args: [prepareERC1155IncentivePayload(data)],

@@ -18,7 +18,7 @@ export class MockPoints extends MockERC20 {
   public override async approve(
     address: Address,
     value: bigint,
-    params?: WriteParams<typeof pointsAbi, 'approve'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.approveRaw(address, value, params));
   }
@@ -26,7 +26,7 @@ export class MockPoints extends MockERC20 {
   public override async approveRaw(
     address: Address,
     value: bigint,
-    params?: WriteParams<typeof pointsAbi, 'approve'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulatePointsApprove(this._config, {
       address: this.assertValidAddress(),
@@ -39,19 +39,11 @@ export class MockPoints extends MockERC20 {
     return { hash, result };
   }
 
-  public async issue(
-    address: Address,
-    value: bigint,
-    params?: WriteParams<typeof pointsAbi, 'issue'>,
-  ) {
+  public async issue(address: Address, value: bigint, params?: WriteParams) {
     return await this.awaitResult(this.issueRaw(address, value, params));
   }
 
-  public async issueRaw(
-    address: Address,
-    value: bigint,
-    params?: WriteParams<typeof pointsAbi, 'issue'>,
-  ) {
+  public async issueRaw(address: Address, value: bigint, params?: WriteParams) {
     const { request, result } = await simulatePointsIssue(this._config, {
       address: this.assertValidAddress(),
       args: [address, value],

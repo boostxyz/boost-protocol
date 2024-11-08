@@ -94,11 +94,7 @@ export interface IncentiveCriteria {
   targetContract: Address;
 }
 
-export interface ReadIncentiveCriteriaParams
-  extends ReadParams<
-    typeof erc20VariableCriteriaIncentiveAbi,
-    'getIncentiveCriteria'
-  > {}
+export interface ReadIncentiveCriteriaParams extends ReadParams {}
 
 export interface GetIncentiveScalarParams {
   chainId: number;
@@ -144,10 +140,7 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
    * @throws {IncentiveCriteriaNotFoundError}
    */
   public async getIncentiveCriteria(
-    params?: ReadParams<
-      typeof erc20VariableCriteriaIncentiveAbi,
-      'getIncentiveCriteria'
-    >,
+    params?: ReadParams,
   ): Promise<IncentiveCriteria> {
     try {
       const criteria =
@@ -172,12 +165,7 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
    * @returns {Promise<IncentiveCriteria>} Incentive criteria structure
    * @throws {IncentiveCriteriaNotFoundError}
    */
-  public async getMaxReward(
-    params?: ReadParams<
-      typeof erc20VariableCriteriaIncentiveAbi,
-      'getIncentiveCriteria'
-    >,
-  ): Promise<bigint> {
+  public async getMaxReward(params?: ReadParams): Promise<bigint> {
     const maxReward = await readErc20VariableCriteriaIncentiveGetMaxReward(
       this._config,
       {
@@ -199,10 +187,7 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
    */
   public async getIncentiveScalar(
     { chainId, hash, knownSignatures }: GetIncentiveScalarParams,
-    params?: ReadParams<
-      typeof erc20VariableCriteriaIncentiveAbi,
-      'getIncentiveCriteria'
-    >,
+    params?: ReadParams,
   ): Promise<bigint> {
     const criteria = await this.getIncentiveCriteria(params);
     if (criteria.criteriaType === SignatureType.EVENT) {

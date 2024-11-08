@@ -117,9 +117,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async owner(
-    params?: ReadParams<typeof allowListIncentiveAbi, 'owner'>,
-  ) {
+  public async owner(params?: ReadParams) {
     return await readAllowListIncentiveOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -136,9 +134,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async claims(
-    params?: ReadParams<typeof allowListIncentiveAbi, 'claims'>,
-  ) {
+  public async claims(params?: ReadParams) {
     return await readAllowListIncentiveClaims(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -155,9 +151,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async reward(
-    params?: ReadParams<typeof allowListIncentiveAbi, 'reward'>,
-  ) {
+  public async reward(params?: ReadParams) {
     return await readAllowListIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -175,10 +169,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<boolean>}
    */
-  public async claimed(
-    address: Address,
-    params?: ReadParams<typeof allowListIncentiveAbi, 'claimed'>,
-  ) {
+  public async claimed(address: Address, params?: ReadParams) {
     return await readAllowListIncentiveClaimed(this._config, {
       address: this.assertValidAddress(),
       args: [address],
@@ -195,9 +186,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<SimpleAllowList>}
    */
-  public async allowList(
-    params?: ReadParams<typeof allowListIncentiveAbi, 'allowList'>,
-  ): Promise<SimpleAllowList> {
+  public async allowList(params?: ReadParams): Promise<SimpleAllowList> {
     const address = await readAllowListIncentiveAllowList(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -217,9 +206,7 @@ export class AllowListIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async limit(
-    params?: ReadParams<typeof allowListIncentiveAbi, 'limit'>,
-  ) {
+  public async limit(params?: ReadParams) {
     return await readAllowListIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -238,7 +225,7 @@ export class AllowListIncentive extends DeployableTarget<
    */
   protected async claim(
     payload: Pick<ClaimPayload, 'target'>,
-    params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.claimRaw(payload, params));
   }
@@ -254,7 +241,7 @@ export class AllowListIncentive extends DeployableTarget<
    */
   protected async claimRaw(
     payload: Pick<ClaimPayload, 'target'>,
-    params?: WriteParams<typeof allowListIncentiveAbi, 'claim'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateAllowListIncentiveClaim(
       this._config,
@@ -281,7 +268,7 @@ export class AllowListIncentive extends DeployableTarget<
    */
   public async isClaimable(
     payload: Pick<ClaimPayload, 'target'>,
-    params?: ReadParams<typeof allowListIncentiveAbi, 'isClaimable'>,
+    params?: ReadParams,
   ) {
     return await readAllowListIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),

@@ -216,7 +216,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async allocate(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof managedBudgetAbi, 'allocate'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.allocateRaw(transfer, params));
   }
@@ -234,7 +234,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async allocateRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof managedBudgetAbi, 'allocate'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateManagedBudgetAllocate(
       this._config,
@@ -264,7 +264,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async clawback(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof managedBudgetAbi, 'clawback'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.clawbackRaw(transfer, params));
   }
@@ -283,7 +283,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async clawbackRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof managedBudgetAbi, 'clawback'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateManagedBudgetClawback(
       this._config,
@@ -327,7 +327,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
     data: Hex,
     boostId: bigint | number,
     incentiveId: bigint | number,
-    params?: WriteParams<typeof managedBudgetAbi, 'clawbackFromTarget'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(
       this.clawbackFromTargetRaw(target, data, boostId, incentiveId, params),
@@ -362,7 +362,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
     data: Hex,
     boostId: bigint | number,
     incentiveId: bigint | number,
-    params?: WriteParams<typeof managedBudgetAbi, 'clawbackFromTarget'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateManagedBudgetClawbackFromTarget(
       this._config,
@@ -393,7 +393,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async disburse(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof managedBudgetAbi, 'disburse'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.disburseRaw(transfer, params));
   }
@@ -410,7 +410,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async disburseRaw(
     transfer: FungibleTransferPayload | ERC1155TransferPayload,
-    params?: WriteParams<typeof managedBudgetAbi, 'disburse'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateManagedBudgetDisburse(
       this._config,
@@ -437,7 +437,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async disburseBatch(
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
-    params?: WriteParams<typeof managedBudgetAbi, 'disburseBatch'>,
+    params?: WriteParams,
   ) {
     return await this.awaitResult(this.disburseBatchRaw(transfers, params));
   }
@@ -453,7 +453,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    */
   public async disburseBatchRaw(
     transfers: Array<FungibleTransferPayload | ERC1155TransferPayload>,
-    params?: WriteParams<typeof managedBudgetAbi, 'disburseBatch'>,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateManagedBudgetDisburseBatch(
       this._config,
@@ -476,7 +476,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public owner(params?: ReadParams<typeof managedBudgetAbi, 'owner'>) {
+  public owner(params?: ReadParams) {
     return readManagedBudgetOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
@@ -498,7 +498,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
   public total(
     asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
-    params?: ReadParams<typeof managedBudgetAbi, 'total'>,
+    params?: ReadParams,
   ) {
     return readManagedBudgetTotal(this._config, {
       address: this.assertValidAddress(),
@@ -521,7 +521,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
   public available(
     asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
-    params?: ReadParams<typeof managedBudgetAbi, 'available'>,
+    params?: ReadParams,
   ) {
     return readManagedBudgetAvailable(this._config, {
       address: this.assertValidAddress(),
@@ -544,7 +544,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
   public distributed(
     asset: Address = zeroAddress,
     tokenId?: bigint | undefined,
-    params?: ReadParams<typeof managedBudgetAbi, 'distributed'>,
+    params?: ReadParams,
   ) {
     return readManagedBudgetDistributed(this._config, {
       address: this.assertValidAddress(),

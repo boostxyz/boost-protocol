@@ -27,11 +27,8 @@ import {
 import { allowListFromAddress } from '@boostxyz/sdk';
 import { MockERC20 } from '@boostxyz/test/MockERC20';
 import { accounts } from '@boostxyz/test/accounts';
-import {
-  type DeployableTestOptions,
-  defaultOptions,
-} from '@boostxyz/test/helpers';
-import { Config, deepEqual } from '@wagmi/core';
+import type { DeployableTestOptions } from '@boostxyz/test/helpers';
+import { deepEqual } from '@wagmi/core';
 import {
   type Address,
   type Hex,
@@ -147,7 +144,7 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
           if (incentive.strategy === StrategyType.POOL) {
             amount += incentive.reward * incentive.limit;
           }
-          if (incentive.mintableMockAsset)
+          if (incentive.shouldMintAndAllocate)
             await fundBudgetForIncentive(budget, amount, incentive.asset, {
               config,
               account,
@@ -155,7 +152,7 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
           return core.ERC20Incentive(incentive);
         case 'ERC20VariableCriteriaIncentive':
           amount += incentive.limit;
-          if (incentive.mintableMockAsset)
+          if (incentive.shouldMintAndAllocate)
             await fundBudgetForIncentive(budget, amount, incentive.asset, {
               config,
               account,
@@ -163,7 +160,7 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
           return core.ERC20VariableCriteriaIncentive(incentive);
         case 'ERC20VariableIncentive':
           amount += incentive.limit;
-          if (incentive.mintableMockAsset)
+          if (incentive.shouldMintAndAllocate)
             await fundBudgetForIncentive(budget, amount, incentive.asset, {
               config,
               account,
@@ -274,9 +271,13 @@ type BoostConfig = {
   >;
   incentives: (
     | Identifiable<AllowListIncentivePayload>
-    | Identifiable<ERC20IncentivePayload>
-    | Identifiable<ERC20VariableCriteriaIncentivePayload>
-    | Identifiable<ERC20VariableIncentivePayload>
+    | (Identifiable<ERC20IncentivePayload> & { shouldMintAndAllocate: boolean })
+    | (Identifiable<ERC20VariableCriteriaIncentivePayload> & {
+        shouldMintAndAllocate: boolean;
+      })
+    | (Identifiable<ERC20VariableIncentivePayload> & {
+        shouldMintAndAllocate: boolean;
+      })
   )[];
 };
 
@@ -337,7 +338,7 @@ export const AllowListIncentiveSchema = z.object({
 export const ERC20IncentiveSchema = z.object({
   type: z.literal('ERC20Incentive'),
   asset: AddressSchema,
-  mintableMockAsset: z.boolean().default(true),
+  shouldMintAndAllocate: z.boolean().default(true),
   strategy: z.nativeEnum(StrategyType),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
@@ -347,7 +348,7 @@ export const ERC20IncentiveSchema = z.object({
 export const ERC20VariableIncentiveSchema = z.object({
   type: z.literal('ERC20VariableIncentive'),
   asset: AddressSchema,
-  mintableMockAsset: z.boolean().default(true),
+  shouldMintAndAllocate: z.boolean().default(true),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
   manager: AddressSchema,
@@ -363,7 +364,7 @@ export const IncentiveCriteriaSchema = z.object({
 export const ERC20VariableCriteriaIncentiveSchema = z.object({
   type: z.literal('ERC20VariableCriteriaIncentive'),
   asset: AddressSchema,
-  mintableMockAsset: z.boolean().default(true),
+  shouldMintAndAllocate: z.boolean().default(true),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
   manager: AddressSchema.optional(),
@@ -417,7 +418,6 @@ async function fundBudget(
   budget: Budget,
   amount = parseEther('110'),
 ) {
-  console.warn(`minting ${amount} to ${options.account.address}`);
   await erc20.mint(options.account.address, amount);
 
   await erc20.approve(budget.assertValidAddress(), amount);
@@ -488,6 +488,7 @@ export function makeSeed({
       {
         type: 'ERC20Incentive',
         asset: asset,
+        shouldMintAndAllocate: true,
         strategy: 0,
         reward: 1n,
         limit: 1n,

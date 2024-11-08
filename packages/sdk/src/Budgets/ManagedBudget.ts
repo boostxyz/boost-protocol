@@ -6,10 +6,12 @@ import {
   readManagedBudgetTotal,
   simulateManagedBudgetAllocate,
   simulateManagedBudgetClawback,
+  simulateManagedBudgetClawbackFromTarget,
   simulateManagedBudgetDisburse,
   simulateManagedBudgetDisburseBatch,
   writeManagedBudgetAllocate,
   writeManagedBudgetClawback,
+  writeManagedBudgetClawbackFromTarget,
   writeManagedBudgetDisburse,
   writeManagedBudgetDisburseBatch,
 } from '@boostxyz/evm';
@@ -20,6 +22,7 @@ import {
   type ContractEventName,
   type Hex,
   encodeAbiParameters,
+  isAddress,
   parseAbiParameters,
   zeroAddress,
 } from 'viem';
@@ -28,10 +31,12 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
+import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   DeployableTargetWithRBAC,
   type Roles,
 } from '../Deployable/DeployableTargetWithRBAC';
+import type { Incentive } from '../Incentives/Incentive';
 import {
   DeployableUnknownOwnerProvidedError,
   UnknownTransferPayloadSupplied,
@@ -266,7 +271,7 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
 
   /**
    * Clawbacks assets from the budget.
-   * Only the owner can directly clawback assets from the budget
+   * Only the owner or admin can directly clawback assets from the budget
    * If the amount is zero, the entire balance of the asset will be transferred to the receiver
    * If the asset transfer fails, the reclamation will revert
    *
@@ -291,6 +296,88 @@ export class ManagedBudget extends DeployableTargetWithRBAC<
       },
     );
     const hash = await writeManagedBudgetClawback(this._config, request);
+    return { hash, result };
+  }
+
+  /**
+   * Clawbacks assets from an incentive associated with the budget via Boost Core.
+   * Only the authorized users can clawback assets from an incentive.
+   * If the asset transfer fails, the reclamation will revert.
+   *
+   * @example
+   * ```ts
+   * const [amount, address] = await budgets.budget.clawbackFromTarget(
+   *   core.assertValidAddress(),
+   *   erc20Incentive.buildClawbackData(1n),
+   *   boost.id,
+   *   incentiveId,
+   * );
+   * ```
+   * @public
+   * @async
+   * @param {Address} target - The address of a contract implementing clawback, typically `BoostCore`
+   * @param {Hex} data - The encoded data payload for the clawback, can be acquired with `incentive.buildClawbackData`
+   * @param {bigint | number} boostId - The ID of the boost
+   * @param {bigint | number} incentiveId - The ID of the incentive
+   * @param {?WriteParams} [params] - Optional write parameters
+   * @returns {Promise<[bigint, Address]>} - Returns a tuple of amount reclaimed and the address reclaimed from
+   */
+  public async clawbackFromTarget(
+    target: Address,
+    data: Hex,
+    boostId: bigint | number,
+    incentiveId: bigint | number,
+    params?: WriteParams<typeof managedBudgetAbi, 'clawbackFromTarget'>,
+  ) {
+    return await this.awaitResult(
+      this.clawbackFromTargetRaw(target, data, boostId, incentiveId, params),
+    );
+  }
+
+  /**
+   * Clawbacks assets from an incentive associated with the budget via Boost Core.
+   * Only the authorized users can clawback assets from an incentive.
+   * If the asset transfer fails, the reclamation will revert.
+   *
+   * @example
+   * ```ts
+   * const { hash, result: [ amount, address ] } = await budgets.budget.clawbackFromTargetRaw(
+   *   core.assertValidAddress(),
+   *   erc20Incentive.buildClawbackData(1n),
+   *   boost.id,
+   *   incentiveId,
+   * );
+   * ```
+   * @public
+   * @async
+   * @param {Address} target - The address of a contract implementing clawback, typically `BoostCore`
+   * @param {Hex} data - The encoded data payload for the clawback, can be acquired with `incentive.buildClawbackData`
+   * @param {bigint | number} boostId - The ID of the boost
+   * @param {bigint | number} incentiveId - The ID of the incentive
+   * @param {?WriteParams} [params] - Optional write parameters
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - Returns transaction hash and simulated result
+   */
+  public async clawbackFromTargetRaw(
+    target: Address,
+    data: Hex,
+    boostId: bigint | number,
+    incentiveId: bigint | number,
+    params?: WriteParams<typeof managedBudgetAbi, 'clawbackFromTarget'>,
+  ) {
+    const { request, result } = await simulateManagedBudgetClawbackFromTarget(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [target, data, BigInt(boostId), BigInt(incentiveId)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeManagedBudgetClawbackFromTarget(
+      this._config,
+      request,
+    );
     return { hash, result };
   }
 

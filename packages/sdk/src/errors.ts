@@ -9,6 +9,7 @@ import {
 import type { Criteria } from './Actions/EventAction';
 import type { EventLogs } from './Actions/EventAction';
 import type { BoostRegistry } from './BoostRegistry';
+import { DeployableTarget } from './Deployable/DeployableTarget';
 import type { Incentive } from './Incentives/Incentive';
 
 /**

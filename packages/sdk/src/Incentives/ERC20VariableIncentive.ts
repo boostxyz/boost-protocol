@@ -399,6 +399,17 @@ export class ERC20VariableIncentive<
   }
 
   /**
+   * Encodes an amount to clawback from the incentive
+   *
+   * @public
+   * @param {bigint} amount - How much of the asset to clawback
+   * @returns {Hex} - Returns an encoded uint256
+   */
+  public buildClawbackData(amount: bigint) {
+    return encodeAbiParameters([{ type: 'uint256' }], [amount]);
+  }
+
+  /**
    * @inheritdoc
    *
    * @public

@@ -1,6 +1,12 @@
 import { readMockErc20BalanceOf } from "@boostxyz/evm";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { encodeAbiParameters, isAddress, parseEther, zeroAddress } from "viem";
+import {
+  encodeAbiParameters,
+  isAddress,
+  isAddressEqual,
+  parseEther,
+  zeroAddress,
+} from "viem";
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { accounts } from "@boostxyz/test/accounts";
 import {
@@ -127,5 +133,39 @@ describe("ERC20VariableIncentive", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
+  });
+
+  test("can properly encode a uint256", () => {
+    //@ts-ignore
+    const incentive = fixtures.core.ERC20VariableIncentive();
+    expect(incentive.buildClawbackData(1n)).toBe(
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+    );
+  });
+
+  test("can clawback via a budget", async () => {
+    const erc20VariableIncentive = new fixtures.bases.ERC20VariableIncentive(
+      defaultOptions,
+      {
+        asset: budgets.erc20.assertValidAddress(),
+        reward: 1n,
+        limit: 1n,
+        manager: zeroAddress,
+      },
+    );
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20VariableIncentive],
+    });
+    const [amount, address] = await budgets.budget.clawbackFromTarget(
+      fixtures.core.assertValidAddress(),
+      erc20VariableIncentive.buildClawbackData(1n),
+      boost.id,
+      0,
+    );
+    expect(amount).toBe(1n);
+    expect(isAddressEqual(address, budgets.erc20.assertValidAddress())).toBe(
+      true,
+    );
   });
 });

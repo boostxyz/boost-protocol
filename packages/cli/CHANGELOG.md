@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 1.1.0-alpha.35
+
+### Patch Changes
+
+- d63bbe4: fix cli bundling deps
+
 ## 1.1.0-alpha.34
 
 ### Minor Changes

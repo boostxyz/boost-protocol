@@ -20,7 +20,7 @@ export default {
   build: {
     minify: true,
     rollupOptions: {
-      external: [/node/, /^@boostxyz\/sdk/],
+      external: [/node\:/, /^@boostxyz\/sdk/],
     },
     lib: {
       entry: Object.keys(packageJson.exports)

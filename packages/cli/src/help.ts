@@ -7,7 +7,9 @@ Commands:
   deploy                  Deploy a new version of the protocol
   seed generate           Generate a new basic Boost seed
   seed erc20              Deploys a new ERC20
-  seed first.json [...]
+  seed seed.json [...]    Create Boosts using JSON configuration files generable by \`seed generate\`. 
+                          You can pass as many file paths as needed, and each will be validated before any operations occur.
+                          Budgets can be automatically funded based on the incentives configuration, using accounts derived from a configured private key or mnemonic.
 
 Options:
   -h, --help     Print help

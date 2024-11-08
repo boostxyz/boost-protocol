@@ -10,6 +10,10 @@ import help from './help';
 import { commands } from './index';
 import { type Options, envToObject, objectToEnv, validateJson } from './utils';
 
+BigInt.prototype.toJSON = function () {
+  return Number(this);
+};
+
 type validCommands = keyof typeof commands;
 
 const args = arg({
@@ -69,6 +73,7 @@ async function main(): Promise<number | undefined> {
   // run command and format result for cache
   async function runCommandAndFormat() {
     const result = await commands[command](_.slice(1), options);
+    if (command === 'seed' && _.includes('generate')) options.format = 'json';
     return options.format === 'env'
       ? objectToEnv(result)
       : JSON.stringify(result, null, 2);

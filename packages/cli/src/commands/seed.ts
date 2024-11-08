@@ -260,7 +260,6 @@ const zAbiItemSchema = z.custom<`0x${string}`>().pipe(
 
 type Identifiable<T> = T & { type: string };
 type BoostConfig = {
-  asset: Address;
   protocolFee: bigint;
   maxParticipants: bigint;
   budget: DeployablePayloadOrAddress<Identifiable<ManagedBudgetPayload>>;
@@ -271,12 +270,14 @@ type BoostConfig = {
   >;
   incentives: (
     | Identifiable<AllowListIncentivePayload>
-    | (Identifiable<ERC20IncentivePayload> & { shouldMintAndAllocate: boolean })
+    | (Identifiable<ERC20IncentivePayload> & {
+        shouldMintAndAllocate?: boolean;
+      })
     | (Identifiable<ERC20VariableCriteriaIncentivePayload> & {
-        shouldMintAndAllocate: boolean;
+        shouldMintAndAllocate?: boolean;
       })
     | (Identifiable<ERC20VariableIncentivePayload> & {
-        shouldMintAndAllocate: boolean;
+        shouldMintAndAllocate?: boolean;
       })
   )[];
 };
@@ -338,7 +339,7 @@ export const AllowListIncentiveSchema = z.object({
 export const ERC20IncentiveSchema = z.object({
   type: z.literal('ERC20Incentive'),
   asset: AddressSchema,
-  shouldMintAndAllocate: z.boolean().default(true),
+  shouldMintAndAllocate: z.boolean().optional().default(false),
   strategy: z.nativeEnum(StrategyType),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
@@ -348,7 +349,7 @@ export const ERC20IncentiveSchema = z.object({
 export const ERC20VariableIncentiveSchema = z.object({
   type: z.literal('ERC20VariableIncentive'),
   asset: AddressSchema,
-  shouldMintAndAllocate: z.boolean().default(true),
+  shouldMintAndAllocate: z.boolean().optional().default(false),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
   manager: AddressSchema,
@@ -364,7 +365,7 @@ export const IncentiveCriteriaSchema = z.object({
 export const ERC20VariableCriteriaIncentiveSchema = z.object({
   type: z.literal('ERC20VariableCriteriaIncentive'),
   asset: AddressSchema,
-  shouldMintAndAllocate: z.boolean().default(true),
+  shouldMintAndAllocate: z.boolean().optional().default(false),
   reward: z.coerce.bigint(),
   limit: z.coerce.bigint(),
   manager: AddressSchema.optional(),
@@ -440,7 +441,6 @@ export function makeSeed({
   chainId: number;
 }): BoostConfig {
   return {
-    asset,
     protocolFee: 0n,
     maxParticipants: 10n,
     budget: {
@@ -488,7 +488,7 @@ export function makeSeed({
       {
         type: 'ERC20Incentive',
         asset: asset,
-        shouldMintAndAllocate: true,
+        shouldMintAndAllocate: false,
         strategy: 0,
         reward: 1n,
         limit: 1n,

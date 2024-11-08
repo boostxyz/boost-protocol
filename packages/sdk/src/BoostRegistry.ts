@@ -30,7 +30,6 @@ import {
   type HashAndSimulatedResult,
   type ReadParams,
   type RegistryType,
-  type SimulateParams,
   type WriteParams,
   assertValidAddressByChainId,
 } from './utils';
@@ -275,7 +274,7 @@ export class BoostRegistry extends Deployable<
     registryType: RegistryType,
     name: string,
     implementation: Address,
-    params?: SimulateParams,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateBoostRegistryRegister(
       this._config,
@@ -406,7 +405,7 @@ export class BoostRegistry extends Deployable<
     const { address: baseAddress } = assertValidAddressByChainId(
       this._config,
       target.bases,
-      params?.chain?.id || params?.chainId,
+      params?.chainId,
     );
     const { request, result } = await simulateBoostRegistryDeployClone(
       this._config,
@@ -414,7 +413,7 @@ export class BoostRegistry extends Deployable<
         ...assertValidAddressByChainId(
           this._config,
           this.addresses,
-          params?.chain?.id || params?.chainId,
+          params?.chainId,
         ),
         args: [target.registryType, baseAddress, displayName, payload.args[0]],
         ...this.optionallyAttachAccount(),

@@ -1,6 +1,5 @@
 import {
   boostCoreAbi,
-  type iAuthAbi,
   readBoostCoreCreateBoostAuth,
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
@@ -336,7 +335,7 @@ export class BoostCore extends Deployable<
   ) {
     const [payload, options] =
       this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
-    const desiredChainId = _params?.chain?.id || _params?.chainId;
+    const desiredChainId = _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,
       this.addresses,
@@ -406,7 +405,7 @@ export class BoostCore extends Deployable<
   ) {
     const [payload, options] =
       this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
-    const desiredChainId = _params?.chain?.id || _params?.chainId;
+    const desiredChainId = _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,
       this.addresses,
@@ -657,7 +656,7 @@ export class BoostCore extends Deployable<
         ...assertValidAddressByChainId(
           this._config,
           this.addresses,
-          params?.chain?.id || params?.chainId,
+          params?.chainId,
         ),
         args: [boostId, incentiveId, referrer, data],
         ...this.optionallyAttachAccount(),
@@ -729,7 +728,7 @@ export class BoostCore extends Deployable<
         ...assertValidAddressByChainId(
           this._config,
           this.addresses,
-          params?.chain?.id || params?.chainId,
+          params?.chainId,
         ),
         args: [boostId, incentiveId, referrer, data, claimant],
         ...this.optionallyAttachAccount(),

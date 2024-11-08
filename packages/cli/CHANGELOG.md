@@ -1,5 +1,12 @@
 # @boostxyz/cli
 
+## 1.1.0-alpha.34
+
+### Minor Changes
+
+- 7495290: initial public release, documentation, and small tweaks to `seed generate` to support serialization
+- e1e3c26: add seed command to generate Boost state
+
 ## 1.1.0-alpha.33
 
 ## 1.1.0-alpha.32

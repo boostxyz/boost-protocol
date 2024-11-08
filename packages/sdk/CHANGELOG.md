@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.33
+
+### Minor Changes
+
+- 6cefd33: add `clawbackFromTarget` API to ManagedBudget, docs, tests
+
 ## 2.0.0-alpha.32
 
 ### Minor Changes

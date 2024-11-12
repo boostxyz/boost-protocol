@@ -29,7 +29,6 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
-  parseEther,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -129,11 +128,11 @@ import {
 export { boostCoreAbi };
 
 /**
- * The fee (in wei) required to claim each incentive, must be provided for the `claimIncentive` transaction
+ * The fee denominator (basis points, i.e. 10000 == 100%)
  *
  * @type {bigint}
  */
-export const BOOST_CORE_CLAIM_FEE = parseEther('0.000075');
+export const FEE_DENOMINATOR = 10000n;
 
 /**
  * The fixed addresses for the deployed Boost Core.
@@ -1062,6 +1061,20 @@ export class BoostCore extends Deployable<
       logs: receipt.logs,
     });
     return logs.at(0)?.args;
+  }
+
+  /**
+   * Calculate the protocol fee for ERC20 or ETH assets for a given amount. Fees are collected when initializing new incentives, or clawing back from incentives.
+   *
+   * @public
+   * @async
+   * @param {bigint} [amount]
+   * @param {?ReadParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async calculateProtocolFee(amount: bigint, params?: ReadParams) {
+    const protocolFee = await this.protocolFee(params);
+    return (amount * protocolFee) / FEE_DENOMINATOR;
   }
 
   /**

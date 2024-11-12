@@ -34,7 +34,7 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
-  type StrategyType,
+  StrategyType,
   prepareClaimPayload,
 } from '../claiming';
 import {
@@ -61,7 +61,7 @@ export interface ERC20IncentivePayload {
    */
   asset: Address;
   /**
-   * The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
+   * The type of disbursement strategy for the incentive.
    *
    * @type {StrategyType}
    */
@@ -411,6 +411,28 @@ export class ERC20Incentive extends DeployableTarget<
     );
     const hash = await writeErc20IncentiveDrawRaffle(this._config, request);
     return { hash, result };
+  }
+
+  /**
+   * Get the maximum amount that can be claimed by this incentive. Useful when used in conjunction with `BoostCore.calculateProtocolFee`
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
+   */
+  public async getTotalBudget(params?: ReadParams) {
+    if (this.payload?.strategy && this.payload?.limit && this.payload?.reward) {
+      return (this.payload.strategy as StrategyType) === StrategyType.POOL
+        ? this.payload.limit * this.payload.reward
+        : this.payload.reward;
+    }
+    const [strategy, limit, reward] = await Promise.all([
+      this.strategy(params),
+      this.limit(params),
+      this.reward(params),
+    ]);
+    return strategy === StrategyType.POOL ? limit * reward : reward;
   }
 
   /**

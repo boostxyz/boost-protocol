@@ -399,6 +399,21 @@ export class CGDAIncentive extends DeployableTarget<
   }
 
   /**
+   * Get the maximum amount that can be claimed by this incentive. Useful when used in conjunction with `BoostCore.calculateProtocolFee`
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
+   */
+  public async getTotalBudget(params?: ReadParams) {
+    if (this.payload?.totalBudget) {
+      return this.payload.totalBudget;
+    }
+    return await this.totalBudget(params);
+  }
+
+  /**
    * @inheritdoc
    *
    * @public

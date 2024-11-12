@@ -52,7 +52,7 @@ export interface ERC20VariableIncentivePayload {
    */
   asset: Address;
   /**
-   * The amount of the asset to distribute.
+   * The reward multiplier. If 0, the signed amount from the claim payload is used directly. Variable amount (in ETH decimal format) will by multiplied by this value.
    *
    * @type {bigint}
    */
@@ -349,6 +349,21 @@ export class ERC20VariableIncentive<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Get the maximum amount that can be claimed by this incentive. Useful when used in conjunction with `BoostCore.calculateProtocolFee`
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
+   */
+  public async getTotalBudget(params?: ReadParams) {
+    if ((this.payload as ERC20VariableIncentivePayload)?.limit) {
+      return (this.payload as ERC20VariableIncentivePayload).limit;
+    }
+    return await this.limit(params);
   }
 
   /**

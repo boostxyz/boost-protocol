@@ -424,8 +424,8 @@ export class ERC20Incentive extends DeployableTarget<
   public async getTotalBudget(params?: ReadParams) {
     if (
       this.payload?.strategy !== undefined &&
-      this.payload?.limit &&
-      this.payload?.reward
+      this.payload?.limit !== undefined &&
+      this.payload?.reward !== undefined
     ) {
       return (this.payload.strategy as StrategyType) === StrategyType.POOL
         ? this.payload.limit * this.payload.reward

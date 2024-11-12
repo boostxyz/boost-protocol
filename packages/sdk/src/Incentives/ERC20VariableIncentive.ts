@@ -360,7 +360,7 @@ export class ERC20VariableIncentive<
    * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
    */
   public async getTotalBudget(params?: ReadParams) {
-    if ((this.payload as ERC20VariableIncentivePayload)?.limit) {
+    if ((this.payload as ERC20VariableIncentivePayload)?.limit !== undefined) {
       return (this.payload as ERC20VariableIncentivePayload).limit;
     }
     return await this.limit(params);

@@ -407,7 +407,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
    */
   public async getTotalBudget(params?: ReadParams) {
-    if (this.payload?.totalBudget) {
+    if (this.payload?.totalBudget !== undefined) {
       return this.payload.totalBudget;
     }
     return await this.totalBudget(params);

@@ -73,7 +73,7 @@ export interface ERC20IncentivePayload {
    */
   reward: bigint;
   /**
-   * How many times can this incentive be claimed.
+   * How many times can this incentive be claimed. This should ideally be 1n for `RAFFLE` strategy types.
    *
    * @type {bigint}
    */
@@ -422,7 +422,11 @@ export class ERC20Incentive extends DeployableTarget<
    * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
    */
   public async getTotalBudget(params?: ReadParams) {
-    if (this.payload?.strategy && this.payload?.limit && this.payload?.reward) {
+    if (
+      this.payload?.strategy !== undefined &&
+      this.payload?.limit &&
+      this.payload?.reward
+    ) {
       return (this.payload.strategy as StrategyType) === StrategyType.POOL
         ? this.payload.limit * this.payload.reward
         : this.payload.reward;
@@ -508,6 +512,13 @@ export function prepareERC20IncentivePayload({
       { type: 'uint256', name: 'limit' },
       { type: 'address', name: 'manager' },
     ],
-    [asset, strategy, reward, limit, manager],
+    [
+      asset,
+      strategy,
+      reward,
+      // unclear how user set limit should work for raffle, so in order to avoid passing 0's let's correct it
+      limit === 0n && strategy === StrategyType.RAFFLE ? 1n : limit,
+      manager,
+    ],
   );
 }

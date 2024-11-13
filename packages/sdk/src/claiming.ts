@@ -8,8 +8,7 @@ import { type Address, type Hex, encodeAbiParameters, zeroHash } from 'viem';
  */
 export enum StrategyType {
   POOL = 0,
-  MINT = 1,
-  RAFFLE = 2,
+  RAFFLE = 1,
 }
 
 /**

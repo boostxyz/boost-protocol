@@ -34,7 +34,7 @@ import type {
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
   type ClaimPayload,
-  type StrategyType,
+  StrategyType,
   prepareClaimPayload,
 } from '../claiming';
 import {
@@ -61,7 +61,7 @@ export interface ERC20IncentivePayload {
    */
   asset: Address;
   /**
-   * The type of disbursement strategy for the incentive. `StrategyType.MINT` is not supported for `ERC20Incentives`
+   * The type of disbursement strategy for the incentive.
    *
    * @type {StrategyType}
    */
@@ -73,7 +73,7 @@ export interface ERC20IncentivePayload {
    */
   reward: bigint;
   /**
-   * How many times can this incentive be claimed.
+   * How many times can this incentive be claimed. This should ideally be 1n for `RAFFLE` strategy types.
    *
    * @type {bigint}
    */
@@ -414,6 +414,32 @@ export class ERC20Incentive extends DeployableTarget<
   }
 
   /**
+   * Get the maximum amount that can be claimed by this incentive. Useful when used in conjunction with `BoostCore.calculateProtocolFee`
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
+   */
+  public async getTotalBudget(params?: ReadParams) {
+    if (
+      this.payload?.strategy !== undefined &&
+      this.payload?.limit !== undefined &&
+      this.payload?.reward !== undefined
+    ) {
+      return (this.payload.strategy as StrategyType) === StrategyType.POOL
+        ? this.payload.limit * this.payload.reward
+        : this.payload.reward;
+    }
+    const [strategy, limit, reward] = await Promise.all([
+      this.strategy(params),
+      this.limit(params),
+      this.reward(params),
+    ]);
+    return strategy === StrategyType.POOL ? limit * reward : reward;
+  }
+
+  /**
    * @inheritdoc
    *
    * @public
@@ -486,6 +512,13 @@ export function prepareERC20IncentivePayload({
       { type: 'uint256', name: 'limit' },
       { type: 'address', name: 'manager' },
     ],
-    [asset, strategy, reward, limit, manager],
+    [
+      asset,
+      strategy,
+      reward,
+      // unclear how user set limit should work for raffle, so in order to avoid passing 0's let's correct it
+      limit === 0n && strategy === StrategyType.RAFFLE ? 1n : limit,
+      manager,
+    ],
   );
 }

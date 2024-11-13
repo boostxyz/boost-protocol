@@ -12,10 +12,9 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpe
 import { pad, parseEther, zeroAddress } from "viem";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { ContractAction } from "./Actions/ContractAction";
-import { BOOST_CORE_CLAIM_FEE } from "./BoostCore";
-import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { StrategyType } from "./claiming";
 import { BoostNotFoundError, IncentiveNotCloneableError } from "./errors";
+import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { bytes4 } from "./utils";
 import { BoostValidatorEOA } from "./Validators/Validator";
 
@@ -882,7 +881,6 @@ describe("BoostCore", () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: BOOST_CORE_CLAIM_FEE },
     );
 
     const claimInfo = await fixtures.core.getClaimFromTransaction({ hash });
@@ -890,5 +888,20 @@ describe("BoostCore", () => {
     expect(claimInfo?.claimant).toBe(claimant);
     expect(typeof claimInfo?.boostId).toBe("bigint");
     expect(claimInfo?.referrer).toBe(referrer);
+  });
+
+  test("can calculate an incentive's protocol fee ahead of creation time", async () => {
+    const erc20Incentive = fixtures.core.ERC20Incentive({
+      asset: budgets.erc20.assertValidAddress(),
+      strategy: StrategyType.POOL,
+      reward: parseEther('1'),
+      limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
+    });
+
+    const totalFee = await fixtures.core.calculateProtocolFee(
+      await erc20Incentive.getTotalBudget()
+    )
+    expect(totalFee).toBe(100000000000000000n)
   });
 });

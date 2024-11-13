@@ -4,7 +4,7 @@ import {
   type SimulateContractParameters,
   type WatchContractEventParameters,
   getAccount,
-  getClient,
+  getChainId,
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
@@ -225,19 +225,24 @@ export function assertValidAddressByChainId(
   desiredChainId?: number,
 ): { chainId: number; address: Address } {
   let chainId: number | undefined = undefined;
-  const wagmiAccount = getAccount(config);
+
+  const wagmiChainId = getChainId(config);
+  if (wagmiChainId && addressByChainId[wagmiChainId]) chainId = wagmiChainId;
   // if manually providing a chain id for some contract operation, try to use it
   if (desiredChainId !== undefined) {
     if (addressByChainId[desiredChainId]) chainId = desiredChainId;
-  } else if (wagmiAccount.chainId !== undefined) {
+  } else if (wagmiChainId !== undefined) {
     // otherwise if we can get the current chain id off the connected account and it matches one of ours, use it
-    if (addressByChainId[wagmiAccount.chainId]) chainId = wagmiAccount.chainId;
+    if (addressByChainId[wagmiChainId]) chainId = wagmiChainId;
   }
   // chainId is still undefined, try to get chain id off viem client
   if (chainId === undefined) {
-    const client = getClient(config);
-    if (client?.chain.id && addressByChainId[client?.chain.id])
-      chainId = client.chain.id;
+    const wagmiAccount = getAccount(config);
+    if (wagmiAccount.chainId !== undefined) {
+      // otherwise if we can get the current chain id off the connected account and it matches one of ours, use it
+      if (addressByChainId[wagmiAccount.chainId])
+        chainId = wagmiAccount.chainId;
+    }
   }
   // if chainId is STILL undefined, use our default addresses
   // TODO: update this when on prod network

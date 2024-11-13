@@ -14,6 +14,7 @@
     "@boostxyz/test": "1.0.1-alpha.3"
   },
   "changesets": [
+    "afraid-papayas-kiss",
     "calm-moles-fry",
     "chatty-eagles-collect",
     "chilly-pets-live",
@@ -58,6 +59,7 @@
     "pretty-carrots-wink",
     "purple-islands-cheer",
     "quiet-lies-lick",
+    "real-boxes-jump",
     "real-planes-ring",
     "red-kiwis-hope",
     "red-stingrays-greet",

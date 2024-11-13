@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.34
+
+### Minor Changes
+
+- 9ff2694: add `getTotalBudget` and `calculateProtocolFee` utilities
+- 2ed232d: change WriteParams to use SimulateContractParameters under the hood, remove excessively huge generic typings
+
 ## 2.0.0-alpha.33
 
 ### Minor Changes

@@ -12,10 +12,9 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpe
 import { pad, parseEther, zeroAddress } from "viem";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { ContractAction } from "./Actions/ContractAction";
-import { BOOST_CORE_CLAIM_FEE } from "./BoostCore";
-import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { StrategyType } from "./claiming";
 import { BoostNotFoundError, IncentiveNotCloneableError } from "./errors";
+import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { bytes4 } from "./utils";
 import { BoostValidatorEOA } from "./Validators/Validator";
 
@@ -882,7 +881,6 @@ describe("BoostCore", () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: BOOST_CORE_CLAIM_FEE },
     );
 
     const claimInfo = await fixtures.core.getClaimFromTransaction({ hash });

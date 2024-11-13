@@ -1,13 +1,4 @@
 import { readMockErc20BalanceOf } from "@boostxyz/evm";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import {
-  encodeAbiParameters,
-  isAddress,
-  isAddressEqual,
-  parseEther,
-  zeroAddress,
-} from "viem";
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { accounts } from "@boostxyz/test/accounts";
 import {
   type BudgetFixtures,
@@ -17,9 +8,16 @@ import {
   freshBoost,
   fundBudget,
 } from "@boostxyz/test/helpers";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import {
+  isAddress,
+  isAddressEqual,
+  parseEther,
+  zeroAddress
+} from "viem";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { ERC20VariableIncentive } from "./ERC20VariableIncentive";
 
-const BOOST_CORE_CLAIM_FEE = parseEther("0.000075");
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -76,7 +74,6 @@ describe("ERC20VariableIncentive", () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: BOOST_CORE_CLAIM_FEE },
     );
     expect(
       await readMockErc20BalanceOf(defaultOptions.config, {
@@ -120,7 +117,6 @@ describe("ERC20VariableIncentive", () => {
       0n,
       referrer,
       claimDataPayload,
-      { value: BOOST_CORE_CLAIM_FEE },
     );
     try {
       await fixtures.core.claimIncentive(
@@ -128,7 +124,6 @@ describe("ERC20VariableIncentive", () => {
         0n,
         referrer,
         claimDataPayload,
-        { value: BOOST_CORE_CLAIM_FEE },
       );
     } catch (e) {
       expect(e).toBeInstanceOf(Error);

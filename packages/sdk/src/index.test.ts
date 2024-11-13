@@ -93,7 +93,6 @@ const allExports = [
   "BOOST_REGISTRY_ADDRESSES",
   "boostCoreAbi",
   "boostRegistryAbi",
-  "BOOST_CORE_CLAIM_FEE",
   "BOOST_CORE_ADDRESS",
   "BOOST_CORE_ADDRESSES",
   "ActionByComponentInterface",
@@ -118,6 +117,7 @@ const allExports = [
 describe("SDK exports", () => {
   test(`should export all public API`, () => {
     for(let exp of allExports) {
+      if(!(SDK as any)[exp]) console.log(`expected ${exp} to be defined`)
       expect((SDK as any)[exp]).toBeDefined()
     }
   });

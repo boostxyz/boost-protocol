@@ -1066,6 +1066,20 @@ export class BoostCore extends Deployable<
   /**
    * Calculate the protocol fee for ERC20 or ETH assets for a given amount. Fees are collected when initializing new incentives, or clawing back from incentives.
    *
+   * @example
+   * ```ts
+   * const fee = await core.calculateProtocolFee(
+   *  await incentive.getTotalBudget()
+   * )
+   * const totalIncentiveFundAmount = desiredAmount + fee
+   * await erc20.approve(budget.assertValidAddress(), totalIncentiveFundAmount);
+   * await budget.allocate({
+   *  amount: totalIncentiveFundAmount,
+   *  asset: erc20.assertValidAddress(),
+   *  target: '0xME',
+   * });
+   *
+   * ```
    * @public
    * @async
    * @param {bigint} [amount]

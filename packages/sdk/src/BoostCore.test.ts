@@ -889,4 +889,19 @@ describe("BoostCore", () => {
     expect(typeof claimInfo?.boostId).toBe("bigint");
     expect(claimInfo?.referrer).toBe(referrer);
   });
+
+  test.only("can calculate an incentive's protocol fee ahead of creation time", async () => {
+    const erc20Incentive = fixtures.core.ERC20Incentive({
+      asset: budgets.erc20.assertValidAddress(),
+      strategy: StrategyType.POOL,
+      reward: parseEther('1'),
+      limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
+    });
+
+    const totalFee = await fixtures.core.calculateProtocolFee(
+      await erc20Incentive.getTotalBudget()
+    )
+    expect(totalFee).toBe(100000000000000000n)
+  });
 });

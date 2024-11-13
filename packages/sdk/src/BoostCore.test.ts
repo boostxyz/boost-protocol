@@ -890,7 +890,7 @@ describe("BoostCore", () => {
     expect(claimInfo?.referrer).toBe(referrer);
   });
 
-  test.only("can calculate an incentive's protocol fee ahead of creation time", async () => {
+  test("can calculate an incentive's protocol fee ahead of creation time", async () => {
     const erc20Incentive = fixtures.core.ERC20Incentive({
       asset: budgets.erc20.assertValidAddress(),
       strategy: StrategyType.POOL,

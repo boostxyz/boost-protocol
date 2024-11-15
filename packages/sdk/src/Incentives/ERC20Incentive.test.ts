@@ -85,6 +85,48 @@ describe("ERC20Incentive", () => {
     ).toBe(1n);
   });
 
+  test("can test claimability", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)!.account!,
+      // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+      trustedSigner = accounts.at(0)!;
+    const erc20Incentive = fixtures.core.ERC20Incentive({
+      asset: budgets.erc20.assertValidAddress(),
+      strategy: StrategyType.POOL,
+      reward: 1n,
+      limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
+    });
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20Incentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const incentiveData = erc20Incentive.buildClaimData();
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    expect(await boost.incentives.at(0)!.getRemainingClaimPotential()).toBeGreaterThan(0n)
+    expect(await boost.incentives.at(0)!.canBeClaimed()).toBe(true)
+
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+    );
+
+    expect(await boost.incentives.at(0)!.getRemainingClaimPotential()).toBe(0n)
+    expect(await boost.incentives.at(0)!.canBeClaimed()).toBe(false)
+  });
+
   test("cannot claim twice", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!;

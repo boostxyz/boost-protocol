@@ -5,6 +5,7 @@ import {
   type WatchContractEventParameters,
   getAccount,
   getChainId,
+  readContract,
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import type { ExtractAbiEvent } from 'abitype';
@@ -254,4 +255,49 @@ export function assertValidAddressByChainId(
     );
   // biome-ignore lint/style/noNonNullAssertion: this type should be narrowed by the above statement but isn't?
   return { chainId, address: addressByChainId[chainId]! };
+}
+
+/**
+ * Check an ERC20's balance for a given asset and
+ *
+ * @public
+ * @async
+ * @param {Config} [config]
+ * @param {Address} [asset]
+ * @param {Address} [owner]
+ * @param {?ReadParams} [params]
+ * @returns {Promise<bigint>} - The erc20 balance
+ */
+export async function getErc20Balance(
+  config: Config,
+  asset: Address,
+  owner: Address,
+  params?: ReadParams,
+) {
+  return await readContract(config, {
+    ...params,
+    functionName: 'balanceOf',
+    address: asset,
+    args: [owner],
+    abi: [
+      {
+        constant: true,
+        inputs: [
+          {
+            name: '_owner',
+            type: 'address',
+          },
+        ],
+        name: 'balanceOf',
+        outputs: [
+          {
+            name: 'balance',
+            type: 'uint256',
+          },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ],
+  });
 }

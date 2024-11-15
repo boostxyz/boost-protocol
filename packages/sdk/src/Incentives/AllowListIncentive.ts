@@ -279,6 +279,34 @@ export class AllowListIncentive extends DeployableTarget<
   }
 
   /**
+   * Check if an incentive can potentially be claimed by comparing limit and total claims. Does not take requesting user or underlying allowlist into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>} - True if total claims is less than limit
+   */
+  public async canBeClaimed(params?: ReadParams) {
+    return (await this.getRemainingClaimPotential(params)) > 0n;
+  }
+
+  /**
+   * Check how many claims remain by comparing limit and total claims. Does not take requesting user or underlying allowlist into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} - True if total claims is less than limit
+   */
+  public async getRemainingClaimPotential(params?: ReadParams) {
+    const [claims, limit] = await Promise.all([
+      this.claims(params),
+      this.limit(params),
+    ]);
+    return limit - claims;
+  }
+
+  /**
    * @inheritdoc
    *
    * @public

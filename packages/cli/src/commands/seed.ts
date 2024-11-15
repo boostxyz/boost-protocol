@@ -8,6 +8,7 @@ import {
   BoostCore,
   BoostRegistry,
   type Budget,
+  type CGDAIncentivePayload,
   type DeployablePayloadOrAddress,
   type ERC20IncentivePayload,
   type ERC20VariableCriteriaIncentivePayload,
@@ -16,6 +17,7 @@ import {
   FilterType,
   type ManagedBudget,
   type ManagedBudgetPayload,
+  type PointsIncentivePayload,
   PrimitiveType,
   Roles,
   SignatureType,
@@ -23,8 +25,8 @@ import {
   type SimpleAllowListPayload,
   type SimpleDenyListPayload,
   StrategyType,
+  allowListFromAddress,
 } from '@boostxyz/sdk';
-import { allowListFromAddress } from '@boostxyz/sdk';
 import { MockERC20 } from '@boostxyz/test/MockERC20';
 import { accounts } from '@boostxyz/test/accounts';
 import type { DeployableTestOptions } from '@boostxyz/test/helpers';
@@ -137,6 +139,8 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
       switch (incentive.type) {
         case 'AllowListIncentive':
           return core.AllowListIncentive(incentive);
+        case 'PointsIncentive':
+          return core.PointsIncentive(incentive);
         case 'ERC20Incentive':
           if (incentive.strategy === StrategyType.RAFFLE) {
             amount += incentive.reward;
@@ -166,6 +170,14 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
               account,
             });
           return core.ERC20VariableIncentive(incentive);
+        case 'CGDAIncentive':
+          amount += incentive.totalBudget;
+          if (incentive.shouldMintAndAllocate)
+            await fundBudgetForIncentive(budget, amount, incentive.asset, {
+              config,
+              account,
+            });
+          return core.CGDAIncentive(incentive);
       }
     });
 
@@ -178,7 +190,8 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
       action: core.EventAction(template.action as EventActionPayload),
       validator: core.SignerValidator(template.validator),
       allowList: await getAllowList(template, { core }),
-      incentives,
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      incentives: incentives as any[],
     });
     boostIds.push(boost.id.toString());
   }
@@ -270,6 +283,7 @@ type BoostConfig = {
   >;
   incentives: (
     | Identifiable<AllowListIncentivePayload>
+    | Identifiable<PointsIncentivePayload>
     | (Identifiable<ERC20IncentivePayload> & {
         shouldMintAndAllocate?: boolean;
       })
@@ -277,6 +291,9 @@ type BoostConfig = {
         shouldMintAndAllocate?: boolean;
       })
     | (Identifiable<ERC20VariableIncentivePayload> & {
+        shouldMintAndAllocate?: boolean;
+      })
+    | (Identifiable<CGDAIncentivePayload> & {
         shouldMintAndAllocate?: boolean;
       })
   )[];
@@ -372,6 +389,25 @@ export const ERC20VariableCriteriaIncentiveSchema = z.object({
   criteria: IncentiveCriteriaSchema,
 });
 
+export const CGDAIncentiveSchema = z.object({
+  type: z.literal('CGDAIncentive'),
+  asset: AddressSchema,
+  shouldMintAndAllocate: z.boolean().optional().default(false),
+  initialReward: z.coerce.bigint(),
+  rewardDecay: z.coerce.bigint(),
+  rewardBoost: z.coerce.bigint(),
+  totalBudget: z.coerce.bigint(),
+  manager: AddressSchema,
+});
+
+export const PointsIncentiveSchema = z.object({
+  type: z.literal('PointsIncentive'),
+  venue: AddressSchema,
+  selector: zAbiItemSchema,
+  reward: z.coerce.bigint(),
+  limit: z.coerce.bigint(),
+});
+
 export const BoostSeedConfigSchema = z.object({
   protocolFee: z.coerce.bigint(),
   maxParticipants: z.coerce.bigint(),
@@ -389,6 +425,8 @@ export const BoostSeedConfigSchema = z.object({
       ERC20IncentiveSchema,
       ERC20VariableCriteriaIncentiveSchema,
       ERC20VariableIncentiveSchema,
+      CGDAIncentiveSchema,
+      PointsIncentiveSchema,
     ]),
   ),
 });

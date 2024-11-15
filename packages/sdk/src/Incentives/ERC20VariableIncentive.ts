@@ -368,6 +368,34 @@ export class ERC20VariableIncentive<
   }
 
   /**
+   * Check if any claims remain by comparing the incentive's total claimed amount against its limit. Does not take requesting user's elligibility into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>} - True if limit minus total claimed is greater than 0
+   */
+  public async canBeClaimed(params?: ReadParams) {
+    return (await this.getRemainingClaimPotential(params)) > 0n;
+  }
+
+  /**
+   * Check how much of the underlying asset remains by comparing the the limit against the total amount claimed. Does not take requesting user's elligibility into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} - Limit minus total claimed
+   */
+  public async getRemainingClaimPotential(params?: ReadParams) {
+    const [totalClaimed, limit] = await Promise.all([
+      this.totalClaimed(params),
+      this.limit(params),
+    ]);
+    return limit - totalClaimed;
+  }
+
+  /**
    * Builds the claim data for the ERC20VariableIncentive.
    *
    * @public

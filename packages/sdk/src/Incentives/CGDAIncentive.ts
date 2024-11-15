@@ -34,6 +34,7 @@ import {
   type ReadParams,
   RegistryType,
   type WriteParams,
+  getErc20Balance,
 } from '../utils';
 
 export { cgdaIncentiveAbi };
@@ -378,6 +379,39 @@ export class CGDAIncentive extends DeployableTarget<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Check if any claims remain by comparing the incentive's balance against the current reward. Does not take requesting user's elligibility into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>} - True if asset balance minus current reward is greater than 0
+   */
+  public async canBeClaimed(params?: ReadParams) {
+    return (await this.getRemainingClaimPotential(params)) > 0n;
+  }
+
+  /**
+   * Check how many claims remain by comparing the incentive's balance against the current reward. Does not take requesting user's elligibility into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} - Asset balance minus current reward
+   */
+  public async getRemainingClaimPotential(params?: ReadParams) {
+    const [currentReward, currentBalance] = await Promise.all([
+      this.currentReward(params),
+      getErc20Balance(
+        this._config,
+        await this.asset(),
+        this.assertValidAddress(),
+        params,
+      ),
+    ]);
+    return currentBalance - currentReward;
   }
 
   /**

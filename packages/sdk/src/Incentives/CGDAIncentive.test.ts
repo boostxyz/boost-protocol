@@ -1,7 +1,4 @@
 import { readMockErc20BalanceOf } from "@boostxyz/evm";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { isAddress, isAddressEqual, pad, parseEther, zeroAddress } from "viem";
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { accounts } from "@boostxyz/test/accounts";
 import {
   type BudgetFixtures,
@@ -11,6 +8,9 @@ import {
   freshBoost,
   fundBudget,
 } from "@boostxyz/test/helpers";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { isAddress, isAddressEqual, pad, parseEther, zeroAddress } from "viem";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { CGDAIncentive } from "./CGDAIncentive";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
@@ -80,6 +80,51 @@ describe("CGDAIncentive", () => {
         args: [defaultOptions.account.address],
       }),
     ).toBe(1n);
+  });
+
+  test("can get claimability", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)!.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const trustedSigner = accounts.at(0)!;
+    const erc20Incentive = fixtures.core.CGDAIncentive({
+      asset: budgets.erc20.assertValidAddress(),
+      initialReward: 1n,
+      totalBudget: 2n,
+      rewardBoost: 1n,
+      rewardDecay: 1n,
+      manager: budgets.budget.assertValidAddress(),
+    });
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20Incentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
+
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    expect(await boost.incentives.at(0)!.getRemainingClaimPotential()).toBeGreaterThan(0n)
+    expect(await boost.incentives.at(0)!.canBeClaimed()).toBe(true)
+
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload
+    );
+
+    expect(await boost.incentives.at(0)!.getRemainingClaimPotential()).toBe(0n)
+    expect(await boost.incentives.at(0)!.canBeClaimed()).toBe(false)
+
   });
 
   test("cannot claim twice", async () => {

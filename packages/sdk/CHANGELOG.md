@@ -1,5 +1,77 @@
 # @boostxyz/sdk
 
+## 2.0.0
+
+### Major Changes
+
+- 5a51804: make `ValidateActionStepsParams.chainId` mandatory to skirt sender, logs weirdness
+- 2bcbb7b: initial sdk alpha release
+
+### Minor Changes
+
+- 9ff2694: add `getTotalBudget` and `calculateProtocolFee` utilities
+- aa20a00: add `EventAction.deriveActionClaimantFromTransaction` method, slight refactor to how `ValidateActionStepParams` are handled
+- f11669c: add `OpenAllowList`, for zero config allow list support
+- 74e818c: ManagedBudgetRoles as ts enum
+- 9860502: make `ValidationActionStepParams.knownSignatures` mandatory. Cuts down on size via dep removal, better dx
+- 0101059: add `transactionSenderClaimant(): ActionClaimant` utility
+- 6cefd33: add `clawbackFromTarget` API to ManagedBudget, docs, tests
+- 2de419c: add `decodeClaimData` api to Validator, variable incentives
+- bac443d: Implement support for non-indexed string parameters
+- 1df1f74: split out eventABI getter parameters from the validation parameters for
+  validateActionSteps calls
+- 1c9a128: must supply chainId in `transactionSenderClaimant`
+- ba5b22f: event action hardening, alternate event action payload shape, action step deduping
+- bcc662c: consume component interfaces from evm in sdk to avoid magic strings
+- 95240eb: deprecate ManagedBudgetRoles enum for RBAC Roles
+- 29e17b0: add buildClaimData method to incentives
+- 5144fde: add owner to allow/denylist
+- b1f6864: ERC1155Incentive functioning with tests, refactor all ts utilities to sdk package
+- 004140a: accept numerical strings for id in core.readBoost
+- 33c2c49: merge known signatures with signatures registry, add mint(address,uint256,address,uint256,address,string) function signature
+- 2377fa4: add `BoostCore.simulateCreateBoost`, minor refactor to encapsulate building the on chain create boost payload
+- be00de4: add BoostNotFoundError to read/get Boost for friendlier message
+- 1025a21: add `BoostCore.getClaimFromTransaction` for retrieving `BoostClaimed` event from tx
+- 839fe56: add "ManyRoles" methods to RBAC
+- a5e3376: Bump SDK to build in new contracts and release
+- 6beb1d4: noop: force publication
+- 7076b88: export boostRegistryAbi, test all public exports
+- 2ed232d: change WriteParams to use SimulateContractParameters under the hood, remove excessively huge generic typings
+- 43d7fe2: add `BoostValidatorEOA` to `Validator` module, use as default signer in `core.createBoost`
+- a7a3331: refactor base to bases in boost targets, resolve base address from config, and default to sepolia for now
+- 31de323: test release alpha.1
+- 1dc5168: refactor utils, put interfaces and encoding functions with their respective consuming classes
+- 1c9a128: accept `GetTransactionParameters` in `ValidateActionStepParams` to fix retroactive Boost completion
+- 324a1c7: better support for pnpm linking w/ env specified contracts on all implementations
+- eed8dae: create RBAC contract, extend allowlists and budgets from it to unify auth/event api, remove SimpleBudget as it's functionally similar to ManagedBudget
+- 15f71e8: add `BoostRegistry.initialize` as more obvious alternative name for `.clone`, make `.deploy` protected for Boost targets, await valid action steps, better `isBase` defaults, update comments
+- 494d87c: add initializeRaw for consistency with other clone methods
+- 8b4be2a: add indexes to use case test signatures, refactor example tests
+- 5a6d1e6: refactor ERC20VariableCriteria to extend ERC20Variable to fix missing methods, remove dependence on signatures package like EventAction
+- bac443d: Support Regex filtering for Event Actions
+- 818ab69: add `ValidateActionStepParams.notBeforeBlockNumber` bigint to support retroactive boost fixes
+- 19744b8: add viability test for delegation action
+- b6574e8: add `incentive.canBeClaimed` & `incentive.getRemainingClaimPotential` and add missing incentives to cli seed
+- d44954a: make `actionType` optional in event action steps, default to 0 if not provided
+- 0a0d35b: fix BoostRegisty.getClone method, it now returns the correct interface
+
+### Patch Changes
+
+- 449cf4b: [BOOST-4842] feat(sdk): add gas used setting for variable incentives sdk helpers
+- 2225e57: configure sdk to generate sourcemaps, include src in dep bundle so as not to break "sources" field
+- 5473021: remove evm as optional dependency
+- f0c615b: create and validate `anyActionParameter`
+- 48f014d: fix address comparison for NOT_EQUAL case
+- 7554bac: moves data fetching for validation at action step level
+- 34fff84: fix environment passthrough for event action base address
+- 9fe6e77: use default signer/validator when none is provided
+- 953fb62: fixes `DecodeLogTopicsMismatch` error
+- 4b65cfe: refactor budget methods to make assets have zero address as the default value
+- b9ac73b: LimitedSignerValidator implemented with SDK support
+- d8f0d27: Replace signTypedData util with PrivateKeyAccount's signTypedData
+- 1b43eaf: initial sepolia release, omit unused, unaudited interfaces, release @boostxyz/signatures
+- c64582d: [BOOST-4787] feat: extend erc20variableincentive to include on chain criteria
+
 ## 2.0.0-alpha.35
 
 ### Minor Changes

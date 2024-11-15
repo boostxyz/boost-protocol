@@ -297,6 +297,34 @@ export class PointsIncentive extends DeployableTarget<
   }
 
   /**
+   * Check if any claims remain by comparing the incentive's total claims against its limit. Does not take requesting user's elligibility into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<boolean>} - True if total claims is less than limit
+   */
+  public async canBeClaimed(params?: ReadParams) {
+    return (await this.getRemainingClaimPotential(params)) > 0n;
+  }
+
+  /**
+   * Check how many claims remain by comparing the incentive's total claims against its limit. Does not take requesting user's elligibility into account.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} - True if total claims is less than limit
+   */
+  public async getRemainingClaimPotential(params?: ReadParams) {
+    const [claims, limit] = await Promise.all([
+      this.claims(params),
+      this.limit(params),
+    ]);
+    return limit - claims;
+  }
+
+  /**
    * @inheritdoc
    *
    * @public

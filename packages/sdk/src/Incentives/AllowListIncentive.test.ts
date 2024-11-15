@@ -1,6 +1,3 @@
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { isAddress, pad, parseEther, zeroAddress } from "viem";
-import { beforeAll, describe, expect, test } from "vitest";
 import { accounts } from "@boostxyz/test/accounts";
 import {
   type Fixtures,
@@ -8,8 +5,11 @@ import {
   deployFixtures,
   freshBoost,
 } from "@boostxyz/test/helpers";
-import { PointsIncentive } from "./PointsIncentive";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { isAddress, pad, parseEther, zeroAddress } from "viem";
+import { beforeAll, describe, expect, test } from "vitest";
 import { Roles } from "../Deployable/DeployableTargetWithRBAC";
+import { PointsIncentive } from "./PointsIncentive";
 
 let fixtures: Fixtures;
 
@@ -84,6 +84,54 @@ describe("AllowListIncentive", () => {
       { value: parseEther("0.000075"), account: trustedSigner.privateKey },
     );
     expect(await allowList.isAllowed(trustedSigner.account)).toBe(true);
+  });
+
+  test("can test claimability", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)?.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const trustedSigner = accounts.at(0)!;
+    const allowList = await loadFixture(freshAllowList(fixtures));
+    const allowListIncentive = new fixtures.bases.AllowListIncentive(
+      defaultOptions,
+      {
+        allowList: allowList.assertValidAddress(),
+        limit: 1n,
+      },
+    );
+    const boost = await freshBoost(fixtures, {
+      incentives: [allowListIncentive],
+    });
+    await allowList.grantManyRoles(
+      [allowListIncentive.assertValidAddress()],
+      [Roles.MANAGER],
+    );
+
+    const claimant = trustedSigner.account;
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
+
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    expect(await boost.incentives.at(0)!.getRemainingClaimPotential()).toBeGreaterThan(0n)
+    expect(await boost.incentives.at(0)!.canBeClaimed()).toBe(true)
+
+    //await boost.validator.setValidatorCaller(boost.assertValidAddress());
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+      { value: parseEther("0.000075"), account: trustedSigner.privateKey },
+    );
+    expect(await boost.incentives.at(0)!.getRemainingClaimPotential()).toBe(0n)
+    expect(await boost.incentives.at(0)!.canBeClaimed()).toBe(false)
   });
 
   test("cannot claim twice", async () => {

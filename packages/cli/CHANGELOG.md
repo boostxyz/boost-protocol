@@ -1,5 +1,20 @@
 # @boostxyz/cli
 
+## 1.1.0
+
+### Minor Changes
+
+- 7495290: initial public release, documentation, and small tweaks to `seed generate` to support serialization
+- e1e3c26: add seed command to generate Boost state
+- 324a1c7: better support for pnpm linking w/ env specified contracts on all implementations
+- eed8dae: create RBAC contract, extend allowlists and budgets from it to unify auth/event api, remove SimpleBudget as it's functionally similar to ManagedBudget
+- b6574e8: add `incentive.canBeClaimed` & `incentive.getRemainingClaimPotential` and add missing incentives to cli seed
+
+### Patch Changes
+
+- d63bbe4: fix cli bundling deps
+- c64582d: [BOOST-4787] feat: extend erc20variableincentive to include on chain criteria
+
 ## 1.1.0-alpha.37
 
 ## 1.1.0-alpha.36

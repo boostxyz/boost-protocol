@@ -17,6 +17,7 @@ import {
 } from "viem";
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { ERC20VariableIncentive } from "./ERC20VariableIncentive";
+import { decodeClaimData } from "../Validators/Validator";
 
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
@@ -128,6 +129,39 @@ describe("ERC20VariableIncentive", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
+  });
+
+  test("can decode a claimed amount from claim data", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)!.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const trustedSigner = accounts.at(0)!;
+    const erc20VariableIncentive = new fixtures.bases.ERC20VariableIncentive(
+      defaultOptions,
+      {
+        asset: budgets.erc20.assertValidAddress(),
+        reward: 1n,
+        limit: 1n,
+        manager: zeroAddress,
+      },
+    );
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20VariableIncentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData: erc20VariableIncentive.buildClaimData(parseEther("1")),
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    const { incentiveData } = decodeClaimData(claimDataPayload)
+    expect(erc20VariableIncentive.decodeClaimData(incentiveData)).toBe(parseEther("1"))
   });
 
   test("can properly encode a uint256", () => {

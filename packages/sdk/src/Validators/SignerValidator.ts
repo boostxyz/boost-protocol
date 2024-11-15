@@ -17,7 +17,6 @@ import {
   type PrivateKeyAccount,
   encodeAbiParameters,
 } from 'viem';
-import { signTypedData } from 'viem/accounts';
 import { SignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,

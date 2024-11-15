@@ -5,7 +5,7 @@ import {
   // ALimitedSignerValidator,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
-import type { Address, Hex } from 'viem';
+import { type Address, type Hex, decodeAbiParameters } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
 import { LimitedSignerValidator } from './LimitedSignerValidator';
@@ -80,3 +80,26 @@ export const BoostValidatorEOA = {
   MAINNET: import.meta.env.VITE_BOOST_MAINNET_SIGNER_EOA as Address,
   TESTNET: import.meta.env.VITE_BOOST_TESTNET_SIGNER_EOA as Address,
 };
+
+/**
+ * Decodes a claim data hex string into its validator data and incentive data components.
+ *
+ * @export
+ * @param {Hex} data - The hex-encoded claim data to decode
+ * @returns {{ validatorData: Hex; incentiveData: Hex }} The decoded claim data components
+ */
+export function decodeClaimData(data: Hex) {
+  return decodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'BoostClaimData',
+        components: [
+          { type: 'bytes', name: 'validatorData' },
+          { type: 'bytes', name: 'incentiveData' },
+        ],
+      },
+    ],
+    data,
+  )[0];
+}

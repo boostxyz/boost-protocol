@@ -20,6 +20,7 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  decodeAbiParameters,
   encodeAbiParameters,
 } from 'viem';
 import { ERC20VariableIncentive as ERC20VariableIncentiveBases } from '../../dist/deployments.json';
@@ -379,6 +380,18 @@ export class ERC20VariableIncentive<
       [{ type: 'uint256', name: 'rewardAmount' }],
       [rewardAmount],
     );
+  }
+
+  /**
+   * Decodes claim data for the ERC20VariableIncentive, returning the encoded claim amount.
+   * Useful when deriving amount claimed from logs.
+   *
+   * @public
+   * @param {Hex} claimData
+   * @returns {BigInt} Returns the reward amount from a claim data payload
+   */
+  public decodeClaimData(data: Hex) {
+    return BigInt(decodeAbiParameters([{ type: 'uint256' }], data)[0]);
   }
 
   /**

@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 2.0.0-alpha.35
+
+### Minor Changes
+
+- 2de419c: add `decodeClaimData` api to Validator, variable incentives
+
 ## 2.0.0-alpha.34
 
 ### Minor Changes

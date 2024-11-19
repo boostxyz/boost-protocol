@@ -29,10 +29,10 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     }
 
     /// @dev The total amount of each fungible asset distributed from the budget
-    mapping(address => uint256) private _distributedFungible;
+    mapping(address => uint256) internal _distributedFungible;
 
     /// @dev The total amount of each ERC1155 asset and token ID distributed from the budget
-    mapping(address => mapping(uint256 => uint256)) private _distributedERC1155;
+    mapping(address => mapping(uint256 => uint256)) internal _distributedERC1155;
 
     /// @notice Construct a new ManagedBudget
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.

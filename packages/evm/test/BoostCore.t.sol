@@ -193,6 +193,12 @@ contract BoostCoreTest is Test {
         assertEq(address(boost.validator), address(boost.action));
     }
 
+    function testCreateBoost_FullValidationNonManager() public {
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        hoax(makeAddr("invalid creator"));
+        boostCore.createBoost(validCreateCalldata);
+    }
+
     function testCreateBoost_NoBudget() public {
         // Try to create a Boost without a ABudget (should fail)
         bytes memory invalidBudgetCalldata = LibZip.cdCompress(

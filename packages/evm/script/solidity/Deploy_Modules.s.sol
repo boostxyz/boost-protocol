@@ -192,7 +192,6 @@ contract ModuleBaseDeployer is ScriptUtils {
         SimpleDenyList(list).initialize(data);
 
         _registerIfNew(newDeploy, "OpenAllowList", list, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
-
     }
 
     function _deploySimpleDenyList(BoostRegistry registry) internal returns (address simpleDenyList) {

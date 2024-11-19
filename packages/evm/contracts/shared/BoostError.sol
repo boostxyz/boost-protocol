@@ -46,4 +46,7 @@ library BoostError {
 
     /// @notice thrown when an address has claimed the maximum possible quantity
     error MaximumClaimed(address claimant);
+
+    /// @notice thrown when an impossible math percentage is calculated
+    error InvalidPercentage(uint256 percent);
 }

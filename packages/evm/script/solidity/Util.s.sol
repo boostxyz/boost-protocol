@@ -64,10 +64,9 @@ contract ScriptUtils is Script {
         }
     }
 
-    function _getDeterministicCloneAddress(ACloneable base) internal view returns(address) {
+    function _getDeterministicCloneAddress(ACloneable base) internal view returns (address) {
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
         return LibClone.predictDeterministicAddress(address(base), salt, CREATE2_FACTORY);
-
     }
 
     function _buildJsonDeployPath() internal view virtual returns (string memory) {

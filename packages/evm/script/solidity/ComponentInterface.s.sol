@@ -115,7 +115,7 @@ contract LogComponentInterface is ScriptUtils {
         string memory interfaceId = uint256(uint32(type(AERC20VariableIncentive).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AERC20VariableIncentive", interfaceId);
     }
-    
+
     function _getInterfaceAERC20VariableCriteriaIncentive() internal {
         string memory interfaceId = uint256(uint32(type(AERC20VariableCriteriaIncentive).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AERC20VariableCriteriaIncentive", interfaceId);

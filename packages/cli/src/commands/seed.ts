@@ -9,6 +9,7 @@ import {
   BoostRegistry,
   type Budget,
   type CGDAIncentivePayload,
+  type CreateBoostPayload,
   type DeployablePayloadOrAddress,
   type ERC20IncentivePayload,
   type ERC20VariableCriteriaIncentivePayload,
@@ -75,6 +76,7 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
 
   if (positionals.at(0) === 'erc20') {
     let erc20 = new MockERC20({ config, account }, {});
+    // @ts-expect-error
     await erc20.deploy();
     return {
       erc20: erc20.assertValidAddress(),
@@ -183,16 +185,20 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
 
     const incentives = await Promise.all(incentivePromises);
 
-    const boost = await core.createBoost({
+    const boostConfig: CreateBoostPayload = {
       protocolFee: template.protocolFee,
       maxParticipants: template.maxParticipants,
       budget: budget,
-      action: core.EventAction(template.action as EventActionPayload),
-      validator: core.SignerValidator(template.validator),
+      action: core.EventAction(template.action),
       allowList: await getAllowList(template, { core }),
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      incentives: incentives as any[],
-    });
+      incentives,
+    };
+
+    if (template.validator) {
+      boostConfig.validator = core.SignerValidator(template.validator);
+    }
+
+    const boost = await core.createBoost(boostConfig);
     boostIds.push(boost.id.toString());
   }
 
@@ -413,12 +419,10 @@ export const BoostSeedConfigSchema = z.object({
   maxParticipants: z.coerce.bigint(),
   budget: z.union([AddressSchema, ManagedBudgetSchema]),
   action: z.union([AddressSchema, EventActionSchema]),
-  validator: z.union([AddressSchema, SignerValidatorSchema]),
-  allowList: z.union([
-    AddressSchema,
-    SimpleDenyListSchema,
-    SimpleAllowListSchema,
-  ]),
+  validator: z.union([AddressSchema, SignerValidatorSchema]).optional(),
+  allowList: z
+    .union([AddressSchema, SimpleDenyListSchema, SimpleAllowListSchema])
+    .optional(),
   incentives: z.array(
     z.union([
       AllowListIncentiveSchema,
@@ -435,6 +439,7 @@ async function getAllowList(
   { allowList }: z.infer<typeof BoostSeedConfigSchema>,
   { core }: { core: BoostCore },
 ): Promise<AllowList> {
+  if (!allowList) return core.OpenAllowList();
   if (typeof allowList === 'string' && isAddress(allowList))
     return await allowListFromAddress(
       //@ts-expect-error i do what i want

@@ -271,8 +271,9 @@ const zAbiItemSchema = z.custom<`0x${string}`>().pipe(
       message: 'signature must start with `event` or function`',
     })
     .transform((sig) => {
-      if (sig.startsWith('event')) return pad(toFunctionSelector(sig)) as Hex;
-      if (sig.startsWith('function')) return toEventSelector(sig) as Hex;
+      if (sig.startsWith('function'))
+        return pad(toFunctionSelector(sig)) as Hex;
+      if (sig.startsWith('event')) return toEventSelector(sig) as Hex;
       throw new Error('unreachable');
     }),
 );

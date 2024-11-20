@@ -14,9 +14,6 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
     /// @dev The `data` field contains implementation-specific context. See the implementation's `claim` function for details.
     event Claimed(address indexed recipient, bytes data);
 
-    /// @notice The address of the ERC20-like token
-    address public asset = address(0xdeaDDeADDEaDdeaDdEAddEADDEAdDeadDEADDEaD);
-
     /// @notice Thrown when a claim fails
     error ClaimFailed();
 
@@ -31,11 +28,11 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
         bytes data;
     }
 
-    /// @notice The number of claims that have been made
-    uint256 public claims;
-
     /// @notice The reward amount issued for each claim
     uint256 public reward;
+
+    /// @notice The number of claims that have been made
+    function claims() external virtual returns (uint256);
 
     /// @notice Claim the incentive
     /// @param data_ The data payload for the incentive claim
@@ -57,6 +54,10 @@ abstract contract AIncentive is IBoostClaim, ACloneable {
     /// @return The data payload to be passed to the {ABudget} for interpretation
     /// @dev This function is to be called by {BoostCore} before the incentive is initialized to determine the required budget allowance. It returns an ABI-encoded payload that can be passed directly to the {ABudget} contract for interpretation.
     function preflight(bytes calldata data_) external view virtual returns (bytes memory);
+
+    function asset() external view virtual returns (address) {
+        return address(0xdeaDDeADDEaDdeaDdEAddEADDEAdDeadDEADDEaD);
+    }
 
     /// @return The current reward
     function currentReward() public view virtual returns (uint256) {

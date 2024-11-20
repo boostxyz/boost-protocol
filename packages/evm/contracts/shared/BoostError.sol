@@ -41,6 +41,7 @@ library BoostError {
     /// @notice thrown when an incentiveId is already claimed against
     error IncentiveClaimed(uint8 incentiveId);
 
+    /// @notice thrown when a clawback attempt result in a zero amount
     error ClawbackFailed(address caller, bytes data);
 
     /// @notice thrown when an address has claimed the maximum possible quantity

@@ -25,6 +25,15 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
         uint256 limit;
     }
 
+    /// @inheritdoc AIncentive
+    address public override asset;
+
+    /// @inheritdoc AIncentive
+    uint256 public override claims;
+
+    /// @inheritdoc AERC20VariableIncentive
+    uint256 public override totalClaimed;
+
     /// @notice Construct a new ERC20VariableIncentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

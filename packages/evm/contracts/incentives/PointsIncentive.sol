@@ -23,6 +23,9 @@ contract PointsIncentive is OwnableRoles, APointsIncentive {
         uint256 limit;
     }
 
+    /// @inheritdoc AIncentive
+    uint256 public override claims;
+
     /// @notice Construct a new PointsIncentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

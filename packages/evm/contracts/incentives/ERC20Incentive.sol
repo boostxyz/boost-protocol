@@ -26,6 +26,15 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
         address manager;
     }
 
+    /// @inheritdoc AIncentive
+    address public override asset;
+
+    /// @inheritdoc AIncentive
+    uint256 public override claims;
+
+    /// @inheritdoc AERC20Incentive
+    uint256 public override limit;
+
     /// @notice Construct a new ERC20Incentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

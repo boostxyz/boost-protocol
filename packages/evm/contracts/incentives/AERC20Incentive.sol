@@ -34,15 +34,15 @@ abstract contract AERC20Incentive is AIncentive {
     /// @notice The strategy for the incentive (RAFFLE or POOL)
     Strategy public strategy;
 
-    /// @notice The limit (max claims, or max entries for raffles)
-    uint256 public limit;
-
     /// @notice The set of addresses that have claimed a slot in the incentive raffle
     address[] public entries;
     /// @notice Draw a winner from the raffle
     /// @dev Only valid when the strategy is set to `Strategy.RAFFLE`
 
     function drawRaffle() external virtual;
+
+    /// @notice The limit (max claims, or max entries for raffles)
+    function limit() external virtual returns (uint256);
 
     /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override(ACloneable) returns (bytes4) {

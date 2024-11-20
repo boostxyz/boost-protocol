@@ -22,7 +22,7 @@ abstract contract AERC20VariableIncentive is AIncentive {
     uint256 public limit;
 
     /// @notice The total amount claimed so far
-    uint256 public totalClaimed;
+    function totalClaimed() external virtual returns (uint256);
 
     /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {

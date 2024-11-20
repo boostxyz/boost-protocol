@@ -30,6 +30,12 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
         uint256 totalBudget;
     }
 
+    /// @inheritdoc AIncentive
+    address public override asset;
+
+    /// @inheritdoc AIncentive
+    uint256 public override claims;
+
     /// @notice Construct a new CGDAIncentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor.
     constructor() {

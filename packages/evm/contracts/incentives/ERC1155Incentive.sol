@@ -32,6 +32,12 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
         bytes32 transactionHash;
     }
 
+    /// @inheritdoc AIncentive
+    address public override asset;
+
+    /// @inheritdoc AIncentive
+    uint256 public override claims;
+
     /// @notice Construct a new ERC1155Incentive
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {

@@ -156,6 +156,12 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
         return true;
     }
 
+    /// @notice Pays the management fee for a specific boost and incentive
+    /// @param boostId The ID of the boost for which the management fee is being paid
+    /// @param incentiveId The ID of the incentive within the boost
+    /// @dev The function checks the type of incentive and ensures that the claims have reached the limit
+    /// or the balance is zero before transferring the management fee to the boost owner
+    /// @dev Supports management fee payouts for AERC20Incentive and AERC20VariableIncentive deployments
     function payManagementFee(uint256 boostId, uint8 incentiveId) external {
         BoostLib.Boost memory boost = core.getBoost(boostId);
 
@@ -184,6 +190,14 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
         revert BoostError.NotImplemented();
     }
 
+    /// @notice Transfers the management fee for a specific boost and incentive
+    /// @param boostId The ID of the boost for which the management fee is being transferred
+    /// @param incentiveId The ID of the incentive within the boost
+    /// @param boost The Boost object containing details about the boost
+    /// @param claim The number of claims made for the incentive
+    /// @param limit The limit of claims allowed for the incentive
+    /// @dev The function calculates the management fee based on the claims and
+    /// limit, then transfers the fee to the boost owner
     function _transferManagementFee(
         uint256 boostId,
         uint256 incentiveId,

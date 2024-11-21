@@ -1,5 +1,15 @@
 # @boostxyz/cli
 
+## 1.2.0
+
+### Minor Changes
+
+- fa789d9: Make Validator and Allowlist optional in boost seed
+
+### Patch Changes
+
+- 66c8941: bugfix: route signature encoding correctly
+
 ## 1.1.0
 
 ### Minor Changes

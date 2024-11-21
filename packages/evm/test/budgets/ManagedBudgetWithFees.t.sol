@@ -1010,7 +1010,47 @@ contract ManagedBudgetWithFeesTest is Test, IERC1155Receiver {
         uint256 expectedFee = claimed * fee / amount;
 
         assertEq(mockERC20.balanceOf(boostOwner), expectedFee);
-        //assertEq(mockERC20.balanceOf(address(managedBudget)), amountToMint - mockERC20.balanceOf(boostOwner));
+        assertEq(mockERC20.balanceOf(address(managedBudget)), amountToMint - mockERC20.balanceOf(boostOwner));
+    }
+
+    function testFuzz_payMangementFeePartialRevertIfNotEmpty(uint256 amount, uint256 newFee, uint256 claimed) public {
+        amount = bound(amount, 1e6, type(uint128).max);
+        claimed = bound(claimed, 0, amount - 1);
+        newFee = bound(newFee, 0, 10_000);
+
+        managedBudget.setManagementFee(newFee);
+
+        uint256 amountToMint = amount + (amount * newFee / 10_000);
+        mockERC20.mint(address(this), amountToMint);
+        // Approve the budget to transfer tokens
+        mockERC20.approve(address(managedBudget), amountToMint);
+
+        bytes memory data =
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), amountToMint);
+
+        managedBudget.allocate(data);
+        assertEq(managedBudget.total(address(mockERC20)), amountToMint);
+        uint256 fee = amount * managedBudget.managementFee() / 10_000;
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), incentiveMock, amount);
+        managedBudget.disburse(data);
+        assertEq(managedBudget.reservedFunds(address(mockERC20)), fee);
+        assertEq(managedBudget.available(address(mockERC20)), 0);
+
+        _setupMockIncentive(amount, claimed, type(AERC20VariableIncentive).interfaceId);
+        _setupBoostGetter(incentiveMock, boostOwner);
+
+        uint256 amountRemaining = mockERC20.balanceOf(incentiveMock);
+
+        vm.expectRevert(abi.encodeWithSelector(BoostError.FeePayoutFailed.selector, amountRemaining));
+        managedBudget.payManagementFee(1, 0);
+    }
+
+    function test_payManagemetnFeeUnsupportedInterfaceId() public {
+        _setupMockIncentive(0, 0, type(AIncentive).interfaceId);
+        _setupBoostGetter(incentiveMock, boostOwner);
+
+        vm.expectRevert(BoostError.NotImplemented.selector);
+        managedBudget.payManagementFee(1, 0);
     }
 
     function _setupBoostGetter(address incentive, address owner) internal returns (BoostLib.Boost memory boost) {

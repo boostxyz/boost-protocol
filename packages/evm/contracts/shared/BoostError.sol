@@ -49,4 +49,8 @@ library BoostError {
 
     /// @notice thrown when an impossible math percentage is calculated
     error InvalidPercentage(uint256 percent);
+
+    /// @notice thrown when a payout fails due to non-zero balance remaining
+    /// for an incentive
+    error FeePayoutFailed(uint256 amount);
 }

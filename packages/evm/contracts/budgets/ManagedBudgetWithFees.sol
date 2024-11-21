@@ -170,7 +170,7 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
                 _transferManagementFee(boostId, incentiveId, boost, claims, limit);
                 return;
             }
-            revert BoostError.Unauthorized();
+            revert BoostError.FeePayoutFailed(balanceRemaining);
         }
         if (AIncentive(validIncentive).supportsInterface(type(AERC20VariableIncentive).interfaceId)) {
             uint256 balanceRemaining = AIncentive(validIncentive).asset().balanceOf(validIncentive);
@@ -180,7 +180,7 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
                 _transferManagementFee(boostId, incentiveId, boost, totalClaimed, limit);
                 return;
             }
-            revert BoostError.Unauthorized();
+            revert BoostError.FeePayoutFailed(balanceRemaining);
         }
         revert BoostError.NotImplemented();
     }

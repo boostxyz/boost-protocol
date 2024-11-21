@@ -100,7 +100,7 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
 
     /// @inheritdoc ABudget
     function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId)
-        external
+        public
         virtual
         override(ABudget, ManagedBudget)
         onlyAuthorized
@@ -156,13 +156,8 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
         return true;
     }
 
-    /// @notice Pays the management fee for a specific boost and incentive
-    /// @param boostId The ID of the boost for which the management fee is being paid
-    /// @param incentiveId The ID of the incentive within the boost
-    /// @dev The function checks the type of incentive and ensures that the claims have reached the limit
-    /// or the balance is zero before transferring the management fee to the boost owner
-    /// @dev Supports management fee payouts for AERC20Incentive and AERC20VariableIncentive deployments
-    function payManagementFee(uint256 boostId, uint8 incentiveId) external {
+    /// @inheritdoc AManagedBudgetWithFees
+    function payManagementFee(uint256 boostId, uint256 incentiveId) public override {
         BoostLib.Boost memory boost = core.getBoost(boostId);
 
         address validIncentive = address(boost.incentives[incentiveId]);
@@ -188,6 +183,17 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
             revert BoostError.Unauthorized();
         }
         revert BoostError.NotImplemented();
+    }
+
+    /// @inheritdoc AManagedBudgetWithFees
+    function clawbackFromTargetAndPayFee(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        virtual
+        override
+        returns (uint256 amount, address asset)
+    {
+        (amount, asset) = clawbackFromTarget(target, data_, boostId, incentiveId);
+        payManagementFee(boostId, incentiveId);
     }
 
     /// @notice Transfers the management fee for a specific boost and incentive

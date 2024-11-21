@@ -277,7 +277,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
                     address(this), claim_.target, incentive.tokenId, protocolFeeAmount, ""
                 );
             }
-            emit ProtocolFeesCollected(boostId, incentiveId, protocolFeeAmount, protocolFeeReceiver);
+            emit ProtocolFeesCollected(boostId, incentiveId, protocolFeeAmount, claim_.target);
         }
 
         (uint256 clawbackAmount, address asset) = boost.incentives[incentiveId].clawback(abi.encode(claim_));

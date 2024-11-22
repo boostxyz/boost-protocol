@@ -242,7 +242,7 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
     /// @notice Sets the management fee percentage
     /// @dev Only the owner can call this function. The fee is in basis points (100 = 1%)
     /// @param fee_ The new management fee percentage in basis points
-    function setManagementFee(uint256 fee_) external onlyOwner {
+    function setManagementFee(uint256 fee_) external onlyOwnerOrRoles(ADMIN_ROLE) {
         require(fee_ <= 10000, "Fee cannot exceed 100%");
         managementFee = fee_;
         emit ManagementFeeSet(fee_);

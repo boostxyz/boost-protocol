@@ -136,7 +136,7 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
                 revert InsufficientFunds(request.asset, avail, payload.amount + maxManagementFee);
             }
 
-            incentiveFees[request.target] = maxManagementFee;
+            incentiveFeesMax[request.target] = maxManagementFee;
             reservedFunds[request.asset] += maxManagementFee;
             _distributedFungible[request.asset] += payload.amount;
             _transferFungible(request.asset, request.target, payload.amount);
@@ -165,22 +165,14 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
         if (AIncentive(validIncentive).supportsInterface(type(AERC20Incentive).interfaceId)) {
             uint256 claims = AERC20Incentive(validIncentive).claims();
             uint256 limit = AERC20Incentive(validIncentive).limit();
-            uint256 balanceRemaining = AIncentive(validIncentive).asset().balanceOf(validIncentive);
-            if (claims == limit || balanceRemaining == 0) {
-                _transferManagementFee(boostId, incentiveId, boost, claims, limit);
-                return;
-            }
-            revert BoostError.FeePayoutFailed(balanceRemaining);
+            _transferManagementFee(boostId, incentiveId, boost, claims, limit);
+            return;
         }
         if (AIncentive(validIncentive).supportsInterface(type(AERC20VariableIncentive).interfaceId)) {
-            uint256 balanceRemaining = AIncentive(validIncentive).asset().balanceOf(validIncentive);
             uint256 totalClaimed = AERC20VariableIncentive(validIncentive).totalClaimed();
             uint256 limit = AERC20VariableIncentive(validIncentive).limit();
-            if (totalClaimed == limit || balanceRemaining == 0) {
-                _transferManagementFee(boostId, incentiveId, boost, totalClaimed, limit);
-                return;
-            }
-            revert BoostError.FeePayoutFailed(balanceRemaining);
+            _transferManagementFee(boostId, incentiveId, boost, totalClaimed, limit);
+            return;
         }
         revert BoostError.NotImplemented();
     }
@@ -212,12 +204,22 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
         uint256 limit
     ) internal {
         address incentive = address(boost.incentives[incentiveId]);
-        uint256 maxAmount = incentiveFees[incentive];
-        uint256 amount = maxAmount * claim / limit;
-        delete incentiveFees[incentive];
+        uint256 maxAmount = incentiveFeesMax[incentive];
+        uint256 alreadyPaid = incentiveFeesDisbursed[incentive];
+        uint256 amount = maxAmount * claim / limit - alreadyPaid;
+        incentiveFeesDisbursed[incentive] = alreadyPaid + amount;
         address asset = AIncentive(incentive).asset();
         address manager = boost.owner;
-        reservedFunds[asset] -= maxAmount;
+        reservedFunds[asset] -= amount;
+
+        if (amount == 0) {
+            revert BoostError.ZeroBalancePayout();
+        }
+
+        if (alreadyPaid + amount == maxAmount) {
+            delete incentiveFeesMax[incentive];
+            delete incentiveFeesDisbursed[incentive];
+        }
 
         emit ManagementFeePaid(boostId, incentiveId, manager, amount);
 

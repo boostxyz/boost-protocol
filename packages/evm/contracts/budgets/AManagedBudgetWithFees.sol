@@ -25,7 +25,10 @@ abstract contract AManagedBudgetWithFees is AManagedBudget {
     uint256 public managementFee;
 
     /// @dev Mapping of incentive addresses to their respective amounts
-    mapping(address => uint256) public incentiveFees;
+    mapping(address => uint256) public incentiveFeesMax;
+
+    /// @dev Mapping of incentive addresses to their respective amounts
+    mapping(address => uint256) public incentiveFeesDisbursed;
 
     /// @dev Total amount of funds reserved for management fees
     mapping(address => uint256) public reservedFunds;

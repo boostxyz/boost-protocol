@@ -30,3 +30,4 @@ repository = "https://github.com/boostxyz/boost-protocol"
 
 [etherscan]
 sepolia = { key = "${MAIN_ETHERSCAN_API_KEY}", chain = "sepolia" }
+base-sepolia = { key = "${BASE_ETHERSCAN_API_KEY}", chain = "base-sepolia" }

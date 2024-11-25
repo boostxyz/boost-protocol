@@ -60,11 +60,16 @@ import {
   type ManagedBudgetPayload,
 } from './Budgets/ManagedBudget';
 import {
+  ManagedBudgetWithFees,
+  type ManagedBudgetWithFeesPayload,
+} from './Budgets/ManagedBudgetWithFees';
+import {
   Deployable,
   type DeployableOptions,
   type DeployablePayloadOrAddress,
   type GenericDeployableParams,
 } from './Deployable/Deployable';
+import { Roles } from './Deployable/DeployableTargetWithRBAC';
 import {
   AllowListIncentive,
   type AllowListIncentivePayload,
@@ -1264,6 +1269,31 @@ export class BoostCore extends Deployable<
    */
   ManagedBudget(options: DeployablePayloadOrAddress<ManagedBudgetPayload>) {
     return new ManagedBudget(
+      { config: this._config, account: this._account },
+      options,
+    );
+  }
+  /**
+   * Bound {@link ManagedBudgetWithFees} constructor that reuses the same configuration as the Boost Core instance.
+   * Prepends the BoostCore address to the authorized list because it's structurally critical to calculating payouts.
+   *
+   * @example
+   * ```ts
+   * const budget = core.ManagedBudgetWithFees('0x') // is roughly equivalent to
+   * const budget = new ManagedBudgetWithFees({ config: core._config, account: core._account }, '0x')
+   * ```
+   * @param {DeployablePayloadOrAddress<ManagedBudgetWithFeesPayload>} options
+   * @returns {ManagedBudgetWithFees}
+   */
+  ManagedBudgetWithFees(
+    options: DeployablePayloadOrAddress<ManagedBudgetWithFeesPayload>,
+  ) {
+    if (typeof options !== 'string') {
+      options.authorized = [this.assertValidAddress(), ...options.authorized];
+      options.roles = [Roles.MANAGER, ...options.roles];
+    }
+
+    return new ManagedBudgetWithFees(
       { config: this._config, account: this._account },
       options,
     );

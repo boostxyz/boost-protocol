@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 2.1.1
+
+### Patch Changes
+
+- a33c633: Deploy new protocol to base-sepolia
+
 ## 2.1.0
 
 ### Minor Changes

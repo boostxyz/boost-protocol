@@ -9,6 +9,7 @@ import {BoostCore} from "contracts/BoostCore.sol";
 import {BoostRegistry, ABoostRegistry} from "contracts/BoostRegistry.sol";
 
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
+import {ManagedBudgetWithFees} from "contracts/budgets/ManagedBudgetWithFees.sol";
 
 import {EventAction} from "contracts/actions/EventAction.sol";
 
@@ -43,6 +44,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("Boost Registry: ", address(registry));
 
         _deployManagedBudget(registry);
+        _deployManagedBudgetWithFees(registry);
 
         _deployEventAction(registry);
 
@@ -82,6 +84,15 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("ManagedBudget", managedBudget);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(newDeploy, "ManagedBudget", managedBudget, registry, ABoostRegistry.RegistryType.BUDGET);
+    }
+
+    function _deployManagedBudgetWithFees(BoostRegistry registry) internal returns (address managedBudget) {
+        bytes memory initCode = type(ManagedBudgetWithFees).creationCode;
+        managedBudget = _getCreate2Address(initCode, "");
+        console.log("ManagedBudgetWithFees: ", managedBudget);
+        deployJson = deployJsonKey.serialize("ManagedBudgetWithFees", managedBudget);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "ManagedBudgetWithFees", managedBudget, registry, ABoostRegistry.RegistryType.BUDGET);
     }
 
     function _deployEventAction(BoostRegistry registry) internal returns (address eventAction) {

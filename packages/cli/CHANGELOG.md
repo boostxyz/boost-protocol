@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 1.3.0
+
+### Minor Changes
+
+- bcdaf13: Add ManagedBudgetWithFees
+
 ## 1.2.0
 
 ### Minor Changes

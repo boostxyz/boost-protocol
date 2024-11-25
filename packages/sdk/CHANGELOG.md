@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 2.1.0
+
+### Minor Changes
+
+- bcdaf13: Add ManagedBudgetWithFees
+- 0ec6acd: Redeploy core and ManagedBudgetWithFees
+
 ## 2.0.0
 
 ### Major Changes

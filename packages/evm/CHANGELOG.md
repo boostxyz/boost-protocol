@@ -1,5 +1,16 @@
 # @boostxyz/evm
 
+## 2.1.0
+
+### Minor Changes
+
+- bcdaf13: Add ManagedBudgetWithFees
+- 0ec6acd: Redeploy core and ManagedBudgetWithFees
+
+### Patch Changes
+
+- d819fc2: refactor(evm): change attribution for clawback event in core
+
 ## 2.0.0
 
 ### Major Changes

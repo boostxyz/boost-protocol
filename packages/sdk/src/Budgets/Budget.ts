@@ -1,10 +1,14 @@
 import { aBudgetAbi } from '@boostxyz/evm';
-import { AManagedBudget } from '@boostxyz/evm/deploys/componentInterfaces.json';
+import {
+  AManagedBudget,
+  AManagedBudgetWithFees,
+} from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
 import { ManagedBudget } from './ManagedBudget';
+import { ManagedBudgetWithFees } from './ManagedBudgetWithFees';
 
 export {
   // VestingBudget,
@@ -17,7 +21,7 @@ export {
  * @export
  * @typedef {Budget}
  */
-export type Budget = ManagedBudget; // | VestingBudget
+export type Budget = ManagedBudget | ManagedBudgetWithFees; // | VestingBudget
 
 /**
  * A map of Budget component interfaces to their constructors.
@@ -28,6 +32,7 @@ export const BudgetByComponentInterface = {
   // ['0x64683da1']: VestingBudget,
   // ['0x2929d19c']: SimpleBudget,
   [AManagedBudget as Hex]: ManagedBudget,
+  [AManagedBudgetWithFees as Hex]: ManagedBudgetWithFees,
 };
 
 /**
@@ -37,7 +42,7 @@ export const BudgetByComponentInterface = {
  * @async
  * @param {DeployableOptions} options
  * @param {Address} address
- * @returns {Promise<ManagedBudget>}
+ * @returns {Promise<ManagedBudget | ManagedBudgetWithFees>}
  * @throws {@link InvalidComponentInterfaceError}
  */
 export async function budgetFromAddress(

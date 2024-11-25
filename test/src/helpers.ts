@@ -6,31 +6,22 @@ import {
   writeMockErc1155SetApprovalForAll,
   writePointsInitialize,
 } from '@boostxyz/evm';
-import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
-import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
-import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/VestingBudget.sol/VestingBudget.json';
+import ManagedBudgetWithFeesArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudgetWithFees.sol/ManagedBudgetWithFees.json';
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import ERC20VariableCriteriaIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
-import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { deployContract, simulateContract, writeContract } from '@wagmi/core';
-import {
-  type Abi,
-  type Address,
-  type Hex,
-  parseEther,
-  zeroAddress,
-} from 'viem';
+import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
 import {
   type ActionStep,
   AllowListIncentive,
@@ -52,10 +43,8 @@ import {
   // type ERC1155IncentivePayload,
   // SimpleBudget,
   // type SimpleBudgetPayload,
-  type Deployable,
   type DeployableOptions,
   type DeployablePayloadOrAddress,
-  DeployableTarget,
   ERC20Incentive,
   type ERC20IncentivePayload,
   ERC20VariableCriteriaIncentive,
@@ -69,6 +58,8 @@ import {
   type LimitedSignerValidatorPayload,
   ManagedBudget,
   type ManagedBudgetPayload,
+  ManagedBudgetWithFees,
+  type ManagedBudgetWithFeesPayload,
   OpenAllowList,
   PointsIncentive,
   type PointsIncentivePayload,
@@ -102,10 +93,14 @@ export type StringEmitterFixtures = Awaited<
   ReturnType<typeof deployStringEmitterMock>
 >;
 export type BudgetFixtures = {
-  budget: ManagedBudget;
+  budget: ManagedBudget | ManagedBudgetWithFees;
   erc20: MockERC20;
   erc1155: MockERC1155;
   points: MockPoints;
+};
+
+export type BudgetWithFeeFixtures = BudgetFixtures & {
+  budget: ManagedBudgetWithFees;
 };
 
 export async function freshBoost(
@@ -159,6 +154,7 @@ export function useTestFixtures(
       OpenAllowList,
       // SimpleBudget: typeof SimpleBudget;
       ManagedBudget,
+      ManagedBudgetWithFees,
       // VestingBudget: typeof VestingBudget;
       AllowListIncentive,
       CGDAIncentive,
@@ -254,6 +250,15 @@ export function deployFixtures(
       deployContract(config, {
         abi: ManagedBudgetArtifact.abi,
         bytecode: ManagedBudgetArtifact.bytecode as Hex,
+        account,
+      }),
+    );
+
+    const managedBudgetWithFeesBase = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: ManagedBudgetWithFeesArtifact.abi,
+        bytecode: ManagedBudgetWithFeesArtifact.bytecode as Hex,
         account,
       }),
     );
@@ -385,6 +390,11 @@ export function deployFixtures(
           [chainId]: managedBudgetBase,
         };
       },
+      ManagedBudgetWithFees: class TManagedBudgetWithFees extends ManagedBudgetWithFees {
+        public static override bases: Record<number, Address> = {
+          [chainId]: managedBudgetWithFeesBase,
+        };
+      },
       // VestingBudget: class TVestingBudget extends VestingBudget {
       //   public static override bases: Record<number, Address> = {
       //     [chainId]: vestingBudgetBase,
@@ -445,6 +455,7 @@ export function deployFixtures(
       OpenAllowList: typeof OpenAllowList;
       // SimpleBudget: typeof SimpleBudget;
       ManagedBudget: typeof ManagedBudget;
+      ManagedBudgetWithFees: typeof ManagedBudgetWithFees;
       // VestingBudget: typeof VestingBudget;
       AllowListIncentive: typeof AllowListIncentive;
       CGDAIncentive: typeof CGDAIncentive;
@@ -547,6 +558,15 @@ export function deployFixtures(
         options: DeployablePayloadOrAddress<ManagedBudgetPayload>,
       ) {
         return new bases.ManagedBudget(
+          { config: this._config, account: this._account },
+          options,
+        );
+      }
+
+      override ManagedBudgetWithFees(
+        options: DeployablePayloadOrAddress<ManagedBudgetWithFeesPayload>,
+      ) {
+        return new bases.ManagedBudgetWithFees(
           { config: this._config, account: this._account },
           options,
         );
@@ -793,6 +813,26 @@ export function freshManagedBudget(
   };
 }
 
+export function freshManagedBudgetWithFees(
+  options: DeployableTestOptions,
+  fixtures: Fixtures,
+) {
+  return async function freshBudgetWithFees() {
+    return await fixtures.registry.initialize(
+      crypto.randomUUID(),
+      new fixtures.bases.ManagedBudgetWithFees(options, {
+        owner: options.account.address,
+        authorized: [
+          fixtures.core.assertValidAddress(),
+          options.account.address,
+        ],
+        roles: [Roles.MANAGER, Roles.ADMIN],
+        managementFee: 100n,
+      }),
+    );
+  };
+}
+
 // export function freshVestingBudget(
 //   options: DeployableTestOptions,
 //   fixtures: Fixtures,
@@ -991,6 +1031,55 @@ export function fundManagedBudget(
   return async function fundBudget() {
     if (!budget)
       budget = await loadFixture(freshManagedBudget(options, fixtures));
+    if (!erc20) erc20 = await loadFixture(fundErc20(options));
+    if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
+    if (!points) points = await loadFixture(fundPoints(options));
+
+    await budget.allocate(
+      {
+        amount: parseEther('1.0'),
+        asset: zeroAddress,
+        target: options.account.address,
+      },
+      { value: parseEther('1.0') },
+    );
+
+    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
+    await budget.allocate({
+      amount: parseEther('110'),
+      asset: erc20.assertValidAddress(),
+      target: options.account.address,
+    });
+
+    await writeMockErc1155SetApprovalForAll(options.config, {
+      args: [budget.assertValidAddress(), true],
+      address: erc1155.assertValidAddress(),
+      account: options.account,
+    });
+    await budget.allocate({
+      tokenId: 1n,
+      amount: 110n,
+      asset: erc1155.assertValidAddress(),
+      target: options.account.address,
+    });
+
+    return { budget, erc20, erc1155, points } as BudgetFixtures & {
+      budget: ManagedBudget;
+    };
+  };
+}
+
+export function fundManagedBudgetWithFees(
+  options: DeployableTestOptions,
+  fixtures: Fixtures,
+  budget?: ManagedBudgetWithFees,
+  erc20?: MockERC20,
+  erc1155?: MockERC1155,
+  points?: MockPoints,
+) {
+  return async function fundBudget() {
+    if (!budget)
+      budget = await loadFixture(freshManagedBudgetWithFees(options, fixtures));
     if (!erc20) erc20 = await loadFixture(fundErc20(options));
     if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
     if (!points) points = await loadFixture(fundPoints(options));

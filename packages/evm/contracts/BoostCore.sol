@@ -97,8 +97,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     /// @notice Constructor to initialize the owner
-    constructor(BoostRegistry registry_, address protocolFeeReceiver_) {
-        _initializeOwner(msg.sender);
+    constructor(BoostRegistry registry_, address protocolFeeReceiver_, address owner_) {
+        _initializeOwner(owner_);
         registry = registry_;
         protocolFeeReceiver = protocolFeeReceiver_;
     }

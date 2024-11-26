@@ -29,8 +29,9 @@ contract CoreDeployer is ScriptUtils {
     }
 
     function _deployCore(address registry) internal returns (address core) {
+        address owner = vm.addr(vm.envUint("SIGNER_PRIVATE_KEY"));
         bytes memory initCode = type(BoostCore).creationCode;
-        bytes memory constructorArgs = abi.encode(registry, BOOST_FEE_RECIPIENT);
+        bytes memory constructorArgs = abi.encode(registry, BOOST_FEE_RECIPIENT, owner);
         core = _getCreate2Address(initCode, constructorArgs);
         console.log("BoostCore: ", core);
         _deploy2(initCode, constructorArgs);

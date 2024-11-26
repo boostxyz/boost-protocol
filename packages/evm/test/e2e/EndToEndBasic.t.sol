@@ -66,7 +66,7 @@ import {AValidator} from "contracts/validators/AValidator.sol";
  */
 contract EndToEndBasic is Test {
     BoostRegistry public registry = new BoostRegistry();
-    BoostCore public core = new BoostCore(registry, address(1));
+    BoostCore public core = new BoostCore(registry, address(1), address(this));
 
     MockERC20 public erc20 = new MockERC20();
     MockERC721 public erc721 = new MockERC721();

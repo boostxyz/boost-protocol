@@ -44,7 +44,7 @@ contract BoostCoreTest is Test {
     MockAuth mockAuth;
     address[] mockAddresses;
 
-    BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1));
+    BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
     BoostLib.Target action =
         _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
     BoostLib.Target contractAction =
@@ -95,7 +95,7 @@ contract BoostCoreTest is Test {
     function testConstructor() public {
         BoostRegistry registry = new BoostRegistry();
         address protocolFeeReceiver = address(1);
-        BoostCore boostCoreInstance = new BoostCore(registry, protocolFeeReceiver);
+        BoostCore boostCoreInstance = new BoostCore(registry, protocolFeeReceiver, address(this));
 
         // Check the owner
         assertEq(address(this), boostCoreInstance.owner());

@@ -36,7 +36,8 @@ import {AValidator} from "contracts/validators/AValidator.sol";
 contract EndToEndSignerValidator is Test, OwnableRoles {
     BoostRegistry public registry = new BoostRegistry();
     address fee_recipient = address(1);
-    BoostCore public core = new BoostCore(registry, fee_recipient);
+    address boost_core_owner = address(this);
+    BoostCore public core = new BoostCore(registry, fee_recipient, boost_core_owner);
 
     address budgetManager = makeAddr("ABudget Manager");
     address budgetAdmin = makeAddr("ABudget Admin");

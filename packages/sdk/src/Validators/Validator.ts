@@ -8,6 +8,7 @@ import { readContract } from '@wagmi/core';
 import { type Address, type Hex, decodeAbiParameters } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
+import type { ReadParams } from '../utils';
 import { LimitedSignerValidator } from './LimitedSignerValidator';
 import { SignerValidator } from './SignerValidator';
 
@@ -45,11 +46,13 @@ export const ValidatorByComponentInterface = {
 export async function validatorFromAddress(
   options: DeployableOptions,
   address: Address,
+  params?: ReadParams,
 ) {
   const interfaceId = (await readContract(options.config, {
     abi: aValidatorAbi,
     functionName: 'getComponentInterface',
     address,
+    ...params,
   })) as keyof typeof ValidatorByComponentInterface;
   const Ctor = ValidatorByComponentInterface[interfaceId];
   if (!Ctor) {

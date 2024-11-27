@@ -12,6 +12,7 @@ import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
+import type { ReadParams } from '../utils';
 import { AllowListIncentive } from './AllowListIncentive';
 import { CGDAIncentive } from './CGDAIncentive';
 import { ERC20Incentive } from './ERC20Incentive';
@@ -73,11 +74,13 @@ export const IncentiveByComponentInterface = {
 export async function incentiveFromAddress(
   options: DeployableOptions,
   address: Address,
+  params?: ReadParams,
 ) {
   const interfaceId = (await readContract(options.config, {
     abi: aIncentiveAbi,
     functionName: 'getComponentInterface',
     address,
+    ...params,
   })) as keyof typeof IncentiveByComponentInterface;
   const Ctor = IncentiveByComponentInterface[interfaceId];
   if (!Ctor) {

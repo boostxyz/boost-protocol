@@ -4,6 +4,7 @@ import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
+import type { ReadParams } from '../utils';
 import { EventAction } from './EventAction';
 
 export {
@@ -44,11 +45,13 @@ export const ActionByComponentInterface = {
 export async function actionFromAddress(
   options: DeployableOptions,
   address: Address,
+  params?: ReadParams,
 ) {
   const interfaceId = (await readContract(options.config, {
     abi: aActionAbi,
     functionName: 'getComponentInterface',
     address,
+    ...params,
   })) as keyof typeof ActionByComponentInterface;
   const Ctor = ActionByComponentInterface[interfaceId];
   if (!Ctor) {

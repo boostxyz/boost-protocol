@@ -7,6 +7,7 @@ import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
+import type { ReadParams } from '../utils';
 import { ManagedBudget } from './ManagedBudget';
 import { ManagedBudgetWithFees } from './ManagedBudgetWithFees';
 
@@ -48,11 +49,13 @@ export const BudgetByComponentInterface = {
 export async function budgetFromAddress(
   options: DeployableOptions,
   address: Address,
+  params?: ReadParams,
 ) {
   const interfaceId = (await readContract(options.config, {
     abi: aBudgetAbi,
     functionName: 'getComponentInterface',
     address,
+    ...params,
   })) as keyof typeof BudgetByComponentInterface;
   const Ctor = BudgetByComponentInterface[interfaceId];
   if (!Ctor) {

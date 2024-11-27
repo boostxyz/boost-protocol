@@ -7,6 +7,7 @@ import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
+import type { ReadParams } from '../utils';
 import { OpenAllowList } from './OpenAllowList';
 import { SimpleAllowList } from './SimpleAllowList';
 import { SimpleDenyList } from './SimpleDenyList';
@@ -45,11 +46,13 @@ export const AllowListByComponentInterface = {
 export async function allowListFromAddress(
   options: DeployableOptions,
   address: Address,
+  params?: ReadParams,
 ) {
   const interfaceId = (await readContract(options.config, {
     abi: aAllowListAbi,
     functionName: 'getComponentInterface',
     address,
+    ...params,
   })) as keyof typeof AllowListByComponentInterface;
   const Ctor = AllowListByComponentInterface[interfaceId];
   if (!Ctor) {

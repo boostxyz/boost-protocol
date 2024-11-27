@@ -223,6 +223,10 @@ export interface BoostCoreOptionsWithPayload extends DeployableOptions {
    * @type {Address}
    */
   protocolFeeReceiver: Address;
+  /**
+   * The address that will be defined as the BoostCore owner.
+   */
+  owner: Address;
 }
 
 /**
@@ -233,7 +237,7 @@ export interface BoostCoreOptionsWithPayload extends DeployableOptions {
  */
 // biome-ignore lint/suspicious/noExplicitAny: type guard
 function isBoostCoreDeployable(opts: any): opts is BoostCoreOptionsWithPayload {
-  return opts.registryAddress && opts.protocolFeeReceiver;
+  return opts.registryAddress && opts.protocolFeeReceiver && opts.owner;
 }
 
 /**
@@ -269,10 +273,10 @@ export type CreateBoostPayload = {
  * @export
  * @class BoostCore
  * @typedef {BoostCore}
- * @extends {Deployable<[Address, Address]>}
+ * @extends {Deployable<[Address, Address, Address]>}
  */
 export class BoostCore extends Deployable<
-  [Address, Address],
+  [Address, Address, Address],
   typeof boostCoreAbi
 > {
   /**
@@ -302,7 +306,7 @@ export class BoostCore extends Deployable<
    * @param {BoostCoreConfig} param0
    * @param {Config} param0.config
    * @param {?Account} [param0.account]
-   * @param {({ address?: Address; } | { registryAddress: Address; protocolFeeReceiver: Address; })} param0....options
+   * @param {({ address?: Address; } | { registryAddress: Address; protocolFeeReceiver: Address; owner: Address; })} param0....options
    */
   constructor({ config, account, ...options }: BoostCoreConfig) {
     if (isBoostCoreDeployed(options) && options.address) {
@@ -311,6 +315,7 @@ export class BoostCore extends Deployable<
       super({ account, config }, [
         options.registryAddress,
         options.protocolFeeReceiver,
+        options.owner,
       ]);
     } else {
       const { address } = assertValidAddressByChainId(
@@ -1498,12 +1503,12 @@ export class BoostCore extends Deployable<
    * @inheritdoc
    *
    * @public
-   * @param {?[Address, Address]} [_payload]
+   * @param {?[Address, Address, Address]} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: [Address, Address],
+    _payload?: [Address, Address, Address],
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [payload, options] = this.validateDeploymentConfig(

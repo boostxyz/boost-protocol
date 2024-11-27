@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 1.3.2
+
+### Patch Changes
+
+- 7b11e38: fix owner param in BoostCore constructor
+
 ## 1.3.1
 
 ## 1.3.0

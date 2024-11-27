@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 2.1.2
+
+### Patch Changes
+
+- 52f6db3: deploy new protocol to all supported networks
+
 ## 2.1.1
 
 ### Patch Changes

@@ -120,6 +120,7 @@ export const deploy: Command<DeployResult> = async function deploy(
       ...options,
       registryAddress: registry.assertValidAddress(),
       protocolFeeReceiver: account.address,
+      owner: account.address,
       // biome-ignore lint/suspicious/noExplicitAny: we know what we're doing
     }) as any
   ).deploy();

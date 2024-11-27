@@ -484,6 +484,7 @@ export function deployFixtures(
       ...options,
       registryAddress: registry.assertValidAddress(),
       protocolFeeReceiver: account.address,
+      owner: account.address,
     }).deploy();
 
     class TBoostCore extends BoostCore {

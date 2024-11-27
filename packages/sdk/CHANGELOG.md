@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 2.1.2
+
+### Patch Changes
+
+- 7b11e38: fix owner param in BoostCore constructor
+- 52f6db3: deploy new protocol to all supported networks
+
 ## 2.1.1
 
 ### Patch Changes

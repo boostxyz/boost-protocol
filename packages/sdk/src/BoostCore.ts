@@ -810,13 +810,13 @@ export class BoostCore extends Deployable<
     };
     const [action, budget, validator, allowList, incentives] =
       await Promise.all([
-        actionFromAddress(options, boostPayload.action),
-        budgetFromAddress(options, boostPayload.budget),
-        validatorFromAddress(options, boostPayload.validator),
-        allowListFromAddress(options, boostPayload.allowList),
+        actionFromAddress(options, boostPayload.action, params),
+        budgetFromAddress(options, boostPayload.budget, params),
+        validatorFromAddress(options, boostPayload.validator, params),
+        allowListFromAddress(options, boostPayload.allowList, params),
         Promise.all(
           boostPayload.incentives.map((incentiveAddress) =>
-            incentiveFromAddress(options, incentiveAddress),
+            incentiveFromAddress(options, incentiveAddress, params),
           ),
         ),
       ]);

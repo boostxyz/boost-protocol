@@ -272,7 +272,7 @@ export class AllowListIncentive extends DeployableTarget<
   ) {
     return await readAllowListIncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
+      args: [payload.target, zeroHash],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });

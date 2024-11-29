@@ -359,7 +359,7 @@ export class ERC1155Incentive extends DeployableTarget<
   public async isClaimable(payload: ClaimPayload, params?: ReadParams) {
     return await readErc1155IncentiveIsClaimable(this._config, {
       address: this.assertValidAddress(),
-      args: [prepareClaimPayload(payload)],
+      args: [payload.target, payload.data],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });

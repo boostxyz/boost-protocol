@@ -180,10 +180,8 @@ describe("PointsIncentive", () => {
   });
 
   test("isClaimable returns expected values", async () => {
-    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
-    const referrer = accounts.at(1)!.account!;
-    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
-    const trustedSigner = accounts.at(0)!;
+    const referrer = accounts[1].account;
+    const trustedSigner = accounts[0];
     const pointsIncentive = fixtures.core.PointsIncentive({
       venue: points.assertValidAddress(),
       selector: bytes4("issue(address,uint256)"),
@@ -198,7 +196,7 @@ describe("PointsIncentive", () => {
     const incentiveData = pointsIncentive.buildClaimData();
 
     // Should be claimable before claiming
-    expect(await boost.incentives.at(0)!.isClaimable({
+    expect(await boost.incentives[0]!.isClaimable({
       target: claimant,
       data: incentiveData
     })).toBe(true);
@@ -225,7 +223,7 @@ describe("PointsIncentive", () => {
     );
 
     // Should not be claimable after claiming
-    expect(await boost.incentives.at(0)!.isClaimable({
+    expect(await boost.incentives[0]!.isClaimable({
       target: claimant,
       data: incentiveData
     })).toBe(false);

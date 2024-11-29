@@ -226,7 +226,7 @@ describe("ERC20Incentive", () => {
     const incentiveData = erc20Incentive.buildClaimData();
 
     // Should be claimable before claiming
-    expect(await boost.incentives.at(0)!.isClaimable({
+    expect(await boost.incentives[0]!.isClaimable({
       target: claimant,
       data: incentiveData
     })).toBe(true);
@@ -249,7 +249,7 @@ describe("ERC20Incentive", () => {
     );
 
     // Should not be claimable after claiming
-    expect(await boost.incentives.at(0)!.isClaimable({
+    expect(await boost.incentives[0]!.isClaimable({
       target: claimant,
       data: incentiveData
     })).toBe(false);

@@ -37,6 +37,7 @@ describe("AllowListIncentive", () => {
       reward: 1n,
       limit: 1n,
     });
+    // @ts-expect-error
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
@@ -185,5 +186,52 @@ describe("AllowListIncentive", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
+  });
+
+  test("isClaimable returns expected values", async () => {
+    const referrer = accounts[1].account;
+    const trustedSigner = accounts[0];
+    const allowList = await loadFixture(freshAllowList(fixtures));
+    const allowListIncentive = new fixtures.bases.AllowListIncentive(
+      defaultOptions,
+      {
+        allowList: allowList.assertValidAddress(),
+        limit: 1n,
+      },
+    );
+    const boost = await freshBoost(fixtures, {
+      incentives: [allowListIncentive],
+    });
+    await allowList.grantManyRoles(
+      [allowListIncentive.assertValidAddress()],
+      [Roles.MANAGER],
+    );
+
+    const claimant = trustedSigner.account;
+    const incentiveData = allowListIncentive.buildClaimData();
+
+    // Should be claimable before claiming
+    expect(await boost.incentives[0]!.isClaimable({ target: claimant })).toBe(true);
+
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    // Claim the incentive
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+      { value: parseEther("0.000075"), account: trustedSigner.privateKey },
+    );
+
+    // Should not be claimable after claiming
+    expect(await boost.incentives[0]!.isClaimable({ target: claimant })).toBe(false);
   });
 });

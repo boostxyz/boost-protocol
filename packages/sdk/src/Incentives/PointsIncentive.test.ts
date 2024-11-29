@@ -32,6 +32,7 @@ describe("PointsIncentive", () => {
       reward: 1n,
       limit: 1n,
     });
+    // @ts-expect-error
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
@@ -176,5 +177,57 @@ describe("PointsIncentive", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
+  });
+
+  test("isClaimable returns expected values", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)!.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const trustedSigner = accounts.at(0)!;
+    const pointsIncentive = fixtures.core.PointsIncentive({
+      venue: points.assertValidAddress(),
+      selector: bytes4("issue(address,uint256)"),
+      reward: 1n,
+      limit: 1n,
+    });
+    const boost = await freshBoost(fixtures, {
+      incentives: [pointsIncentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const incentiveData = pointsIncentive.buildClaimData();
+
+    // Should be claimable before claiming
+    expect(await boost.incentives.at(0)!.isClaimable({
+      target: claimant,
+      data: incentiveData
+    })).toBe(true);
+
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    await writePointsGrantRoles(defaultOptions.config, {
+      address: points.assertValidAddress(),
+      args: [pointsIncentive.assertValidAddress(), 2n],
+      account: defaultOptions.account,
+    });
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+    );
+
+    // Should not be claimable after claiming
+    expect(await boost.incentives.at(0)!.isClaimable({
+      target: claimant,
+      data: incentiveData
+    })).toBe(false);
   });
 });

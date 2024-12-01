@@ -52,7 +52,7 @@
     "abitype": "^1.0.6",
     "hardhat": "^2.22.12",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2",
+    "typescript": "^5.6.3",
     "viem": "2.21.16"
   }
 }

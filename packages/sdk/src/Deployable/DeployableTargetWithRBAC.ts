@@ -4,11 +4,13 @@ import {
   readRbacHasAnyRole,
   readRbacIsAuthorized,
   readRbacRolesOf,
+  simulateOwnableRolesTransferOwnership,
   simulateRbacGrantManyRoles,
   simulateRbacGrantRoles,
   simulateRbacRevokeManyRoles,
   simulateRbacRevokeRoles,
   simulateRbacSetAuthorized,
+  writeOwnableRolesTransferOwnership,
   writeRbacGrantManyRoles,
   writeRbacGrantRoles,
   writeRbacRevokeManyRoles,
@@ -425,5 +427,45 @@ export class DeployableTargetWithRBAC<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Transfer ownership of the contract to a new address
+   *
+   * @public
+   * @async
+   * @param {Address} newOwner - The address to transfer ownership to
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async transferOwnership(newOwner: Address, params?: WriteParams) {
+    return await this.awaitResult(this.transferOwnershipRaw(newOwner, params));
+  }
+
+  /**
+   * Transfer ownership of the contract to a new address
+   *
+   * @public
+   * @async
+   * @param {Address} newOwner - The address to transfer ownership to
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async transferOwnershipRaw(newOwner: Address, params?: WriteParams) {
+    const { request, result } = await simulateOwnableRolesTransferOwnership(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [newOwner],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeOwnableRolesTransferOwnership(
+      this._config,
+      request,
+    );
+    return { hash, result };
   }
 }

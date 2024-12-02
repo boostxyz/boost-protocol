@@ -100,4 +100,17 @@ describe('RBAC', () => {
     expect(await budget.isAuthorized(user)).toBe(false);
     expect(await budget.rolesOf(user)).not.toContain(Roles.MANAGER);
   });
+
+  test('can transfer ownership', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const oldOwner = accounts[0].account;
+    const newOwner = accounts[9].account;
+    expect(await budget.owner()).toBe(oldOwner);
+    
+    // Transfer ownership
+    await budget.transferOwnership(newOwner);
+    
+    // Verify the new owner has admin rights
+    expect(await budget.owner()).toBe(newOwner);
+  });
 });

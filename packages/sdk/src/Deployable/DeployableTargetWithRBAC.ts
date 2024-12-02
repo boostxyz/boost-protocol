@@ -4,12 +4,14 @@ import {
   readRbacHasAnyRole,
   readRbacIsAuthorized,
   readRbacRolesOf,
+  simulateOwnableRolesRenounceOwnership,
   simulateOwnableRolesTransferOwnership,
   simulateRbacGrantManyRoles,
   simulateRbacGrantRoles,
   simulateRbacRevokeManyRoles,
   simulateRbacRevokeRoles,
   simulateRbacSetAuthorized,
+  writeOwnableRolesRenounceOwnership,
   writeOwnableRolesTransferOwnership,
   writeRbacGrantManyRoles,
   writeRbacGrantRoles,
@@ -463,6 +465,43 @@ export class DeployableTargetWithRBAC<
       },
     );
     const hash = await writeOwnableRolesTransferOwnership(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Renounce ownership of the contract
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async renounceOwnership(params?: WriteParams) {
+    return await this.awaitResult(this.renounceOwnershipRaw(params));
+  }
+
+  /**
+   * Renounce ownership of the contract
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async renounceOwnershipRaw(params?: WriteParams) {
+    const { request, result } = await simulateOwnableRolesRenounceOwnership(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeOwnableRolesRenounceOwnership(
       this._config,
       request,
     );

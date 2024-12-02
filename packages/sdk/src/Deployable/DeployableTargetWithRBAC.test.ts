@@ -8,6 +8,7 @@ import {
   freshManagedBudget,
 } from '@boostxyz/test/helpers';
 import { Roles } from './DeployableTargetWithRBAC';
+import { zeroAddress } from 'viem';
 
 let fixtures: Fixtures;
 
@@ -112,5 +113,18 @@ describe('RBAC', () => {
     
     // Verify the new owner has admin rights
     expect(await budget.owner()).toBe(newOwner);
+  });
+
+  test('can renounce ownership', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const owner = accounts[0].account;
+    
+    // Verify initial owner has admin rights
+    expect(await budget.owner()).toBe(owner);
+    
+    // Renounce ownership
+    await budget.renounceOwnership();
+    const newOwner = await budget.owner();
+    expect(newOwner).toBe(zeroAddress);
   });
 });

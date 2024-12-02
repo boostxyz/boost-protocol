@@ -38,6 +38,7 @@ describe("ERC20VariableIncentive", () => {
       limit: 1n,
       manager: zeroAddress,
     });
+    // @ts-expect-error
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
@@ -236,5 +237,52 @@ describe("ERC20VariableIncentive", () => {
     expect(isAddressEqual(address, budgets.erc20.assertValidAddress())).toBe(
       true,
     );
+  });
+
+  test("isClaimable returns expected values", async () => {
+    const referrer = accounts[1].account;
+    const trustedSigner = accounts[0];
+    const erc20VariableIncentive = fixtures.core.ERC20VariableIncentive({
+      asset: budgets.erc20.assertValidAddress(),
+      reward: 1n,
+      limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
+    });
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20VariableIncentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const incentiveData = erc20VariableIncentive.buildClaimData(parseEther("1"));
+
+    // Should be claimable before claiming
+    expect(await boost.incentives[0]!.isClaimable({
+      target: claimant,
+      data: incentiveData
+    })).toBe(true);
+
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    // Claim the incentive
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+    );
+
+    // Should not be claimable after claiming
+    expect(await boost.incentives[0]!.isClaimable({
+      target: claimant,
+      data: incentiveData
+    })).toBe(false);
   });
 });

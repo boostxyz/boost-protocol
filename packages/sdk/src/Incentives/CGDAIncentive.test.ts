@@ -33,6 +33,7 @@ describe("CGDAIncentive", () => {
       rewardDecay: 1n,
       manager: budgets.budget.address || zeroAddress,
     });
+    // @ts-expect-error
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
@@ -207,5 +208,54 @@ describe("CGDAIncentive", () => {
     expect(isAddressEqual(address, budgets.erc20.assertValidAddress())).toBe(
       true,
     );
+  });
+
+  test("isClaimable returns expected values", async () => {
+    const referrer = accounts[1].account;
+    const trustedSigner = accounts[0];
+    const cgdaIncentive = fixtures.core.CGDAIncentive({
+      asset: budgets.erc20.assertValidAddress(),
+      initialReward: 1n,
+      totalBudget: 10n,
+      rewardBoost: 1n,
+      rewardDecay: 1n,
+      manager: budgets.budget.assertValidAddress(),
+    });
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [cgdaIncentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const incentiveData = cgdaIncentive.buildClaimData();
+
+    // Should be claimable before claiming
+    expect(await boost.incentives[0]!.isClaimable({
+      target: claimant,
+      data: incentiveData
+    })).toBe(true);
+
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    // Claim the incentive
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+    );
+
+    // Should not be claimable after claiming
+    expect(await boost.incentives[0]!.isClaimable({
+      target: claimant,
+      data: incentiveData
+    })).toBe(false);
   });
 });

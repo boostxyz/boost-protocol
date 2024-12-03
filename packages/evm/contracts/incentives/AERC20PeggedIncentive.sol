@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {ACloneable} from "contracts/shared/ACloneable.sol";
@@ -13,7 +12,6 @@ import {AIncentive} from "./AIncentive.sol";
 /// @title ERC20 AIncentive
 /// @notice A simple ERC20 incentive implementation that allows claiming of tokens
 abstract contract AERC20PeggedIncentive is AIncentive {
-    using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 
     /// @notice A mapping of address to claim status

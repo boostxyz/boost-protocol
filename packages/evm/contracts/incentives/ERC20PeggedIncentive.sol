@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {LibPRNG} from "@solady/utils/LibPRNG.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
@@ -12,7 +11,6 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {RBAC} from "contracts/shared/RBAC.sol";
 
 contract ERC20PeggedIncentive is RBAC, AERC20PeggedIncentive {
-    using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 
     event ERC20PeggedIncentiveInitialized(

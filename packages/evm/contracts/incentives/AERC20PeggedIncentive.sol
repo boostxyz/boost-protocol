@@ -21,7 +21,7 @@ abstract contract AERC20PeggedIncentive is AIncentive {
 
     uint256 public totalClaim;
 
-    /// @notice The limit (max claims, or max entries for raffles)
+    /// @notice The limit max possible reward tokens to be claimed
     function limit() external virtual returns (uint256);
 
     /// @inheritdoc ACloneable

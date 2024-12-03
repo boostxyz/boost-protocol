@@ -1,14 +1,27 @@
 import {
   rbacAbi,
+  readOwnableRolesOwnershipHandoverExpiresAt,
   readRbacHasAllRoles,
   readRbacHasAnyRole,
   readRbacIsAuthorized,
   readRbacRolesOf,
+  simulateOwnableRolesCancelOwnershipHandover,
+  simulateOwnableRolesCompleteOwnershipHandover,
+  simulateOwnableRolesRenounceOwnership,
+  simulateOwnableRolesRenounceRoles,
+  simulateOwnableRolesRequestOwnershipHandover,
+  simulateOwnableRolesTransferOwnership,
   simulateRbacGrantManyRoles,
   simulateRbacGrantRoles,
   simulateRbacRevokeManyRoles,
   simulateRbacRevokeRoles,
   simulateRbacSetAuthorized,
+  writeOwnableRolesCancelOwnershipHandover,
+  writeOwnableRolesCompleteOwnershipHandover,
+  writeOwnableRolesRenounceOwnership,
+  writeOwnableRolesRenounceRoles,
+  writeOwnableRolesRequestOwnershipHandover,
+  writeOwnableRolesTransferOwnership,
   writeRbacGrantManyRoles,
   writeRbacGrantRoles,
   writeRbacRevokeManyRoles,
@@ -425,5 +438,273 @@ export class DeployableTargetWithRBAC<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Transfer ownership of the contract to a new address
+   *
+   * @public
+   * @async
+   * @param {Address} newOwner - The address to transfer ownership to
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async transferOwnership(newOwner: Address, params?: WriteParams) {
+    return await this.awaitResult(this.transferOwnershipRaw(newOwner, params));
+  }
+
+  /**
+   * Transfer ownership of the contract to a new address
+   *
+   * @public
+   * @async
+   * @param {Address} newOwner - The address to transfer ownership to
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async transferOwnershipRaw(newOwner: Address, params?: WriteParams) {
+    const { request, result } = await simulateOwnableRolesTransferOwnership(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [newOwner],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeOwnableRolesTransferOwnership(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Renounce ownership of the contract
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async renounceOwnership(params?: WriteParams) {
+    return await this.awaitResult(this.renounceOwnershipRaw(params));
+  }
+
+  /**
+   * Renounce ownership of the contract
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async renounceOwnershipRaw(params?: WriteParams) {
+    const { request, result } = await simulateOwnableRolesRenounceOwnership(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeOwnableRolesRenounceOwnership(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Request a two-step ownership handover to the caller
+   * The request will automatically expire in 48 hours
+   *
+   * Note: This is part of a two-step ownership transfer process:
+   * 1. New owner calls requestOwnershipHandover()
+   * 2. Current owner calls completeOwnershipHandover(newOwner)
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async requestOwnershipHandover(params?: WriteParams) {
+    return await this.awaitResult(this.requestOwnershipHandoverRaw(params));
+  }
+
+  /**
+   * Request a two-step ownership handover to the caller
+   * The request will automatically expire in 48 hours
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async requestOwnershipHandoverRaw(params?: WriteParams) {
+    const { request, result } =
+      await simulateOwnableRolesRequestOwnershipHandover(this._config, {
+        address: this.assertValidAddress(),
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      });
+    const hash = await writeOwnableRolesRequestOwnershipHandover(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Complete a pending ownership handover to a new owner
+   * Must be called by the current owner after the new owner has requested the handover
+   *
+   * Note: This is part of a two-step ownership transfer process:
+   * 1. New owner calls requestOwnershipHandover()
+   * 2. Current owner calls completeOwnershipHandover(newOwner)
+   *
+   * @public
+   * @async
+   * @param {Address} pendingOwner - The address that requested the ownership handover
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async completeOwnershipHandover(
+    pendingOwner: Address,
+    params?: WriteParams,
+  ) {
+    return await this.awaitResult(
+      this.completeOwnershipHandoverRaw(pendingOwner, params),
+    );
+  }
+
+  /**
+   * Complete a pending ownership handover to a new owner
+   * Must be called by the current owner after the new owner has requested the handover
+   *
+   * @public
+   * @async
+   * @param {Address} pendingOwner - The address that requested the ownership handover
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async completeOwnershipHandoverRaw(
+    pendingOwner: Address,
+    params?: WriteParams,
+  ) {
+    const { request, result } =
+      await simulateOwnableRolesCompleteOwnershipHandover(this._config, {
+        address: this.assertValidAddress(),
+        args: [pendingOwner],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      });
+    const hash = await writeOwnableRolesCompleteOwnershipHandover(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Cancel a pending ownership handover request
+   * Must be called by the account that originally requested the handover
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async cancelOwnershipHandover(params?: WriteParams) {
+    return await this.awaitResult(this.cancelOwnershipHandoverRaw(params));
+  }
+
+  /**
+   * Cancel a pending ownership handover request
+   * Must be called by the account that originally requested the handover
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async cancelOwnershipHandoverRaw(params?: WriteParams) {
+    const { request, result } =
+      await simulateOwnableRolesCancelOwnershipHandover(this._config, {
+        address: this.assertValidAddress(),
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      });
+    const hash = await writeOwnableRolesCancelOwnershipHandover(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Get the expiry timestamp for a pending ownership handover
+   * Returns 0 if there is no pending handover request for the given address
+   *
+   * @public
+   * @param {Address} pendingOwner - The address to check for pending handover requests
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} - The timestamp when the handover request expires, or 0 if no request exists
+   */
+  public ownershipHandoverExpiresAt(
+    pendingOwner: Address,
+    params?: ReadParams,
+  ): Promise<bigint> {
+    return readOwnableRolesOwnershipHandoverExpiresAt(this._config, {
+      address: this.assertValidAddress(),
+      args: [pendingOwner],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
+   * Allow the caller to remove their own roles
+   * If the caller does not have a role, then it will be a no-op for that role
+   *
+   * @public
+   * @async
+   * @param {Roles} roles - Bitmap of roles to renounce
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async renounceRoles(roles: Roles, params?: WriteParams) {
+    return await this.awaitResult(this.renounceRolesRaw(roles, params));
+  }
+
+  /**
+   * Allow the caller to remove their own roles
+   * If the caller does not have a role, then it will be a no-op for that role
+   *
+   * @public
+   * @async
+   * @param {Roles} roles - Bitmap of roles to renounce
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async renounceRolesRaw(roles: Roles, params?: WriteParams) {
+    const { request, result } = await simulateOwnableRolesRenounceRoles(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [roles],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeOwnableRolesRenounceRoles(this._config, request);
+    return { hash, result };
   }
 }

@@ -8,6 +8,11 @@ import {
   freshManagedBudget,
 } from '@boostxyz/test/helpers';
 import { Roles } from './DeployableTargetWithRBAC';
+import { createTestClient, http, zeroAddress, publicActions, walletActions } from 'viem';
+import { setupConfig } from '@boostxyz/test/viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { hardhat } from 'viem/chains';
+import { ManagedBudget } from '../Budgets/ManagedBudget';
 
 let fixtures: Fixtures;
 
@@ -99,5 +104,175 @@ describe('RBAC', () => {
     await budget.setAuthorized([user], [false]);
     expect(await budget.isAuthorized(user)).toBe(false);
     expect(await budget.rolesOf(user)).not.toContain(Roles.MANAGER);
+  });
+
+  test('can transfer ownership', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const oldOwner = accounts[0].account;
+    const newOwner = accounts[9].account;
+    expect(await budget.owner()).toBe(oldOwner);
+    
+    // Transfer ownership
+    await budget.transferOwnership(newOwner);
+    
+    // Verify the new owner
+    expect(await budget.owner()).toBe(newOwner);
+  });
+
+  test('can renounce ownership', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const owner = accounts[0].account;
+    
+    // Verify initial owner
+    expect(await budget.owner()).toBe(owner);
+    
+    // Renounce ownership
+    await budget.renounceOwnership();
+    const newOwner = await budget.owner();
+    expect(newOwner).toBe(zeroAddress);
+  });
+
+  test('supports two-step ownership handover', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const currentOwner = accounts[0].account;
+    const newOwner = accounts[6];
+
+    const walletClient = createTestClient({
+      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
+      chain: hardhat,
+      mode: 'hardhat',
+      account: privateKeyToAccount(newOwner.key),
+      key: newOwner.key,
+    })
+    .extend(publicActions)
+    .extend(walletActions) as any;
+    
+    const newOwnerOptions = {
+      account: privateKeyToAccount(newOwner.key),
+      config: setupConfig(walletClient)
+    };
+
+    // Create budget instance with different signer
+    const sameBudgetDifferentSigner = new ManagedBudget(
+      { config: newOwnerOptions.config, account: newOwnerOptions.account },
+      budget.address
+    );
+    
+    await sameBudgetDifferentSigner.requestOwnershipHandover();
+
+    // Verify initial ownership
+    expect(await budget.owner()).toBe(currentOwner);
+    expect(await sameBudgetDifferentSigner.owner()).toBe(currentOwner);
+    
+    // Complete handover from current owner
+    await budget.completeOwnershipHandover(newOwner.account);
+    
+    // Verify ownership has transferred
+    expect(await budget.owner()).toBe(newOwner.account);
+    expect(await sameBudgetDifferentSigner.owner()).toBe(newOwner.account);
+  });
+
+  test('ownership handover fails if not requested', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const newOwner = accounts[7].account;
+    
+    // Try to complete handover without request
+    await expect(
+      budget.completeOwnershipHandover(newOwner)
+    ).rejects.toThrowError('NoHandoverRequest');
+  });
+
+  test('can cancel ownership handover', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const currentOwner = accounts[0].account;
+    const newOwner = accounts[6];
+    
+    // Create new options with new owner's account and wallet client
+    const walletClient = createTestClient({
+      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
+      chain: hardhat,
+      mode: 'hardhat',
+      account: privateKeyToAccount(newOwner.key),
+      key: newOwner.key,
+    })
+    .extend(publicActions)
+    .extend(walletActions) as any;
+    
+    const newOwnerOptions = {
+      account: privateKeyToAccount(newOwner.key),
+      config: setupConfig(walletClient)
+    };
+    
+    // Create budget instance with different signer
+    const sameBudgetDifferentSigner = new ManagedBudget(
+      { config: newOwnerOptions.config, account: newOwnerOptions.account },
+      budget.address
+    );
+    
+    // Request handover from new owner account
+    await sameBudgetDifferentSigner.requestOwnershipHandover();
+    
+    // Cancel the handover request
+    await sameBudgetDifferentSigner.cancelOwnershipHandover();
+    
+    // Verify handover can't be completed after cancellation
+    await expect(
+      budget.completeOwnershipHandover(newOwner.account)
+    ).rejects.toThrowError('NoHandoverRequest');
+    
+    // Verify ownership hasn't changed
+    expect(await budget.owner()).toBe(currentOwner);
+  });
+
+  test('can check ownership handover expiry', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const newOwner = accounts[6];
+    
+    const walletClient = createTestClient({
+      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
+      chain: hardhat,
+      mode: 'hardhat',
+      account: privateKeyToAccount(newOwner.key),
+      key: newOwner.key,
+    })
+    .extend(publicActions)
+    .extend(walletActions) as any;
+    
+    const newOwnerOptions = {
+      account: privateKeyToAccount(newOwner.key),
+      config: setupConfig(walletClient)
+    };
+    
+    // Create identical budget instance with different signer
+    const sameBudgetDifferentSigner = new ManagedBudget(
+      { config: newOwnerOptions.config, account: newOwnerOptions.account },
+      budget.address
+    );
+    
+    // Check expiry before request (should be 0)
+    expect(await budget.ownershipHandoverExpiresAt(newOwner.account)).toBe(0n);
+    
+    // Request handover
+    await sameBudgetDifferentSigner.requestOwnershipHandover();
+    
+    // Check expiry after request (should be > 0)
+    const expiryTime = await budget.ownershipHandoverExpiresAt(newOwner.account);
+    expect(expiryTime).toBeGreaterThan(0n);
+    
+    // Cancel request
+    await sameBudgetDifferentSigner.cancelOwnershipHandover();
+    
+    // Check expiry after cancellation (should be 0 again)
+    expect(await budget.ownershipHandoverExpiresAt(newOwner.account)).toBe(0n);
+  });
+
+  test('can renounce roles', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const account = accounts[0];
+    const user = account.account;
+    
+    expect(await budget.hasAllRoles(user, Roles.ADMIN)).toBe(true);
+    await budget.renounceRoles(Roles.ADMIN);
+    expect(await budget.hasAllRoles(user, Roles.ADMIN)).toBe(false);
   });
 });

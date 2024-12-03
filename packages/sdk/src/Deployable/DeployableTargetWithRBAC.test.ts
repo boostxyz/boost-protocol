@@ -115,7 +115,7 @@ describe('RBAC', () => {
     // Transfer ownership
     await budget.transferOwnership(newOwner);
     
-    // Verify the new owner has admin rights
+    // Verify the new owner
     expect(await budget.owner()).toBe(newOwner);
   });
 
@@ -123,7 +123,7 @@ describe('RBAC', () => {
     const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
     const owner = accounts[0].account;
     
-    // Verify initial owner has admin rights
+    // Verify initial owner
     expect(await budget.owner()).toBe(owner);
     
     // Renounce ownership
@@ -228,7 +228,6 @@ describe('RBAC', () => {
     const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
     const newOwner = accounts[6];
     
-    // Create new options with new owner's account and wallet client
     const walletClient = createTestClient({
       transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
       chain: hardhat,
@@ -244,7 +243,7 @@ describe('RBAC', () => {
       config: setupConfig(walletClient)
     };
     
-    // Create budget instance with different signer
+    // Create identical budget instance with different signer
     const sameBudgetDifferentSigner = new ManagedBudget(
       { config: newOwnerOptions.config, account: newOwnerOptions.account },
       budget.address

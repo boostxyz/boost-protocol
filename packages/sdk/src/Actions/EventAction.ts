@@ -708,8 +708,12 @@ export class EventAction extends DeployableTarget<
         ...params,
         chainId: actionStep.chainid,
       });
-      if (params.notBeforeBlockNumber)
-        return receipt.blockNumber >= params.notBeforeBlockNumber;
+      if (
+        params.notBeforeBlockNumber &&
+        receipt.blockNumber < params.notBeforeBlockNumber
+      ) {
+        return false;
+      }
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
         .map((log) => {
@@ -730,8 +734,12 @@ export class EventAction extends DeployableTarget<
           ...params,
           chainId: actionStep.chainid,
         });
-        if (params.notBeforeBlockNumber)
-          return transaction.blockNumber >= params.notBeforeBlockNumber;
+        if (
+          params.notBeforeBlockNumber &&
+          transaction.blockNumber < params.notBeforeBlockNumber
+        ) {
+          return false;
+        }
         return this.isActionFunctionValid(actionStep, transaction, params);
       }
     }

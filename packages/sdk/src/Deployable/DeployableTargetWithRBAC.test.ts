@@ -266,4 +266,14 @@ describe('RBAC', () => {
     // Check expiry after cancellation (should be 0 again)
     expect(await budget.ownershipHandoverExpiresAt(newOwner.account)).toBe(0n);
   });
+
+  test('can renounce roles', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const account = accounts[0];
+    const user = account.account;
+    
+    expect(await budget.hasAllRoles(user, Roles.ADMIN)).toBe(true);
+    await budget.renounceRoles(Roles.ADMIN);
+    expect(await budget.hasAllRoles(user, Roles.ADMIN)).toBe(false);
+  });
 });

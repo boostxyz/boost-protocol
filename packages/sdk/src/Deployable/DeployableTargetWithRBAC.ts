@@ -8,6 +8,7 @@ import {
   simulateOwnableRolesCancelOwnershipHandover,
   simulateOwnableRolesCompleteOwnershipHandover,
   simulateOwnableRolesRenounceOwnership,
+  simulateOwnableRolesRenounceRoles,
   simulateOwnableRolesRequestOwnershipHandover,
   simulateOwnableRolesTransferOwnership,
   simulateRbacGrantManyRoles,
@@ -18,6 +19,7 @@ import {
   writeOwnableRolesCancelOwnershipHandover,
   writeOwnableRolesCompleteOwnershipHandover,
   writeOwnableRolesRenounceOwnership,
+  writeOwnableRolesRenounceRoles,
   writeOwnableRolesRequestOwnershipHandover,
   writeOwnableRolesTransferOwnership,
   writeRbacGrantManyRoles,
@@ -665,5 +667,44 @@ export class DeployableTargetWithRBAC<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Allow the caller to remove their own roles
+   * If the caller does not have a role, then it will be a no-op for that role
+   *
+   * @public
+   * @async
+   * @param {Roles} roles - Bitmap of roles to renounce
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async renounceRoles(roles: Roles, params?: WriteParams) {
+    return await this.awaitResult(this.renounceRolesRaw(roles, params));
+  }
+
+  /**
+   * Allow the caller to remove their own roles
+   * If the caller does not have a role, then it will be a no-op for that role
+   *
+   * @public
+   * @async
+   * @param {Roles} roles - Bitmap of roles to renounce
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async renounceRolesRaw(roles: Roles, params?: WriteParams) {
+    const { request, result } = await simulateOwnableRolesRenounceRoles(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [roles],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeOwnableRolesRenounceRoles(this._config, request);
+    return { hash, result };
   }
 }

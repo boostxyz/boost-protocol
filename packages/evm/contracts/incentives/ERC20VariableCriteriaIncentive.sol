@@ -20,6 +20,10 @@ enum SignatureType {
 contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
     using SafeTransferLib for address;
 
+    event ERC20VariableCriteriaIncentiveInitialized(
+        address indexed asset, uint256 reward, uint256 limit, uint256 maxReward, IncentiveCriteria criteria
+    );
+
     /// @notice Initialize the ERC20VariableCriteriaIncentive with IncentiveCriteria
     /// @param data_ The encoded initialization data `(address asset, uint256 reward, uint256 limit, IncentiveCriteria criteria)`
     function initialize(bytes calldata data_) public override initializer {
@@ -47,6 +51,7 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
 
         _initializeOwner(msg.sender);
         _setRoles(msg.sender, MANAGER_ROLE);
+        emit ERC20VariableCriteriaIncentiveInitialized(asset_, reward_, limit_, maxReward_, criteria_);
     }
 
     /// @notice Returns the incentive criteria

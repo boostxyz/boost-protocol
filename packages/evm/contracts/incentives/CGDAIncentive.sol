@@ -16,6 +16,10 @@ import {RBAC} from "contracts/shared/RBAC.sol";
 contract CGDAIncentive is RBAC, ACGDAIncentive {
     using SafeTransferLib for address;
 
+    event CGDAIncentiveInitialized(
+        address indexed asset, uint256 initialReward, uint256 rewardDecay, uint256 rewardBoost, uint256 totalBudget
+    );
+
     /// @notice The payload for initializing a CGDAIncentive
     /// @param asset The address of the ERC20-like token
     /// @param initialReward The initial reward amount
@@ -68,6 +72,9 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
         totalBudget = init_.totalBudget;
         _initializeOwner(msg.sender);
         _setRoles(msg.sender, MANAGER_ROLE);
+        emit CGDAIncentiveInitialized(
+            init_.asset, init_.initialReward, init_.rewardDecay, init_.rewardBoost, init_.totalBudget
+        );
     }
 
     /// @inheritdoc AIncentive

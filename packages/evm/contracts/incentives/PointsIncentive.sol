@@ -15,6 +15,8 @@ import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
 ///     - The maximum number of claims must not have been reached; and
 ///     - This contract must be authorized to operate the points contract's issuance function
 contract PointsIncentive is OwnableRoles, APointsIncentive {
+    event PointsIncentiveInitialized(address indexed venue, bytes4 selector, uint256 reward, uint256 limit);
+
     /// @notice The payload for initializing a PointsIncentive
     struct InitPayload {
         address venue;
@@ -43,6 +45,7 @@ contract PointsIncentive is OwnableRoles, APointsIncentive {
         reward = init_.reward;
         limit = init_.limit;
         _initializeOwner(msg.sender);
+        emit PointsIncentiveInitialized(init_.venue, init_.selector, init_.reward, init_.limit);
     }
 
     /// @notice Claim the incentive

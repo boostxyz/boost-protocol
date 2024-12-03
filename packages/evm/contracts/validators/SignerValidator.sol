@@ -19,6 +19,8 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     using SignatureCheckerLib for address;
     using IncentiveBits for IncentiveBits.IncentiveMap;
 
+    event SignerValidatorInitialized(address validatorCaller);
+
     /// @dev track claimed incentives using this bitmap
     IncentiveBits.IncentiveMap _used;
 
@@ -44,6 +46,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
         for (uint256 i = 0; i < signers_.length; i++) {
             signers[signers_[i]] = true;
         }
+        emit SignerValidatorInitialized(validatorCaller_);
     }
 
     /// Validate that the action has been completed successfully by constructing a payload and checking the signature against it

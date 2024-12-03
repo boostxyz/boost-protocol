@@ -17,6 +17,8 @@ import {RBAC} from "contracts/shared/RBAC.sol";
 contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
     using SafeTransferLib for address;
 
+    event ERC20VariableIncentiveInitialized(address indexed asset, uint256 reward, uint256 limit);
+
     /// @notice The reward multiplier; if 0, the signed amount from the claim payload is used directly
     /// @notice The payload for initializing the incentive
     struct InitPayload {
@@ -63,6 +65,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
 
         _initializeOwner(msg.sender);
         _setRoles(msg.sender, MANAGER_ROLE);
+        emit ERC20VariableIncentiveInitialized(asset_, reward_, limit_);
     }
 
     /// @notice Claim the incentive with variable rewards

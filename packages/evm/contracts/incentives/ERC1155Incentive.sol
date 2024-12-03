@@ -19,7 +19,9 @@ import {ACloneable} from "contracts/shared/ACloneable.sol";
 /// @title ERC1155Incentive
 /// @notice A simple ERC1155 incentive implementation that allows claiming of tokens
 contract ERC1155Incentive is RBAC, AERC1155Incentive {
+    event ERC1155IncentiveInitialized(address indexed asset, Strategy strategy, uint256 tokenId, uint256 limit);
     /// @notice The payload for initializing an ERC1155Incentive
+
     struct InitPayload {
         IERC1155 asset;
         Strategy strategy;
@@ -68,6 +70,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
 
         _initializeOwner(msg.sender);
         _setRoles(msg.sender, MANAGER_ROLE);
+        emit ERC1155IncentiveInitialized(asset, strategy, tokenId, limit);
     }
 
     /// @inheritdoc AIncentive

@@ -223,4 +223,47 @@ describe('RBAC', () => {
     // Verify ownership hasn't changed
     expect(await budget.owner()).toBe(currentOwner);
   });
+
+  test('can check ownership handover expiry', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const newOwner = accounts[6];
+    
+    // Create new options with new owner's account and wallet client
+    const walletClient = createTestClient({
+      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
+      chain: hardhat,
+      mode: 'hardhat',
+      account: privateKeyToAccount(newOwner.key),
+      key: newOwner.key,
+    })
+    .extend(publicActions)
+    .extend(walletActions) as any;
+    
+    const newOwnerOptions = {
+      account: privateKeyToAccount(newOwner.key),
+      config: setupConfig(walletClient)
+    };
+    
+    // Create budget instance with different signer
+    const sameBudgetDifferentSigner = new ManagedBudget(
+      { config: newOwnerOptions.config, account: newOwnerOptions.account },
+      budget.address
+    );
+    
+    // Check expiry before request (should be 0)
+    expect(await budget.ownershipHandoverExpiresAt(newOwner.account)).toBe(0n);
+    
+    // Request handover
+    await sameBudgetDifferentSigner.requestOwnershipHandover();
+    
+    // Check expiry after request (should be > 0)
+    const expiryTime = await budget.ownershipHandoverExpiresAt(newOwner.account);
+    expect(expiryTime).toBeGreaterThan(0n);
+    
+    // Cancel request
+    await sameBudgetDifferentSigner.cancelOwnershipHandover();
+    
+    // Check expiry after cancellation (should be 0 again)
+    expect(await budget.ownershipHandoverExpiresAt(newOwner.account)).toBe(0n);
+  });
 });

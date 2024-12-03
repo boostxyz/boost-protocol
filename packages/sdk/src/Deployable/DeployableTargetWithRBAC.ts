@@ -1,5 +1,6 @@
 import {
   rbacAbi,
+  readOwnableRolesOwnershipHandoverExpiresAt,
   readRbacHasAllRoles,
   readRbacHasAnyRole,
   readRbacIsAuthorized,
@@ -642,5 +643,27 @@ export class DeployableTargetWithRBAC<
       request,
     );
     return { hash, result };
+  }
+
+  /**
+   * Get the expiry timestamp for a pending ownership handover
+   * Returns 0 if there is no pending handover request for the given address
+   *
+   * @public
+   * @param {Address} pendingOwner - The address to check for pending handover requests
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>} - The timestamp when the handover request expires, or 0 if no request exists
+   */
+  public ownershipHandoverExpiresAt(
+    pendingOwner: Address,
+    params?: ReadParams,
+  ): Promise<bigint> {
+    return readOwnableRolesOwnershipHandoverExpiresAt(this._config, {
+      address: this.assertValidAddress(),
+      args: [pendingOwner],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 }

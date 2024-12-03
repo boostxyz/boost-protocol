@@ -14,6 +14,7 @@ import {ManagedBudgetWithFees} from "contracts/budgets/ManagedBudgetWithFees.sol
 import {EventAction} from "contracts/actions/EventAction.sol";
 
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
+import {ERC20PeggedIncentive} from "contracts/incentives/ERC20PeggedIncentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 import {ERC20VariableCriteriaIncentive} from "contracts/incentives/ERC20VariableCriteriaIncentive.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
@@ -111,6 +112,15 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("ERC20Incentive", erc20Incentive);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(newDeploy, "ERC20Incentive", erc20Incentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+    }
+
+function _deployERC20PeggedIncentive(BoostRegistry registry) internal returns (address erc20PeggedIncentive) {
+        bytes memory initCode = type(ERC20PeggedIncentive).creationCode;
+        erc20PeggedIncentive = _getCreate2Address(initCode, "");
+        console.log("ERC20PeggedIncentive: ", erc20PeggedIncentive);
+        deployJson = deployJsonKey.serialize("ERC20PeggedIncentive", erc20PeggedIncentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "ERC20PeggedIncentive", erc20PeggedIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
     function _deployERC20VariableIncentive(BoostRegistry registry) internal returns (address erc20VariableIncentive) {

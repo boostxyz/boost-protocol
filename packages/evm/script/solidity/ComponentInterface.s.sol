@@ -19,6 +19,7 @@ import {AEventAction} from "contracts/actions/EventAction.sol";
 import {AAllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
 import {ACGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 import {AERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
+import {AERC20PeggedIncentive} from "contracts/incentives/AERC20PeggedIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {AERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
@@ -37,6 +38,7 @@ contract LogComponentInterface is ScriptUtils {
     function run() public {
         _getInterfaceAEventAction();
         _getInterfaceAERC20Incentive();
+        _getInterfaceAERC20PeggedIncentive();
         _getInterfaceACloneable();
         _getInterfaceABudget();
         _getInterfaceAManagedBudget();
@@ -116,6 +118,11 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAIncentive() internal {
         string memory interfaceId = uint256(uint32(type(AIncentive).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AIncentive", interfaceId);
+    }
+
+    function _getInterfaceAERC20PeggedIncentive() internal {
+        string memory interfaceId = uint256(uint32(type(AERC20PeggedIncentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AERC20PeggedIncentive", interfaceId);
     }
 
     function _getInterfaceAERC20VariableIncentive() internal {

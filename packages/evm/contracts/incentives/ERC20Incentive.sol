@@ -17,6 +17,10 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
     using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 
+    event ERC20IncentiveInitialized(
+        address indexed asset, Strategy strategy, uint256 reward, uint256 limit, address manager
+    );
+
     /// @notice The payload for initializing the incentive
     struct InitPayload {
         address asset;
@@ -61,6 +65,7 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
         limit = init_.limit;
         _initializeOwner(msg.sender);
         _setRoles(init_.manager, MANAGER_ROLE);
+        emit ERC20IncentiveInitialized(init_.asset, init_.strategy, init_.reward, init_.limit, init_.manager);
     }
 
     /// @inheritdoc AIncentive

@@ -9,12 +9,20 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {AEventAction} from "contracts/actions/AEventAction.sol";
 
 contract EventAction is AEventAction {
+    event EventActionInitialized(
+        ActionClaimant actionClaimant,
+        ActionStep actionStepOne,
+        ActionStep actionStepTwo,
+        ActionStep actionStepThree,
+        ActionStep actionStepFour
+    );
     /// @notice The payload for initializing an EventAction
     /// @param actionClaimant The payload describing how claimants are identified
     /// @param actionStepOne The first criteria to validate with
     /// @param actionStepTwo The second criteria to validate with
     /// @param actionStepThree The third criteria to validate with
     /// @param actionStepFour The fourth criteria to validate with
+
     struct InitPayload {
         ActionClaimant actionClaimant;
         ActionStep actionStepOne;
@@ -39,6 +47,10 @@ contract EventAction is AEventAction {
         actionSteps.push(init_.actionStepTwo);
         actionSteps.push(init_.actionStepThree);
         actionSteps.push(init_.actionStepFour);
+
+        emit EventActionInitialized(
+            init_.actionClaimant, init_.actionStepOne, init_.actionStepTwo, init_.actionStepThree, init_.actionStepFour
+        );
     }
 
     /// @notice Prepare the action for execution and return the expected payload

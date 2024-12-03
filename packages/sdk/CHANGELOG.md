@@ -1,5 +1,17 @@
 # @boostxyz/sdk
 
+## 2.2.0
+
+### Minor Changes
+
+- e3feb6d: Add ownership management methods to DeployableTargetWithRBAC
+
+### Patch Changes
+
+- 864e7fd: fix for isClaimable error on incentives
+- 47132d5: fixes block number validation
+- 4893d56: pass params into internal reads on getBoost
+
 ## 2.1.2
 
 ### Patch Changes

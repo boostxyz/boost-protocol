@@ -181,4 +181,46 @@ describe('RBAC', () => {
       budget.completeOwnershipHandover(newOwner)
     ).rejects.toThrowError('NoHandoverRequest');
   });
+
+  test('can cancel ownership handover', async () => {
+    const budget = await loadFixture(freshManagedBudget(defaultOptions, fixtures));
+    const currentOwner = accounts[0].account;
+    const newOwner = accounts[6];
+    
+    // Create new options with new owner's account and wallet client
+    const walletClient = createTestClient({
+      transport: http('http://127.0.0.1:8545', { retryCount: 0 }),
+      chain: hardhat,
+      mode: 'hardhat',
+      account: privateKeyToAccount(newOwner.key),
+      key: newOwner.key,
+    })
+    .extend(publicActions)
+    .extend(walletActions) as any;
+    
+    const newOwnerOptions = {
+      account: privateKeyToAccount(newOwner.key),
+      config: setupConfig(walletClient)
+    };
+    
+    // Create budget instance with different signer
+    const sameBudgetDifferentSigner = new ManagedBudget(
+      { config: newOwnerOptions.config, account: newOwnerOptions.account },
+      budget.address
+    );
+    
+    // Request handover from new owner account
+    await sameBudgetDifferentSigner.requestOwnershipHandover();
+    
+    // Cancel the handover request
+    await sameBudgetDifferentSigner.cancelOwnershipHandover();
+    
+    // Verify handover can't be completed after cancellation
+    await expect(
+      budget.completeOwnershipHandover(newOwner.account)
+    ).rejects.toThrowError('NoHandoverRequest');
+    
+    // Verify ownership hasn't changed
+    expect(await budget.owner()).toBe(currentOwner);
+  });
 });

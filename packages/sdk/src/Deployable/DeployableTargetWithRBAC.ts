@@ -4,6 +4,7 @@ import {
   readRbacHasAnyRole,
   readRbacIsAuthorized,
   readRbacRolesOf,
+  simulateOwnableRolesCancelOwnershipHandover,
   simulateOwnableRolesCompleteOwnershipHandover,
   simulateOwnableRolesRenounceOwnership,
   simulateOwnableRolesRequestOwnershipHandover,
@@ -13,6 +14,7 @@ import {
   simulateRbacRevokeManyRoles,
   simulateRbacRevokeRoles,
   simulateRbacSetAuthorized,
+  writeOwnableRolesCancelOwnershipHandover,
   writeOwnableRolesCompleteOwnershipHandover,
   writeOwnableRolesRenounceOwnership,
   writeOwnableRolesRequestOwnershipHandover,
@@ -599,6 +601,43 @@ export class DeployableTargetWithRBAC<
         ...(params as any),
       });
     const hash = await writeOwnableRolesCompleteOwnershipHandover(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Cancel a pending ownership handover request
+   * Must be called by the account that originally requested the handover
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async cancelOwnershipHandover(params?: WriteParams) {
+    return await this.awaitResult(this.cancelOwnershipHandoverRaw(params));
+  }
+
+  /**
+   * Cancel a pending ownership handover request
+   * Must be called by the account that originally requested the handover
+   *
+   * @public
+   * @async
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async cancelOwnershipHandoverRaw(params?: WriteParams) {
+    const { request, result } =
+      await simulateOwnableRolesCancelOwnershipHandover(this._config, {
+        address: this.assertValidAddress(),
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      });
+    const hash = await writeOwnableRolesCancelOwnershipHandover(
       this._config,
       request,
     );

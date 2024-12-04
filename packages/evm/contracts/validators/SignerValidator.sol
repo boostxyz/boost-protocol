@@ -53,6 +53,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     /// @inheritdoc AValidator
     function validate(uint256 boostId, uint256 incentiveId, address claimant, bytes calldata claimData)
         public
+        payable
         virtual
         override
         returns (bool)

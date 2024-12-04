@@ -16,6 +16,7 @@ abstract contract AValidator is ACloneable {
     /// @dev The decompressed payload contains freeform bytes that are entirely implementation-specific
     function validate(uint256 boostId, uint256 incentiveId, address claimant, bytes calldata data)
         external
+        payable
         virtual
         returns (bool);
 

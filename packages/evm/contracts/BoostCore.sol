@@ -14,6 +14,7 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {IProtocolFeeModule} from "contracts/shared/IProtocolFeeModule.sol";
 
 import {AAction} from "contracts/actions/AAction.sol";
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
@@ -78,6 +79,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice The protocol fee receiver
     address public protocolFeeReceiver;
 
+    address public protocolFeeModule;
+
     /// @notice The base protocol fee (in bps)
     uint64 public protocolFee = 1_000; // 10%
 
@@ -134,7 +137,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
         BoostLib.Boost storage boost = _boosts.push();
         boost.owner = payload_.owner;
         boost.budget = payload_.budget;
-        boost.protocolFee = protocolFee + payload_.protocolFee;
+        boost.protocolFee = address(protocolFeeModule) != address(0)
+            ? IProtocolFeeModule(protocolFeeModule).getProtocolFee(data_) + payload_.protocolFee
+            : protocolFee + payload_.protocolFee;
         boost.maxParticipants = payload_.maxParticipants;
 
         // Setup the Boost components
@@ -195,9 +200,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
         // Validate the claimant against the allow list and the validator
         if (!boost.allowList.isAllowed(claimant, data_)) revert BoostError.Unauthorized();
 
-        // wake-disable-next-line reentrancy (protected)
-        if (!boost.validator.validate(boostId_, incentiveId_, claimant, data_)) revert BoostError.Unauthorized();
-
+        // Call validate and pass along the value
+        if (!boost.validator.validate{value: msg.value}(boostId_, incentiveId_, claimant, data_)) {
+            revert BoostError.Unauthorized();
+        }
         // Get the balance of the asset before the claim
         uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive) : 0;
 
@@ -342,6 +348,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @dev This function is only callable by the owner
     function setProtocolFee(uint64 protocolFee_) external onlyOwner {
         protocolFee = protocolFee_;
+    }
+
+    /// @notice Set the protocol fee module address
+    /// @param protocolFeeModule_ The new protocol fee module address
+    /// @dev This function is only callable by the owner
+    function setProtocolFeeModule(address protocolFeeModule_) external onlyOwner {
+        protocolFeeModule = protocolFeeModule_;
     }
 
     /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it

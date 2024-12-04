@@ -8,6 +8,7 @@ import {
   readErc20PeggedIncentiveIsClaimable,
   readErc20PeggedIncentiveLimit,
   readErc20PeggedIncentiveOwner,
+  readErc20PeggedIncentivePeg,
   readErc20PeggedIncentiveReward,
   readErc20PeggedIncentiveTotalClaimed,
   simulateErc20PeggedIncentiveClaim,
@@ -225,6 +226,22 @@ export class ERC20PeggedIncentive extends DeployableTarget<
    */
   public async asset(params?: ReadParams) {
     return await readErc20PeggedIncentiveAsset(this._config, {
+      address: this.assertValidAddress(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
+   * The address of the pegged ERC20-like token
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
+   */
+  public async peg(params?: ReadParams) {
+    return await readErc20PeggedIncentivePeg(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),

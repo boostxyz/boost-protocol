@@ -83,6 +83,10 @@ import {
   type ERC20IncentivePayload,
 } from './Incentives/ERC20Incentive';
 import {
+  ERC20PeggedIncentive,
+  type ERC20PeggedIncentivePayload,
+} from './Incentives/ERC20PeggedIncentive';
+import {
   ERC20VariableCriteriaIncentive,
   type ERC20VariableCriteriaIncentivePayload,
 } from './Incentives/ERC20VariableCriteriaIncentive';
@@ -1367,6 +1371,24 @@ export class BoostCore extends Deployable<
    */
   ERC20Incentive(options: ERC20IncentivePayload) {
     return new ERC20Incentive(
+      { config: this._config, account: this._account },
+      options,
+    );
+  }
+
+  /**
+   * Bound {@link ERC20PeggedIncentive} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const incentive = core.ERC20PeggedIncentive({ ... }) // is roughly equivalent to
+   * const incentive = new ERC20PeggedIncentive({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {ERC20PeggedIncentivePayload} options
+   * @returns {ERC20PeggedIncentive}
+   */
+  ERC20PeggedIncentive(options: ERC20PeggedIncentivePayload) {
+    return new ERC20PeggedIncentive(
       { config: this._config, account: this._account },
       options,
     );

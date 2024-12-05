@@ -27,8 +27,19 @@ library BoostLib {
         address owner;
     }
 
+    struct CreateBoostPayload {
+        ABudget budget;
+        BoostLib.Target action;
+        BoostLib.Target validator;
+        BoostLib.Target allowList;
+        BoostLib.Target[] incentives;
+        uint64 protocolFee;
+        uint256 maxParticipants;
+        address owner;
+    }
     /// @notice A base struct for a contract and its initialization parameters
     /// @dev This is used to pass the base contract and its initialization parameters in an efficient manner
+
     struct Target {
         bool isBase;
         address instance;

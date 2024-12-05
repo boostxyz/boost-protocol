@@ -31,17 +31,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
     using LibZip for bytes;
     using SafeTransferLib for address;
 
-    struct InitPayload {
-        ABudget budget;
-        BoostLib.Target action;
-        BoostLib.Target validator;
-        BoostLib.Target allowList;
-        BoostLib.Target[] incentives;
-        uint64 protocolFee;
-        uint256 maxParticipants;
-        address owner;
-    }
-
     event BoostCreated(
         uint256 indexed boostId,
         address indexed owner,
@@ -128,7 +117,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         nonReentrant
         returns (BoostLib.Boost memory)
     {
-        InitPayload memory payload_ = abi.decode(data_.cdDecompress(), (InitPayload));
+        BoostLib.CreateBoostPayload memory payload_ = abi.decode(data_.cdDecompress(), (BoostLib.CreateBoostPayload));
 
         // Validate the Budget
         _checkBudget(payload_.budget);

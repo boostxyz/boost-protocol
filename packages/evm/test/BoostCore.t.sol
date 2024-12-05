@@ -35,7 +35,11 @@ import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
-import {MockProtocolFeeModule, MockProtocolFeeModuleNoReturn, MockProtocolFeeModuleBadReturn} from "contracts/shared/Mocks.sol";
+import {
+    MockProtocolFeeModule,
+    MockProtocolFeeModuleNoReturn,
+    MockProtocolFeeModuleBadReturn
+} from "contracts/shared/Mocks.sol";
 
 contract BoostCoreTest is Test {
     using LibClone for address;
@@ -326,7 +330,7 @@ contract BoostCoreTest is Test {
         );
 
         vm.expectRevert();
-        
+
         // Call createBoost
         boostCore.createBoost(createCalldata);
     }
@@ -364,7 +368,6 @@ contract BoostCoreTest is Test {
         // Call createBoost
         boostCore.createBoost(createCalldata);
     }
-
 
     function testCreateBoost_AfterSetProtocolFeeModule() public {
         // Create a mock protocol fee module with a specific fee
@@ -407,7 +410,6 @@ contract BoostCoreTest is Test {
         // Verify that the boost's protocolFee is correct
         assertEq(boost.protocolFee, expectedProtocolFee, "Protocol fee should be sum of module fee and payload fee");
     }
-
 
     //////////////////////////////////
     // BoostCore.setCreateBoostAuth //

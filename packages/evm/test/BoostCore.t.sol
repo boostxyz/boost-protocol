@@ -58,7 +58,7 @@ contract BoostCoreTest is Test {
 
     bytes validCreateCalldata = LibZip.cdCompress(
         abi.encode(
-            BoostCore.InitPayload({
+            BoostLib.CreateBoostPayload({
                 budget: budget,
                 action: action,
                 validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
@@ -132,7 +132,7 @@ contract BoostCoreTest is Test {
     function testCreateBoost_NoValidator() public {
         bytes memory invalidCreateCalldata = LibZip.cdCompress(
             abi.encode(
-                BoostCore.InitPayload({
+                BoostLib.CreateBoostPayload({
                     budget: budget,
                     action: contractAction,
                     validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
@@ -250,7 +250,7 @@ contract BoostCoreTest is Test {
         // Try to create a Boost with an address that doesn't support the ABudget interface (should fail)
         bytes memory calldata_ = LibZip.cdCompress(
             abi.encode(
-                BoostCore.InitPayload(
+                BoostLib.CreateBoostPayload(
                     ABudget(payable(action.instance)),
                     action,
                     BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
@@ -277,7 +277,7 @@ contract BoostCoreTest is Test {
         // Try to create a Boost with an invalid AAction (should fail)
         bytes memory invalidActionCalldata = LibZip.cdCompress(
             abi.encode(
-                BoostCore.InitPayload(
+                BoostLib.CreateBoostPayload(
                     budget,
                     BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     action,
@@ -312,7 +312,7 @@ contract BoostCoreTest is Test {
 
         bytes memory createCalldata = LibZip.cdCompress(
             abi.encode(
-                BoostCore.InitPayload({
+                BoostLib.CreateBoostPayload({
                     budget: budget,
                     action: action,
                     validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),

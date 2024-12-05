@@ -6,6 +6,7 @@ import {ERC20} from "@solady/tokens/ERC20.sol";
 import {ERC721} from "@solady/tokens/ERC721.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {IAuth} from "contracts/auth/IAuth.sol";
+import {IProtocolFeeModule} from "contracts/shared/IProtocolFeeModule.sol";
 
 /**
  * 🚨 WARNING: The mocks in this file are for testing purposes only. DO NOT use
@@ -91,5 +92,29 @@ contract MockAuth is IAuth {
     /// @dev This function overrides the isAuthorized function in the IAuth interface.
     function isAuthorized(address addr) external view override returns (bool) {
         return _isAuthorized[addr];
+    }
+}
+
+/// @title MockProtocolFeeModule
+/// @notice A mock implementation of the IProtocolFeeModule interface (FOR TESTING PURPOSES ONLY)
+contract MockProtocolFeeModule is IProtocolFeeModule {
+    uint64 private protocolFee;
+
+    /// @notice Initializes the contract with a protocol fee.
+    /// @param _protocolFee The protocol fee to set.
+    constructor(uint64 _protocolFee) {
+        protocolFee = _protocolFee;
+    }
+
+    /// @notice Returns the protocol fee.
+    /// @return uint64 The protocol fee.
+    function getProtocolFee(bytes calldata) external view override returns (uint64) {
+        return protocolFee;
+    }
+
+    /// @notice Sets the protocol fee.
+    /// @param _protocolFee The new protocol fee.
+    function setProtocolFee(uint64 _protocolFee) external {
+        protocolFee = _protocolFee;
     }
 }

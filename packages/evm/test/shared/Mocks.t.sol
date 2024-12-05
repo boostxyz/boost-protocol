@@ -2,13 +2,14 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {MockERC20, MockERC721} from "contracts/shared/Mocks.sol";
+import {MockERC20, MockERC721, MockAuth, MockProtocolFeeModule} from "contracts/shared/Mocks.sol";
 import {MockAuth} from "contracts/shared/Mocks.sol"; // Add this import at the top with the others
 
 contract MocksTest is Test {
     MockERC20 mockERC20;
     MockERC721 mockERC721;
     MockAuth mockAuth;
+    MockProtocolFeeModule mockProtocolFeeModule;
     address[] mockAddresses;
     address authorizedBoostCreator = makeAddr("authorizedBoostCreator");
 
@@ -17,6 +18,7 @@ contract MocksTest is Test {
         mockERC721 = new MockERC721();
         mockAddresses.push(authorizedBoostCreator);
         mockAuth = new MockAuth(mockAddresses);
+        mockProtocolFeeModule = new MockProtocolFeeModule(100); // Example protocol fee
     }
 
     ///////////////
@@ -104,5 +106,17 @@ contract MocksTest is Test {
 
     function testMockAuthIsNotAuthorized() public {
         assertFalse(mockAuth.isAuthorized(address(this)));
+    }
+
+    /////////////////////////////
+    // MockProtocolFeeModule //
+    /////////////////////////////
+    function testMockProtocolFeeModule_getProtocolFee() public {
+        assertEq(mockProtocolFeeModule.getProtocolFee(""), 100);
+    }
+
+    function testMockProtocolFeeModule_setProtocolFee() public {
+        mockProtocolFeeModule.setProtocolFee(200);
+        assertEq(mockProtocolFeeModule.getProtocolFee(""), 200);
     }
 }

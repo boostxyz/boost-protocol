@@ -8,6 +8,7 @@ import {
   readErc20PeggedIncentiveIsClaimable,
   readErc20PeggedIncentiveLimit,
   readErc20PeggedIncentiveOwner,
+  readErc20PeggedIncentivePeg,
   readErc20PeggedIncentiveReward,
   readErc20PeggedIncentiveTotalClaimed,
   simulateErc20PeggedIncentiveClaim,
@@ -41,7 +42,7 @@ import {
 export { erc20PeggedIncentiveAbi };
 
 /**
- * The object representation of a `ERC20Incentive.InitPayload`
+ * The object representation of a `ERC20PeggedIncentive.InitPayload`
  *
  * @export
  * @interface ERC20PeggedIncentivePayload
@@ -82,7 +83,7 @@ export interface ERC20PeggedIncentivePayload {
 }
 
 /**
- * A generic `viem.Log` event with support for `ERC20Incentive` event types.
+ * A generic `viem.Log` event with support for `ERC20PeggedIncentive` event types.
  *
  * @export
  * @typedef {ERC20PeggedIncentiveLog}
@@ -100,8 +101,8 @@ export type ERC20PeggedIncentiveLog<
  * A simple ERC20 incentive implementation that allows claiming of tokens
  *
  * @export
- * @class ERC20Incentive
- * @typedef {ERC20Incentive}
+ * @class ERC20PeggedIncentive
+ * @typedef {ERC20PeggedIncentive}
  * @extends {DeployableTarget<ERC20PeggedIncentivePayload>}
  */
 export class ERC20PeggedIncentive extends DeployableTarget<
@@ -225,6 +226,22 @@ export class ERC20PeggedIncentive extends DeployableTarget<
    */
   public async asset(params?: ReadParams) {
     return await readErc20PeggedIncentiveAsset(this._config, {
+      address: this.assertValidAddress(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
+   * The address of the pegged ERC20-like token
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
+   */
+  public async peg(params?: ReadParams) {
+    return await readErc20PeggedIncentivePeg(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -448,11 +465,11 @@ export class ERC20PeggedIncentive extends DeployableTarget<
   }
 
   /**
-   * Builds the claim data for the ERC20Incentive.
+   * Builds the claim data for the ERC20PeggedIncentive.
    *
    * @public
-   * @returns {Hash} A `zeroHash`, as ERC20Incentive doesn't require specific claim data.
-   * @description This function returns `zeroHash` because ERC20Incentive doesn't use any specific claim data.
+   * @returns {Hash} A `zeroHash`, as ERC20PeggedIncentive doesn't require specific claim data.
+   * @description This function returns `zeroHash` because ERC20PeggedIncentive doesn't use any specific claim data.
    */
   public buildClaimData() {
     return zeroHash;
@@ -460,7 +477,7 @@ export class ERC20PeggedIncentive extends DeployableTarget<
 }
 
 /**
- * Given a {@link ERC20PeggedIncentivePayload}, properly encode a `ERC20Incentive.InitPayload` for use with {@link ERC20Incentive} initialization.
+ * Given a {@link ERC20PeggedIncentivePayload}, properly encode a `ERC20PeggedIncentive.InitPayload` for use with {@link ERC20PeggedIncentive} initialization.
  *
  * @param {ERC20PeggedIncentivePayload} param0
  * @param {Address} param0.asset - The address of the incentivized asset.

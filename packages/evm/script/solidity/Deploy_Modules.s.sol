@@ -59,6 +59,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
+        _deployERC20PeggedIncentive(registry);
 
         _saveJson();
     }
@@ -114,7 +115,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _registerIfNew(newDeploy, "ERC20Incentive", erc20Incentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
-function _deployERC20PeggedIncentive(BoostRegistry registry) internal returns (address erc20PeggedIncentive) {
+    function _deployERC20PeggedIncentive(BoostRegistry registry) internal returns (address erc20PeggedIncentive) {
         bytes memory initCode = type(ERC20PeggedIncentive).creationCode;
         erc20PeggedIncentive = _getCreate2Address(initCode, "");
         console.log("ERC20PeggedIncentive: ", erc20PeggedIncentive);

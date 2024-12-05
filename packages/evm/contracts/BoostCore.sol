@@ -145,7 +145,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         // Setup the Boost components
         boost.action = AAction(_makeTarget(type(AAction).interfaceId, payload_.action, true));
         boost.allowList = AAllowList(_makeTarget(type(AAllowList).interfaceId, payload_.allowList, true));
-        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget, payload_.protocolFee);
+        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget, boost.protocolFee);
         boost.validator = AValidator(
             payload_.validator.instance == address(0)
                 ? boost.action.supportsInterface(type(AValidator).interfaceId) ? address(boost.action) : address(0)
@@ -453,7 +453,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     {
         // Decode the preflight data to extract the transfer details
         ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
-        uint64 totalFee = _protocolFee + protocolFee;
+        uint64 totalFee = _protocolFee;
 
         if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
             // Decode the fungible payload
@@ -524,7 +524,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 incentiveId,
         address asset,
         uint256 totalProtocolFees,
-        uint256 additionalProtocolFee,
+        uint256 protocolFee_,
         ABudget.AssetType assetType,
         bytes memory extraData
     ) internal {
@@ -538,7 +538,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             assetType,
             asset,
             totalProtocolFees,
-            protocolFee + additionalProtocolFee, // We store the current protocol fee in case it changes in the future
+            protocolFee_, // We store the current protocol fee in case it changes in the future
             tokenId
         );
 

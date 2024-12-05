@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 2.2.1
+
+### Patch Changes
+
+- fe3e21a: use ERC20PeggedIncentive in the sdk
+
 ## 2.2.0
 
 ### Minor Changes

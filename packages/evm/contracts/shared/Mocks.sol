@@ -118,3 +118,36 @@ contract MockProtocolFeeModule is IProtocolFeeModule {
         protocolFee = _protocolFee;
     }
 }
+
+/// @title MockProtocolFeeModule
+/// @notice A mock implementation of the IProtocolFeeModule interface (FOR TESTING PURPOSES ONLY)
+contract MockProtocolFeeModuleBadReturn {
+    uint256 private protocolFee;
+
+    /// @notice Initializes the contract with a protocol fee.
+    /// @param _protocolFee The protocol fee to set.
+    constructor(uint256 _protocolFee) {
+        protocolFee = _protocolFee;
+    }
+
+    /// @notice Returns the protocol fee.
+    /// @return uint64 The protocol fee.
+    function getProtocolFee(bytes calldata) external view returns (uint256) {
+        return protocolFee;
+    }
+
+    /// @notice Sets the protocol fee.
+    /// @param _protocolFee The new protocol fee.
+    function setProtocolFee(uint256 _protocolFee) external {
+        protocolFee = _protocolFee;
+    }
+}
+
+/// @title MockProtocolFeeModule
+/// @notice A mock implementation of the IProtocolFeeModule interface (FOR TESTING PURPOSES ONLY)
+contract MockProtocolFeeModuleNoReturn {
+    uint256 private protocolFee;
+
+    /// @notice Returns the protocol fee.
+    function getProtocolFee(bytes calldata) external view {}
+}

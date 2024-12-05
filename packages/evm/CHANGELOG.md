@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 2.1.3
+
+### Patch Changes
+
+- fe3e21a: use ERC20PeggedIncentive in the sdk
+
 ## 2.1.2
 
 ### Patch Changes

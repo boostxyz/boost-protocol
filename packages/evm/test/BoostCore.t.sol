@@ -35,6 +35,7 @@ import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {MockProtocolFeeModule} from "contracts/shared/Mocks.sol";
 
 contract BoostCoreTest is Test {
     using LibClone for address;
@@ -293,6 +294,48 @@ contract BoostCoreTest is Test {
             abi.encodeWithSelector(BoostError.InvalidInstance.selector, type(AAction).interfaceId, address(0))
         );
         boostCore.createBoost(invalidActionCalldata);
+    }
+
+    function testCreateBoost_AfterSetProtocolFeeModule() public {
+        // Create a mock protocol fee module with a specific fee
+        uint64 moduleFee = 200; // 2%
+        MockProtocolFeeModule mockModule = new MockProtocolFeeModule(moduleFee);
+
+        // Set the protocol fee module
+        boostCore.setProtocolFeeModule(address(mockModule));
+
+        // Verify that the protocol fee module is set correctly
+        assertEq(boostCore.protocolFeeModule(), address(mockModule), "Protocol fee module not set correctly");
+
+        // Prepare createBoost calldata with payload protocolFee
+        uint64 payloadProtocolFee = 100; // 1%
+
+        bytes memory createCalldata = LibZip.cdCompress(
+            abi.encode(
+                BoostCore.InitPayload({
+                    budget: budget,
+                    action: action,
+                    validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
+                    allowList: allowList,
+                    incentives: _makeIncentives(1),
+                    protocolFee: payloadProtocolFee,
+                    maxParticipants: 10_000,
+                    owner: address(1)
+                })
+            )
+        );
+
+        // Call createBoost
+        boostCore.createBoost(createCalldata);
+
+        // Get the Boost
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+
+        // Expected protocol fee is moduleFee + payloadProtocolFee
+        uint64 expectedProtocolFee = moduleFee + payloadProtocolFee;
+
+        // Verify that the boost's protocolFee is correct
+        assertEq(boost.protocolFee, expectedProtocolFee, "Protocol fee should be sum of module fee and payload fee");
     }
 
     //////////////////////////////////
@@ -583,6 +626,34 @@ contract BoostCoreTest is Test {
         uint64 newProtocolFee = 700; // 7%
         boostCore.setProtocolFee(newProtocolFee);
         assertEq(boostCore.protocolFee(), newProtocolFee);
+    }
+
+    ////////////////////////////////////
+    // BoostCore.setProtocolFeeModule //
+    ////////////////////////////////////
+
+    function testSetProtocolFeeModule() public {
+        // Create a mock protocol fee module
+        uint64 mockFee = 500; // 5%
+        MockProtocolFeeModule mockModule = new MockProtocolFeeModule(mockFee);
+
+        // Set the protocol fee module
+        boostCore.setProtocolFeeModule(address(mockModule));
+
+        // Verify that the protocol fee module is set correctly
+        assertEq(boostCore.protocolFeeModule(), address(mockModule), "Protocol fee module not set correctly");
+    }
+
+    function testSetProtocolFeeModule_Unauthorized() public {
+        // Create a mock protocol fee module
+        uint64 mockFee = 500; // 5%
+        MockProtocolFeeModule mockModule = new MockProtocolFeeModule(mockFee);
+
+        // Attempt to set the protocol fee module from a non-owner account
+        address unauthorizedUser = makeAddr("unauthorizedUser");
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        boostCore.setProtocolFeeModule(address(mockModule));
     }
 
     ///////////////////////////

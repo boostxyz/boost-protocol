@@ -1,5 +1,12 @@
 # @boostxyz/evm
 
+## 3.0.0
+
+### Major Changes
+
+- 5d0b1f8: correct deployment address for sepolia deployment
+- efcac66: [ADHOC] chore: deploy onto Sepolia
+
 ## 2.1.4
 
 ### Patch Changes

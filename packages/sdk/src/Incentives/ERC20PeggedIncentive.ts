@@ -468,11 +468,15 @@ export class ERC20PeggedIncentive extends DeployableTarget<
    * Builds the claim data for the ERC20PeggedIncentive.
    *
    * @public
-   * @returns {Hash} A `zeroHash`, as ERC20PeggedIncentive doesn't require specific claim data.
-   * @description This function returns `zeroHash` because ERC20PeggedIncentive doesn't use any specific claim data.
+   * @param {bigint} rewardAmount
+   * @returns {Hash} Returns the encoded claim data
+   * @description This function returns the encoded claim data for the ERC20PeggedIncentive.
    */
-  public buildClaimData() {
-    return zeroHash;
+  public buildClaimData(rewardAmount: bigint) {
+    return encodeAbiParameters(
+      [{ type: 'uint256', name: 'rewardAmount' }],
+      [rewardAmount],
+    );
   }
 }
 

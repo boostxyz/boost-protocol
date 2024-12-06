@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 1.3.5
+
+### Patch Changes
+
+- df8152b: [ADHOC] Chore(evm): deploy on base & base sepolia
+
 ## 1.3.4
 
 ## 1.3.3

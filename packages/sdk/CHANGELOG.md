@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 2.2.2
+
+### Patch Changes
+
+- df8152b: [ADHOC] Chore(evm): deploy on base & base sepolia
+- 3bef168: generate build claim data for ERC20PeggedIncentive
+
 ## 2.2.1
 
 ### Patch Changes

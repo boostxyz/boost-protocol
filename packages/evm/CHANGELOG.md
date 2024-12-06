@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 2.1.4
+
+### Patch Changes
+
+- df8152b: [ADHOC] Chore(evm): deploy on base & base sepolia
+
 ## 2.1.3
 
 ### Patch Changes

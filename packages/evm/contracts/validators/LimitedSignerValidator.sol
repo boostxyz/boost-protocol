@@ -39,6 +39,7 @@ contract LimitedSignerValidator is ALimitedSignerValidator, SignerValidator {
     /// @inheritdoc AValidator
     function validate(uint256 boostId, uint256 incentiveId, address claimant, bytes calldata claimData)
         public
+        payable
         override(AValidator, SignerValidator)
         returns (bool)
     {

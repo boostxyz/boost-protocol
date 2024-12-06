@@ -53,6 +53,7 @@ contract ERC721MintAction is AOwnable, AERC721MintAction {
     /// @dev Example: `abi.encode(address(holder), abi.encode(uint256(tokenId)))`
     function validate(uint256, /*unused*/ uint256, /* unused */ address, /*unused*/ bytes calldata data_)
         external
+        payable
         virtual
         override
         returns (bool success)

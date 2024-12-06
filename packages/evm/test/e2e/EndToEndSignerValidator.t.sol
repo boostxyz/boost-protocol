@@ -268,7 +268,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
         return core.createBoost(
             LibZip.cdCompress(
                 abi.encode(
-                    BoostCore.InitPayload(
+                    BoostLib.CreateBoostPayload(
                         // "... with my budget"
                         budget,
                         BoostLib.Target({

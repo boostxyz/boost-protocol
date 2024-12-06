@@ -24,34 +24,51 @@ function createHardhatProcess(): Promise<ChildProcessWithoutNullStreams> {
   return new Promise((resolve, reject) => {
     const hardhatProcess = spawn('npx', ['hardhat', 'node']);
 
-    hardhatProcess.stdout.on('data', () => {
-      resolve(hardhatProcess);
-    });
+    function onData(d) {
+      if (d.toString().includes('WARNING')) {
+        cleanup();
+        resolve(hardhatProcess);
+      }
+    }
 
-    hardhatProcess.stderr.on('data', (data) => {
-      console.error('stderr', data.toString());
-      reject(data);
-    });
+    function onError(d) {
+      cleanup();
+      reject(d);
+    }
 
-    hardhatProcess.on('close', () => {
+    function onClose() {
+      cleanup();
       console.log(`hardhat process closed`);
-    });
+    }
+
+    function cleanup() {
+      hardhatProcess.stdout.off('data', onData);
+      hardhatProcess.stderr.off('data', onError);
+    }
+
+    hardhatProcess.stdout.on('data', onData);
+    hardhatProcess.stderr.on('data', onError);
+    hardhatProcess.on('close', onClose);
   });
 }
 
-export async function setup({}: GlobalSetupContext) {
+export async function setup() {
   const pids = await findProcess('port', 8545);
-  let process: ChildProcessWithoutNullStreams;
+  let proc: ChildProcessWithoutNullStreams;
   if (pids.length)
     console.log('hardhat process already running, not starting a new one');
   else {
-    process = await createHardhatProcess();
-    console.log('hardhat started successfully');
+    try {
+      proc = await createHardhatProcess();
+      console.log('hardhat started successfully');
+    } catch (_e) {
+      console.warn('hardhat may already be running');
+    }
   }
 
   return function () {
-    if (process && !process.killed) {
-      process.kill();
+    if (proc && !proc.killed) {
+      proc.kill();
     }
   };
 }

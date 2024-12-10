@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 3.0.0
+
+### Major Changes
+
+- d07a3b1: [ADHOC] chore(evm): deploy on base, sepolia & base sepolia
+
 ## 2.0.0
 
 ### Major Changes

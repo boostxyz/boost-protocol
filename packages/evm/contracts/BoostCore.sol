@@ -134,7 +134,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
         // Setup the Boost components
         boost.action = AAction(_makeTarget(type(AAction).interfaceId, payload_.action, true));
         boost.allowList = AAllowList(_makeTarget(type(AAllowList).interfaceId, payload_.allowList, true));
-        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget, boost.protocolFee);
+        address protocolAsset =
+            protocolFeeModule != address(0) ? IProtocolFeeModule(protocolFeeModule).getProtocolAsset(data_) : address(0);
+        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget, boost.protocolFee, protocolAsset);
         boost.validator = AValidator(
             payload_.validator.instance == address(0)
                 ? boost.action.supportsInterface(type(AValidator).interfaceId) ? address(boost.action) : address(0)
@@ -383,53 +385,69 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param targets_ The set of incentives {Target<AIncentive>[]}
     /// @param budget_ The ABudget from which to allocate the incentives
     /// @return newIncentives The set of initialized incentives {AIncentive[]}
-    function _makeIncentives(BoostLib.Target[] memory targets_, ABudget budget_, uint64 protocolFee_)
-        internal
-        returns (AIncentive[] memory newIncentives)
-    {
+
+    function _makeIncentives(
+        BoostLib.Target[] memory targets_,
+        ABudget budget_,
+        uint64 protocolFee_,
+        address protocolAsset
+    ) internal returns (AIncentive[] memory newIncentives) {
+        uint256 boostId = _boosts.length - 1;
         newIncentives = new AIncentive[](targets_.length);
+
         for (uint256 i = 0; i < targets_.length; i++) {
-            // Deploy the clone, but don't initialize until we've preflighted
-            _checkTarget(type(AIncentive).interfaceId, targets_[i].instance);
-
-            // Ensure the target is a base implementation (incentive clones are not reusable)
-            if (!targets_[i].isBase) {
-                revert BoostError.InvalidInstance(type(AIncentive).interfaceId, targets_[i].instance);
-            }
-
-            // Create the incentive instance
-            newIncentives[i] = AIncentive(_makeTarget(type(AIncentive).interfaceId, targets_[i], false));
-
-            // Get the preflight data for the protocol fee and original disbursement
-            bytes memory preflight = newIncentives[i].preflight(targets_[i].parameters);
-            if (preflight.length != 0) {
-                (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
-                // Protocol Fee disbursal
-                // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
-                if (!budget_.disburse(disbursal)) {
-                    revert BoostError.InvalidInitialization();
-                }
-                // Original disbursement call
-                if (!budget_.disburse(preflight)) {
-                    revert BoostError.InvalidInitialization();
-                }
-                // decode the preflight data to extract the transfer details
-                ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
-                _addIncentive(
-                    _boosts.length - 1,
-                    i,
-                    request.asset,
-                    feeAmount,
-                    protocolFee_,
-                    request.assetType,
-                    targets_[i].parameters
-                );
-            }
-
-            // Initialize the incentive instance after value has been trasnferred
-            // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
-            newIncentives[i].initialize(targets_[i].parameters);
+            newIncentives[i] = _createSingleIncentive(targets_[i], budget_, protocolFee_, protocolAsset, boostId, i);
         }
+    }
+
+    /// @notice Create a single incentive for a Boost
+    /// @param target The target for the incentive
+    /// @param budget_ The ABudget from which to allocate the incentive
+    /// @param protocolFee_ The protocol fee for the incentive
+    /// @param protocolAsset The protocol asset for the incentive
+    /// @param boostId The ID of the Boost
+    /// @param incentiveId The ID of the incentive
+    /// @return incentive The initialized incentive
+    function _createSingleIncentive(
+        BoostLib.Target memory target,
+        ABudget budget_,
+        uint64 protocolFee_,
+        address protocolAsset,
+        uint256 boostId,
+        uint256 incentiveId
+    ) private returns (AIncentive incentive) {
+        // Store parameters in a local variable to reduce stack usage
+        bytes memory incentiveParams = target.parameters;
+
+        _checkTarget(type(AIncentive).interfaceId, target.instance);
+
+        if (!target.isBase) {
+            revert BoostError.InvalidInstance(type(AIncentive).interfaceId, target.instance);
+        }
+
+        incentive = AIncentive(_makeTarget(type(AIncentive).interfaceId, target, false));
+
+        bytes memory preflight = incentive.preflight(incentiveParams);
+        if (preflight.length != 0) {
+            (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
+            if (!budget_.disburse(disbursal)) revert BoostError.InvalidInitialization();
+            if (!budget_.disburse(preflight)) revert BoostError.InvalidInitialization();
+
+            ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
+
+            // Now fewer variables are passed directly to _addIncentive, reducing stack pressure
+            _addIncentive(
+                boostId,
+                incentiveId,
+                protocolAsset != address(0) ? protocolAsset : request.asset,
+                feeAmount,
+                protocolFee_,
+                request.assetType,
+                incentiveParams
+            );
+        }
+
+        incentive.initialize(incentiveParams);
     }
 
     /// @notice Internal helper function to calculate the protocol fee and prepare the modified disbursal
@@ -555,3 +573,57 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
     }
 }
+
+/*
+
+    function _makeIncentives(BoostLib.Target[] memory targets_, ABudget budget_, uint64 protocolFee_, address protocolAsset)
+        internal
+        returns (AIncentive[] memory newIncentives)
+    {
+        newIncentives = new AIncentive[](targets_.length);
+        uint256 boostId = _boosts.length - 1;
+        for (uint256 i = 0; i < targets_.length; i++) {
+            // Deploy the clone, but don't initialize until we've preflighted
+            _checkTarget(type(AIncentive).interfaceId, targets_[i].instance);
+
+            // Ensure the target is a base implementation (incentive clones are not reusable)
+            if (!targets_[i].isBase) {
+                revert BoostError.InvalidInstance(type(AIncentive).interfaceId, targets_[i].instance);
+            }
+
+            // Create the incentive instance
+            newIncentives[i] = AIncentive(_makeTarget(type(AIncentive).interfaceId, targets_[i], false));
+
+            // Get the preflight data for the protocol fee and original disbursement
+            bytes memory preflight = newIncentives[i].preflight(targets_[i].parameters);
+            if (preflight.length != 0) {
+                (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
+                // Protocol Fee disbursal
+                // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
+                if (!budget_.disburse(disbursal)) {
+                    revert BoostError.InvalidInitialization();
+                }
+                // Original disbursement call
+                if (!budget_.disburse(preflight)) {
+                    revert BoostError.InvalidInitialization();
+                }
+                // decode the preflight data to extract the transfer details
+                (ABudget.AssetType requestAssetType, address requestAsset,,) =
+                    abi.decode(preflight, (ABudget.AssetType, address, address, bytes));
+                _addIncentive(
+                    boostId,
+                    i,
+                    protocolAsset != address(0) ? protocolAsset : requestAsset,
+                    feeAmount,
+                    protocolFee_,
+                    requestAssetType,
+                    targets_[i].parameters
+                );
+            }
+
+            // Initialize the incentive instance after value has been trasnferred
+            // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
+            newIncentives[i].initialize(targets_[i].parameters);
+        }
+    }
+    */

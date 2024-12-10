@@ -99,6 +99,7 @@ contract MockAuth is IAuth {
 /// @notice A mock implementation of the IProtocolFeeModule interface (FOR TESTING PURPOSES ONLY)
 contract MockProtocolFeeModule is IProtocolFeeModule {
     uint64 private protocolFee;
+    address private protocolAsset;
 
     /// @notice Initializes the contract with a protocol fee.
     /// @param _protocolFee The protocol fee to set.
@@ -116,6 +117,18 @@ contract MockProtocolFeeModule is IProtocolFeeModule {
     /// @param _protocolFee The new protocol fee.
     function setProtocolFee(uint64 _protocolFee) external {
         protocolFee = _protocolFee;
+    }
+
+    /// @notice Returns the protocol asset to be used based on the boost configuration.
+    /// @return address The protocol asset address.
+    function getProtocolAsset(bytes calldata) external view override returns (address) {
+        return address(0);
+    }
+
+    /// @notice Sets the protocol asset to be used based on the boost configuration.
+    /// @param _protocolAsset The new protocol asset address.
+    function setProtocolAsset(address _protocolAsset) external {
+        protocolAsset = _protocolAsset;
     }
 }
 
@@ -141,6 +154,12 @@ contract MockProtocolFeeModuleBadReturn {
     function setProtocolFee(uint256 _protocolFee) external {
         protocolFee = _protocolFee;
     }
+
+    /// @notice Returns the protocol asset to be used based on the boost configuration.
+    /// @return address The protocol asset address.
+    function getProtocolAsset(bytes calldata) external view returns (uint256) {
+        return protocolFee;
+    }
 }
 
 /// @title MockProtocolFeeModule
@@ -150,4 +169,6 @@ contract MockProtocolFeeModuleNoReturn {
 
     /// @notice Returns the protocol fee.
     function getProtocolFee(bytes calldata) external view {}
+
+    function getProtocolAsset(bytes calldata) external view {}
 }

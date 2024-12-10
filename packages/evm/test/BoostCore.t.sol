@@ -411,6 +411,61 @@ contract BoostCoreTest is Test {
         assertEq(boost.protocolFee, expectedProtocolFee, "Protocol fee should be sum of module fee and payload fee");
     }
 
+    //////////////////////////////////////////
+    // BoostCore.createBoost - ProtocolAsset //
+    //////////////////////////////////////////
+
+    /// @notice Test createBoost when protocolFeeModule is not set, ensuring the protocolAsset is zero
+    function testCreateBoost_WithoutProtocolFeeModuleAsset() public {
+        // Ensure no protocol fee module is set
+        assertEq(boostCore.protocolFeeModule(), address(0));
+
+        // Create the boost
+        boostCore.createBoost(validCreateCalldata);
+
+        // Fetch the newly created boost
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+
+        // Verify that no protocol fee module asset was applied and that the incentive's asset is the original
+        bytes32 key = keccak256(abi.encodePacked(uint256(0), uint256(0)));
+        BoostCore.IncentiveDisbursalInfo memory info = boostCore.getIncentiveFeesInfo(key);
+
+        // Since no protocol fee module is set, the asset should be the original request.asset
+        // which in our setup was the mockERC20.
+        assertEq(
+            info.asset, address(mockERC20), "When no protocol fee module is set, incentive asset should be original"
+        );
+    }
+
+    /// @notice Test createBoost with a protocol fee module that returns a custom protocol asset
+    function testCreateBoost_WithProtocolFeeModuleAsset() public {
+        // Create a mock protocol fee module that returns a custom protocol asset
+        address expectedProtocolAsset = address(mockERC20); // Using mockERC20 as the "protocol asset"
+        uint64 moduleFee = 200; // 2%
+        MockProtocolFeeModule mockModule = new MockProtocolFeeModule(moduleFee);
+        mockModule.setProtocolAsset(expectedProtocolAsset);
+
+        // Set the protocol fee module
+        boostCore.setProtocolFeeModule(address(mockModule));
+        assertEq(boostCore.protocolFeeModule(), address(mockModule), "Protocol fee module not set correctly");
+
+        // Create a Boost
+        boostCore.createBoost(validCreateCalldata);
+
+        // Fetch the newly created boost
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+
+        // Verify that the protocol asset is correctly applied to the incentive
+        bytes32 key = keccak256(abi.encodePacked(uint256(0), uint256(0)));
+        BoostCore.IncentiveDisbursalInfo memory info = boostCore.getIncentiveFeesInfo(key);
+
+        // Since the protocol fee module is set and returns a specific protocol asset,
+        // the incentive's asset should be overridden to that protocol asset.
+        assertEq(
+            info.asset, expectedProtocolAsset, "Incentive asset should match the protocol asset from the fee module"
+        );
+    }
+
     //////////////////////////////////
     // BoostCore.setCreateBoostAuth //
     /////////////////////////////////

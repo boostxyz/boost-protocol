@@ -1,7 +1,7 @@
 ---
-"@boostxyz/evm": patch
-"@boostxyz/sdk": patch
-"@boostxyz/cli": patch
+"@boostxyz/evm": major
+"@boostxyz/sdk": major
+"@boostxyz/cli": major
 
 ---
 

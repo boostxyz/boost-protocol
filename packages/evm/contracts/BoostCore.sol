@@ -416,7 +416,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 boostId,
         uint256 incentiveId
     ) private returns (AIncentive incentive) {
-        // Store parameters in a local variable to reduce stack usage
         bytes memory incentiveParams = target.parameters;
 
         _checkTarget(type(AIncentive).interfaceId, target.instance);
@@ -435,7 +434,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
             ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
 
-            // Now fewer variables are passed directly to _addIncentive, reducing stack pressure
             _addIncentive(
                 boostId,
                 incentiveId,
@@ -447,6 +445,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
             );
         }
 
+        // We initialize the incentive after the preflight check so it has the necesary value
+        // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
         incentive.initialize(incentiveParams);
     }
 
@@ -573,57 +573,3 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
     }
 }
-
-/*
-
-    function _makeIncentives(BoostLib.Target[] memory targets_, ABudget budget_, uint64 protocolFee_, address protocolAsset)
-        internal
-        returns (AIncentive[] memory newIncentives)
-    {
-        newIncentives = new AIncentive[](targets_.length);
-        uint256 boostId = _boosts.length - 1;
-        for (uint256 i = 0; i < targets_.length; i++) {
-            // Deploy the clone, but don't initialize until we've preflighted
-            _checkTarget(type(AIncentive).interfaceId, targets_[i].instance);
-
-            // Ensure the target is a base implementation (incentive clones are not reusable)
-            if (!targets_[i].isBase) {
-                revert BoostError.InvalidInstance(type(AIncentive).interfaceId, targets_[i].instance);
-            }
-
-            // Create the incentive instance
-            newIncentives[i] = AIncentive(_makeTarget(type(AIncentive).interfaceId, targets_[i], false));
-
-            // Get the preflight data for the protocol fee and original disbursement
-            bytes memory preflight = newIncentives[i].preflight(targets_[i].parameters);
-            if (preflight.length != 0) {
-                (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
-                // Protocol Fee disbursal
-                // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
-                if (!budget_.disburse(disbursal)) {
-                    revert BoostError.InvalidInitialization();
-                }
-                // Original disbursement call
-                if (!budget_.disburse(preflight)) {
-                    revert BoostError.InvalidInitialization();
-                }
-                // decode the preflight data to extract the transfer details
-                (ABudget.AssetType requestAssetType, address requestAsset,,) =
-                    abi.decode(preflight, (ABudget.AssetType, address, address, bytes));
-                _addIncentive(
-                    boostId,
-                    i,
-                    protocolAsset != address(0) ? protocolAsset : requestAsset,
-                    feeAmount,
-                    protocolFee_,
-                    requestAssetType,
-                    targets_[i].parameters
-                );
-            }
-
-            // Initialize the incentive instance after value has been trasnferred
-            // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
-            newIncentives[i].initialize(targets_[i].parameters);
-        }
-    }
-    */

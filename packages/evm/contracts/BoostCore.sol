@@ -196,7 +196,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             revert BoostError.Unauthorized();
         }
         // Get the balance of the asset before the claim
-        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive) : 0;
+        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, boost, incentiveId_) : 0;
 
         // Execute the claim
         // wake-disable-next-line reentrancy (protected)
@@ -205,7 +205,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
 
         // Get the balance of the asset after the claim
-        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive) : 0;
+        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, boost, incentiveId_) : 0;
 
         // Calculate the change in balance and the protocol fee amount
         uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
@@ -298,7 +298,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 expectedFeeBalance = (incentive.protocolFeesRemaining * FEE_DENOMINATOR) / incentive.protocolFee;
 
         // Get the actual balance of the asset
-        uint256 actualBalance = _getAssetBalance(incentive);
+        uint256 actualBalance = _getAssetBalance(incentive, _boosts[boostId], incentiveId);
 
         // Check if there is any discrepancy between the expected and actual balance
         if (actualBalance > expectedFeeBalance) {
@@ -553,11 +553,15 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     // Helper function to get the balance of the asset depending on its type
-    function _getAssetBalance(IncentiveDisbursalInfo storage incentive) internal view returns (uint256) {
+    function _getAssetBalance(
+        IncentiveDisbursalInfo storage incentive,
+        BoostLib.Boost storage boost,
+        uint256 incentiveId_
+    ) internal view returns (uint256) {
         if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
-            return IERC20(incentive.asset).balanceOf(address(this));
+            return IERC20(incentive.asset).balanceOf(address(boost.incentives[incentiveId_]));
         } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
-            return IERC1155(incentive.asset).balanceOf(address(this), incentive.tokenId);
+            return IERC1155(incentive.asset).balanceOf(address(boost.incentives[incentiveId_]), incentive.tokenId);
         }
         return 0;
     }

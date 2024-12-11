@@ -555,6 +555,48 @@ contract BoostCoreTest is Test {
         vm.stopPrank();
     }
 
+    function testClaimIncentive_ProtocolFeeTransfer() public {
+        address feeReceiver = address(0xfee);
+        boostCore.setProtocolFeeReceiver(feeReceiver);
+
+        // Create the boost
+        boostCore.createBoost(validCreateCalldata);
+
+        // Get the boost and incentive contract
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive incentiveContract = ERC20Incentive(address(boost.incentives[0]));
+
+        // Calculate expected fee
+        uint256 claimAmount = incentiveContract.reward();
+        uint256 protocolFeePercentage = boostCore.protocolFee();
+
+        uint256 expectedFee = (claimAmount * protocolFeePercentage) / boostCore.FEE_DENOMINATOR();
+
+        // Mint an ERC721 token to the claimant
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Record initial balances
+        uint256 initialFeeReceiverBalance = mockERC20.balanceOf(feeReceiver);
+
+        // Prepare claim data
+        bytes memory data = abi.encode(address(this), abi.encode(tokenId));
+
+        // Expect the fee ProtocolFeesCollected event
+        vm.expectEmit();
+        emit BoostCore.ProtocolFeesCollected(0, 0, expectedFee, feeReceiver);
+
+        // Perform claim
+        boostCore.claimIncentive(0, 0, address(0), data);
+
+        // Verify fee transfer
+        assertEq(
+            mockERC20.balanceOf(feeReceiver),
+            initialFeeReceiverBalance + expectedFee,
+            "Protocol fee not transferred correctly"
+        );
+    }
+
     ///////////////////////////
     // BoostCore.getBoost //
     ///////////////////////////

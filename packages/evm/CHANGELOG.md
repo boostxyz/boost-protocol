@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 4.1.0
+
+### Minor Changes
+
+- 2e59293: fix protocol fee transfer on claim
+
 ## 4.0.0
 
 ### Major Changes

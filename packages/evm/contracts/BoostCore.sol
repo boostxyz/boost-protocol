@@ -76,6 +76,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
     uint64 public constant FEE_DENOMINATOR = 10_000;
 
+    /// @notice the max erc20 amount that can be cleared as dust
+    uint64 public DUST_THRESHOLD = 1_000;
+
     address private constant ZERO_ADDRESS = address(0);
 
     // @notice The set of incentives for the Boost
@@ -343,6 +346,15 @@ contract BoostCore is Ownable, ReentrancyGuard {
         protocolFee = protocolFee_;
     }
 
+    /// @notice Set the dust threshold
+    /// @param newThreshold The new Threshold
+    /// @dev This function is only callable by the owner
+    /// @dev This function will revert if `newThreshold >= FEE_DENOMINATOR` for security purposes
+    function setDustThreshold(uint64 newThreshold) external onlyOwner {
+        if (newThreshold >= FEE_DENOMINATOR) revert BoostError.Unauthorized();
+        DUST_THRESHOLD = newThreshold;
+    }
+
     /// @notice Set the protocol fee module address
     /// @param protocolFeeModule_ The new protocol fee module address
     /// @dev This function is only callable by the owner
@@ -572,10 +584,19 @@ contract BoostCore is Ownable, ReentrancyGuard {
     function _transferProtocolFee(IncentiveDisbursalInfo storage incentive, uint256 amount) internal {
         if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
             incentive.asset.safeTransfer(protocolFeeReceiver, amount);
+            _dustHatch(incentive.asset);
         } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
             IERC1155(incentive.asset).safeTransferFrom(
                 address(this), protocolFeeReceiver, incentive.tokenId, amount, ""
             );
+        }
+    }
+
+    // helper that transfers dust to protocolFeeReceiver
+    function _dustHatch(address asset) internal {
+        uint256 balance = IERC20(asset).balanceOf(address(this));
+        if (balance < DUST_THRESHOLD) {
+            asset.safeTransfer(protocolFeeReceiver, balance);
         }
     }
 }

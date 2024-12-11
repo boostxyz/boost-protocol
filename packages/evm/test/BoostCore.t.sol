@@ -15,6 +15,7 @@ import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 // Allowlists
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
+import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 // Budgets
 import {ABudget} from "contracts/budgets/ABudget.sol";
@@ -67,7 +68,7 @@ contract BoostCoreTest is Test {
                 action: action,
                 validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                 allowList: allowList,
-                incentives: _makeIncentives(1),
+                incentives: _makeIncentives(1, 1 ether, 100),
                 protocolFee: 0, // 5%
                 maxParticipants: 10_000,
                 owner: address(1)
@@ -141,7 +142,7 @@ contract BoostCoreTest is Test {
                     action: contractAction,
                     validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList: allowList,
-                    incentives: _makeIncentives(1),
+                    incentives: _makeIncentives(1, 1 ether, 100),
                     protocolFee: 0,
                     maxParticipants: 10_000,
                     owner: address(1)
@@ -212,7 +213,7 @@ contract BoostCoreTest is Test {
                 action,
                 BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                 allowList,
-                _makeIncentives(1),
+                _makeIncentives(1, 1 ether, 100),
                 0.01 ether,
                 0.001 ether,
                 10_000,
@@ -234,7 +235,7 @@ contract BoostCoreTest is Test {
                 action,
                 BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                 allowList,
-                _makeIncentives(1),
+                _makeIncentives(1, 1 ether, 100),
                 0.01 ether,
                 0.001 ether,
                 10_000,
@@ -259,7 +260,7 @@ contract BoostCoreTest is Test {
                     action,
                     BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList,
-                    _makeIncentives(1),
+                    _makeIncentives(1, 1 ether, 100),
                     0.001 ether,
                     10_000,
                     address(this)
@@ -286,7 +287,7 @@ contract BoostCoreTest is Test {
                     BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     action,
                     allowList,
-                    _makeIncentives(1),
+                    _makeIncentives(1, 1 ether, 100),
                     0.001 ether,
                     10_000,
                     address(this)
@@ -321,7 +322,7 @@ contract BoostCoreTest is Test {
                     action: action,
                     validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList: allowList,
-                    incentives: _makeIncentives(1),
+                    incentives: _makeIncentives(1, 1 ether, 100),
                     protocolFee: payloadProtocolFee,
                     maxParticipants: 10_000,
                     owner: address(1)
@@ -356,7 +357,7 @@ contract BoostCoreTest is Test {
                     action: action,
                     validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList: allowList,
-                    incentives: _makeIncentives(1),
+                    incentives: _makeIncentives(1, 1 ether, 100),
                     protocolFee: payloadProtocolFee,
                     maxParticipants: 10_000,
                     owner: address(1)
@@ -390,7 +391,7 @@ contract BoostCoreTest is Test {
                     action: action,
                     validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList: allowList,
-                    incentives: _makeIncentives(1),
+                    incentives: _makeIncentives(1, 1 ether, 100),
                     protocolFee: payloadProtocolFee,
                     maxParticipants: 10_000,
                     owner: address(1)
@@ -555,6 +556,74 @@ contract BoostCoreTest is Test {
         vm.stopPrank();
     }
 
+    function testFuzzClaimIncentive_ProtocolFeeTransfer(uint256 rewardAmount) public {
+        uint160 claimant = uint160(makeAddr("claimant"));
+        uint16 claimLimit = 1_000;
+        rewardAmount = bound(rewardAmount, 10_000, (type(uint256).max >> 15) / claimLimit);
+        uint256 amountToMint =
+            (rewardAmount + rewardAmount * boostCore.protocolFee() / boostCore.FEE_DENOMINATOR()) * claimLimit;
+        mockERC20.mint(address(this), amountToMint);
+        mockERC20.approve(address(budget), amountToMint);
+        budget.allocate(
+            abi.encode(
+                ABudget.Transfer({
+                    assetType: ABudget.AssetType.ERC20,
+                    asset: address(mockERC20),
+                    target: address(this),
+                    data: abi.encode(ABudget.FungiblePayload({amount: amountToMint}))
+                })
+            )
+        );
+        address feeReceiver = makeAddr("0xfee");
+        boostCore.setProtocolFeeReceiver(feeReceiver);
+
+        bytes memory createBoostCalldata = _makeValidCreateCalldataWithVariableRewardAmount(1, rewardAmount, claimLimit);
+
+        // Create the boost
+        boostCore.createBoost(createBoostCalldata);
+
+        // Get the boost and incentive contract
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive incentive = ERC20Incentive(address(boost.incentives[0]));
+
+        // Calculate expected fee
+        uint256 claimAmount = incentive.reward();
+        uint256 protocolFeePercentage = boostCore.protocolFee();
+
+        uint256 expectedFee = (claimAmount * protocolFeePercentage) / boostCore.FEE_DENOMINATOR();
+
+        // Mint an ERC721 token to the claimant
+
+        for (uint160 tokenId = 1; tokenId < 1001; tokenId++) {
+            hoax(address(claimant + tokenId));
+            mockERC721.mint{value: 0.1 ether}(address(this));
+
+            // Record initial balances
+            uint256 initialFeeReceiverBalance = mockERC20.balanceOf(feeReceiver);
+
+            // Prepare claim data
+            bytes memory data = abi.encode(address(this), abi.encode(tokenId));
+
+            // Expect the fee ProtocolFeesCollected event
+            vm.expectEmit();
+            emit BoostCore.ProtocolFeesCollected(0, 0, expectedFee, feeReceiver);
+
+            // Perform claim
+            hoax(address(claimant + tokenId));
+            boostCore.claimIncentive(0, 0, address(0), data);
+
+            // Verify fee transfer
+            assertApproxEqAbs(
+                mockERC20.balanceOf(feeReceiver),
+                initialFeeReceiverBalance + expectedFee,
+                boostCore.DUST_THRESHOLD(),
+                "Protocol fee not transferred correctly"
+            );
+        }
+
+        assertGt(1_000, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
+    }
+
     function testClaimIncentive_ProtocolFeeTransfer() public {
         address feeReceiver = address(0xfee);
         boostCore.setProtocolFeeReceiver(feeReceiver);
@@ -594,6 +663,11 @@ contract BoostCoreTest is Test {
             mockERC20.balanceOf(feeReceiver),
             initialFeeReceiverBalance + expectedFee,
             "Protocol fee not transferred correctly"
+        );
+        assertEq(
+            mockERC20.balanceOf(address(boostCore)),
+            (incentiveContract.limit() - 1) * claimAmount * protocolFeePercentage / boostCore.FEE_DENOMINATOR(),
+            "unclaimed funds in boost core"
         );
     }
 
@@ -830,6 +904,27 @@ contract BoostCoreTest is Test {
     // Test Helper Functions //
     ///////////////////////////
 
+    function _makeValidCreateCalldataWithVariableRewardAmount(
+        uint256 incentiveCount,
+        uint256 rewardAmount,
+        uint16 claimLimit
+    ) internal returns (bytes memory createCalldata) {
+        createCalldata = LibZip.cdCompress(
+            abi.encode(
+                BoostLib.CreateBoostPayload({
+                    budget: budget,
+                    action: action,
+                    validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
+                    allowList: _makeDenyList(),
+                    incentives: _makeIncentives(incentiveCount, rewardAmount, claimLimit),
+                    protocolFee: 0,
+                    maxParticipants: 10_000,
+                    owner: address(1)
+                })
+            )
+        );
+    }
+
     function _makeERC721MintAction(address target, bytes4 selector, uint256 value)
         internal
         returns (BoostLib.Target memory)
@@ -866,6 +961,15 @@ contract BoostCoreTest is Test {
         });
     }
 
+    function _makeDenyList() internal returns (BoostLib.Target memory) {
+        address[] memory list = new address[](0);
+        return BoostLib.Target({
+            isBase: true,
+            instance: address(new SimpleDenyList()),
+            parameters: abi.encode(address(0), list)
+        });
+    }
+
     function _makeBudget(address owner_, address[] memory authorized_, uint256[] memory roles_)
         internal
         returns (ABudget _budget)
@@ -876,7 +980,10 @@ contract BoostCoreTest is Test {
         );
     }
 
-    function _makeIncentives(uint256 count) internal returns (BoostLib.Target[] memory) {
+    function _makeIncentives(uint256 count, uint256 rewardAmount, uint16 limit)
+        internal
+        returns (BoostLib.Target[] memory)
+    {
         BoostLib.Target[] memory incentives = new BoostLib.Target[](count);
         for (uint256 i = 0; i < count; i++) {
             incentives[i] = BoostLib.Target({
@@ -886,8 +993,8 @@ contract BoostCoreTest is Test {
                     ERC20Incentive.InitPayload({
                         asset: address(mockERC20),
                         strategy: AERC20Incentive.Strategy.POOL,
-                        reward: 1 ether,
-                        limit: 100,
+                        reward: rewardAmount,
+                        limit: limit,
                         manager: address(this)
                     })
                 )

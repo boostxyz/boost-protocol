@@ -74,6 +74,7 @@ describe("Boost for Swapping on a Specific DEX (paraswap)", () => {
       jsonRpcUrl: CHAIN_URL,
       blockNumber: CHAIN_BLOCK,
     });
+
     fixtures = await loadFixture(deployFixtures(defaultOptions, 42161));
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
   });

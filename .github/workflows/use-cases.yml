@@ -31,8 +31,4 @@ jobs:
           file_name: .env
 
       - name: Run tests
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          command: npx turbo test:ci --cache-dir=".cache" --concurrency=1 --filter="./examples/zora-mint"
+        run: npx turbo test:ci --cache-dir=".cache" --concurrency=1 --filter="./examples/*"

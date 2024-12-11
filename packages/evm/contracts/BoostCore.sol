@@ -187,6 +187,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         BoostLib.Boost storage boost = _boosts[boostId_];
         bytes32 key = _generateKey(boostId_, incentiveId_);
         IncentiveDisbursalInfo storage incentive = incentivesFeeInfo[key];
+        AIncentive incentiveContract = boost.incentives[incentiveId_];
 
         // Validate the claimant against the allow list and the validator
         if (!boost.allowList.isAllowed(claimant, data_)) revert BoostError.Unauthorized();
@@ -196,16 +197,16 @@ contract BoostCore is Ownable, ReentrancyGuard {
             revert BoostError.Unauthorized();
         }
         // Get the balance of the asset before the claim
-        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, boost, incentiveId_) : 0;
+        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
 
         // Execute the claim
         // wake-disable-next-line reentrancy (protected)
-        if (!boost.incentives[incentiveId_].claim(claimant, data_)) {
+        if (!incentiveContract.claim(claimant, data_)) {
             revert BoostError.ClaimFailed(claimant, data_);
         }
 
         // Get the balance of the asset after the claim
-        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, boost, incentiveId_) : 0;
+        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
 
         // Calculate the change in balance and the protocol fee amount
         uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
@@ -293,12 +294,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
         // Generate the unique key for the incentive
         bytes32 key = _generateKey(boostId, incentiveId);
         IncentiveDisbursalInfo storage incentive = incentivesFeeInfo[key];
+        AIncentive incentiveContract = _boosts[boostId].incentives[incentiveId];
 
         // Get the expected balance based on protocolFeesRemaining and the specific incentive.protocolFee
         uint256 expectedFeeBalance = (incentive.protocolFeesRemaining * FEE_DENOMINATOR) / incentive.protocolFee;
 
         // Get the actual balance of the asset
-        uint256 actualBalance = _getAssetBalance(incentive, _boosts[boostId], incentiveId);
+        uint256 actualBalance = _getAssetBalance(incentive, incentiveContract);
 
         // Check if there is any discrepancy between the expected and actual balance
         if (actualBalance > expectedFeeBalance) {
@@ -555,13 +557,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
     // Helper function to get the balance of the asset depending on its type
     function _getAssetBalance(
         IncentiveDisbursalInfo storage incentive,
-        BoostLib.Boost storage boost,
-        uint256 incentiveId_
+        AIncentive incentiveContract
     ) internal view returns (uint256) {
         if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
-            return IERC20(incentive.asset).balanceOf(address(boost.incentives[incentiveId_]));
+            return IERC20(incentive.asset).balanceOf(address(incentiveContract));
         } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
-            return IERC1155(incentive.asset).balanceOf(address(boost.incentives[incentiveId_]), incentive.tokenId);
+            return IERC1155(incentive.asset).balanceOf(address(incentiveContract), incentive.tokenId);
         }
         return 0;
     }

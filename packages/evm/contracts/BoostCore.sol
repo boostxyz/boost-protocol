@@ -555,10 +555,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     // Helper function to get the balance of the asset depending on its type
-    function _getAssetBalance(
-        IncentiveDisbursalInfo storage incentive,
-        AIncentive incentiveContract
-    ) internal view returns (uint256) {
+    function _getAssetBalance(IncentiveDisbursalInfo storage incentive, AIncentive incentiveContract)
+        internal
+        view
+        returns (uint256)
+    {
         if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
             return IERC20(incentive.asset).balanceOf(address(incentiveContract));
         } else if (incentive.assetType == ABudget.AssetType.ERC1155) {

@@ -1,6 +1,6 @@
 [
   "// Begin common builtin event signatures",
-  "Transfer(address indexed,address indexed,uint256 indexed)",
+  "Transfer(address indexed,address indexed,uint256)",
   "Purchased(address indexed,address indexed,uint256 indexed,uint256,uint256)",
   "NameRegistered(string,bytes32,address,uint256,uint256,uint256)",
   "DelegateChanged(address indexed,address indexed,address indexed)",

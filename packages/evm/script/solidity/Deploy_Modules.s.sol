@@ -17,6 +17,7 @@ import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {ERC20PeggedIncentive} from "contracts/incentives/ERC20PeggedIncentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 import {ERC20VariableCriteriaIncentive} from "contracts/incentives/ERC20VariableCriteriaIncentive.sol";
+import {ERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
@@ -52,6 +53,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployERC20Incentive(registry);
         _deployERC20VariableIncentive(registry);
         _deployERC20VariableCriteriaIncentive(registry);
+        _deployERC20PeggedIncentive(registry);
         _deployCGDAIncentive(registry);
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
@@ -122,6 +124,15 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("ERC20PeggedIncentive", erc20PeggedIncentive);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(newDeploy, "ERC20PeggedIncentive", erc20PeggedIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+    }
+
+    function _deployERC20PeggedVariableCriteriaIncentive(BoostRegistry registry) internal returns (address erc20PeggedVariableCriteriaIncentive) {
+        bytes memory initCode = type(ERC20PeggedIncentive).creationCode;
+        erc20PeggedIncentive = _getCreate2Address(initCode, "");
+        console.log("ERC20PeggedVariableCriteriaIncentive: ", erc20PeggedVariableCriteriaIncentive);
+        deployJson = deployJsonKey.serialize("ERC20PeggedVariableCriteriaIncentive", erc20PeggedVariableCriteriaIncentive);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, "ERC20PeggedVariableCriteriaIncentive", erc20PeggedVariableCriteriaIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
     function _deployERC20VariableIncentive(BoostRegistry registry) internal returns (address erc20VariableIncentive) {

@@ -23,6 +23,7 @@ import {AERC20PeggedIncentive} from "contracts/incentives/AERC20PeggedIncentive.
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {AERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
+import {AERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentive.sol";
 import {APointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 
 import {ASimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
@@ -39,6 +40,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAEventAction();
         _getInterfaceAERC20Incentive();
         _getInterfaceAERC20PeggedIncentive();
+        _getInterfaceAERC20PeggedVariableCriteriaIncentive();
         _getInterfaceACloneable();
         _getInterfaceABudget();
         _getInterfaceAManagedBudget();
@@ -123,6 +125,11 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAERC20PeggedIncentive() internal {
         string memory interfaceId = uint256(uint32(type(AERC20PeggedIncentive).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AERC20PeggedIncentive", interfaceId);
+    }
+
+    function _getInterfaceAERC20PeggedVariableCriteriaIncentive() internal {
+        string memory interfaceId = uint256(uint32(type(AERC20PeggedVariableCriteriaIncentive).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AERC20PeggedVariableCriteriaIncentive", interfaceId);
     }
 
     function _getInterfaceAERC20VariableIncentive() internal {

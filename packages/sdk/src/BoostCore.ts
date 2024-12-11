@@ -87,6 +87,10 @@ import {
   type ERC20PeggedIncentivePayload,
 } from './Incentives/ERC20PeggedIncentive';
 import {
+  ERC20PeggedVariableCriteriaIncentive,
+  type ERC20PeggedVariableCriteriaIncentivePayload,
+} from './Incentives/ERC20PeggedVariableCriteriaIncentive';
+import {
   ERC20VariableCriteriaIncentive,
   type ERC20VariableCriteriaIncentivePayload,
 } from './Incentives/ERC20VariableCriteriaIncentive';
@@ -1492,6 +1496,29 @@ export class BoostCore extends Deployable<
     isBase?: boolean,
   ) {
     return new ERC20VariableCriteriaIncentive(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
+
+  /**
+   * Bound {@link ERC20PeggedVariableCriteriaIncentive} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const validator = core.ERC20PeggedVariableCriteriaIncentive({ ... }) // is roughly equivalent to
+   * const validator = new ERC20PeggedVariableCriteriaIncentive({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<ERC20PeggedVariableCriteriaIncentive>} options
+   * @param {?boolean} [isBase]
+   * @returns {ERC20PeggedVariableCriteriaIncentive}
+   * */
+  ERC20PeggedVariableCriteriaIncentive(
+    options: DeployablePayloadOrAddress<ERC20PeggedVariableCriteriaIncentivePayload>,
+    isBase?: boolean,
+  ) {
+    return new ERC20PeggedVariableCriteriaIncentive(
       { config: this._config, account: this._account },
       options,
       isBase,

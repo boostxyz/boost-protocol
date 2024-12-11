@@ -1,5 +1,15 @@
 # @boostxyz/evm
 
+## 5.0.0
+
+### Major Changes
+
+- fa42c64: [ADHOC] chore(evm): deploy to base, sepolia and base sepolia
+
+### Minor Changes
+
+- 2e59293: fix protocol fee transfer on claim
+
 ## 4.0.0
 
 ### Major Changes

@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 4.0.0
+
+### Major Changes
+
+- fa42c64: [ADHOC] chore(evm): deploy to base, sepolia and base sepolia
+
 ## 3.0.0
 
 ### Major Changes

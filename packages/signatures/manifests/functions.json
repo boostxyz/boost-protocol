@@ -4,11 +4,15 @@
   "mint(address mintTo,uint256 quantity,address collection,uint256 tokenId,address mintReferral,string comment)",
   "mintPayable(address to, uint256 amount)",
   "execute(bytes commands,bytes[] inputs)",
+  "execute(bytes commands,bytes[] inputs,uint256 deadline)",
   "register(string name,address owner,uint256 duration,bytes32 secret,address resolver,bytes[] data,bool reverseRecord,uint16 ownerControlledFuses)",
+  "register((string,address,uint256,address,bytes[],bool))",
   "getVotes(address account, uint256 blockNumber) view returns (uint256)",
   "transferFrom(address,address,uint256)",
   "mintTo((address,uint8,uint8,address,uint32,address,uint32,bytes32[],uint96,uint32,uint32,uint32,bytes,address,bytes32[],uint256))",
   "buy1155(address erc20zAddress, uint256 num1155ToBuy, address recipient, address excessRefundRecipient, uint256 maxEthToSpend, uint160 sqrtPriceLimitX96)",
+  "buy(address recipient,address refundRecipient,address orderReferrer,string comment,uint8 expectedMarketType,uint256 minOrderSize,uint160 sqrtPriceLimitX96)",
+  "sell(uint256 tokensToSell,address recipient,address orderReferrer,string comment,uint8 expectedMarketType,uint256 minPayoutSize,uint160 sqrtPriceLimitX96)",
   "// Test function signatures",
   "mint(address)"
 ]

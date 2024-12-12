@@ -57,7 +57,7 @@ export type Incentive =
 /**
  * A map of Incentive component interfaces to their constructors.
  *
- * @type {{ "0xc5b24b8e": typeof PointsIncentive; "0x8c901437": typeof ERC20Incentive; "0x4414fbb4": typeof ERC20PeggedIncentive; "0xf60c99c9": typeof Erc20PeggedVariableCriteriaIncentive; "0x56586338":  typeof AllowListIncentive; "0xa39e44d9": typeof CGDAIncentive; "0xa8e4af1e": typeof ERC20VariableIncentive; "0x90318111": typeof ERC20VariableCriteriaIncentive }}
+ * @type {{ "0xc5b24b8e": typeof PointsIncentive; "0x8c901437": typeof ERC20Incentive; "0x4414fbb4": typeof ERC20PeggedIncentive; "0xf60c99c9": typeof ERC20PeggedVariableCriteriaIncentive; "0x56586338":  typeof AllowListIncentive; "0xa39e44d9": typeof CGDAIncentive; "0xa8e4af1e": typeof ERC20VariableIncentive; "0x90318111": typeof ERC20VariableCriteriaIncentive }}
  */
 export const IncentiveByComponentInterface = {
   [APointsIncentive as Hex]: PointsIncentive,

@@ -17,7 +17,7 @@ import {
   writeErc20PeggedVariableCriteriaIncentiveClaim,
   writeErc20PeggedVariableCriteriaIncentiveClawback,
 } from '@boostxyz/evm';
-import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/Erc20PeggedVariableCriteriaIncentive.sol/Erc20PeggedVariableCriteriaIncentive.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol/ERC20PeggedVariableCriteriaIncentive.json';
 import {
   type Address,
   type ContractEventName,
@@ -47,7 +47,7 @@ export { erc20PeggedVariableCriteriaIncentiveAbi };
  * The object representation of a `Erc20PeggedVariableCriteriaIncentive.InitPayload`
  *
  * @export
- * @interface Erc20PeggedVariableCriteriaIncentive
+ * @interface E20PeggedVariableCriteriaIncentive
  * @typedef {Erc20PeggedVariableCriteriaIncentive}
  */
 export interface ERC20PeggedVariableCriteriaIncentivePayload {

@@ -1,5 +1,11 @@
 # @boostxyz/signatures
 
+## 1.2.0
+
+### Minor Changes
+
+- 4b2e8ad: add signatures for coop and basenames
+
 ## 1.1.0
 
 ### Minor Changes

@@ -338,7 +338,6 @@ contract BoostCoreTest is Test {
 
     function testCreateBoost_AfterSetProtocolFeeModule_NoReturn() public {
         // Create a mock protocol fee module with a specific fee
-        uint64 moduleFee = 200; // 2%
         MockProtocolFeeModuleNoReturn mockModule = new MockProtocolFeeModuleNoReturn();
 
         // Set the protocol fee module
@@ -424,9 +423,6 @@ contract BoostCoreTest is Test {
         // Create the boost
         boostCore.createBoost(validCreateCalldata);
 
-        // Fetch the newly created boost
-        BoostLib.Boost memory boost = boostCore.getBoost(0);
-
         // Verify that no protocol fee module asset was applied and that the incentive's asset is the original
         bytes32 key = keccak256(abi.encodePacked(uint256(0), uint256(0)));
         BoostCore.IncentiveDisbursalInfo memory info = boostCore.getIncentiveFeesInfo(key);
@@ -452,9 +448,6 @@ contract BoostCoreTest is Test {
 
         // Create a Boost
         boostCore.createBoost(validCreateCalldata);
-
-        // Fetch the newly created boost
-        BoostLib.Boost memory boost = boostCore.getBoost(0);
 
         // Verify that the protocol asset is correctly applied to the incentive
         bytes32 key = keccak256(abi.encodePacked(uint256(0), uint256(0)));
@@ -556,12 +549,13 @@ contract BoostCoreTest is Test {
         vm.stopPrank();
     }
 
-    function testFuzzClaimIncentive_ProtocolFeeTransfer(uint256 rewardAmount) public {
+    function testFuzzClaimIncentive_ProtocolFeeTransfer(uint256 rewardAmount, uint64 additionalProtocolFee) public {
         uint160 claimant = uint160(makeAddr("claimant"));
         uint16 claimLimit = 1_000;
+        additionalProtocolFee = uint64(bound(additionalProtocolFee, 0, 9_000));
         rewardAmount = bound(rewardAmount, 10_000, (type(uint256).max >> 15) / claimLimit);
-        uint256 amountToMint =
-            (rewardAmount + rewardAmount * boostCore.protocolFee() / boostCore.FEE_DENOMINATOR()) * claimLimit;
+        uint64 totalFee = uint64(boostCore.protocolFee()) + additionalProtocolFee;
+        uint256 amountToMint = (rewardAmount + rewardAmount * totalFee / boostCore.FEE_DENOMINATOR()) * claimLimit;
         mockERC20.mint(address(this), amountToMint);
         mockERC20.approve(address(budget), amountToMint);
         budget.allocate(
@@ -577,7 +571,8 @@ contract BoostCoreTest is Test {
         address feeReceiver = makeAddr("0xfee");
         boostCore.setProtocolFeeReceiver(feeReceiver);
 
-        bytes memory createBoostCalldata = _makeValidCreateCalldataWithVariableRewardAmount(1, rewardAmount, claimLimit);
+        bytes memory createBoostCalldata =
+            _makeValidCreateCalldataWithVariableRewardAmount(1, rewardAmount, claimLimit, additionalProtocolFee);
 
         // Create the boost
         boostCore.createBoost(createBoostCalldata);
@@ -588,7 +583,7 @@ contract BoostCoreTest is Test {
 
         // Calculate expected fee
         uint256 claimAmount = incentive.reward();
-        uint256 protocolFeePercentage = boostCore.protocolFee();
+        uint256 protocolFeePercentage = boost.protocolFee;
 
         uint256 expectedFee = (claimAmount * protocolFeePercentage) / boostCore.FEE_DENOMINATOR();
 
@@ -621,7 +616,7 @@ contract BoostCoreTest is Test {
             );
         }
 
-        assertGt(1_000, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
+        assertEq(0, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
     }
 
     function testClaimIncentive_ProtocolFeeTransfer() public {
@@ -907,7 +902,8 @@ contract BoostCoreTest is Test {
     function _makeValidCreateCalldataWithVariableRewardAmount(
         uint256 incentiveCount,
         uint256 rewardAmount,
-        uint16 claimLimit
+        uint16 claimLimit,
+        uint64 protocolFee
     ) internal returns (bytes memory createCalldata) {
         createCalldata = LibZip.cdCompress(
             abi.encode(
@@ -917,7 +913,7 @@ contract BoostCoreTest is Test {
                     validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
                     allowList: _makeDenyList(),
                     incentives: _makeIncentives(incentiveCount, rewardAmount, claimLimit),
-                    protocolFee: 0,
+                    protocolFee: protocolFee,
                     maxParticipants: 10_000,
                     owner: address(1)
                 })

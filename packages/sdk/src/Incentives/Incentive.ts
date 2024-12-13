@@ -62,7 +62,8 @@ export type Incentive =
 export const IncentiveByComponentInterface = {
   [APointsIncentive as Hex]: PointsIncentive,
   [AERC20Incentive as Hex]: ERC20Incentive,
-  [AERC20VariableIncentive as Hex]: ERC20VariableIncentive,
+  [AERC20PeggedVariableCriteriaIncentive as Hex]:
+    ERC20PeggedVariableCriteriaIncentive,
   [AERC20PeggedIncentive as Hex]: ERC20PeggedIncentive,
   [AAllowListIncentive]: AllowListIncentive,
   // [AERC1155Incentive as Hex]: ERC1155Incentive,

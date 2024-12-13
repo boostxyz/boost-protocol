@@ -84,9 +84,9 @@ export function basicErc721TransferScalarPayload(
     asset: erc721.assertValidAddress(),
     reward: 1n,
     limit: 1n,
-    maxReward: 10000n,
+    maxReward: 1n,
     criteria: basicErc721TransferScalarCriteria(erc721),
-    peg: zeroAddress,
+    peg: erc20.assertValidAddress(),
   };
 }
 
@@ -110,8 +110,8 @@ describe("ERC20VariableCriteriaIncentive", () => {
       asset: budgets.erc20.assertValidAddress(),
       reward: 1n,
       limit: 1n,
-      maxReward: 10000n,
-      manager: accounts[0].account,
+      maxReward: 1n,
+      manager: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       criteria: basicErc721TransferScalarCriteria(erc721),
       peg: erc20.assertValidAddress(),
     });

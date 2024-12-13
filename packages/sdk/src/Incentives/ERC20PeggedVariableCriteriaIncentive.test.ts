@@ -123,6 +123,47 @@ describe("ERC20VariableCriteriaIncentive", () => {
     expect(isAddress(boost.incentives[0]!.assertValidAddress())).toBe(true);
   });
 
+  describe("Basic Parameters", () => {
+    test("should return correct asset address", async () => {
+      const asset = await erc20Incentive.asset();
+      expect(isAddressEqual(asset, budgets.erc20.assertValidAddress())).toBe(true);
+    });
+
+    test("should return correct peg token address", async () => {
+      const peg = await erc20Incentive.peg();
+      expect(isAddressEqual(peg, erc20.assertValidAddress())).toBe(true);
+    });
+
+    test("should return correct reward amount", async () => {
+      const reward = await erc20Incentive.reward();
+      expect(reward).toBe(1n);
+    });
+
+    test("should return correct limit", async () => {
+      const limit = await erc20Incentive.limit();
+      expect(limit).toBe(1n);
+    });
+
+    test("should return correct max reward", async () => {
+      const maxReward = await erc20Incentive.getMaxReward();
+      expect(maxReward).toBe(1n);
+    });
+  });
+
+  describe("Remaining Claims", () => {
+    test("should calculate remaining claim potential correctly", async () => {
+      const remaining = await erc20Incentive.getRemainingClaimPotential();
+      const limit = await erc20Incentive.limit();
+      const totalClaimed = await erc20Incentive.totalClaimed();
+      expect(remaining).toBe(limit - totalClaimed);
+    });
+
+    test("should return true for canBeClaimed when claims remain", async () => {
+      const canBeClaimed = await erc20Incentive.canBeClaimed();
+      expect(canBeClaimed).toBe(true);
+    });
+  });
+
   describe("getIncentiveCriteria", () => {
     test("should fetch incentive criteria successfully", async () => {
       const incentive = boost.incentives[0] as ERC20PeggedVariableCriteriaIncentive;
@@ -133,6 +174,31 @@ describe("ERC20VariableCriteriaIncentive", () => {
         fieldIndex: expect.any(Number),
         targetContract: expect.any(String),
       });
+    });
+  });
+
+  describe("Claim Data", () => {
+    test("should properly encode claim data", () => {
+      const rewardAmount = parseEther("1");
+      const encodedData = erc20Incentive.buildClaimData(rewardAmount);
+      expect(encodedData).toBe(
+        "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+      );
+    });
+  });
+
+  describe("Owner and Manager", () => {
+    test("should return correct owner", async () => {
+      const owner = await erc20Incentive.owner();
+      expect(isAddressEqual(owner, fixtures.core.assertValidAddress())).toBe(true);
+    });
+  });
+
+  describe("Current Reward", () => {
+    test("should return valid current reward", async () => {
+      const currentReward = await erc20Incentive.currentReward();
+      expect(currentReward).toBeDefined();
+      expect(currentReward).toBeTypeOf("bigint");
     });
   });
 
@@ -155,15 +221,6 @@ describe("ERC20VariableCriteriaIncentive", () => {
     });
 
     test("should return a valid scalar for event-based criteria", async () => {
-      erc20Incentive = fixtures.core.ERC20PeggedVariableCriteriaIncentive({
-        asset: budgets.erc20.assertValidAddress(),
-        reward: 1n,
-        limit: 1n,
-        maxReward: 1n,
-        criteria: basicErc721MintScalarCriteria(erc721),
-        peg: zeroAddress,
-      });
-
       boost = await freshBoost(fixtures, {
         budget: budgets.budget,
         incentives: [erc20Incentive],

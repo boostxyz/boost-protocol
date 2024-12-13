@@ -19,28 +19,43 @@ import {
   writeErc20PeggedVariableCriteriaIncentiveClawback,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol/ERC20PeggedVariableCriteriaIncentive.json';
+import { getTransaction, getTransactionReceipt } from '@wagmi/core';
+import type { AbiEvent } from 'abitype';
 import {
+  type AbiFunction,
   type Address,
   type ContractEventName,
   type Hex,
+  decodeFunctionData,
   encodeAbiParameters,
+  parseEventLogs,
   zeroAddress,
 } from 'viem';
 import { ERC20Incentive as ERC20IncentiveBases } from '../../dist/deployments.json';
+import { SignatureType } from '../Actions/EventAction';
 import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import { type ClaimPayload, prepareClaimPayload } from '../claiming';
-import { IncentiveCriteriaNotFoundError } from '../errors';
 import {
+  DecodedArgsError,
+  IncentiveCriteriaNotFoundError,
+  InvalidCriteriaTypeError,
+  NoMatchingLogsError,
+} from '../errors';
+import {
+  CheatCodes,
   type GenericLog,
   type ReadParams,
   RegistryType,
   type WriteParams,
 } from '../utils';
-import type { IncentiveCriteria } from './ERC20VariableCriteriaIncentive';
+import type {
+  GetIncentiveScalarParams,
+  IncentiveCriteria,
+} from './ERC20VariableCriteriaIncentive';
 
 export { erc20PeggedVariableCriteriaIncentiveAbi };
 
@@ -198,6 +213,99 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
       });
 
     return maxReward;
+  }
+
+  /**
+   * Fetches the incentive scalar from a transaction hash
+   *
+   * @param {GetIncentiveScalarParams} params
+   * @param {?ReadParams} [params]
+   * @returns {Promise<bigint>}
+   * @throws {InvalidCriteriaTypeError | NoMatchingLogsError | DecodedArgsError}
+   */
+  public async getIncentiveScalar(
+    { chainId, hash, knownSignatures }: GetIncentiveScalarParams,
+    params?: ReadParams,
+  ): Promise<bigint> {
+    const criteria = await this.getIncentiveCriteria(params);
+    if (criteria.criteriaType === SignatureType.EVENT) {
+      const transactionReceipt = await getTransactionReceipt(this._config, {
+        chainId,
+        hash,
+      });
+      if (criteria.fieldIndex === CheatCodes.GAS_REBATE_INCENTIVE) {
+        const totalCost =
+          transactionReceipt.gasUsed * transactionReceipt.effectiveGasPrice + // Normal gas cost
+          (transactionReceipt.blobGasUsed ?? 0n) *
+            (transactionReceipt.blobGasPrice ?? 0n); // Blob gas cost - account for potential undefined values
+        return totalCost;
+      }
+      const logs = transactionReceipt.logs;
+
+      if (logs.length === 0) {
+        throw new NoMatchingLogsError(
+          `No logs found for event signature ${criteria.signature}`,
+        );
+      }
+
+      // Decode the event log
+      try {
+        // Decode function data
+        const eventAbi = knownSignatures[criteria.signature] as AbiEvent;
+        const decodedEvents = parseEventLogs({
+          abi: [eventAbi],
+          logs,
+        });
+        if (decodedEvents == undefined || decodedEvents.length === 0) {
+          throw new NoMatchingLogsError(
+            `No logs found for event signature ${criteria.signature}`,
+          );
+        }
+        const scalarValue = (decodedEvents[0]?.args as string[])[
+          criteria.fieldIndex
+        ];
+
+        if (scalarValue === undefined) {
+          throw new DecodedArgsError(
+            `Decoded argument at index ${criteria.fieldIndex} is undefined`,
+          );
+        }
+        return BigInt(scalarValue);
+      } catch (e) {
+        throw new DecodedArgsError(
+          `Failed to decode event log for signature ${criteria.signature}: ${(e as Error).message}`,
+        );
+      }
+    } else if (criteria.criteriaType === SignatureType.FUNC) {
+      // Fetch the transaction data
+      const transaction = await getTransaction(this._config, {
+        chainId,
+        hash,
+      });
+      try {
+        // Decode function data
+        const func = knownSignatures[criteria.signature] as AbiFunction;
+        const decodedFunction = decodeFunctionData({
+          abi: [func],
+          data: transaction.input,
+        });
+        const scalarValue = decodedFunction.args[criteria.fieldIndex] as string;
+        if (scalarValue === undefined || scalarValue === null) {
+          throw new DecodedArgsError(
+            `Decoded argument at index ${criteria.fieldIndex} is undefined`,
+          );
+        }
+        return BigInt(scalarValue);
+      } catch (e) {
+        throw new DecodedArgsError(
+          `Failed to decode function data for signature ${criteria.signature}: ${(e as Error).message}`,
+        );
+      }
+    } else {
+      throw new InvalidCriteriaTypeError(
+        `Invalid criteria type ${criteria.criteriaType}`,
+      );
+    }
   }
 
   /**

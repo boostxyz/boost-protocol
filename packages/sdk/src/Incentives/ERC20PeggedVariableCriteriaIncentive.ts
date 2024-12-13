@@ -89,6 +89,12 @@ export interface ERC20PeggedVariableCriteriaIncentivePayload {
    * @optional
    */
   manager?: Address;
+  /**
+   * The criteria for the incentive that determines how the reward is distributed.
+   *
+   * @type {IncentiveCriteria}
+   */
+  criteria: IncentiveCriteria;
 }
 
 /**

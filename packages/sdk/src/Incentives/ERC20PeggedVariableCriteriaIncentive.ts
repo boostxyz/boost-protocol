@@ -10,6 +10,7 @@ import {
   readErc20PeggedVariableCriteriaIncentiveIsClaimable,
   readErc20PeggedVariableCriteriaIncentiveLimit,
   readErc20PeggedVariableCriteriaIncentiveOwner,
+  readErc20PeggedVariableCriteriaIncentivePeg,
   readErc20PeggedVariableCriteriaIncentiveReward,
   readErc20PeggedVariableCriteriaIncentiveTotalClaimed,
   simulateErc20PeggedVariableCriteriaIncentiveClaim,
@@ -256,7 +257,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<Address>}
    */
-  public async getAsset(params?: ReadParams) {
+  public async asset(params?: ReadParams) {
     return await readErc20PeggedVariableCriteriaIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -272,7 +273,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async getReward(params?: ReadParams) {
+  public async reward(params?: ReadParams) {
     return await readErc20PeggedVariableCriteriaIncentiveReward(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -288,7 +289,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    * @param {?ReadParams} [params]
    * @returns {Promise<bigint>}
    */
-  public async getLimit(params?: ReadParams) {
+  public async limit(params?: ReadParams) {
     return await readErc20PeggedVariableCriteriaIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -419,7 +420,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    * @returns {Promise<bigint>} = Return a bigint representing that maximum amount that can be distributed by this incentive.
    */
   public async getTotalBudget(params?: ReadParams) {
-    return await this.getLimit(params);
+    return await this.limit(params);
   }
 
   /**
@@ -445,7 +446,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
   public async getRemainingClaimPotential(params?: ReadParams) {
     const [totalClaimed, limit] = await Promise.all([
       this.totalClaimed(params),
-      this.getLimit(params),
+      this.limit(params),
     ]);
     return limit - totalClaimed;
   }

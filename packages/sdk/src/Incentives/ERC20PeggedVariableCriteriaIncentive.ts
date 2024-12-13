@@ -671,6 +671,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
  * @param {bigint} param0.reward - The amount of the asset to distribute.
  * @param {bigint} param0.limit - How many times can this incentive be claimed.
  * @param {Address} [param0.manager=zeroAddress] - The entity that can manage the incentive.
+ * @param {IncentiveCriteria} param0.criteria - The incentive criteria for reward distribution.
  * @returns {Hex}
  */
 export function prepareERC20PeggedVariableCriteriaIncentivePayload({
@@ -678,18 +679,50 @@ export function prepareERC20PeggedVariableCriteriaIncentivePayload({
   peg,
   reward,
   limit,
-  maxReward,
+  maxReward = 0n,
   manager = zeroAddress,
+  criteria,
 }: ERC20PeggedVariableCriteriaIncentivePayload) {
   return encodeAbiParameters(
     [
-      { type: 'address', name: 'asset' },
-      { type: 'address', name: 'peg' },
-      { type: 'uint256', name: 'reward' },
-      { type: 'uint256', name: 'limit' },
-      { type: 'uint256', name: 'maxReward' },
-      { type: 'address', name: 'manager' },
+      {
+        type: 'tuple',
+        name: 'initPayloadExtended',
+        components: [
+          { type: 'address', name: 'asset' },
+          { type: 'address', name: 'peg' },
+          { type: 'uint256', name: 'reward' },
+          { type: 'uint256', name: 'limit' },
+          { type: 'address', name: 'manager' },
+          { type: 'uint256', name: 'maxReward' },
+          {
+            type: 'tuple',
+            name: 'criteria',
+            components: [
+              { type: 'uint8', name: 'criteriaType' },
+              { type: 'bytes32', name: 'signature' },
+              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'address', name: 'targetContract' },
+            ],
+          },
+        ],
+      },
     ],
-    [asset, peg, reward, limit, maxReward, manager],
+    [
+      {
+        asset,
+        peg,
+        reward,
+        limit,
+        maxReward,
+        manager,
+        criteria: {
+          criteriaType: criteria.criteriaType,
+          signature: criteria.signature,
+          fieldIndex: criteria.fieldIndex,
+          targetContract: criteria.targetContract,
+        },
+      },
+    ],
   );
 }

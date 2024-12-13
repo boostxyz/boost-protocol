@@ -14,6 +14,7 @@ import ManagedBudgetWithFeesArtifact from '@boostxyz/evm/artifacts/contracts/bud
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
+import ERC20PeggedIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedIncentive.sol/ERC20PeggedIncentive.json';
 import ERC20PeggedVariableCriteriaIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol/ERC20PeggedVariableCriteriaIncentive.json';
 import ERC20VariableCriteriaIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
@@ -48,6 +49,8 @@ import {
   type DeployablePayloadOrAddress,
   ERC20Incentive,
   type ERC20IncentivePayload,
+  ERC20PeggedIncentive,
+  type ERC20PeggedIncentivePayload,
   ERC20PeggedVariableCriteriaIncentive,
   type ERC20PeggedVariableCriteriaIncentivePayload,
   ERC20VariableCriteriaIncentive,
@@ -162,6 +165,7 @@ export function useTestFixtures(
       AllowListIncentive,
       CGDAIncentive,
       ERC20Incentive,
+      ERC20PeggedIncentive,
       ERC20VariableIncentive,
       ERC20VariableCriteriaIncentive,
       ERC20PeggedVariableCriteriaIncentive,
@@ -300,6 +304,14 @@ export function deployFixtures(
         account,
       }),
     );
+    const erc20PeggedIncentiveBase = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: ERC20PeggedIncentiveArtifact.abi,
+        bytecode: ERC20PeggedIncentiveArtifact.bytecode as Hex,
+        account,
+      }),
+    );
     const erc20VariableIncentiveBase = await getDeployedContractAddress(
       config,
       deployContract(config, {
@@ -429,6 +441,11 @@ export function deployFixtures(
           [chainId]: erc20IncentiveBase,
         };
       },
+      ERC20PeggedIncentive: class TERC20PeggedIncentive extends ERC20PeggedIncentive {
+        public static override bases: Record<number, Address> = {
+          [chainId]: erc20PeggedIncentiveBase,
+        };
+      },
       ERC20VariableIncentive: class TERC20VariableIncentive extends ERC20VariableIncentive {
         public static override bases: Record<number, Address> = {
           [chainId]: erc20VariableIncentiveBase,
@@ -479,6 +496,7 @@ export function deployFixtures(
       AllowListIncentive: typeof AllowListIncentive;
       CGDAIncentive: typeof CGDAIncentive;
       ERC20Incentive: typeof ERC20Incentive;
+      ERC20PeggedIncentive: typeof ERC20PeggedIncentive;
       ERC20VariableIncentive: typeof ERC20VariableIncentive;
       ERC20VariableCriteriaIncentive: typeof ERC20VariableCriteriaIncentive;
       ERC20PeggedVariableCriteriaIncentive: typeof ERC20PeggedVariableCriteriaIncentive;
@@ -612,6 +630,12 @@ export function deployFixtures(
       }
       override ERC20Incentive(options: ERC20IncentivePayload) {
         return new bases.ERC20Incentive(
+          { config: this._config, account: this._account },
+          options,
+        );
+      }
+      override ERC20PeggedIncentive(options: ERC20PeggedIncentivePayload) {
+        return new bases.ERC20PeggedIncentive(
           { config: this._config, account: this._account },
           options,
         );

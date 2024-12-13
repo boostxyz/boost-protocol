@@ -47,7 +47,7 @@ export { erc20PeggedVariableCriteriaIncentiveAbi };
  * The object representation of a `Erc20PeggedVariableCriteriaIncentive.InitPayload`
  *
  * @export
- * @interface E20PeggedVariableCriteriaIncentive
+ * @interface Erc20PeggedVariableCriteriaIncentive
  * @typedef {Erc20PeggedVariableCriteriaIncentive}
  */
 export interface ERC20PeggedVariableCriteriaIncentivePayload {
@@ -176,11 +176,12 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
   }
 
   /**
-   * Fetches the IncentiveCriteria struct from the contract
+   * Retrieves the maximum reward amount per claim.
    *
+   * @public
+   * @async
    * @param {?ReadParams} [params]
-   * @returns {Promise<IncentiveCriteria>} Incentive criteria structure
-   * @throws {IncentiveCriteriaNotFoundError}
+   * @returns {Promise<bigint>} The maximum reward amount per claim
    */
   public async getMaxReward(params?: ReadParams): Promise<bigint> {
     const maxReward =

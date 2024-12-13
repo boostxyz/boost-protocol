@@ -15,7 +15,12 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
     using SafeTransferLib for address;
 
     event ERC20PeggedIncentiveInitialized(
-        address indexed asset, address indexed peg, uint256 reward, uint256 limit, IncentiveCriteria criteria, address manager
+        address indexed asset,
+        address indexed peg,
+        uint256 reward,
+        uint256 limit,
+        IncentiveCriteria criteria,
+        address manager
     );
 
     /// @notice The payload for initializing the incentive
@@ -77,7 +82,9 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         incentiveCriteria = criteria_;
         _initializeOwner(msg.sender);
         _setRoles(init_.manager, MANAGER_ROLE);
-        emit ERC20PeggedIncentiveInitialized(init_.asset, init_.peg, init_.reward, init_.limit, init_.criteria, init_.manager);
+        emit ERC20PeggedIncentiveInitialized(
+            init_.asset, init_.peg, init_.reward, init_.limit, init_.criteria, init_.manager
+        );
     }
 
     /// @inheritdoc AIncentive

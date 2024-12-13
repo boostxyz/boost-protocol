@@ -266,6 +266,22 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
   }
 
   /**
+   * The address of the pegged ERC20-like token
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {Promise<Address>}
+   */
+  public async peg(params?: ReadParams) {
+    return await readErc20PeggedVariableCriteriaIncentivePeg(this._config, {
+      address: this.assertValidAddress(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
    * The reward amount issued for each claim
    *
    * @public

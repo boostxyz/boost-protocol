@@ -37,7 +37,10 @@ import type {
   DeployableOptions,
   GenericDeployableParams,
 } from '../Deployable/Deployable';
-import { DeployableTarget } from '../Deployable/DeployableTarget';
+import {
+  DeployableTargetWithRBAC,
+  Roles,
+} from '../Deployable/DeployableTargetWithRBAC';
 import { type ClaimPayload, prepareClaimPayload } from '../claiming';
 import {
   DecodedArgsError,
@@ -135,7 +138,7 @@ export type Erc20PeggedVariableCriteriaIncentiveLog<
  * @typedef {ERC20PeggedVariableCriteriaIncentive}
  * @extends {DeployableTarget<ERC20PeggedVariableCriteriaIncentive>}
  */
-export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
+export class ERC20PeggedVariableCriteriaIncentive extends DeployableTargetWithRBAC<
   ERC20PeggedVariableCriteriaIncentivePayload,
   typeof erc20PeggedVariableCriteriaIncentiveAbi
 > {

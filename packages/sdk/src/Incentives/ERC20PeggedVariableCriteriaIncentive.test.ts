@@ -34,6 +34,8 @@ import {
   gasRebateIncentiveCriteria,
 } from "./ERC20VariableCriteriaIncentive";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
+import { Roles } from "../Deployable/DeployableTargetWithRBAC";
+import { makeTestClient } from "@boostxyz/test/viem";
 
 /**
  * A basic ERC721 mint scalar criteria for testing
@@ -111,15 +113,17 @@ describe("ERC20VariableCriteriaIncentive", () => {
       reward: 1n,
       limit: 1n,
       maxReward: 1n,
-      manager: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      manager: defaultOptions.account.address, // Set the test account as manager during initialization
       criteria: basicErc721TransferScalarCriteria(erc721),
       peg: erc20.assertValidAddress(),
     });
 
+    // Create boost with the budget and incentive, and grant MANAGER_ROLE to the test account
     boost = await freshBoost(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
+    await budgets.budget.grantRoles(defaultOptions.account.address, Roles.MANAGER);
     expect(isAddress(boost.incentives[0]!.assertValidAddress())).toBe(true);
   });
 
@@ -315,18 +319,43 @@ describe("ERC20VariableCriteriaIncentive", () => {
       "0x0000000000000000000000000000000000000000000000000000000000000001",
     );
   });
-
   test("can clawback via a budget", async () => {
+    // Deploy boost with budget and incentive
     const boost = await freshBoost(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
+
+    // Get the deployed incentive and verify its address
+    const deployedIncentive = await boost.incentives[0]!;
+    const deployedIncentiveAddress = deployedIncentive.assertValidAddress();
+    console.log('Deployed incentive address:', deployedIncentiveAddress);
+
+    // Initialize the incentive with the deployed address
+    const incentiveInstance = fixtures.core.ERC20PeggedVariableCriteriaIncentive({
+      address: deployedIncentiveAddress,
+    });
+
+    // Get budget address and verify it
+    const budgetAddress = budgets.budget.assertValidAddress();
+    console.log('Budget address:', budgetAddress);
+
+    // First grant ADMIN_ROLE to test account so it can grant other roles
+    await incentiveInstance.grantRoles(defaultOptions.account.address, Roles.ADMIN);
+
+    // Then grant both ADMIN_ROLE and MANAGER_ROLE to budget contract
+    await incentiveInstance.grantRoles(budgetAddress, Roles.ADMIN);
+    await incentiveInstance.grantRoles(budgetAddress, Roles.MANAGER);
+
+    // Perform clawback
     const [amount, address] = await budgets.budget.clawbackFromTarget(
-      fixtures.core.assertValidAddress(),
+      deployedIncentive.assertValidAddress(),
       erc20Incentive.buildClawbackData(1n),
       boost.id,
       0,
     );
+
+    // Verify results
     expect(amount).toBe(1n);
     expect(isAddressEqual(address, budgets.erc20.assertValidAddress())).toBe(
       true,

@@ -714,8 +714,8 @@ export function prepareERC20PeggedVariableCriteriaIncentivePayload({
         peg,
         reward,
         limit,
-        maxReward,
         manager,
+        maxReward,
         criteria: {
           criteriaType: criteria.criteriaType,
           signature: criteria.signature,

@@ -19,8 +19,9 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         address indexed peg,
         uint256 reward,
         uint256 limit,
-        IncentiveCriteria criteria,
-        address manager
+        address manager,
+        uint256 maxReward,
+        IncentiveCriteria criteria
     );
 
     /// @notice The payload for initializing the incentive
@@ -29,8 +30,8 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         address peg;
         uint256 reward;
         uint256 limit;
-        uint256 maxReward;
         address manager;
+        uint256 maxReward;
         IncentiveCriteria criteria;
     }
 
@@ -83,7 +84,7 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         _initializeOwner(msg.sender);
         _setRoles(init_.manager, MANAGER_ROLE);
         emit ERC20PeggedIncentiveInitialized(
-            init_.asset, init_.peg, init_.reward, init_.limit, init_.criteria, init_.manager
+            init_.asset, init_.peg, init_.reward, init_.limit, init_.manager, init_.maxReward, init_.criteria
         );
     }
 

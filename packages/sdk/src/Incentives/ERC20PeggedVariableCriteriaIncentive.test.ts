@@ -27,7 +27,6 @@ import { SignatureType } from "../Actions/EventAction";
 import type { Boost } from "../Boost";
 import {
   type ERC20PeggedVariableCriteriaIncentive,
-  type ERC20PeggedVariableCriteriaIncentivePayload,
 } from "./ERC20PeggedVariableCriteriaIncentive";
 import {
   type IncentiveCriteria,
@@ -71,25 +70,6 @@ export function basicErc721MintScalarCriteria(
   };
 }
 
-/**
- * A basic ERC721 mint scalar payload for testing
- *
- * @param {MockERC721} erc721 - The ERC721 contract
- * @returns {ERC20VariableCriteriaIncentivePayload} - Returns a full variable criteria incentive payload
- */
-export function basicErc721TransferScalarPayload(
-  erc721: MockERC721,
-): ERC20PeggedVariableCriteriaIncentivePayload {
-  return {
-    asset: erc721.assertValidAddress(),
-    reward: 1n,
-    limit: 1n,
-    maxReward: 1n,
-    criteria: basicErc721TransferScalarCriteria(erc721),
-    peg: erc20.assertValidAddress(),
-  };
-}
-
 let fixtures: Fixtures,
   erc20: MockERC20,
   erc721: MockERC721,
@@ -108,10 +88,9 @@ describe("ERC20VariableCriteriaIncentive", () => {
     erc721 = await loadFixture(fundErc721(defaultOptions));
     erc20Incentive = fixtures.core.ERC20PeggedVariableCriteriaIncentive({
       asset: budgets.erc20.assertValidAddress(),
-      reward: 1n,
-      limit: 1n,
-      maxReward: 1n,
-      manager: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      reward: parseEther("1"),
+      limit: parseEther("10"),
+      maxReward: parseEther("20"),
       criteria: basicErc721TransferScalarCriteria(erc721),
       peg: erc20.assertValidAddress(),
     });
@@ -136,17 +115,17 @@ describe("ERC20VariableCriteriaIncentive", () => {
 
     test("should return correct reward amount", async () => {
       const reward = await erc20Incentive.reward();
-      expect(reward).toBe(1n);
+      expect(reward).toBe(parseEther("1"));
     });
 
     test("should return correct limit", async () => {
       const limit = await erc20Incentive.limit();
-      expect(limit).toBe(1n);
+      expect(limit).toBe(parseEther("10"));
     });
 
     test("should return correct max reward", async () => {
       const maxReward = await erc20Incentive.getMaxReward();
-      expect(maxReward).toBe(1n);
+      expect(maxReward).toBe(parseEther("20"));
     });
   });
 
@@ -187,7 +166,7 @@ describe("ERC20VariableCriteriaIncentive", () => {
     });
   });
 
-  describe("Owner and Manager", () => {
+  describe("Owner", () => {
     test("should return correct owner", async () => {
       const owner = await erc20Incentive.owner();
       expect(isAddressEqual(owner, fixtures.core.assertValidAddress())).toBe(true);

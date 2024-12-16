@@ -62,6 +62,14 @@ export enum CheatCodes {
 }
 
 /**
+ * The signature for the Transfer event for both ERC20 and ERC721.
+ *
+ * @type {Hex}
+ */
+export const TRANSFER_SIGNATURE =
+  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+/**
  * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.
  * See (writeContract)[https://viem.sh/docs/contract/writeContract]
  *

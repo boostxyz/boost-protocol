@@ -1,3 +1,4 @@
+import { sign } from 'crypto';
 import {
   eventActionAbi,
   readEventActionGetActionClaimant,
@@ -11,10 +12,10 @@ import { match } from 'ts-pattern';
 import {
   type AbiEvent,
   type AbiFunction,
-  AbiItem,
   type Address,
   type GetLogsReturnType,
   type GetTransactionParameters,
+  type GetTransactionReceiptReturnType,
   type Hex,
   type Log,
   type Transaction,
@@ -35,6 +36,7 @@ import type {
 } from '../Deployable/Deployable';
 import { DeployableTarget } from '../Deployable/DeployableTarget';
 import {
+  DecodedArgsError,
   DecodedArgsMalformedError,
   FieldValueNotComparableError,
   FieldValueUndefinedError,
@@ -51,6 +53,7 @@ import {
   type Overwrite,
   type ReadParams,
   RegistryType,
+  TRANSFER_SIGNATURE,
   type WriteParams,
 } from '../utils';
 
@@ -714,6 +717,12 @@ export class EventAction extends DeployableTarget<
       ) {
         return false;
       }
+
+      // Special handling for Transfer events
+      if (actionStep.signature === TRANSFER_SIGNATURE) {
+        return this.decodeTransferLogs(receipt, actionStep);
+      }
+
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
         .map((log) => {
@@ -765,6 +774,82 @@ export class EventAction extends DeployableTarget<
       }
     }
     return false;
+  }
+
+  /**
+   * Decodes transfer logs specifically for ERC721 and ERC20 Transfer events.
+   *
+   * This special handling is required because both ERC20 and ERC721 Transfer events:
+   * 1. Share the same event signature (0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef)
+   * 2. Have similar but distinct structures:
+   *    - ERC721: Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
+   *    - ERC20:  Transfer(address indexed from, address indexed to, uint256 value)
+   *
+   * This causes signature collisions in the known signatures package, requiring us to
+   * try decoding both ways to determine which type of Transfer event we're dealing with.
+   *
+   * @param {GetTransactionReceiptReturnType} receipt - The transaction receipt containing the logs
+   * @param {ActionStep} actionStep - The action step being validated
+   * @returns {Promise<boolean>} - Returns true if the transfer logs are valid for either ERC20 or ERC721
+   * @throws {DecodedArgsError} - Throws if neither ERC20 nor ERC721 decoding succeeds
+   */
+  private async decodeTransferLogs(
+    receipt: GetTransactionReceiptReturnType,
+    actionStep: ActionStep,
+  ) {
+    const filteredLogs = receipt.logs.filter(
+      (log) => log.topics[0] === TRANSFER_SIGNATURE,
+    );
+
+    // ERC721
+    try {
+      const decodedLogs = filteredLogs.map((log) => {
+        const { eventName, args } = decodeEventLog({
+          abi: [
+            {
+              name: 'Transfer',
+              type: 'event',
+              inputs: [
+                { type: 'address', indexed: true },
+                { type: 'address', indexed: true },
+                { type: 'uint256', indexed: true },
+              ],
+            },
+          ],
+          data: log.data,
+          topics: log.topics,
+        });
+        return { ...log, eventName, args };
+      });
+
+      return this.isActionEventValid(actionStep, decodedLogs);
+    } catch {
+      // ERC20
+      try {
+        const decodedLogs = filteredLogs.map((log) => {
+          const { eventName, args } = decodeEventLog({
+            abi: [
+              {
+                name: 'Transfer',
+                type: 'event',
+                inputs: [
+                  { type: 'address', indexed: true },
+                  { type: 'address', indexed: true },
+                  { type: 'uint256' },
+                ],
+              },
+            ],
+            data: log.data,
+            topics: log.topics,
+          });
+          return { ...log, eventName, args };
+        });
+
+        return this.isActionEventValid(actionStep, decodedLogs);
+      } catch {
+        throw new DecodedArgsError('Failed to decode transfer logs');
+      }
+    }
   }
 
   /**

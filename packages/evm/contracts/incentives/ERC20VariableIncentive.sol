@@ -25,6 +25,7 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
         address asset;
         uint256 reward;
         uint256 limit;
+        address manager;
     }
 
     /// @inheritdoc AIncentive
@@ -64,7 +65,8 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
         totalClaimed = 0;
 
         _initializeOwner(msg.sender);
-        _setRoles(msg.sender, MANAGER_ROLE);
+        address manager_ = init_.manager;
+        _setRoles(manager_, MANAGER_ROLE);
         emit ERC20VariableIncentiveInitialized(asset_, reward_, limit_);
     }
 
@@ -108,7 +110,12 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
+    function clawback(bytes calldata data_)
+        external
+        override
+        onlyOwnerOrRoles(MANAGER_ROLE)
+        returns (uint256, address)
+    {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 

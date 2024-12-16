@@ -108,7 +108,12 @@ contract ERC20PeggedIncentive is RBAC, AERC20PeggedIncentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
+    function clawback(bytes calldata data_)
+        external
+        override
+        onlyOwnerOrRoles(MANAGER_ROLE)
+        returns (uint256, address)
+    {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 

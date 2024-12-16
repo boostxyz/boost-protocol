@@ -991,7 +991,7 @@ contract BoostCoreTest is Test {
                         strategy: AERC20Incentive.Strategy.POOL,
                         reward: rewardAmount,
                         limit: limit,
-                        manager: address(this)
+                        manager: address(boostCore)
                     })
                 )
             });

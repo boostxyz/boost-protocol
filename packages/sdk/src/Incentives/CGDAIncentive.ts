@@ -511,6 +511,7 @@ export function prepareCGDAIncentivePayload({
   rewardDecay,
   rewardBoost,
   totalBudget,
+  manager,
 }: CGDAIncentivePayload) {
   return encodeAbiParameters(
     [
@@ -519,7 +520,8 @@ export function prepareCGDAIncentivePayload({
       { type: 'uint256', name: 'rewardDecay' },
       { type: 'uint256', name: 'rewardBoost' },
       { type: 'uint256', name: 'totalBudget' },
+      { type: 'address', name: 'manager' },
     ],
-    [asset, initialReward, rewardDecay, rewardBoost, totalBudget],
+    [asset, initialReward, rewardDecay, rewardBoost, totalBudget, manager],
   );
 }

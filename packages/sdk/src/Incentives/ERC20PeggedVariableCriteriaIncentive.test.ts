@@ -294,4 +294,22 @@ describe("ERC20VariableCriteriaIncentive", () => {
       "0x0000000000000000000000000000000000000000000000000000000000000001",
     );
   });
+
+  test("can clawback via a budget", async () => {
+    // rebase this
+    const boost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20Incentive],
+    });
+    const [amount, address] = await budgets.budget.clawbackFromTarget(
+      fixtures.core.assertValidAddress(),
+      erc20Incentive.buildClawbackData(1n),
+      boost.id,
+      0,
+    );
+    expect(amount).toBe(1n);
+    expect(isAddressEqual(address, budgets.erc20.assertValidAddress())).toBe(
+      true,
+    );
+  });
 });

@@ -7,6 +7,7 @@
       "packages/evm/out",
       "packages/evm/cache",
       "packages/evm/cache_forge",
+      "packages/sdk/cache",
       "dist",
       ".next",
       ".turbo"

@@ -1,4 +1,3 @@
-import { sign } from 'crypto';
 import {
   eventActionAbi,
   readEventActionGetActionClaimant,

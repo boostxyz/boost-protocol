@@ -265,7 +265,8 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
                 strategy: strategy,
                 tokenId: tokenId,
                 limit: limit,
-                extraData: ""
+                extraData: "",
+                manager: address(0)
             })
         );
     }

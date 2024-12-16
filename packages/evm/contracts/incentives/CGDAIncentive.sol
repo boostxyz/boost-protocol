@@ -32,6 +32,7 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
         uint256 rewardDecay;
         uint256 rewardBoost;
         uint256 totalBudget;
+        address manager;
     }
 
     /// @inheritdoc AIncentive
@@ -71,7 +72,7 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
 
         totalBudget = init_.totalBudget;
         _initializeOwner(msg.sender);
-        _setRoles(msg.sender, MANAGER_ROLE);
+        _setRoles(init_.manager, MANAGER_ROLE);
         emit CGDAIncentiveInitialized(
             init_.asset, init_.initialReward, init_.rewardDecay, init_.rewardBoost, init_.totalBudget
         );
@@ -120,7 +121,7 @@ contract CGDAIncentive is RBAC, ACGDAIncentive {
         external
         virtual
         override
-        onlyRoles(MANAGER_ROLE)
+        onlyOwnerOrRoles(MANAGER_ROLE)
         returns (uint256, address)
     {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));

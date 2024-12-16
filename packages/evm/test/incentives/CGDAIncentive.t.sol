@@ -31,7 +31,8 @@ contract CGDAIncentiveTest is Test {
                     initialReward: 1 ether,
                     rewardDecay: 0.05 ether,
                     rewardBoost: 0.1 ether,
-                    totalBudget: 10 ether
+                    totalBudget: 10 ether,
+                    manager: address(this)
                 })
             )
         );
@@ -51,7 +52,8 @@ contract CGDAIncentiveTest is Test {
                     initialReward: 1 ether,
                     rewardDecay: 0.05 ether,
                     rewardBoost: 0.1 ether,
-                    totalBudget: 10 ether
+                    totalBudget: 10 ether,
+                    manager: address(this)
                 })
             )
         );
@@ -82,7 +84,8 @@ contract CGDAIncentiveTest is Test {
                     initialReward: 1 ether,
                     rewardDecay: 0.05 ether,
                     rewardBoost: 0.1 ether,
-                    totalBudget: 10 ether
+                    totalBudget: 10 ether,
+                    manager: address(this)
                 })
             )
         );
@@ -100,7 +103,8 @@ contract CGDAIncentiveTest is Test {
                     initialReward: 0, // Invalid initialReward
                     rewardDecay: 0.05 ether,
                     rewardBoost: 0.1 ether,
-                    totalBudget: 10 ether
+                    totalBudget: 10 ether,
+                    manager: address(this)
                 })
             )
         );
@@ -118,7 +122,8 @@ contract CGDAIncentiveTest is Test {
                     initialReward: 11 ether, // initialReward greater than totalBudget
                     rewardDecay: 0.05 ether,
                     rewardBoost: 0.1 ether,
-                    totalBudget: 10 ether
+                    totalBudget: 10 ether,
+                    manager: address(this)
                 })
             )
         );
@@ -293,7 +298,8 @@ contract CGDAIncentiveTest is Test {
                     initialReward: 1 ether,
                     rewardDecay: 0.05 ether,
                     rewardBoost: 0.1 ether,
-                    totalBudget: 10 ether
+                    totalBudget: 10 ether,
+                    manager: address(this)
                 })
             )
         );

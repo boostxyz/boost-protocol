@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 5.1.0
+
+### Minor Changes
+
+- a853ac8: add logic for Transfer event decoding
+- 3320c8d: standardize clawback logic
+
 ## 5.0.0
 
 ### Major Changes

@@ -1,5 +1,12 @@
 # @boostxyz/evm
 
+## 5.1.0
+
+### Minor Changes
+
+- 7afe8a3: add Erc20PeggedVariableCriteriaIncentive
+- 3320c8d: standardize clawback logic
+
 ## 5.0.0
 
 ### Major Changes

@@ -1,3 +1,4 @@
+import { events } from '@boostxyz/signatures';
 import {
   type Config,
   type ReadContractParameters,
@@ -66,8 +67,9 @@ export enum CheatCodes {
  *
  * @type {Hex}
  */
-export const TRANSFER_SIGNATURE =
-  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+export const TRANSFER_SIGNATURE = events.selectors[
+  'Transfer(address indexed,address indexed,uint256 indexed)'
+] as Hex;
 
 /**
  * Helper type that encapsulates common writeContract parameters without fields like `abi`, `args`, `functionName`, `address` that are expected to be provided the SDK.

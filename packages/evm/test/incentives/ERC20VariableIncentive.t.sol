@@ -129,7 +129,14 @@ contract ERC20VariableIncentiveTest is Test {
 
     function testPreflight() public view {
         bytes memory preflightPayload = incentive.preflight(
-            abi.encode(ERC20VariableIncentive.InitPayload({asset: address(mockAsset), reward: 1 ether, limit: 5 ether}))
+            abi.encode(
+                ERC20VariableIncentive.InitPayload({
+                    asset: address(mockAsset),
+                    reward: 1 ether,
+                    limit: 5 ether,
+                    manager: address(this)
+                })
+            )
         );
 
         ABudget.Transfer memory transfer = abi.decode(preflightPayload, (ABudget.Transfer));
@@ -204,7 +211,9 @@ contract ERC20VariableIncentiveTest is Test {
     }
 
     function _initPayload(address asset, uint256 reward, uint256 limit) internal view returns (bytes memory) {
-        return abi.encode(ERC20VariableIncentive.InitPayload({asset: asset, reward: reward, limit: limit}));
+        return abi.encode(
+            ERC20VariableIncentive.InitPayload({asset: asset, reward: reward, limit: limit, manager: address(this)})
+        );
     }
 
     function _makeFungibleTransfer(ABudget.AssetType assetType, address asset, address target, uint256 value)

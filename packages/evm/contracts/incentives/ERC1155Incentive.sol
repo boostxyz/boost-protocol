@@ -28,6 +28,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
         uint256 tokenId;
         uint256 limit;
         bytes extraData;
+        address manager;
     }
 
     struct ERC1155ClaimPayload {
@@ -69,7 +70,7 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
         extraData = init_.extraData;
 
         _initializeOwner(msg.sender);
-        _setRoles(msg.sender, MANAGER_ROLE);
+        _setRoles(init_.manager, MANAGER_ROLE);
         emit ERC1155IncentiveInitialized(asset, strategy, tokenId, limit);
     }
 
@@ -117,7 +118,12 @@ contract ERC1155Incentive is RBAC, AERC1155Incentive {
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_) external override onlyRoles(MANAGER_ROLE) returns (uint256, address) {
+    function clawback(bytes calldata data_)
+        external
+        override
+        onlyOwnerOrRoles(MANAGER_ROLE)
+        returns (uint256, address)
+    {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
         (uint256 amount) = abi.decode(claim_.data, (uint256));
 

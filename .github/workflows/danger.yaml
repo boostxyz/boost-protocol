@@ -1,6 +1,11 @@
 name: "🚧 Danger"
 on:
   pull_request:
+    types: 
+      - opened
+      - reopened
+      - synchronize # captures and git pushes with changes
+      - edited  # This captures title and description changes
 jobs:
   danger:
     runs-on: ubuntu-latest

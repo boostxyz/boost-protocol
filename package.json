@@ -5,9 +5,9 @@
   "repository": "https://github.com/boostxyz/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",
   "license": "GPL-3.0-or-later",
-  "packageManager": "pnpm@9.4.0",
+  "packageManager": "pnpm@9.15.0",
   "engines": {
-    "pnpm": "9.4.0"
+    "pnpm": "9.15.0"
   },
   "scripts": {
     "build": "turbo build",

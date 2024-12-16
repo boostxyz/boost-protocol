@@ -54,6 +54,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployERC20VariableIncentive(registry);
         _deployERC20VariableCriteriaIncentive(registry);
         _deployERC20PeggedIncentive(registry);
+        _deployERC20PeggedVariableCriteriaIncentive(registry);
         _deployCGDAIncentive(registry);
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
@@ -127,7 +128,7 @@ contract ModuleBaseDeployer is ScriptUtils {
     }
 
     function _deployERC20PeggedVariableCriteriaIncentive(BoostRegistry registry) internal returns (address erc20PeggedVariableCriteriaIncentive) {
-        bytes memory initCode = type(ERC20PeggedIncentive).creationCode;
+        bytes memory initCode = type(ERC20PeggedVariableCriteriaIncentive).creationCode;
         erc20PeggedVariableCriteriaIncentive = _getCreate2Address(initCode, "");
         console.log("ERC20PeggedVariableCriteriaIncentive: ", erc20PeggedVariableCriteriaIncentive);
         deployJson = deployJsonKey.serialize("ERC20PeggedVariableCriteriaIncentive", erc20PeggedVariableCriteriaIncentive);

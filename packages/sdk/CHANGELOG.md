@@ -1,5 +1,15 @@
 # @boostxyz/sdk
 
+## 5.2.0
+
+### Minor Changes
+
+- 5c1ea17: auto-add boostcore as a manager in ManagedBudget
+
+### Patch Changes
+
+- d32f677: add decodeClaimData method to ERC20PeggedVariableCriteriaIncentive
+
 ## 5.1.1
 
 ### Patch Changes

@@ -26,6 +26,7 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  decodeAbiParameters,
   decodeFunctionData,
   encodeAbiParameters,
   parseEventLogs,
@@ -659,6 +660,18 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
       [{ type: 'uint256', name: 'rewardAmount' }],
       [rewardAmount],
     );
+  }
+
+  /**
+   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentive, returning the encoded claim amount.
+   * Useful when deriving amount claimed from logs.
+   *
+   * @public
+   * @param {Hex} claimData
+   * @returns {BigInt} Returns the reward amount from a claim data payload
+   */
+  public decodeClaimData(data: Hex) {
+    return BigInt(decodeAbiParameters([{ type: 'uint256' }], data)[0]);
   }
 }
 

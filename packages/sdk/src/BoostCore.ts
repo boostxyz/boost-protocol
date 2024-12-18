@@ -1281,6 +1281,13 @@ export class BoostCore extends Deployable<
    * @returns {ManagedBudget}
    */
   ManagedBudget(options: DeployablePayloadOrAddress<ManagedBudgetPayload>) {
+    if (
+      typeof options !== 'string' &&
+      !options.authorized.includes(this.assertValidAddress())
+    ) {
+      options.authorized = [this.assertValidAddress(), ...options.authorized];
+      options.roles = [Roles.MANAGER, ...options.roles];
+    }
     return new ManagedBudget(
       { config: this._config, account: this._account },
       options,
@@ -1301,7 +1308,10 @@ export class BoostCore extends Deployable<
   ManagedBudgetWithFees(
     options: DeployablePayloadOrAddress<ManagedBudgetWithFeesPayload>,
   ) {
-    if (typeof options !== 'string') {
+    if (
+      typeof options !== 'string' &&
+      !options.authorized.includes(this.assertValidAddress())
+    ) {
       options.authorized = [this.assertValidAddress(), ...options.authorized];
       options.roles = [Roles.MANAGER, ...options.roles];
     }

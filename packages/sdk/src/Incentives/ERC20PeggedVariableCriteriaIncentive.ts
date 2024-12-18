@@ -31,7 +31,7 @@ import {
   parseEventLogs,
   zeroAddress,
 } from 'viem';
-import { ERC20Incentive as ERC20IncentiveBases } from '../../dist/deployments.json';
+import { ERC20PeggedVariableCriteriaIncentive as ERC20PeggedVariableCriteriaIncentiveBases } from '../../dist/deployments.json';
 import { SignatureType } from '../Actions/EventAction';
 import type {
   DeployableOptions,
@@ -149,7 +149,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    */
   public static override bases: Record<number, Address> = {
     31337: import.meta.env.VITE_ERC20_INCENTIVE_BASE,
-    ...(ERC20IncentiveBases as Record<number, Address>),
+    ...(ERC20PeggedVariableCriteriaIncentiveBases as Record<number, Address>),
   };
   /**
    * @inheritdoc

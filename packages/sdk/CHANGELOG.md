@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 5.1.1
+
+### Patch Changes
+
+- 5b172a5: update base contracts for pegged incentive types
+
 ## 5.1.0
 
 ### Minor Changes

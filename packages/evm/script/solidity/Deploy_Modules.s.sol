@@ -62,6 +62,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
         _deploySignerValidator(registry);
+        _deployIntentValidator(registry);
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
@@ -251,7 +252,7 @@ contract ModuleBaseDeployer is ScriptUtils {
 
         bytes memory initCode = type(IntentValidator).creationCode;
         intentValidator = _getCreate2Address(initCode, "");
-        console.log("SimpleDenyList: ", intentValidator);
+        console.log("IntentValidator: ", intentValidator);
         deployJson = deployJsonKey.serialize("IntentValidator", intentValidator);
         bool newDeploy = _deploy2(initCode, "");
 

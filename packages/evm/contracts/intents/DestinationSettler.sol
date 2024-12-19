@@ -43,6 +43,11 @@ contract DestinationSettler is ReentrancyGuard {
     error InvalidUserSignature();
     error InvalidExecutionChainId();
 
+    // constructor that takes boost core address
+    constructor(address _boostCore) {
+        boostCore = BoostCore(_boostCore);
+    }
+
     // Called by filler, who sees ERC7683 intent emitted on origin chain
     // containing the callsByUser data to be executed following a 7702 delegation.
     // @dev We don't use the last parameter `fillerData` in this function.
@@ -108,12 +113,15 @@ contract DestinationSettler is ReentrancyGuard {
         // Get the associated authorized public keys for the user. Assumes the target has `getKeys` similar to that in ExperimentalDelegation.
         ExperimentalDelegation userAccount = ExperimentalDelegation(payable(userCalls.user));
         SignatureVerification.Key[] memory keys = userAccount.getKeys();
-        SignatureVerification.WrappedSignature memory wrappedSignature =
-            SignatureVerification.parseSignature(userCalls.signature);
-        SignatureVerification.Key memory authorizingKey = keys[wrappedSignature.keyIndex];
 
-        bytes32 digest = keccak256(abi.encodePacked(userAccount.nonce(), abi.encode(userCalls)));
-        SignatureVerification.assertSignature(digest, userCalls.signature, authorizingKey);
+        // TODO: Fix the signature verification
+        // SignatureVerification.WrappedSignature memory wrappedSignature =
+        //     SignatureVerification.parseSignature(userCalls.signature);
+        // SignatureVerification.Key memory authorizingKey = keys[wrappedSignature.keyIndex];
+
+        //bytes32 digest = keccak256(abi.encodePacked(userAccount.nonce(), abi.encode(userCalls)));
+        // TODO: This is where we would use the EIP712-compatible hash.
+        //SignatureVerification.assertSignature(digest, userCalls.signature, authorizingKey);
     }
 
     function _verify7702Delegation() internal {

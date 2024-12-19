@@ -13,6 +13,7 @@ import {AManagedBudgetWithFees} from "contracts/budgets/AManagedBudgetWithFees.s
 import {AVestingBudget} from "contracts/budgets/AVestingBudget.sol";
 
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
+import {AIntentValidator} from "contracts/validators/AIntentValidator.sol";
 
 import {AEventAction} from "contracts/actions/EventAction.sol";
 
@@ -47,6 +48,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAManagedBudgetWithFees();
         _getInterfaceAVestingBudget();
         _getInterfaceASignerValidator();
+        _getInterfaceAIntentValidator();
         _getInterfaceAAllowListIncentive();
         _getInterfaceACGDAIncentive();
         _getInterfaceAIncentive();
@@ -105,6 +107,11 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceASignerValidator() internal {
         string memory interfaceId = uint256(uint32(type(ASignerValidator).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("ASignerValidator", interfaceId);
+    }
+
+    function _getInterfaceAIntentValidator() internal {
+        string memory interfaceId = uint256(uint32(type(AIntentValidator).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AIntentValidator", interfaceId);
     }
 
     function _getInterfaceAAllowListIncentive() internal {

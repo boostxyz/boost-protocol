@@ -29,9 +29,8 @@ contract IntentValidator is AIntentValidator {
     /// @param data_ The compressed list of authorized signers
     /// @dev The first address in the list will be the initial owner of the contract
     function initialize(bytes calldata data_) public virtual override initializer {
-        (address[] memory signers_, address validatorCaller_, address settlerCaller_) =
-            abi.decode(data_, (address[], address, address));
-        _initializeOwner(signers_[0]);
+        (address validatorCaller_, address settlerCaller_) = abi.decode(data_, (address, address));
+        _initializeOwner(msg.sender);
         _validatorCaller = validatorCaller_;
         _settlerCaller = settlerCaller_;
         emit SignerValidatorInitialized(validatorCaller_);

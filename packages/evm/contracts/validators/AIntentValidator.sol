@@ -12,7 +12,7 @@ import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 
 /// @title Abstract Intent Validator
 /// @notice An abstract contract for a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
-abstract contract AIntentValidator is ACloneable, Ownable, IBoostClaim {
+abstract contract AIntentValidator is AValidator, Ownable, IBoostClaim {
     using SignatureCheckerLib for address;
     using IncentiveBits for IncentiveBits.IncentiveMap;
 
@@ -39,9 +39,8 @@ abstract contract AIntentValidator is ACloneable, Ownable, IBoostClaim {
     /// @param data_ The compressed list of authorized signers
     /// @dev The first address in the list will be the initial owner of the contract
     function initialize(bytes calldata data_) public virtual override initializer {
-        (address[] memory signers_, address validatorCaller_, address settlerCaller_) =
-            abi.decode(data_, (address[], address, address));
-        _initializeOwner(signers_[0]);
+        (address validatorCaller_, address settlerCaller_) = abi.decode(data_, (address, address));
+        _initializeOwner(msg.sender);
         _validatorCaller = validatorCaller_;
         _settlerCaller = settlerCaller_;
         emit SignerValidatorInitialized(validatorCaller_);
@@ -57,6 +56,7 @@ abstract contract AIntentValidator is ACloneable, Ownable, IBoostClaim {
         public
         payable
         virtual
+        override
         returns (bool)
     {
         if (msg.sender != _validatorCaller) revert BoostError.Unauthorized();
@@ -89,7 +89,7 @@ abstract contract AIntentValidator is ACloneable, Ownable, IBoostClaim {
     }
 
     /// @inheritdoc ACloneable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AValidator) returns (bool) {
         return interfaceId == type(AIntentValidator).interfaceId || super.supportsInterface(interfaceId);
     }
 }

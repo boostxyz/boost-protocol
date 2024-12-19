@@ -9,10 +9,11 @@ import {CallByUser, Call, FillerData} from "./Structs.sol";
 import {ResolvedCrossChainOrderLib} from "./ResolvedCrossChainOrderLib.sol";
 import {ExperimentalDelegation} from "./account/ExperimentalDelegation.sol";
 import {SignatureVerification} from "./SignatureVerification.sol";
-import {BoostLib} from "../shared/BoostLib.sol"; // Adjust the import path as needed
+import {BoostLib} from "../shared/BoostLib.sol";
 import {IGetBoost} from "../shared/IGetBoost.sol";
-import {IBoostClaim} from "../shared/IBoostClaim.sol";
 import {ILatchValidator} from "../shared/ILatchValidator.sol";
+import {BoostCore} from "../BoostCore.sol";
+import {IBoostClaim} from "../shared/IBoostClaim.sol";
 
 /**
  * Modified from https://github.com/across-protocol/eip-7702-erc-7683-demo/blob/main/contracts/src/DestinationSettler.sol
@@ -30,7 +31,7 @@ import {ILatchValidator} from "../shared/ILatchValidator.sol";
 contract DestinationSettler is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    IGetBoost boostCore = IGetBoost(0xDCFFcE9d8185706780A46Cf04D9c6b86b3451497);
+    BoostCore boostCore = BoostCore(0xDCFFcE9d8185706780A46Cf04D9c6b86b3451497);
 
     /// @notice Store unique orders to prevent duplicate fills for the same order.
     mapping(bytes32 => bool) public fillStatuses;
@@ -47,14 +48,14 @@ contract DestinationSettler is ReentrancyGuard {
     // @dev We don't use the last parameter `fillerData` in this function.
     function fill(bytes32 orderId, bytes calldata originData, bytes calldata rawFillerData) external nonReentrant {
         (CallByUser memory callsByUser) = abi.decode(originData, (CallByUser));
-        (FillerData memory fillerData) = abi.decode(rawFillerData, (FillerData));
+        (FillerData memory fillerData_) = abi.decode(fillerData, (FillerData));
         if (ResolvedCrossChainOrderLib.getOrderId(callsByUser) != orderId) revert InvalidOrderId();
 
         // Protect against duplicate fills.
         if (fillStatuses[orderId]) revert DuplicateFill();
         fillStatuses[orderId] = true;
 
-        BoostLib.Boost memory boost = boostCore.getBoost(fillerData.boostId);
+        BoostLib.Boost memory boost = boostCore.getBoost(fillerData_.boostId);
         ILatchValidator latchValidator = ILatchValidator(address(boost.validator));
         latchValidator.latchValidation();
 
@@ -81,7 +82,7 @@ contract DestinationSettler is ReentrancyGuard {
         // NOTE: We could iterate through the incentives and claim each one of them, I'm not sure the best way to deal with multi-incentive boosts here
         //       for MVP I'm just going to claim whatever is fed in but I think we want this to be quantity vs index based - could even be a range/bitmap to allow partials
         boostCore.claimIncentiveFor(
-            fillerData.boostId, fillerData.incentiveId, address(this), claimData, callsByUser.user
+            fillerData_.boostId, fillerData_.incentiveId, address(this), claimData, callsByUser.user
         );
 
         // Perform any final steps required to prove that filler has successfully filled the ERC7683 intent.

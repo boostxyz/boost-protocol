@@ -2,24 +2,34 @@
 pragma solidity ^0.8.24;
 
 import {Ownable} from "@solady/auth/Ownable.sol";
-
 import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 import {EIP712} from "@solady/utils/EIP712.sol";
-
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {IncentiveBits} from "contracts/shared/IncentiveBits.sol";
-
-import {AIntentValidator} from "contracts/validators/AIntentValidator.sol";
+import {AValidator} from "contracts/validators/AValidator.sol";
 import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 
-/// @title Signer Validator
-/// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
-contract IntentValidator is AIntentValidator {
+/// @title Abstract Intent Validator
+/// @notice An abstract contract for a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
+abstract contract AIntentValidator is ACloneable, Ownable, IBoostClaim {
     using SignatureCheckerLib for address;
     using IncentiveBits for IncentiveBits.IncentiveMap;
 
-    /// @notice Construct a new SignerValidator
+    event SignerValidatorInitialized(address validatorCaller);
+
+    /// @dev track claimed incentives using this bitmap
+    IncentiveBits.IncentiveMap internal _used;
+
+    /// @dev address allowed to call validate
+    address internal _validatorCaller;
+
+    /// @dev address allowed to call latchValidation
+    address internal _settlerCaller;
+
+    bool internal _latchValidation = false;
+
+    /// @notice Construct a new AbstractIntentValidator
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
     constructor() {
         _disableInitializers();
@@ -37,30 +47,49 @@ contract IntentValidator is AIntentValidator {
         emit SignerValidatorInitialized(validatorCaller_);
     }
 
-    /// Validate that the action has been completed successfully by constructing a payload and checking the signature against it
-    /// @inheritdoc AIntentValidator
+    /// @notice Latch the validation process
+    function latchValidation() external {
+        if (msg.sender != _settlerCaller) revert BoostError.Unauthorized();
+        _latchValidation = true;
+    }
+
     function validate(uint256 boostId, uint256 incentiveId, address claimant, bytes calldata claimData)
         public
         payable
         virtual
-        override
         returns (bool)
     {
         if (msg.sender != _validatorCaller) revert BoostError.Unauthorized();
-        // Since it should always call into this ideally if they call into the claim in their call sequence this should trip
-        // but we should also check here to be safe
         if (!_latchValidation) revert BoostError.Unauthorized();
 
         _latchValidation = false;
         (BoostClaimData memory claim) = abi.decode(claimData, (BoostClaimData));
 
         bytes32 hash = keccak256(abi.encode(claimant));
-        // Mark the incentive as claimed to prevent replays
-        // checks internally if the incentive has already been claimed
         _used.setOrThrow(hash, incentiveId);
 
-        // Return the result of the signature check
-        // no need for a sig prefix since it's encoded by the EIP712 lib
         return true;
+    }
+
+    /// @notice Set the validator caller address
+    /// @param newCaller The new validator caller address
+    function setValidatorCaller(address newCaller) external onlyOwner {
+        _validatorCaller = newCaller;
+    }
+
+    /// @notice Set the settler caller address
+    /// @param newCaller The new settler caller address
+    function setSettlerCaller(address newCaller) external onlyOwner {
+        _settlerCaller = newCaller;
+    }
+
+    /// @inheritdoc ACloneable
+    function getComponentInterface() public pure virtual override returns (bytes4) {
+        return type(AIntentValidator).interfaceId;
+    }
+
+    /// @inheritdoc ACloneable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {
+        return interfaceId == type(AIntentValidator).interfaceId || super.supportsInterface(interfaceId);
     }
 }

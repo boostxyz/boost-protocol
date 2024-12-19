@@ -26,6 +26,9 @@ import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
+import {IntentValidator} from "contracts/validators/IntentValidator.sol";
+
+import {DestinationSettler} from "contracts/intents/DestinationSettler.sol";
 
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
@@ -236,5 +239,22 @@ contract ModuleBaseDeployer is ScriptUtils {
         bool newDeploy = _deploy2(initCode, "");
 
         _registerIfNew(newDeploy, "SimpleDenyList", simpleDenyList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
+    }
+
+    function _deployIntentValidator(BoostRegistry registry) internal returns (address intentValidator) {
+        // Deploy DestinationSettler since it's an input to IntentValidator
+        bytes memory settlerInitCode = type(DestinationSettler).creationCode;
+        address settler = _getCreate2Address(settlerInitCode, "");
+        console.log("DestinationSettler: ", settler);
+        deployJson = deployJsonKey.serialize("DestinationSettler", settler);
+        _deploy2(settlerInitCode, "");
+
+        bytes memory initCode = type(IntentValidator).creationCode;
+        intentValidator = _getCreate2Address(initCode, "");
+        console.log("SimpleDenyList: ", intentValidator);
+        deployJson = deployJsonKey.serialize("IntentValidator", intentValidator);
+        bool newDeploy = _deploy2(initCode, "");
+
+        _registerIfNew(newDeploy, "IntentValidator", intentValidator, registry, ABoostRegistry.RegistryType.VALIDATOR);
     }
 }

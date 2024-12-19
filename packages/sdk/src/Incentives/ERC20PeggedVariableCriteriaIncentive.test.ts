@@ -77,7 +77,7 @@ let fixtures: Fixtures,
   budgets: BudgetFixtures,
   boost: Boost;
 
-describe("ERC20VariableCriteriaIncentive", () => {
+describe("ERC20PeggedVariableCriteriaIncentive", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
@@ -163,6 +163,13 @@ describe("ERC20VariableCriteriaIncentive", () => {
       expect(encodedData).toBe(
         "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
       );
+    });
+
+    test("should properly decode claim data", () => {
+      const rewardAmount = parseEther("1");
+      const encodedData = erc20Incentive.buildClaimData(rewardAmount);
+      const decodedData = erc20Incentive.decodeClaimData(encodedData);
+      expect(decodedData).toBe(rewardAmount);
     });
   });
 

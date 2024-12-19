@@ -11,29 +11,18 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {IncentiveBits} from "contracts/shared/IncentiveBits.sol";
 
 import {AValidator} from "contracts/validators/AValidator.sol";
-import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
+import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 
 /// @title Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
-contract SignerValidator is ASignerValidator, Ownable, EIP712 {
+contract IntentValidator is SignerValidator {
     using SignatureCheckerLib for address;
     using IncentiveBits for IncentiveBits.IncentiveMap;
-
-    event SignerValidatorInitialized(address validatorCaller);
-
-    /// @dev track claimed incentives using this bitmap
-    IncentiveBits.IncentiveMap _used;
-
-    /// @dev address allowed to call validate
-    address internal _validatorCaller;
 
     /// @dev address allowed to call latchValidation
     address internal _settlerCaller;
 
     bool internal _latchValidation = false;
-
-    bytes32 internal constant _SIGNER_VALIDATOR_TYPEHASH =
-        keccak256("SignerValidatorData(uint256 boostId,uint8 incentiveQuantity,address claimant,bytes incentiveData)");
 
     /// @notice Construct a new SignerValidator
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
@@ -93,7 +82,6 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
         return true;
     }
 
-    /// @inheritdoc ASignerValidator
     function setValidatorCaller(address newCaller) external override onlyOwner {
         _validatorCaller = newCaller;
     }

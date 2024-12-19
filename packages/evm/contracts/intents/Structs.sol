@@ -32,7 +32,7 @@ struct CallByUser {
     Call[] calls; // calldata to execute
 }
 
-struct fillerData {
+struct FillerData {
     uint256 boostId; // ID of the boost for the intent that's being filled
     uint256 incentiveId; // ID of the incentive being claimed
 }

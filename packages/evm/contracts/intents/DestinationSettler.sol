@@ -10,6 +10,9 @@ import {ResolvedCrossChainOrderLib} from "./ResolvedCrossChainOrderLib.sol";
 import {ExperimentalDelegation} from "./account/ExperimentalDelegation.sol";
 import {SignatureVerification} from "./SignatureVerification.sol";
 import {BoostLib} from "../shared/BoostLib.sol"; // Adjust the import path as needed
+import {IGetBoost} from "../shared/IGetBoost.sol";
+import {IBoostClaim} from "../shared/IBoostClaim.sol";
+import {ILatchValidator} from "../shared/ILatchValidator.sol";
 
 /**
  * Modified from https://github.com/across-protocol/eip-7702-erc-7683-demo/blob/main/contracts/src/DestinationSettler.sol
@@ -51,8 +54,8 @@ contract DestinationSettler is ReentrancyGuard {
         if (fillStatuses[orderId]) revert DuplicateFill();
         fillStatuses[orderId] = true;
 
-        BoostLib.Boost boost = boostCore.getBoost(fillerData.boostId);
-        ILatchValidator latchValidator = ILatchValidator(boost.validator);
+        BoostLib.Boost memory boost = boostCore.getBoost(fillerData.boostId);
+        ILatchValidator latchValidator = ILatchValidator(address(boost.validator));
         latchValidator.latchValidation();
 
         // TODO: Protect fillers from collisions with other fillers. Requires letting user set an exclusive relayer.
@@ -73,11 +76,13 @@ contract DestinationSettler is ReentrancyGuard {
 
         // NOTE: Might need to tweak the validation data - I don't think we need to pass anything in if we're using latches
         bytes memory claimData =
-            abi.encode(IBoostClaim.BoostClaimData(abi.encode(0x0), abi.encode(callsByUser.Asset.amount)));
+            abi.encode(IBoostClaim.BoostClaimData(abi.encode(0x0), abi.encode(callsByUser.asset.amount)));
 
         // NOTE: We could iterate through the incentives and claim each one of them, I'm not sure the best way to deal with multi-incentive boosts here
         //       for MVP I'm just going to claim whatever is fed in but I think we want this to be quantity vs index based - could even be a range/bitmap to allow partials
-        boost.claimIncentiveFor(fillerData.boostId, fillerData.incentiveId, address(this), claimData, callsByUser.user);
+        boostCore.claimIncentiveFor(
+            fillerData.boostId, fillerData.incentiveId, address(this), claimData, callsByUser.user
+        );
 
         // Perform any final steps required to prove that filler has successfully filled the ERC7683 intent.
         // For example, we could emit an event containing a unique hash of the fill that could be proved

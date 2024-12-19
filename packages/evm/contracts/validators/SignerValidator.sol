@@ -92,7 +92,7 @@ contract SignerValidator is ASignerValidator, Ownable, EIP712 {
     }
 
     /// @inheritdoc ASignerValidator
-    function setValidatorCaller(address newCaller) external override onlyOwner {
+    function setValidatorCaller(address newCaller) external virtual override onlyOwner {
         _validatorCaller = newCaller;
     }
 

@@ -51,9 +51,9 @@ contract DestinationSettler is ReentrancyGuard {
     // Called by filler, who sees ERC7683 intent emitted on origin chain
     // containing the callsByUser data to be executed following a 7702 delegation.
     // @dev We don't use the last parameter `fillerData` in this function.
-    function fill(bytes32 orderId, bytes calldata originData, bytes calldata rawFillerData) external nonReentrant {
+    function fill(bytes32 orderId, bytes calldata originData, bytes calldata _fillerData) external nonReentrant {
         (CallByUser memory callsByUser) = abi.decode(originData, (CallByUser));
-        (FillerData memory fillerData_) = abi.decode(fillerData, (FillerData));
+        (FillerData memory fillerData_) = abi.decode(_fillerData, (FillerData));
         if (ResolvedCrossChainOrderLib.getOrderId(callsByUser) != orderId) revert InvalidOrderId();
 
         // Protect against duplicate fills.

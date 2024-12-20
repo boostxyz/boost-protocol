@@ -33,6 +33,7 @@ import {
   gasRebateIncentiveCriteria,
 } from "./ERC20VariableCriteriaIncentive";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
+import { readMockErc20BalanceOf } from "@boostxyz/evm";
 
 /**
  * A basic ERC721 mint scalar criteria for testing
@@ -73,7 +74,7 @@ export function basicErc721MintScalarCriteria(
 let fixtures: Fixtures,
   erc20: MockERC20,
   erc721: MockERC721,
-  erc20Incentive: ERC20PeggedVariableCriteriaIncentive,
+  erc20PeggedVariableCriteriaIncentive: ERC20PeggedVariableCriteriaIncentive,
   budgets: BudgetFixtures,
   boost: Boost;
 
@@ -86,7 +87,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
     erc20 = await loadFixture(fundErc20(defaultOptions));
     erc721 = await loadFixture(fundErc721(defaultOptions));
-    erc20Incentive = fixtures.core.ERC20PeggedVariableCriteriaIncentive({
+    erc20PeggedVariableCriteriaIncentive = fixtures.core.ERC20PeggedVariableCriteriaIncentive({
       asset: budgets.erc20.assertValidAddress(),
       reward: parseEther("1"),
       limit: parseEther("10"),
@@ -97,48 +98,48 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
 
     boost = await freshBoost(fixtures, {
       budget: budgets.budget,
-      incentives: [erc20Incentive],
+      incentives: [erc20PeggedVariableCriteriaIncentive],
     });
     expect(isAddress(boost.incentives[0]!.assertValidAddress())).toBe(true);
   });
 
   describe("Basic Parameters", () => {
     test("should return correct asset address", async () => {
-      const asset = await erc20Incentive.asset();
+      const asset = await erc20PeggedVariableCriteriaIncentive.asset();
       expect(isAddressEqual(asset, budgets.erc20.assertValidAddress())).toBe(true);
     });
 
     test("should return correct peg token address", async () => {
-      const peg = await erc20Incentive.peg();
+      const peg = await erc20PeggedVariableCriteriaIncentive.peg();
       expect(isAddressEqual(peg, erc20.assertValidAddress())).toBe(true);
     });
 
     test("should return correct reward amount", async () => {
-      const reward = await erc20Incentive.reward();
+      const reward = await erc20PeggedVariableCriteriaIncentive.reward();
       expect(reward).toBe(parseEther("1"));
     });
 
     test("should return correct limit", async () => {
-      const limit = await erc20Incentive.limit();
+      const limit = await erc20PeggedVariableCriteriaIncentive.limit();
       expect(limit).toBe(parseEther("10"));
     });
 
     test("should return correct max reward", async () => {
-      const maxReward = await erc20Incentive.getMaxReward();
+      const maxReward = await erc20PeggedVariableCriteriaIncentive.getMaxReward();
       expect(maxReward).toBe(parseEther("20"));
     });
   });
 
   describe("Remaining Claims", () => {
     test("should calculate remaining claim potential correctly", async () => {
-      const remaining = await erc20Incentive.getRemainingClaimPotential();
-      const limit = await erc20Incentive.limit();
-      const totalClaimed = await erc20Incentive.totalClaimed();
+      const remaining = await erc20PeggedVariableCriteriaIncentive.getRemainingClaimPotential();
+      const limit = await erc20PeggedVariableCriteriaIncentive.limit();
+      const totalClaimed = await erc20PeggedVariableCriteriaIncentive.totalClaimed();
       expect(remaining).toBe(limit - totalClaimed);
     });
 
     test("should return true for canBeClaimed when claims remain", async () => {
-      const canBeClaimed = await erc20Incentive.canBeClaimed();
+      const canBeClaimed = await erc20PeggedVariableCriteriaIncentive.canBeClaimed();
       expect(canBeClaimed).toBe(true);
     });
   });
@@ -159,30 +160,23 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
   describe("Claim Data", () => {
     test("should properly encode claim data", () => {
       const rewardAmount = parseEther("1");
-      const encodedData = erc20Incentive.buildClaimData(rewardAmount);
+      const encodedData = erc20PeggedVariableCriteriaIncentive.buildClaimData(rewardAmount);
       expect(encodedData).toBe(
         "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
       );
-    });
-
-    test("should properly decode claim data", () => {
-      const rewardAmount = parseEther("1");
-      const encodedData = erc20Incentive.buildClaimData(rewardAmount);
-      const decodedData = erc20Incentive.decodeClaimData(encodedData);
-      expect(decodedData).toBe(rewardAmount);
     });
   });
 
   describe("Owner", () => {
     test("should return correct owner", async () => {
-      const owner = await erc20Incentive.owner();
+      const owner = await erc20PeggedVariableCriteriaIncentive.owner();
       expect(isAddressEqual(owner, fixtures.core.assertValidAddress())).toBe(true);
     });
   });
 
   describe("Current Reward", () => {
     test("should return valid current reward", async () => {
-      const currentReward = await erc20Incentive.currentReward();
+      const currentReward = await erc20PeggedVariableCriteriaIncentive.currentReward();
       expect(currentReward).toBeDefined();
       expect(currentReward).toBeTypeOf("bigint");
     });
@@ -197,7 +191,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
         recipient,
         1n,
       );
-      const scalar = await erc20Incentive.getIncentiveScalar({
+      const scalar = await erc20PeggedVariableCriteriaIncentive.getIncentiveScalar({
         hash,
         chainId: 31337,
         knownSignatures: allKnownSignatures,
@@ -209,7 +203,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
     test("should return a valid scalar for event-based criteria", async () => {
       boost = await freshBoost(fixtures, {
         budget: budgets.budget,
-        incentives: [erc20Incentive],
+        incentives: [erc20PeggedVariableCriteriaIncentive],
       });
       const recipient = accounts[1].account;
       const { hash } = await erc721.transferFromRaw(
@@ -217,7 +211,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
         recipient,
         1n,
       );
-      const scalar = await erc20Incentive.getIncentiveScalar({
+      const scalar = await erc20PeggedVariableCriteriaIncentive.getIncentiveScalar({
         hash,
         chainId: 31337,
         knownSignatures: allKnownSignatures,
@@ -230,7 +224,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
       // Ensure that the gasRebateIncentiveCriteria returns the correct structure
       const gasRebateCriteria = gasRebateIncentiveCriteria();
 
-      erc20Incentive = fixtures.core.ERC20PeggedVariableCriteriaIncentive({
+      erc20PeggedVariableCriteriaIncentive = fixtures.core.ERC20PeggedVariableCriteriaIncentive({
         asset: budgets.erc20.assertValidAddress(),
         reward: 1n,
         limit: 1n,
@@ -249,7 +243,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
 
       boost = await freshBoost(fixtures, {
         budget: budgets.budget,
-        incentives: [erc20Incentive],
+        incentives: [erc20PeggedVariableCriteriaIncentive],
       });
 
       // Validate that the deployed incentive has the correct criteria set up
@@ -268,7 +262,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
       const { hash } = await erc20.mintRaw(recipient, parseEther("100"));
 
       try {
-        await erc20Incentive.getIncentiveScalar({
+        await erc20PeggedVariableCriteriaIncentive.getIncentiveScalar({
           hash,
           chainId: 31337,
           knownSignatures: allKnownSignatures,
@@ -283,7 +277,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
       const { hash } = await erc20.mintRaw(recipient, parseEther("100"));
 
       try {
-        await erc20Incentive.getIncentiveScalar({
+        await erc20PeggedVariableCriteriaIncentive.getIncentiveScalar({
           hash,
           chainId: 31337,
           knownSignatures: allKnownSignatures,
@@ -306,11 +300,11 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
     // rebase this
     const boost = await freshBoost(fixtures, {
       budget: budgets.budget,
-      incentives: [erc20Incentive],
+      incentives: [erc20PeggedVariableCriteriaIncentive],
     });
     const [amount, address] = await budgets.budget.clawbackFromTarget(
       fixtures.core.assertValidAddress(),
-      erc20Incentive.buildClawbackData(1n),
+      erc20PeggedVariableCriteriaIncentive.buildClawbackData(1n),
       boost.id,
       0,
     );
@@ -319,4 +313,45 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
       true,
     );
   });
+
+  test('can claim', async () => {
+    const referrer = accounts.at(1)?.account!
+    const trustedSigner = accounts.at(0)!
+    const claimant = trustedSigner.account!;
+    const asset = await erc20PeggedVariableCriteriaIncentive.asset()
+    const signedAmount = 2n
+    const incentiveData = erc20PeggedVariableCriteriaIncentive.buildClaimData(signedAmount)
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id
+    })
+
+    // verify reward amount
+    const incentiveClaimAmount = await erc20PeggedVariableCriteriaIncentive.decodeClaimData(claimDataPayload)
+    expect(incentiveClaimAmount).toBe(signedAmount)
+
+    const balanceBeforeClaim = await readMockErc20BalanceOf(defaultOptions.config, {
+      address: asset,
+      args: [claimant],
+    })
+
+    await fixtures.core.claimIncentiveFor(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+      claimant,
+    );
+
+    const balanceAfterClaim = await readMockErc20BalanceOf(defaultOptions.config, {
+      address: asset,
+      args: [claimant],
+    })
+
+    expect(balanceAfterClaim - balanceBeforeClaim).toBe(signedAmount);
+  })
 });

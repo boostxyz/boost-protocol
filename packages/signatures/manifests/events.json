@@ -14,8 +14,13 @@
   "BoostCreated(uint256 indexed,address indexed,address indexed,uint256,address,address,address)",
   "SecondaryBuy(address indexed,address indexed,address indexed,uint256,uint256)",
   "CoopTokenBuy(address indexed,address indexed,address indexed,uint256,uint256,uint256,uint256,uint256,string,uint256,uint8)",
+  "WowTokenBuy(address indexed,address indexed,address indexed,uint256,uint256,uint256,uint256,uint256,string,uint256,uint8)",
   "CoopTokenSell(address indexed,address indexed,address indexed,uint256,uint256,uint256,uint256,uint256,string,uint256,uint8)",
+  "WowTokenSell(address indexed,address indexed,address indexed,uint256,uint256,uint256,uint256,uint256,string,uint256,uint8)",
   "CoopTokenFees(address indexed,address indexed,address indexed,address,uint256,uint256,uint256,uint256)",
+  "WowTokenFees(address indexed,address indexed,address indexed,address,uint256,uint256,uint256,uint256)",
+  "CoopTokenTransfer(address indexed,address indexed,uint256,uint256,uint256,uint256)",
+  "WowTokenTransfer(address indexed,address indexed,uint256,uint256,uint256,uint256)",
   "// Test signatures",
   "InfoIndexed(address indexed,string indexed)",
   "Info(address,string)"

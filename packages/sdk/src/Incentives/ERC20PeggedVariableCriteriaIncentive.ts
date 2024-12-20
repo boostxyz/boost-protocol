@@ -29,6 +29,7 @@ import {
   decodeAbiParameters,
   decodeFunctionData,
   encodeAbiParameters,
+  parseEther,
   parseEventLogs,
   zeroAddress,
 } from 'viem';
@@ -651,27 +652,108 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    * Builds the claim data for the ERC20PeggedVariableCriteriaIncentivePayload.
    *
    * @public
-   * @param {bigint} rewardAmount
+   * @param {bigint} signedAmount
    * @returns {Hash} Returns the encoded claim data
    * @description This function returns the encoded claim data for the ERC20PeggedVariableCriteriaIncentivePayload.
    */
-  public buildClaimData(rewardAmount: bigint) {
+  public buildClaimData(signedAmount: bigint) {
     return encodeAbiParameters(
-      [{ type: 'uint256', name: 'rewardAmount' }],
-      [rewardAmount],
+      [{ type: 'uint256', name: 'signedAmount' }],
+      [signedAmount],
     );
   }
 
   /**
-   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentive, returning the encoded claim amount.
+   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentive, returning the claim amount.
    * Useful when deriving amount claimed from logs.
    *
    * @public
    * @param {Hex} claimData
    * @returns {BigInt} Returns the reward amount from a claim data payload
    */
-  public decodeClaimData(data: Hex) {
-    return BigInt(decodeAbiParameters([{ type: 'uint256' }], data)[0]);
+  public async decodeClaimData(claimData: Hex) {
+    const boostClaimData = decodeAbiParameters(
+      [
+        {
+          type: 'tuple',
+          name: 'BoostClaimData',
+          components: [
+            { type: 'bytes', name: 'validatorData' },
+            { type: 'bytes', name: 'incentiveData' },
+          ],
+        },
+      ],
+      claimData,
+    );
+    const signedAmount = decodeAbiParameters(
+      [{ type: 'uint256' }],
+      boostClaimData[0].incentiveData,
+    )[0];
+    let claimAmount = signedAmount;
+    const [reward, maxReward] = await Promise.all([
+      this.reward(),
+      this.getMaxReward(),
+    ]);
+
+    if (reward === 0n) {
+      return claimAmount;
+    } else {
+      claimAmount = (reward * signedAmount) / parseEther('1');
+    }
+
+    if (maxReward !== 0n && claimAmount > maxReward) {
+      claimAmount = maxReward;
+    }
+
+    return claimAmount;
+  }
+
+  /**
+   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentive, returning the claim amount.
+   * Useful when deriving amount claimed from logs.
+   * Use this function instead of `decodeClaimData` if you have reward details.
+   *
+   * @public
+   * @param {Hex} claimData
+   * @param {bigint} [reward]
+   * @param {bigint} [maxReward]
+   * @returns {BigInt} Returns the reward amount from a claim data payload
+   */
+  public decodeClaimDataWithRewardDetails(
+    claimData: Hex,
+    reward: bigint,
+    maxReward: bigint,
+  ) {
+    const boostClaimData = decodeAbiParameters(
+      [
+        {
+          type: 'tuple',
+          name: 'BoostClaimData',
+          components: [
+            { type: 'bytes', name: 'validatorData' },
+            { type: 'bytes', name: 'incentiveData' },
+          ],
+        },
+      ],
+      claimData,
+    );
+    const signedAmount = decodeAbiParameters(
+      [{ type: 'uint256' }],
+      boostClaimData[0].incentiveData,
+    )[0];
+    let claimAmount = signedAmount;
+
+    if (reward === 0n) {
+      return claimAmount;
+    } else {
+      claimAmount = (reward * signedAmount) / parseEther('1');
+    }
+
+    if (maxReward !== 0n && claimAmount > maxReward) {
+      claimAmount = maxReward;
+    }
+
+    return claimAmount;
   }
 }
 

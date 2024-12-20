@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Receiver} from "solady/accounts/Receiver.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Receiver} from "@solady/accounts/Receiver.sol";
+import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
 import {MultiSendCallOnly} from "../utils/MultiSend.sol";
 import {ECDSA} from "../utils/ECDSA.sol";

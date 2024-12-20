@@ -44,11 +44,7 @@ contract IntentValidatorTest is Test {
         _settlerCaller = makeAddr("settlerCaller");
         _unauthorizedCaller = makeAddr("unauthorizedCaller");
 
-        // The first signer in this list will be the owner after initialization.
-        address[] memory signers = new address[](1);
-        signers[0] = _owner;
-
-        bytes memory data = abi.encode(signers, _validatorCaller, _settlerCaller);
+        bytes memory data = abi.encode(_validatorCaller, _settlerCaller);
 
         validator = IntentValidator(LibClone.clone(address(baseValidator)));
         validator.initialize(data);

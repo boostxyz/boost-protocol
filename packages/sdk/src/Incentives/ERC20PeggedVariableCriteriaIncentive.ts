@@ -669,14 +669,60 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    *
    * @public
    * @param {Hex} claimData
-   * @param {?bigint} [_reward]
-   * @param {?bigint} [_maxReward]
    * @returns {BigInt} Returns the reward amount from a claim data payload
    */
-  public async decodeClaimData(
+  public async decodeClaimData(claimData: Hex) {
+    const boostClaimData = decodeAbiParameters(
+      [
+        {
+          type: 'tuple',
+          name: 'BoostClaimData',
+          components: [
+            { type: 'bytes', name: 'validatorData' },
+            { type: 'bytes', name: 'incentiveData' },
+          ],
+        },
+      ],
+      claimData,
+    );
+    const signedAmount = decodeAbiParameters(
+      [{ type: 'uint256' }],
+      boostClaimData[0].incentiveData,
+    )[0];
+    let claimAmount = signedAmount;
+    const [reward, maxReward] = await Promise.all([
+      this.reward(),
+      this.getMaxReward(),
+    ]);
+
+    if (reward === 0n) {
+      return claimAmount;
+    } else {
+      claimAmount = (reward * signedAmount) / parseEther('1');
+    }
+
+    if (maxReward !== 0n && claimAmount > maxReward) {
+      claimAmount = maxReward;
+    }
+
+    return claimAmount;
+  }
+
+  /**
+   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentive, returning the claim amount.
+   * Useful when deriving amount claimed from logs.
+   * Use this function instead of `decodeClaimData` if you have reward details.
+   *
+   * @public
+   * @param {Hex} claimData
+   * @param {bigint} [reward]
+   * @param {bigint} [maxReward]
+   * @returns {BigInt} Returns the reward amount from a claim data payload
+   */
+  public decodeClaimDataWithRewardDetails(
     claimData: Hex,
-    _reward?: bigint,
-    _maxReward?: bigint,
+    reward: bigint,
+    maxReward: bigint,
   ) {
     const boostClaimData = decodeAbiParameters(
       [
@@ -696,8 +742,6 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
       boostClaimData[0].incentiveData,
     )[0];
     let claimAmount = signedAmount;
-    const reward = _reward ?? (await this.reward());
-    const maxReward = _maxReward ?? (await this.getMaxReward());
 
     if (reward === 0n) {
       return claimAmount;

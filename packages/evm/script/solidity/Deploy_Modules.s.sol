@@ -86,6 +86,17 @@ contract ModuleBaseDeployer is ScriptUtils {
         return BoostRegistry(deployJson.readAddress(".BoostRegistry"));
     }
 
+    function _getBoostCore() internal returns (BoostCore core) {
+        string memory path =
+            string(abi.encodePacked(vm.projectRoot(), "/deploys/", vm.toString(block.chainid), ".json"));
+        deployJson = vm.readFile(path);
+        deployJson = deployJsonKey.serialize(deployJson);
+        if (!vm.keyExistsJson(deployJson, ".BoostCore")) {
+            revert("No Boost Core deployed: run `pnpm deploy:core:local");
+        }
+        return BoostCore(deployJson.readAddress(".BoostCore"));
+    }
+
     function _deployManagedBudget(BoostRegistry registry) internal returns (address managedBudget) {
         bytes memory initCode = type(ManagedBudget).creationCode;
         managedBudget = _getCreate2Address(initCode, "");
@@ -245,10 +256,11 @@ contract ModuleBaseDeployer is ScriptUtils {
     function _deployIntentValidator(BoostRegistry registry) internal returns (address intentValidator) {
         // Deploy DestinationSettler since it's an input to IntentValidator
         bytes memory settlerInitCode = type(DestinationSettler).creationCode;
-        address settler = _getCreate2Address(settlerInitCode, "");
+        BoostCore core = _getBoostCore();
+        address settler = _getCreate2Address(settlerInitCode, abi.encode(core));
         console.log("DestinationSettler: ", settler);
         deployJson = deployJsonKey.serialize("DestinationSettler", settler);
-        _deploy2(settlerInitCode, "");
+        _deploy2(settlerInitCode, abi.encode(core));
 
         bytes memory initCode = type(IntentValidator).creationCode;
         intentValidator = _getCreate2Address(initCode, "");

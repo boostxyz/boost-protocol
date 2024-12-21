@@ -26,6 +26,9 @@ import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
+import {IntentValidator} from "contracts/validators/IntentValidator.sol";
+
+import {DestinationSettler} from "contracts/intents/DestinationSettler.sol";
 
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
@@ -59,6 +62,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
         _deploySignerValidator(registry);
+        _deployIntentValidator(registry);
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
@@ -80,6 +84,17 @@ contract ModuleBaseDeployer is ScriptUtils {
             revert("No registry deployed: run `pnpm deploy:core:local");
         }
         return BoostRegistry(deployJson.readAddress(".BoostRegistry"));
+    }
+
+    function _getBoostCore() internal returns (BoostCore core) {
+        string memory path =
+            string(abi.encodePacked(vm.projectRoot(), "/deploys/", vm.toString(block.chainid), ".json"));
+        deployJson = vm.readFile(path);
+        deployJson = deployJsonKey.serialize(deployJson);
+        if (!vm.keyExistsJson(deployJson, ".BoostCore")) {
+            revert("No Boost Core deployed: run `pnpm deploy:core:local");
+        }
+        return BoostCore(deployJson.readAddress(".BoostCore"));
     }
 
     function _deployManagedBudget(BoostRegistry registry) internal returns (address managedBudget) {
@@ -236,5 +251,23 @@ contract ModuleBaseDeployer is ScriptUtils {
         bool newDeploy = _deploy2(initCode, "");
 
         _registerIfNew(newDeploy, "SimpleDenyList", simpleDenyList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
+    }
+
+    function _deployIntentValidator(BoostRegistry registry) internal returns (address intentValidator) {
+        // Deploy DestinationSettler since it's an input to IntentValidator
+        bytes memory settlerInitCode = type(DestinationSettler).creationCode;
+        BoostCore core = _getBoostCore();
+        address settler = _getCreate2Address(settlerInitCode, abi.encode(core));
+        console.log("DestinationSettler: ", settler);
+        deployJson = deployJsonKey.serialize("DestinationSettler", settler);
+        _deploy2(settlerInitCode, abi.encode(core));
+
+        bytes memory initCode = type(IntentValidator).creationCode;
+        intentValidator = _getCreate2Address(initCode, "");
+        console.log("IntentValidator: ", intentValidator);
+        deployJson = deployJsonKey.serialize("IntentValidator", intentValidator);
+        bool newDeploy = _deploy2(initCode, "");
+
+        _registerIfNew(newDeploy, "IntentValidator", intentValidator, registry, ABoostRegistry.RegistryType.VALIDATOR);
     }
 }

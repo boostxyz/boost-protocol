@@ -32,6 +32,7 @@
     "test": "forge test -vvv",
     "test:ci": "forge test --summary --detailed -vvv",
     "coverage": "forge coverage --report lcov --report-file coverage/lcov.info",
+    "create:intent": "forge script script/solidity/SetupIntents.s.sol:SetupIntents --broadcast -f http://127.0.0.1:8545 --skip-simulation --mnemonics 'test test test test test test test test test test test junk'",
     "deploy:core:local": "forge script script/solidity/Deploy.s.sol:CoreDeployer -f http://127.0.0.1:8545 --broadcast --mnemonics \"test test test test test test test test test test test junk\"",
     "deploy:modules:local": "forge script script/solidity/Deploy_Modules.s.sol:ModuleBaseDeployer -f http://127.0.0.1:8545 --broadcast --mnemonics \"test test test test test test test test test test test junk\"",
     "anvil": "anvil"

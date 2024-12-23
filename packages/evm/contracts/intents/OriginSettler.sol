@@ -56,6 +56,8 @@ contract OriginSettler is ReentrancyGuard {
 
         // The OpenEvent contains originData which is required to make the destination chain fill, so we only
         // emit the user calls.
+        // originData in the emission is theCallsByUser we need to pass into Fill
+        // the hash of it is the order id
         emit IOriginSettler.Open(keccak256(resolvedOrder.fillInstructions[0].originData), resolvedOrder);
     }
 

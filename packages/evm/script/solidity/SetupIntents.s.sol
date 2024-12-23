@@ -57,6 +57,7 @@ contract SetupIntents is ScriptUtils {
     MockERC721 public erc721;
     uint256 p256privateKey;
     MockERC20 erc20 = MockERC20(0x238c8CD93ee9F8c7Edf395548eF60c0d2e46665E);
+    // TODO: don't hardcode
     DestinationSettler destinationSettler =
         DestinationSettler(0x854D9E0C135b44e609d42B01Dca690010fEbe8De);
     // EIP-7212 compliant deploy from mainnet https://github.com/daimo-eth/p256-verifier
@@ -74,9 +75,13 @@ contract SetupIntents is ScriptUtils {
             0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
         );
 
+    VmSafe.Wallet deployer;
+
     function setUp() public {
+        string memory mnemonic = vm.envString("MNEMONIC");
+        deployer = vm.createWallet(vm.deriveKey(mnemonic,0));
         vm.etch(address(0x14), verifierCode);
-        P256KeyGenerator generator = new P256KeyGenerator();
+        //P256KeyGenerator generator = new P256KeyGenerator();
         //p256privateKey = generator.generatePrivateKey();
         p256privateKey = 100366595829038452957523597440756290436854445761208339940577349703440345778405;
         console.log("pk: ", p256privateKey);
@@ -86,11 +91,12 @@ contract SetupIntents is ScriptUtils {
 
     /*
         call sequence:
+        0. export MNEMONIC='test test test test test test test test test test test junk'
         1. pn deploy:core:local
         2. pn deploy:modules:local
-        3. `createIntentionalBoost()` forge script script/solidity/SetupIntents.s.sol:SetupIntents -f http://127.0.0.1:8545 --mnemonics "test test test test test test test test test test test junk" --sig "createIntentionalBoost()" --broadcast
-        4. `createDelegationWallet()` forge script script/solidity/SetupIntents.s.sol:SetupIntents -f http://127.0.0.1:8545 --mnemonics "test test test test test test test test test test test junk" --sig "createDelegationWallet()" --skip-simulation --broadcast
-        5. `fillIntentionalBoost()` forge script script/solidity/SetupIntents.s.sol:SetupIntents -f http://127.0.0.1:8545 --mnemonics "test test test test test test test test test test test junk" --sig "fillIntentionalBoost()" -vvvvv
+        3. `createIntentionalBoost()` forge script script/solidity/SetupIntents.s.sol:SetupIntents -f http://127.0.0.1:8545 --mnemonics $MNEMONIC --sig "createIntentionalBoost()" --broadcast
+        4. `createDelegationWallet()` forge script script/solidity/SetupIntents.s.sol:SetupIntents -f http://127.0.0.1:8545 --mnemonics $MNEMONIC --sig "createDelegationWallet()" --skip-simulation --broadcast
+        5. `fillIntentionalBoost()` forge script script/solidity/SetupIntents.s.sol:SetupIntents -f http://127.0.0.1:8545 --mnemonics $MNEMONIC --sig "fillIntentionalBoost()" -vvvvv
 
     */
 
@@ -99,7 +105,7 @@ contract SetupIntents is ScriptUtils {
         erc721 = new MockERC721();
         vm.broadcast();
         erc20.mint(
-            address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266),
+            deployer.addr,
             1000 ether
         );
         vm.broadcast();
@@ -306,12 +312,10 @@ contract SetupIntents is ScriptUtils {
                     registry.deployClone(
                         ABoostRegistry.RegistryType.BUDGET,
                         base,
-                        string(abi.encode("My Managed ABudget234", block.number)),
+                        string(abi.encode("My Managed ABudget ", block.number)),
                         abi.encode(
                             ManagedBudget.InitPayload({
-                                owner: address(
-                                    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-                                ),
+                                owner: deployer.addr,
                                 authorized: authorized,
                                 roles: roles
                             })
@@ -331,7 +335,7 @@ contract SetupIntents is ScriptUtils {
                 ABudget.Transfer({
                     assetType: ABudget.AssetType.ERC20,
                     asset: address(erc20),
-                    target: address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266),
+                    target: deployer.addr,
                     data: abi.encode(
                         ABudget.FungiblePayload({amount: 600 ether})
                     )
@@ -345,7 +349,7 @@ contract SetupIntents is ScriptUtils {
                 ABudget.Transfer({
                     assetType: ABudget.AssetType.ETH,
                     asset: address(0),
-                    target: address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266),
+                    target: deployer.addr,
                     data: abi.encode(
                         ABudget.FungiblePayload({amount: 10.5 ether})
                     )

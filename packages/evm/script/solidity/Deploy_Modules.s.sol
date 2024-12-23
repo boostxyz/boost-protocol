@@ -18,6 +18,7 @@ import {ERC20PeggedIncentive} from "contracts/incentives/ERC20PeggedIncentive.so
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
 import {ERC20VariableCriteriaIncentive} from "contracts/incentives/ERC20VariableCriteriaIncentive.sol";
 import {ERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol";
+import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
@@ -68,6 +69,9 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
         _deployERC20PeggedIncentive(registry);
 
+        vm.startBroadcast();
+        registry.register(ABoostRegistry.RegistryType.ACTION, "ERC721MintAction", address(new ERC721MintAction()));
+        vm.stopBroadcast();
         _saveJson();
     }
 

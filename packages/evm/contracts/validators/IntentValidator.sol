@@ -56,7 +56,7 @@ contract IntentValidator is AIntentValidator {
         bytes32 hash = keccak256(abi.encode(claimant));
         // Mark the incentive as claimed to prevent replays
         // checks internally if the incentive has already been claimed
-        _used.setOrThrow(hash, incentiveId);
+        //_used.setOrThrow(hash, incentiveId);
 
         // Return the result of the signature check
         // no need for a sig prefix since it's encoded by the EIP712 lib

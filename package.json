@@ -36,7 +36,7 @@
     "@types/node": "^20.16.10",
     "@vitest/coverage-v8": "^2.1.1",
     "@wagmi/core": "2.13.8",
-    "abitype": "^1.0.6",
+    "abitype": "^1.0.8",
     "arg": "^5.0.2",
     "danger": "^12.3.3",
     "dotenv": "16.4.5",

@@ -45,8 +45,8 @@ importers:
         specifier: 2.13.8
         version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8))
       abitype:
-        specifier: ^1.0.6
-        version: 1.0.6(typescript@5.6.3)(zod@3.23.8)
+        specifier: ^1.0.8
+        version: 1.0.8(typescript@5.6.3)(zod@3.23.8)
       arg:
         specifier: ^5.0.2
         version: 5.0.2
@@ -190,8 +190,8 @@ importers:
         specifier: ^2.1.16
         version: 2.1.16(bufferutil@4.0.8)(typescript@5.6.3)
       abitype:
-        specifier: ^1.0.6
-        version: 1.0.6(typescript@5.6.3)(zod@3.23.8)
+        specifier: ^1.0.8
+        version: 1.0.8(typescript@5.6.3)(zod@3.23.8)
       hardhat:
         specifier: ^2.22.12
         version: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)
@@ -1552,6 +1552,17 @@ packages:
 
   abitype@1.0.6:
     resolution: {integrity: sha512-MMSqYh4+C/aVqI2RQaWqbvI4Kxo5cQV40WQ4QFtDnNzCkqChm8MuENhElmynZlO0qUy/ObkEUaXtKqYnx1Kp3A==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+      zod: ^3 >=3.22.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      zod:
+        optional: true
+
+  abitype@1.0.8:
+    resolution: {integrity: sha512-ZeiI6h3GnW06uYDLx0etQtX/p8E24UaHHBj57RSjK7YBFe7iuVn07EDpOeP451D06sF27VOz9JJPlIKJmXgkEg==}
     peerDependencies:
       typescript: '>=5.0.4'
       zod: ^3 >=3.22.0
@@ -5962,7 +5973,7 @@ snapshots:
 
   '@wagmi/cli@2.1.16(bufferutil@4.0.8)(typescript@5.6.3)':
     dependencies:
-      abitype: 1.0.6(typescript@5.6.3)(zod@3.23.8)
+      abitype: 1.0.8(typescript@5.6.3)(zod@3.23.8)
       bundle-require: 4.2.1(esbuild@0.19.12)
       cac: 6.7.14
       change-case: 5.4.4
@@ -6020,6 +6031,11 @@ snapshots:
       zod: 3.23.8
 
   abitype@1.0.6(typescript@5.6.3)(zod@3.23.8):
+    optionalDependencies:
+      typescript: 5.6.3
+      zod: 3.23.8
+
+  abitype@1.0.8(typescript@5.6.3)(zod@3.23.8):
     optionalDependencies:
       typescript: 5.6.3
       zod: 3.23.8

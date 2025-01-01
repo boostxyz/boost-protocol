@@ -31,10 +31,10 @@ importers:
         version: 1.0.12(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
       '@nomicfoundation/hardhat-toolbox-viem':
         specifier: ^3.0.0
-        version: 3.0.0(b7thmnjjcpwabagdl7pjgs52fq)
+        version: 3.0.0(gtpaprbussbpptw2wgjyyd73zu)
       '@nomicfoundation/hardhat-viem':
         specifier: 2.0.4
-        version: 2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8)
+        version: 2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))(zod@3.24.1)
       '@types/node':
         specifier: ^20.16.10
         version: 20.16.10
@@ -43,10 +43,10 @@ importers:
         version: 2.1.1(vitest@2.1.1(@types/node@20.16.10)(terser@5.31.1))
       '@wagmi/core':
         specifier: 2.13.8
-        version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8))
+        version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))
       abitype:
-        specifier: ^1.0.8
-        version: 1.0.8(typescript@5.6.3)(zod@3.23.8)
+        specifier: ^1.0.6
+        version: 1.0.6(typescript@5.6.3)(zod@3.24.1)
       arg:
         specifier: ^5.0.2
         version: 5.0.2
@@ -85,7 +85,7 @@ importers:
         version: 5.6.3
       viem:
         specifier: 2.21.16
-        version: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+        version: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.24.1)
       vite:
         specifier: ^5.4.8
         version: 5.4.8(@types/node@20.16.10)(terser@5.31.1)
@@ -93,8 +93,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(@types/node@20.16.10)(terser@5.31.1)
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.1
+        version: 3.24.1
 
   examples/agora-vote:
     dependencies:
@@ -166,7 +166,7 @@ importers:
     dependencies:
       '@wagmi/core':
         specifier: 2.13.8
-        version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8))
+        version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))
     devDependencies:
       '@nomicfoundation/hardhat-foundry':
         specifier: ^1.1.2
@@ -203,22 +203,22 @@ importers:
         version: 5.6.3
       viem:
         specifier: 2.21.16
-        version: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+        version: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8)
 
   packages/sdk:
     dependencies:
       '@wagmi/core':
         specifier: 2.x
-        version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8))
+        version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.24.1))
       abitype:
         specifier: '1'
-        version: 1.0.6(typescript@5.6.3)(zod@3.23.8)
+        version: 1.0.6(typescript@5.6.3)(zod@3.24.1)
       ts-pattern:
         specifier: 5.5.0
         version: 5.5.0
       viem:
         specifier: 2.x
-        version: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+        version: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.24.1)
 
   packages/signatures: {}
 
@@ -4367,6 +4367,9 @@ packages:
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
 
+  zod@3.24.1:
+    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
+
   zustand@4.4.1:
     resolution: {integrity: sha512-QCPfstAS4EBiTQzlaGP1gmorkh/UL1Leaj2tdj+zZCZ/9bm0WS7sI2wnfD5lpOszFqWJ1DcPnGoY8RDL61uokw==}
     engines: {node: '>=12.7.0'}
@@ -5339,13 +5342,13 @@ snapshots:
       ethers: 6.13.3(bufferutil@4.0.8)
       hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)
 
-  '@nomicfoundation/hardhat-ignition-viem@0.15.6(@nomicfoundation/hardhat-ignition@0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(@nomicfoundation/hardhat-viem@2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8))(@nomicfoundation/ignition-core@0.15.6(bufferutil@4.0.8))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))':
+  '@nomicfoundation/hardhat-ignition-viem@0.15.6(@nomicfoundation/hardhat-ignition@0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(@nomicfoundation/hardhat-viem@2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))(zod@3.24.1))(@nomicfoundation/ignition-core@0.15.6(bufferutil@4.0.8))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))':
     dependencies:
       '@nomicfoundation/hardhat-ignition': 0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
-      '@nomicfoundation/hardhat-viem': 2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8)
+      '@nomicfoundation/hardhat-viem': 2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))(zod@3.24.1)
       '@nomicfoundation/ignition-core': 0.15.6(bufferutil@4.0.8)
       hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1)
 
   '@nomicfoundation/hardhat-ignition-viem@0.15.6(@nomicfoundation/hardhat-ignition@0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)))(@nomicfoundation/hardhat-viem@2.0.5(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8))(@nomicfoundation/ignition-core@0.15.6(bufferutil@4.0.8))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3))(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))':
     dependencies:
@@ -5353,7 +5356,7 @@ snapshots:
       '@nomicfoundation/hardhat-viem': 2.0.5(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8)
       '@nomicfoundation/ignition-core': 0.15.6(bufferutil@4.0.8)
       hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8)
 
   '@nomicfoundation/hardhat-ignition@0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))':
     dependencies:
@@ -5397,25 +5400,6 @@ snapshots:
       ethereumjs-util: 7.1.5
       hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)
 
-  '@nomicfoundation/hardhat-toolbox-viem@3.0.0(b7thmnjjcpwabagdl7pjgs52fq)':
-    dependencies:
-      '@nomicfoundation/hardhat-ignition-viem': 0.15.6(@nomicfoundation/hardhat-ignition@0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(@nomicfoundation/hardhat-viem@2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8))(@nomicfoundation/ignition-core@0.15.6(bufferutil@4.0.8))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))
-      '@nomicfoundation/hardhat-network-helpers': 1.0.12(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
-      '@nomicfoundation/hardhat-verify': 2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
-      '@nomicfoundation/hardhat-viem': 2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8)
-      '@types/chai': 4.3.16
-      '@types/chai-as-promised': 7.1.8
-      '@types/mocha': 10.0.6
-      '@types/node': 20.16.10
-      chai: 5.1.1
-      chai-as-promised: 7.1.2(chai@5.1.1)
-      hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)
-      hardhat-gas-reporter: 1.0.10(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
-      solidity-coverage: 0.8.12(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
-      ts-node: 10.9.2(@types/node@20.16.10)(typescript@5.6.3)
-      typescript: 5.6.3
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
-
   '@nomicfoundation/hardhat-toolbox-viem@3.0.0(cbaedbg2txo4mvxvhf5n3j66uq)':
     dependencies:
       '@nomicfoundation/hardhat-ignition-viem': 0.15.6(@nomicfoundation/hardhat-ignition@0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)))(@nomicfoundation/hardhat-viem@2.0.5(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8))(@nomicfoundation/ignition-core@0.15.6(bufferutil@4.0.8))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3))(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))
@@ -5433,7 +5417,26 @@ snapshots:
       solidity-coverage: 0.8.12(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3))
       ts-node: 10.9.2(@types/node@22.7.4)(typescript@5.6.3)
       typescript: 5.6.3
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8)
+
+  '@nomicfoundation/hardhat-toolbox-viem@3.0.0(gtpaprbussbpptw2wgjyyd73zu)':
+    dependencies:
+      '@nomicfoundation/hardhat-ignition-viem': 0.15.6(@nomicfoundation/hardhat-ignition@0.15.6(@nomicfoundation/hardhat-verify@2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)))(@nomicfoundation/hardhat-viem@2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))(zod@3.24.1))(@nomicfoundation/ignition-core@0.15.6(bufferutil@4.0.8))(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))
+      '@nomicfoundation/hardhat-network-helpers': 1.0.12(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
+      '@nomicfoundation/hardhat-verify': 2.0.6(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
+      '@nomicfoundation/hardhat-viem': 2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))(zod@3.24.1)
+      '@types/chai': 4.3.16
+      '@types/chai-as-promised': 7.1.8
+      '@types/mocha': 10.0.6
+      '@types/node': 20.16.10
+      chai: 5.1.1
+      chai-as-promised: 7.1.2(chai@5.1.1)
+      hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)
+      hardhat-gas-reporter: 1.0.10(bufferutil@4.0.8)(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
+      solidity-coverage: 0.8.12(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))
+      ts-node: 10.9.2(@types/node@20.16.10)(typescript@5.6.3)
+      typescript: 5.6.3
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1)
 
   '@nomicfoundation/hardhat-toolbox@5.0.0(evfikxerfsmndbscllatyo4prm)':
     dependencies:
@@ -5486,13 +5489,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@nomicfoundation/hardhat-viem@2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))(zod@3.23.8)':
+  '@nomicfoundation/hardhat-viem@2.0.4(hardhat@2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3))(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))(zod@3.24.1)':
     dependencies:
-      abitype: 0.9.10(typescript@5.6.3)(zod@3.23.8)
+      abitype: 0.9.10(typescript@5.6.3)(zod@3.24.1)
       hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@20.16.10)(typescript@5.6.3))(typescript@5.6.3)
       lodash.memoize: 4.1.2
       typescript: 5.6.3
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1)
     transitivePeerDependencies:
       - zod
 
@@ -5502,7 +5505,7 @@ snapshots:
       hardhat: 2.22.12(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.3))(typescript@5.6.3)
       lodash.memoize: 4.1.2
       typescript: 5.6.3
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8)
     transitivePeerDependencies:
       - zod
 
@@ -5991,7 +5994,7 @@ snapshots:
       picocolors: 1.1.0
       picomatch: 3.0.1
       prettier: 3.3.3
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8)
       zod: 3.23.8
     optionalDependencies:
       typescript: 5.6.3
@@ -5999,11 +6002,39 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@wagmi/core@2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8))':
+  '@wagmi/core@2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.24.1))':
     dependencies:
       eventemitter3: 5.0.1
       mipd: 0.0.7(typescript@5.6.3)
-      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.24.1)
+      zustand: 4.4.1(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)
+    optionalDependencies:
+      '@tanstack/query-core': 5.32.0
+      typescript: 5.6.3
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - react
+
+  '@wagmi/core@2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8))':
+    dependencies:
+      eventemitter3: 5.0.1
+      mipd: 0.0.7(typescript@5.6.3)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8)
+      zustand: 4.4.1(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)
+    optionalDependencies:
+      '@tanstack/query-core': 5.32.0
+      typescript: 5.6.3
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - react
+
+  '@wagmi/core@2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))':
+    dependencies:
+      eventemitter3: 5.0.1
+      mipd: 0.0.7(typescript@5.6.3)
+      viem: 2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1)
       zustand: 4.4.1(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)
     optionalDependencies:
       '@tanstack/query-core': 5.32.0
@@ -6025,20 +6056,30 @@ snapshots:
       typescript: 5.6.3
       zod: 3.23.8
 
+  abitype@0.9.10(typescript@5.6.3)(zod@3.24.1):
+    optionalDependencies:
+      typescript: 5.6.3
+      zod: 3.24.1
+
   abitype@1.0.5(typescript@5.6.3)(zod@3.23.8):
     optionalDependencies:
       typescript: 5.6.3
       zod: 3.23.8
+
+  abitype@1.0.5(typescript@5.6.3)(zod@3.24.1):
+    optionalDependencies:
+      typescript: 5.6.3
+      zod: 3.24.1
 
   abitype@1.0.6(typescript@5.6.3)(zod@3.23.8):
     optionalDependencies:
       typescript: 5.6.3
       zod: 3.23.8
 
-  abitype@1.0.8(typescript@5.6.3)(zod@3.23.8):
+  abitype@1.0.6(typescript@5.6.3)(zod@3.24.1):
     optionalDependencies:
       typescript: 5.6.3
-      zod: 3.23.8
+      zod: 3.24.1
 
   acorn-walk@8.3.4:
     dependencies:
@@ -8922,7 +8963,25 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.23.8):
+  viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.24.1):
+    dependencies:
+      '@adraffy/ens-normalize': 1.10.0
+      '@noble/curves': 1.4.0
+      '@noble/hashes': 1.4.0
+      '@scure/bip32': 1.4.0
+      '@scure/bip39': 1.4.0
+      abitype: 1.0.5(typescript@5.6.3)(zod@3.24.1)
+      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8))
+      webauthn-p256: 0.0.5
+      ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+    optionalDependencies:
+      typescript: 5.6.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
+  viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.23.8):
     dependencies:
       '@adraffy/ens-normalize': 1.10.0
       '@noble/curves': 1.4.0
@@ -8930,6 +8989,24 @@ snapshots:
       '@scure/bip32': 1.4.0
       '@scure/bip39': 1.4.0
       abitype: 1.0.5(typescript@5.6.3)(zod@3.23.8)
+      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8))
+      webauthn-p256: 0.0.5
+      ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+    optionalDependencies:
+      typescript: 5.6.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
+  viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1):
+    dependencies:
+      '@adraffy/ens-normalize': 1.10.0
+      '@noble/curves': 1.4.0
+      '@noble/hashes': 1.4.0
+      '@scure/bip32': 1.4.0
+      '@scure/bip39': 1.4.0
+      abitype: 1.0.5(typescript@5.6.3)(zod@3.24.1)
       isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8))
       webauthn-p256: 0.0.5
       ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
@@ -9131,6 +9208,8 @@ snapshots:
   yocto-queue@1.1.1: {}
 
   zod@3.23.8: {}
+
+  zod@3.24.1: {}
 
   zustand@4.4.1(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0):
     dependencies:

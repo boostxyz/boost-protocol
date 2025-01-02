@@ -88,6 +88,7 @@ export enum PrimitiveType {
   ADDRESS = 1,
   BYTES = 2,
   STRING = 3,
+  TUPLE = 4,
 }
 
 /**

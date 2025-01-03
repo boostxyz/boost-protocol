@@ -3,6 +3,7 @@ import {
   readBoostCoreCreateBoostAuth,
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
+  readBoostCoreGetIncentiveFeesInfo,
   readBoostCoreProtocolFee,
   readBoostCoreProtocolFeeReceiver,
   readIAuthIsAuthorized,
@@ -29,6 +30,8 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodePacked,
+  keccak256,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -126,6 +129,7 @@ import {
   InvalidProtocolChainIdError,
   MustInitializeBudgetError,
 } from './errors';
+import type { AssetType } from './transfers';
 import {
   type GenericLog,
   type ReadParams,
@@ -273,6 +277,20 @@ export type CreateBoostPayload = {
   protocolFee?: bigint;
   maxParticipants?: bigint;
   owner?: Address;
+};
+
+/**
+ * Represents the information about the disbursal of an incentive.
+ *
+ * @export
+ * @typedef {IncentiveDisbursalInfo}
+ */
+export type IncentiveDisbursalInfo = {
+  assetType: AssetType;
+  asset: Address;
+  protocolFeesRemaining: bigint;
+  protocolFee: bigint;
+  tokenId: bigint;
 };
 
 /**
@@ -1044,6 +1062,38 @@ export class BoostCore extends Deployable<
       request,
     );
     return { hash, result };
+  }
+
+  /**
+   * Get the incentives fees information for a given Boost ID and Incentive ID.
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId - The ID of the Boost
+   * @param {bigint} incentiveId - The ID of the Incentive
+   * @param {?ReadParams} [params]
+   * @returns {Promise<IncentiveDisbursalInfo>}
+   */
+  public async getIncentiveFeesInfo(
+    boostId: bigint,
+    incentiveId: bigint,
+    params?: ReadParams,
+  ) {
+    const key = keccak256(
+      encodePacked(['uint256', 'uint256'], [boostId, incentiveId]),
+    );
+
+    return await readBoostCoreGetIncentiveFeesInfo(this._config, {
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
+      args: [key],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   /**

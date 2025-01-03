@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 5.2.0
+
+### Minor Changes
+
+- 00498c2: [BOOST-5131] feat: tuple support for eventaction
+
 ## 5.1.0
 
 ### Minor Changes

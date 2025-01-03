@@ -42,6 +42,8 @@ import {
   FieldValueUndefinedError,
   FunctionDataDecodeError,
   InvalidNumericalCriteriaError,
+  InvalidTupleDecodingError,
+  InvalidTupleEncodingError,
   NoEventActionStepsProvidedError,
   TooManyEventActionStepsProvidedError,
   UnparseableAbiParamError,
@@ -1281,14 +1283,16 @@ function parseNestedTupleValue(
   type: Exclude<PrimitiveType, PrimitiveType.TUPLE>;
 } {
   if (!indexes.length) {
-    throw new Error(`No indexes found; cannot parse TUPLE field`);
+    throw new InvalidTupleDecodingError(
+      `No indexes found; cannot parse TUPLE field`,
+    );
   }
 
   // The first index picks which top-level ABI param to look at
   const idx = indexes[0] ?? abiInputs.length + 1;
   // If idx is out of range or is a "terminator," fail fast
   if (idx >= abiInputs.length) {
-    throw new Error(`Tuple index ${idx} is out of range for ABI inputs`);
+    throw new InvalidTupleDecodingError(undefined, idx);
   }
 
   const param = abiInputs[idx];
@@ -1302,7 +1306,9 @@ function parseNestedTupleValue(
 
   // Otherwise param is a tuple => rawValue must be an array of subfields
   if (!Array.isArray(rawValue)) {
-    throw new Error(`rawValue is not an array, but param.type is tuple`);
+    throw new InvalidTupleDecodingError(
+      `rawValue is not an array, but param.type is tuple`,
+    );
   }
 
   // Move to the next sub-index
@@ -1310,17 +1316,13 @@ function parseNestedTupleValue(
   if (!remaining.length) {
     // If there are no more indexes, we can't pick a sub-component
     // Typically you'd want at least one more index to say "which subfield in the tuple we want"
-    throw new Error(
-      `No sub-index provided to pick a sub-component in nested tuple`,
-    );
+    throw new InvalidTupleDecodingError(undefined, -1);
   }
 
   // Check the next index for param.components
   const subIdx = remaining[0] ?? param.components.length + 1;
   if (subIdx >= param.components.length) {
-    throw new Error(
-      `Tuple sub-index ${subIdx} out of range for param.components`,
-    );
+    throw new InvalidTupleDecodingError(undefined, subIdx);
   }
 
   // Recurse deeper using param.components as the "new top-level" ABI param list
@@ -1352,7 +1354,7 @@ function abiTypeToPrimitiveType(
   }
 
   // If it doesn't match any known scalar, throw. We expect parseNestedTupleValue() to handle nested tuple logic separately.
-  throw new Error(`Unrecognized ABI type: ${abiType}`);
+  throw new DecodedArgsError(`Unrecognized ABI type: ${abiType}`);
 }
 
 function _dedupeActionSteps(_steps: ActionStep[]): ActionStep[] {
@@ -1624,13 +1626,13 @@ const MAX_FIELD_INDEX = 0b111111; // Maximum value for 6 bits (63)
  */
 export function packFieldIndexes(indexes: number[]): number {
   if (indexes.length > 5) {
-    throw new Error('Can only pack up to 5 indexes.');
+    throw new InvalidTupleEncodingError('Can only pack up to 5 indexes.');
   }
 
   let packed = 0;
   indexes.forEach((index, i) => {
     if (index > MAX_FIELD_INDEX) {
-      throw new Error(
+      throw new InvalidTupleEncodingError(
         `Index ${index} exceeds the maximum allowed value (${MAX_FIELD_INDEX}).`,
       );
     }

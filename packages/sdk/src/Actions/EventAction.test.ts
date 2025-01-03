@@ -1244,7 +1244,7 @@ describe("Tuple & bitpacked fieldIndex support", () => {
     test("throws if an index exceeds the max field index (63)", () => {
       // 64 is out of range
       expect(() => packFieldIndexes([64])).toThrowError(
-        /exceeds the maximum allowed value of 63 (terminator)/,
+        "Index 64 exceeds the maximum allowed value (63).",
       );
     });
 
@@ -1376,7 +1376,7 @@ describe("Tuple & bitpacked fieldIndex support", () => {
       );      
       expect(() =>
         action.parseFieldFromAbi(allArgs, tupleIndex, abiInputs, PrimitiveType.TUPLE),
-      ).toThrowError(/out of range for param.components/);
+      ).toThrowError("Failed to decode tuple: 9");
     });
   });
 });

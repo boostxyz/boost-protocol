@@ -794,7 +794,8 @@ export class EventAction extends DeployableTarget<
           eventAbi.inputs || [],
           criteria.fieldType,
         );
-        if (this.validateFieldAgainstCriteria(criteria, value, type, { log })) {
+        criteria.fieldType = type;
+        if (this.validateFieldAgainstCriteria(criteria, value, { log })) {
           return true;
         }
       } catch {
@@ -1018,7 +1019,8 @@ export class EventAction extends DeployableTarget<
         func.inputs || [],
         criteria.fieldType,
       );
-      return this.validateFieldAgainstCriteria(criteria, value, type, {
+      criteria.fieldType = type;
+      return this.validateFieldAgainstCriteria(criteria, value, {
         decodedArgs: decodedData.args as readonly (string | bigint)[],
       });
     } catch {
@@ -1041,7 +1043,6 @@ export class EventAction extends DeployableTarget<
   public validateFieldAgainstCriteria(
     criteria: Criteria,
     fieldValue: string | bigint | Hex,
-    fieldType: Exclude<PrimitiveType, PrimitiveType.TUPLE>,
     input:
       | { log: EventLogs[0] }
       | { decodedArgs: readonly (string | bigint)[] },
@@ -1052,11 +1053,16 @@ export class EventAction extends DeployableTarget<
      */
     if (
       criteria.filterType === FilterType.EQUAL &&
-      fieldType === PrimitiveType.BYTES &&
+      criteria.fieldType === PrimitiveType.BYTES &&
       criteria.fieldIndex === CheatCodes.ANY_ACTION_PARAM
     ) {
       return true;
     }
+    if (criteria.fieldType === PrimitiveType.TUPLE) {
+      // May want an error here?
+      return false;
+    }
+    const fieldType = criteria.fieldType;
 
     // Evaluate filter based on the final fieldType
     switch (criteria.filterType) {
@@ -1447,7 +1453,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },
@@ -1468,7 +1474,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },
@@ -1489,7 +1495,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },
@@ -1510,7 +1516,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },

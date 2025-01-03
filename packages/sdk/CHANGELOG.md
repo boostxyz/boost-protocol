@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 5.3.0
+
+### Minor Changes
+
+- 00498c2: [BOOST-5131] feat: tuple support for eventaction
+
 ## 5.2.1
 
 ### Patch Changes

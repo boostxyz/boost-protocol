@@ -36,9 +36,11 @@ import {
   Criteria,
   anyActionParameter,
   transactionSenderClaimant,
+  packFieldIndexes, unpackFieldIndexes
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";
+
 
 let fixtures: Fixtures,
   erc721: MockERC721,
@@ -1221,3 +1223,161 @@ describe("EventAction Func Selector", () => {
     ).toBe(true);
   });
 });
+
+describe("Tuple & bitpacked fieldIndex support", () => {
+  describe("packFieldIndexes / unpackFieldIndexes", () => {
+    test("packs up to five indexes and unpacks them correctly", () => {
+      const indexes = [0, 3, 5, 10, 63]; // sample indexes
+      const packed = packFieldIndexes(indexes);
+      const result = unpackFieldIndexes(packed);
+      const resultIndexes = [0, 3, 5, 10]; // 63 is a terminator and won't be included since it triggers a break
+
+      expect(result).toEqual(resultIndexes);
+    });
+
+    test("throws if more than five indexes are provided", () => {
+      expect(() => packFieldIndexes([1, 2, 3, 4, 5, 6])).toThrowError(
+        "Can only pack up to 5 indexes.",
+      );
+    });
+
+    test("throws if an index exceeds the max field index (63)", () => {
+      // 64 is out of range
+      expect(() => packFieldIndexes([64])).toThrowError(
+        /exceeds the maximum allowed value of 63 (terminator)/,
+      );
+    });
+
+    test("terminates on max-field-index in unpackFieldIndexes", () => {
+      // 63 is used as a "terminator," so anything after 63 should be truncated
+      // Example: [2, 63, 7] => We expect only [2] because 63 signals end
+      const packed = packFieldIndexes([2, 63, 7]);
+      const result = unpackFieldIndexes(packed);
+
+      // we expect only [2], because 63 signals "stop"
+      expect(result).toEqual([2]);
+    });
+  });
+
+  describe("parseFieldFromAbi with TUPLE bitpacked indexes", () => {
+    // We'll create a minimal EventAction or a direct call to parseFieldFromAbi
+    // to show we can handle a TUPLE index that references nested components
+
+    test("handles a single-level tuple with one sub-index", async () => {
+      // Suppose we have a tuple param in index 0, with a single sub-field
+      // We'll pack the indexes: [0, 0]
+      // i.e. top-level param at index 0 is a tuple, then sub-field 0
+      const tupleIndex = packFieldIndexes([0, 0]);
+
+      // We'll construct a minimal event or function input ABI with 1 param: a tuple of [address].
+      const abiInputs = [
+        {
+          type: "tuple",
+          components: [{ type: "address" }],
+        },
+      ];
+
+      // The actual values we decoded: array of one tuple => [ ["0x1234..."] ]
+      const allArgs = [
+        // param 0 is a tuple of length 1 => the "address"
+        ["0x111122223333444455556666777788889999AaAa"],
+      ];
+
+      const action = new EventAction(
+        defaultOptions,
+        basicErc721MintFuncAction(erc721),
+      );
+
+      const { value, type } = action.parseFieldFromAbi(
+        allArgs,
+        tupleIndex, // bitpacked indexes
+        abiInputs,
+        PrimitiveType.TUPLE, // declared TUPLE
+      );
+
+      expect(type).toBe(PrimitiveType.ADDRESS);
+      expect(value).toBe("0x111122223333444455556666777788889999AaAa");
+    });
+
+    test("handles deeper nested tuples with multiple sub-indexes", async () => {
+      // Suppose param 1 is a tuple, inside that subcomponent 2 is also a tuple, etc.
+      const tupleIndex = packFieldIndexes([1, 2, 0]); // for example
+
+      // Our ABI might have 2 top-level params: param 0 is a normal uint, param 1 is a tuple
+      // That tuple's 'components' has at least 3 fields, so we pick sub-field #2
+      // that sub-field #2 might itself be a tuple with at least 1 field => sub-sub-field #0
+      const abiInputs = [
+        { type: "uint256" }, // param 0
+        {
+          type: "tuple",
+          components: [
+            { type: "address" }, // sub-field 0
+            { type: "uint256" }, // sub-field 1
+            {
+              type: "tuple", // sub-field 2
+              components: [{ type: "string" }], // sub-sub-field 0
+            },
+          ],
+        },
+      ];
+
+      const allArgs = [
+        123n, // param 0
+        [
+          "0x111122223333444455556666777788889999AaAa", // sub-field0
+          999n, // sub-field1
+          // sub-field2 => tuple
+          ["hello world"], // sub-sub-field 0
+        ],
+      ];
+
+      const action = new EventAction(
+        defaultOptions,
+        basicErc721MintFuncAction(erc721),
+      );
+      const { value, type } = action.parseFieldFromAbi(
+        allArgs,
+        tupleIndex,
+        abiInputs,
+        PrimitiveType.TUPLE, // We know it's a nested TUPLE
+      );
+
+      expect(type).toBe(PrimitiveType.STRING);
+      expect(value).toBe("hello world");
+    });
+
+    test("throws if TUPLE indexes go out of range", async () => {
+      const tupleIndex = packFieldIndexes([1, 2, 9]); // sub-field #9 doesn't exist
+      const abiInputs = [
+        { type: "uint256" },
+        {
+          type: "tuple",
+          components: [
+            { type: "address" },
+            { type: "uint256" },
+            {
+              type: "tuple",
+              components: [{ type: "string" }],
+            },
+          ],
+        },
+      ];
+      const allArgs = [
+        123n,
+        [
+          "0x111122223333444455556666777788889999AaAa",
+          999n,
+          ["hello world"],
+        ],
+      ];
+      const action = new EventAction(
+        defaultOptions,
+        basicErc721MintFuncAction(erc721),
+      );      
+      expect(() =>
+        action.parseFieldFromAbi(allArgs, tupleIndex, abiInputs, PrimitiveType.TUPLE),
+      ).toThrowError(/out of range for param.components/);
+    });
+  });
+});
+

@@ -1061,8 +1061,9 @@ export class EventAction extends DeployableTarget<
       return true;
     }
     if (criteria.fieldType === PrimitiveType.TUPLE) {
-      // May want an error here?
-      return false;
+      throw new InvalidTupleDecodingError(
+        'Tuples should not be passed into validateFieldAgainstCriteria',
+      );
     }
     const fieldType = criteria.fieldType;
 

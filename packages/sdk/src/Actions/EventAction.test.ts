@@ -36,7 +36,8 @@ import {
   Criteria,
   anyActionParameter,
   transactionSenderClaimant,
-  packFieldIndexes, unpackFieldIndexes
+  packFieldIndexes,
+  unpackFieldIndexes
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";

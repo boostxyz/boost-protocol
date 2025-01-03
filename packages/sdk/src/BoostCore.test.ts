@@ -904,4 +904,46 @@ describe("BoostCore", () => {
     )
     expect(totalFee).toBe(100000000000000000n)
   });
+
+  test("can get incentive fees information", async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+
+    // Create a new boost
+    const boost = await core.createBoost({
+      protocolFee: 0n,
+      maxParticipants: 10n,
+      budget: budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      validator: core.SignerValidator({
+        signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
+      }),
+      allowList: core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        core.ERC20Incentive({
+          asset: erc20.assertValidAddress(),
+          reward: parseEther("1"),
+          limit: 10n,
+          strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
+        }),
+      ],
+    });
+
+    const feesInfo = await core.getIncentiveFeesInfo(boost.id, 0n);
+
+    expect(feesInfo).toBeDefined();
+    expect(feesInfo.protocolFee).toBe(1000n);
+    expect(feesInfo.protocolFeesRemaining).toBe(parseEther("1"));
+    expect(feesInfo.asset.toLowerCase()).toBe(erc20.assertValidAddress());
+  });
 });

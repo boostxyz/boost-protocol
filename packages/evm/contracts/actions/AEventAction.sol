@@ -33,15 +33,16 @@ abstract contract AEventAction is AAction {
         UINT,
         ADDRESS,
         BYTES,
-        STRING
+        STRING,
+        TUPLE
     }
 
     // Define Structs
     struct Criteria {
         FilterType filterType;
         PrimitiveType fieldType;
-        // the parameter index in the event or function
-        uint8 fieldIndex;
+        // the parameter index in the event or function - keeping this size they should still pack to a single storage and the field will still be a number vs bigint
+        uint32 fieldIndex;
         // data fields in case we need more complex filtering; used with regex filters
         bytes filterData;
     }

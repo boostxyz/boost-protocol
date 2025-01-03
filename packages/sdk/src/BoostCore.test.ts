@@ -17,6 +17,7 @@ import { BoostNotFoundError, IncentiveNotCloneableError } from "./errors";
 import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { bytes4 } from "./utils";
 import { BoostValidatorEOA } from "./Validators/Validator";
+import { AssetType } from "./transfers";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -944,6 +945,7 @@ describe("BoostCore", () => {
     expect(feesInfo).toBeDefined();
     expect(feesInfo.protocolFee).toBe(1000n);
     expect(feesInfo.protocolFeesRemaining).toBe(parseEther("1"));
+    expect(feesInfo.assetType).toBe(AssetType.ERC20);
     expect(feesInfo.asset.toLowerCase()).toBe(erc20.assertValidAddress());
   });
 });

@@ -129,6 +129,7 @@ import {
   InvalidProtocolChainIdError,
   MustInitializeBudgetError,
 } from './errors';
+import type { AssetType } from './transfers';
 import {
   type GenericLog,
   type ReadParams,
@@ -277,18 +278,6 @@ export type CreateBoostPayload = {
   maxParticipants?: bigint;
   owner?: Address;
 };
-
-/**
- * Enum representing the asset types for incentives.
- *
- * @export
- * @enum {number}
- */
-export enum AssetType {
-  ERC20 = 0,
-  ERC1155 = 1,
-  ETH = 2,
-}
 
 /**
  * Represents the information about the disbursal of an incentive.

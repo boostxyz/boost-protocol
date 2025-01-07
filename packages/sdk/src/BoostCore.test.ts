@@ -18,6 +18,7 @@ import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { bytes4 } from "./utils";
 import { BoostValidatorEOA } from "./Validators/Validator";
 import { AssetType } from "./transfers";
+import { waitForTransactionReceipt } from "@wagmi/core";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -33,7 +34,7 @@ describe("BoostCore", () => {
     const { core } = fixtures;
 
     const { budget, erc20 } = budgets;
-    await core.createBoost({
+    const payload = {
       protocolFee: 0n,
       maxParticipants: 5n,
       budget: budget,
@@ -60,8 +61,11 @@ describe("BoostCore", () => {
           manager: budget.assertValidAddress(),
         }),
       ],
-    });
-    expect(await core.getBoostCount()).toBe(1n);
+    }
+    const { hash } = await core.createBoostRaw(payload)
+    await waitForTransactionReceipt(defaultOptions.config, { hash })
+    await core.createBoost(payload);
+    expect(await core.getBoostCount()).toBe(2n);
   });
 
   test("throws a typed error if no boost exists", async () => {

@@ -14,6 +14,7 @@ import {
   simulateBoostCoreSetProtocolFeeReceiver,
   writeBoostCoreClaimIncentive,
   writeBoostCoreClaimIncentiveFor,
+  writeBoostCoreCreateBoost,
   writeBoostCoreSetCreateBoostAuth,
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
@@ -132,6 +133,7 @@ import {
 import type { AssetType } from './transfers';
 import {
   type GenericLog,
+  type HashAndSimulatedResult,
   type ReadParams,
   type WriteParams,
   assertValidAddressByChainId,
@@ -423,6 +425,27 @@ export class BoostCore extends Deployable<
       maxParticipants: boost.maxParticipants,
       owner: boost.owner,
     });
+  }
+
+  /**
+   * Create a new Boost.
+   *
+   * @public
+   * @async
+   * @param {CreateBoostPayload} _boostPayload
+   * @param {?WriteParams} [params]
+   * @returns {Promise<HashAndSimulatedResult>}
+   */
+  public async createBoostRaw(
+    _boostPayload: CreateBoostPayload,
+    _params?: WriteParams,
+  ): Promise<HashAndSimulatedResult> {
+    const { request, result } = await this.simulateCreateBoost(
+      _boostPayload,
+      _params,
+    );
+    const hash = await writeBoostCoreCreateBoost(this._config, request);
+    return { hash, result };
   }
 
   /**

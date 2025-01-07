@@ -7,6 +7,7 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
+import type { AbiEventParameter } from 'abitype';
 import { match } from 'ts-pattern';
 import {
   type AbiEvent,
@@ -1287,6 +1288,17 @@ function parseNestedTupleValue(
     throw new InvalidTupleDecodingError(
       `No indexes found; cannot parse TUPLE field`,
     );
+  }
+
+  // If the event abi has indexed parameters, we need to reorder the inputs so that indexed params are first
+  if (abiInputs.some((input) => (input as AbiEventParameter).indexed)) {
+    const indexedInputs = abiInputs.filter(
+      (input) => (input as AbiEventParameter).indexed,
+    );
+    const nonIndexedInputs = abiInputs.filter(
+      (input) => !(input as AbiEventParameter).indexed,
+    );
+    abiInputs = [...indexedInputs, ...nonIndexedInputs];
   }
 
   // The first index picks which top-level ABI param to look at

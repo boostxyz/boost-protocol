@@ -1446,4 +1446,35 @@ describe('decodeAndReorderLogArgs', () => {
     expect(result.args[2]).toBe("0x865C301c46d64DE5c9B124Ec1a97eF1EFC1bcbd1");
     expect(result.args[3]).toBe(1765419105n);
   });
+
+  test('works with events where params are already correctly ordered', () => {
+    const event = eventAbi["BoostCreated(uint256 indexed,address indexed,address indexed,uint256,address,address,address)"] as AbiEvent;
+
+    const log: Log = {
+      address: "0xdcffce9d8185706780a46cf04d9c6b86b3451497",
+      blockHash: "0xdfcbc66fc07d41321badb8f8afa3e8fea3f65e87791d3de1ad07d470b2ff1c8e",
+      blockNumber: 7449080n,
+      data: "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e81490c0b9e625999c78f155c7bcf7f11f512b390000000000000000000000003322baef13ac75b1b1e25abc65c0df28f9e55670000000000000000000000000d1513f67da84dec0759f6a715bf28a637c7de716",
+      logIndex: 141,
+      removed: false,
+      topics: [
+        "0x116812d3ad4507d72f2c428b63246d594ca055a1dc119394285504c23d1f34cd",
+        "0x000000000000000000000000000000000000000000000000000000000000006f",
+        "0x0000000000000000000000000000c1e5c9d12c8c52eb319af11da44bb84779d2",
+        "0x0000000000000000000000008b1646483aeedd894feb417da1f5a7ab1846e81e"
+      ],
+      transactionHash: "0xb23270a738440be31b2e6c2e1180324f04159d7bfd681564e877d8675fd8b5c2",
+      transactionIndex: 79,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe(111n);
+    expect(result.args[1]).toBe("0x0000c1E5C9d12c8c52eb319AF11dA44bb84779d2");
+    expect(result.args[2]).toBe("0x8B1646483aEedd894feB417dA1f5a7Ab1846E81E");
+    expect(result.args[3]).toBe(1n);
+    expect(result.args[4]).toBe("0xE81490c0b9e625999C78f155c7bCf7f11f512B39");
+    expect(result.args[5]).toBe("0x3322BaEf13ac75B1b1E25Abc65c0dF28f9e55670");
+    expect(result.args[6]).toBe("0xD1513f67da84DEc0759F6a715BF28A637c7de716");
+  });
 }); 

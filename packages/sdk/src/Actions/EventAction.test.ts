@@ -1477,4 +1477,29 @@ describe('decodeAndReorderLogArgs', () => {
     expect(result.args[5]).toBe("0x3322BaEf13ac75B1b1E25Abc65c0dF28f9e55670");
     expect(result.args[6]).toBe("0xD1513f67da84DEc0759F6a715BF28A637c7de716");
   });
+
+  test('works with events where there is no indexed params', () => {
+    const event = eventAbi['Minted(uint8,address,uint256,uint256)'] as AbiEvent;
+
+    const log: Log = {
+      address: "0x45ecff1c647a32455ced5c21400fe61aa2be680b",
+      blockHash: "0xc5b14f59a5bc89e6a6ecdd595d4d10d1dd82adc624a04717fdff78bbb9dac988",
+      blockNumber: 24749935n,
+      data: "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000865c301c46d64de5c9b124ec1a97ef1efc1bcbd1000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000014a4",
+      logIndex: 188,
+      removed: false,
+      topics: [
+        "0x7ac572687bf4e66a8514fc2ec464fc2644c78bcb1d80a225fc51a33e0ee38bfa"
+      ],
+      transactionHash: "0x0e4aba5edcbfff24d25290066b992ef5670a00864febe38ffaeb8cb1476faa96",
+      transactionIndex: 42,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe(1);
+    expect(result.args[1]).toBe("0x865C301c46d64DE5c9B124Ec1a97eF1EFC1bcbd1");
+    expect(result.args[2]).toBe(1n);
+    expect(result.args[3]).toBe(5284n);
+  });
 }); 

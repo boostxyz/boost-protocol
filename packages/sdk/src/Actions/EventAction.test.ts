@@ -1419,4 +1419,31 @@ describe('decodeAndReorderLogArgs', () => {
     expect(Array.isArray(result.args[4]));
     expect(result.args[5]).toBe(0n);
   });
+
+  test('correctly reorders mixed indexed and non-indexed parameters', () => {
+    const event = eventAbi['NameRegistered(string,bytes32 indexed,address indexed,uint256)'] as AbiEvent;
+
+    const log: Log = {
+      address: "0x4ccb0bb02fcaba27e82a56646e81d8c5bc4119a5",
+      blockHash: "0xd3756b6a35ebee1bfcf66b605dc3bd6fc85ca282ed94b190b25db4c6b3ef188a",
+      blockNumber: 23536079n,
+      data: "0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000693a2861000000000000000000000000000000000000000000000000000000000000000c626f6f73742d6d61747469650000000000000000000000000000000000000000",
+      logIndex: 133,
+      removed: false,
+      topics: [
+        "0x0667086d08417333ce63f40d5bc2ef6fd330e25aaaf317b7c489541f8fe600fa",
+        "0x82de51675fd710fc7a247469e170340787130a61b84dc3446b63277e03e4abd9",
+        "0x000000000000000000000000865c301c46d64de5c9b124ec1a97ef1efc1bcbd1"
+      ],
+      transactionHash: "0xbe54acb2ceb28e7eb962e09218d51ab3369139ac3fd782cacccf163f0daf1a08",
+      transactionIndex: 26,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe("boost-mattie");
+    expect(result.args[1]).toBe("0x82de51675fd710fc7a247469e170340787130a61b84dc3446b63277e03e4abd9");
+    expect(result.args[2]).toBe("0x865C301c46d64DE5c9B124Ec1a97eF1EFC1bcbd1");
+    expect(result.args[3]).toBe(1765419105n);
+  });
 }); 

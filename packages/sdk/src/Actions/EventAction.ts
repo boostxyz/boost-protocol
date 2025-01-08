@@ -1651,7 +1651,7 @@ export function unpackFieldIndexes(packed: number): number[] {
  *
  * @param event - The event ABI definition
  * @param log - The log to decode
- * @returns The decoded log with arguments in the original ABI order
+ * @returns {EventLogs[0]} The decoded log with arguments in the original ABI order
  */
 export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
   const decodedLog = decodeEventLog({

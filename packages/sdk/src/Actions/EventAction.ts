@@ -333,6 +333,13 @@ export interface EventActionPayloadRaw {
 export type EventLogs = GetLogsReturnType<AbiEvent, AbiEvent[], true>;
 
 /**
+ * Single event log
+ * @export
+ * @typedef {EventLog}
+ */
+export type EventLog = EventLogs[0] & { args: unknown[] };
+
+/**
  * A generic event action
  *
  * @export
@@ -1651,7 +1658,7 @@ export function unpackFieldIndexes(packed: number): number[] {
  *
  * @param event - The event ABI definition
  * @param log - The log to decode
- * @returns {EventLogs[0]} The decoded log with arguments in the original ABI order
+ * @returns {EventLog} The decoded log with arguments in the original ABI order
  */
 export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
   const decodedLog = decodeEventLog({
@@ -1665,7 +1672,7 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     : Object.values(decodedLog.args);
 
   if (!event.inputs.some((input) => input.indexed)) {
-    return decodedLog as EventLogs[0];
+    return decodedLog as EventLog;
   }
 
   const indexedIndices: number[] = [];
@@ -1695,5 +1702,5 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     ...log,
     eventName: decodedLog.eventName,
     args: reorderedArgs,
-  } as EventLogs[0];
+  } as EventLog;
 }

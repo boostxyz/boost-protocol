@@ -580,14 +580,7 @@ export class EventAction extends DeployableTarget<
       }
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
-        .map((log) => {
-          const { eventName, args } = decodeEventLog({
-            abi: [event],
-            data: log.data,
-            topics: log.topics,
-          });
-          return { ...log, eventName, args };
-        });
+        .map((log) => decodeAndReorderLogArgs(event, log));
 
       for (let log of decodedLogs) {
         if (!isAddressEqual(log.address, claimant.targetContract)) continue;
@@ -733,15 +726,7 @@ export class EventAction extends DeployableTarget<
 
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
-        .map((log) => {
-          const { eventName, args } = decodeEventLog({
-            abi: [event],
-            data: log.data,
-            topics: log.topics,
-          });
-
-          return { ...log, eventName, args };
-        });
+        .map((log) => decodeAndReorderLogArgs(event, log));
 
       return this.isActionEventValid(actionStep, decodedLogs, event);
     }
@@ -1290,17 +1275,6 @@ function parseNestedTupleValue(
     );
   }
 
-  // If the event abi has indexed parameters, we need to reorder the inputs so that indexed params are first
-  if (abiInputs.some((input) => (input as AbiEventParameter).indexed)) {
-    const indexedInputs = abiInputs.filter(
-      (input) => (input as AbiEventParameter).indexed,
-    );
-    const nonIndexedInputs = abiInputs.filter(
-      (input) => !(input as AbiEventParameter).indexed,
-    );
-    abiInputs = [...indexedInputs, ...nonIndexedInputs];
-  }
-
   // The first index picks which top-level ABI param to look at
   const idx = indexes[0] ?? abiInputs.length + 1;
   // If idx is out of range or is a "terminator," fail fast
@@ -1669,4 +1643,64 @@ export function unpackFieldIndexes(packed: number): number[] {
     indexes.push(index);
   }
   return indexes;
+}
+
+/**
+ * Decodes an event log and reorders the arguments to match the original ABI order.
+ * This is necessary because viem's decodeEventLog reorders indexed parameters to the front.
+ *
+ * @param event - The event ABI definition
+ * @param log - The log to decode
+ * @returns The decoded log with arguments in the original ABI order
+ */
+export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
+  const decodedLog = decodeEventLog({
+    abi: [event],
+    data: log.data,
+    topics: log.topics,
+  });
+
+  const argsArray = Array.isArray(decodedLog.args)
+    ? decodedLog.args
+    : Object.values(decodedLog.args);
+
+  // Create a mapping from viem's order to original ABI order
+  let reorderedArgs = [...argsArray];
+  if (event.inputs.some((input) => input.indexed)) {
+    const mapping: number[] = new Array(event.inputs.length);
+    let indexedCount = 0;
+    let nonIndexedCount = 0;
+
+    event.inputs.forEach((input, originalIndex) => {
+      if (input.indexed) {
+        mapping[indexedCount++] = originalIndex;
+      } else {
+        mapping[
+          event.inputs.filter((i) => i.indexed).length + nonIndexedCount++
+        ] = originalIndex;
+      }
+    });
+
+    const finalMapping = new Array(event.inputs.length);
+    mapping.forEach((originalIndex, viemIndex) => {
+      finalMapping[originalIndex] = viemIndex;
+    });
+
+    reorderedArgs = finalMapping.map((i) => argsArray[i]);
+  }
+
+  return {
+    ...log,
+    eventName: decodedLog.eventName,
+    args: reorderedArgs,
+    blockHash: log.blockHash ?? zeroHash,
+    blockNumber: log.blockNumber ?? 0n,
+    logIndex: log.logIndex ?? 0,
+    transactionHash: log.transactionHash ?? zeroHash,
+    transactionIndex: log.transactionIndex ?? 0,
+    address: log.address,
+    data: log.data,
+    removed: log.removed ?? false,
+    topics: log.topics,
+  };
 }

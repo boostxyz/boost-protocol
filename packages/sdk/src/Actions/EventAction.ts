@@ -1665,20 +1665,7 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     : Object.values(decodedLog.args);
 
   if (!event.inputs.some((input) => input.indexed)) {
-    return {
-      ...log,
-      eventName: decodedLog.eventName,
-      args: argsArray,
-      blockHash: log.blockHash ?? zeroHash,
-      blockNumber: log.blockNumber ?? 0n,
-      logIndex: log.logIndex ?? 0,
-      transactionHash: log.transactionHash ?? zeroHash,
-      transactionIndex: log.transactionIndex ?? 0,
-      address: log.address,
-      data: log.data,
-      removed: log.removed ?? false,
-      topics: log.topics,
-    };
+    return decodedLog as EventLogs[0];
   }
 
   const indexedIndices: number[] = [];
@@ -1708,14 +1695,5 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     ...log,
     eventName: decodedLog.eventName,
     args: reorderedArgs,
-    blockHash: log.blockHash ?? zeroHash,
-    blockNumber: log.blockNumber ?? 0n,
-    logIndex: log.logIndex ?? 0,
-    transactionHash: log.transactionHash ?? zeroHash,
-    transactionIndex: log.transactionIndex ?? 0,
-    address: log.address,
-    data: log.data,
-    removed: log.removed ?? false,
-    topics: log.topics,
-  };
+  } as EventLogs[0];
 }

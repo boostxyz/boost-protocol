@@ -1664,28 +1664,44 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     ? decodedLog.args
     : Object.values(decodedLog.args);
 
-  // Create a mapping from viem's order to original ABI order
-  let reorderedArgs = [...argsArray];
-  if (event.inputs.some((input) => input.indexed)) {
-    const mapping: number[] = new Array(event.inputs.length);
-    let indexedCount = 0;
-    let nonIndexedCount = 0;
+  if (!event.inputs.some((input) => input.indexed)) {
+    return {
+      ...log,
+      eventName: decodedLog.eventName,
+      args: argsArray,
+      blockHash: log.blockHash ?? zeroHash,
+      blockNumber: log.blockNumber ?? 0n,
+      logIndex: log.logIndex ?? 0,
+      transactionHash: log.transactionHash ?? zeroHash,
+      transactionIndex: log.transactionIndex ?? 0,
+      address: log.address,
+      data: log.data,
+      removed: log.removed ?? false,
+      topics: log.topics,
+    };
+  }
 
-    event.inputs.forEach((input, originalIndex) => {
-      if (input.indexed) {
-        mapping[indexedCount++] = originalIndex;
-      } else {
-        mapping[
-          event.inputs.filter((i) => i.indexed).length + nonIndexedCount++
-        ] = originalIndex;
-      }
-    });
+  const indexedIndices: number[] = [];
+  const nonIndexedIndices: number[] = [];
+  for (let i = 0; i < event.inputs.length; i++) {
+    if (event.inputs[i]!.indexed) {
+      indexedIndices.push(i);
+    } else {
+      nonIndexedIndices.push(i);
+    }
+  }
 
-    const finalMapping = new Array(event.inputs.length);
-    mapping.forEach((originalIndex, viemIndex) => {
-      finalMapping[originalIndex] = viemIndex;
-    });
-    reorderedArgs = finalMapping.map((i) => argsArray[i]);
+  const reorderedArgs = new Array(event.inputs.length);
+  let currentIndex = 0;
+
+  // Place the indexed arguments in their original positions
+  for (let i = 0; i < indexedIndices.length; i++) {
+    reorderedArgs[indexedIndices[i]!] = argsArray[currentIndex++];
+  }
+
+  // Place the non-indexed arguments in their original positions
+  for (let i = 0; i < nonIndexedIndices.length; i++) {
+    reorderedArgs[nonIndexedIndices[i]!] = argsArray[currentIndex++];
   }
 
   return {

@@ -5,12 +5,12 @@ import {
 import { selectors as funcSelectors } from "@boostxyz/signatures/functions";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AbiEvent,
+  type AbiEvent,
   type Address,
+  type Log,
   type Hex,
   isAddress,
   isAddressEqual,
-  Log,
   parseEther,
   toHex,
   zeroAddress,

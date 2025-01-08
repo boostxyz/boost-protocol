@@ -1685,7 +1685,6 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     mapping.forEach((originalIndex, viemIndex) => {
       finalMapping[originalIndex] = viemIndex;
     });
-
     reorderedArgs = finalMapping.map((i) => argsArray[i]);
   }
 

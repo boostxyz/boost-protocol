@@ -3,6 +3,7 @@ import {
   readBoostCoreCreateBoostAuth,
   readBoostCoreGetBoost,
   readBoostCoreGetBoostCount,
+  readBoostCoreGetIncentiveFeesInfo,
   readBoostCoreProtocolFee,
   readBoostCoreProtocolFeeReceiver,
   readIAuthIsAuthorized,
@@ -13,6 +14,7 @@ import {
   simulateBoostCoreSetProtocolFeeReceiver,
   writeBoostCoreClaimIncentive,
   writeBoostCoreClaimIncentiveFor,
+  writeBoostCoreCreateBoost,
   writeBoostCoreSetCreateBoostAuth,
   writeBoostCoreSetProtocolFeeReceiver,
 } from '@boostxyz/evm';
@@ -29,6 +31,8 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodePacked,
+  keccak256,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -126,8 +130,10 @@ import {
   InvalidProtocolChainIdError,
   MustInitializeBudgetError,
 } from './errors';
+import type { AssetType } from './transfers';
 import {
   type GenericLog,
+  type HashAndSimulatedResult,
   type ReadParams,
   type WriteParams,
   assertValidAddressByChainId,
@@ -276,6 +282,20 @@ export type CreateBoostPayload = {
 };
 
 /**
+ * Represents the information about the disbursal of an incentive.
+ *
+ * @export
+ * @typedef {IncentiveDisbursalInfo}
+ */
+export type IncentiveDisbursalInfo = {
+  assetType: AssetType;
+  asset: Address;
+  protocolFeesRemaining: bigint;
+  protocolFee: bigint;
+  tokenId: bigint;
+};
+
+/**
  * The core contract for the Boost protocol. Used to create and retrieve deployed Boosts.
  *
  * @export
@@ -405,6 +425,27 @@ export class BoostCore extends Deployable<
       maxParticipants: boost.maxParticipants,
       owner: boost.owner,
     });
+  }
+
+  /**
+   * Create a new Boost.
+   *
+   * @public
+   * @async
+   * @param {CreateBoostPayload} _boostPayload
+   * @param {?WriteParams} [params]
+   * @returns {Promise<HashAndSimulatedResult>}
+   */
+  public async createBoostRaw(
+    _boostPayload: CreateBoostPayload,
+    _params?: WriteParams,
+  ): Promise<HashAndSimulatedResult> {
+    const { request, result } = await this.simulateCreateBoost(
+      _boostPayload,
+      _params,
+    );
+    const hash = await writeBoostCoreCreateBoost(this._config, request);
+    return { hash, result };
   }
 
   /**
@@ -1044,6 +1085,38 @@ export class BoostCore extends Deployable<
       request,
     );
     return { hash, result };
+  }
+
+  /**
+   * Get the incentives fees information for a given Boost ID and Incentive ID.
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId - The ID of the Boost
+   * @param {bigint} incentiveId - The ID of the Incentive
+   * @param {?ReadParams} [params]
+   * @returns {Promise<IncentiveDisbursalInfo>}
+   */
+  public async getIncentiveFeesInfo(
+    boostId: bigint,
+    incentiveId: bigint,
+    params?: ReadParams,
+  ) {
+    const key = keccak256(
+      encodePacked(['uint256', 'uint256'], [boostId, incentiveId]),
+    );
+
+    return await readBoostCoreGetIncentiveFeesInfo(this._config, {
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
+      args: [key],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   /**

@@ -1,13 +1,16 @@
-import { selectors as eventSelectors } from "@boostxyz/signatures/events";
+import { 
+  selectors as eventSelectors, 
+  abi as eventAbi,
+ } from "@boostxyz/signatures/events";
 import { selectors as funcSelectors } from "@boostxyz/signatures/functions";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   AbiEvent,
-  AbiFunction,
   type Address,
   type Hex,
   isAddress,
   isAddressEqual,
+  Log,
   parseEther,
   toHex,
   zeroAddress,
@@ -37,11 +40,11 @@ import {
   anyActionParameter,
   transactionSenderClaimant,
   packFieldIndexes,
-  unpackFieldIndexes
+  unpackFieldIndexes,
+  decodeAndReorderLogArgs
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";
-
 
 let fixtures: Fixtures,
   erc721: MockERC721,
@@ -304,6 +307,7 @@ describe("EventAction Event Selector", () => {
         defaultOptions,
         basicErc721TransferAction(erc721),
       );
+      // @ts-expect-error
       await action.deploy();
       expect(isAddress(action.assertValidAddress())).toBe(true);
     });
@@ -964,6 +968,7 @@ describe("EventAction Func Selector", () => {
       defaultOptions,
       basicErc721MintFuncAction(erc721),
     );
+    // @ts-expect-error
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
@@ -1381,4 +1386,38 @@ describe("Tuple & bitpacked fieldIndex support", () => {
     });
   });
 });
+
+describe('decodeAndReorderLogArgs', () => {
+  test('correctly reorders mixed indexed and non-indexed parameters', () => {
+    const event = eventAbi[
+      'Minted(address indexed,uint8,uint8,address indexed,(uint32,uint256,address,uint32,uint32,uint32,address,bool,uint256,uint256,uint256,uint256,uint256),uint256 indexed)'
+    ] as AbiEvent;
+
+    const log: Log = {
+      address: "0x000000000001a36777f9930aaeff623771b13e70",
+      blockHash: "0xf529b056439fb090e974a2567642500ede9b5632ddb3bc138e6bebdf18ce367a",
+      blockNumber: 24706315n,
+      data: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000015a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000512b55b00d744fc2edb8474f223a7498c3e5a7ce00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000002c2ad68fd900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001f8c501d9b0000000000000000000000000000000000000000000000000000000c9e86723e0000000000000000000000000000000000000000000000000000000000000000000",
+      logIndex: 379,
+      removed: false,
+      topics: [
+        "0x2a29f7402bd32f0e4bbe17d44be064f7f64d96ee174ed7cb27936d869bf9a888",
+        "0x0000000000000000000000008bc2a882609060bf9b5c673af5d11795463b9230",
+        "0x000000000000000000000000234d469154ed5cec5a8c22b186e4766d556702ff",
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      transactionHash: "0x604496c89be16e005314db89478c9999fc55aa95e8bbc6d5e8b2a26afc82abb7",
+      transactionIndex: 110,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe("0x8BC2A882609060Bf9b5C673aF5D11795463B9230");
+    expect(result.args[1]).toBe(0);
+    expect(result.args[2]).toBe(0);
+    expect(result.args[3]).toBe("0x234d469154eD5cEC5A8C22b186e4766d556702ff");
+    expect(Array.isArray(result.args[4]));
+    expect(result.args[5]).toBe(0n);
+  });
+}); 
 

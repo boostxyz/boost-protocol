@@ -7,6 +7,7 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
+import type { AbiEventParameter } from 'abitype';
 import { match } from 'ts-pattern';
 import {
   type AbiEvent,
@@ -332,6 +333,13 @@ export interface EventActionPayloadRaw {
 export type EventLogs = GetLogsReturnType<AbiEvent, AbiEvent[], true>;
 
 /**
+ * Single event log
+ * @export
+ * @typedef {EventLog}
+ */
+export type EventLog = EventLogs[0] & { args: unknown[] };
+
+/**
  * A generic event action
  *
  * @export
@@ -579,14 +587,7 @@ export class EventAction extends DeployableTarget<
       }
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
-        .map((log) => {
-          const { eventName, args } = decodeEventLog({
-            abi: [event],
-            data: log.data,
-            topics: log.topics,
-          });
-          return { ...log, eventName, args };
-        });
+        .map((log) => decodeAndReorderLogArgs(event, log));
 
       for (let log of decodedLogs) {
         if (!isAddressEqual(log.address, claimant.targetContract)) continue;
@@ -732,15 +733,7 @@ export class EventAction extends DeployableTarget<
 
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
-        .map((log) => {
-          const { eventName, args } = decodeEventLog({
-            abi: [event],
-            data: log.data,
-            topics: log.topics,
-          });
-
-          return { ...log, eventName, args };
-        });
+        .map((log) => decodeAndReorderLogArgs(event, log));
 
       return this.isActionEventValid(actionStep, decodedLogs, event);
     }
@@ -1657,4 +1650,57 @@ export function unpackFieldIndexes(packed: number): number[] {
     indexes.push(index);
   }
   return indexes;
+}
+
+/**
+ * Decodes an event log and reorders the arguments to match the original ABI order.
+ * This is necessary because viem's decodeEventLog reorders indexed parameters to the front.
+ *
+ * @param event - The event ABI definition
+ * @param log - The log to decode
+ * @returns {EventLog} The decoded log with arguments in the original ABI order
+ */
+export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
+  const decodedLog = decodeEventLog({
+    abi: [event],
+    data: log.data,
+    topics: log.topics,
+  });
+
+  const argsArray = Array.isArray(decodedLog.args)
+    ? decodedLog.args
+    : Object.values(decodedLog.args);
+
+  if (!event.inputs.some((input) => input.indexed)) {
+    return decodedLog as EventLog;
+  }
+
+  const indexedIndices: number[] = [];
+  const nonIndexedIndices: number[] = [];
+  for (let i = 0; i < event.inputs.length; i++) {
+    if (event.inputs[i]!.indexed) {
+      indexedIndices.push(i);
+    } else {
+      nonIndexedIndices.push(i);
+    }
+  }
+
+  const reorderedArgs = new Array(event.inputs.length);
+  let currentIndex = 0;
+
+  // Place the indexed arguments in their original positions
+  for (let i = 0; i < indexedIndices.length; i++) {
+    reorderedArgs[indexedIndices[i]!] = argsArray[currentIndex++];
+  }
+
+  // Place the non-indexed arguments in their original positions
+  for (let i = 0; i < nonIndexedIndices.length; i++) {
+    reorderedArgs[nonIndexedIndices[i]!] = argsArray[currentIndex++];
+  }
+
+  return {
+    ...log,
+    eventName: decodedLog.eventName,
+    args: reorderedArgs,
+  } as EventLog;
 }

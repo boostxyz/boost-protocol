@@ -1,10 +1,13 @@
-import { selectors as eventSelectors } from "@boostxyz/signatures/events";
+import { 
+  selectors as eventSelectors, 
+  abi as eventAbi,
+ } from "@boostxyz/signatures/events";
 import { selectors as funcSelectors } from "@boostxyz/signatures/functions";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AbiEvent,
-  AbiFunction,
+  type AbiEvent,
   type Address,
+  type Log,
   type Hex,
   isAddress,
   isAddressEqual,
@@ -37,11 +40,11 @@ import {
   anyActionParameter,
   transactionSenderClaimant,
   packFieldIndexes,
-  unpackFieldIndexes
+  unpackFieldIndexes,
+  decodeAndReorderLogArgs
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";
-
 
 let fixtures: Fixtures,
   erc721: MockERC721,
@@ -304,6 +307,7 @@ describe("EventAction Event Selector", () => {
         defaultOptions,
         basicErc721TransferAction(erc721),
       );
+      // @ts-expect-error
       await action.deploy();
       expect(isAddress(action.assertValidAddress())).toBe(true);
     });
@@ -964,6 +968,7 @@ describe("EventAction Func Selector", () => {
       defaultOptions,
       basicErc721MintFuncAction(erc721),
     );
+    // @ts-expect-error
     await action.deploy();
     expect(isAddress(action.assertValidAddress())).toBe(true);
   });
@@ -1382,3 +1387,119 @@ describe("Tuple & bitpacked fieldIndex support", () => {
   });
 });
 
+describe('decodeAndReorderLogArgs', () => {
+  test('correctly reorders mixed indexed and non-indexed parameters', () => {
+    const event = eventAbi[
+      'Minted(address indexed,uint8,uint8,address indexed,(uint32,uint256,address,uint32,uint32,uint32,address,bool,uint256,uint256,uint256,uint256,uint256),uint256 indexed)'
+    ] as AbiEvent;
+
+    const log: Log = {
+      address: "0x000000000001a36777f9930aaeff623771b13e70",
+      blockHash: "0xf529b056439fb090e974a2567642500ede9b5632ddb3bc138e6bebdf18ce367a",
+      blockNumber: 24706315n,
+      data: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000015a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000512b55b00d744fc2edb8474f223a7498c3e5a7ce00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000002c2ad68fd900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001f8c501d9b0000000000000000000000000000000000000000000000000000000c9e86723e0000000000000000000000000000000000000000000000000000000000000000000",
+      logIndex: 379,
+      removed: false,
+      topics: [
+        "0x2a29f7402bd32f0e4bbe17d44be064f7f64d96ee174ed7cb27936d869bf9a888",
+        "0x0000000000000000000000008bc2a882609060bf9b5c673af5d11795463b9230",
+        "0x000000000000000000000000234d469154ed5cec5a8c22b186e4766d556702ff",
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      transactionHash: "0x604496c89be16e005314db89478c9999fc55aa95e8bbc6d5e8b2a26afc82abb7",
+      transactionIndex: 110,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe("0x8BC2A882609060Bf9b5C673aF5D11795463B9230");
+    expect(result.args[1]).toBe(0);
+    expect(result.args[2]).toBe(0);
+    expect(result.args[3]).toBe("0x234d469154eD5cEC5A8C22b186e4766d556702ff");
+    expect(Array.isArray(result.args[4]));
+    expect(result.args[5]).toBe(0n);
+  });
+
+  test('correctly reorders mixed indexed and non-indexed parameters', () => {
+    const event = eventAbi['NameRegistered(string,bytes32 indexed,address indexed,uint256)'] as AbiEvent;
+
+    const log: Log = {
+      address: "0x4ccb0bb02fcaba27e82a56646e81d8c5bc4119a5",
+      blockHash: "0xd3756b6a35ebee1bfcf66b605dc3bd6fc85ca282ed94b190b25db4c6b3ef188a",
+      blockNumber: 23536079n,
+      data: "0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000693a2861000000000000000000000000000000000000000000000000000000000000000c626f6f73742d6d61747469650000000000000000000000000000000000000000",
+      logIndex: 133,
+      removed: false,
+      topics: [
+        "0x0667086d08417333ce63f40d5bc2ef6fd330e25aaaf317b7c489541f8fe600fa",
+        "0x82de51675fd710fc7a247469e170340787130a61b84dc3446b63277e03e4abd9",
+        "0x000000000000000000000000865c301c46d64de5c9b124ec1a97ef1efc1bcbd1"
+      ],
+      transactionHash: "0xbe54acb2ceb28e7eb962e09218d51ab3369139ac3fd782cacccf163f0daf1a08",
+      transactionIndex: 26,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe("boost-mattie");
+    expect(result.args[1]).toBe("0x82de51675fd710fc7a247469e170340787130a61b84dc3446b63277e03e4abd9");
+    expect(result.args[2]).toBe("0x865C301c46d64DE5c9B124Ec1a97eF1EFC1bcbd1");
+    expect(result.args[3]).toBe(1765419105n);
+  });
+
+  test('works with events where params are already correctly ordered', () => {
+    const event = eventAbi["BoostCreated(uint256 indexed,address indexed,address indexed,uint256,address,address,address)"] as AbiEvent;
+
+    const log: Log = {
+      address: "0xdcffce9d8185706780a46cf04d9c6b86b3451497",
+      blockHash: "0xdfcbc66fc07d41321badb8f8afa3e8fea3f65e87791d3de1ad07d470b2ff1c8e",
+      blockNumber: 7449080n,
+      data: "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e81490c0b9e625999c78f155c7bcf7f11f512b390000000000000000000000003322baef13ac75b1b1e25abc65c0df28f9e55670000000000000000000000000d1513f67da84dec0759f6a715bf28a637c7de716",
+      logIndex: 141,
+      removed: false,
+      topics: [
+        "0x116812d3ad4507d72f2c428b63246d594ca055a1dc119394285504c23d1f34cd",
+        "0x000000000000000000000000000000000000000000000000000000000000006f",
+        "0x0000000000000000000000000000c1e5c9d12c8c52eb319af11da44bb84779d2",
+        "0x0000000000000000000000008b1646483aeedd894feb417da1f5a7ab1846e81e"
+      ],
+      transactionHash: "0xb23270a738440be31b2e6c2e1180324f04159d7bfd681564e877d8675fd8b5c2",
+      transactionIndex: 79,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe(111n);
+    expect(result.args[1]).toBe("0x0000c1E5C9d12c8c52eb319AF11dA44bb84779d2");
+    expect(result.args[2]).toBe("0x8B1646483aEedd894feB417dA1f5a7Ab1846E81E");
+    expect(result.args[3]).toBe(1n);
+    expect(result.args[4]).toBe("0xE81490c0b9e625999C78f155c7bCf7f11f512B39");
+    expect(result.args[5]).toBe("0x3322BaEf13ac75B1b1E25Abc65c0dF28f9e55670");
+    expect(result.args[6]).toBe("0xD1513f67da84DEc0759F6a715BF28A637c7de716");
+  });
+
+  test('works with events where there is no indexed params', () => {
+    const event = eventAbi['Minted(uint8,address,uint256,uint256)'] as AbiEvent;
+
+    const log: Log = {
+      address: "0x45ecff1c647a32455ced5c21400fe61aa2be680b",
+      blockHash: "0xc5b14f59a5bc89e6a6ecdd595d4d10d1dd82adc624a04717fdff78bbb9dac988",
+      blockNumber: 24749935n,
+      data: "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000865c301c46d64de5c9b124ec1a97ef1efc1bcbd1000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000014a4",
+      logIndex: 188,
+      removed: false,
+      topics: [
+        "0x7ac572687bf4e66a8514fc2ec464fc2644c78bcb1d80a225fc51a33e0ee38bfa"
+      ],
+      transactionHash: "0x0e4aba5edcbfff24d25290066b992ef5670a00864febe38ffaeb8cb1476faa96",
+      transactionIndex: 42,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe(1);
+    expect(result.args[1]).toBe("0x865C301c46d64DE5c9B124Ec1a97eF1EFC1bcbd1");
+    expect(result.args[2]).toBe(1n);
+    expect(result.args[3]).toBe(5284n);
+  });
+}); 

@@ -17,6 +17,8 @@ import { BoostNotFoundError, IncentiveNotCloneableError } from "./errors";
 import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { bytes4 } from "./utils";
 import { BoostValidatorEOA } from "./Validators/Validator";
+import { AssetType } from "./transfers";
+import { waitForTransactionReceipt } from "@wagmi/core";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -32,7 +34,7 @@ describe("BoostCore", () => {
     const { core } = fixtures;
 
     const { budget, erc20 } = budgets;
-    await core.createBoost({
+    const payload = {
       protocolFee: 0n,
       maxParticipants: 5n,
       budget: budget,
@@ -59,8 +61,11 @@ describe("BoostCore", () => {
           manager: budget.assertValidAddress(),
         }),
       ],
-    });
-    expect(await core.getBoostCount()).toBe(1n);
+    }
+    const { hash } = await core.createBoostRaw(payload)
+    await waitForTransactionReceipt(defaultOptions.config, { hash })
+    await core.createBoost(payload);
+    expect(await core.getBoostCount()).toBe(2n);
   });
 
   test("throws a typed error if no boost exists", async () => {
@@ -903,5 +908,48 @@ describe("BoostCore", () => {
       await erc20Incentive.getTotalBudget()
     )
     expect(totalFee).toBe(100000000000000000n)
+  });
+
+  test("can get incentive fees information", async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+
+    // Create a new boost
+    const boost = await core.createBoost({
+      protocolFee: 0n,
+      maxParticipants: 10n,
+      budget: budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      validator: core.SignerValidator({
+        signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
+      }),
+      allowList: core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [
+        core.ERC20Incentive({
+          asset: erc20.assertValidAddress(),
+          reward: parseEther("1"),
+          limit: 10n,
+          strategy: StrategyType.POOL,
+          manager: budget.assertValidAddress(),
+        }),
+      ],
+    });
+
+    const feesInfo = await core.getIncentiveFeesInfo(boost.id, 0n);
+
+    expect(feesInfo).toBeDefined();
+    expect(feesInfo.protocolFee).toBe(1000n);
+    expect(feesInfo.protocolFeesRemaining).toBe(parseEther("1"));
+    expect(feesInfo.assetType).toBe(AssetType.ERC20);
+    expect(feesInfo.asset.toLowerCase()).toBe(erc20.assertValidAddress());
   });
 });

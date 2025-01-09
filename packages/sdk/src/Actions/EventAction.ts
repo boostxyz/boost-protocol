@@ -7,10 +7,12 @@ import {
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
+import type { AbiEventParameter } from 'abitype';
 import { match } from 'ts-pattern';
 import {
   type AbiEvent,
   type AbiFunction,
+  type AbiParameter,
   type Address,
   type GetLogsReturnType,
   type GetTransactionParameters,
@@ -41,6 +43,8 @@ import {
   FieldValueUndefinedError,
   FunctionDataDecodeError,
   InvalidNumericalCriteriaError,
+  InvalidTupleDecodingError,
+  InvalidTupleEncodingError,
   NoEventActionStepsProvidedError,
   TooManyEventActionStepsProvidedError,
   UnparseableAbiParamError,
@@ -88,6 +92,8 @@ export enum PrimitiveType {
   ADDRESS = 1,
   BYTES = 2,
   STRING = 3,
+  // Note: TUPLE remains in the enum but is no longer handled directly by `validateFieldAgainstCriteria`.
+  TUPLE = 4,
 }
 
 /**
@@ -112,6 +118,9 @@ export interface Criteria {
   fieldType: PrimitiveType;
   /**
    * The index in the logs argument array where the field is located.
+   *
+   * If `fieldType` is TUPLE, this value is **bitpacked** with up to 5 sub-indexes,
+   * with the maximum 6-bit value used as a "terminator" to indicate no further indexes.
    *
    * @type {number}
    */
@@ -322,6 +331,13 @@ export interface EventActionPayloadRaw {
  * @typedef {EventLogs}
  */
 export type EventLogs = GetLogsReturnType<AbiEvent, AbiEvent[], true>;
+
+/**
+ * Single event log
+ * @export
+ * @typedef {EventLog}
+ */
+export type EventLog = EventLogs[0] & { args: unknown[] };
 
 /**
  * A generic event action
@@ -571,14 +587,7 @@ export class EventAction extends DeployableTarget<
       }
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
-        .map((log) => {
-          const { eventName, args } = decodeEventLog({
-            abi: [event],
-            data: log.data,
-            topics: log.topics,
-          });
-          return { ...log, eventName, args };
-        });
+        .map((log) => decodeAndReorderLogArgs(event, log));
 
       for (let log of decodedLogs) {
         if (!isAddressEqual(log.address, claimant.targetContract)) continue;
@@ -703,7 +712,7 @@ export class EventAction extends DeployableTarget<
 
       // Use the provided logs, no need to fetch receipt
       if ('logs' in params) {
-        return this.isActionEventValid(actionStep, params.logs);
+        return this.isActionEventValid(actionStep, params.logs, event);
       }
 
       const receipt = await getTransactionReceipt(this._config, {
@@ -724,17 +733,9 @@ export class EventAction extends DeployableTarget<
 
       const decodedLogs = receipt.logs
         .filter((log) => log.topics[0] === toEventSelector(event))
-        .map((log) => {
-          const { eventName, args } = decodeEventLog({
-            abi: [event],
-            data: log.data,
-            topics: log.topics,
-          });
+        .map((log) => decodeAndReorderLogArgs(event, log));
 
-          return { ...log, eventName, args };
-        });
-
-      return this.isActionEventValid(actionStep, decodedLogs);
+      return this.isActionEventValid(actionStep, decodedLogs, event);
     }
     if (actionStep.signatureType === SignatureType.FUNC) {
       if ('hash' in params) {
@@ -756,20 +757,44 @@ export class EventAction extends DeployableTarget<
 
   /**
    * Validates a single action event with a given criteria against logs.
-   * If logs are provided in the optional `params` argument, then those logs will be used instead of being fetched with the configured client.
    *
    * @public
-   * @async
    * @param {ActionStep} actionStep - The action step containing the event to validate.
    * @param {EventLogs} logs - Event logs to validate the given step against
-   * @returns {Promise<boolean>} Resolves to true if the action event is valid, throws if input is invalid, otherwise false.
+   * @param {AbiEvent} eventAbi - The ABI definition of the event
+   * @returns {boolean} Resolves to true if the action event is valid, throws if input is invalid, otherwise false.
    */
-  public isActionEventValid(actionStep: ActionStep, logs: EventLogs) {
+  public isActionEventValid(
+    actionStep: ActionStep,
+    logs: EventLogs,
+    eventAbi: AbiEvent,
+  ): boolean {
     const criteria = actionStep.actionParameter;
     if (!logs.length) return false;
+
+    // Check each log
     for (let log of logs) {
-      if (this.validateLogAgainstCriteria(criteria, log)) {
-        return true;
+      // parse out final (scalar) field from the log args
+      try {
+        if (!Array.isArray(log.args)) {
+          throw new DecodedArgsMalformedError({
+            log,
+            criteria,
+            fieldValue: undefined,
+          });
+        }
+        const { value, type } = this.parseFieldFromAbi(
+          log.args,
+          criteria.fieldIndex,
+          eventAbi.inputs || [],
+          criteria.fieldType,
+        );
+        criteria.fieldType = type;
+        if (this.validateFieldAgainstCriteria(criteria, value, { log })) {
+          return true;
+        }
+      } catch {
+        // If there's an error on this log, keep trying with the next one
       }
     }
     return false;
@@ -821,7 +846,15 @@ export class EventAction extends DeployableTarget<
         return { ...log, eventName, args };
       });
 
-      return this.isActionEventValid(actionStep, decodedLogs);
+      return this.isActionEventValid(actionStep, decodedLogs, {
+        name: 'Transfer',
+        type: 'event',
+        inputs: [
+          { type: 'address', indexed: true },
+          { type: 'address', indexed: true },
+          { type: 'uint256', indexed: true },
+        ],
+      });
     } catch {
       // ERC20
       try {
@@ -844,11 +877,89 @@ export class EventAction extends DeployableTarget<
           return { ...log, eventName, args };
         });
 
-        return this.isActionEventValid(actionStep, decodedLogs);
+        return this.isActionEventValid(actionStep, decodedLogs, {
+          name: 'Transfer',
+          type: 'event',
+          inputs: [
+            { type: 'address', indexed: true },
+            { type: 'address', indexed: true },
+            { type: 'uint256' },
+          ],
+        });
       } catch {
         throw new DecodedArgsError('Failed to decode transfer logs');
       }
     }
+  }
+
+  /**
+   * Parses the final (scalar) field from a set of decoded arguments, given an ABI definition.
+   * If the fieldType is TUPLE, we decode `fieldIndex` as a bitpacked array of indexes to drill down
+   * into nested tuples. Otherwise, we parse the single `fieldIndex` as normal.
+   *
+   * @public
+   * @param {readonly unknown[]} allArgs - The decoded arguments array from an event log or function call.
+   * @param {number} criteriaIndex - The field index (bitpacked if TUPLE).
+   * @param {AbiParameter[]} abiInputs - The ABI inputs describing each decoded argument.
+   * @param {PrimitiveType} declaredType - Either TUPLE or a standard scalar type
+   * @returns {{ value: string | bigint | Hex; type: Exclude<PrimitiveType, PrimitiveType.TUPLE> }}
+   */
+  public parseFieldFromAbi(
+    allArgs: readonly unknown[],
+    criteriaIndex: number,
+    abiInputs: readonly AbiParameter[],
+    declaredType: PrimitiveType,
+  ): {
+    value: string | bigint | Hex;
+    type: Exclude<PrimitiveType, PrimitiveType.TUPLE>;
+  } {
+    // If ANY_ACTION_PARAM, return a dummy "any" value so we can do special-case checks
+    if (criteriaIndex === CheatCodes.ANY_ACTION_PARAM) {
+      return { value: zeroHash, type: PrimitiveType.BYTES };
+    }
+
+    // If it's not TUPLE, parse as a single index (existing logic)
+    if (declaredType !== PrimitiveType.TUPLE) {
+      if (!Array.isArray(allArgs) || criteriaIndex >= allArgs.length) {
+        throw new FieldValueUndefinedError({
+          fieldValue: allArgs,
+          criteria: {
+            filterType: FilterType.EQUAL,
+            fieldType: declaredType,
+            fieldIndex: criteriaIndex,
+            filterData: zeroHash,
+          },
+        });
+      }
+      const abiParam = abiInputs[criteriaIndex];
+      if (!abiParam || !abiParam.type) {
+        throw new UnparseableAbiParamError(criteriaIndex, abiParam as AbiEvent);
+      }
+      const rawValue = allArgs[criteriaIndex];
+
+      const finalType = abiTypeToPrimitiveType(abiParam.type);
+
+      if (
+        finalType === PrimitiveType.ADDRESS &&
+        (typeof rawValue !== 'string' || !isAddress(rawValue))
+      ) {
+        throw new FieldValueUndefinedError({
+          fieldValue: rawValue,
+          criteria: {
+            fieldIndex: criteriaIndex,
+            filterType: FilterType.EQUAL,
+            fieldType: finalType,
+            filterData: zeroHash,
+          },
+        });
+      }
+
+      return { value: rawValue as string | bigint | Hex, type: finalType };
+    }
+
+    // Otherwise, declaredType === TUPLE => decode bitpacked indexes
+    const indexes = unpackFieldIndexes(criteriaIndex);
+    return parseNestedTupleValue(allArgs as unknown[], indexes, abiInputs);
   }
 
   /**
@@ -870,10 +981,10 @@ export class EventAction extends DeployableTarget<
     params: Pick<ValidateActionStepParams, 'abiItem' | 'knownSignatures'>,
   ) {
     const criteria = actionStep.actionParameter;
-    let signature = actionStep.signature;
+    const signature = actionStep.signature;
 
     let func: AbiFunction;
-    if (params.abiItem) func = params?.abiItem as AbiFunction;
+    if (params.abiItem) func = params.abiItem as AbiFunction;
     else {
       const sigPool = params.knownSignatures as Record<Hex, AbiFunction>;
       func = sigPool[signature] as AbiFunction;
@@ -892,31 +1003,37 @@ export class EventAction extends DeployableTarget<
       throw new FunctionDataDecodeError([func], e as Error);
     }
 
-    // Validate the criteria against decoded arguments using fieldIndex
-    const decodedArgs = decodedData.args;
-
-    if (!decodedArgs || !decodedData) return false;
-
-    if (
-      !this.validateFunctionAgainstCriteria(
-        criteria,
-        decodedArgs as (string | bigint)[],
-      )
-    ) {
+    if (!decodedData?.args) {
       return false;
     }
 
-    return true;
+    try {
+      const { value, type } = this.parseFieldFromAbi(
+        decodedData.args as unknown[],
+        criteria.fieldIndex,
+        func.inputs || [],
+        criteria.fieldType,
+      );
+      criteria.fieldType = type;
+      return this.validateFieldAgainstCriteria(criteria, value, {
+        decodedArgs: decodedData.args as readonly (string | bigint)[],
+      });
+    } catch {
+      return false;
+    }
   }
+
   /**
-   * Validates a field against a given criteria.
+   * Validates a field against a given criteria. The field is assumed to be a non-tuple scalar,
+   * along with its final resolved `PrimitiveType`. (Any TUPLE logic has been extracted elsewhere.)
    *
    * @param {Criteria} criteria - The criteria to validate against.
    * @param {string | bigint | Hex} fieldValue - The field value to validate.
+   * @param {Exclude<PrimitiveType, PrimitiveType.TUPLE>} fieldType - The final resolved primitive type.
    * @param {Object} input - Additional context for validation.
    * @param {EventLogs[0]} [input.log] - The event log, if validating an event.
    * @param {readonly (string | bigint)[]} [input.decodedArgs] - The decoded function arguments, if validating a function call.
-   * @returns {Promise<boolean>} - Returns true if the field passes the criteria, false otherwise.
+   * @returns {boolean} - Returns true if the field passes the criteria, false otherwise.
    */
   public validateFieldAgainstCriteria(
     criteria: Criteria,
@@ -925,6 +1042,10 @@ export class EventAction extends DeployableTarget<
       | { log: EventLogs[0] }
       | { decodedArgs: readonly (string | bigint)[] },
   ): boolean {
+    /*
+     * Special-case: ANY_ACTION_PARAM. If we have filterType=EQUAL, fieldType=BYTES, fieldIndex=255,
+     * we consider that a wildcard match. Return true immediately.
+     */
     if (
       criteria.filterType === FilterType.EQUAL &&
       criteria.fieldType === PrimitiveType.BYTES &&
@@ -932,11 +1053,17 @@ export class EventAction extends DeployableTarget<
     ) {
       return true;
     }
+    if (criteria.fieldType === PrimitiveType.TUPLE) {
+      throw new InvalidTupleDecodingError(
+        'Tuples should not be passed into validateFieldAgainstCriteria',
+      );
+    }
+    const fieldType = criteria.fieldType;
 
-    // Type narrow based on criteria.filterType
+    // Evaluate filter based on the final fieldType
     switch (criteria.filterType) {
       case FilterType.EQUAL:
-        return match(criteria.fieldType)
+        return match(fieldType)
           .with(PrimitiveType.ADDRESS, () =>
             isAddressEqual(criteria.filterData, fieldValue as Address),
           )
@@ -951,7 +1078,7 @@ export class EventAction extends DeployableTarget<
           .otherwise(() => fieldValue === criteria.filterData);
 
       case FilterType.NOT_EQUAL:
-        return match(criteria.fieldType)
+        return match(fieldType)
           .with(
             PrimitiveType.ADDRESS,
             () => !isAddressEqual(criteria.filterData, fieldValue as Address),
@@ -967,7 +1094,7 @@ export class EventAction extends DeployableTarget<
           .otherwise(() => fieldValue !== criteria.filterData);
 
       case FilterType.GREATER_THAN:
-        if (criteria.fieldType === PrimitiveType.UINT) {
+        if (fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) > BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -975,8 +1102,9 @@ export class EventAction extends DeployableTarget<
           criteria,
           fieldValue,
         });
+
       case FilterType.GREATER_THAN_OR_EQUAL:
-        if (criteria.fieldType === PrimitiveType.UINT) {
+        if (fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) >= BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -986,7 +1114,7 @@ export class EventAction extends DeployableTarget<
         });
 
       case FilterType.LESS_THAN:
-        if (criteria.fieldType === PrimitiveType.UINT) {
+        if (fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) < BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -994,8 +1122,9 @@ export class EventAction extends DeployableTarget<
           criteria,
           fieldValue,
         });
+
       case FilterType.LESS_THAN_OR_EQUAL:
-        if (criteria.fieldType === PrimitiveType.UINT) {
+        if (fieldType === PrimitiveType.UINT) {
           return BigInt(fieldValue) <= BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -1006,11 +1135,11 @@ export class EventAction extends DeployableTarget<
 
       case FilterType.CONTAINS:
         if (
-          criteria.fieldType === PrimitiveType.BYTES ||
-          criteria.fieldType === PrimitiveType.STRING
+          fieldType === PrimitiveType.BYTES ||
+          fieldType === PrimitiveType.STRING
         ) {
           let substring;
-          if (criteria.fieldType === PrimitiveType.STRING) {
+          if (fieldType === PrimitiveType.STRING) {
             substring = fromHex(criteria.filterData, 'string');
           } else {
             // truncate the `0x` prefix
@@ -1032,12 +1161,11 @@ export class EventAction extends DeployableTarget<
             fieldValue,
           });
         }
-
-        if (criteria.fieldType === PrimitiveType.STRING) {
-          // fieldValue is decoded by the ABI
+        if (fieldType === PrimitiveType.STRING) {
           const regexString = fromHex(criteria.filterData, 'string');
           return new RegExp(regexString).test(fieldValue);
         }
+      // Otherwise unrecognized or not applicable
 
       default:
         throw new UnrecognizedFilterTypeError({
@@ -1046,68 +1174,6 @@ export class EventAction extends DeployableTarget<
           fieldValue,
         });
     }
-  }
-
-  /**
-   * Validates a {@link Log} against a given criteria.
-   * If the criteria's fieldIndex is 255 (using CheatCodes enum), it is reserved for anyValidation
-   *
-   * @param {Criteria} criteria - The criteria to validate against.
-   * @param {Log} log - The Viem event log.
-   * @returns {boolean} - Returns true if the log passes the criteria, false otherwise.
-   */
-  public validateLogAgainstCriteria(
-    criteria: Criteria,
-    log: EventLogs[0],
-  ): boolean {
-    if (
-      !Array.isArray(log.args) ||
-      (log.args.length <= criteria.fieldIndex &&
-        criteria.fieldIndex !== CheatCodes.ANY_ACTION_PARAM)
-    ) {
-      throw new DecodedArgsMalformedError({
-        log,
-        criteria,
-        fieldValue: undefined,
-      });
-    }
-
-    const fieldValue =
-      criteria.fieldIndex === CheatCodes.ANY_ACTION_PARAM
-        ? zeroHash
-        : log.args.at(criteria.fieldIndex);
-
-    if (fieldValue === undefined) {
-      throw new FieldValueUndefinedError({ log, criteria, fieldValue });
-    }
-    return this.validateFieldAgainstCriteria(criteria, fieldValue, { log });
-  }
-
-  /**
-   * Validates a function's decoded arguments against a given criteria.
-   * If the criteria's fieldIndex is 255 (using CheatCodes enum), it is reserved for anyValidation
-   *
-   * @param {Criteria} criteria - The criteria to validate against.
-   * @param {unknown[]} decodedArgs - The decoded arguments of the function call.
-   * @returns {Promise<boolean>} - Returns true if the decoded argument passes the criteria, false otherwise.
-   */
-  public validateFunctionAgainstCriteria(
-    criteria: Criteria,
-    decodedArgs: readonly (string | bigint)[],
-  ): boolean {
-    const fieldValue =
-      criteria.fieldIndex === CheatCodes.ANY_ACTION_PARAM
-        ? zeroHash
-        : decodedArgs[criteria.fieldIndex];
-    if (fieldValue === undefined) {
-      throw new FieldValueUndefinedError({
-        criteria,
-        fieldValue,
-      });
-    }
-    return this.validateFieldAgainstCriteria(criteria, fieldValue, {
-      decodedArgs,
-    });
   }
 
   /**
@@ -1159,6 +1225,15 @@ export class EventAction extends DeployableTarget<
     };
   }
 
+  /**
+   * Determines whether a string or bytes field is indexed in the event definition.
+   * If the user tries to filter on an indexed string/bytes, we throw an error.
+   *
+   * @public
+   * @param {ActionStep} step
+   * @param {AbiEvent} event
+   * @returns {boolean}
+   */
   public isArraylikeIndexed(step: ActionStep, event: AbiEvent) {
     if (
       (step.actionParameter.fieldType === PrimitiveType.STRING ||
@@ -1171,9 +1246,114 @@ export class EventAction extends DeployableTarget<
   }
 }
 
+/**
+ * Checks if a particular ABI parameter is the "tuple" variant that can have `components`.
+ *
+ * @param {AbiParameter} param
+ * @returns {boolean}
+ */
+function isTupleAbiParameter(
+  param: AbiParameter,
+): param is Extract<AbiParameter, { components: readonly AbiParameter[] }> {
+  return param.type === 'tuple' || param.type.startsWith('tuple[');
+}
+
+/**
+ * Recursively parses nested tuples by following an array of sub-indexes (unpacked from bitpacked `fieldIndex`).
+ * Each entry in `indexes` is used to pick which sub-component in the current tuple's `components`.
+ * If we encounter the "terminator" or run out of indexes, we stop.
+ *
+ * @param {unknown[]} rawArgs - The top-level arguments array.
+ * @param {number[]} indexes - The array of indexes from `unpackFieldIndexes(...)`.
+ * @param {readonly AbiParameter[]} abiInputs - The top-level ABI inputs for the entire arguments array.
+ * @returns {{ value: string | bigint | Hex, type: Exclude<PrimitiveType, PrimitiveType.TUPLE> }}
+ */
+function parseNestedTupleValue(
+  rawArgs: unknown[],
+  indexes: number[],
+  abiInputs: readonly AbiParameter[],
+): {
+  value: string | bigint | Hex;
+  type: Exclude<PrimitiveType, PrimitiveType.TUPLE>;
+} {
+  if (!indexes.length) {
+    throw new InvalidTupleDecodingError(
+      `No indexes found; cannot parse TUPLE field`,
+    );
+  }
+
+  // The first index picks which top-level ABI param to look at
+  const idx = indexes[0] ?? abiInputs.length + 1;
+  // If idx is out of range or is a "terminator," fail fast
+  if (idx >= abiInputs.length) {
+    throw new InvalidTupleDecodingError(undefined, idx);
+  }
+
+  const param = abiInputs[idx];
+  const rawValue = rawArgs[idx];
+
+  // If param isn't a tuple, we are at a leaf
+  if (!isTupleAbiParameter(param!)) {
+    const finalType = abiTypeToPrimitiveType(param!.type);
+    return { value: rawValue as string | bigint | Hex, type: finalType };
+  }
+
+  // Otherwise param is a tuple => rawValue must be an array of subfields
+  if (!Array.isArray(rawValue)) {
+    throw new InvalidTupleDecodingError(
+      `rawValue is not an array, but param.type is tuple`,
+    );
+  }
+
+  // Move to the next sub-index
+  const remaining = indexes.slice(1);
+  if (!remaining.length) {
+    // If there are no more indexes, we can't pick a sub-component
+    // Typically you'd want at least one more index to say "which subfield in the tuple we want"
+    throw new InvalidTupleDecodingError(undefined, -1);
+  }
+
+  // Check the next index for param.components
+  const subIdx = remaining[0] ?? param.components.length + 1;
+  if (subIdx >= param.components.length) {
+    throw new InvalidTupleDecodingError(undefined, subIdx);
+  }
+
+  // Recurse deeper using param.components as the "new top-level" ABI param list
+  return parseNestedTupleValue(rawValue, remaining, param.components);
+}
+
+/**
+ * Maps an ABI type string (e.g. 'uint256', 'address', 'bytes', 'string', etc.) to a `PrimitiveType`.
+ *
+ * @param {string} abiType
+ * @returns {Exclude<PrimitiveType, PrimitiveType.TUPLE>}
+ */
+function abiTypeToPrimitiveType(
+  abiType: string,
+): Exclude<PrimitiveType, PrimitiveType.TUPLE> {
+  const lower = abiType.toLowerCase();
+
+  if (lower.startsWith('uint') || lower.startsWith('int')) {
+    return PrimitiveType.UINT;
+  }
+  if (lower === 'address') {
+    return PrimitiveType.ADDRESS;
+  }
+  if (lower === 'bytes' || lower.startsWith('bytes')) {
+    return PrimitiveType.BYTES;
+  }
+  if (lower === 'string') {
+    return PrimitiveType.STRING;
+  }
+
+  // If it doesn't match any known scalar, throw. We expect parseNestedTupleValue() to handle nested tuple logic separately.
+  throw new DecodedArgsError(`Unrecognized ABI type: ${abiType}`);
+}
+
 function _dedupeActionSteps(_steps: ActionStep[]): ActionStep[] {
-  const steps: ActionStep[] = [],
-    signatures: Record<string, boolean> = {};
+  const steps: ActionStep[] = [];
+  const signatures: Record<string, boolean> = {};
   for (let step of _steps) {
     const signature = JSON.stringify(step);
     if (signatures[signature]) continue;
@@ -1182,6 +1362,7 @@ function _dedupeActionSteps(_steps: ActionStep[]): ActionStep[] {
   }
   return steps;
 }
+
 type RawActionStep = Overwrite<ActionStep, { chainid: bigint }>;
 type RawActionClaimant = Overwrite<ActionClaimant, { chainid: bigint }>;
 
@@ -1268,7 +1449,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },
@@ -1289,7 +1470,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },
@@ -1310,7 +1491,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },
@@ -1331,7 +1512,7 @@ export function prepareEventActionPayload({
                 components: [
                   { type: 'uint8', name: 'filterType' },
                   { type: 'uint8', name: 'fieldType' },
-                  { type: 'uint8', name: 'fieldIndex' },
+                  { type: 'uint32', name: 'fieldIndex' },
                   { type: 'bytes', name: 'filterData' },
                 ],
               },
@@ -1425,4 +1606,101 @@ export function transactionSenderClaimant(chainId: number): ActionClaimant {
     targetContract: zeroAddress,
     chainid: chainId,
   };
+}
+
+// Helper functions to bit-pack and decode fieldIndex values
+const MAX_FIELD_INDEX = 0b111111; // Maximum value for 6 bits (63)
+
+/**
+ * Packs up to five indexes into a single uint32 value.
+ *
+ * @param {number[]} indexes - Array of up to five indexes to pack.
+ * @returns {number} - Packed uint32 value.
+ * @throws {Error} - If more than five indexes are provided or an index exceeds the maximum value.
+ */
+export function packFieldIndexes(indexes: number[]): number {
+  if (indexes.length > 5) {
+    throw new InvalidTupleEncodingError('Can only pack up to 5 indexes.');
+  }
+
+  let packed = 0;
+  indexes.forEach((index, i) => {
+    if (index > MAX_FIELD_INDEX) {
+      throw new InvalidTupleEncodingError(
+        `Index ${index} exceeds the maximum allowed value (${MAX_FIELD_INDEX}).`,
+      );
+    }
+    packed |= (index & MAX_FIELD_INDEX) << (i * 6); // Each index occupies 6 bits
+  });
+
+  return packed;
+}
+
+/**
+ * Unpacks a uint32 fieldIndex value into an array of up to five indexes.
+ *
+ * @param {number} packed - Packed uint32 value.
+ * @returns {number[]} - Array of unpacked indexes.
+ */
+export function unpackFieldIndexes(packed: number): number[] {
+  const indexes: number[] = [];
+  for (let i = 0; i < 5; i++) {
+    const index = (packed >> (i * 6)) & MAX_FIELD_INDEX;
+    if (index === MAX_FIELD_INDEX) break; // Terminator value
+    indexes.push(index);
+  }
+  return indexes;
+}
+
+/**
+ * Decodes an event log and reorders the arguments to match the original ABI order.
+ * This is necessary because viem's decodeEventLog reorders indexed parameters to the front.
+ *
+ * @param event - The event ABI definition
+ * @param log - The log to decode
+ * @returns {EventLog} The decoded log with arguments in the original ABI order
+ */
+export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
+  const decodedLog = decodeEventLog({
+    abi: [event],
+    data: log.data,
+    topics: log.topics,
+  });
+
+  const argsArray = Array.isArray(decodedLog.args)
+    ? decodedLog.args
+    : Object.values(decodedLog.args);
+
+  if (!event.inputs.some((input) => input.indexed)) {
+    return decodedLog as EventLog;
+  }
+
+  const indexedIndices: number[] = [];
+  const nonIndexedIndices: number[] = [];
+  for (let i = 0; i < event.inputs.length; i++) {
+    if (event.inputs[i]!.indexed) {
+      indexedIndices.push(i);
+    } else {
+      nonIndexedIndices.push(i);
+    }
+  }
+
+  const reorderedArgs = new Array(event.inputs.length);
+  let currentIndex = 0;
+
+  // Place the indexed arguments in their original positions
+  for (let i = 0; i < indexedIndices.length; i++) {
+    reorderedArgs[indexedIndices[i]!] = argsArray[currentIndex++];
+  }
+
+  // Place the non-indexed arguments in their original positions
+  for (let i = 0; i < nonIndexedIndices.length; i++) {
+    reorderedArgs[nonIndexedIndices[i]!] = argsArray[currentIndex++];
+  }
+
+  return {
+    ...log,
+    eventName: decodedLog.eventName,
+    args: reorderedArgs,
+  } as EventLog;
 }

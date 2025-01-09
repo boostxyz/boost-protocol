@@ -21,9 +21,9 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  decodeAbiParameters,
   encodeAbiParameters,
   zeroAddress,
-  zeroHash,
 } from 'viem';
 import { ERC20PeggedIncentive as ERC20PeggedIncentiveBases } from '../../dist/deployments.json';
 import type {
@@ -477,6 +477,35 @@ export class ERC20PeggedIncentive extends DeployableTarget<
       [{ type: 'uint256', name: 'rewardAmount' }],
       [rewardAmount],
     );
+  }
+
+  /**
+   * Decodes claim data for the ERC20PeggedIncentive, returning the claim amount.
+   * Useful when deriving amount claimed from logs.
+   *
+   * @public
+   * @param {Hex} claimData
+   * @returns {BigInt} Returns the reward amount from a claim data payload
+   */
+  public decodeClaimData(claimData: Hex) {
+    const boostClaimData = decodeAbiParameters(
+      [
+        {
+          type: 'tuple',
+          name: 'BoostClaimData',
+          components: [
+            { type: 'bytes', name: 'validatorData' },
+            { type: 'bytes', name: 'incentiveData' },
+          ],
+        },
+      ],
+      claimData,
+    );
+    const signedAmount = decodeAbiParameters(
+      [{ type: 'uint256' }],
+      boostClaimData[0].incentiveData,
+    )[0];
+    return signedAmount;
   }
 }
 

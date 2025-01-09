@@ -106,7 +106,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("EventAction: ", eventAction);
         deployJson = deployJsonKey.serialize("EventAction", eventAction);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "EventAction_2", eventAction, registry, ABoostRegistry.RegistryType.ACTION);
+        _registerIfNew(newDeploy, "EventAction", eventAction, registry, ABoostRegistry.RegistryType.ACTION);
     }
 
     function _deployERC20Incentive(BoostRegistry registry) internal returns (address erc20Incentive) {

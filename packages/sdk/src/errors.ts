@@ -865,3 +865,53 @@ export class BoostNotFoundError extends Error {
     this.id = id;
   }
 }
+
+/**
+ * Thrown when a tuple decoding operation encounters unexpected structure or data.
+ *
+ * @export
+ * @class InvalidTupleDecodingError
+ * @typedef {InvalidTupleDecodingError}
+ * @extends {Error}
+ */
+export class InvalidTupleDecodingError extends Error {
+  /**
+   * The index of the tuple that caused the error.
+   *
+   * @type {number}
+   */
+  public readonly tupleIndex: number;
+
+  /**
+   * Creates an instance of InvalidTupleDecodingError.
+   *
+   * @constructor
+   * @param {string} tupleName - The name or identifier of the tuple that failed to decode.
+   * @param {string} [message] - Optional custom message for more context.
+   */
+  constructor(message?: string, tupleIndex?: number) {
+    super(message || `Failed to decode tuple: ${tupleIndex}`);
+    this.tupleIndex = tupleIndex ?? -1;
+  }
+}
+
+export class InvalidTupleEncodingError extends Error {
+  /**
+   * The index of the tuple that caused the error.
+   *
+   * @type {number}
+   */
+  public readonly tupleIndex: number;
+
+  /**
+   * Creates an instance of InvalidTupleEncodingError.
+   *
+   * @constructor
+   * @param {string} tupleName - The name or identifier of the tuple that failed to encode.
+   * @param {string} [message] - Optional custom message for more context.
+   */
+  constructor(message?: string, tupleIndex?: number) {
+    super(message || `Failed to encode tuple: ${tupleIndex}`);
+    this.tupleIndex = tupleIndex ?? -1;
+  }
+}

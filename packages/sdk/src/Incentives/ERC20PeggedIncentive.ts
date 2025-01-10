@@ -422,11 +422,11 @@ export class ERC20PeggedIncentive extends DeployableTarget<
    * @returns {Promise<bigint>} - True if total claims is less than limit
    */
   public async getRemainingClaimPotential(params?: ReadParams) {
-    const [claims, limit] = await Promise.all([
-      this.claims(params),
+    const [totalClaimed, limit] = await Promise.all([
+      this.totalClaimed(params),
       this.limit(params),
     ]);
-    return limit - claims;
+    return limit - totalClaimed;
   }
 
   /**

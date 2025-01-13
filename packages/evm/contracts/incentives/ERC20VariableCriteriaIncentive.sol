@@ -9,6 +9,7 @@ import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20Variab
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {IToppable} from "contracts/shared/IToppable.sol";
 
 enum SignatureType {
     FUNC,
@@ -87,5 +88,22 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
 
         emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, claimAmount));
         return true;
+    }
+
+    /// @notice Top up the incentive with more ERC20 tokens
+    /// @dev Uses `msg.sender` as the token source, and uses `asset` to identify which token.
+    ///      Caller must approve this contract to spend at least `amount` prior to calling.
+    /// @param amount The number of tokens to top up
+    function topup(uint256 amount) external virtual override onlyOwnerOrRoles(MANAGER_ROLE) {
+        if (amount == 0) {
+            revert BoostError.InvalidInitialization();
+        }
+        // Transfer tokens from the caller into this contract
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        // Increase the total incentive limit
+        limit += amount;
+
+        emit ToppedUp(msg.sender, amount);
     }
 }

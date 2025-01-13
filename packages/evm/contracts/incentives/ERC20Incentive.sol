@@ -10,10 +10,11 @@ import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {RBAC} from "contracts/shared/RBAC.sol";
+import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title ERC20 AIncentive
 /// @notice A simple ERC20 incentive implementation that allows claiming of tokens
-contract ERC20Incentive is RBAC, AERC20Incentive {
+contract ERC20Incentive is RBAC, AERC20Incentive, IToppable {
     using LibPRNG for LibPRNG.PRNG;
     using SafeTransferLib for address;
 
@@ -135,6 +136,35 @@ contract ERC20Incentive is RBAC, AERC20Incentive {
         emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, amount));
 
         return (amount, asset);
+    }
+
+    /// @notice Top up the incentive with more ERC20 tokens
+    /// @dev Uses `msg.sender` as the token source, and uses `asset` to identify which token.
+    ///      Caller must approve this contract to spend at least `amount` prior to calling.
+    /// @param amount The number of tokens to top up
+    function topup(uint256 amount) external virtual override onlyOwnerOrRoles(MANAGER_ROLE) {
+        if (amount == 0) {
+            revert BoostError.InvalidInitialization();
+        }
+        // Transfer tokens from the caller into this contract
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        // For RAFFLE strategy, decide whether or not to allow multiple prizes
+        // For simplicity, revert here:
+        if (strategy == Strategy.RAFFLE) {
+            revert BoostError.Unauthorized();
+        }
+
+        // For POOL strategy, each claim uses `reward` tokens, so require multiples
+        if (amount % reward != 0) {
+            revert BoostError.InvalidInitialization();
+        }
+
+        // Increase how many times this incentive can be claimed
+        uint256 additionalClaims = amount / reward;
+        limit += additionalClaims;
+
+        emit ToppedUp(msg.sender, amount);
     }
 
     /// @notice Check if an incentive is claimable

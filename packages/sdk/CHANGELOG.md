@@ -1,5 +1,20 @@
 # @boostxyz/sdk
 
+## 5.3.0
+
+### Minor Changes
+
+- ade50d6: reorder event args params in decoded logs to match abi params
+- 68ffa7b: deploy EventAction module on Base/BaseSepolia/Sepolia
+- 00498c2: [BOOST-5131] feat: tuple support for eventaction
+- 999399b: add method for getIncentiveFeesInfo on boostcore
+
+### Patch Changes
+
+- a62b4c1: fix getRemainingClaims on ERC20PeggedIncentive
+- f6a5b57: add decodeClaimData to ERC20PeggedIncentive
+- 29813f6: add a createBoostRaw function to BoostCore sdk
+
 ## 5.2.1
 
 ### Patch Changes

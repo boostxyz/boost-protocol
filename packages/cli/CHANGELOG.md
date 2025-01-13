@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 4.1.0
+
+### Minor Changes
+
+- 68ffa7b: deploy EventAction module on Base/BaseSepolia/Sepolia
+
 ## 4.0.4
 
 ## 4.0.3

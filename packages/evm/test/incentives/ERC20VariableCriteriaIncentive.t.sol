@@ -178,6 +178,62 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         assertTrue(incentive.isClaimable(CLAIM_RECIPIENT, abi.encode(1 ether)));
     }
 
+    /////////////////////////////////////////
+    // ERC20VariableCriteriaIncentive.topup
+    /////////////////////////////////////////
+
+    function testTopup() public {
+        // Define the IncentiveCriteria struct
+        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+            .IncentiveCriteria({
+            criteriaType: SignatureType.EVENT,
+            signature: keccak256("Transfer(address,address,uint256)"),
+            fieldIndex: 2,
+            targetContract: address(mockAsset)
+        });
+        uint256 maxReward = 1.5 ether; // Set a max reward cap
+
+        // Initialize with reward=1 ether, limit=5 ether.
+        // The contract will hold 100 ether from setUp().
+        _initialize(address(mockAsset), 1 ether, 5 ether, maxReward, criteria);
+        assertEq(incentive.limit(), 5 ether, "Initial limit should be 5 ether");
+
+        // Approve enough tokens so the incentive contract can pull them
+        mockAsset.mint(address(this), 100 ether);
+        mockAsset.approve(address(incentive), 100 ether);
+
+        // Top up an additional 5 ether
+        incentive.topup(5 ether);
+
+        // The limit should now be 10 ether
+        assertEq(incentive.limit(), 10 ether, "Limit should increase by 5 ether");
+
+        // The contract should now hold 105 ether total
+        assertEq(mockAsset.balanceOf(address(incentive)), 105 ether, "Contract balance should now be 105 ether");
+    }
+
+    function testTopup_ZeroAmount() public {
+        // Define the IncentiveCriteria struct
+        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+            .IncentiveCriteria({
+            criteriaType: SignatureType.EVENT,
+            signature: keccak256("Transfer(address,address,uint256)"),
+            fieldIndex: 2,
+            targetContract: address(mockAsset)
+        });
+        uint256 maxReward = 1.5 ether; // Set a max reward cap
+
+        // Initialize with reward=1 ether, limit=5 ether.
+        // The contract will hold 100 ether from setUp().
+        _initialize(address(mockAsset), 1 ether, 5 ether, maxReward, criteria);
+
+        // Attempt to top up 0 => revert with InvalidInitialization
+        mockAsset.mint(address(this), 100 ether);
+        mockAsset.approve(address(incentive), 100 ether);
+        vm.expectRevert(BoostError.InvalidInitialization.selector);
+        incentive.topup(0);
+    }
+
     /////////////////////////////////////////////////////////
     // ERC20VariableCriteriaIncentive.getIncentiveCriteria //
     /////////////////////////////////////////////////////////

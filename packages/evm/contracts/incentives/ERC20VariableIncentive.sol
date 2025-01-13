@@ -11,10 +11,11 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {RBAC} from "contracts/shared/RBAC.sol";
+import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title ERC20 Incentive with Variable Rewards
 /// @notice A modified ERC20 incentive implementation that allows claiming of variable token amounts with a spending limit
-contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
+contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC, IToppable {
     using SafeTransferLib for address;
 
     event ERC20VariableIncentiveInitialized(address indexed asset, uint256 reward, uint256 limit);
@@ -126,6 +127,23 @@ contract ERC20VariableIncentive is AERC20VariableIncentive, RBAC {
         emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, amount));
 
         return (amount, asset);
+    }
+
+    /// @notice Top up the incentive with more ERC20 tokens
+    /// @dev Uses `msg.sender` as the token source, and uses `asset` to identify which token.
+    ///      Caller must approve this contract to spend at least `amount` prior to calling.
+    /// @param amount The number of tokens to top up
+    function topup(uint256 amount) external virtual override onlyOwnerOrRoles(MANAGER_ROLE) {
+        if (amount == 0) {
+            revert BoostError.InvalidInitialization();
+        }
+        // Transfer tokens from the caller into this contract
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        // Increase the total incentive limit
+        limit += amount;
+
+        emit ToppedUp(msg.sender, amount);
     }
 
     /// @inheritdoc AIncentive

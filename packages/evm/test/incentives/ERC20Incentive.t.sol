@@ -176,6 +176,67 @@ contract ERC20IncentiveTest is Test {
         assertEq(incentive.limit(), 0);
     }
 
+    //////////////////////////////
+    // ERC20Incentive.topup    //
+    //////////////////////////////
+
+    function testTopup() public {
+        // Initialize the ERC20Incentive with a POOL strategy, reward = 1 ETH, limit = 5
+        // => This means we can currently fulfill 5 claims (5 * 1 ETH).
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
+        assertEq(incentive.limit(), 5);
+
+        // Approve enough tokens so the incentive contract can pull them
+        mockAsset.mint(address(this), 100 ether);
+        mockAsset.approve(address(incentive), 100 ether);
+
+        // Top up 5 ETH => should increase limit from 5 -> 10
+        incentive.topup(5 ether);
+        assertEq(incentive.limit(), 10);
+
+        // Check that the contract now holds those extra tokens
+        // The initial deposit was 100 ETH for the incentive,
+        // it hasn't spent anything yet (no claims), so it should have 105 ETH now.
+        assertEq(mockAsset.balanceOf(address(incentive)), 105 ether);
+    }
+
+    function testTopup_ZeroAmount() public {
+        // Initialize the ERC20Incentive with a POOL strategy, reward = 1 ETH, limit = 5
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
+
+        // Attempt to top up 0 => revert with InvalidInitialization
+        mockAsset.mint(address(this), 100 ether);
+        mockAsset.approve(address(incentive), 100 ether);
+
+        vm.expectRevert(BoostError.InvalidInitialization.selector);
+        incentive.topup(0);
+    }
+
+    function testTopup_RaffleStrategy() public {
+        // Initialize the ERC20Incentive with a RAFFLE strategy
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.RAFFLE, 1 ether, 5);
+
+        // Attempt to top up => revert with Unauthorized
+        mockAsset.mint(address(this), 100 ether);
+        mockAsset.approve(address(incentive), 100 ether);
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        incentive.topup(10 ether);
+    }
+
+    function testTopup_InvalidMultiple() public {
+        // Initialize the ERC20Incentive with a POOL strategy, reward = 1 ETH, limit = 5
+        // => Each claim uses exactly 1 ETH.
+        _initialize(address(mockAsset), AERC20Incentive.Strategy.POOL, 1 ether, 5);
+
+        // Attempt to top up an amount that isn't an integer multiple of 'reward'
+        // => revert with InvalidInitialization
+        mockAsset.mint(address(this), 100 ether);
+        mockAsset.approve(address(incentive), 100 ether);
+        vm.expectRevert(BoostError.InvalidInitialization.selector);
+        // e.g. 1.5 ETH => not an integer multiple of 1 ETH
+        incentive.topup(1.5 ether);
+    }
+
     ////////////////////////////////
     // ERC20Incentive.isClaimable //
     ////////////////////////////////

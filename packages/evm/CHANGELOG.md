@@ -1,5 +1,12 @@
 # @boostxyz/evm
 
+## 5.2.0
+
+### Minor Changes
+
+- 68ffa7b: deploy EventAction module on Base/BaseSepolia/Sepolia
+- 00498c2: [BOOST-5131] feat: tuple support for eventaction
+
 ## 5.1.0
 
 ### Minor Changes

@@ -117,6 +117,15 @@ abstract contract ABudget is ACloneable, Receiver, RBAC {
     /// @return The amount of assets reconciled
     function reconcile(bytes calldata data_) external virtual returns (uint256);
 
+    /// @notice Add more funds to an incentive
+    /// @param data_ The data for the transfer (amount, token address, token ID, etc.)
+    /// @param boostId The boost containing the incentive
+    /// @param incentiveId The index of the incentive in the incentives array
+    /// @dev The boost's protocol fee is is transferred from the budget to BoostCore
+    function topUp(bytes calldata data_, uint256 boostId, uint256 incentiveId) external payable virtual;
+
+    function _transferFungible(address asset_, address to_, uint256 amount_) internal virtual;
+
     /// @inheritdoc ACloneable
     function supportsInterface(bytes4 interfaceId) public view virtual override(ACloneable) returns (bool) {
         return interfaceId == type(ABudget).interfaceId || super.supportsInterface(interfaceId);

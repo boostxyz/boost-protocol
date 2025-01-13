@@ -17,6 +17,7 @@ import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {BoostRegistry, ABoostRegistry} from "contracts/BoostRegistry.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
+import {IReadCore} from "contracts/shared/IReadCore.sol";
 
 contract NotACloneable is ERC165 {
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -193,7 +194,9 @@ contract BoostRegistryTest is Test {
             ABoostRegistry.RegistryType.BUDGET,
             address(baseBudgetImpl),
             "Testing ABudget",
-            abi.encode(ManagedBudget.InitPayload({owner: address(this), authorized: authorized, roles: roles}))
+            abi.encode(
+                ManagedBudget.InitPayload({owner: address(this), core: address(0), authorized: authorized, roles: roles})
+            )
         );
 
         assertTrue(instance.supportsInterface(type(ABudget).interfaceId));
@@ -229,7 +232,12 @@ contract BoostRegistryTest is Test {
             address(baseBudgetImpl),
             "Testing ABudget",
             abi.encode(
-                ManagedBudget.InitPayload({owner: address(this), authorized: new address[](0), roles: new uint256[](0)})
+                ManagedBudget.InitPayload({
+                    owner: address(this),
+                    core: address(0),
+                    authorized: new address[](0),
+                    roles: new uint256[](0)
+                })
             )
         );
 

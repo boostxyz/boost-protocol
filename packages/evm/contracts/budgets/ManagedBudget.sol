@@ -14,6 +14,9 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IClaw} from "contracts/shared/IClaw.sol";
+import {IReadCore} from "contracts/shared/IReadCore.sol";
+import {BoostLib} from "contracts/shared/BoostLib.sol";
+import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Managed ABudget
 /// @notice A minimal budget implementation with RBAC that simply holds and distributes tokens (ERC20-like and native)
@@ -24,6 +27,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     /// @notice The payload for initializing a ManagedBudget
     struct InitPayload {
         address owner;
+        address core;
         address[] authorized;
         uint256[] roles;
     }
@@ -45,6 +49,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     function initialize(bytes calldata data_) public virtual override initializer {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
         _initializeOwner(init_.owner);
+        _setCore(IReadCore(init_.core));
         for (uint256 i = 0; i < init_.authorized.length; i++) {
             _setRoles(init_.authorized[i], init_.roles[i]);
         }
@@ -172,6 +177,38 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     }
 
     /// @inheritdoc ABudget
+    function topUp(bytes calldata data_, uint256 boostId, uint256 incentiveId) external payable virtual override {
+        Transfer memory request = abi.decode(data_, (Transfer));
+
+        BoostLib.Boost memory boost = core.getBoost(boostId);
+        if (request.target != address(boost.incentives[incentiveId])) revert BoostError.Unauthorized();
+
+        if (request.assetType == AssetType.ERC20 || request.assetType == AssetType.ETH) {
+            FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
+            uint256 feeAmount = payload.amount * boost.protocolFee;
+            _distributedFungible[request.asset] += feeAmount;
+            _transferFungible(request.asset, address(core), feeAmount);
+            if (request.assetType == AssetType.ERC20) {
+                request.asset.safeApprove(request.target, payload.amount);
+            } else if (request.assetType == AssetType.ETH) {
+                if (msg.value != payload.amount) {
+                    revert InvalidAllocation(request.asset, payload.amount);
+                }
+            }
+            IToppable(request.target).topup(payload.amount);
+        } else if (request.assetType == AssetType.ERC1155) {
+            ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
+
+            uint256 avail = IERC1155(request.asset).balanceOf(address(this), payload.tokenId);
+            if (payload.amount > avail) {
+                revert InsufficientFunds(request.asset, avail, payload.amount);
+            }
+
+            _transferERC1155(request.asset, request.target, payload.tokenId, payload.amount, payload.data);
+        }
+    }
+
+    /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to multiple recipients
     /// @param data_ The packed array of {Transfer} requests
     /// @return True if all disbursements were successful
@@ -246,7 +283,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
     /// @param amount_ The amount of the asset to transfer
     /// @dev This function is used to transfer assets from the budget to a given recipient (typically an incentive contract)
     /// @dev If the destination address is the zero address, or the transfer fails for any reason, this function will revert
-    function _transferFungible(address asset_, address to_, uint256 amount_) internal virtual nonReentrant {
+    function _transferFungible(address asset_, address to_, uint256 amount_) internal virtual override nonReentrant {
         // Increment the total amount of the asset distributed from the budget
         if (to_ == address(0)) revert TransferFailed(asset_, to_, amount_);
         if (amount_ > available(asset_)) {

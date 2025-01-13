@@ -972,7 +972,14 @@ contract BoostCoreTest is Test {
     {
         _budget = ABudget(payable(address(new ManagedBudget()).clone()));
         _budget.initialize(
-            abi.encode(ManagedBudget.InitPayload({owner: owner_, authorized: authorized_, roles: roles_}))
+            abi.encode(
+                ManagedBudget.InitPayload({
+                    owner: owner_,
+                    core: address(boostCore),
+                    authorized: authorized_,
+                    roles: roles_
+                })
+            )
         );
     }
 

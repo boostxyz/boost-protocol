@@ -331,7 +331,8 @@ contract ERC20IncentiveTest is Test {
     function _newBudgetClone() internal returns (ManagedBudget newBudget) {
         address[] memory authorized = new address[](0);
         uint256[] memory roles = new uint256[](0);
-        ManagedBudget.InitPayload memory initPayload = ManagedBudget.InitPayload(address(this), authorized, roles);
+        ManagedBudget.InitPayload memory initPayload =
+            ManagedBudget.InitPayload(address(this), address(0), authorized, roles);
         newBudget = ManagedBudget(payable(LibClone.clone(address(new ManagedBudget()))));
         newBudget.initialize(abi.encode(initPayload));
     }

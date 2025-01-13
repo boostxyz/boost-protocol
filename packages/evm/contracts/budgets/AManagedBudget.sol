@@ -11,11 +11,20 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IClaw} from "contracts/shared/IClaw.sol";
+import {IReadCore} from "contracts/shared/IReadCore.sol";
 
 /// @title Abstract Managed ABudget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
 abstract contract AManagedBudget is ABudget, IERC1155Receiver {
+    IReadCore internal core;
+
+    /// @notice set BoostCore interface during initialization
+    /// @param _core the address of BoostCore the Budget will interact with
+    function _setCore(IReadCore _core) internal onlyInitializing {
+        core = _core;
+    }
+
     /// @notice Get the total amount of ERC1155 assets allocated to the budget, including any that have been distributed
     /// @param asset_ The address of the asset
     /// @param tokenId_ The ID of the token

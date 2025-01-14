@@ -185,7 +185,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
 
         if (request.assetType == AssetType.ERC20 || request.assetType == AssetType.ETH) {
             FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
-            uint256 feeAmount = payload.amount * boost.protocolFee;
+            uint256 feeAmount = payload.amount * boost.protocolFee / 10_000;
             _distributedFungible[request.asset] += feeAmount;
             _transferFungible(request.asset, address(core), feeAmount);
             if (request.assetType == AssetType.ERC20) {
@@ -196,6 +196,7 @@ contract ManagedBudget is AManagedBudget, ReentrancyGuard {
                 }
             }
             IToppable(request.target).topup(payload.amount);
+            emit Distributed(request.asset, request.target, payload.amount);
         } else if (request.assetType == AssetType.ERC1155) {
             ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
 

@@ -177,13 +177,18 @@ contract VestingBudget is AVestingBudget, ReentrancyGuard {
         return 0;
     }
 
+    /// @inheritdoc ABudget
+    function topUp(bytes calldata, uint256, uint256) external payable virtual override {
+        revert BoostError.NotImplemented();
+    }
+
     /// @notice Transfer assets to the recipient
     /// @param asset_ The address of the asset
     /// @param to_ The address of the recipient
     /// @param amount_ The amount of the asset to transfer
     /// @dev This function is used to transfer assets from the budget to a given recipient (typically an incentive contract)
     /// @dev If the destination address is the zero address, or the transfer fails for any reason, this function will revert
-    function _transferFungible(address asset_, address to_, uint256 amount_) internal virtual nonReentrant {
+    function _transferFungible(address asset_, address to_, uint256 amount_) internal virtual override nonReentrant {
         // Increment the total amount of the asset distributed from the budget
         if (to_ == address(0)) revert TransferFailed(asset_, to_, amount_);
         if (amount_ > available(asset_)) {

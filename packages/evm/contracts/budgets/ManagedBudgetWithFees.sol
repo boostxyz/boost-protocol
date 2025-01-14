@@ -20,6 +20,7 @@ import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 import {AERC20VariableIncentive} from "contracts/incentives/AERC20VariableIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IClaw} from "contracts/shared/IClaw.sol";
+import {IReadCore} from "contracts/shared/IReadCore.sol";
 
 /// @title Managed ABudget
 /// @notice A minimal budget implementation with RBAC that simply holds and distributes tokens (ERC20-like and native)
@@ -51,7 +52,8 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
         }
 
         if (init_.authorized.length == 0) revert("no core contract set");
-        core = BoostCore(init_.authorized[0]);
+        address _core = init_.authorized[0];
+        _setCore(IReadCore(_core));
 
         managementFee = init_.managementFee;
         emit ManagementFeeSet(init_.managementFee);

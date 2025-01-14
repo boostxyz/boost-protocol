@@ -216,7 +216,12 @@ contract EndToEndBasic is Test {
                         ),
                         "My Managed ABudget",
                         abi.encode(
-                            ManagedBudget.InitPayload({owner: address(this), authorized: authorized, roles: roles})
+                            ManagedBudget.InitPayload({
+                                owner: address(this),
+                                core: address(core),
+                                authorized: authorized,
+                                roles: roles
+                            })
                         )
                     )
                 )

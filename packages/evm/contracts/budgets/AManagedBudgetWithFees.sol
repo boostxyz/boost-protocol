@@ -18,9 +18,6 @@ import {IClaw} from "contracts/shared/IClaw.sol";
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
 /// @dev This type of budget supports ETH, ERC20, and ERC1155 assets only
 abstract contract AManagedBudgetWithFees is AManagedBudget {
-    /// @dev the core contract used to get boost creator info
-    BoostCore internal core;
-
     /// @dev The management fee percentage (in basis points, i.e., 100 = 1%)
     uint256 public managementFee;
 

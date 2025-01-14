@@ -36,7 +36,12 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         managedBudget = ManagedBudget(payable(LibClone.clone(address(new ManagedBudget()))));
         managedBudget.initialize(
             abi.encode(
-                ManagedBudget.InitPayload({owner: address(this), authorized: new address[](0), roles: new uint256[](0)})
+                ManagedBudget.InitPayload({
+                    owner: address(this),
+                    core: address(0),
+                    authorized: new address[](0),
+                    roles: new uint256[](0)
+                })
             )
         );
     }
@@ -102,7 +107,12 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
     function testInitialize() public {
         // Initializer can only be called on clones, not the base contract
         bytes memory data = abi.encode(
-            ManagedBudget.InitPayload({owner: address(this), authorized: new address[](0), roles: new uint256[](0)})
+            ManagedBudget.InitPayload({
+                owner: address(this),
+                core: address(0),
+                authorized: new address[](0),
+                roles: new uint256[](0)
+            })
         );
         ManagedBudget clone = ManagedBudget(payable(LibClone.clone(address(managedBudget))));
         clone.initialize(data);

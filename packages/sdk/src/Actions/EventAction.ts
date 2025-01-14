@@ -1664,7 +1664,7 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     }
   }
 
-  const reorderedArgs = new Array(event.inputs.length);
+  const reorderedArgs = Array.from({ length: event.inputs.length });
   let currentIndex = 0;
 
   // Place the indexed arguments in their original positions

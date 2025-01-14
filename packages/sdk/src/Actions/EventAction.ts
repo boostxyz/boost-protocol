@@ -6,8 +6,8 @@ import {
   writeEventActionExecute,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
+import { abi } from '@boostxyz/signatures/events';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
-import type { AbiEventParameter } from 'abitype';
 import { match } from 'ts-pattern';
 import {
   type AbiEvent,
@@ -585,9 +585,15 @@ export class EventAction extends DeployableTarget<
       ) {
         return undefined;
       }
-      const decodedLogs = receipt.logs
-        .filter((log) => log.topics[0] === toEventSelector(event))
-        .map((log) => decodeAndReorderLogArgs(event, log));
+
+      let decodedLogs: EventLogs;
+      if (signature === TRANSFER_SIGNATURE) {
+        ({ decodedLogs } = await this.decodeTransferLogs(receipt));
+      } else {
+        decodedLogs = receipt.logs
+          .filter((log) => log.topics[0] === toEventSelector(event))
+          .map((log) => decodeAndReorderLogArgs(event, log));
+      }
 
       for (let log of decodedLogs) {
         if (!isAddressEqual(log.address, claimant.targetContract)) continue;
@@ -728,7 +734,8 @@ export class EventAction extends DeployableTarget<
 
       // Special handling for Transfer events
       if (actionStep.signature === TRANSFER_SIGNATURE) {
-        return this.decodeTransferLogs(receipt, actionStep);
+        const { decodedLogs, event } = await this.decodeTransferLogs(receipt);
+        return this.isActionEventValid(actionStep, decodedLogs, event);
       }
 
       const decodedLogs = receipt.logs
@@ -801,7 +808,7 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Decodes transfer logs specifically for ERC721 and ERC20 Transfer events.
+   * Decodes logs specifically for ERC721 and ERC20 Transfer events.
    *
    * This special handling is required because both ERC20 and ERC721 Transfer events:
    * 1. Share the same event signature (0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef)
@@ -813,79 +820,51 @@ export class EventAction extends DeployableTarget<
    * try decoding both ways to determine which type of Transfer event we're dealing with.
    *
    * @param {GetTransactionReceiptReturnType} receipt - The transaction receipt containing the logs
-   * @param {ActionStep} actionStep - The action step being validated
-   * @returns {Promise<boolean>} - Returns true if the transfer logs are valid for either ERC20 or ERC721
+   * @returns {Promise<{ decodedLogs: EventLogs; event: AbiEvent }>} - Returns the decoded logs and the transfer event ABI used for decoding
    * @throws {DecodedArgsError} - Throws if neither ERC20 nor ERC721 decoding succeeds
    */
   private async decodeTransferLogs(
     receipt: GetTransactionReceiptReturnType,
-    actionStep: ActionStep,
-  ) {
+  ): Promise<{ decodedLogs: EventLogs; event: AbiEvent }> {
     const filteredLogs = receipt.logs.filter(
       (log) => log.topics[0] === TRANSFER_SIGNATURE,
     );
+    const event = abi[
+      'Transfer(address indexed,address indexed,uint256 indexed)'
+    ] as AbiEvent;
 
     // ERC721
     try {
       const decodedLogs = filteredLogs.map((log) => {
         const { eventName, args } = decodeEventLog({
-          abi: [
-            {
-              name: 'Transfer',
-              type: 'event',
-              inputs: [
-                { type: 'address', indexed: true },
-                { type: 'address', indexed: true },
-                { type: 'uint256', indexed: true },
-              ],
-            },
-          ],
+          abi: [event],
           data: log.data,
           topics: log.topics,
         });
         return { ...log, eventName, args };
       });
 
-      return this.isActionEventValid(actionStep, decodedLogs, {
-        name: 'Transfer',
-        type: 'event',
-        inputs: [
-          { type: 'address', indexed: true },
-          { type: 'address', indexed: true },
-          { type: 'uint256', indexed: true },
-        ],
-      });
+      return {
+        decodedLogs,
+        event,
+      };
     } catch {
       // ERC20
       try {
+        event.inputs[2]!.indexed = false;
         const decodedLogs = filteredLogs.map((log) => {
           const { eventName, args } = decodeEventLog({
-            abi: [
-              {
-                name: 'Transfer',
-                type: 'event',
-                inputs: [
-                  { type: 'address', indexed: true },
-                  { type: 'address', indexed: true },
-                  { type: 'uint256' },
-                ],
-              },
-            ],
+            abi: [event],
             data: log.data,
             topics: log.topics,
           });
           return { ...log, eventName, args };
         });
 
-        return this.isActionEventValid(actionStep, decodedLogs, {
-          name: 'Transfer',
-          type: 'event',
-          inputs: [
-            { type: 'address', indexed: true },
-            { type: 'address', indexed: true },
-            { type: 'uint256' },
-          ],
-        });
+        return {
+          decodedLogs,
+          event,
+        };
       } catch {
         throw new DecodedArgsError('Failed to decode transfer logs');
       }

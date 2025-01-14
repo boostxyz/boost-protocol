@@ -123,6 +123,8 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
 
         // - Max Participants == 5
         assertEq(boost.maxParticipants, 5);
+
+        _I_can_top_up_a_boost(budget, boost);
     }
 
     function test__As_a_user() public {
@@ -326,6 +328,41 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
         );
     }
 
+    function _I_can_top_up_a_boost(ABudget budget, BoostLib.Boost memory boost) internal {
+        erc20.approve(address(budget), 60 ether);
+        assertTrue(
+            budget.allocate(
+                abi.encode(
+                    ABudget.Transfer({
+                        assetType: ABudget.AssetType.ERC20,
+                        asset: address(erc20),
+                        target: address(this),
+                        data: abi.encode(ABudget.FungiblePayload({amount: 60 ether}))
+                    })
+                )
+            )
+        );
+        uint256 boostId = core.getBoostCount() - 1;
+
+        console.log("boost id:", boostId);
+
+        bytes memory data =
+            _makeFungibleTransfer(ABudget.AssetType.ERC20, address(erc20), address(boost.incentives[0]), 50 ether);
+
+        uint256 coreInitial = erc20.balanceOf(address(core));
+        uint256 incentiveInitial = erc20.balanceOf(address(boost.incentives[0]));
+
+        vm.expectEmit(true, false, false, true, address(budget));
+        emit ABudget.Distributed(address(erc20), address(boost.incentives[0]), 50 ether);
+        budget.topUp(data, boostId, 0);
+
+        uint256 coreFinal = erc20.balanceOf(address(core));
+        uint256 incentiveFinal = erc20.balanceOf(address(boost.incentives[0]));
+
+        assertEq(coreFinal - coreInitial, 10 ether);
+        assertEq(incentiveFinal - incentiveInitial, 50 ether);
+    }
+
     function _given_that_I_am_eligible_for_a_boost() internal returns (BoostLib.Boost memory) {
         _when_I_allocate_assets_to_my_budget(_budget);
         return _when_I_create_a_new_boost_with_my_budget(_budget);
@@ -346,5 +383,24 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
     function _signHash(bytes32 digest, uint256 privateKey) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
+    }
+
+    function _makeFungibleTransfer(ABudget.AssetType assetType, address asset, address target, uint256 value)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        ABudget.Transfer memory transfer;
+        transfer.assetType = assetType;
+        transfer.asset = asset;
+        transfer.target = target;
+        if (assetType == ABudget.AssetType.ETH || assetType == ABudget.AssetType.ERC20) {
+            transfer.data = abi.encode(ABudget.FungiblePayload({amount: value}));
+        } else if (assetType == ABudget.AssetType.ERC1155) {
+            // we're not actually handling this case yet, so hardcoded token ID of 1 is fine
+            transfer.data = abi.encode(ABudget.ERC1155Payload({tokenId: 1, amount: value, data: ""}));
+        }
+
+        return abi.encode(transfer);
     }
 }

@@ -637,7 +637,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     function _getFeeDisbursal(bytes memory preflight, uint64 _protocolFee)
         internal
         view
-        returns (bytes memory, uint256, uint256)
+        returns (bytes memory, uint256)
     {
         // Decode the preflight data to extract the transfer details
         ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
@@ -658,7 +658,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             request.target = address(this); // Set the target to BoostCore (this contract)
 
             // Encode and return the modified request as bytes
-            return (abi.encode(request), feeAmount, payload.amount);
+            return (abi.encode(request), feeAmount);
         } else if (request.assetType == ABudget.AssetType.ERC1155) {
             // Decode the ERC1155 payload
             ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
@@ -678,7 +678,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             request.target = address(this); // Set the target to BoostCore (this contract)
 
             // Encode and return the modified request as bytes
-            return (abi.encode(request), feeAmount, payload.amount);
+            return (abi.encode(request), feeAmount);
         } else {
             revert BoostError.NotImplemented();
         }

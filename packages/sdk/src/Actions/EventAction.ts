@@ -1611,6 +1611,9 @@ export function packFieldIndexes(indexes: number[]): number {
     }
     packed |= (index & MAX_FIELD_INDEX) << (i * 6); // Each index occupies 6 bits
   });
+  if (indexes.length < 5) {
+    packed |= MAX_FIELD_INDEX << (indexes.length * 6); // Terminator
+  }
 
   return packed;
 }

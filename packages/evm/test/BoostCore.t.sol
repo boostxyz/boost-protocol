@@ -57,8 +57,8 @@ contract BoostCoreTest is Test {
         _makeContractAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
     BoostLib.Target allowList = _makeAllowList(address(this));
 
-    address[] authorized = [address(boostCore)];
-    uint256[] roles = [1 << 0];
+    address[] authorized = [address(boostCore), address(1)];
+    uint256[] roles = [1 << 0, 1 << 0];
     ABudget budget = _makeBudget(address(this), authorized, roles);
 
     bytes validCreateCalldata = LibZip.cdCompress(
@@ -458,6 +458,159 @@ contract BoostCoreTest is Test {
         assertEq(
             info.asset, expectedProtocolAsset, "Incentive asset should match the protocol asset from the fee module"
         );
+    }
+
+    ///////////////////////////////////
+    // BoostCore.addIncentiveToBoost //
+    ///////////////////////////////////
+
+    /// @notice Tests that the boost owner can successfully add an incentive, emitting an event
+    function testAddIncentiveToBoost_BasicSuccess() public {
+        // 1) Create a Boost first
+        boostCore.createBoost(validCreateCalldata);
+        BoostLib.Boost memory originalBoost = boostCore.getBoost(0);
+
+        // 2) Create a new incentive target (like in _makeIncentives, but for a single item)
+        BoostLib.Target memory newIncentive = BoostLib.Target({
+            isBase: true,
+            instance: address(new ERC20Incentive()),
+            parameters: abi.encode(
+                ERC20Incentive.InitPayload({
+                    asset: address(mockERC20),
+                    strategy: AERC20Incentive.Strategy.POOL,
+                    reward: 0.5 ether, // half an ETH worth of the token
+                    limit: 50,
+                    manager: address(boostCore)
+                })
+            )
+        });
+
+        // We allocate 25 for the boost and 2.5 for protocol fees
+        mockERC20.mint(address(this), 27.5 ether);
+        mockERC20.approve(address(budget), 27.5 ether);
+        budget.allocate(
+            abi.encode(
+                ABudget.Transfer({
+                    assetType: ABudget.AssetType.ERC20,
+                    asset: address(mockERC20),
+                    target: address(this),
+                    data: abi.encode(ABudget.FungiblePayload({amount: 27.5 ether}))
+                })
+            )
+        );
+
+        // 3) Expect the IncentiveAdded event
+        vm.expectEmit(true, true, false, true);
+        emit BoostCore.IncentiveAdded(0, /* incentiveId = */ 1, /* ignored */ address(0), false /* not a new boost */ );
+
+        // 4) Call addIncentiveToBoost as the boost owner (originalBoost.owner)
+        vm.prank(originalBoost.owner);
+        address incentiveAddress = address(boostCore.addIncentiveToBoost(0, newIncentive));
+
+        // 5) Verify the updated state
+        BoostLib.Boost memory updatedBoost = boostCore.getBoost(0);
+        assertEq(
+            updatedBoost.incentives.length,
+            originalBoost.incentives.length + 1,
+            "The number of incentives should have increased by 1"
+        );
+        assertEq(
+            address(updatedBoost.incentives[updatedBoost.incentives.length - 1]),
+            incentiveAddress,
+            "The newly added incentive should match the returned address"
+        );
+    }
+
+    /// @notice Tests that a non-owner cannot add an incentive
+    function testAddIncentiveToBoost_UnauthorizedCaller() public {
+        // 1) Create a Boost first
+        boostCore.createBoost(validCreateCalldata);
+
+        // 2) Construct a new incentive target
+        BoostLib.Target memory newIncentive = BoostLib.Target({
+            isBase: true,
+            instance: address(new ERC20Incentive()),
+            parameters: abi.encode(
+                ERC20Incentive.InitPayload({
+                    asset: address(mockERC20),
+                    strategy: AERC20Incentive.Strategy.POOL,
+                    reward: 1 ether,
+                    limit: 10,
+                    manager: address(boostCore)
+                })
+            )
+        });
+
+        // 3) Attempt to add an incentive from a non-owner
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        boostCore.addIncentiveToBoost(0, newIncentive);
+    }
+
+    /// @notice Tests that the function reverts if the new incentive target does not implement AIncentive or isBase=false
+    function testAddIncentiveToBoost_InvalidIncentive() public {
+        boostCore.createBoost(validCreateCalldata);
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+
+        BoostLib.Target memory bogusIncentive = BoostLib.Target({
+            isBase: false, // <--- invalid because we expect to clone a base
+            instance: address(new ERC20Incentive()),
+            parameters: ""
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BoostError.InvalidInstance.selector, type(AIncentive).interfaceId, bogusIncentive.instance
+            )
+        );
+        vm.prank(boost.owner);
+        boostCore.addIncentiveToBoost(0, bogusIncentive);
+
+        BoostLib.Target memory notAIncentive = BoostLib.Target({
+            isBase: true,
+            instance: address(new ContractAction()),
+            parameters: abi.encode(
+                AContractAction.InitPayload({
+                    chainId: block.chainid,
+                    target: address(mockERC20),
+                    selector: mockERC20.transfer.selector,
+                    value: 0
+                })
+            )
+        });
+
+        vm.prank(boost.owner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BoostError.InvalidInstance.selector, type(AIncentive).interfaceId, notAIncentive.instance
+            )
+        );
+        boostCore.addIncentiveToBoost(0, notAIncentive);
+    }
+
+    /// @notice Tests that adding an incentive fails if the budget is not authorized or lacks sufficient funds
+    function testAddIncentiveToBoost_BudgetAuthorizationOrFunds() public {
+        boostCore.createBoost(validCreateCalldata);
+        BoostLib.Boost memory createdBoost = boostCore.getBoost(0);
+
+        ABudget restrictedBudget = _makeBudget(address(0), new address[](0), new uint256[](0));
+
+        BoostLib.Target memory incentive = BoostLib.Target({
+            isBase: true,
+            instance: address(new ERC20Incentive()),
+            parameters: abi.encode(
+                ERC20Incentive.InitPayload({
+                    asset: address(mockERC20),
+                    strategy: AERC20Incentive.Strategy.POOL,
+                    reward: 2 ether,
+                    limit: 5,
+                    manager: address(boostCore)
+                })
+            )
+        });
+
+        vm.prank(makeAddr("unauthorizedBudget"));
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        boostCore.addIncentiveToBoost(0, incentive);
     }
 
     //////////////////////////////////

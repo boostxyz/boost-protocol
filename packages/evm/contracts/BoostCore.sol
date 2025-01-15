@@ -164,8 +164,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     /// @notice Top up an existing incentive using tokens from a budget.
-    ///         All tokens are first transferred into BoostCore, then fees are taken,
-    ///         and finally the remainder is topped up into the incentive.
+    ///         All tokens are first transferred into BoostCore, then a protocol fee
+    ///         is accounted for and reserved in this function. The remainder is approved
+    ///         and the incentive contract pulls the tokens during the topup call.
     /// @param boostId The ID of the Boost
     /// @param incentiveId The ID of the incentive within that Boost
     /// @param data_ The raw data to pass to the incentive’s `preflight` and eventually `topup`
@@ -183,6 +184,8 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
 
         ABudget.Transfer memory request = abi.decode(preflightData, (ABudget.Transfer));
+
+        // Redirect the disbursement to this contract so we have the funds to topup and reserve the protocol fee
         request.target = address(this);
         bytes memory revisedRequest = abi.encode(request);
 
@@ -205,12 +208,25 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         uint256 fee = (totalAmount * boost.protocolFee) / FEE_DENOMINATOR;
         uint256 remainder = totalAmount - fee;
+
         bytes32 key = _generateKey(boostId, incentiveId);
         IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
         info.protocolFeesRemaining += fee;
 
         if (remainder > 0) {
-            IToppable(address(incentiveContract)).topup(remainder);
+            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                // Approve exactly `remainder` tokens
+                IERC20 token = IERC20(request.asset);
+                token.approve(address(incentiveContract), remainder);
+                IToppable(address(incentiveContract)).topup(remainder);
+                token.approve(address(incentiveContract), 0);
+            } else {
+                // ERC1155 => setApprovalForAll
+                IERC1155 erc1155 = IERC1155(request.asset);
+                erc1155.setApprovalForAll(address(incentiveContract), true);
+                IToppable(address(incentiveContract)).topup(remainder);
+                erc1155.setApprovalForAll(address(incentiveContract), false);
+            }
         }
     }
 

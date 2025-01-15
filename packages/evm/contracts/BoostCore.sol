@@ -22,6 +22,7 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IAuth} from "contracts/auth/IAuth.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
+import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
@@ -202,6 +203,41 @@ contract BoostCore is Ownable, ReentrancyGuard {
         existingIncentives.push(newIncentive);
 
         emit IncentiveAdded(boostId, newIncentiveId, address(newIncentive), false);
+    }
+    /// @notice Top up an existing incentive
+    /// @param boostId The ID of the Boost
+    /// @param incentiveId The ID of the incentive within that Boost
+    /// @param data_ The raw data to pass to the incentive’s `preflight` and eventually `topup`
+    function topupIncentiveFromBudget(uint256 boostId, uint256 incentiveId, bytes calldata data_, address budget)
+        external
+        nonReentrant
+    {
+        BoostLib.Boost storage boost = _boosts[boostId];
+        AIncentive incentiveContract = boost.incentives[incentiveId];
+
+        bytes memory preflightData = incentiveContract.preflight(data_);
+
+        // If `preflightData` is empty, revert
+        if (preflightData.length == 0) {
+            revert BoostError.InvalidInitialization();
+        }
+
+        (bytes memory feeDisbursal, uint256 feeAmount, uint256 amount) =
+            _getFeeDisbursal(preflightData, boost.protocolFee);
+
+        ABudget budget_ = budget == address(0) ? boost.budget : ABudget(payable(budget));
+        _checkBudget(budget_);
+        if (!budget_.disburse(feeDisbursal)) {
+            revert BoostError.InvalidInitialization();
+        }
+        if (!budget_.disburse(preflightData)) {
+            revert BoostError.InvalidInitialization();
+        }
+
+        bytes32 key = _generateKey(boostId, incentiveId);
+        IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
+        info.protocolFeesRemaining += feeAmount; // We’ve pulled additional protocol fees
+        IToppable(address(incentiveContract)).topup(amount);
     }
 
     /// @notice Claim an incentive for a Boost
@@ -485,7 +521,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         bytes memory preflight = incentive.preflight(incentiveParams);
         if (preflight.length != 0) {
-            (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
+            (bytes memory disbursal, uint256 feeAmount, ) = _getFeeDisbursal(preflight, protocolFee_);
             if (!budget_.disburse(disbursal)) revert BoostError.InvalidInitialization();
             if (!budget_.disburse(preflight)) revert BoostError.InvalidInitialization();
 
@@ -513,7 +549,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     function _getFeeDisbursal(bytes memory preflight, uint64 _protocolFee)
         internal
         view
-        returns (bytes memory, uint256)
+        returns (bytes memory, uint256, uint256)
     {
         // Decode the preflight data to extract the transfer details
         ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
@@ -534,7 +570,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             request.target = address(this); // Set the target to BoostCore (this contract)
 
             // Encode and return the modified request as bytes
-            return (abi.encode(request), feeAmount);
+            return (abi.encode(request), feeAmount, payload.amount);
         } else if (request.assetType == ABudget.AssetType.ERC1155) {
             // Decode the ERC1155 payload
             ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
@@ -554,7 +590,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             request.target = address(this); // Set the target to BoostCore (this contract)
 
             // Encode and return the modified request as bytes
-            return (abi.encode(request), feeAmount);
+            return (abi.encode(request), feeAmount, payload.amount);
         } else {
             revert BoostError.NotImplemented();
         }

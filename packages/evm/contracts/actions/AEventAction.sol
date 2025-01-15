@@ -34,7 +34,8 @@ abstract contract AEventAction is AAction {
         ADDRESS,
         BYTES,
         STRING,
-        TUPLE
+        TUPLE,
+        INT
     }
 
     // Define Structs

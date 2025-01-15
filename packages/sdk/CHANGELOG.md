@@ -1,5 +1,13 @@
 # @boostxyz/sdk
 
+## 5.3.1
+
+### Patch Changes
+
+- cf262d1: [BOOST-5221] feat(sdk): update tuple support helpers to add terminators
+- 34308e9: fix transfer signature issue in deriveActionClaimantFromTransaction method
+- aef6e3c: fix undefined address in address comparison
+
 ## 5.3.0
 
 ### Minor Changes

@@ -773,7 +773,7 @@ contract BoostCoreTest is Test {
     }
 
     function testFuzzTopUpAndClaimIncentive_ProtocolFeeTransfer(uint256 rewardAmount, uint64 additionalProtocolFee)
-        internal
+        public
     {
         uint160 claimant = uint160(makeAddr("claimant"));
         uint16 claimLimit = 100;

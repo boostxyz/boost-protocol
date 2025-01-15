@@ -2,4 +2,4 @@
 "@boostxyz/sdk": patch
 ---
 
-prevent mutatation of Transfer abi be using structuredClone
+prevent mutatation of Transfer abi by using structuredClone

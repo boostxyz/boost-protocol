@@ -189,21 +189,28 @@ contract BoostCore is Ownable, ReentrancyGuard {
         _checkBudget(budget_);
 
         uint256 topupAmount;
+        uint256 fee;
+        uint256 totalAmount;
         if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
             ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
             topupAmount = payload.amount;
+            fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
+            totalAmount = topupAmount + fee;
+            payload.amount = totalAmount;
+            request.data = abi.encode(payload);
         } else if (request.assetType == ABudget.AssetType.ERC1155) {
             ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
             topupAmount = payload.amount;
+            fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
+            totalAmount = topupAmount + fee;
+            payload.amount = totalAmount;
+            request.data = abi.encode(payload);
         } else {
             revert BoostError.NotImplemented();
         }
 
-        uint256 fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
-        uint256 totalAmount = topupAmount + fee;
         // Redirect the disbursement to this contract so we have the funds to topup and reserve the protocol fee
         request.target = address(this);
-        request.amount = totalAmount;
         bytes memory revisedRequest = abi.encode(request);
 
         if (!budget_.disburse(revisedRequest)) {

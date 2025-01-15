@@ -1241,6 +1241,15 @@ describe("Tuple & bitpacked fieldIndex support", () => {
       expect(result).toEqual(resultIndexes);
     });
 
+    test("packs 3 indexes with the automatic addition of a terminator and unpacks them correctly", () => {
+      const indexes = [0, 3, 5]; // sample indexes
+      const packed = packFieldIndexes(indexes);
+      const result = unpackFieldIndexes(packed);
+      const resultIndexes = [0, 3, 5]; // should terminate on it's own even if a terminator isn't passed in
+
+      expect(result).toEqual(resultIndexes);
+    });
+
     test("throws if more than five indexes are provided", () => {
       expect(() => packFieldIndexes([1, 2, 3, 4, 5, 6])).toThrowError(
         "Can only pack up to 5 indexes.",

@@ -619,6 +619,108 @@ contract BoostCoreTest is Test {
         assertEq(0, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
     }
 
+    function testFuzzTopUpAndClaimIncentive_ProtocolFeeTransfer(uint256 rewardAmount, uint64 additionalProtocolFee)
+        internal
+    {
+        uint160 claimant = uint160(makeAddr("claimant"));
+        uint16 claimLimit = 100;
+        additionalProtocolFee = uint64(bound(additionalProtocolFee, 0, 9_000));
+        rewardAmount = bound(rewardAmount, 10_000, (type(uint256).max >> 15) / claimLimit);
+        uint64 totalFee = uint64(boostCore.protocolFee()) + additionalProtocolFee;
+        uint256 amountToMint = (rewardAmount + rewardAmount * totalFee / boostCore.FEE_DENOMINATOR()) * claimLimit;
+        mockERC20.mint(address(this), amountToMint);
+        mockERC20.approve(address(budget), amountToMint);
+        budget.allocate(
+            abi.encode(
+                ABudget.Transfer({
+                    assetType: ABudget.AssetType.ERC20,
+                    asset: address(mockERC20),
+                    target: address(this),
+                    data: abi.encode(ABudget.FungiblePayload({amount: amountToMint}))
+                })
+            )
+        );
+        address feeReceiver = makeAddr("0xfee");
+        boostCore.setProtocolFeeReceiver(feeReceiver);
+
+        bytes memory createBoostCalldata =
+            _makeValidCreateCalldataWithVariableRewardAmount(1, rewardAmount, claimLimit, additionalProtocolFee);
+
+        // Create the boost
+        boostCore.createBoost(createBoostCalldata);
+
+        // Get the boost and incentive contract
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive incentive = ERC20Incentive(address(boost.incentives[0]));
+
+        _do_topup(amountToMint, claimLimit, rewardAmount);
+
+        // Calculate expected fee
+        uint256 claimAmount = incentive.reward();
+        uint256 protocolFeePercentage = boost.protocolFee;
+
+        uint256 expectedFee = (claimAmount * protocolFeePercentage) / boostCore.FEE_DENOMINATOR();
+
+        // Mint an ERC721 token to the claimant
+
+        for (uint160 tokenId = 1; tokenId < 102; tokenId++) {
+            hoax(address(claimant + tokenId));
+            mockERC721.mint{value: 0.1 ether}(address(this));
+
+            // Record initial balances
+            uint256 initialFeeReceiverBalance = mockERC20.balanceOf(feeReceiver);
+
+            // Prepare claim data
+            bytes memory data = abi.encode(address(this), abi.encode(tokenId));
+
+            // Expect the fee ProtocolFeesCollected event
+            vm.expectEmit();
+            emit BoostCore.ProtocolFeesCollected(0, 0, expectedFee, feeReceiver);
+
+            // Perform claim
+            hoax(address(claimant + tokenId));
+            boostCore.claimIncentive(0, 0, address(0), data);
+
+            // Verify fee transfer
+            assertApproxEqAbs(
+                mockERC20.balanceOf(feeReceiver),
+                initialFeeReceiverBalance + expectedFee,
+                boostCore.DUST_THRESHOLD(),
+                "Protocol fee not transferred correctly"
+            );
+        }
+
+        //assertEq(0, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
+    }
+
+    function _do_topup(uint256 amountToMint, uint256 claimLimit, uint256 rewardAmount) internal {
+        mockERC20.mint(address(this), amountToMint);
+        mockERC20.approve(address(budget), amountToMint);
+
+        budget.allocate(
+            abi.encode(
+                ABudget.Transfer({
+                    assetType: ABudget.AssetType.ERC20,
+                    asset: address(mockERC20),
+                    target: address(this),
+                    data: abi.encode(ABudget.FungiblePayload({amount: amountToMint}))
+                })
+            )
+        );
+
+        bytes memory topupCalldata = abi.encode(
+            ERC20Incentive.InitPayload({
+                asset: address(mockERC20),
+                strategy: AERC20Incentive.Strategy.POOL,
+                reward: rewardAmount,
+                limit: claimLimit,
+                manager: address(budget)
+            })
+        );
+
+        boostCore.topupIncentiveFromBudget(0, 0, topupCalldata, address(budget));
+    }
+
     function testClaimIncentive_ProtocolFeeTransfer() public {
         address feeReceiver = address(0xfee);
         boostCore.setProtocolFeeReceiver(feeReceiver);
@@ -991,7 +1093,7 @@ contract BoostCoreTest is Test {
                         strategy: AERC20Incentive.Strategy.POOL,
                         reward: rewardAmount,
                         limit: limit,
-                        manager: address(boostCore)
+                        manager: address(budget)
                     })
                 )
             });

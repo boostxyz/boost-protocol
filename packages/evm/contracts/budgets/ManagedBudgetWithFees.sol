@@ -113,6 +113,20 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
         return (amount, asset);
     }
 
+    /// @notice A function that triggers a top-up on a specified incentive,
+    ///         using *this* budget contract as the source of funds.
+    /// @param boostId The ID of the Boost to top up
+    /// @param incentiveId The ID of the incentive within that Boost
+    /// @param data_ Arbitrary data forwarded to the incentive’s `preflight` and `topup`
+    function topupIncentive(address target, uint256 boostId, uint256 incentiveId, bytes calldata data_)
+        external
+        onlyAuthorized
+        returns (bool)
+    {
+        BoostCore(target).topupIncentiveFromBudget(boostId, incentiveId, data_, address(this));
+        return true;
+    }
+
     /// @inheritdoc ABudget
     /// @notice Disburses assets from the budget to a single recipient if sender is owner, admin, or manager
     /// @param data_ The packed {Transfer} request

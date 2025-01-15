@@ -31,6 +31,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     using LibZip for bytes;
     using SafeTransferLib for address;
 
+    // @notice Emitted when a new Boost is created
     event BoostCreated(
         uint256 indexed boostId,
         address indexed owner,
@@ -39,6 +40,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
         address validator,
         address allowList,
         address budget
+    );
+
+    /// @notice Emitted when an additional incentive is added to a Boost on initial creation or after the fact
+    event IncentiveAdded(
+        uint256 indexed boostId, uint256 indexed incentiveId, address indexed incentiveAddress, bool isNewBoost
     );
 
     event ProtocolFeesCollected(
@@ -160,6 +166,42 @@ contract BoostCore is Ownable, ReentrancyGuard {
             address(boost.budget)
         );
         return boost;
+    }
+
+    /**
+     * @notice Allows the owner of an existing boost to add a new incentive to it.
+     * @dev Follows the same general flow (budget checks, preflight, fee accounting) as `createBoost`.
+     *      1) Only the Boost owner can call this.
+     *      2) The budget is re-checked for authorization (optional depending on your security model).
+     *      3) We use the same `_createSingleIncentive` helper to mint/clone and initialize the incentive.
+     * @param boostId The ID of the Boost to which we want to add a new incentive
+     * @param target The `BoostLib.Target` describing the new incentive (base implementation, params, etc.)
+     * @return newIncentive The newly created AIncentive contract instance
+     */
+    function addIncentiveToBoost(uint256 boostId, BoostLib.Target calldata target)
+        external
+        nonReentrant
+        returns (AIncentive newIncentive)
+    {
+        // 1) Load the boost and check ownership
+        BoostLib.Boost storage boost = _boosts[boostId];
+        if (msg.sender != boost.owner) {
+            revert BoostError.Unauthorized();
+        }
+        _checkBudget(boost.budget);
+
+        AIncentive[] storage existingIncentives = boost.incentives;
+        uint256 newIncentiveId = existingIncentives.length;
+        address protocolAsset = protocolFeeModule != address(0)
+            ? IProtocolFeeModule(protocolFeeModule).getProtocolAsset(abi.encode(boostId, target))
+            : address(0);
+
+        newIncentive =
+            _createSingleIncentive(target, boost.budget, boost.protocolFee, protocolAsset, boostId, newIncentiveId);
+
+        existingIncentives.push(newIncentive);
+
+        emit IncentiveAdded(boostId, newIncentiveId, address(newIncentive), false);
     }
 
     /// @notice Claim an incentive for a Boost
@@ -411,6 +453,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         for (uint256 i = 0; i < targets_.length; i++) {
             newIncentives[i] = _createSingleIncentive(targets_[i], budget_, protocolFee_, protocolAsset, boostId, i);
+            emit IncentiveAdded(boostId, i, address(newIncentives[i]), true);
         }
     }
 

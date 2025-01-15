@@ -595,7 +595,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     // helper that transfers dust to protocolFeeReceiver
     function _dustHatch(address asset) internal {
         uint256 balance = IERC20(asset).balanceOf(address(this));
-        if (balance < DUST_THRESHOLD) {
+        if (balance > 0 && balance < DUST_THRESHOLD) {
             asset.safeTransfer(protocolFeeReceiver, balance);
         }
     }

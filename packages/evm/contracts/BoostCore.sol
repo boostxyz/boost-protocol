@@ -22,6 +22,7 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IAuth} from "contracts/auth/IAuth.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
+import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
@@ -160,6 +161,129 @@ contract BoostCore is Ownable, ReentrancyGuard {
             address(boost.budget)
         );
         return boost;
+    }
+
+    /// @notice Top up an existing incentive using tokens from a budget.
+    ///         All tokens are first transferred into BoostCore, then a protocol fee
+    ///         is accounted for and reserved in this function. The remainder is approved
+    ///         and the incentive contract pulls the tokens during the topup call.
+    /// @param boostId The ID of the Boost
+    /// @param incentiveId The ID of the incentive within that Boost
+    /// @param data_ The raw data to pass to the incentive’s `preflight` and eventually `topup`
+    /// @param budget The budget contract from which to disburse; if zero, we use the boost's default budget
+    function topupIncentiveFromBudget(uint256 boostId, uint256 incentiveId, bytes calldata data_, address budget)
+        external
+        nonReentrant
+    {
+        BoostLib.Boost storage boost = _boosts[boostId];
+        AIncentive incentiveContract = boost.incentives[incentiveId];
+
+        bytes memory preflightData = incentiveContract.preflight(data_);
+        if (preflightData.length == 0) {
+            revert BoostError.InvalidInitialization();
+        }
+
+        ABudget.Transfer memory request = abi.decode(preflightData, (ABudget.Transfer));
+
+        // Redirect the disbursement to this contract so we have the funds to topup and reserve the protocol fee
+        request.target = address(this);
+        bytes memory revisedRequest = abi.encode(request);
+
+        ABudget budget_ = (budget == address(0)) ? boost.budget : ABudget(payable(budget));
+        _checkBudget(budget_);
+        if (!budget_.disburse(revisedRequest)) {
+            revert BoostError.InvalidInitialization();
+        }
+
+        uint256 totalAmount;
+        if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+            ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
+            totalAmount = payload.amount;
+        } else if (request.assetType == ABudget.AssetType.ERC1155) {
+            ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
+            totalAmount = payload.amount;
+        } else {
+            revert BoostError.NotImplemented();
+        }
+
+        uint256 fee = (totalAmount * boost.protocolFee) / FEE_DENOMINATOR;
+        uint256 remainder = totalAmount - fee;
+
+        bytes32 key = _generateKey(boostId, incentiveId);
+        IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
+        info.protocolFeesRemaining += fee;
+
+        if (remainder > 0) {
+            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                // Approve exactly `remainder` tokens
+                IERC20 token = IERC20(request.asset);
+                token.approve(address(incentiveContract), remainder);
+                IToppable(address(incentiveContract)).topup(remainder);
+                token.approve(address(incentiveContract), 0);
+            } else {
+                // ERC1155 => setApprovalForAll
+                IERC1155 erc1155 = IERC1155(request.asset);
+                erc1155.setApprovalForAll(address(incentiveContract), true);
+                IToppable(address(incentiveContract)).topup(remainder);
+                erc1155.setApprovalForAll(address(incentiveContract), false);
+            }
+        }
+    }
+
+    /// @notice Top up an existing incentive using tokens pulled directly from the caller (msg.sender).
+    ///         All tokens are first transferred into BoostCore, then a protocol fee is accounted for.
+    ///         The remainder is approved so the incentive contract can pull them during the topup call.
+    /// @param boostId The ID of the Boost
+    /// @param incentiveId The ID of the incentive within that Boost
+    /// @param data_ The raw data to pass to the incentive’s `preflight` and eventually `topup`
+    function topupIncentiveFromSender(uint256 boostId, uint256 incentiveId, bytes calldata data_)
+        external
+        nonReentrant
+    {
+        BoostLib.Boost storage boost = _boosts[boostId];
+        AIncentive incentiveContract = boost.incentives[incentiveId];
+        bytes memory preflightData = incentiveContract.preflight(data_);
+        if (preflightData.length == 0) {
+            revert BoostError.InvalidInitialization();
+        }
+        ABudget.Transfer memory request = abi.decode(preflightData, (ABudget.Transfer));
+
+        uint256 totalAmount;
+        uint256 tokenId; // for ERC1155
+        if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+            ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
+            totalAmount = payload.amount;
+            IERC20 token = IERC20(request.asset);
+            token.transferFrom(msg.sender, address(this), totalAmount);
+        } else if (request.assetType == ABudget.AssetType.ERC1155) {
+            ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
+            totalAmount = payload.amount;
+            tokenId = payload.tokenId;
+            IERC1155(request.asset).safeTransferFrom(msg.sender, address(this), tokenId, totalAmount, "");
+        } else {
+            revert BoostError.NotImplemented();
+        }
+
+        uint256 fee = (totalAmount * boost.protocolFee) / FEE_DENOMINATOR;
+        uint256 remainder = totalAmount - fee;
+
+        bytes32 key = _generateKey(boostId, incentiveId);
+        IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
+        info.protocolFeesRemaining += fee;
+
+        if (remainder > 0) {
+            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                IERC20 token = IERC20(request.asset);
+                token.approve(address(incentiveContract), remainder);
+                IToppable(address(incentiveContract)).topup(remainder);
+                token.approve(address(incentiveContract), 0);
+            } else {
+                IERC1155 erc1155 = IERC1155(request.asset);
+                erc1155.setApprovalForAll(address(incentiveContract), true);
+                IToppable(address(incentiveContract)).topup(remainder);
+                erc1155.setApprovalForAll(address(incentiveContract), false);
+            }
+        }
     }
 
     /// @notice Claim an incentive for a Boost

@@ -92,8 +92,8 @@ export enum PrimitiveType {
   ADDRESS = 1,
   BYTES = 2,
   STRING = 3,
-  // Note: TUPLE remains in the enum but is no longer handled directly by `validateFieldAgainstCriteria`.
   TUPLE = 4,
+  INT = 5,
 }
 
 /**
@@ -1088,13 +1088,20 @@ export class EventAction extends DeployableTarget<
             () => BigInt(fieldValue) !== BigInt(criteria.filterData),
           )
           .with(
+            PrimitiveType.INT,
+            () => BigInt(fieldValue) !== BigInt(criteria.filterData),
+          )
+          .with(
             PrimitiveType.STRING,
             () => fieldValue !== fromHex(criteria.filterData, 'string'),
           )
           .otherwise(() => fieldValue !== criteria.filterData);
 
       case FilterType.GREATER_THAN:
-        if (fieldType === PrimitiveType.UINT) {
+        if (
+          fieldType === PrimitiveType.UINT ||
+          fieldType === PrimitiveType.INT
+        ) {
           return BigInt(fieldValue) > BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -1104,7 +1111,10 @@ export class EventAction extends DeployableTarget<
         });
 
       case FilterType.GREATER_THAN_OR_EQUAL:
-        if (fieldType === PrimitiveType.UINT) {
+        if (
+          fieldType === PrimitiveType.UINT ||
+          fieldType === PrimitiveType.INT
+        ) {
           return BigInt(fieldValue) >= BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -1114,7 +1124,10 @@ export class EventAction extends DeployableTarget<
         });
 
       case FilterType.LESS_THAN:
-        if (fieldType === PrimitiveType.UINT) {
+        if (
+          fieldType === PrimitiveType.UINT ||
+          fieldType === PrimitiveType.INT
+        ) {
           return BigInt(fieldValue) < BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -1124,7 +1137,10 @@ export class EventAction extends DeployableTarget<
         });
 
       case FilterType.LESS_THAN_OR_EQUAL:
-        if (fieldType === PrimitiveType.UINT) {
+        if (
+          fieldType === PrimitiveType.UINT ||
+          fieldType === PrimitiveType.INT
+        ) {
           return BigInt(fieldValue) <= BigInt(criteria.filterData);
         }
         throw new InvalidNumericalCriteriaError({
@@ -1334,8 +1350,11 @@ function abiTypeToPrimitiveType(
 ): Exclude<PrimitiveType, PrimitiveType.TUPLE> {
   const lower = abiType.toLowerCase();
 
-  if (lower.startsWith('uint') || lower.startsWith('int')) {
+  if (lower.startsWith('uint')) {
     return PrimitiveType.UINT;
+  }
+  if (lower.startsWith('int')) {
+    return PrimitiveType.INT;
   }
   if (lower === 'address') {
     return PrimitiveType.ADDRESS;

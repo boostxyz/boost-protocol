@@ -1651,7 +1651,10 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     : Object.values(decodedLog.args);
 
   if (!event.inputs.some((input) => input.indexed)) {
-    return decodedLog as EventLog;
+    return {
+      ...log,
+      ...decodedLog,
+    } as EventLog;
   }
 
   const indexedIndices: number[] = [];

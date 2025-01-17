@@ -765,8 +765,8 @@ describe("BoostCore", () => {
     await new Promise((resolve) => {
       setTimeout(resolve, 500);
     });
-
-    expect(subscription).toHaveBeenCalledTimes(1);
+    // This should be called once for each event
+    expect(subscription).toHaveBeenCalledTimes(2);
   });
 
   test("can set a passthrough auth scheme", async () => {

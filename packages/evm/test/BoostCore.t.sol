@@ -816,7 +816,7 @@ contract BoostCoreTest is Test {
 
         // Mint an ERC721 token to the claimant
 
-        for (uint160 tokenId = 1; tokenId < 102; tokenId++) {
+        for (uint160 tokenId = 1; tokenId < 201; tokenId++) {
             hoax(address(claimant + tokenId));
             mockERC721.mint{value: 0.1 ether}(address(this));
 
@@ -843,7 +843,7 @@ contract BoostCoreTest is Test {
             );
         }
 
-        //assertEq(0, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
+        assertEq(0, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
     }
 
     function _do_topup(uint256 amountToMint, uint256 claimLimit, uint256 rewardAmount) internal {

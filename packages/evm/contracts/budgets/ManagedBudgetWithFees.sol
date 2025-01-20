@@ -150,7 +150,7 @@ contract ManagedBudgetWithFees is AManagedBudgetWithFees, ManagedBudget {
                 revert InsufficientFunds(request.asset, avail, payload.amount + maxManagementFee);
             }
 
-            incentiveFeesMax[request.target] = maxManagementFee;
+            incentiveFeesMax[request.target] += maxManagementFee;
             reservedFunds[request.asset] += maxManagementFee;
             _distributedFungible[request.asset] += payload.amount;
             _transferFungible(request.asset, request.target, payload.amount);

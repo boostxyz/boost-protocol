@@ -532,6 +532,31 @@ contract ManagedBudgetWithFeesTest is Test, IERC1155Receiver {
         assertEq(managedBudget.distributed(address(mockERC20)), 100 ether);
     }
 
+    function testDisburse_MultipleTxs() public {
+        mockERC20.mint(address(this), 101 ether);
+        // Approve the budget to transfer tokens
+        mockERC20.approve(address(managedBudget), 202 ether);
+
+        // Allocate 100 tokens to the budget
+        bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(this), 202 ether);
+        managedBudget.allocate(data);
+        assertEq(managedBudget.total(address(mockERC20)), 202 ether);
+
+        // Disburse 100 tokens from the budget to the recipient
+        data = _makeFungibleTransfer(ABudget.AssetType.ERC20, address(mockERC20), address(1), 100 ether);
+        assertTrue(managedBudget.disburse(data));
+        assertEq(managedBudget.incentiveFeesMax(address(1)), 1 ether);
+        assertEq(mockERC20.balanceOf(address(1)), 100 ether);
+
+        assertTrue(managedBudget.disburse(data));
+        assertEq(managedBudget.incentiveFeesMax(address(1)), 2 ether);
+        assertEq(mockERC20.balanceOf(address(1)), 200 ether);
+
+        // Ensure the budget holds the management fee
+        assertEq(managedBudget.available(address(mockERC20)), 0);
+        assertEq(managedBudget.distributed(address(mockERC20)), 200 ether);
+    }
+
     function testDisburse_NativeBalance() public {
         // Allocate 101 ETH to the budget
         bytes memory data = _makeFungibleTransfer(ABudget.AssetType.ETH, address(0), address(this), 101 ether);

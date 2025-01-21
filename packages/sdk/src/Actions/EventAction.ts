@@ -1503,7 +1503,10 @@ export function prepareEventActionPayload({
     ],
     [
       {
-        actionClaimant: _toRawActionStep(actionClaimant),
+        actionClaimant: {
+          ..._toRawActionStep(actionClaimant),
+          signature: pad(actionClaimant.signature),
+        },
         actionStepOne: {
           ..._toRawActionStep({
             ...actionStepOne,

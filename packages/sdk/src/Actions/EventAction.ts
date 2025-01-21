@@ -1366,6 +1366,18 @@ function _fromRawActionStep<T extends RawActionStep | RawActionClaimant>(
 }
 
 /**
+ * Typeguard to determine if a user is supplying a simple or raw EventActionPayload
+ *
+ * @param {*} opts
+ * @returns {opts is EventActionPayloadSimple}
+ */
+function _isEventActionPayloadSimple(
+  opts: EventActionPayload,
+): opts is EventActionPayloadSimple {
+  return Array.isArray((opts as EventActionPayloadSimple).actionSteps);
+}
+
+/**
  * Determines whether a signature is an event or function signature based on its format.
  * - 32-byte signatures (0x + 64 chars) that don't start with 28 zeros are event signatures
  * - 4-byte signatures (0x + 8 chars) or 32-byte signatures with 28 leading zeros are function signatures

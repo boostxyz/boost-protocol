@@ -26,6 +26,7 @@ import {
   fromHex,
   isAddress,
   isAddressEqual,
+  pad,
   toEventSelector,
   zeroAddress,
   zeroHash,
@@ -1504,19 +1505,31 @@ export function prepareEventActionPayload({
       {
         actionClaimant: _toRawActionStep(actionClaimant),
         actionStepOne: {
-          ..._toRawActionStep(actionStepOne),
+          ..._toRawActionStep({
+            ...actionStepOne,
+            signature: pad(actionStepOne.signature),
+          }),
           actionType: actionStepOne.actionType || 0,
         },
         actionStepTwo: {
-          ..._toRawActionStep(actionStepTwo),
+          ..._toRawActionStep({
+            ...actionStepTwo,
+            signature: pad(actionStepTwo.signature),
+          }),
           actionType: actionStepTwo.actionType || 0,
         },
         actionStepThree: {
-          ..._toRawActionStep(actionStepThree),
+          ..._toRawActionStep({
+            ...actionStepThree,
+            signature: pad(actionStepThree.signature),
+          }),
           actionType: actionStepThree.actionType || 0,
         },
         actionStepFour: {
-          ..._toRawActionStep(actionStepFour),
+          ..._toRawActionStep({
+            ...actionStepFour,
+            signature: pad(actionStepFour.signature),
+          }),
           actionType: actionStepFour.actionType || 0,
         },
       },

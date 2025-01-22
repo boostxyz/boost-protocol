@@ -12,11 +12,15 @@ import {
   simulateBoostCoreCreateBoost,
   simulateBoostCoreSetCreateBoostAuth,
   simulateBoostCoreSetProtocolFeeReceiver,
+  simulateBoostCoreTopupIncentiveFromBudget,
+  simulateBoostCoreTopupIncentiveFromSender,
   writeBoostCoreClaimIncentive,
   writeBoostCoreClaimIncentiveFor,
   writeBoostCoreCreateBoost,
   writeBoostCoreSetCreateBoostAuth,
   writeBoostCoreSetProtocolFeeReceiver,
+  writeBoostCoreTopupIncentiveFromBudget,
+  writeBoostCoreTopupIncentiveFromSender,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import {
@@ -24,6 +28,7 @@ import {
   getAccount,
   getChains,
   getTransactionReceipt,
+  readContract,
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
@@ -31,6 +36,8 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  decodeAbiParameters,
+  encodeAbiParameters,
   encodePacked,
   keccak256,
   parseEventLogs,
@@ -1653,5 +1660,218 @@ export class BoostCore extends Deployable<
       args: payload,
       ...this.optionallyAttachAccount(options.account),
     };
+  }
+  /**
+   * Prepares and executes a top-up from a Budget, specifying the net top-up amount
+   * that should land in the incentive (the protocol fee is added automatically).
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId The ID of the Boost
+   * @param {bigint} incentiveId The ID of the incentive within that Boost
+   * @param {any} topupPayload A typed struct for the incentive’s top-up parameters
+   * @param {Address} [budget] Optional override budget address (otherwise uses the Boost’s budget)
+   * @param {?WriteParams} [params] Additional transaction overrides
+   * @returns {Promise<{ hash: Hex; result: void }>} The transaction hash and simulation result
+   */
+  public async topupIncentiveFromBudgetPreFee(
+    boostId: bigint,
+    incentiveId: bigint,
+    topupAmount: bigint,
+    budget?: Address,
+    params?: WriteParams,
+  ) {
+    const boost = await this.getBoost(boostId, params);
+    if (incentiveId >= boost.incentives.length) {
+      throw new Error(`Incentive ID ${incentiveId} out of range`);
+    }
+    const incentive = boost.incentives[Number(incentiveId)];
+    if (!incentive) {
+      throw new Error(`Incentive with ID ${incentiveId} not found`);
+    }
+
+    const incentiveData = incentive.getTopupPayload(topupAmount);
+
+    // 6. Call raw method with the full total
+    return await this.topupIncentiveFromBudgetRaw(
+      boostId,
+      incentiveId,
+      incentiveData,
+      budget,
+      params,
+    );
+  }
+
+  /**
+   * Prepares and executes a top-up from a Budget, specifying the entire total tokens
+   * (incentive + fee) you want to disburse. We'll back-calculate how many tokens land
+   * in the incentive.
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId The ID of the Boost
+   * @param {bigint} incentiveId The ID of the incentive within that Boost
+   * @param {any} topupPayload A typed struct for the incentive’s top-up parameters
+   * @param {bigint} totalAmount The total tokens to disburse
+   * @param {Address} [budget] Optional override budget address
+   * @param {?WriteParams} [params] Additional transaction overrides
+   * @returns {Promise<{ hash: Hex; result: void }>}
+   */
+  public async topupIncentiveFromBudgetPostFee(
+    boostId: bigint,
+    incentiveId: bigint,
+    totalAmount: bigint,
+    budget?: Address,
+    params?: WriteParams,
+  ) {
+    const feeBps = await this.protocolFee(params);
+    const topupAmount =
+      (totalAmount * FEE_DENOMINATOR) / (FEE_DENOMINATOR + feeBps);
+    return this.topupIncentiveFromBudgetPreFee(
+      boostId,
+      incentiveId,
+      topupAmount,
+      budget,
+      params,
+    );
+  }
+
+  /**
+   * Prepares and executes a top-up from the caller (msg.sender), specifying the net top-up
+   * to land in the incentive. We'll add the protocol fee on top automatically.
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId The ID of the Boost
+   * @param {bigint} incentiveId The ID of the incentive within that Boost
+   * @param {any} topupPayload A typed struct for the incentive’s top-up parameters
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: Hex; result: void }>}
+   */
+  public async topupIncentiveFromSenderPreFee(
+    boostId: bigint,
+    incentiveId: bigint,
+    topupAmount: bigint,
+    params?: WriteParams,
+  ) {
+    const boost = await this.getBoost(boostId, params);
+    if (incentiveId >= boost.incentives.length) {
+      throw new Error(`Incentive ID ${incentiveId} out of range`);
+    }
+    const incentive = boost.incentives[Number(incentiveId)];
+    if (!incentive) {
+      throw new Error(`Incentive with ID ${incentiveId} not found`);
+    }
+
+    const incentiveData = incentive.getTopupPayload(topupAmount, params);
+
+    return await this.topupIncentiveFromSenderRaw(
+      boostId,
+      incentiveId,
+      incentiveData,
+      params,
+    );
+  }
+
+  /**
+   * Prepares and executes a top-up from the caller (msg.sender), specifying the total
+   * tokens you’re willing to provide (including fee). We'll back-calculate the net
+   * top-up for the incentive.
+   *
+   * @public
+   * @async
+   * @param {bigint} boostId The ID of the Boost
+   * @param {bigint} incentiveId The ID of the incentive within that Boost
+   * @param {any} topupPayload A typed struct for the incentive’s top-up parameters
+   * @param {bigint} totalAmount The entire tokens (top-up + fee)
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: Hex; result: void }>}
+   */
+  public async topupIncentiveFromSenderPostFee(
+    boostId: bigint,
+    incentiveId: bigint,
+    totalAmount: bigint,
+    params?: WriteParams,
+  ) {
+    const feeBps = await this.protocolFee(params);
+    const topupAmount =
+      (totalAmount * FEE_DENOMINATOR) / (FEE_DENOMINATOR + feeBps);
+
+    return this.topupIncentiveFromSenderPreFee(
+      boostId,
+      incentiveId,
+      topupAmount,
+      params,
+    );
+  }
+
+  /**
+   * A lower-level function that actually calls `topupIncentiveFromSender` on-chain,
+   * passing the final total. The contract modifies its internal logic to split net top-up vs. fee.
+   *
+   * @private
+   * @param {bigint} boostId
+   * @param {bigint} incentiveId
+   * @param {Hex} preflightData The raw ABudget.Transfer data from preflight
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: Hex; result: void }>}
+   */
+  private async topupIncentiveFromSenderRaw(
+    boostId: bigint,
+    incentiveId: bigint,
+    preflightData: `0x${string}`,
+    params?: WriteParams,
+  ) {
+    const { request, result } = await simulateBoostCoreTopupIncentiveFromSender(
+      this._config,
+      {
+        ...this.optionallyAttachAccount(),
+        ...(params as object),
+        address: this.assertValidAddress(),
+        args: [boostId, incentiveId, preflightData],
+      },
+    );
+    const hash = await writeBoostCoreTopupIncentiveFromSender(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * A lower-level function that actually calls `topupIncentiveFromBudget` on-chain,
+   * passing the preflight data plus the final total. The contract itself modifies
+   * the amount to (topup + fee).
+   *
+   * @private
+   * @param {bigint} boostId
+   * @param {bigint} incentiveId
+   * @param {Hex} preflightData The raw ABudget.Transfer (encoded) from preflight
+   * @param {Address} [budget] Optional override for the budget
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: Hex; result: void }>}
+   */
+  private async topupIncentiveFromBudgetRaw(
+    boostId: bigint,
+    incentiveId: bigint,
+    preflightData: `0x${string}`,
+    budget?: Address,
+    params?: WriteParams,
+  ) {
+    // e.g. run "simulate + write" pattern
+    const { request, result } = await simulateBoostCoreTopupIncentiveFromBudget(
+      this._config,
+      {
+        ...this.optionallyAttachAccount(),
+        ...(params as object),
+        address: this.assertValidAddress(),
+        args: [boostId, incentiveId, preflightData, budget ?? zeroAddress],
+      },
+    );
+    const hash = await writeBoostCoreTopupIncentiveFromBudget(
+      this._config,
+      request,
+    );
+    return { hash, result };
   }
 }

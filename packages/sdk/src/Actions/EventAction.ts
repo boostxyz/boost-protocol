@@ -1389,12 +1389,12 @@ function _isEventActionPayloadSimple(
 export function detectSignatureType(signature: Hex): SignatureType {
   const hexWithoutPrefix = signature.slice(2);
 
-  // 4-byte function selector (8 hex chars)
+  // 4-byte function selectors (8 hex chars)
   if (hexWithoutPrefix.length === 8) {
     return SignatureType.FUNC;
   }
 
-  // I32-byte selectors (64 hex chars)
+  // 32-byte selectors (64 hex chars)
   if (hexWithoutPrefix.length === 64) {
     // Check if it starts with 28 bytes (56 chars) of zeros
     const leadingPart = hexWithoutPrefix.slice(0, 56);

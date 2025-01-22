@@ -503,6 +503,32 @@ export class ERC20Incentive extends DeployableTarget<
   }
 
   /**
+   * A helper that composes a typed "top-up" parameter object
+   * given a net top-up amount. You can name it whatever you like
+   * (e.g. topupParamsFromNetAmount, getTopupPayload, etc.).
+   *
+   * @public
+   * @param {bigint} netAmount The net top-up tokens the user wants to add
+   * @param {?WriteParams} [params] (optional) if you need them
+   * @returns {Hex} the ABI-encoded data for top-up
+   */
+  public getTopupPayload(netAmount: bigint): Hex {
+    // 1. Build a typed object matching your `ERC20IncentivePayload`.
+    //    For example, you might want to increment `limit` by `netAmount`,
+    //    or set `reward = netAmount`. That’s up to your logic:
+    const typed: ERC20IncentivePayload = {
+      asset: this.payload?.asset || zeroAddress,
+      strategy: this.payload?.strategy || StrategyType.POOL, // e.g. StrategyType.POOL
+      reward: netAmount, // store net top-up as the "reward"
+      limit: 1n, // or maybe add netAmount to existing limit
+      manager: this.payload?.manager || zeroAddress,
+    };
+
+    // 2. Encode it with your existing `prepareERC20IncentivePayload(...)`.
+    return prepareERC20IncentivePayload(typed);
+  }
+
+  /**
    * Builds the claim data for the ERC20Incentive.
    *
    * @public

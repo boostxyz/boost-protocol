@@ -349,6 +349,28 @@ export class PointsIncentive extends DeployableTarget<
   }
 
   /**
+   * Generates a top-up payload for the PointsIncentive contract.
+   *
+   * @public
+   * @param {bigint} netAmount The net reward amount to be added to the incentive.
+   * @returns {Hex} The ABI-encoded top-up payload.
+   */
+  public getTopupPayload(netAmount: bigint): Hex {
+    return encodeAbiParameters(
+      [
+        { type: 'address', name: 'venue' },
+        { type: 'bytes4', name: 'selector' },
+        { type: 'uint256', name: 'amount' },
+      ],
+      [
+        this.payload?.venue ?? zeroHash,
+        this.payload?.selector ?? zeroHash,
+        netAmount,
+      ],
+    );
+  }
+
+  /**
    * Builds the claim data for the PointsIncentive.
    *
    * @public

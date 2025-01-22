@@ -26,6 +26,7 @@ import {
   fromHex,
   isAddress,
   isAddressEqual,
+  pad,
   toEventSelector,
   zeroAddress,
   zeroHash,
@@ -1536,12 +1537,14 @@ export function prepareEventActionPayload({
           signatureType:
             actionClaimant.signatureType ??
             detectSignatureType(actionClaimant.signature),
+          signature: pad(actionClaimant.signature),
         },
         actionStepOne: {
           ..._toRawActionStep(actionStepOne),
           signatureType:
             actionStepOne.signatureType ??
             detectSignatureType(actionStepOne.signature),
+          signature: pad(actionStepOne.signature),
           actionType: actionStepOne.actionType || 0,
         },
         actionStepTwo: {
@@ -1549,6 +1552,7 @@ export function prepareEventActionPayload({
           signatureType:
             actionStepTwo.signatureType ??
             detectSignatureType(actionStepTwo.signature),
+          signature: pad(actionStepTwo.signature),
           actionType: actionStepTwo.actionType || 0,
         },
         actionStepThree: {
@@ -1556,6 +1560,7 @@ export function prepareEventActionPayload({
           signatureType:
             actionStepThree.signatureType ??
             detectSignatureType(actionStepThree.signature),
+          signature: pad(actionStepThree.signature),
           actionType: actionStepThree.actionType || 0,
         },
         actionStepFour: {
@@ -1563,6 +1568,7 @@ export function prepareEventActionPayload({
           signatureType:
             actionStepFour.signatureType ??
             detectSignatureType(actionStepFour.signature),
+          signature: pad(actionStepFour.signature),
           actionType: actionStepFour.actionType || 0,
         },
       },

@@ -28,6 +28,7 @@ import {
   isAddressEqual,
   pad,
   toEventSelector,
+  trim,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -1408,6 +1409,21 @@ export function detectSignatureType(signature: Hex): SignatureType {
 }
 
 /**
+ * Normalizes a hex value to ensure proper byte padding.
+ * This prevents viem's automatic padding which can change the value.
+ * For example:
+ * - "0x1" -> "0x01"
+ * - "0xabc" -> "0x0abc"
+ * - "0xabcd" -> "0xabcd"
+ *
+ * @param {Hex} value - The hex value to normalize
+ * @returns {Hex} The normalized hex string
+ */
+function normalizeUintValue(value: Hex): Hex {
+  return trim(pad(value));
+}
+
+/**
  * Function to properly encode an event action payload.
  *
  * @param {InitPayload} param0
@@ -1546,6 +1562,15 @@ export function prepareEventActionPayload({
             detectSignatureType(actionStepOne.signature),
           signature: pad(actionStepOne.signature),
           actionType: actionStepOne.actionType || 0,
+          actionParameter:
+            actionStepOne.actionParameter.fieldType === PrimitiveType.UINT
+              ? {
+                  ...actionStepOne.actionParameter,
+                  filterData: normalizeUintValue(
+                    actionStepOne.actionParameter.filterData,
+                  ),
+                }
+              : actionStepOne.actionParameter,
         },
         actionStepTwo: {
           ..._toRawActionStep(actionStepTwo),
@@ -1554,6 +1579,15 @@ export function prepareEventActionPayload({
             detectSignatureType(actionStepTwo.signature),
           signature: pad(actionStepTwo.signature),
           actionType: actionStepTwo.actionType || 0,
+          actionParameter:
+            actionStepTwo.actionParameter.fieldType === PrimitiveType.UINT
+              ? {
+                  ...actionStepTwo.actionParameter,
+                  filterData: normalizeUintValue(
+                    actionStepTwo.actionParameter.filterData,
+                  ),
+                }
+              : actionStepTwo.actionParameter,
         },
         actionStepThree: {
           ..._toRawActionStep(actionStepThree),
@@ -1562,6 +1596,15 @@ export function prepareEventActionPayload({
             detectSignatureType(actionStepThree.signature),
           signature: pad(actionStepThree.signature),
           actionType: actionStepThree.actionType || 0,
+          actionParameter:
+            actionStepThree.actionParameter.fieldType === PrimitiveType.UINT
+              ? {
+                  ...actionStepThree.actionParameter,
+                  filterData: normalizeUintValue(
+                    actionStepThree.actionParameter.filterData,
+                  ),
+                }
+              : actionStepThree.actionParameter,
         },
         actionStepFour: {
           ..._toRawActionStep(actionStepFour),
@@ -1570,6 +1613,15 @@ export function prepareEventActionPayload({
             detectSignatureType(actionStepFour.signature),
           signature: pad(actionStepFour.signature),
           actionType: actionStepFour.actionType || 0,
+          actionParameter:
+            actionStepFour.actionParameter.fieldType === PrimitiveType.UINT
+              ? {
+                  ...actionStepFour.actionParameter,
+                  filterData: normalizeUintValue(
+                    actionStepFour.actionParameter.filterData,
+                  ),
+                }
+              : actionStepFour.actionParameter,
         },
       },
     ],

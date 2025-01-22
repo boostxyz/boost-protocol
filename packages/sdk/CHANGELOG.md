@@ -1,5 +1,16 @@
 # @boostxyz/sdk
 
+## 5.4.0
+
+### Minor Changes
+
+- 6f21288: add padding to 4-byte function selectors in signature
+- 23ceab9: derive signatureType from signature
+
+### Patch Changes
+
+- 2897165: prevent mutatation of Transfer abi by using structuredClone
+
 ## 5.3.1
 
 ### Patch Changes

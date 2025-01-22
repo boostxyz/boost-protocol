@@ -829,9 +829,9 @@ export class EventAction extends DeployableTarget<
     const filteredLogs = receipt.logs.filter(
       (log) => log.topics[0] === TRANSFER_SIGNATURE,
     );
-    const event = abi[
-      'Transfer(address indexed,address indexed,uint256 indexed)'
-    ] as AbiEvent;
+    const event = structuredClone(
+      abi['Transfer(address indexed,address indexed,uint256 indexed)'],
+    ) as AbiEvent;
 
     // ERC721
     try {

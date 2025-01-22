@@ -331,6 +331,23 @@ export class AllowListIncentive extends DeployableTarget<
   }
 
   /**
+   * Generates a top-up payload for the AllowListIncentive contract.
+   *
+   * @public
+   * @param {bigint} netAmount The net number of slots to be added to the allowlist.
+   * @returns {Hex} The ABI-encoded top-up payload.
+   */
+  public getTopupPayload(netAmount: bigint): Hex {
+    return encodeAbiParameters(
+      [
+        { type: 'address', name: 'allowList' },
+        { type: 'uint256', name: 'limit' },
+      ],
+      [this.payload?.allowList ?? zeroHash, netAmount],
+    );
+  }
+
+  /**
    * Builds the claim data for the AllowListIncentive.
    *
    * @public

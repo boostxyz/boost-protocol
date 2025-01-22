@@ -483,6 +483,37 @@ export class CGDAIncentive extends DeployableTarget<
   }
 
   /**
+   * Generates a top-up payload for the CGDAIncentive contract.
+   *
+   * In this approach, we treat a "top-up" as incrementing the existing `totalBudget`
+   * in the incentive by `netAmount`. The entire payload is re-encoded with the updated budget.
+   *
+   * @public
+   * @param {bigint} netAmount The additional tokens to add to `totalBudget`.
+   * @returns {Hex} The ABI-encoded, updated CGDAIncentive payload.
+   */
+  public getTopupPayload(netAmount: bigint): Hex {
+    return encodeAbiParameters(
+      [
+        { type: 'address', name: 'asset' },
+        { type: 'uint256', name: 'initialReward' },
+        { type: 'uint256', name: 'rewardDecay' },
+        { type: 'uint256', name: 'rewardBoost' },
+        { type: 'uint256', name: 'totalBudget' },
+        { type: 'address', name: 'manager' },
+      ],
+      [
+        this.payload?.asset ?? zeroHash,
+        this.payload?.initialReward ?? 0n,
+        this.payload?.rewardDecay ?? 0n,
+        this.payload?.rewardBoost ?? 0n,
+        netAmount,
+        this.payload?.manager ?? zeroHash,
+      ],
+    );
+  }
+
+  /**
    * Builds the claim data for the CGDAIncentive.
    *
    * @public

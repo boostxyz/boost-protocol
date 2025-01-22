@@ -614,6 +614,32 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
   }
 
   /**
+   * Generates a top-up payload for the ERC20PeggedIncentive contract by incrementing
+   * the existing `limit` field by `netAmount`. The entire payload is then re-encoded
+   * via `prepareERC20PeggedIncentivePayload(...)`.
+   *
+   * @public
+   * @param {bigint} netAmount - The additional limit to add to this incentive.
+   * @returns {Hex} The ABI-encoded payload with the updated `limit`.
+   */
+  public getTopupPayload(netAmount: bigint): Hex {
+    return prepareERC20PeggedVariableCriteriaIncentivePayload({
+      asset: this.payload?.asset ?? zeroAddress,
+      peg: this.payload?.peg ?? zeroAddress,
+      reward: this.payload?.reward ?? 0n,
+      limit: netAmount,
+      maxReward: this.payload?.maxReward ?? 0n,
+      manager: this.payload?.manager ?? zeroAddress,
+      criteria: this.payload?.criteria ?? {
+        criteriaType: 0,
+        signature: zeroAddress,
+        fieldIndex: 0,
+        targetContract: zeroAddress,
+      },
+    });
+  }
+
+  /**
    * @inheritdoc
    *
    * @public

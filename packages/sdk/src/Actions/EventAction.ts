@@ -1424,6 +1424,28 @@ function normalizeUintValue(value: Hex): Hex {
 }
 
 /**
+ * Helper function to prepare an action step for encoding
+ *
+ * @param {ActionStep} step - The action step to prepare
+ * @returns {ActionStep} The prepared action step
+ */
+function prepareActionStep(step: ActionStep) {
+  return {
+    ..._toRawActionStep(step),
+    signatureType: step.signatureType ?? detectSignatureType(step.signature),
+    signature: pad(step.signature),
+    actionType: step.actionType || 0,
+    actionParameter:
+      step.actionParameter.fieldType === PrimitiveType.UINT
+        ? {
+            ...step.actionParameter,
+            filterData: normalizeUintValue(step.actionParameter.filterData),
+          }
+        : step.actionParameter,
+  };
+}
+
+/**
  * Function to properly encode an event action payload.
  *
  * @param {InitPayload} param0
@@ -1555,74 +1577,10 @@ export function prepareEventActionPayload({
             detectSignatureType(actionClaimant.signature),
           signature: pad(actionClaimant.signature),
         },
-        actionStepOne: {
-          ..._toRawActionStep(actionStepOne),
-          signatureType:
-            actionStepOne.signatureType ??
-            detectSignatureType(actionStepOne.signature),
-          signature: pad(actionStepOne.signature),
-          actionType: actionStepOne.actionType || 0,
-          actionParameter:
-            actionStepOne.actionParameter.fieldType === PrimitiveType.UINT
-              ? {
-                  ...actionStepOne.actionParameter,
-                  filterData: normalizeUintValue(
-                    actionStepOne.actionParameter.filterData,
-                  ),
-                }
-              : actionStepOne.actionParameter,
-        },
-        actionStepTwo: {
-          ..._toRawActionStep(actionStepTwo),
-          signatureType:
-            actionStepTwo.signatureType ??
-            detectSignatureType(actionStepTwo.signature),
-          signature: pad(actionStepTwo.signature),
-          actionType: actionStepTwo.actionType || 0,
-          actionParameter:
-            actionStepTwo.actionParameter.fieldType === PrimitiveType.UINT
-              ? {
-                  ...actionStepTwo.actionParameter,
-                  filterData: normalizeUintValue(
-                    actionStepTwo.actionParameter.filterData,
-                  ),
-                }
-              : actionStepTwo.actionParameter,
-        },
-        actionStepThree: {
-          ..._toRawActionStep(actionStepThree),
-          signatureType:
-            actionStepThree.signatureType ??
-            detectSignatureType(actionStepThree.signature),
-          signature: pad(actionStepThree.signature),
-          actionType: actionStepThree.actionType || 0,
-          actionParameter:
-            actionStepThree.actionParameter.fieldType === PrimitiveType.UINT
-              ? {
-                  ...actionStepThree.actionParameter,
-                  filterData: normalizeUintValue(
-                    actionStepThree.actionParameter.filterData,
-                  ),
-                }
-              : actionStepThree.actionParameter,
-        },
-        actionStepFour: {
-          ..._toRawActionStep(actionStepFour),
-          signatureType:
-            actionStepFour.signatureType ??
-            detectSignatureType(actionStepFour.signature),
-          signature: pad(actionStepFour.signature),
-          actionType: actionStepFour.actionType || 0,
-          actionParameter:
-            actionStepFour.actionParameter.fieldType === PrimitiveType.UINT
-              ? {
-                  ...actionStepFour.actionParameter,
-                  filterData: normalizeUintValue(
-                    actionStepFour.actionParameter.filterData,
-                  ),
-                }
-              : actionStepFour.actionParameter,
-        },
+        actionStepOne: prepareActionStep(actionStepOne),
+        actionStepTwo: prepareActionStep(actionStepTwo),
+        actionStepThree: prepareActionStep(actionStepThree),
+        actionStepFour: prepareActionStep(actionStepFour),
       },
     ],
   );

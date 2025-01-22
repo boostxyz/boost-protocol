@@ -158,7 +158,7 @@ export interface ActionClaimant {
    *
    * @type {SignatureType}
    */
-  signatureType: SignatureType;
+  signatureType?: SignatureType;
   /**
    * The 4 byte signature of the event or function
    *
@@ -203,7 +203,7 @@ export interface ActionStep {
    *
    * @type {SignatureType}
    */
-  signatureType: SignatureType;
+  signatureType?: SignatureType;
   /**
    * The type of action being performed.
    *
@@ -1379,6 +1379,35 @@ function _isEventActionPayloadSimple(
 }
 
 /**
+ * Determines whether a signature is an event or function signature based on its format.
+ * - 32-byte signatures (0x + 64 chars) that don't start with 28 zeros are event signatures
+ * - 4-byte signatures (0x + 8 chars) or 32-byte signatures with 28 leading zeros are function signatures
+ *
+ * @param {Hex} signature - The signature to check
+ * @returns {SignatureType} The detected signature type
+ */
+export function detectSignatureType(signature: Hex): SignatureType {
+  const hexWithoutPrefix = signature.slice(2);
+
+  // 4-byte function selectors (8 hex chars)
+  if (hexWithoutPrefix.length === 8) {
+    return SignatureType.FUNC;
+  }
+
+  // 32-byte selectors (64 hex chars)
+  if (hexWithoutPrefix.length === 64) {
+    // Check if it starts with 28 bytes (56 chars) of zeros
+    const leadingPart = hexWithoutPrefix.slice(0, 56);
+    if (leadingPart === '0'.repeat(56)) {
+      return SignatureType.FUNC;
+    }
+    return SignatureType.EVENT;
+  }
+
+  throw new Error('Invalid signature format');
+}
+
+/**
  * Function to properly encode an event action payload.
  *
  * @param {InitPayload} param0
@@ -1505,34 +1534,41 @@ export function prepareEventActionPayload({
       {
         actionClaimant: {
           ..._toRawActionStep(actionClaimant),
+          signatureType:
+            actionClaimant.signatureType ??
+            detectSignatureType(actionClaimant.signature),
           signature: pad(actionClaimant.signature),
         },
         actionStepOne: {
-          ..._toRawActionStep({
-            ...actionStepOne,
-            signature: pad(actionStepOne.signature),
-          }),
+          ..._toRawActionStep(actionStepOne),
+          signatureType:
+            actionStepOne.signatureType ??
+            detectSignatureType(actionStepOne.signature),
+          signature: pad(actionStepOne.signature),
           actionType: actionStepOne.actionType || 0,
         },
         actionStepTwo: {
-          ..._toRawActionStep({
-            ...actionStepTwo,
-            signature: pad(actionStepTwo.signature),
-          }),
+          ..._toRawActionStep(actionStepTwo),
+          signatureType:
+            actionStepTwo.signatureType ??
+            detectSignatureType(actionStepTwo.signature),
+          signature: pad(actionStepTwo.signature),
           actionType: actionStepTwo.actionType || 0,
         },
         actionStepThree: {
-          ..._toRawActionStep({
-            ...actionStepThree,
-            signature: pad(actionStepThree.signature),
-          }),
+          ..._toRawActionStep(actionStepThree),
+          signatureType:
+            actionStepThree.signatureType ??
+            detectSignatureType(actionStepThree.signature),
+          signature: pad(actionStepThree.signature),
           actionType: actionStepThree.actionType || 0,
         },
         actionStepFour: {
-          ..._toRawActionStep({
-            ...actionStepFour,
-            signature: pad(actionStepFour.signature),
-          }),
+          ..._toRawActionStep(actionStepFour),
+          signatureType:
+            actionStepFour.signatureType ??
+            detectSignatureType(actionStepFour.signature),
+          signature: pad(actionStepFour.signature),
           actionType: actionStepFour.actionType || 0,
         },
       },

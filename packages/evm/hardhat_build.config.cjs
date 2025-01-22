@@ -6,14 +6,12 @@ module.exports = {
   solidity: {
     settings: {
       evmVersion: 'cancun',
+      optimizer: {
+        enabled: true,
+        runs: 10_000,
+      },
     },
     version: '0.8.26',
-  },
-  compilerOptions: {
-    optimizer: {
-      enabled: true,
-      runs: 10_000,
-    },
   },
   paths: {
     cache: './cache_hh',

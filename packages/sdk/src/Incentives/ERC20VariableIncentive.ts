@@ -22,6 +22,7 @@ import {
   type Hex,
   decodeAbiParameters,
   encodeAbiParameters,
+  zeroAddress,
 } from 'viem';
 import { ERC20VariableIncentive as ERC20VariableIncentiveBases } from '../../dist/deployments.json';
 import type {
@@ -393,6 +394,23 @@ export class ERC20VariableIncentive<
       this.limit(params),
     ]);
     return limit - totalClaimed;
+  }
+  /**
+   * Generates a top-up payload for the ERC20PeggedIncentive contract by incrementing
+   * the existing `limit` field by `netAmount`. The entire payload is then re-encoded
+   * via `prepareERC20PeggedIncentivePayload(...)`.
+   *
+   * @public
+   * @param {bigint} netAmount - The additional limit to add to this incentive.
+   * @returns {Hex} The ABI-encoded payload with the updated `limit`.
+   */
+  public getTopupPayload(netAmount: bigint): Hex {
+    return prepareERC20VariableIncentivePayload({
+      asset: zeroAddress,
+      reward: 0n,
+      manager: zeroAddress,
+      limit: netAmount,
+    });
   }
 
   /**

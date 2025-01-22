@@ -478,6 +478,24 @@ export class ERC20PeggedIncentive extends DeployableTarget<
       [rewardAmount],
     );
   }
+  /**
+   * Generates a top-up payload for the ERC20PeggedIncentive contract by incrementing
+   * the existing `limit` field by `netAmount`. The entire payload is then re-encoded
+   * via `prepareERC20PeggedIncentivePayload(...)`.
+   *
+   * @public
+   * @param {bigint} netAmount - The additional limit to add to this incentive.
+   * @returns {Hex} The ABI-encoded payload with the updated `limit`.
+   */
+  public getTopupPayload(netAmount: bigint): Hex {
+    return prepareERC20PeggedIncentivePayload({
+      asset: this.payload?.asset ?? zeroAddress,
+      peg: this.payload?.peg ?? zeroAddress,
+      reward: this.payload?.reward ?? 0n,
+      limit: netAmount,
+      manager: this.payload?.manager ?? zeroAddress,
+    });
+  }
 
   /**
    * Decodes claim data for the ERC20PeggedIncentive, returning the claim amount.

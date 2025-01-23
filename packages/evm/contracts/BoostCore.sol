@@ -64,6 +64,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 indexed boostId, uint256 indexed incentiveId, address indexed claimant, address referrer, bytes data
     );
 
+    event BoostToppedUp(
+        uint256 indexed boostId, uint256 indexed incentiveId, address indexed sender, uint256 amount, uint256 fee
+    );
+
     /// @notice The list of boosts
     BoostLib.Boost[] private _boosts;
 
@@ -233,50 +237,55 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 topupAmount;
         uint256 fee;
         uint256 totalAmount;
-        if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
-            ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
-            topupAmount = payload.amount;
-            fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
-            totalAmount = topupAmount + fee;
-            payload.amount = totalAmount;
-            request.data = abi.encode(payload);
-        } else if (request.assetType == ABudget.AssetType.ERC1155) {
-            ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
-            topupAmount = payload.amount;
-            fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
-            totalAmount = topupAmount + fee;
-            payload.amount = totalAmount;
-            request.data = abi.encode(payload);
-        } else {
-            revert BoostError.NotImplemented();
+        {
+            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
+                topupAmount = payload.amount;
+                fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
+                totalAmount = topupAmount + fee;
+                payload.amount = totalAmount;
+                request.data = abi.encode(payload);
+            } else if (request.assetType == ABudget.AssetType.ERC1155) {
+                ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
+                topupAmount = payload.amount;
+                fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
+                totalAmount = topupAmount + fee;
+                payload.amount = totalAmount;
+                request.data = abi.encode(payload);
+            } else {
+                revert BoostError.NotImplemented();
+            }
+
+            // Redirect the disbursement to this contract so we have the funds to topup and reserve the protocol fee
+            request.target = address(this);
+            bytes memory revisedRequest = abi.encode(request);
+
+            if (!budget_.disburse(revisedRequest)) {
+                revert BoostError.InvalidInitialization();
+            }
+
+            bytes32 key = _generateKey(boostId, incentiveId);
+            IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
+            info.protocolFeesRemaining += fee;
         }
-
-        // Redirect the disbursement to this contract so we have the funds to topup and reserve the protocol fee
-        request.target = address(this);
-        bytes memory revisedRequest = abi.encode(request);
-
-        if (!budget_.disburse(revisedRequest)) {
-            revert BoostError.InvalidInitialization();
-        }
-
-        bytes32 key = _generateKey(boostId, incentiveId);
-        IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
-        info.protocolFeesRemaining += fee;
 
         if (topupAmount > 0) {
-            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
-                // Approve exactly `topupAmount` tokens
-                IERC20 token = IERC20(request.asset);
-                token.approve(address(incentiveContract), topupAmount);
-                IToppable(address(incentiveContract)).topup(topupAmount);
-                token.approve(address(incentiveContract), 0);
-            } else {
-                // ERC1155 => setApprovalForAll
-                IERC1155 erc1155 = IERC1155(request.asset);
-                erc1155.setApprovalForAll(address(incentiveContract), true);
-                IToppable(address(incentiveContract)).topup(topupAmount);
-                erc1155.setApprovalForAll(address(incentiveContract), false);
+            {
+                if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                    // Approve exactly `topupAmount` tokens
+                    IERC20 token = IERC20(request.asset);
+                    token.approve(address(incentiveContract), topupAmount);
+                    IToppable(address(incentiveContract)).topup(topupAmount);
+                    token.approve(address(incentiveContract), 0);
+                } else {
+                    // ERC1155 => setApprovalForAll
+                    IERC1155 erc1155 = IERC1155(request.asset);
+                    erc1155.setApprovalForAll(address(incentiveContract), true);
+                    IToppable(address(incentiveContract)).topup(topupAmount);
+                    erc1155.setApprovalForAll(address(incentiveContract), false);
+                }
             }
+            emit BoostToppedUp(boostId, incentiveId, msg.sender, topupAmount, fee);
         }
     }
 
@@ -317,22 +326,27 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 fee = (totalAmount * boost.protocolFee) / FEE_DENOMINATOR;
         uint256 remainder = totalAmount - fee;
 
-        bytes32 key = _generateKey(boostId, incentiveId);
-        IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
-        info.protocolFeesRemaining += fee;
+        {
+            bytes32 key = _generateKey(boostId, incentiveId);
+            IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
+            info.protocolFeesRemaining += fee;
+        }
 
         if (remainder > 0) {
-            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
-                IERC20 token = IERC20(request.asset);
-                token.approve(address(incentiveContract), remainder);
-                IToppable(address(incentiveContract)).topup(remainder);
-                token.approve(address(incentiveContract), 0);
-            } else {
-                IERC1155 erc1155 = IERC1155(request.asset);
-                erc1155.setApprovalForAll(address(incentiveContract), true);
-                IToppable(address(incentiveContract)).topup(remainder);
-                erc1155.setApprovalForAll(address(incentiveContract), false);
+            {
+                if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                    IERC20 token = IERC20(request.asset);
+                    token.approve(address(incentiveContract), remainder);
+                    IToppable(address(incentiveContract)).topup(remainder);
+                    token.approve(address(incentiveContract), 0);
+                } else {
+                    IERC1155 erc1155 = IERC1155(request.asset);
+                    erc1155.setApprovalForAll(address(incentiveContract), true);
+                    IToppable(address(incentiveContract)).topup(remainder);
+                    erc1155.setApprovalForAll(address(incentiveContract), false);
+                }
             }
+            emit BoostToppedUp(boostId, incentiveId, msg.sender, remainder, fee);
         }
     }
 

@@ -806,11 +806,11 @@ contract BoostCoreTest is Test {
         BoostLib.Boost memory boost = boostCore.getBoost(0);
         ERC20Incentive incentive = ERC20Incentive(address(boost.incentives[0]));
 
-        _do_topup(amountToMint, claimLimit, rewardAmount);
+        uint256 protocolFeePercentage = boost.protocolFee;
+        _do_topup(amountToMint, claimLimit, rewardAmount, protocolFeePercentage);
 
         // Calculate expected fee
         uint256 claimAmount = incentive.reward();
-        uint256 protocolFeePercentage = boost.protocolFee;
 
         uint256 expectedFee = (claimAmount * protocolFeePercentage) / boostCore.FEE_DENOMINATOR();
 
@@ -846,7 +846,9 @@ contract BoostCoreTest is Test {
         assertEq(0, mockERC20.balanceOf(address(boostCore)), "unclaimedFunds In boost core");
     }
 
-    function _do_topup(uint256 amountToMint, uint256 claimLimit, uint256 rewardAmount) internal {
+    function _do_topup(uint256 amountToMint, uint256 claimLimit, uint256 rewardAmount, uint256 feePercentage)
+        internal
+    {
         mockERC20.mint(address(this), amountToMint);
         mockERC20.approve(address(budget), amountToMint);
 
@@ -871,6 +873,10 @@ contract BoostCoreTest is Test {
             })
         );
 
+        vm.expectEmit(true, true, true, true, address(boostCore));
+        emit BoostCore.BoostToppedUp(
+            0, 0, address(this), rewardAmount * claimLimit, rewardAmount * claimLimit * feePercentage / 10_000
+        );
         boostCore.topupIncentiveFromBudget(0, 0, topupCalldata, address(budget));
     }
 

@@ -953,3 +953,125 @@ describe("BoostCore", () => {
     expect(feesInfo.asset.toLowerCase()).toBe(erc20.assertValidAddress());
   });
 });
+
+describe("Top-Up Incentives", () => {
+  let incentive: ReturnType<typeof fixtures.core.ERC20Incentive>;
+  let boostId: bigint;
+
+  beforeAll(async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+
+    incentive = core.ERC20Incentive({
+      asset: erc20.assertValidAddress(),
+      strategy: StrategyType.POOL,
+      reward: parseEther("1"),
+      limit: 5n,
+      manager: budget.assertValidAddress(),
+    });
+    await erc20.mint(defaultOptions.account.address, parseEther("110"));
+    await erc20.approve(budget.assertValidAddress(), parseEther("110"));
+    await budget.allocate({
+      amount: parseEther("110"),
+      asset: erc20.assertValidAddress(),
+      target: defaultOptions.account.address,
+    });
+    
+
+    const createdBoost = await core.createBoost({
+      protocolFee: 0n,
+      maxParticipants: 5n,
+      budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      validator: core.SignerValidator({
+        signers: [defaultOptions.account.address],
+        validatorCaller: defaultOptions.account.address,
+      }),
+      allowList: core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [incentive],
+    });
+    boostId = createdBoost.id;
+  });
+
+  test("can top up from a budget (pre-fee)", async () => {
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+
+    console.log("budget", budget.assertValidAddress());
+
+    const netTopup = parseEther("5");
+
+    await core.topupIncentiveFromBudgetPreFee(boostId, 0n, netTopup, budget.assertValidAddress());
+    console.log("topup done");
+
+    expect(await incentive.limit()).toBe(5n + 5n); // original limit 5 + topup 5
+  });
+
+  test("can top up from a budget (post-fee)", async () => {
+    const { core } = fixtures;
+    const { budget } = budgets;
+
+    const total = parseEther("5.5");
+    await core.topupIncentiveFromBudgetPostFee(boostId, 0n, total, budget.assertValidAddress());
+
+    expect(await incentive.limit()).toBe(10n + 5n);
+  });
+
+  test("pre-fee and post-fee top-ups lead to the same net top-up", async () => {
+    const { core } = fixtures;
+    const { budget } = budgets;
+
+    const net = parseEther("2");
+    const netPlusFee = parseEther("2.2");
+
+    await core.topupIncentiveFromBudgetPreFee(boostId, 0n, net, budget.assertValidAddress());
+
+    await core.topupIncentiveFromBudgetPostFee(boostId, 0n, netPlusFee, budget.assertValidAddress());
+
+    expect(await incentive.limit()).toBe(15n + 4n);
+  });
+
+  test("can top up from sender (pre-fee)", async () => {
+    const { core } = fixtures;
+    const { erc20 } = budgets;
+
+    const netTopup = parseEther("10");
+    const netPlusFee = parseEther("11");
+    await erc20.mint(defaultOptions.account.address, netPlusFee);
+    await erc20.approve(core.assertValidAddress(), netPlusFee);
+
+    await core.topupIncentiveFromSenderPreFee(boostId, 0n, netTopup);
+
+    expect(await incentive.limit()).toBe(19n + 10n);
+  });
+
+  test("can top up from sender (post-fee)", async () => {
+    const { core } = fixtures;
+    const { erc20 } = budgets;
+
+    const totalWithFee = parseEther("5.5");
+    await erc20.mint(defaultOptions.account.address, totalWithFee);
+    await erc20.approve(core.assertValidAddress(), totalWithFee);
+
+    await core.topupIncentiveFromSenderPostFee(boostId, 0n, totalWithFee);
+
+    expect(await incentive.limit()).toBe(29n + 5n);
+  });
+
+  test("throws if net top-up is zero", async () => {
+    const { core } = fixtures;
+    const { budget } = budgets;
+
+    await expect(async () => {
+      await core.topupIncentiveFromBudgetPreFee(boostId, 0n, 0n, budget.assertValidAddress());
+    }).rejects.toThrowError();
+  });
+});

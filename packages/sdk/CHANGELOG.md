@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 5.5.0
+
+### Minor Changes
+
+- 3ac1685: normalize UINT hex to intended value
+
 ## 5.4.0
 
 ### Minor Changes

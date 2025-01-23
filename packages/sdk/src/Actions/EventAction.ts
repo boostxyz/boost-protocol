@@ -28,6 +28,7 @@ import {
   isAddressEqual,
   pad,
   toEventSelector,
+  trim,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -1408,6 +1409,43 @@ export function detectSignatureType(signature: Hex): SignatureType {
 }
 
 /**
+ * Normalizes a hex value to ensure proper byte padding.
+ * This prevents viem's automatic padding which can change the value.
+ * For example:
+ * - "0x1" -> "0x01"
+ * - "0xabc" -> "0x0abc"
+ * - "0xabcd" -> "0xabcd"
+ *
+ * @param {Hex} value - The hex value to normalize
+ * @returns {Hex} The normalized hex string
+ */
+function normalizeUintValue(value: Hex): Hex {
+  return trim(pad(value));
+}
+
+/**
+ * Helper function to prepare an action step for encoding
+ *
+ * @param {ActionStep} step - The action step to prepare
+ * @returns {ActionStep} The prepared action step
+ */
+function prepareActionStep(step: ActionStep) {
+  return {
+    ..._toRawActionStep(step),
+    signatureType: step.signatureType ?? detectSignatureType(step.signature),
+    signature: pad(step.signature),
+    actionType: step.actionType || 0,
+    actionParameter:
+      step.actionParameter.fieldType === PrimitiveType.UINT
+        ? {
+            ...step.actionParameter,
+            filterData: normalizeUintValue(step.actionParameter.filterData),
+          }
+        : step.actionParameter,
+  };
+}
+
+/**
  * Function to properly encode an event action payload.
  *
  * @param {InitPayload} param0
@@ -1539,38 +1577,10 @@ export function prepareEventActionPayload({
             detectSignatureType(actionClaimant.signature),
           signature: pad(actionClaimant.signature),
         },
-        actionStepOne: {
-          ..._toRawActionStep(actionStepOne),
-          signatureType:
-            actionStepOne.signatureType ??
-            detectSignatureType(actionStepOne.signature),
-          signature: pad(actionStepOne.signature),
-          actionType: actionStepOne.actionType || 0,
-        },
-        actionStepTwo: {
-          ..._toRawActionStep(actionStepTwo),
-          signatureType:
-            actionStepTwo.signatureType ??
-            detectSignatureType(actionStepTwo.signature),
-          signature: pad(actionStepTwo.signature),
-          actionType: actionStepTwo.actionType || 0,
-        },
-        actionStepThree: {
-          ..._toRawActionStep(actionStepThree),
-          signatureType:
-            actionStepThree.signatureType ??
-            detectSignatureType(actionStepThree.signature),
-          signature: pad(actionStepThree.signature),
-          actionType: actionStepThree.actionType || 0,
-        },
-        actionStepFour: {
-          ..._toRawActionStep(actionStepFour),
-          signatureType:
-            actionStepFour.signatureType ??
-            detectSignatureType(actionStepFour.signature),
-          signature: pad(actionStepFour.signature),
-          actionType: actionStepFour.actionType || 0,
-        },
+        actionStepOne: prepareActionStep(actionStepOne),
+        actionStepTwo: prepareActionStep(actionStepTwo),
+        actionStepThree: prepareActionStep(actionStepThree),
+        actionStepFour: prepareActionStep(actionStepFour),
       },
     ],
   );

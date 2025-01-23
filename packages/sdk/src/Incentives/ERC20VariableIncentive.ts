@@ -404,12 +404,12 @@ export class ERC20VariableIncentive<
    * @param {bigint} netAmount - The additional limit to add to this incentive.
    * @returns {Hex} The ABI-encoded payload with the updated `limit`.
    */
-  public getTopupPayload(netAmount: bigint): Hex {
+  public async getTopupPayload(netAmount: bigint): Promise<Hex> {
     return prepareERC20VariableIncentivePayload({
-      asset: zeroAddress,
-      reward: 0n,
+      asset: (await this.asset()) as Address,
+      reward: netAmount,
       manager: zeroAddress,
-      limit: netAmount,
+      limit: 1n,
     });
   }
 

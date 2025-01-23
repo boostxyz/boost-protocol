@@ -1690,9 +1690,12 @@ export class BoostCore extends Deployable<
       throw new Error(`Incentive with ID ${incentiveId} not found`);
     }
 
-    const incentiveData = incentive.getTopupPayload(topupAmount);
+    const incentiveData = await incentive.getTopupPayload(topupAmount);
 
-    // 6. Call raw method with the full total
+    if (!(topupAmount > 0)) {
+      throw new Error('Top-up amount must be greater than zero');
+    }
+
     return await this.topupIncentiveFromBudgetRaw(
       boostId,
       incentiveId,
@@ -1763,7 +1766,11 @@ export class BoostCore extends Deployable<
       throw new Error(`Incentive with ID ${incentiveId} not found`);
     }
 
-    const incentiveData = incentive.getTopupPayload(topupAmount);
+    if (!(topupAmount > 0)) {
+      throw new Error('Top-up amount must be greater than zero');
+    }
+
+    const incentiveData = await incentive.getTopupPayload(topupAmount);
 
     return await this.topupIncentiveFromSenderRaw(
       boostId,
@@ -1819,7 +1826,7 @@ export class BoostCore extends Deployable<
   private async topupIncentiveFromSenderRaw(
     boostId: bigint,
     incentiveId: bigint,
-    preflightData: `0x${string}`,
+    preflightData: Hex,
     params?: WriteParams,
   ) {
     const { request, result } = await simulateBoostCoreTopupIncentiveFromSender(
@@ -1854,7 +1861,7 @@ export class BoostCore extends Deployable<
   private async topupIncentiveFromBudgetRaw(
     boostId: bigint,
     incentiveId: bigint,
-    preflightData: `0x${string}`,
+    preflightData: Hex,
     budget?: Address,
     params?: WriteParams,
   ) {

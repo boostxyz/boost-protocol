@@ -512,15 +512,16 @@ export class ERC20Incentive extends DeployableTarget<
    * @param {?WriteParams} [params] (optional) if you need them
    * @returns {Hex} the ABI-encoded data for top-up
    */
-  public getTopupPayload(netAmount: bigint): Hex {
+  public async getTopupPayload(netAmount: bigint): Promise<Hex> {
     // 1. Build a typed object matching your `ERC20IncentivePayload`.
     //    For example, you might want to increment `limit` by `netAmount`,
     //    or set `reward = netAmount`. That’s up to your logic:
+    const asset = await this.asset();
     const typed: ERC20IncentivePayload = {
-      asset: this.payload?.asset || zeroAddress,
-      strategy: this.payload?.strategy || StrategyType.POOL, // e.g. StrategyType.POOL
-      reward: netAmount, // store net top-up as the "reward"
-      limit: 1n, // or maybe add netAmount to existing limit
+      asset: asset || zeroAddress,
+      strategy: StrategyType.POOL, // e.g. StrategyType.POOL
+      reward: 1n, // store net top-up as the "reward"
+      limit: netAmount, // or maybe add netAmount to existing limit
       manager: this.payload?.manager || zeroAddress,
     };
 

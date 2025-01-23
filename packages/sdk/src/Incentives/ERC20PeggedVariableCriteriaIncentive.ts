@@ -622,9 +622,9 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    * @param {bigint} netAmount - The additional limit to add to this incentive.
    * @returns {Hex} The ABI-encoded payload with the updated `limit`.
    */
-  public getTopupPayload(netAmount: bigint): Hex {
+  public async getTopupPayload(netAmount: bigint): Promise<Hex> {
     return prepareERC20PeggedVariableCriteriaIncentivePayload({
-      asset: this.payload?.asset ?? zeroAddress,
+      asset: (await this.asset()) ?? zeroAddress,
       peg: this.payload?.peg ?? zeroAddress,
       reward: this.payload?.reward ?? 0n,
       limit: netAmount,

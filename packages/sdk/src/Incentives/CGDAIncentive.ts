@@ -492,7 +492,7 @@ export class CGDAIncentive extends DeployableTarget<
    * @param {bigint} netAmount The additional tokens to add to `totalBudget`.
    * @returns {Hex} The ABI-encoded, updated CGDAIncentive payload.
    */
-  public getTopupPayload(netAmount: bigint): Hex {
+  public async getTopupPayload(netAmount: bigint): Promise<Hex> {
     return encodeAbiParameters(
       [
         { type: 'address', name: 'asset' },
@@ -503,7 +503,7 @@ export class CGDAIncentive extends DeployableTarget<
         { type: 'address', name: 'manager' },
       ],
       [
-        this.payload?.asset ?? zeroHash,
+        (await this.asset()) ?? zeroHash,
         this.payload?.initialReward ?? 0n,
         this.payload?.rewardDecay ?? 0n,
         this.payload?.rewardBoost ?? 0n,

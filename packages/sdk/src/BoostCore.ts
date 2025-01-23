@@ -1763,7 +1763,7 @@ export class BoostCore extends Deployable<
       throw new Error(`Incentive with ID ${incentiveId} not found`);
     }
 
-    const incentiveData = incentive.getTopupPayload(topupAmount, params);
+    const incentiveData = incentive.getTopupPayload(topupAmount);
 
     return await this.topupIncentiveFromSenderRaw(
       boostId,

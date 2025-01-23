@@ -310,6 +310,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 topupAmount;
         uint256 fee;
         uint256 totalAmount;
+        uint256 tokenId;
         if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
             ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
             topupAmount = payload.amount;
@@ -322,6 +323,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
             totalAmount = topupAmount + fee;
             payload.amount = totalAmount;
+            tokenId = payload.tokenId;
         } else {
             revert BoostError.NotImplemented();
         }
@@ -334,18 +336,20 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
 
         if (topupAmount > 0) {
-            {
-                if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
-                    IERC20 token = IERC20(request.asset);
-                    token.approve(address(incentiveContract), topupAmount);
-                    IToppable(address(incentiveContract)).topup(topupAmount);
-                    token.approve(address(incentiveContract), 0);
-                } else {
-                    IERC1155 erc1155 = IERC1155(request.asset);
-                    erc1155.setApprovalForAll(address(incentiveContract), true);
-                    IToppable(address(incentiveContract)).topup(topupAmount);
-                    erc1155.setApprovalForAll(address(incentiveContract), false);
-                }
+            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                // Approve exactly `topupAmount` tokens
+                IERC20 token = IERC20(request.asset);
+                token.transferFrom(msg.sender, address(this), totalAmount);
+                token.approve(address(incentiveContract), topupAmount);
+                IToppable(address(incentiveContract)).topup(topupAmount);
+                token.approve(address(incentiveContract), 0);
+            } else {
+                // ERC1155 => setApprovalForAll
+                IERC1155 erc1155 = IERC1155(request.asset);
+                erc1155.safeTransferFrom(msg.sender, address(this), tokenId, totalAmount, "");
+                erc1155.setApprovalForAll(address(incentiveContract), true);
+                IToppable(address(incentiveContract)).topup(topupAmount);
+                erc1155.setApprovalForAll(address(incentiveContract), false);
             }
             emit BoostToppedUp(boostId, incentiveId, msg.sender, topupAmount, fee);
         }

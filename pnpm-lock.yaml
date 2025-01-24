@@ -45,8 +45,8 @@ importers:
         specifier: 2.13.8
         version: 2.13.8(@tanstack/query-core@5.32.0)(@types/react@18.3.0)(immer@10.0.2)(react@18.3.0)(typescript@5.6.3)(viem@2.21.16(bufferutil@4.0.8)(typescript@5.6.3)(zod@3.24.1))
       abitype:
-        specifier: ^1.0.6
-        version: 1.0.6(typescript@5.6.3)(zod@3.24.1)
+        specifier: ^1.0.8
+        version: 1.0.8(typescript@5.6.3)(zod@3.24.1)
       arg:
         specifier: ^5.0.2
         version: 5.0.2
@@ -2971,6 +2971,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isinteger@4.0.4:
     resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
@@ -6071,12 +6072,17 @@ snapshots:
       typescript: 5.6.3
       zod: 3.24.1
 
-  abitype@1.0.6(typescript@5.6.3)(zod@3.23.8):
+  abitype@1.0.6(typescript@5.6.3)(zod@3.24.1):
+    optionalDependencies:
+      typescript: 5.6.3
+      zod: 3.24.1
+
+  abitype@1.0.8(typescript@5.6.3)(zod@3.23.8):
     optionalDependencies:
       typescript: 5.6.3
       zod: 3.23.8
 
-  abitype@1.0.6(typescript@5.6.3)(zod@3.24.1):
+  abitype@1.0.8(typescript@5.6.3)(zod@3.24.1):
     optionalDependencies:
       typescript: 5.6.3
       zod: 3.24.1
@@ -7567,7 +7573,7 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isows@1.0.4(ws@8.17.1(bufferutil@4.0.8)):
+  isows@1.0.4(ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)):
     dependencies:
       ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
 
@@ -8971,7 +8977,7 @@ snapshots:
       '@scure/bip32': 1.4.0
       '@scure/bip39': 1.4.0
       abitype: 1.0.5(typescript@5.6.3)(zod@3.24.1)
-      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8))
+      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4))
       webauthn-p256: 0.0.5
       ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
     optionalDependencies:
@@ -8989,7 +8995,7 @@ snapshots:
       '@scure/bip32': 1.4.0
       '@scure/bip39': 1.4.0
       abitype: 1.0.5(typescript@5.6.3)(zod@3.23.8)
-      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8))
+      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4))
       webauthn-p256: 0.0.5
       ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
     optionalDependencies:
@@ -9007,7 +9013,7 @@ snapshots:
       '@scure/bip32': 1.4.0
       '@scure/bip39': 1.4.0
       abitype: 1.0.5(typescript@5.6.3)(zod@3.24.1)
-      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8))
+      isows: 1.0.4(ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4))
       webauthn-p256: 0.0.5
       ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
     optionalDependencies:

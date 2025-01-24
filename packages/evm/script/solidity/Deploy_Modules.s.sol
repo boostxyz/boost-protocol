@@ -9,7 +9,7 @@ import {BoostCore} from "contracts/BoostCore.sol";
 import {BoostRegistry, ABoostRegistry} from "contracts/BoostRegistry.sol";
 
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
-import {ManagedBudgetWithFees} from "contracts/budgets/ManagedBudgetWithFees.sol";
+import {ManagedBudgetWithFeesV2} from "contracts/budgets/ManagedBudgetWithFeesV2.sol";
 
 import {EventAction} from "contracts/actions/EventAction.sol";
 
@@ -92,7 +92,7 @@ contract ModuleBaseDeployer is ScriptUtils {
     }
 
     function _deployManagedBudgetWithFees(BoostRegistry registry) internal returns (address managedBudget) {
-        bytes memory initCode = type(ManagedBudgetWithFees).creationCode;
+        bytes memory initCode = type(ManagedBudgetWithFeesV2).creationCode;
         managedBudget = _getCreate2Address(initCode, "");
         console.log("ManagedBudgetWithFees: ", managedBudget);
         deployJson = deployJsonKey.serialize("ManagedBudgetWithFees", managedBudget);

@@ -1,5 +1,13 @@
 # @boostxyz/sdk
 
+## 6.0.0
+
+### Major Changes
+
+- 0731b2d: [ADHOC] chore(evm): deploy protocol
+  feat(evm): add topup support for incentives
+  feat(evm): support core upgradability
+
 ## 5.5.0
 
 ### Minor Changes

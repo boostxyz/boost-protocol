@@ -1,5 +1,13 @@
 # @boostxyz/cli
 
+## 5.0.0
+
+### Major Changes
+
+- 0731b2d: [ADHOC] chore(evm): deploy protocol
+  feat(evm): add topup support for incentives
+  feat(evm): support core upgradability
+
 ## 4.1.3
 
 ## 4.1.2

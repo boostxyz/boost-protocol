@@ -88,7 +88,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ManagedBudget: ", managedBudget);
         deployJson = deployJsonKey.serialize("ManagedBudget", managedBudget);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "ManagedBudget", managedBudget, registry, ABoostRegistry.RegistryType.BUDGET);
+        _registerIfNew(newDeploy, string(abi.encodePacked("ManagedBudget", managedBudget)), managedBudget, registry, ABoostRegistry.RegistryType.BUDGET);
     }
 
     function _deployManagedBudgetWithFees(BoostRegistry registry) internal returns (address managedBudget) {
@@ -97,7 +97,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ManagedBudgetWithFees: ", managedBudget);
         deployJson = deployJsonKey.serialize("ManagedBudgetWithFees", managedBudget);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "ManagedBudgetWithFees", managedBudget, registry, ABoostRegistry.RegistryType.BUDGET);
+        _registerIfNew(newDeploy, string(abi.encodePacked("ManagedBudgetWithFees", managedBudget)), managedBudget, registry, ABoostRegistry.RegistryType.BUDGET);
     }
 
     function _deployEventAction(BoostRegistry registry) internal returns (address eventAction) {
@@ -106,7 +106,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("EventAction: ", eventAction);
         deployJson = deployJsonKey.serialize("EventAction", eventAction);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "EventAction", eventAction, registry, ABoostRegistry.RegistryType.ACTION);
+        _registerIfNew(newDeploy, string(abi.encodePacked("EventAction", eventAction)), eventAction, registry, ABoostRegistry.RegistryType.ACTION);
     }
 
     function _deployERC20Incentive(BoostRegistry registry) internal returns (address erc20Incentive) {
@@ -115,7 +115,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ERC20Incentive: ", erc20Incentive);
         deployJson = deployJsonKey.serialize("ERC20Incentive", erc20Incentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "ERC20Incentive", erc20Incentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(newDeploy, string(abi.encodePacked("ERC20Incentive", erc20Incentive)), erc20Incentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
     function _deployERC20PeggedIncentive(BoostRegistry registry) internal returns (address erc20PeggedIncentive) {
@@ -124,7 +124,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ERC20PeggedIncentive: ", erc20PeggedIncentive);
         deployJson = deployJsonKey.serialize("ERC20PeggedIncentive", erc20PeggedIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "ERC20PeggedIncentive", erc20PeggedIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(newDeploy, string(abi.encodePacked("ERC20PeggedIncentive", erc20PeggedIncentive)), erc20PeggedIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
     function _deployERC20PeggedVariableCriteriaIncentive(BoostRegistry registry) internal returns (address erc20PeggedVariableCriteriaIncentive) {
@@ -133,7 +133,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("ERC20PeggedVariableCriteriaIncentive: ", erc20PeggedVariableCriteriaIncentive);
         deployJson = deployJsonKey.serialize("ERC20PeggedVariableCriteriaIncentive", erc20PeggedVariableCriteriaIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "ERC20PeggedVariableCriteriaIncentive", erc20PeggedVariableCriteriaIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(newDeploy, string(abi.encodePacked("ERC20PeggedVariableCriteriaIncentive", erc20PeggedVariableCriteriaIncentive)), erc20PeggedVariableCriteriaIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
     function _deployERC20VariableIncentive(BoostRegistry registry) internal returns (address erc20VariableIncentive) {
@@ -143,7 +143,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("ERC20VariableIncentive", erc20VariableIncentive);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(
-            newDeploy, "ERC20VariableIncentive", erc20VariableIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE
+            newDeploy, string(abi.encodePacked("ERC20VariableIncentive", erc20VariableIncentive)), erc20VariableIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE
         );
     }
 
@@ -158,7 +158,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(
             newDeploy,
-            "ERC20VariableCriteriaIncentive",
+            string(abi.encodePacked("ERC20VariableCriteriaIncentive", erc20VariableCriteriaIncentive)),
             erc20VariableCriteriaIncentive,
             registry,
             ABoostRegistry.RegistryType.INCENTIVE
@@ -171,7 +171,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("CGDAIncentive: ", cgdaIncentive);
         deployJson = deployJsonKey.serialize("CGDAIncentive", cgdaIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "CGDAIncentive", cgdaIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(newDeploy, string(abi.encodePacked("CGDAIncentive", cgdaIncentive)), cgdaIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
     function _deployPointsIncentive(BoostRegistry registry) internal returns (address pointsIncentive) {
@@ -180,7 +180,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("PointsIncentive: ", pointsIncentive);
         deployJson = deployJsonKey.serialize("PointsIncentive", pointsIncentive);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "PointsIncentive", pointsIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
+        _registerIfNew(newDeploy, string(abi.encodePacked("PointsIncentive", pointsIncentive)), pointsIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE);
     }
 
     function _deployAllowListIncentive(BoostRegistry registry) internal returns (address allowListIncentive) {
@@ -190,7 +190,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("AllowListIncentive", allowListIncentive);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(
-            newDeploy, "AllowListIncentive", allowListIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE
+            newDeploy, string(abi.encodePacked("AllowListIncentive", allowListIncentive)), allowListIncentive, registry, ABoostRegistry.RegistryType.INCENTIVE
         );
     }
 
@@ -200,7 +200,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("SignerValidator: ", signerValidator);
         deployJson = deployJsonKey.serialize("SignerValidator", signerValidator);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "SignerValidator", signerValidator, registry, ABoostRegistry.RegistryType.VALIDATOR);
+        _registerIfNew(newDeploy, string(abi.encodePacked("SignerValidator", signerValidator)), signerValidator, registry, ABoostRegistry.RegistryType.VALIDATOR);
     }
 
     function _deploySimpleAllowList(BoostRegistry registry) internal returns (address simpleAllowList) {
@@ -209,7 +209,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         console.log("SimpleAllowList: ", simpleAllowList);
         deployJson = deployJsonKey.serialize("SimpleAllowList", simpleAllowList);
         bool newDeploy = _deploy2(initCode, "");
-        _registerIfNew(newDeploy, "SimpleAllowList", simpleAllowList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
+        _registerIfNew(newDeploy, string(abi.encodePacked("SimpleAllowList", simpleAllowList)), simpleAllowList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
     }
 
     function _deployOpenAllowList(BoostRegistry registry, SimpleDenyList baseDenyList)
@@ -225,7 +225,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         bytes memory data = abi.encode(address(0), users);
         SimpleDenyList(list).initialize(data);
 
-        _registerIfNew(newDeploy, "OpenAllowList", list, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
+        _registerIfNew(newDeploy, string(abi.encodePacked("OpenAllowList", list)), list, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
     }
 
     function _deploySimpleDenyList(BoostRegistry registry) internal returns (address simpleDenyList) {
@@ -235,6 +235,6 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("SimpleDenyList", simpleDenyList);
         bool newDeploy = _deploy2(initCode, "");
 
-        _registerIfNew(newDeploy, "SimpleDenyList", simpleDenyList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
+        _registerIfNew(newDeploy, string(abi.encodePacked("SimpleDenyList", simpleDenyList)), simpleDenyList, registry, ABoostRegistry.RegistryType.ALLOW_LIST);
     }
 }

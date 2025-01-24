@@ -328,7 +328,6 @@ contract BoostCore is Ownable, ReentrancyGuard {
             revert BoostError.NotImplemented();
         }
 
-
         {
             bytes32 key = _generateKey(boostId, incentiveId);
             IncentiveDisbursalInfo storage info = incentivesFeeInfo[key];
@@ -636,7 +635,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         bytes memory preflight = incentive.preflight(incentiveParams);
         if (preflight.length != 0) {
-            (bytes memory disbursal, uint256 feeAmount, ) = _getFeeDisbursal(preflight, protocolFee_);
+            (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
             if (!budget_.disburse(disbursal)) revert BoostError.InvalidInitialization();
             if (!budget_.disburse(preflight)) revert BoostError.InvalidInitialization();
 

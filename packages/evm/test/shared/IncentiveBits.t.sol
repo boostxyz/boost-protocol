@@ -20,12 +20,14 @@ contract IncentiveBitsTest is Test {
         assertEq(type(uint8).max, map);
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testIncentiveBitsBitTooLarge(uint8 badIndex) public {
         vm.assume(badIndex > 7);
         vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveToBig.selector, badIndex));
         _used.setOrThrow(fakeHash, badIndex);
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testIncentiveRevertsIfToggledAgain() public {
         _used.setOrThrow(fakeHash, 7);
         vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveClaimed.selector, 7));

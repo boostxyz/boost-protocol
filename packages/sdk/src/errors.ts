@@ -861,7 +861,7 @@ export class BoostNotFoundError extends Error {
    * @param {string} [id] - stringified boost id that does not exist
    */
   constructor(id: string) {
-    super(`Boost with not found with id: ${id}`);
+    super(`Boost not found with id: ${id}`);
     this.id = id;
   }
 }

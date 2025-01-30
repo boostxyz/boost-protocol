@@ -1681,7 +1681,7 @@ export class BoostCore extends Deployable<
     budget?: Address,
     params?: WriteParams,
   ) {
-    const boost = await this.getBoost(boostId, params);
+    const boost = await this.getBoost(boostId, params as ReadParams);
     if (incentiveId >= boost.incentives.length) {
       throw new Error(`Incentive ID ${incentiveId} out of range`);
     }
@@ -1727,7 +1727,7 @@ export class BoostCore extends Deployable<
     budget?: Address,
     params?: WriteParams,
   ) {
-    const feeBps = await this.protocolFee(params);
+    const feeBps = await this.protocolFee(params as ReadParams);
     const topupAmount =
       (totalAmount * FEE_DENOMINATOR) / (FEE_DENOMINATOR + feeBps);
     return this.topupIncentiveFromBudgetPreFee(
@@ -1757,7 +1757,7 @@ export class BoostCore extends Deployable<
     topupAmount: bigint,
     params?: WriteParams,
   ) {
-    const boost = await this.getBoost(boostId, params);
+    const boost = await this.getBoost(boostId, params as ReadParams);
     if (incentiveId >= boost.incentives.length) {
       throw new Error(`Incentive ID ${incentiveId} out of range`);
     }
@@ -1800,7 +1800,7 @@ export class BoostCore extends Deployable<
     totalAmount: bigint,
     params?: WriteParams,
   ) {
-    const feeBps = await this.protocolFee(params);
+    const feeBps = await this.protocolFee(params as ReadParams);
     const topupAmount =
       (totalAmount * FEE_DENOMINATOR) / (FEE_DENOMINATOR + feeBps);
 

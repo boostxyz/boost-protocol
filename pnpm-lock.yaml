@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  viem: 2.22.1
+
 importers:
 
   .:
@@ -217,7 +220,7 @@ importers:
         specifier: 5.5.0
         version: 5.5.0
       viem:
-        specifier: 2.x
+        specifier: 2.22.1
         version: 2.22.1(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@6.0.4)(zod@3.24.1)
 
   packages/signatures: {}
@@ -1038,7 +1041,7 @@ packages:
       '@nomicfoundation/hardhat-viem': ^2.0.0
       '@nomicfoundation/ignition-core': ^0.15.6
       hardhat: ^2.18.0
-      viem: ^2.7.6
+      viem: 2.22.1
 
   '@nomicfoundation/hardhat-ignition@0.15.6':
     resolution: {integrity: sha512-PcMf4xlYvwHYej2jcuOd/rBNNMM5FO11vh9c+MF8+m7NxV4b6NOameL3uscoD7ghg0H2GNgnGXgQ67ryRqtdIQ==}
@@ -1068,7 +1071,7 @@ packages:
       solidity-coverage: ^0.8.1
       ts-node: '>=8.0.0'
       typescript: ^5.0.4
-      viem: ^2.7.6
+      viem: 2.22.1
 
   '@nomicfoundation/hardhat-toolbox@5.0.0':
     resolution: {integrity: sha512-FnUtUC5PsakCbwiVNsqlXVIWG5JIb5CEZoSXbJUsEBun22Bivx2jhF1/q9iQbzuaGpJKFQyOhemPB2+XlEE6pQ==}
@@ -1102,14 +1105,14 @@ packages:
     peerDependencies:
       hardhat: ^2.17.0
       typescript: ~5.0.0
-      viem: ^2.7.6
+      viem: 2.22.1
 
   '@nomicfoundation/hardhat-viem@2.0.5':
     resolution: {integrity: sha512-T3xqRzPwhKawqjKvqUT1fZUD85JxFhHjb/nAiJiuYQzaR6NyDPEJVwcc3CU5uwB79BwgQlSHDGOKjSNYmQP+VA==}
     peerDependencies:
       hardhat: ^2.17.0
       typescript: ~5.0.0
-      viem: ^2.7.6
+      viem: 2.22.1
 
   '@nomicfoundation/ignition-core@0.15.6':
     resolution: {integrity: sha512-9eD1NJ2G4vh7IleRNmCz/3bGVoNEPYrRVPqx0uvWzG2xD226GGQcTgtK+NovyxsQOE/AcLF1xjX3/+8kNc1sSg==}
@@ -1522,7 +1525,7 @@ packages:
     peerDependencies:
       '@tanstack/query-core': '>=5.0.0'
       typescript: '>=5.0.4'
-      viem: 2.x
+      viem: 2.22.1
     peerDependenciesMeta:
       '@tanstack/query-core':
         optional: true
@@ -7609,7 +7612,7 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isows@1.0.6(ws@8.18.0(bufferutil@4.0.8)):
+  isows@1.0.6(ws@8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)):
     dependencies:
       ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
 
@@ -9040,7 +9043,7 @@ snapshots:
       '@scure/bip32': 1.6.0
       '@scure/bip39': 1.5.0
       abitype: 1.0.7(typescript@5.6.3)(zod@3.24.1)
-      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.8))
+      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))
       ox: 0.6.0(typescript@5.6.3)(zod@3.24.1)
       webauthn-p256: 0.0.10
       ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
@@ -9058,7 +9061,7 @@ snapshots:
       '@scure/bip32': 1.6.0
       '@scure/bip39': 1.5.0
       abitype: 1.0.7(typescript@5.6.3)(zod@3.23.8)
-      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.8))
+      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))
       ox: 0.6.0(typescript@5.6.3)(zod@3.23.8)
       webauthn-p256: 0.0.10
       ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
@@ -9076,7 +9079,7 @@ snapshots:
       '@scure/bip32': 1.6.0
       '@scure/bip39': 1.5.0
       abitype: 1.0.7(typescript@5.6.3)(zod@3.24.1)
-      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.8))
+      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))
       ox: 0.6.0(typescript@5.6.3)(zod@3.24.1)
       webauthn-p256: 0.0.10
       ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)

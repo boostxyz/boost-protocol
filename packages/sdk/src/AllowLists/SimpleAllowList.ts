@@ -180,13 +180,13 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    * @async
    * @param {Address[]} addresses - The list of users to update
    * @param {boolean[]} allowed - The allowed status of each user
-   * @param {?ReadParams} [params]
+   * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
   public async setAllowedRaw(
     addresses: Address[],
     allowed: boolean[],
-    params?: ReadParams,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateSimpleAllowListSetAllowed(
       this._config,

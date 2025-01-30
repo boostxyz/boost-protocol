@@ -401,7 +401,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    */
   protected async validateRaw(
     payload: LimitedSignerValidatorValidatePayload,
-    params?: ReadParams,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateLimitedSignerValidatorValidate(
       this._config,

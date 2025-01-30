@@ -392,7 +392,7 @@ export class SignerValidator extends DeployableTarget<
    */
   protected async validateRaw(
     payload: SignerValidatorValidatePayload,
-    params?: ReadParams,
+    params?: WriteParams,
   ) {
     const { request, result } = await simulateSignerValidatorValidate(
       this._config,

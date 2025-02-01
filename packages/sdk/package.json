@@ -223,7 +223,7 @@
     "typedoc": "npx typedoc --tsconfig ./tsconfig.build.json --sort required-first --sort visibility --sort kind"
   },
   "dependencies": {
-    "ts-pattern": "5.5.0"
+    "ts-pattern": "5.6.2"
   },
   "peerDependencies": {
     "@wagmi/core": "2.x",

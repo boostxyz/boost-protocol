@@ -13,9 +13,12 @@ import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
 import {BoostCore} from "contracts/BoostCore.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
+import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ATransparentBudget} from "contracts/budgets/ATransparentBudget.sol";
+import {IClaw} from "contracts/shared/IClaw.sol";
 
 /*
     TODO
@@ -143,6 +146,21 @@ contract TransparentBudget is ATransparentBudget, ReentrancyGuard {
     /// @dev If the asset transfer fails, the reclamation will revert
     function clawback(bytes calldata) external virtual override onlyOwner returns (uint256) {
         revert BoostError.NotImplemented();
+    }
+
+    function clawbackFromTarget(address target, bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        virtual
+        override
+        returns (uint256, address)
+    {
+        BoostLib.Boost memory boost = BoostCore(target).getBoost(boostId);
+        if (msg.sender != boost.owner) revert BoostError.Unauthorized();
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(msg.sender), data: data_});
+        IClaw incentive = IClaw(target);
+        (uint256 amount, address asset) = incentive.clawback(abi.encode(payload), boostId, incentiveId);
+        return (amount, asset);
     }
 
     /// @inheritdoc ABudget

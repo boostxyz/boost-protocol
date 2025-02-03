@@ -27,6 +27,7 @@ import {TransparentBudget} from "contracts/budgets/TransparentBudget.sol";
 contract TransparentBudgetTest is Test, IERC1155Receiver {
     MockERC20 mockERC20 = new MockERC20();
     MockERC721 mockERC721 = new MockERC721();
+    address boostOwner = makeAddr("boost owner");
     TransparentBudget budget = new TransparentBudget();
     BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
 
@@ -115,6 +116,56 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         budget.createBoost(allocations, boostCore, createBoostPayload);
     }
 
+    function testUnauthorizedClawbackFromTarget() public {
+        address unauthorized = makeAddr("unauthorized");
+        vm.pauseGasMetering();
+        bytes memory transferPayload = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC20,
+                asset: address(mockERC20),
+                target: address(this),
+                data: abi.encode(ABudget.FungiblePayload({amount: 110 ether}))
+            })
+        );
+        bytes[] memory allocations = new bytes[](1);
+        allocations[0] = transferPayload;
+        bytes memory createBoostPayload =
+            _makeValidCreateCalldataWithVariableRewardAmount(1, 10 ether, 10, 0, address(mockERC20));
+        vm.assertEq(mockERC20.balanceOf(address(this)), 110 ether);
+        budget.createBoost(allocations, boostCore, createBoostPayload);
+        vm.assertEq(mockERC20.balanceOf(address(this)), 0);
+
+        hoax(unauthorized);
+        vm.resumeGasMetering();
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        budget.clawbackFromTarget(address(boostCore), abi.encode(100 ether), 0, 0);
+    }
+
+    function testClawbackFromTarget() public {
+        vm.pauseGasMetering();
+        bytes memory transferPayload = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC20,
+                asset: address(mockERC20),
+                target: address(this),
+                data: abi.encode(ABudget.FungiblePayload({amount: 110 ether}))
+            })
+        );
+        bytes[] memory allocations = new bytes[](1);
+        allocations[0] = transferPayload;
+        bytes memory createBoostPayload =
+            _makeValidCreateCalldataWithVariableRewardAmount(1, 10 ether, 10, 0, address(mockERC20));
+        vm.assertEq(mockERC20.balanceOf(address(this)), 110 ether);
+        budget.createBoost(allocations, boostCore, createBoostPayload);
+        vm.assertEq(mockERC20.balanceOf(address(this)), 0);
+
+        hoax(boostOwner);
+        vm.resumeGasMetering();
+        budget.clawbackFromTarget(address(boostCore), abi.encode(100 ether), 0, 0);
+        // owner receives fees and incentive amount
+        vm.assertEq(mockERC20.balanceOf(boostOwner), 110 ether);
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////
@@ -191,7 +242,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
                     incentives: _makeIncentives(incentiveCount, rewardAmount, claimLimit, token),
                     protocolFee: protocolFee,
                     maxParticipants: 10_000,
-                    owner: address(1)
+                    owner: boostOwner
                 })
             )
         );

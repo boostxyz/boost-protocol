@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -23,6 +24,7 @@ import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {TransparentBudget} from "contracts/budgets/TransparentBudget.sol";
+import {IPermit2} from "contracts/shared/IPermit2.sol";
 
 contract TransparentBudgetTest is Test, IERC1155Receiver {
     MockERC20 mockERC20 = new MockERC20();
@@ -30,14 +32,60 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     address boostOwner = makeAddr("boost owner");
     TransparentBudget budget = new TransparentBudget();
     BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
+    bytes32 constant TOKEN_PERMISSIONS_TYPEHASH = keccak256("TokenPermissions(address token,uint256 amount)");
+    bytes32 constant PERMIT_TRANSFER_FROM_TYPEHASH = keccak256(
+        "PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)"
+    );
+    bytes32 constant PERMIT_BATCH_TRANSFER_FROM_TYPEHASH = keccak256(
+        "PermitBatchTransferFrom(TokenPermissions[] permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)"
+    );
 
     BoostLib.Target action =
         _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
+
+    uint256 sepoliaFork;
+    string SEPOLIA_RPC_URL = vm.envString("VITE_SEPOLIA_RPC_URL");
 
     function setUp() public {
         // We allocate 100 for the boost and 10 for protocol fees
         mockERC20.mint(address(this), 110 ether);
         mockERC20.approve(address(budget), 110 ether);
+    }
+
+    function testPermit2BoostCreation() public {
+        (address permit2Creator, uint256 permit2CreatorKey) = makeAddrAndKey("permit2 boost creator");
+        uint256 amount = 110 ether;
+        sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL, 2356288);
+        boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
+        mockERC721 = new MockERC721();
+        action = _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
+        mockERC20 = new MockERC20();
+        budget = new TransparentBudget();
+        mockERC20.mint(address(permit2Creator), amount);
+        hoax(permit2Creator);
+        mockERC20.approve(address(budget.PERMIT2()), type(uint256).max);
+        IPermit2.TokenPermissions[] memory permitted = new IPermit2.TokenPermissions[](1);
+        permitted[0] = IPermit2.TokenPermissions({token: IERC20(address(mockERC20)), amount: amount});
+        IPermit2.PermitBatchTransferFrom memory permit =
+            IPermit2.PermitBatchTransferFrom({permitted: permitted, nonce: vm.randomUint(), deadline: block.timestamp});
+
+        bytes memory sig = _signPermit(permit, address(budget), permit2CreatorKey, budget.PERMIT2());
+
+        bytes memory transferPayload = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC20,
+                asset: address(mockERC20),
+                target: address(this),
+                data: abi.encode(ABudget.FungiblePayload({amount: 110 ether}))
+            })
+        );
+        bytes[] memory allocations = new bytes[](1);
+        allocations[0] = transferPayload;
+        bytes memory createBoostPayload =
+            _makeValidCreateCalldataWithVariableRewardAmount(1, 10 ether, 10, 0, address(mockERC20));
+        hoax(permit2Creator);
+        vm.resumeGasMetering();
+        budget.createBoostWithPermit2(allocations, boostCore, createBoostPayload, sig, permit.nonce, permit.deadline);
     }
 
     function testFuzzBoostCreation(uint256 rewardAmount, uint64 additionalProtocolFee, uint256 incentiveQty) public {
@@ -295,5 +343,47 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
                 AContractAction.InitPayload({chainId: block.chainid, target: target, selector: selector, value: value})
             )
         });
+    }
+
+    // Generate a signature for a batch permit message.
+    function _signPermit(
+        IPermit2.PermitBatchTransferFrom memory permit,
+        address spender,
+        uint256 signerKey,
+        IPermit2 permit2Instance
+    ) internal view returns (bytes memory sig) {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerKey, _getEIP712Hash(permit, spender, permit2Instance));
+        return abi.encodePacked(r, s, v);
+    }
+    // Compute the EIP712 hash of the batch permit object.
+    // Normally this would be implemented off-chain.
+
+    function _getEIP712Hash(IPermit2.PermitBatchTransferFrom memory permit, address spender, IPermit2 permit2Instance)
+        internal
+        view
+        returns (bytes32 h)
+    {
+        bytes32 permittedHash;
+        {
+            uint256 n = permit.permitted.length;
+            bytes32[] memory contentHashes = new bytes32[](n);
+            for (uint256 i; i < n; ++i) {
+                contentHashes[i] = keccak256(
+                    abi.encode(TOKEN_PERMISSIONS_TYPEHASH, permit.permitted[i].token, permit.permitted[i].amount)
+                );
+            }
+            permittedHash = keccak256(abi.encodePacked(contentHashes));
+        }
+        return keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                permit2Instance.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        PERMIT_BATCH_TRANSFER_FROM_TYPEHASH, permittedHash, spender, permit.nonce, permit.deadline
+                    )
+                )
+            )
+        );
     }
 }

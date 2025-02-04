@@ -36,6 +36,7 @@ jobs:
         uses: SpicyPizza/create-envfile@v2.0
         with:
           envkey_TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
+          envkey_VITE_SEPOLIA_RPC_URL: ${{ secrets.VITE_SEPOLIA_RPC_URL }}
           directory: packages/evm
           file_name: .env
 

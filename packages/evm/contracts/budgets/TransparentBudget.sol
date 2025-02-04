@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DynamicArrayLib} from "@solady/utils/DynamicArrayLib.sol";
 import {LibTransient} from "@solady/utils/LibTransient.sol";
 
@@ -19,13 +20,7 @@ import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ATransparentBudget} from "contracts/budgets/ATransparentBudget.sol";
 import {IClaw} from "contracts/shared/IClaw.sol";
-
-/*
-    TODO
-    1. implement clawback logic and tracking on deposits
-    2. implement clawback auth
-    3. implement permit2 support
-*/
+import {IPermit2} from "contracts/shared/IPermit2.sol";
 
 /// @title Simple ABudget
 /// @notice A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
@@ -34,6 +29,8 @@ contract TransparentBudget is ATransparentBudget, ReentrancyGuard {
     using SafeTransferLib for address;
     using DynamicArrayLib for *;
     using LibTransient for *;
+
+    IPermit2 public constant PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
     /// @dev The total amount of each fungible asset distributed from the budget
     mapping(address => uint256) private _distributedFungible;
@@ -47,10 +44,7 @@ contract TransparentBudget is ATransparentBudget, ReentrancyGuard {
         revert BoostError.NotImplemented();
     }
 
-    function createBoost(bytes[] calldata _allocations, BoostCore core, bytes calldata _boostPayload)
-        external
-        payable
-    {
+    function createBoost(bytes[] calldata _allocations, BoostCore core, bytes calldata _boostPayload) public payable {
         DynamicArrayLib.DynamicArray memory allocationKeys;
         allocationKeys.resize(_allocations.length);
 
@@ -61,6 +55,58 @@ contract TransparentBudget is ATransparentBudget, ReentrancyGuard {
 
         core.createBoost(_boostPayload);
 
+        bytes32[] memory keys = allocationKeys.asBytes32Array();
+        for (uint256 i = 0; i < keys.length; i++) {
+            LibTransient.TUint256 storage p = LibTransient.tUint256(keys[i]);
+            if (p.get() != 0) revert BoostError.Unauthorized();
+        }
+    }
+
+    function createBoostWithPermit2(
+        bytes[] calldata _allocations,
+        BoostCore core,
+        bytes calldata _boostPayload,
+        bytes calldata _permit2Signature,
+        uint256 nonce,
+        uint256 deadline
+    ) external payable {
+        DynamicArrayLib.DynamicArray memory allocationKeys;
+        allocationKeys.resize(_allocations.length);
+
+        IPermit2.SignatureTransferDetails[] memory transferDetails =
+            new IPermit2.SignatureTransferDetails[](_allocations.length);
+        IPermit2.TokenPermissions[] memory permissions = new IPermit2.TokenPermissions[](_allocations.length);
+        bytes32 key;
+        for (uint256 i = 0; i < _allocations.length; i++) {
+            Transfer memory request = abi.decode(_allocations[i], (Transfer));
+            if (request.assetType == AssetType.ERC20) {
+                (address asset, uint256 amount, bytes32 tKey) = _allocateERC20(request, false);
+                key = tKey;
+                transferDetails[i] = IPermit2.SignatureTransferDetails({to: address(this), requestedAmount: amount});
+                permissions[i] = IPermit2.TokenPermissions({token: IERC20(asset), amount: amount});
+            } else {
+                key = _allocate(_allocations[i]);
+            }
+            allocationKeys.set(i, key);
+        }
+
+        PERMIT2.permitTransferFrom(
+            // The permit message. Spender will be inferred as the caller (us).
+            IPermit2.PermitBatchTransferFrom({permitted: permissions, nonce: nonce, deadline: deadline}),
+            // The transfer recipients and amounts.
+            transferDetails,
+            // The owner of the tokens, which must also be
+            // the signer of the message, otherwise this call
+            // will fail.
+            msg.sender,
+            // The packed signature that was the result of signing
+            // the EIP712 hash of `permit`.
+            _permit2Signature
+        );
+
+        // Transfer `payload.amount` of the token to this contract
+
+        core.createBoost(_boostPayload);
         bytes32[] memory keys = allocationKeys.asBytes32Array();
         for (uint256 i = 0; i < keys.length; i++) {
             LibTransient.TUint256 storage p = LibTransient.tUint256(keys[i]);
@@ -86,16 +132,7 @@ contract TransparentBudget is ATransparentBudget, ReentrancyGuard {
             p.inc(payload.amount);
             key = tKey;
         } else if (request.assetType == AssetType.ERC20) {
-            FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
-
-            // Transfer `payload.amount` of the token to this contract
-            request.asset.safeTransferFrom(request.target, address(this), payload.amount);
-            if (request.asset.balanceOf(address(this)) < payload.amount) {
-                revert InvalidAllocation(request.asset, payload.amount);
-            }
-            key = bytes32(uint256(uint160(request.asset)));
-            (LibTransient.TUint256 storage p, bytes32 tKey) = getFungibleAmountAndKey(request.asset);
-            p.inc(payload.amount);
+            (,, bytes32 tKey) = _allocateERC20(request, true);
             key = tKey;
         } else if (request.assetType == AssetType.ERC1155) {
             ERC1155Payload memory payload = abi.decode(request.data, (ERC1155Payload));
@@ -114,6 +151,24 @@ contract TransparentBudget is ATransparentBudget, ReentrancyGuard {
             // Unsupported asset type
             revert BoostError.NotImplemented();
         }
+    }
+
+    function _allocateERC20(Transfer memory request, bool transfer)
+        internal
+        returns (address asset, uint256 amount, bytes32 key)
+    {
+        FungiblePayload memory payload = abi.decode(request.data, (FungiblePayload));
+        if (transfer) {
+            request.asset.safeTransferFrom(request.target, address(this), payload.amount);
+            if (request.asset.balanceOf(address(this)) < payload.amount) {
+                revert InvalidAllocation(request.asset, payload.amount);
+            }
+        }
+        (LibTransient.TUint256 storage p, bytes32 tKey) = getFungibleAmountAndKey(request.asset);
+        p.inc(payload.amount);
+        amount = payload.amount;
+        asset = request.asset;
+        key = tKey;
     }
 
     function isAuthorized(address account_) public view virtual override returns (bool) {

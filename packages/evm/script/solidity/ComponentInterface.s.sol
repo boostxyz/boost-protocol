@@ -10,6 +10,7 @@ import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
 import {AManagedBudgetWithFees} from "contracts/budgets/AManagedBudgetWithFees.sol";
+import {AManagedBudgetWithFeesV2} from "contracts/budgets/AManagedBudgetWithFeesV2.sol";
 import {AVestingBudget} from "contracts/budgets/AVestingBudget.sol";
 
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
@@ -45,6 +46,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceABudget();
         _getInterfaceAManagedBudget();
         _getInterfaceAManagedBudgetWithFees();
+        _getInterfaceAManagedBudgetWithFeesV2();
         _getInterfaceAVestingBudget();
         _getInterfaceASignerValidator();
         _getInterfaceAAllowListIncentive();
@@ -75,6 +77,11 @@ contract LogComponentInterface is ScriptUtils {
     function _getInterfaceAManagedBudgetWithFees() internal {
         string memory interfaceId = uint256(uint32(type(AManagedBudgetWithFees).interfaceId)).toHexString(4);
         componentJson = componentJsonKey.serialize("AManagedBudgetWithFees", interfaceId);
+    }
+
+    function _getInterfaceAManagedBudgetWithFeesV2() internal {
+        string memory interfaceId = uint256(uint32(type(AManagedBudgetWithFeesV2).interfaceId)).toHexString(4);
+        componentJson = componentJsonKey.serialize("AManagedBudgetWithFeesV2", interfaceId);
     }
 
     function _getInterfaceAEventAction() internal {

@@ -9,19 +9,19 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshManagedBudgetWithFees,
+  freshManagedBudgetWithFeesV2,
   fundErc20,
   fundErc1155,
   freshBoost,
-  fundManagedBudgetWithFees,
+  fundManagedBudgetWithFeesV2,
 } from "@boostxyz/test/helpers";
 import { testAccount } from "@boostxyz/test/viem";
-import { ManagedBudgetWithFees } from "./ManagedBudgetWithFees";
+import { ManagedBudgetWithFeesV2 } from "./ManagedBudgetWithFeesV2";
 import { Roles } from "../Deployable/DeployableTargetWithRBAC";
 import { StrategyType } from "../claiming";
 
 let fixtures: Fixtures,
-  budget: ManagedBudgetWithFees,
+  budget: ManagedBudgetWithFeesV2,
   erc20: MockERC20,
   erc1155: MockERC1155;
 
@@ -29,9 +29,9 @@ beforeAll(async () => {
   fixtures = await loadFixture(deployFixtures(defaultOptions));
 });
 
-describe("ManagedBudgetWithFees", () => {
+describe("ManagedBudgetWithFeesV2", () => {
   test("can successfully be deployed", async () => {
-    const action = new ManagedBudgetWithFees(defaultOptions, {
+    const action = new ManagedBudgetWithFeesV2(defaultOptions, {
       owner: testAccount.address,
       authorized: [],
       roles: [],
@@ -43,7 +43,7 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can set ManagementFee", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     await budget.setManagementFee(5000n);
     const fee = await budget.managementFee();
@@ -53,7 +53,7 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can grant manager role to many users", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     const one = accounts[1].account;
     const two = accounts[2].account;
@@ -65,7 +65,7 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can grant role", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     const manager = accounts[1].account;
     await budget.grantRoles(manager, Roles.MANAGER);
@@ -75,7 +75,7 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can revoke role", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     const manager = accounts[1].account;
     await budget.grantRoles(manager, Roles.MANAGER);
@@ -89,7 +89,7 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can grant many roles", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     const admin = accounts[1].account;
     const manager = accounts[2].account;
@@ -100,7 +100,7 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can revoke many roles", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     const admin = accounts[1].account;
     const manager = accounts[2].account;
@@ -115,14 +115,14 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can be owned", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     expect(await budget.owner()).toBe(defaultOptions.account.address);
   });
 
   test("can have authorized users", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     expect(await budget.isAuthorized(defaultOptions.account.address)).toBe(
       true,
@@ -132,14 +132,14 @@ describe("ManagedBudgetWithFees", () => {
 
   test("can have no initial balance", async () => {
     const budget = await loadFixture(
-      freshManagedBudgetWithFees(defaultOptions, fixtures),
+      freshManagedBudgetWithFeesV2(defaultOptions, fixtures),
     );
     expect(await budget.available()).toBe(0n);
   });
 
   describe("can allocate", () => {
     beforeEach(async () => {
-      budget = await loadFixture(freshManagedBudgetWithFees(defaultOptions, fixtures));
+      budget = await loadFixture(freshManagedBudgetWithFeesV2(defaultOptions, fixtures));
       erc20 = await loadFixture(fundErc20(defaultOptions));
       erc1155 = await loadFixture(fundErc1155(defaultOptions));
     });
@@ -191,9 +191,9 @@ describe("ManagedBudgetWithFees", () => {
   describe("can disburse", () => {
     beforeEach(async () => {
       const budgetFixtures = await loadFixture(
-        fundManagedBudgetWithFees(defaultOptions, fixtures),
+        fundManagedBudgetWithFeesV2(defaultOptions, fixtures),
       );
-      budget = budgetFixtures.budget as ManagedBudgetWithFees;
+      budget = budgetFixtures.budget as ManagedBudgetWithFeesV2;
       erc20 = budgetFixtures.erc20;
       erc1155 = budgetFixtures.erc1155;
     });
@@ -235,6 +235,48 @@ describe("ManagedBudgetWithFees", () => {
     let originalBalance = await erc20.balanceOf(accounts[0].account);
 
     await budget.payManagementFee(boost.id, 0n);
+    let balance = await erc20.balanceOf(accounts[0].account);
+
+    expect(balance - originalBalance).toBe(reward*fee/10_000n);
+    })
+
+    test("to a fee-compatible incentive overloaded", async () => {
+
+      const reward = 1_000_000_000n;
+      const fee = await budget.managementFee();
+      const erc20Incentive = fixtures.core.ERC20Incentive({
+        asset: erc20.assertValidAddress(),
+        strategy: StrategyType.POOL,
+        reward: 1_000_000_000n,
+        limit: 1n,
+        manager: budget.assertValidAddress(),
+      });
+      await budget.grantRoles(fixtures.core.assertValidAddress(), Roles.MANAGER);
+      const boost = await freshBoost(fixtures, {
+        budget: budget,
+        incentives: [erc20Incentive],
+      });
+
+      const trustedSigner = accounts.at(0)!;
+      const claimant = trustedSigner.account;
+      const incentiveData = erc20Incentive.buildClaimData();
+      const claimDataPayload = await boost.validator.encodeClaimData({
+        signer: trustedSigner,
+        incentiveData,
+        chainId: defaultOptions.config.chains[0].id,
+        incentiveQuantity: boost.incentives.length,
+        claimant,
+        boostId: boost.id,
+      });
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      trustedSigner.account,
+      claimDataPayload,
+    );
+    let originalBalance = await erc20.balanceOf(accounts[0].account);
+
+    await budget.payManagementFee(boost.id, 0n, fixtures.core.assertValidAddress());
     let balance = await erc20.balanceOf(accounts[0].account);
 
     expect(balance - originalBalance).toBe(reward*fee/10_000n);

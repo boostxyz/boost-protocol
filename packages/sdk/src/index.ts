@@ -22,6 +22,7 @@ export * from './Budgets/Budget';
 // export * from './Budgets/VestingBudget';
 export * from './Budgets/ManagedBudget';
 export * from './Budgets/ManagedBudgetWithFees';
+export * from './Budgets/ManagedBudgetWithFeesV2';
 
 // Deployable
 

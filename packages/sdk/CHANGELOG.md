@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 6.0.1
+
+### Patch Changes
+
+- 935a4e8: add ManagedBudgetWithFeesV2 to the sdk
+
 ## 6.0.0
 
 ### Major Changes

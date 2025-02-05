@@ -10,6 +10,7 @@ import {
   simulateManagedBudgetClawbackFromTarget,
   simulateManagedBudgetDisburse,
   simulateManagedBudgetDisburseBatch,
+  simulateManagedBudgetWithFeesPayManagementFee,
   simulateManagedBudgetWithFeesV2PayManagementFee,
   simulateManagedBudgetWithFeesV2SetManagementFee,
   writeManagedBudgetAllocate,
@@ -17,6 +18,7 @@ import {
   writeManagedBudgetClawbackFromTarget,
   writeManagedBudgetDisburse,
   writeManagedBudgetDisburseBatch,
+  writeManagedBudgetWithFeesPayManagementFee,
   writeManagedBudgetWithFeesV2PayManagementFee,
   writeManagedBudgetWithFeesV2SetManagementFee,
 } from '@boostxyz/evm';
@@ -416,21 +418,24 @@ export class ManagedBudgetWithFeesV2 extends DeployableTargetWithRBAC<
    *
    * @public
    * @async
-   * @param {Address} boostCore
    * @param {bigint | string} boostId
    * @param {bigint | string} incentiveId
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the payout was successful
    */
   public async payManagementFee(
-    boostCore: Address,
     boostId: bigint | string,
     incentiveId: bigint | string,
+    boostCore?: Address,
     params?: WriteParams,
   ) {
-    return await this.awaitResult(
-      this.payManagementFeeRaw(boostCore, boostId, incentiveId, params),
-    );
+    return boostCore
+      ? await this.awaitResult(
+          this.payManagementFeeWithCoreRaw(boostCore, boostId, incentiveId),
+        )
+      : await this.awaitResult(
+          this.payManagementFeeRaw(boostId, incentiveId, params),
+        );
   }
 
   /**
@@ -445,6 +450,38 @@ export class ManagedBudgetWithFeesV2 extends DeployableTargetWithRBAC<
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the payout was successful
    */
   public async payManagementFeeRaw(
+    boostId: bigint | string,
+    incentiveId: bigint | string,
+    params?: WriteParams,
+  ) {
+    const { request, result } =
+      await simulateManagedBudgetWithFeesPayManagementFee(this._config, {
+        address: this.assertValidAddress(),
+        args: [boostId, incentiveId],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      });
+    const hash = await writeManagedBudgetWithFeesPayManagementFee(
+      this._config,
+      // @ts-ignore getting a type: 'legacy' | undefined is not assignable to type 'eip7702' | undefined error
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Pays out reserved management fees to the boost owner
+   *
+   * @public
+   * @async
+   * @param {Address} boostCore
+   * @param bigint boostId
+   * @param bigint incentiveId
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>} - True if the payout was successful
+   */
+  public async payManagementFeeWithCoreRaw(
     boostCore: Address,
     boostId: bigint | string,
     incentiveId: bigint | string,

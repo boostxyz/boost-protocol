@@ -11,6 +11,7 @@ import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlist
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
 import ManagedBudgetWithFeesArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudgetWithFees.sol/ManagedBudgetWithFees.json';
+import ManagedBudgetWithFeesV2Artifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudgetWithFeesV2.sol/ManagedBudgetWithFeesV2.json';
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
@@ -276,8 +277,8 @@ export function deployFixtures(
     const managedBudgetWithFeesV2Base = await getDeployedContractAddress(
       config,
       deployContract(config, {
-        abi: ManagedBudgetWithFeesArtifact.abi,
-        bytecode: ManagedBudgetWithFeesArtifact.bytecode as Hex,
+        abi: ManagedBudgetWithFeesV2Artifact.abi,
+        bytecode: ManagedBudgetWithFeesV2Artifact.bytecode as Hex,
         account,
       }),
     );

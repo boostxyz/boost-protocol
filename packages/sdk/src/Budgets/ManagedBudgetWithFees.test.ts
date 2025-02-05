@@ -12,7 +12,6 @@ import {
   freshManagedBudgetWithFees,
   fundErc20,
   fundErc1155,
-  fundManagedBudget,
   freshBoost,
   fundManagedBudgetWithFees,
 } from "@boostxyz/test/helpers";

@@ -234,7 +234,49 @@ describe("ManagedBudgetWithFeesV2", () => {
     );
     let originalBalance = await erc20.balanceOf(accounts[0].account);
 
-    await budget.payManagementFee(fixtures.core.assertValidAddress(), boost.id, 0n);
+    await budget.payManagementFee(boost.id, 0n);
+    let balance = await erc20.balanceOf(accounts[0].account);
+
+    expect(balance - originalBalance).toBe(reward*fee/10_000n);
+    })
+
+    test("to a fee-compatible incentive overloaded", async () => {
+
+      const reward = 1_000_000_000n;
+      const fee = await budget.managementFee();
+      const erc20Incentive = fixtures.core.ERC20Incentive({
+        asset: erc20.assertValidAddress(),
+        strategy: StrategyType.POOL,
+        reward: 1_000_000_000n,
+        limit: 1n,
+        manager: budget.assertValidAddress(),
+      });
+      await budget.grantRoles(fixtures.core.assertValidAddress(), Roles.MANAGER);
+      const boost = await freshBoost(fixtures, {
+        budget: budget,
+        incentives: [erc20Incentive],
+      });
+
+      const trustedSigner = accounts.at(0)!;
+      const claimant = trustedSigner.account;
+      const incentiveData = erc20Incentive.buildClaimData();
+      const claimDataPayload = await boost.validator.encodeClaimData({
+        signer: trustedSigner,
+        incentiveData,
+        chainId: defaultOptions.config.chains[0].id,
+        incentiveQuantity: boost.incentives.length,
+        claimant,
+        boostId: boost.id,
+      });
+    await fixtures.core.claimIncentive(
+      boost.id,
+      0n,
+      trustedSigner.account,
+      claimDataPayload,
+    );
+    let originalBalance = await erc20.balanceOf(accounts[0].account);
+
+    await budget.payManagementFee(boost.id, 0n, fixtures.core.assertValidAddress());
     let balance = await erc20.balanceOf(accounts[0].account);
 
     expect(balance - originalBalance).toBe(reward*fee/10_000n);

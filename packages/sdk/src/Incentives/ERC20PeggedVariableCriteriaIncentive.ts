@@ -32,6 +32,7 @@ import {
   parseEther,
   parseEventLogs,
   zeroAddress,
+  zeroHash,
 } from 'viem';
 import { ERC20PeggedVariableCriteriaIncentive as ERC20PeggedVariableCriteriaIncentiveBases } from '../../dist/deployments.json';
 import { SignatureType } from '../Actions/EventAction';
@@ -632,7 +633,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
       manager: this.payload?.manager ?? zeroAddress,
       criteria: this.payload?.criteria ?? {
         criteriaType: 0,
-        signature: zeroAddress,
+        signature: zeroHash,
         fieldIndex: 0,
         targetContract: zeroAddress,
       },

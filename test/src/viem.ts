@@ -2,6 +2,7 @@ import { createConfig } from '@wagmi/core';
 import {
   http,
   type TestClient,
+  type WalletClient,
   createTestClient,
   publicActions,
   walletActions,
@@ -33,7 +34,7 @@ export const makeTestClient: () => TestClient = () =>
     .extend(publicActions)
     .extend(walletActions) as any;
 
-export function setupConfig(walletClient = makeTestClient()) {
+export function setupConfig(walletClient: TestClient = makeTestClient()) {
   return createConfig({
     ssr: true,
     chains: [hardhat, arbitrum, base, optimism, sepolia],

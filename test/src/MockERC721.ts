@@ -86,7 +86,7 @@ export class MockERC721 extends Deployable<unknown, typeof mockErc721Abi> {
     _payload: unknown = {},
     _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [{}, options] = this.validateDeploymentConfig(_payload, _options);
+    const [_, options] = this.validateDeploymentConfig(_payload, _options);
     //@ts-expect-error this is a test utility, ignoring required args in parameter return
     return {
       abi: mockErc721Abi,

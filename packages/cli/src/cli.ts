@@ -10,8 +10,9 @@ import help from './help';
 import { commands } from './index';
 import { type Options, envToObject, objectToEnv, validateJson } from './utils';
 
-BigInt.prototype.toJSON = function () {
-  return Number(this);
+const bigintReplacer = (_: string, value: unknown) => {
+  if (typeof value === 'bigint') return value.toString();
+  return value;
 };
 
 type validCommands = keyof typeof commands;
@@ -76,7 +77,7 @@ async function main(): Promise<number | undefined> {
     if (command === 'seed' && _.includes('generate')) options.format = 'json';
     return options.format === 'env'
       ? objectToEnv(result)
-      : JSON.stringify(result, null, 2);
+      : JSON.stringify(result, bigintReplacer, 2);
   }
 
   // cached result will either be stringified json, or env formatted string
@@ -90,7 +91,11 @@ async function main(): Promise<number | undefined> {
       const parsedResult = validateJson(cachedResult);
       // if we want json and the cached result is env
       if (options.format === 'json' && parsedResult === false) {
-        cachedResult = JSON.stringify(envToObject(cachedResult), null, 2);
+        cachedResult = JSON.stringify(
+          envToObject(cachedResult),
+          bigintReplacer,
+          2,
+        );
       }
       // if we want env and cached result is json
       if (options.format === 'env' && parsedResult !== false) {

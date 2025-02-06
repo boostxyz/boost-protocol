@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 6.0.2
+
+### Patch Changes
+
+- 8cc4585: allow overwrite of addresses in BoostCore SDK
+
 ## 6.0.1
 
 ### Patch Changes

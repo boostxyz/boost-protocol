@@ -29,6 +29,7 @@ import {
   type ActionStep,
   AllowListIncentive,
   type AllowListIncentivePayload,
+  type Boost,
   BoostCore,
   // ContractAction,
   // type ContractActionPayload,
@@ -87,7 +88,6 @@ import { MockERC20 } from './MockERC20';
 import { MockERC721 } from './MockERC721';
 import { MockERC1155 } from './MockERC1155';
 import { MockPoints } from './MockPoints';
-import { accounts } from './accounts';
 import { setupConfig, testAccount } from './viem';
 
 export type DeployableTestOptions = Required<DeployableOptions>;
@@ -115,7 +115,7 @@ export type BudgetWithFeeFixtures = BudgetFixtures & {
 export async function freshBoost(
   fixtures: Fixtures,
   options: Partial<CreateBoostPayload>,
-) {
+): Promise<Boost> {
   const { core } = fixtures;
   const { budget, erc20 } = await loadFixture(
     fundBudget(defaultOptions, fixtures),
@@ -196,6 +196,7 @@ export function deployFixtures(
     const _registry = await new BoostRegistry({
       address: null,
       ...options,
+      // @ts-ignore
     }).deploy();
 
     class TBoostRegistry extends BoostRegistry {
@@ -541,6 +542,7 @@ export function deployFixtures(
       registryAddress: registry.assertValidAddress(),
       protocolFeeReceiver: account.address,
       owner: account.address,
+      // @ts-ignore
     }).deploy();
 
     class TBoostCore extends BoostCore {
@@ -961,6 +963,7 @@ export async function freshERC20(
   options: DeployableTestOptions = defaultOptions,
 ) {
   const erc20 = new MockERC20(options, {});
+  // @ts-ignore
   await erc20.deploy();
   return erc20;
 }
@@ -969,6 +972,7 @@ export async function freshPoints(
   options: DeployableTestOptions = defaultOptions,
 ) {
   const points = new MockPoints(options, {});
+  // @ts-ignore
   await points.deploy();
   await writePointsInitialize(options.config, {
     address: points.assertValidAddress(),
@@ -982,6 +986,7 @@ export async function freshERC1155(
   options: DeployableTestOptions = defaultOptions,
 ) {
   const erc1155 = new MockERC1155(options, {});
+  // @ts-ignore
   await erc1155.deploy();
   return erc1155;
 }
@@ -990,6 +995,7 @@ export async function freshERC721(
   options: DeployableTestOptions = defaultOptions,
 ) {
   const erc721 = new MockERC721(options, {});
+  // @ts-ignore
   await erc721.deploy();
   return erc721;
 }

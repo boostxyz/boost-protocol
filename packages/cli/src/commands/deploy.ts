@@ -85,7 +85,7 @@ export const deploy: Command<DeployResult> = async function deploy(
     );
   if (!_chain || !Chains[_chain])
     throw new Error(
-      `Must provide valid \`--chain\` to specify target deployment chain, valid chains are ${Object.keys(chains)}`,
+      `Must provide valid \`--chain\` to specify target deployment chain, valid chains are ${Object.keys(Chains)}`,
     );
 
   const [options, chain] = getDeployableOptions({
@@ -93,6 +93,7 @@ export const deploy: Command<DeployResult> = async function deploy(
     privateKey,
     mnemonic,
   });
+
   const { config, account } = options;
   const chainId = chain!.id!;
 

@@ -1,6 +1,8 @@
 import {
   mockErc1155Abi,
+  simulateMockErc1155Burn,
   simulateMockErc1155Mint,
+  writeMockErc1155Burn,
   writeMockErc1155Mint,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/shared/Mocks.sol/MockERC1155.json';
@@ -69,7 +71,7 @@ export class MockERC1155 extends Deployable<unknown, typeof mockErc1155Abi> {
     _payload: unknown = {},
     _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [{}, options] = this.validateDeploymentConfig(_payload, _options);
+    const [_, options] = this.validateDeploymentConfig(_payload, _options);
     //@ts-expect-error this is a test utility, ignoring required args in parameter return
     return {
       abi: mockErc1155Abi,

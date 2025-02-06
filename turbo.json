@@ -18,12 +18,17 @@
         "deploys/**"
       ]
     },
+    "@boostxyz/test#build": {
+      "dependsOn": ["^build", "@boostxyz/evm#build"],
+      "inputs": [".env", "src"],
+      "outputs": ["dist/**"]
+    },
     "@boostxyz/signatures#build": {
       "inputs": ["manifests"],
       "outputs": ["dist/**"]
     },
     "@boostxyz/cli#build": {
-      "dependsOn": ["@boostxyz/evm#build"],
+      "dependsOn": ["@boostxyz/evm#build", "@boostxyz/test#build"],
       "outputs": ["dist/**"]
     },
     "@boostxyz/sdk#build": {

@@ -10,6 +10,7 @@ import {
   type Budget,
   type CGDAIncentivePayload,
   type CreateBoostPayload,
+  type DeployableOptions,
   type DeployablePayloadOrAddress,
   type ERC20IncentivePayload,
   type ERC20VariableCriteriaIncentivePayload,
@@ -30,7 +31,6 @@ import {
 } from '@boostxyz/sdk';
 import { MockERC20 } from '@boostxyz/test/MockERC20';
 import { accounts } from '@boostxyz/test/accounts';
-import type { DeployableTestOptions } from '@boostxyz/test/helpers';
 import { deepEqual } from '@wagmi/core';
 import {
   type Address,
@@ -43,12 +43,14 @@ import {
   toFunctionSelector,
   zeroAddress,
 } from 'viem';
-import { z } from 'zod';
+import { type ZodType, type ZodTypeDef, z } from 'zod';
 import { type Command, type Options, getDeployableOptions } from '../utils';
 export type SeedResult = {
   erc20?: Address;
   boostIds?: string[];
 };
+
+export type DeployableWagmiOptions = Required<DeployableOptions>;
 
 const DEFAULT_MNEMONIC =
   'test test test test test test test test test test test junk';
@@ -211,7 +213,7 @@ async function fundBudgetForIncentive(
   budget: Budget,
   amount: bigint,
   asset: Address,
-  options: DeployableTestOptions,
+  options: DeployableWagmiOptions,
 ) {
   if (asset && amount) {
     let erc20 = new MockERC20(options, asset);
@@ -264,19 +266,21 @@ export const ManagedBudgetSchema = z
     'length mismatch authorized and roles',
   );
 
-const zAbiItemSchema = z.custom<`0x${string}`>().pipe(
-  z
-    .string()
-    .regex(/^(event|function) .*/, {
-      message: 'signature must start with `event` or function`',
-    })
-    .transform((sig) => {
-      if (sig.startsWith('function'))
-        return pad(toFunctionSelector(sig)) as Hex;
-      if (sig.startsWith('event')) return toEventSelector(sig) as Hex;
-      throw new Error('unreachable');
-    }),
-);
+const zAbiItemSchema: ZodType<`0x${string}`, ZodTypeDef, string> = z
+  .custom<`0x${string}`>()
+  .pipe(
+    z
+      .string()
+      .regex(/^(event|function) .*/, {
+        message: 'signature must start with `event` or function`',
+      })
+      .transform((sig) => {
+        if (sig.startsWith('function'))
+          return pad(toFunctionSelector(sig)) as Hex;
+        if (sig.startsWith('event')) return toEventSelector(sig) as Hex;
+        throw new Error('unreachable');
+      }),
+  );
 
 type Identifiable<T> = T & { type: string };
 type BoostConfig = {
@@ -458,7 +462,7 @@ async function getAllowList(
 }
 
 async function fundBudget(
-  options: DeployableTestOptions,
+  options: DeployableWagmiOptions,
   erc20: MockERC20,
   budget: Budget,
   amount = parseEther('110'),

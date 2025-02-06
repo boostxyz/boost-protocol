@@ -214,12 +214,6 @@ export interface BoostCoreDeployedOptions extends DeployableOptions {
    * @type {?Address}
    */
   address?: Address;
-  /**
-   * The mapping of chain ID to address of deployed custom Boost Core contracts.
-   *
-   * @type {?Record<number, Address>}
-   */
-  addresses?: Record<number, Address>;
 }
 
 /**
@@ -331,7 +325,7 @@ export class BoostCore extends Deployable<
    * @readonly
    * @type {Record<string, Address>}
    */
-  static addresses: Record<number, Address> = BOOST_CORE_ADDRESSES;
+  static readonly addresses: Record<number, Address> = BOOST_CORE_ADDRESSES;
 
   /**
    * A getter that will return Boost core's static addresses by numerical chain ID
@@ -356,9 +350,6 @@ export class BoostCore extends Deployable<
   constructor({ config, account, ...options }: BoostCoreConfig) {
     if (isBoostCoreDeployed(options) && options.address) {
       super({ account, config }, options.address);
-      if (options.addresses) {
-        this.updateAddresses(options.addresses);
-      }
     } else if (isBoostCoreDeployable(options)) {
       super({ account, config }, [
         options.registryAddress,
@@ -505,16 +496,6 @@ export class BoostCore extends Deployable<
       chainId,
       args: [prepareBoostPayload(onChainPayload)],
     });
-  }
-
-  /**
-   * Updates the addresses for specific chain IDs. This is used when using a custom deployed instance
-   *
-   * @static
-   * @param {Record<number, Address>} newAddresses - New addresses to add/update
-   */
-  private updateAddresses(addresses: Record<number, Address>) {
-    BoostCore.addresses = addresses;
   }
 
   // This function mutates payload, which isn't awesome but it's fine

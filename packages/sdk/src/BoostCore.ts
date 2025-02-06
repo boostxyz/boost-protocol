@@ -211,9 +211,9 @@ export interface BoostCoreDeployedOptions extends DeployableOptions {
   /**
    * The address of a deployed, custom Boost Core contract.
    *
-   * @type {?Address}
+   * @type {Address}
    */
-  address?: Address;
+  address: Address;
   /**
    * The mapping of chain ID to address of deployed custom Boost Core contracts.
    *

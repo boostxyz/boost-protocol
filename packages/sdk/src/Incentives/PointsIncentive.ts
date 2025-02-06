@@ -17,6 +17,7 @@ import {
   type ContractEventName,
   type Hex,
   encodeAbiParameters,
+  zeroAddress,
   zeroHash,
 } from 'viem';
 import { PointsIncentive as PointsIncentiveBases } from '../../dist/deployments.json';
@@ -363,8 +364,8 @@ export class PointsIncentive extends DeployableTarget<
         { type: 'uint256', name: 'amount' },
       ],
       [
-        this.payload?.venue ?? zeroHash,
-        this.payload?.selector ?? zeroHash,
+        this.payload?.venue ?? zeroAddress,
+        this.payload?.selector ?? '0x00000000',
         netAmount,
       ],
     );

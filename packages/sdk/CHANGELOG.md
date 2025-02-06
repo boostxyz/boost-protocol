@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 6.0.3
+
+### Patch Changes
+
+- 532d0ec: revert BoostCore addresses
+
 ## 6.0.2
 
 ### Patch Changes

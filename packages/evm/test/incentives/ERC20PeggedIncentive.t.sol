@@ -87,6 +87,30 @@ contract ERC20PeggedIncentiveTest is Test {
         assertEq(incentive.claims(), 1);
     }
 
+    function testClaim_CannotClaimTwice() public {
+        // Initialize the ERC20PeggedIncentive
+        _initialize(address(mockAsset), address(pegAsset), 1 ether, 5 ether, address(this));
+
+        // First claim should succeed
+        incentive.claim(address(this), _encodeBoostClaim(1 ether));
+        
+        // Verify initial claim was successful
+        assertEq(mockAsset.balanceOf(address(this)), 1 ether);
+        assertEq(incentive.totalClaimed(), 1 ether);
+        
+        // Verify isClaimable returns false for the same address
+        assertFalse(incentive.isClaimable(address(this), _encodeBoostClaim(1 ether)));
+        
+        // Second claim should revert
+        vm.expectRevert(AIncentive.NotClaimable.selector);
+        incentive.claim(address(this), _encodeBoostClaim(1 ether));
+        
+        // Verify state hasn't changed after failed second claim
+        assertEq(mockAsset.balanceOf(address(this)), 1 ether);
+        assertEq(incentive.totalClaimed(), 1 ether);
+        assertEq(incentive.claims(), 1);
+    }
+
     function testClaim_NotClaimable() public {
         // Initialize the ERC20PeggedIncentive
         _initialize(address(mockAsset), address(pegAsset), 1 ether, 5 ether, address(this));

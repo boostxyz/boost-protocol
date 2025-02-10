@@ -79,9 +79,9 @@ https://book.getfoundry.sh/reference/forge/forge-script#options
 
 | Scanner | Verifier URL |
 | --- | --- |
-| base-sepolia | `https://api-sepolia.basescan.org/api` |
+| base-sepolia | [`https://api-sepolia.basescan.org/api`](https://api-sepolia.basescan.org/api) |
 | arb-mainnet | [`https://api.arbiscan.io/api`](https://api.arbiscan.io/api) |
-| opt-mainnet | [`https://api-optimistic.etherscan.io/api`](https://api-optimistic.etherscan.io/api) |
+| op-mainnet | [`https://api-optimistic.etherscan.io/api`](https://api-optimistic.etherscan.io/api) |
 | base-mainnet | [`https://api.basescan.org/api`](https://api.basescan.org/api) |
 
 ## Security Model
@@ -94,4 +94,5 @@ by the Signer.
 regardless of the validity of individual action requests presented to the signer.
 
 Most incentives hard-cap each address to one claim, but `ERC20PeggedVariableCriteriaIncentive`
-does not, by design.
+and `ERC20VariableIncentive` do not, by design. `ERC1155Incentive` catalogs
+individual claims by transaction hash, as opposed to claimant.

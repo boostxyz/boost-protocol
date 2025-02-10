@@ -102,6 +102,7 @@ contract ERC20PeggedIncentive is RBAC, AERC20PeggedIncentive, IToppable {
 
         totalClaimed += signedAmount;
         claims += 1;
+        claimed[claimTarget] = true;
         asset.safeTransfer(claimTarget, signedAmount);
 
         emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, signedAmount));
@@ -147,7 +148,6 @@ contract ERC20PeggedIncentive is RBAC, AERC20PeggedIncentive, IToppable {
     /// @notice Check if an incentive is claimable
     /// @param claimTarget the address that could receive the claim
     /// @return True if the incentive is claimable based on the data payload
-    /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
     /// @dev The recipient must not have already claimed the incentive
     function isClaimable(address claimTarget, bytes calldata data_) public view override returns (bool) {
         BoostClaimData memory boostClaimData = abi.decode(data_, (BoostClaimData));

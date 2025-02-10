@@ -17,7 +17,7 @@ import { StrategyType } from "./claiming";
 import { BoostNotFoundError, IncentiveNotCloneableError } from "./errors";
 import type { ERC20Incentive } from "./Incentives/ERC20Incentive";
 import { bytes4 } from "./utils";
-import { BoostValidatorEOA } from "./Validators/Validator";
+import { BoostValidatorEOA } from './Validators/Validator';
 import { AssetType } from "./transfers";
 import { waitForTransactionReceipt } from "@wagmi/core";
 import { SignatureType } from "./Actions/EventAction";
@@ -1277,5 +1277,87 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
 
     const newLimit = await incentive.limit();
     expect(newLimit).toBe(originalLimit + expectedNetTopup);
+  });
+});
+
+describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () => {
+  test("enforces validator claim limit", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)!.account!;
+    const signer = accounts.at(0)!;
+    const { core } = fixtures;
+    const { budget, erc20 } = budgets;
+
+    const erc721 = await loadFixture(fundErc721(defaultOptions));
+    const incentive = core.ERC20PeggedVariableCriteriaIncentive({
+      asset: erc20.assertValidAddress(),
+      peg: erc20.assertValidAddress(),
+      reward: parseEther("1"),
+      limit: parseEther("10"), 
+      maxReward: parseEther("2"),
+      manager: budget.assertValidAddress(),
+      criteria: {
+        criteriaType: SignatureType.FUNC,
+        signature: pad(bytes4("transferFrom(address,address,uint256)")),
+        fieldIndex: 2,
+        targetContract: erc721.assertValidAddress(),
+      },
+    });
+    await erc20.mint(defaultOptions.account.address, parseEther("110"));
+    await erc20.approve(budget.assertValidAddress(), parseEther("110"));
+    await budget.allocate({
+      amount: parseEther("110"),
+      asset: erc20.assertValidAddress(),
+      target: defaultOptions.account.address,
+    });
+
+    const boost = await core.createBoost({
+      protocolFee: 0n,
+      maxParticipants: 5n,
+      budget,
+      action: core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+      allowList: core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+      incentives: [incentive],
+    });
+
+    const claimant = defaultOptions.account.address;
+    const signedAmount = parseEther("1");
+    const incentiveData = incentive.buildClaimData(signedAmount);
+
+    // First claim
+    const firstClaimPayload = await boost.validator.encodeClaimData({
+      signer: signer,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    // First claim should succeed
+    await core.claimIncentive(boost.id, 0n, referrer, firstClaimPayload);
+
+    // Generate new signature for second claim
+    const secondClaimPayload = await boost.validator.encodeClaimData({
+      signer: signer,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+    });
+
+    // Second claim should fail due to validator limit (specific error code)
+    await expect(
+      core.claimIncentive(boost.id, 0n, referrer, secondClaimPayload)
+    ).rejects.toThrow("0x059b7045");
   });
 });

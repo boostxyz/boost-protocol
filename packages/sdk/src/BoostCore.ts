@@ -527,12 +527,20 @@ export class BoostCore extends Deployable<
           Object.keys(this.addresses).map(Number),
         );
       const testnet = chain.testnet || chain.id === 31337;
+      const signers = [
+        (testnet
+          ? BoostValidatorEOA.TESTNET
+          : BoostValidatorEOA.MAINNET) as unknown as Address,
+      ];
+
+      // This seemed like the best approach - I didn't want to use the testnet PK even in local testing
+      // May be another approach but this works for now and is pretty well isolated
+      if (chain.id === 31337) {
+        signers.push('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
+      }
+
       payload.validator = this.LimitedSignerValidator({
-        signers: [
-          (testnet
-            ? BoostValidatorEOA.TESTNET
-            : BoostValidatorEOA.MAINNET) as unknown as Address,
-        ],
+        signers,
         validatorCaller: coreAddress,
         maxClaimCount: 1,
       });

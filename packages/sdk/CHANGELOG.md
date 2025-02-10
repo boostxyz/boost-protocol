@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 6.1.0
+
+### Minor Changes
+
+- 54de50c: Changes default behavior in boost creation to use a LimitedSignerValidator
+
 ## 6.0.3
 
 ### Patch Changes

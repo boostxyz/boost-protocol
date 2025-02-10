@@ -527,13 +527,14 @@ export class BoostCore extends Deployable<
           Object.keys(this.addresses).map(Number),
         );
       const testnet = chain.testnet || chain.id === 31337;
-      payload.validator = this.SignerValidator({
+      payload.validator = this.LimitedSignerValidator({
         signers: [
           (testnet
             ? BoostValidatorEOA.TESTNET
             : BoostValidatorEOA.MAINNET) as unknown as Address,
         ],
         validatorCaller: coreAddress,
+        maxClaimCount: 1,
       });
     }
 

@@ -1282,9 +1282,8 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
 
 describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () => {
   test("enforces validator claim limit", async () => {
-    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
-    const referrer = accounts.at(1)!.account!;
-    const signer = accounts.at(0)!;
+    const referrer = accounts[1].account!;
+    const signer = accounts[0];
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
@@ -1358,6 +1357,6 @@ describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () 
     // Second claim should fail due to validator limit (specific error code)
     await expect(
       core.claimIncentive(boost.id, 0n, referrer, secondClaimPayload)
-    ).rejects.toThrow("0x059b7045");
+    ).rejects.toThrow("0x059b7045"); // BoostError.MaximumClaimed
   });
 });

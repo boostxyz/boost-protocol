@@ -26,6 +26,7 @@ import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
+import {LimitedSignerValidator} from "contracts/validators/LimitedSignerValidator.sol";
 
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
@@ -59,6 +60,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
         _deploySignerValidator(registry);
+        _deployLimitedSignerValidator(registry);
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
@@ -201,6 +203,15 @@ contract ModuleBaseDeployer is ScriptUtils {
         deployJson = deployJsonKey.serialize("SignerValidator", signerValidator);
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(newDeploy, string(abi.encodePacked("SignerValidator", signerValidator)), signerValidator, registry, ABoostRegistry.RegistryType.VALIDATOR);
+    }
+
+    function _deployLimitedSignerValidator(BoostRegistry registry) internal returns (address limitedSignerValidator) {
+        bytes memory initCode = type(LimitedSignerValidator).creationCode;
+        limitedSignerValidator = _getCreate2Address(initCode, "");
+        console.log("LimitedSignerValidator: ", limitedSignerValidator);
+        deployJson = deployJsonKey.serialize("LimitedSignerValidator", limitedSignerValidator);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(newDeploy, string(abi.encodePacked("LimitedSignerValidator",  limitedSignerValidator)),  limitedSignerValidator, registry, ABoostRegistry.RegistryType.VALIDATOR);
     }
 
     function _deploySimpleAllowList(BoostRegistry registry) internal returns (address simpleAllowList) {

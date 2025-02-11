@@ -18,9 +18,7 @@ import {
   encodeAbiParameters,
 } from 'viem';
 import { signTypedData } from 'viem/accounts';
-// TODO
-//import { LimitedSignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
-import { SignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
+import { LimitedSignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,

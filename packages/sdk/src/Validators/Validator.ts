@@ -1,8 +1,7 @@
 import { aValidatorAbi } from '@boostxyz/evm';
 import {
+  ALimitedSignerValidator,
   ASignerValidator,
-  // TODO: bring this back in
-  // ALimitedSignerValidator,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import { type Address, type Hex, decodeAbiParameters } from 'viem';
@@ -29,8 +28,7 @@ export type Validator = SignerValidator | LimitedSignerValidator;
  */
 export const ValidatorByComponentInterface = {
   [ASignerValidator as Hex]: SignerValidator,
-  // TODO bring this back in
-  // [ALimitedSignerValidator as Hex]: LimitedSignerValidator,
+  [ALimitedSignerValidator as Hex]: LimitedSignerValidator,
 };
 
 /**

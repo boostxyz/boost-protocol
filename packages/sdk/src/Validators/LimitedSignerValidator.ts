@@ -18,9 +18,7 @@ import {
   encodeAbiParameters,
 } from 'viem';
 import { signTypedData } from 'viem/accounts';
-// TODO
-//import { LimitedSignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
-import { SignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
+import { LimitedSignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -604,10 +602,7 @@ export async function prepareLimitedSignerValidatorClaimDataPayload({
     },
   };
 
-  const trustedSignature = await signTypedData({
-    ...typedData,
-    privateKey: signer.key,
-  });
+  const trustedSignature = await signer.privateKey.signTypedData(typedData);
 
   // Prepare the claim data payload using the new helper
   const validatorData = prepareLimitedSignerValidatorInputParams({

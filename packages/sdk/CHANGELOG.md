@@ -1,5 +1,29 @@
 # @boostxyz/sdk
 
+## 6.1.3
+
+### Patch Changes
+
+- 53ed9e5: fix issue with privkey format in limitedSignerValidator
+
+## 6.1.2
+
+### Patch Changes
+
+- df2369d: export LimitedSignerValidator component interface
+
+## 6.1.1
+
+### Patch Changes
+
+- 9ee2db2: use LimitedSignerValidator base address
+
+## 6.1.0
+
+### Minor Changes
+
+- 54de50c: Changes default behavior in boost creation to use a LimitedSignerValidator
+
 ## 6.0.3
 
 ### Patch Changes

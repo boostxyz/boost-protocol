@@ -602,10 +602,7 @@ export async function prepareLimitedSignerValidatorClaimDataPayload({
     },
   };
 
-  const trustedSignature = await signTypedData({
-    ...typedData,
-    privateKey: signer.key,
-  });
+  const trustedSignature = await signer.privateKey.signTypedData(typedData);
 
   // Prepare the claim data payload using the new helper
   const validatorData = prepareLimitedSignerValidatorInputParams({

@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 6.0.3
+
+### Patch Changes
+
+- df2369d: export LimitedSignerValidator component interface
+
 ## 6.0.2
 
 ### Patch Changes

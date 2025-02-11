@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 6.1.1
+
+### Patch Changes
+
+- 9ee2db2: use LimitedSignerValidator base address
+
 ## 6.1.0
 
 ### Minor Changes

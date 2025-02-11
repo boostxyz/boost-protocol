@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 6.1.3
+
+### Patch Changes
+
+- 53ed9e5: fix issue with privkey format in limitedSignerValidator
+
 ## 6.1.2
 
 ### Patch Changes

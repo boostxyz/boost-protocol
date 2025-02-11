@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 6.1.2
+
+### Patch Changes
+
+- df2369d: export LimitedSignerValidator component interface
+
 ## 6.1.1
 
 ### Patch Changes

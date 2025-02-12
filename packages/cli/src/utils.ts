@@ -10,7 +10,7 @@ import {
 } from 'viem';
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
 import * as chains from 'viem/chains';
-import { ZodArray, ZodBigInt, ZodObject, type ZodType, type z } from 'zod';
+import { ZodArray, ZodBigInt, ZodObject, type ZodType, z } from 'zod';
 
 export const Chains = chains as Record<string, chains.Chain>;
 
@@ -135,4 +135,26 @@ export function coerceBigInts<T extends ZodType>(
   }
 
   return obj as z.infer<T>;
+}
+
+export function stringifyBigInts<T extends ZodType>(schema: T): ZodType {
+  if (schema instanceof ZodBigInt) {
+    return z.string();
+  }
+
+  if (schema instanceof ZodObject) {
+    const shape = Object.fromEntries(
+      Object.entries(schema.shape).map(([key, field]) => [
+        key,
+        stringifyBigInts(field as ZodType),
+      ]),
+    );
+    return z.object(shape);
+  }
+
+  if (schema instanceof ZodArray) {
+    return z.array(stringifyBigInts(schema.element));
+  }
+
+  return schema;
 }

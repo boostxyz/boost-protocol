@@ -10,6 +10,7 @@ import {
 } from 'viem';
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
 import * as chains from 'viem/chains';
+import { ZodArray, ZodBigInt, ZodObject, type ZodType, type z } from 'zod';
 
 export const Chains = chains as Record<string, chains.Chain>;
 
@@ -104,4 +105,34 @@ export function getDeployableOptions({
   });
 
   return [{ config, account }, chain] as const;
+}
+
+export function coerceBigInts<T extends ZodType>(
+  obj: unknown,
+  schema: T,
+): z.infer<T> {
+  if (schema instanceof ZodBigInt) {
+    return typeof obj === 'string' ? BigInt(obj) : obj;
+  }
+
+  if (schema instanceof ZodObject) {
+    const shape = schema.shape;
+    if (typeof obj !== 'object' || obj === null) return obj as z.infer<T>;
+    const newObj = { ...obj } as Record<string, unknown>;
+
+    for (const [key, fieldSchema] of Object.entries(shape)) {
+      if (key in obj) {
+        // biome-ignore lint/suspicious/noExplicitAny: we don't care if a value isn't valid, let it be
+        newObj[key] = coerceBigInts((obj as any)[key], fieldSchema as ZodType);
+      }
+    }
+    return newObj as z.infer<T>;
+  }
+
+  if (schema instanceof ZodArray) {
+    if (!Array.isArray(obj)) return obj;
+    return obj.map((item) => coerceBigInts(item, schema.element)) as z.infer<T>;
+  }
+
+  return obj as z.infer<T>;
 }

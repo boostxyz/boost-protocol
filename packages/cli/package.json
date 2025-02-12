@@ -44,7 +44,7 @@
   "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "vite build && pnpm check:ts",
-    "check:ts": "tsc --build --emitDeclarationOnly --declaration --declarationMap --force",
+    "check:ts": "tsc --build --emitDeclarationOnly --sourceMap --declaration --declarationMap --force",
     "dev": "vite build --watch",
     "clean": "rm -rf dist"
   },

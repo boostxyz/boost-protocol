@@ -1,4 +1,3 @@
-import type { DeployableOptions } from '@boostxyz/sdk';
 import { createConfig } from '@wagmi/core';
 import {
   http,

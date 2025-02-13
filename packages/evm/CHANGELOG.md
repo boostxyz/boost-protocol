@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 6.0.4
+
+### Patch Changes
+
+- a1132eb: creating TS types for cli releases
+
 ## 6.0.3
 
 ### Patch Changes

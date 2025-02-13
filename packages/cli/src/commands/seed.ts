@@ -52,6 +52,7 @@ import { type Command, type Options, getDeployableOptions } from '../utils';
 export type SeedResult = {
   erc20?: Address;
   boostIds?: string[];
+  budget?: Address;
 };
 
 export type DeployableWagmiOptions = Required<DeployableOptions>;
@@ -118,28 +119,47 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
   if (!positionals.length) throw new Error('No seed provided');
   const templates = await Promise.all(positionals.map(getSeed));
 
-  let sharedBudget: ManagedBudget | undefined;
+  let sharedBudget: ManagedBudget | ManagedBudgetWithFeesV2 | undefined;
   let sharedBudgetConfig: ManagedBudgetPayload | undefined;
   const boostIds: string[] = [];
+  let budgetAddress: Address | undefined;
   for (const template of templates) {
-    let budget: ManagedBudget;
+    let budget: ManagedBudget | ManagedBudgetWithFeesV2;
     if (typeof template.budget === 'string' && isAddress(template.budget))
       budget = core.ManagedBudget(template.budget);
     // TODO: create budget from Core
     else if (deepEqual(sharedBudgetConfig, template.budget) && sharedBudget) {
       budget = sharedBudget;
     } else {
-      const payload = {
-        ...template.budget,
-        authorized: [...template.budget.authorized, coreAddress],
-        roles: [...template.budget.roles, Roles.MANAGER],
-      } satisfies ManagedBudgetPayload;
-      budget = await registry.initialize(
-        crypto.randomUUID(),
-        core.ManagedBudget(payload),
-      );
+      let budgetTemplate = template.budget;
+      switch (budgetTemplate.type) {
+        case 'ManagedBudget': {
+          const payload = {
+            ...budgetTemplate,
+            authorized: [...template.budget.authorized, coreAddress],
+            roles: [...template.budget.roles, Roles.MANAGER],
+          } satisfies ManagedBudgetPayload;
+          budget = await registry.initialize(
+            crypto.randomUUID(),
+            core.ManagedBudget(payload),
+          );
+        }
+        case 'ManagedBudgetWithFeesV2': {
+          const payload = {
+            managementFee: 0n,
+            ...budgetTemplate,
+            authorized: [...template.budget.authorized, coreAddress],
+            roles: [...template.budget.roles, Roles.MANAGER],
+          } satisfies ManagedBudgetWithFeesV2Payload;
+          budget = await registry.initialize(
+            crypto.randomUUID(),
+            core.ManagedBudgetWithFeesV2(payload),
+          );
+        }
+      }
       sharedBudget = budget;
       sharedBudgetConfig = template.budget;
+      budgetAddress = budget.assertValidAddress();
     }
 
     const incentivePromises = template.incentives.map(async (incentive) => {
@@ -218,6 +238,7 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
 
   return {
     boostIds,
+    budget: budgetAddress,
   };
 };
 
@@ -265,6 +286,19 @@ const ManagedBudgetRoleSchema = z.coerce
   .max(2)
   .transform(BigInt)
   .pipe(z.custom<Roles>());
+
+export const ManagedBudgetWithFeesV2Schema = z
+  .object({
+    type: z.literal('ManagedBudgetWithFeesV2'),
+    owner: AddressSchema,
+    authorized: z.array(AddressSchema),
+    managementFee: z.coerce.bigint().nonnegative().lt(10_000n),
+    roles: z.array(ManagedBudgetRoleSchema),
+  })
+  .refine(
+    (b) => b.authorized.length === b.roles.length,
+    'length mismatch authorized and roles',
+  );
 
 export const ManagedBudgetSchema = z
   .object({
@@ -461,7 +495,11 @@ export const PointsIncentiveSchema = z.object({
 export const BoostSeedConfigSchema = z.object({
   protocolFee: z.coerce.bigint(),
   maxParticipants: z.coerce.bigint(),
-  budget: z.union([AddressSchema, ManagedBudgetSchema]),
+  budget: z.union([
+    AddressSchema,
+    ManagedBudgetSchema,
+    ManagedBudgetWithFeesV2Schema,
+  ]),
   action: z.union([AddressSchema, EventActionSchema]),
   validator: z
     .union([AddressSchema, SignerValidatorSchema, LimitedSignerValidatorSchema])

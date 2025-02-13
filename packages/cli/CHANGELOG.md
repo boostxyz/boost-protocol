@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 5.1.0
+
+### Minor Changes
+
+- a1132eb: creating TS types for cli releases
+
 ## 5.0.7
 
 ## 5.0.6

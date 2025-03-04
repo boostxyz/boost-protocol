@@ -101,6 +101,7 @@ export type ERC20VariableIncentiveLog<
 export class ERC20VariableIncentive<
   Payload = ERC20VariableIncentivePayload | undefined,
   ABI extends Abi = typeof erc20VariableIncentiveAbi,
+  DecodedClaimPayload = bigint,
 > extends DeployableTarget<Payload, ABI> {
   //@ts-expect-error it is instantiated correctly
   public override readonly abi = erc20VariableIncentiveAbi;
@@ -434,12 +435,11 @@ export class ERC20VariableIncentive<
    *
    * @public
    * @param {Hex} claimData
-   * @returns {Promise<bigint>} Returns the reward amount from a claim data payload
+   * @returns {bigint} Returns the reward amount from a claim data payload
    */
-  public decodeClaimData(data: Hex) {
-    return Promise.resolve(
-      BigInt(decodeAbiParameters([{ type: 'uint256' }], data)[0]),
-    );
+  public decodeClaimData(data: Hex): DecodedClaimPayload {
+    //@ts-expect-error making this generic to prevent major version
+    return BigInt(decodeAbiParameters([{ type: 'uint256' }], data)[0]);
   }
 
   /**

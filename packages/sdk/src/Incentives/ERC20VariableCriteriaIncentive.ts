@@ -114,7 +114,8 @@ export interface GetIncentiveScalarParams {
  */
 export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
   ERC20VariableCriteriaIncentivePayload,
-  typeof erc20VariableCriteriaIncentiveAbi
+  typeof erc20VariableCriteriaIncentiveAbi,
+  Promise<bigint>
 > {
   //@ts-expect-error instantiated correctly
   public override readonly abi = erc20VariableCriteriaIncentiveAbi;

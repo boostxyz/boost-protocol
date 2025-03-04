@@ -434,10 +434,12 @@ export class ERC20VariableIncentive<
    *
    * @public
    * @param {Hex} claimData
-   * @returns {BigInt} Returns the reward amount from a claim data payload
+   * @returns {Promise<bigint>} Returns the reward amount from a claim data payload
    */
   public decodeClaimData(data: Hex) {
-    return BigInt(decodeAbiParameters([{ type: 'uint256' }], data)[0]);
+    return Promise.resolve(
+      BigInt(decodeAbiParameters([{ type: 'uint256' }], data)[0]),
+    );
   }
 
   /**

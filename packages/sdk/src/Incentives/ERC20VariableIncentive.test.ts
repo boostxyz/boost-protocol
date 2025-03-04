@@ -201,8 +201,8 @@ describe("ERC20VariableIncentive", () => {
       boostId: boost.id,
     });
 
-    const { incentiveData } = decodeClaimData(claimDataPayload)
-    expect(erc20VariableIncentive.decodeClaimData(incentiveData)).toBe(parseEther("1"))
+    const { incentiveData } = await decodeClaimData(claimDataPayload)
+    expect(await erc20VariableIncentive.decodeClaimData(incentiveData)).toBe(parseEther("1"))
   });
 
   test("can properly encode a uint256", () => {

@@ -696,7 +696,7 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    *
    * @public
    * @param {Hex} claimData
-   * @returns {BigInt} Returns the reward amount from a claim data payload
+   * @returns {Promise<bigint>} Returns the reward amount from a claim data payload
    */
   public async decodeClaimData(claimData: Hex) {
     const boostClaimData = decodeAbiParameters(

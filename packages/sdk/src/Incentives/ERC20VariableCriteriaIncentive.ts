@@ -10,8 +10,10 @@ import {
   type AbiFunction,
   type Address,
   type Hex,
+  decodeAbiParameters,
   decodeFunctionData,
   encodeAbiParameters,
+  parseEther,
   parseEventLogs,
   zeroAddress,
   zeroHash,
@@ -112,7 +114,8 @@ export interface GetIncentiveScalarParams {
  */
 export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
   ERC20VariableCriteriaIncentivePayload,
-  typeof erc20VariableCriteriaIncentiveAbi
+  typeof erc20VariableCriteriaIncentiveAbi,
+  Promise<bigint>
 > {
   //@ts-expect-error instantiated correctly
   public override readonly abi = erc20VariableCriteriaIncentiveAbi;
@@ -156,6 +159,51 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
     } catch (e) {
       throw new IncentiveCriteriaNotFoundError(e as Error);
     }
+  }
+
+  /**
+   * Decodes claim data for the ERC20VariableCriteriaIncentive, returning the claim amount.
+   * Useful when deriving amount claimed from logs.
+   *
+   * @public
+   * @param {Hex} claimData
+   * @returns {Promise<bigint>} Returns the reward amount from a claim data payload
+   */
+  public override async decodeClaimData(claimData: Hex) {
+    const boostClaimData = decodeAbiParameters(
+      [
+        {
+          type: 'tuple',
+          name: 'BoostClaimData',
+          components: [
+            { type: 'bytes', name: 'validatorData' },
+            { type: 'bytes', name: 'incentiveData' },
+          ],
+        },
+      ],
+      claimData,
+    );
+    const signedAmount = decodeAbiParameters(
+      [{ type: 'uint256' }],
+      boostClaimData[0].incentiveData,
+    )[0];
+    let claimAmount = signedAmount;
+    const [reward, maxReward] = await Promise.all([
+      this.reward(),
+      this.getMaxReward(),
+    ]);
+
+    if (reward === 0n) {
+      return claimAmount;
+    } else {
+      claimAmount = (reward * signedAmount) / parseEther('1');
+    }
+
+    if (maxReward !== 0n && claimAmount > maxReward) {
+      claimAmount = maxReward;
+    }
+
+    return claimAmount;
   }
 
   /**

@@ -503,7 +503,7 @@ export class ERC20PeggedIncentive extends DeployableTarget<
    *
    * @public
    * @param {Hex} claimData
-   * @returns {BigInt} Returns the reward amount from a claim data payload
+   * @returns {bigint} Returns the reward amount from a claim data payload
    */
   public decodeClaimData(claimData: Hex) {
     const boostClaimData = decodeAbiParameters(

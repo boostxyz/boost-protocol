@@ -20,7 +20,8 @@ import { bytes4 } from "./utils";
 import { BoostValidatorEOA } from './Validators/Validator';
 import { AssetType } from "./transfers";
 import { waitForTransactionReceipt } from "@wagmi/core";
-import { SignatureType } from "./Actions/EventAction";
+import { SignatureType, ValueType } from "./Actions/EventAction";
+import { MockERC721 } from "@boostxyz/test/MockERC721";
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -975,6 +976,7 @@ describe("BoostCore", () => {
         signature: pad(bytes4("transferFrom(address,address,uint256)")),
         fieldIndex: 2,
         targetContract: erc721.assertValidAddress(),
+        valueType: ValueType.WAD,
       },
     });
 
@@ -1021,6 +1023,7 @@ describe("BoostCore", () => {
     expect(criteria.targetContract.toLowerCase()).toBe(
       erc721.address?.toLowerCase(),
     );
+    expect(criteria.valueType).toBe(ValueType.WAD);
   });
 });
 
@@ -1149,7 +1152,7 @@ describe("Top-Up Incentives", () => {
 describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
   let incentive: ReturnType<typeof fixtures.core.ERC20PeggedVariableCriteriaIncentive>;
   let boostId: bigint;
-  let erc721: ReturnType<typeof fundErc721>;
+  let erc721: MockERC721;
 
   beforeAll(async () => {
     const { core } = fixtures;
@@ -1170,6 +1173,7 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
         signature: pad(bytes4("transferFrom(address,address,uint256)")),
         fieldIndex: 2,
         targetContract: erc721.assertValidAddress(),
+        valueType: ValueType.WAD,
       },
     });
 
@@ -1300,6 +1304,7 @@ describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () 
         signature: pad(bytes4("transferFrom(address,address,uint256)")),
         fieldIndex: 2,
         targetContract: erc721.assertValidAddress(),
+        valueType: ValueType.WAD,
       },
     });
     await erc20.mint(defaultOptions.account.address, parseEther("110"));

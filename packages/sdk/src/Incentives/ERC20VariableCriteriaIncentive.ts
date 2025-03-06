@@ -95,7 +95,7 @@ export interface IncentiveCriteria {
    */
   targetContract: Address;
   /**
-   * The type of value used for the reward calculation (RAW or WAD).
+   * The type of value used for the scalar value (RAW or WAD).
    * - RAW: Raw integer value (e.g., NFT quantity)
    * - WAD: Value with 18 decimals (e.g., token amount)
    *

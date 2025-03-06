@@ -147,7 +147,7 @@ export enum SignatureType {
 }
 
 /**
- * The type of value used for the reward calculation (RAW or WAD).
+ * The type of value used for the scalar value (RAW or WAD).
  *
  * @export
  * @enum {number}

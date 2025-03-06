@@ -12,7 +12,7 @@ import {ERC20VariableCriteriaIncentive} from "contracts/incentives/ERC20Variable
 import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive, IBoostClaim} from "contracts/incentives/AIncentive.sol";
-import {SignatureType} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
+import {SignatureType, ValueType} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
 
 contract ERC20VariableCriteriaIncentiveTest is Test {
     using SafeTransferLib for address;
@@ -42,7 +42,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
 
         // Encode and initialize the contract
@@ -68,7 +69,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
 
         // Attempt to initialize with a limit greater than available funds => revert
@@ -92,7 +94,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
 
         // Initialize with limit = zero
@@ -121,7 +124,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
         // Initialize the ERC20VariableIncentive with reward and maxReward constraints
         uint256 reward = 0; // set to zero to test maxReward cap
@@ -152,7 +156,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
         // Initialize the ERC20VariableIncentive with reward and maxReward constraints
         uint256 reward = 0; // set to zero to test maxReward cap
@@ -189,7 +194,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
         uint256 maxReward = 1.5 ether; // Set a max reward cap
 
@@ -219,7 +225,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
         uint256 maxReward = 1.5 ether; // Set a max reward cap
 
@@ -245,7 +252,8 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.FUNC,
             signature: keccak256("transfer(address,uint256)"),
             fieldIndex: 1,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
         _initialize(address(mockAsset), 2 ether, 10, 0, criteria);
 

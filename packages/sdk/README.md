@@ -4,7 +4,7 @@ Typescript devkit for interacting with the Boost V2 Protocol
 
 [![Documentation](https://img.shields.io/badge/documentation-typedoc-blue)](boost-protocol.vercel.app)
 
-## Visit [docs.boost.xyz](https://docs.boost.xyz) for docs, guides, API and more!
+## Visit [https://docs.boost.xyz/v2/boost-sdk/overview](https://docs.boost.xyz) for docs, guides, API and more!
 
 
 ## Event Actions

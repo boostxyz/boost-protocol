@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 5.2.0
+
+### Minor Changes
+
+- 06becaa: add valueType to variable incentive criteria
+
 ## 5.1.0
 
 ### Minor Changes

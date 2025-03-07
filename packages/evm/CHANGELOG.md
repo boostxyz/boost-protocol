@@ -1,5 +1,12 @@
 # @boostxyz/evm
 
+## 6.1.0
+
+### Minor Changes
+
+- 06becaa: add valueType to variable incentive criteria
+- a0f4430: new contract base deployments for all modules on testnets
+
 ## 6.0.4
 
 ### Patch Changes

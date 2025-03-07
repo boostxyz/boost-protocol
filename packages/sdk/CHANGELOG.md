@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 6.2.0
+
+### Minor Changes
+
+- 507bf0b: ERC20VariableIncentive and ERC20VaribleCritieriaIncentive decodeClaimData functions return Promise<bigint>
+- 06becaa: add valueType to variable incentive criteria
+
 ## 6.1.3
 
 ### Patch Changes

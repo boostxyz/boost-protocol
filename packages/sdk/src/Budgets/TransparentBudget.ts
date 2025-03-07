@@ -53,8 +53,8 @@ export type TransparentBudgetLog<
 > = GenericLog<typeof transparentBudgetAbi, event>;
 
 /**
- * A minimal budget implementation that simply holds and distributes tokens (ERC20-like and native)
- * This type of budget supports ETH, ERC20, and ERC1155 assets only
+ * A budget implementation that transfers assets to the budget on Boost creation.
+ * Can be used with or without [Permit2](https://github.com/Uniswap/permit2) for token approval
  *
  * @export
  * @class TransparentBudget

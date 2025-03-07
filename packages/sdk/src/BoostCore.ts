@@ -505,6 +505,17 @@ export class BoostCore extends Deployable<
     });
   }
 
+  /**
+   * Creates a new Boost with a given TransparentBudget, which transfers assets to the budget on Boost creation.
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {?WriteParams} [params]
+   * @returns {Promise<Boost>}
+   */
   public async createBoostWithTransparentBudget(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
@@ -573,6 +584,17 @@ export class BoostCore extends Deployable<
     });
   }
 
+  /**
+   * Returns a transaction hash and simulated Boost creation using a transparent budget
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {?WriteParams} [params]
+   * @returns {Promise<HashAndSimulatedResult>}
+   */
   public async createBoostWithTransparentBudgetRaw(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
@@ -590,6 +612,17 @@ export class BoostCore extends Deployable<
     return { hash, result };
   }
 
+  /**
+   * Returns a simulated Boost creation using a transparent budget
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {?WriteParams} [params]
+   * @returns {Promise<SimulateContractReturnType>}
+   */
   public async simulateCreateBoostWithTransparentBudget(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
@@ -627,6 +660,20 @@ export class BoostCore extends Deployable<
     });
   }
 
+  /**
+   * Creates a new Boost with a given a TransparentBudget and Permit2, which transfers assets to the budget on Boost creation.
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
+   * @param {bigint} nonce - The nonce for the permit2 batch transfer
+   * @param {bigint} deadline - The deadline for the permit2 batch transfer
+   * @param {?WriteParams} [params]
+   * @returns {Promise<Boost>}
+   */
   public async createBoostWithPermit2(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
@@ -701,6 +748,20 @@ export class BoostCore extends Deployable<
     });
   }
 
+  /**
+   * Returns a transaction hash and simulated Boost creation using a TransparentBudget and Permit2
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
+   * @param {bigint} nonce - The nonce for the permit2 batch transfer
+   * @param {bigint} deadline - The deadline for the permit2 batch transfer
+   * @param {?WriteParams} [params]
+   * @returns {Promise<HashAndSimulatedResult>}
+   */
   public async createBoostWithPermit2Raw(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
@@ -726,6 +787,20 @@ export class BoostCore extends Deployable<
     return { hash, result };
   }
 
+  /**
+   * Returns a simulated Boost creation using a TransparentBudget and Permit2
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
+   * @param {bigint} nonce - The nonce for the permit2 batch transfer
+   * @param {bigint} deadline - The deadline for the permit2 batch transfer
+   * @param {?WriteParams} [params]
+   * @returns {Promise<SimulateContractReturnType>}
+   */
   public async simulateCreateBoostWithPermit2(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],

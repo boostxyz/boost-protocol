@@ -12,7 +12,8 @@ import {ERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/ERC20Pe
 import {AERC20PeggedIncentive} from "contracts/incentives/AERC20PeggedIncentive.sol";
 import {
     AERC20PeggedVariableCriteriaIncentive,
-    SignatureType
+    SignatureType,
+    ValueType
 } from "contracts/incentives/AERC20PeggedVariableCriteriaIncentive.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
@@ -176,7 +177,8 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
         bytes memory preflightPayload = incentive.preflight(
             abi.encode(
@@ -329,7 +331,8 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
-            targetContract: address(mockAsset)
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
         });
         return abi.encode(
             ERC20PeggedVariableCriteriaIncentive.InitPayload({

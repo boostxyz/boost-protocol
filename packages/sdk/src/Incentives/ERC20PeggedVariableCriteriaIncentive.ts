@@ -636,7 +636,6 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
         signature: zeroHash,
         fieldIndex: 0,
         targetContract: zeroAddress,
-        valueType: 0,
       },
     });
   }
@@ -826,7 +825,6 @@ export function prepareERC20PeggedVariableCriteriaIncentivePayload({
               { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'fieldIndex' },
               { type: 'address', name: 'targetContract' },
-              { type: 'uint8', name: 'valueType' },
             ],
           },
         ],
@@ -845,7 +843,6 @@ export function prepareERC20PeggedVariableCriteriaIncentivePayload({
           signature: criteria.signature,
           fieldIndex: criteria.fieldIndex,
           targetContract: criteria.targetContract,
-          valueType: criteria.valueType,
         },
       },
     ],

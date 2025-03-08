@@ -147,17 +147,6 @@ export enum SignatureType {
 }
 
 /**
- * The type of value used for the scalar value (RAW or WAD).
- *
- * @export
- * @enum {number}
- */
-export enum ValueType {
-  RAW = 0,
-  WAD = 1,
-}
-
-/**
  *  The payload describing how claimants are identified
  *
  * @export

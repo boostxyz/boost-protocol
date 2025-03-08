@@ -13,11 +13,6 @@ enum SignatureType {
     EVENT
 }
 
-enum ValueType {
-    RAW,
-    WAD
-}
-
 /// @title Abstract ERC20 Incentive with Variable Criteria-Based Rewards
 /// @notice Defines the structure for ERC20VariableIncentive with incentive variability criteria, without implementations
 abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
@@ -30,7 +25,6 @@ abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
         bytes32 signature;
         uint8 fieldIndex;
         address targetContract;
-        ValueType valueType;
     }
 
     IncentiveCriteria public incentiveCriteria;

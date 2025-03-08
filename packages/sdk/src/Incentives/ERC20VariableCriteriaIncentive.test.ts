@@ -23,7 +23,7 @@ import {
   zeroHash,
 } from "viem";
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
-import { SignatureType, ValueType } from "../Actions/EventAction";
+import { SignatureType } from "../Actions/EventAction";
 import type { Boost } from "../Boost";
 import {
   type ERC20VariableCriteriaIncentive,
@@ -47,7 +47,6 @@ export function basicErc721TransferScalarCriteria(
     signature: funcSelectors["transferFrom(address,address,uint256)"] as Hex, // Function selector for mint
     fieldIndex: 2, // Field where the scalar value resides
     targetContract: erc721.assertValidAddress(),
-    valueType: ValueType.WAD,
   };
 }
 
@@ -67,7 +66,6 @@ export function basicErc721MintScalarCriteria(
     ] as Hex, // Function selector for mint
     fieldIndex: 2, // Field where the scalar value resides
     targetContract: erc721.assertValidAddress(),
-    valueType: ValueType.WAD,
   };
 }
 
@@ -128,7 +126,6 @@ describe("ERC20VariableCriteriaIncentive", () => {
         signature: expect.any(String),
         fieldIndex: expect.any(Number),
         targetContract: expect.any(String),
-        valueType: expect.any(Number),
       });
     });
   });
@@ -197,7 +194,6 @@ describe("ERC20VariableCriteriaIncentive", () => {
         signature: zeroHash,
         fieldIndex: 255,
         targetContract: zeroAddress,
-        valueType: ValueType.WAD,
       });
 
       boost = await freshBoost(fixtures, {
@@ -213,7 +209,6 @@ describe("ERC20VariableCriteriaIncentive", () => {
       expect(deployedCriteria.signature).toBe(zeroHash);
       expect(deployedCriteria.fieldIndex).toBe(255);
       expect(deployedCriteria.targetContract).toBe(zeroAddress);
-      expect(deployedCriteria.valueType).toBe(ValueType.WAD);
     });
 
     test("should throw NoMatchingLogsError for event criteria with no matching logs", async () => {

@@ -15,11 +15,6 @@ enum SignatureType {
     EVENT
 }
 
-enum ValueType {
-    RAW,
-    WAD
-}
-
 /// @title AERC20PeggedIncentive
 /// @notice An ERC20 incentive with pegged variable rewards
 abstract contract AERC20PeggedVariableCriteriaIncentive is AERC20PeggedIncentive {
@@ -30,7 +25,6 @@ abstract contract AERC20PeggedVariableCriteriaIncentive is AERC20PeggedIncentive
         bytes32 signature;
         uint8 fieldIndex;
         address targetContract;
-        ValueType valueType;
     }
 
     IncentiveCriteria public incentiveCriteria;

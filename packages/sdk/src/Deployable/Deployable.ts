@@ -27,7 +27,7 @@ export type GenericDeployableParams = Omit<
   Parameters<typeof deployContract>[1],
   'args' | 'account'
 > & {
-  args: [Hex, ...Array<Hex>];
+  args: [Hex, ...Array<Hex>] | [];
   account?: Account;
 };
 

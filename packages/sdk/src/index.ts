@@ -18,6 +18,7 @@ export * from './AllowLists/SimpleDenyList';
 // Budgets
 
 export * from './Budgets/Budget';
+export * from './Budgets/TransparentBudget';
 // export * from './Budgets/SimpleBudget';
 // export * from './Budgets/VestingBudget';
 export * from './Budgets/ManagedBudget';

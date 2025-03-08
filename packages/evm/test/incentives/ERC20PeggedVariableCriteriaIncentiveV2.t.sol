@@ -172,8 +172,8 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
     //////////////////////////////////////////////////////
 
     function testPreflight() public {
-        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20PeggedVariableCriteriaIncentiveV2
-            .IncentiveCriteria({
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria memory criteria =
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
@@ -317,7 +317,9 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
     ///////////////////////////
 
     function _newIncentiveClone() internal returns (ERC20PeggedVariableCriteriaIncentiveV2) {
-        return ERC20PeggedVariableCriteriaIncentiveV2(LibClone.clone(address(new ERC20PeggedVariableCriteriaIncentiveV2())));
+        return ERC20PeggedVariableCriteriaIncentiveV2(
+            LibClone.clone(address(new ERC20PeggedVariableCriteriaIncentiveV2()))
+        );
     }
 
     function _newBudgetClone() internal returns (ManagedBudget newBudget) {
@@ -339,8 +341,8 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
         view
         returns (bytes memory)
     {
-        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20PeggedVariableCriteriaIncentiveV2
-            .IncentiveCriteria({
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria memory criteria =
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,

@@ -22,20 +22,13 @@ contract ERC20VariableCriteriaIncentiveV2 is AERC20VariableCriteriaIncentiveV2 {
     using SafeTransferLib for address;
 
     event ERC20VariableCriteriaIncentiveInitialized(
-        address indexed asset,
-        uint256 reward,
-        uint256 limit,
-        uint256 maxReward,
-        IncentiveCriteria criteria
+        address indexed asset, uint256 reward, uint256 limit, uint256 maxReward, IncentiveCriteria criteria
     );
 
     /// @notice Initialize the ERC20VariableCriteriaIncentive with IncentiveCriteria
     /// @param data_ The encoded initialization data `(address asset, uint256 reward, uint256 limit, IncentiveCriteria criteria)`
     function initialize(bytes calldata data_) public override initializer {
-        InitPayloadExtended memory init_ = abi.decode(
-            data_,
-            (InitPayloadExtended)
-        );
+        InitPayloadExtended memory init_ = abi.decode(data_, (InitPayloadExtended));
 
         address asset_ = init_.asset;
         uint256 reward_ = init_.reward;
@@ -59,41 +52,21 @@ contract ERC20VariableCriteriaIncentiveV2 is AERC20VariableCriteriaIncentiveV2 {
 
         _initializeOwner(msg.sender);
         _setRoles(msg.sender, MANAGER_ROLE);
-        emit ERC20VariableCriteriaIncentiveInitialized(
-            asset_,
-            reward_,
-            limit_,
-            maxReward_,
-            criteria_
-        );
+        emit ERC20VariableCriteriaIncentiveInitialized(asset_, reward_, limit_, maxReward_, criteria_);
     }
 
     /// @notice Returns the incentive criteria
     /// @return The stored IncentiveCriteria struct
-    function getIncentiveCriteria()
-        external
-        view
-        override
-        returns (IncentiveCriteria memory)
-    {
+    function getIncentiveCriteria() external view override returns (IncentiveCriteria memory) {
         return incentiveCriteria;
     }
 
     /// @notice Claim the incentive with variable rewards
     /// @param data_ The data payload for the incentive claim `(uint256signedAmount)`
     /// @return True if the incentive was successfully claimed
-    function claim(
-        address claimTarget,
-        bytes calldata data_
-    ) external override onlyOwner returns (bool) {
-        BoostClaimData memory boostClaimData = abi.decode(
-            data_,
-            (BoostClaimData)
-        );
-        uint256 signedAmount = abi.decode(
-            boostClaimData.incentiveData,
-            (uint256)
-        );
+    function claim(address claimTarget, bytes calldata data_) external override onlyOwner returns (bool) {
+        BoostClaimData memory boostClaimData = abi.decode(data_, (BoostClaimData));
+        uint256 signedAmount = abi.decode(boostClaimData.incentiveData, (uint256));
         uint256 claimAmount;
         if (!_isClaimable(claimTarget)) revert NotClaimable();
 
@@ -113,10 +86,7 @@ contract ERC20VariableCriteriaIncentiveV2 is AERC20VariableCriteriaIncentiveV2 {
         claims += 1;
         asset.safeTransfer(claimTarget, claimAmount);
 
-        emit Claimed(
-            claimTarget,
-            abi.encodePacked(asset, claimTarget, claimAmount)
-        );
+        emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, claimAmount));
         return true;
     }
 
@@ -124,9 +94,7 @@ contract ERC20VariableCriteriaIncentiveV2 is AERC20VariableCriteriaIncentiveV2 {
     /// @dev Uses `msg.sender` as the token source, and uses `asset` to identify which token.
     ///      Caller must approve this contract to spend at least `amount` prior to calling.
     /// @param amount The number of tokens to top up
-    function topup(
-        uint256 amount
-    ) external virtual override onlyOwnerOrRoles(MANAGER_ROLE) {
+    function topup(uint256 amount) external virtual override onlyOwnerOrRoles(MANAGER_ROLE) {
         if (amount == 0) {
             revert BoostError.InvalidInitialization();
         }

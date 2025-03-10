@@ -17,8 +17,8 @@ import {EventAction} from "contracts/actions/EventAction.sol";
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {ERC20PeggedIncentive} from "contracts/incentives/ERC20PeggedIncentive.sol";
 import {ERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
-import {ERC20VariableCriteriaIncentive} from "contracts/incentives/ERC20VariableCriteriaIncentive.sol";
-import {ERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol";
+import {ERC20VariableCriteriaIncentiveV2} from "contracts/incentives/ERC20VariableCriteriaIncentiveV2.sol";
+import {ERC20PeggedVariableCriteriaIncentiveV2} from "contracts/incentives/ERC20PeggedVariableCriteriaIncentiveV2.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
@@ -58,9 +58,9 @@ contract ModuleBaseDeployer is ScriptUtils {
 
         _deployERC20Incentive(registry);
         _deployERC20VariableIncentive(registry);
-        _deployERC20VariableCriteriaIncentive(registry);
+        _deployERC20VariableCriteriaIncentiveV2(registry);
         _deployERC20PeggedIncentive(registry);
-        _deployERC20PeggedVariableCriteriaIncentive(registry);
+        _deployERC20PeggedVariableCriteriaIncentiveV2(registry);
         _deployCGDAIncentive(registry);
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
@@ -207,30 +207,33 @@ contract ModuleBaseDeployer is ScriptUtils {
         );
     }
 
-    function _deployERC20PeggedVariableCriteriaIncentive(
+    function _deployERC20PeggedVariableCriteriaIncentiveV2(
         BoostRegistry registry
-    ) internal returns (address erc20PeggedVariableCriteriaIncentive) {
-        bytes memory initCode = type(ERC20PeggedVariableCriteriaIncentive)
+    ) internal returns (address erc20PeggedVariableCriteriaIncentiveV2) {
+        bytes memory initCode = type(ERC20PeggedVariableCriteriaIncentiveV2)
             .creationCode;
-        erc20PeggedVariableCriteriaIncentive = _getCreate2Address(initCode, "");
+        erc20PeggedVariableCriteriaIncentiveV2 = _getCreate2Address(
+            initCode,
+            ""
+        );
         console.log(
-            "ERC20PeggedVariableCriteriaIncentive: ",
-            erc20PeggedVariableCriteriaIncentive
+            "ERC20PeggedVariableCriteriaIncentiveV2: ",
+            erc20PeggedVariableCriteriaIncentiveV2
         );
         deployJson = deployJsonKey.serialize(
-            "ERC20PeggedVariableCriteriaIncentive",
-            erc20PeggedVariableCriteriaIncentive
+            "ERC20PeggedVariableCriteriaIncentiveV2",
+            erc20PeggedVariableCriteriaIncentiveV2
         );
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(
             newDeploy,
             string(
                 abi.encodePacked(
-                    "ERC20PeggedVariableCriteriaIncentive",
-                    erc20PeggedVariableCriteriaIncentive
+                    "ERC20PeggedVariableCriteriaIncentiveV2",
+                    erc20PeggedVariableCriteriaIncentiveV2
                 )
             ),
-            erc20PeggedVariableCriteriaIncentive,
+            erc20PeggedVariableCriteriaIncentiveV2,
             registry,
             ABoostRegistry.RegistryType.INCENTIVE
         );
@@ -261,30 +264,30 @@ contract ModuleBaseDeployer is ScriptUtils {
         );
     }
 
-    function _deployERC20VariableCriteriaIncentive(
+    function _deployERC20VariableCriteriaIncentiveV2(
         BoostRegistry registry
-    ) internal returns (address erc20VariableCriteriaIncentive) {
-        bytes memory initCode = type(ERC20VariableCriteriaIncentive)
+    ) internal returns (address erc20VariableCriteriaIncentiveV2) {
+        bytes memory initCode = type(ERC20VariableCriteriaIncentiveV2)
             .creationCode;
-        erc20VariableCriteriaIncentive = _getCreate2Address(initCode, "");
+        erc20VariableCriteriaIncentiveV2 = _getCreate2Address(initCode, "");
         console.log(
-            "ERC20VariableCriteriaIncentive: ",
-            erc20VariableCriteriaIncentive
+            "ERC20VariableCriteriaIncentiveV2: ",
+            erc20VariableCriteriaIncentiveV2
         );
         deployJson = deployJsonKey.serialize(
-            "ERC20VariableCriteriaIncentive",
-            erc20VariableCriteriaIncentive
+            "ERC20VariableCriteriaIncentiveV2",
+            erc20VariableCriteriaIncentiveV2
         );
         bool newDeploy = _deploy2(initCode, "");
         _registerIfNew(
             newDeploy,
             string(
                 abi.encodePacked(
-                    "ERC20VariableCriteriaIncentive",
-                    erc20VariableCriteriaIncentive
+                    "ERC20VariableCriteriaIncentiveV2",
+                    erc20VariableCriteriaIncentiveV2
                 )
             ),
-            erc20VariableCriteriaIncentive,
+            erc20VariableCriteriaIncentiveV2,
             registry,
             ABoostRegistry.RegistryType.INCENTIVE
         );

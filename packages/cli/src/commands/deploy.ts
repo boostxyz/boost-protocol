@@ -9,7 +9,7 @@ import VestingBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/Ves
 import AllowListIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/AllowListIncentive.sol/AllowListIncentive.json';
 import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/CGDAIncentive.sol/CGDAIncentive.json';
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
-import ERC20VariableCriteriaIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
+import ERC20VariableCriteriaIncentiveV2Artifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentiveV2.sol/ERC20VariableCriteriaIncentiveV2.json';
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
@@ -22,7 +22,7 @@ import {
   CGDAIncentive,
   type DeployableOptions,
   ERC20Incentive,
-  ERC20VariableCriteriaIncentive,
+  ERC20VariableCriteriaIncentiveV2,
   ERC20VariableIncentive,
   EventAction,
   LimitedSignerValidator,
@@ -65,7 +65,7 @@ export type DeployResult = {
   CGDA_INCENTIVE_BASE: string;
   ERC20_INCENTIVE_BASE: string;
   ERC20_VARIABLE_INCENTIVE_BASE: string;
-  ERC20_VARIABLE_CRITERIA_INCENTIVE_BASE: string;
+  ERC20_VARIABLE_CRITERIA_INCENTIVE_V2_BASE: string;
   ERC1155_INCENTIVE_BASE: string;
   POINTS_INCENTIVE_BASE: string;
   SIGNER_VALIDATOR_BASE: string;
@@ -245,11 +245,11 @@ export const deploy: Command<DeployResult> = async function deploy(
     }),
   );
 
-  const erc20VariableCriteriaIncentiveBase = await getDeployedContractAddress(
+  const erc20VariableCriteriaIncentiveV2Base = await getDeployedContractAddress(
     config,
     deployContract(config, {
-      abi: ERC20VariableCriteriaIncentiveArtifact.abi,
-      bytecode: ERC20VariableCriteriaIncentiveArtifact.bytecode as Hex,
+      abi: ERC20VariableCriteriaIncentiveV2Artifact.abi,
+      bytecode: ERC20VariableCriteriaIncentiveV2Artifact.bytecode as Hex,
       account,
     }),
   );
@@ -327,9 +327,9 @@ export const deploy: Command<DeployResult> = async function deploy(
         [chainId]: erc20VariableIncentiveBase,
       } as Record<number, Address>;
     },
-    ERC20VariableCriteriaIncentive: class TERC20VariableCriteriaIncentive extends ERC20VariableCriteriaIncentive {
+    ERC20VariableCriteriaIncentiveV2: class TERC20VariableCriteriaIncentiveV2 extends ERC20VariableCriteriaIncentiveV2 {
       public static override bases: Record<number, Address> = {
-        [chainId]: erc20VariableCriteriaIncentiveBase,
+        [chainId]: erc20VariableCriteriaIncentiveV2Base,
       } as Record<number, Address>;
     },
     // ERC1155Incentive: class TERC1155Incentive extends ERC1155Incentive {
@@ -374,7 +374,8 @@ export const deploy: Command<DeployResult> = async function deploy(
     CGDA_INCENTIVE_BASE: cgdaIncentiveBase,
     ERC20_INCENTIVE_BASE: erc20IncentiveBase,
     ERC20_VARIABLE_INCENTIVE_BASE: erc20VariableIncentiveBase,
-    ERC20_VARIABLE_CRITERIA_INCENTIVE_BASE: erc20VariableCriteriaIncentiveBase,
+    ERC20_VARIABLE_CRITERIA_INCENTIVE_V2_BASE:
+      erc20VariableCriteriaIncentiveV2Base,
     ERC1155_INCENTIVE_BASE: erc1155IncentiveBase,
     POINTS_INCENTIVE_BASE: pointsIncentiveBase,
     SIGNER_VALIDATOR_BASE: signerValidatorBase,

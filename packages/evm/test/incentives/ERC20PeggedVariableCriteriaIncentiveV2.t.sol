@@ -8,23 +8,23 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {AIncentive, IBoostClaim} from "contracts/incentives/AIncentive.sol";
-import {ERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol";
+import {ERC20PeggedVariableCriteriaIncentiveV2} from "contracts/incentives/ERC20PeggedVariableCriteriaIncentiveV2.sol";
 import {AERC20PeggedIncentive} from "contracts/incentives/AERC20PeggedIncentive.sol";
 import {
-    AERC20PeggedVariableCriteriaIncentive,
+    AERC20PeggedVariableCriteriaIncentiveV2,
     SignatureType,
     ValueType
-} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentive.sol";
+} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentiveV2.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 
 /// @title ERC20PeggedVariableCriteriaIncentiveTest
 /// @notice Tests for the updated ERC20PeggedVariableCriteriaIncentive contract with `maxReward` support
-contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
+contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
     using SafeTransferLib for address;
 
-    ERC20PeggedVariableCriteriaIncentive public incentive;
+    ERC20PeggedVariableCriteriaIncentiveV2 public incentive;
     ManagedBudget public budget;
     MockERC20 public mockAsset = new MockERC20();
     MockERC20 public pegAsset = new MockERC20();
@@ -172,8 +172,8 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
     //////////////////////////////////////////////////////
 
     function testPreflight() public {
-        AERC20PeggedVariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20PeggedVariableCriteriaIncentive
-            .IncentiveCriteria({
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria memory criteria =
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
@@ -182,7 +182,7 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
         });
         bytes memory preflightPayload = incentive.preflight(
             abi.encode(
-                ERC20PeggedVariableCriteriaIncentive.InitPayload({
+                ERC20PeggedVariableCriteriaIncentiveV2.InitPayload({
                     asset: address(mockAsset),
                     peg: address(pegAsset),
                     reward: 1 ether,
@@ -282,7 +282,7 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
     function testGetComponentInterface() public view {
         // Retrieve the component interface
         console.logBytes4(incentive.getComponentInterface());
-        assertEq(incentive.getComponentInterface(), type(AERC20PeggedVariableCriteriaIncentive).interfaceId);
+        assertEq(incentive.getComponentInterface(), type(AERC20PeggedVariableCriteriaIncentiveV2).interfaceId);
     }
 
     //////////////////////////////////////////////////
@@ -303,8 +303,10 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
     // Test Helper Functions //
     ///////////////////////////
 
-    function _newIncentiveClone() internal returns (ERC20PeggedVariableCriteriaIncentive) {
-        return ERC20PeggedVariableCriteriaIncentive(LibClone.clone(address(new ERC20PeggedVariableCriteriaIncentive())));
+    function _newIncentiveClone() internal returns (ERC20PeggedVariableCriteriaIncentiveV2) {
+        return ERC20PeggedVariableCriteriaIncentiveV2(
+            LibClone.clone(address(new ERC20PeggedVariableCriteriaIncentiveV2()))
+        );
     }
 
     function _newBudgetClone() internal returns (ManagedBudget newBudget) {
@@ -326,8 +328,8 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
         view
         returns (bytes memory)
     {
-        AERC20PeggedVariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20PeggedVariableCriteriaIncentive
-            .IncentiveCriteria({
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria memory criteria =
+        AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
             fieldIndex: 2,
@@ -335,7 +337,7 @@ contract ERC20PeggedVariableCriteriaIncentiveTest is Test {
             valueType: ValueType.WAD
         });
         return abi.encode(
-            ERC20PeggedVariableCriteriaIncentive.InitPayload({
+            ERC20PeggedVariableCriteriaIncentiveV2.InitPayload({
                 asset: asset,
                 peg: peg,
                 reward: reward,

@@ -13,8 +13,8 @@ import {
   type DeployableOptions,
   type DeployablePayloadOrAddress,
   type ERC20IncentivePayload,
-  type ERC20PeggedVariableCriteriaIncentivePayload,
-  type ERC20VariableCriteriaIncentivePayload,
+  type ERC20PeggedVariableCriteriaIncentiveV2Payload,
+  type ERC20VariableCriteriaIncentiveV2Payload,
   type ERC20VariableIncentivePayload,
   type EventActionPayload,
   FilterType,
@@ -183,22 +183,22 @@ export const seed: Command<SeedResult | BoostConfig> = async function seed(
               account,
             });
           return core.ERC20Incentive(incentive);
-        case 'ERC20VariableCriteriaIncentive':
+        case 'ERC20VariableCriteriaIncentiveV2':
           amount += incentive.limit;
           if (incentive.shouldMintAndAllocate)
             await fundBudgetForIncentive(budget, amount, incentive.asset, {
               config,
               account,
             });
-          return core.ERC20VariableCriteriaIncentive(incentive);
-        case 'ERC20PeggedVariableCriteriaIncentive':
+          return core.ERC20VariableCriteriaIncentiveV2(incentive);
+        case 'ERC20PeggedVariableCriteriaIncentiveV2':
           amount += incentive.limit;
           if (incentive.shouldMintAndAllocate)
             await fundBudgetForIncentive(budget, amount, incentive.asset, {
               config,
               account,
             });
-          return core.ERC20PeggedVariableCriteriaIncentive(incentive);
+          return core.ERC20PeggedVariableCriteriaIncentiveV2(incentive);
         case 'ERC20VariableIncentive':
           amount += incentive.limit;
           if (incentive.shouldMintAndAllocate)
@@ -350,10 +350,10 @@ export type BoostConfig = {
     | (Identifiable<ERC20IncentivePayload> & {
         shouldMintAndAllocate?: boolean;
       })
-    | (Identifiable<ERC20PeggedVariableCriteriaIncentivePayload> & {
+    | (Identifiable<ERC20PeggedVariableCriteriaIncentiveV2Payload> & {
         shouldMintAndAllocate?: boolean;
       })
-    | (Identifiable<ERC20VariableCriteriaIncentivePayload> & {
+    | (Identifiable<ERC20VariableCriteriaIncentiveV2Payload> & {
         shouldMintAndAllocate?: boolean;
       })
     | (Identifiable<ERC20VariableIncentivePayload> & {
@@ -453,8 +453,8 @@ export const IncentiveCriteriaSchema = z.object({
   valueType: z.nativeEnum(ValueType),
 });
 
-export const ERC20VariableCriteriaIncentiveSchema = z.object({
-  type: z.literal('ERC20VariableCriteriaIncentive'),
+export const ERC20VariableCriteriaIncentiveV2Schema = z.object({
+  type: z.literal('ERC20VariableCriteriaIncentiveV2'),
   asset: AddressSchema,
   shouldMintAndAllocate: z.boolean().optional().default(false),
   reward: z.coerce.bigint(),
@@ -463,8 +463,8 @@ export const ERC20VariableCriteriaIncentiveSchema = z.object({
   criteria: IncentiveCriteriaSchema,
 });
 
-export const ERC20PeggedVariableCriteriaIncentiveSchema = z.object({
-  type: z.literal('ERC20PeggedVariableCriteriaIncentive'),
+export const ERC20PeggedVariableCriteriaIncentiveV2Schema = z.object({
+  type: z.literal('ERC20PeggedVariableCriteriaIncentiveV2'),
   asset: AddressSchema,
   shouldMintAndAllocate: z.boolean().optional().default(false),
   maxReward: z.coerce.bigint(),
@@ -513,8 +513,8 @@ export const BoostSeedConfigSchema = z.object({
     z.union([
       AllowListIncentiveSchema,
       ERC20IncentiveSchema,
-      ERC20VariableCriteriaIncentiveSchema,
-      ERC20PeggedVariableCriteriaIncentiveSchema,
+      ERC20VariableCriteriaIncentiveV2Schema,
+      ERC20PeggedVariableCriteriaIncentiveV2Schema,
       ERC20VariableIncentiveSchema,
       CGDAIncentiveSchema,
       PointsIncentiveSchema,
@@ -651,10 +651,10 @@ export async function getCreateBoostPayloadFromBoostConfig(
         return core.PointsIncentive(incentive);
       case 'ERC20Incentive':
         return core.ERC20Incentive(incentive);
-      case 'ERC20VariableCriteriaIncentive':
-        return core.ERC20VariableCriteriaIncentive(incentive);
-      case 'ERC20PeggedVariableCriteriaIncentive':
-        return core.ERC20PeggedVariableCriteriaIncentive(incentive);
+      case 'ERC20VariableCriteriaIncentiveV2':
+        return core.ERC20VariableCriteriaIncentiveV2(incentive);
+      case 'ERC20PeggedVariableCriteriaIncentiveV2':
+        return core.ERC20PeggedVariableCriteriaIncentiveV2(incentive);
       case 'ERC20VariableIncentive':
         return core.ERC20VariableIncentive(incentive);
       case 'CGDAIncentive':

@@ -5,14 +5,14 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {AERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentive.sol";
+import {AERC20PeggedVariableCriteriaIncentiveV2} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentiveV2.sol";
 import {AERC20PeggedIncentive} from "contracts/incentives/AERC20PeggedIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {RBAC} from "contracts/shared/RBAC.sol";
 import {IToppable} from "contracts/shared/IToppable.sol";
 
-contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCriteriaIncentive, IToppable {
+contract ERC20PeggedVariableCriteriaIncentiveV2 is RBAC, AERC20PeggedVariableCriteriaIncentiveV2, IToppable {
     using SafeTransferLib for address;
 
     event ERC20PeggedIncentiveInitialized(
@@ -119,7 +119,7 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
             claimAmount = signedAmount;
         } else {
             // NOTE: this is assuming that the signed scalar is in ETH decimal format
-            claimAmount = reward * signedAmount / 1e18;
+            claimAmount = (reward * signedAmount) / 1e18;
         }
         if (maxReward != 0 && claimAmount > maxReward) {
             claimAmount = maxReward;
@@ -145,7 +145,7 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         returns (uint256, address)
     {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
-        (uint256 amount) = abi.decode(claim_.data, (uint256));
+        uint256 amount = abi.decode(claim_.data, (uint256));
 
         limit -= amount;
 
@@ -187,7 +187,7 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
             claimAmount = signedAmount;
         } else {
             // NOTE: this is assuming that the signed scalar is in ETH decimal format
-            claimAmount = reward * signedAmount / 1e18;
+            claimAmount = (reward * signedAmount) / 1e18;
         }
         return _isClaimable(claimAmount);
     }

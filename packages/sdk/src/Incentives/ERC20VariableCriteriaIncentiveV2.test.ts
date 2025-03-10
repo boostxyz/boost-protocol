@@ -26,11 +26,11 @@ import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { SignatureType, ValueType } from "../Actions/EventAction";
 import type { Boost } from "../Boost";
 import {
-  type ERC20VariableCriteriaIncentive,
-  type ERC20VariableCriteriaIncentivePayload,
+  type ERC20VariableCriteriaIncentiveV2,
+  type ERC20VariableCriteriaIncentiveV2Payload,
   type IncentiveCriteria,
   gasRebateIncentiveCriteria,
-} from "./ERC20VariableCriteriaIncentive";
+} from "./ERC20VariableCriteriaIncentiveV2";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 
 /**
@@ -79,7 +79,7 @@ export function basicErc721MintScalarCriteria(
  */
 export function basicErc721TransferScalarPayload(
   erc721: MockERC721,
-): ERC20VariableCriteriaIncentivePayload {
+): ERC20VariableCriteriaIncentiveV2Payload {
   return {
     asset: erc721.assertValidAddress(),
     reward: 1n,
@@ -92,11 +92,11 @@ export function basicErc721TransferScalarPayload(
 let fixtures: Fixtures,
   erc20: MockERC20,
   erc721: MockERC721,
-  erc20Incentive: ERC20VariableCriteriaIncentive,
+  erc20Incentive: ERC20VariableCriteriaIncentiveV2,
   budgets: BudgetFixtures,
   boost: Boost;
 
-describe("ERC20VariableCriteriaIncentive", () => {
+describe("ERC20VariableCriteriaIncentiveV2", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
@@ -105,7 +105,7 @@ describe("ERC20VariableCriteriaIncentive", () => {
     budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
     erc20 = await loadFixture(fundErc20(defaultOptions));
     erc721 = await loadFixture(fundErc721(defaultOptions));
-    erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentive({
+    erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentiveV2({
       asset: budgets.erc20.assertValidAddress(),
       reward: 1n,
       limit: 1n,
@@ -121,7 +121,7 @@ describe("ERC20VariableCriteriaIncentive", () => {
 
   describe("getIncentiveCriteria", () => {
     test("should fetch incentive criteria successfully", async () => {
-      const incentive = boost.incentives[0] as ERC20VariableCriteriaIncentive;
+      const incentive = boost.incentives[0] as ERC20VariableCriteriaIncentiveV2;
       const criteria = await incentive.getIncentiveCriteria();
       expect(criteria).toMatchObject({
         criteriaType: SignatureType.FUNC,
@@ -152,7 +152,7 @@ describe("ERC20VariableCriteriaIncentive", () => {
     });
 
     test("should return a valid scalar for event-based criteria", async () => {
-      erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentive({
+      erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentiveV2({
         asset: budgets.erc20.assertValidAddress(),
         reward: 1n,
         limit: 1n,
@@ -183,7 +183,7 @@ describe("ERC20VariableCriteriaIncentive", () => {
       // Ensure that the gasRebateIncentiveCriteria returns the correct structure
       const gasRebateCriteria = gasRebateIncentiveCriteria();
 
-      erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentive({
+      erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentiveV2({
         asset: budgets.erc20.assertValidAddress(),
         reward: 1n,
         limit: 1n,
@@ -207,7 +207,7 @@ describe("ERC20VariableCriteriaIncentive", () => {
 
       // Validate that the deployed incentive has the correct criteria set up
       const deployedIncentive = (await boost
-        .incentives[0]) as ERC20VariableCriteriaIncentive;
+        .incentives[0]) as ERC20VariableCriteriaIncentiveV2;
       const deployedCriteria = await deployedIncentive.getIncentiveCriteria();
       expect(deployedCriteria.criteriaType).toBe(SignatureType.EVENT);
       expect(deployedCriteria.signature).toBe(zeroHash);
@@ -250,7 +250,7 @@ describe("ERC20VariableCriteriaIncentive", () => {
 
   test("can properly encode a uint256", () => {
     //@ts-ignore
-    const incentive = fixtures.core.ERC20VariableCriteriaIncentive();
+    const incentive = fixtures.core.ERC20VariableCriteriaIncentiveV2();
     expect(incentive.buildClawbackData(1n)).toBe(
       "0x0000000000000000000000000000000000000000000000000000000000000001",
     );

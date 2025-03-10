@@ -20,7 +20,7 @@ enum ValueType {
 
 /// @title Abstract ERC20 Incentive with Variable Criteria-Based Rewards
 /// @notice Defines the structure for ERC20VariableIncentive with incentive variability criteria, without implementations
-abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
+abstract contract AERC20VariableCriteriaIncentiveV2 is ERC20VariableIncentive {
     using SafeTransferLib for address;
 
     uint256 public maxReward;
@@ -45,7 +45,11 @@ abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
 
     /// @notice Returns the incentive criteria (abstract)
     /// @return The stored IncentiveCriteria struct
-    function getIncentiveCriteria() external view virtual returns (IncentiveCriteria memory);
+    function getIncentiveCriteria()
+        external
+        view
+        virtual
+        returns (IncentiveCriteria memory);
 
     function getMaxReward() external view virtual returns (uint256) {
         return maxReward;
@@ -54,13 +58,24 @@ abstract contract AERC20VariableCriteriaIncentive is ERC20VariableIncentive {
     /// @notice Checks if a specific interface is supported
     /// @param interfaceId The ID of the interface to check
     /// @return True if the interface is supported, false otherwise
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(AERC20VariableCriteriaIncentive).interfaceId || super.supportsInterface(interfaceId);
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
+        return
+            interfaceId ==
+            type(AERC20VariableCriteriaIncentiveV2).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /// @notice Abstract function to get the component interface ID
     /// @return bytes4 The interface ID of the component
-    function getComponentInterface() public pure virtual override returns (bytes4) {
-        return type(AERC20VariableCriteriaIncentive).interfaceId;
+    function getComponentInterface()
+        public
+        pure
+        virtual
+        override
+        returns (bytes4)
+    {
+        return type(AERC20VariableCriteriaIncentiveV2).interfaceId;
     }
 }

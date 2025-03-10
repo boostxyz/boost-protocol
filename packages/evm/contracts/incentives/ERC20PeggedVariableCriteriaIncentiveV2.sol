@@ -5,14 +5,18 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 
-import {AERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentive.sol";
+import {AERC20PeggedVariableCriteriaIncentiveV2} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentiveV2.sol";
 import {AERC20PeggedIncentive} from "contracts/incentives/AERC20PeggedIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {RBAC} from "contracts/shared/RBAC.sol";
 import {IToppable} from "contracts/shared/IToppable.sol";
 
-contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCriteriaIncentive, IToppable {
+contract ERC20PeggedVariableCriteriaIncentiveV2 is
+    RBAC,
+    AERC20PeggedVariableCriteriaIncentiveV2,
+    IToppable
+{
     using SafeTransferLib for address;
 
     event ERC20PeggedIncentiveInitialized(
@@ -71,7 +75,11 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         uint256 maxTotalReward = init_.limit;
         uint256 available = init_.asset.balanceOf(address(this));
         if (available < maxTotalReward) {
-            revert BoostError.InsufficientFunds(init_.asset, available, maxTotalReward);
+            revert BoostError.InsufficientFunds(
+                init_.asset,
+                available,
+                maxTotalReward
+            );
         }
 
         IncentiveCriteria memory criteria_ = init_.criteria;
@@ -85,7 +93,13 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         _initializeOwner(msg.sender);
         _setRoles(init_.manager, MANAGER_ROLE);
         emit ERC20PeggedIncentiveInitialized(
-            init_.asset, init_.peg, init_.reward, init_.limit, init_.manager, init_.maxReward, init_.criteria
+            init_.asset,
+            init_.peg,
+            init_.reward,
+            init_.limit,
+            init_.manager,
+            init_.maxReward,
+            init_.criteria
         );
     }
 
@@ -93,33 +107,45 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
     /// @notice Preflight the incentive to determine the required budget action
     /// @param data_ The {InitPayload} for the incentive
     /// @return budgetData The {Transfer} payload to be passed to the {ABudget} for interpretation
-    function preflight(bytes calldata data_) external view override returns (bytes memory budgetData) {
+    function preflight(
+        bytes calldata data_
+    ) external view override returns (bytes memory budgetData) {
         InitPayload memory init_ = abi.decode(data_, (InitPayload));
         uint256 amount = init_.limit;
 
-        return abi.encode(
-            ABudget.Transfer({
-                assetType: ABudget.AssetType.ERC20,
-                asset: init_.asset,
-                target: address(this),
-                data: abi.encode(ABudget.FungiblePayload({amount: amount}))
-            })
-        );
+        return
+            abi.encode(
+                ABudget.Transfer({
+                    assetType: ABudget.AssetType.ERC20,
+                    asset: init_.asset,
+                    target: address(this),
+                    data: abi.encode(ABudget.FungiblePayload({amount: amount}))
+                })
+            );
     }
 
     /// @notice Claim the incentive with variable rewards
     /// @param data_ The data payload for the incentive claim `(uint256signedAmount)`
     /// @return True if the incentive was successfully claimed
-    function claim(address claimTarget, bytes calldata data_) external override onlyOwner returns (bool) {
-        BoostClaimData memory boostClaimData = abi.decode(data_, (BoostClaimData));
-        uint256 signedAmount = abi.decode(boostClaimData.incentiveData, (uint256));
+    function claim(
+        address claimTarget,
+        bytes calldata data_
+    ) external override onlyOwner returns (bool) {
+        BoostClaimData memory boostClaimData = abi.decode(
+            data_,
+            (BoostClaimData)
+        );
+        uint256 signedAmount = abi.decode(
+            boostClaimData.incentiveData,
+            (uint256)
+        );
         uint256 claimAmount;
 
         if (reward == 0) {
             claimAmount = signedAmount;
         } else {
             // NOTE: this is assuming that the signed scalar is in ETH decimal format
-            claimAmount = reward * signedAmount / 1e18;
+            claimAmount = (reward * signedAmount) / 1e18;
         }
         if (maxReward != 0 && claimAmount > maxReward) {
             claimAmount = maxReward;
@@ -133,25 +159,33 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
         claims += 1;
         asset.safeTransfer(claimTarget, claimAmount);
 
-        emit Claimed(claimTarget, abi.encodePacked(asset, claimTarget, claimAmount));
+        emit Claimed(
+            claimTarget,
+            abi.encodePacked(asset, claimTarget, claimAmount)
+        );
         return true;
     }
 
     /// @inheritdoc AIncentive
-    function clawback(bytes calldata data_)
+    function clawback(
+        bytes calldata data_
+    )
         external
         override
         onlyOwnerOrRoles(MANAGER_ROLE)
         returns (uint256, address)
     {
         ClawbackPayload memory claim_ = abi.decode(data_, (ClawbackPayload));
-        (uint256 amount) = abi.decode(claim_.data, (uint256));
+        uint256 amount = abi.decode(claim_.data, (uint256));
 
         limit -= amount;
 
         // Transfer the tokens back to the intended recipient
         asset.safeTransfer(claim_.target, amount);
-        emit Claimed(claim_.target, abi.encodePacked(asset, claim_.target, amount));
+        emit Claimed(
+            claim_.target,
+            abi.encodePacked(asset, claim_.target, amount)
+        );
 
         return (amount, asset);
     }
@@ -160,7 +194,9 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
     /// @dev Uses `msg.sender` as the token source, and uses `asset` to identify which token.
     ///      Caller must approve this contract to spend at least `amount` prior to calling.
     /// @param amount The number of tokens to top up
-    function topup(uint256 amount) external virtual override onlyOwnerOrRoles(MANAGER_ROLE) {
+    function topup(
+        uint256 amount
+    ) external virtual override onlyOwnerOrRoles(MANAGER_ROLE) {
         if (amount == 0) {
             revert BoostError.InvalidInitialization();
         }
@@ -178,16 +214,25 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
     /// @return True if the incentive is claimable based on the data payload
     /// @dev For the POOL strategy, the `bytes data` portion of the payload ignored
     /// @dev The recipient must not have already claimed the incentive
-    function isClaimable(address claimTarget, bytes calldata data_) public view override returns (bool) {
+    function isClaimable(
+        address claimTarget,
+        bytes calldata data_
+    ) public view override returns (bool) {
         uint256 claimAmount;
-        BoostClaimData memory boostClaimData = abi.decode(data_, (BoostClaimData));
+        BoostClaimData memory boostClaimData = abi.decode(
+            data_,
+            (BoostClaimData)
+        );
 
-        uint256 signedAmount = abi.decode(boostClaimData.incentiveData, (uint256));
+        uint256 signedAmount = abi.decode(
+            boostClaimData.incentiveData,
+            (uint256)
+        );
         if (reward == 0) {
             claimAmount = signedAmount;
         } else {
             // NOTE: this is assuming that the signed scalar is in ETH decimal format
-            claimAmount = reward * signedAmount / 1e18;
+            claimAmount = (reward * signedAmount) / 1e18;
         }
         return _isClaimable(claimAmount);
     }
@@ -204,7 +249,12 @@ contract ERC20PeggedVariableCriteriaIncentive is RBAC, AERC20PeggedVariableCrite
 
     /// @notice Returns the incentive criteria
     /// @return The stored IncentiveCriteria struct
-    function getIncentiveCriteria() external view override returns (IncentiveCriteria memory) {
+    function getIncentiveCriteria()
+        external
+        view
+        override
+        returns (IncentiveCriteria memory)
+    {
         return incentiveCriteria;
     }
 

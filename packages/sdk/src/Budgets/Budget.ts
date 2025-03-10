@@ -12,10 +12,14 @@ import type { ReadParams } from '../utils';
 import { ManagedBudget } from './ManagedBudget';
 import { ManagedBudgetWithFees } from './ManagedBudgetWithFees';
 import { ManagedBudgetWithFeesV2 } from './ManagedBudgetWithFeesV2';
+import { TransparentBudget } from './TransparentBudget';
 
 export {
   // VestingBudget,
   ManagedBudget,
+  ManagedBudgetWithFees,
+  ManagedBudgetWithFeesV2,
+  TransparentBudget,
 };
 
 /**
@@ -27,7 +31,8 @@ export {
 export type Budget =
   | ManagedBudget
   | ManagedBudgetWithFees
-  | ManagedBudgetWithFeesV2; // | VestingBudget
+  | ManagedBudgetWithFeesV2
+  | TransparentBudget; // | VestingBudget
 
 /**
  * A map of Budget component interfaces to their constructors.
@@ -40,6 +45,7 @@ export const BudgetByComponentInterface = {
   [AManagedBudget as Hex]: ManagedBudget,
   [AManagedBudgetWithFees as Hex]: ManagedBudgetWithFees,
   [AManagedBudgetWithFeesV2 as Hex]: ManagedBudgetWithFeesV2,
+  ['0x2929d19c']: TransparentBudget,
 };
 
 /**

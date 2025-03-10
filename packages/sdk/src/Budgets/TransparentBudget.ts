@@ -16,6 +16,7 @@ import {
   type ContractEventName,
   type Hex,
   zeroAddress,
+  zeroHash,
 } from 'viem';
 import { TransparentBudget as TransparentBudgetBases } from '../../dist/deployments.json';
 import type {
@@ -265,22 +266,6 @@ export class TransparentBudget extends DeployableTargetWithRBAC<
   }
 
   /**
-   * Get the owner of the budget
-   *
-   * @public
-   * @param {?ReadParams} [params]
-   * @returns {Promise<Address>}
-   */
-  public owner(params?: ReadParams) {
-    return readTransparentBudgetOwner(this._config, {
-      address: this.assertValidAddress(),
-      args: [],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
-  }
-
-  /**
    * Get the total amount of assets allocated to the budget, including any that have been distributed
    * If a tokenId is provided, get the total amount of ERC1155 assets allocated to the budget, including any that have been distributed
    *
@@ -342,7 +327,7 @@ export class TransparentBudget extends DeployableTargetWithRBAC<
     return {
       abi: transparentBudgetAbi,
       bytecode: bytecode as Hex,
-      args: [],
+      args: [zeroHash],
       ...this.optionallyAttachAccount(options.account),
     };
   }

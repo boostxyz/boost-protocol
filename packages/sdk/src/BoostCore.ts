@@ -519,11 +519,16 @@ export class BoostCore extends Deployable<
   public async createBoostWithTransparentBudget(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
-    _boostPayload: CreateBoostPayload,
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
     _params?: WriteParams,
   ) {
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
     const desiredChainId = _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,
@@ -598,7 +603,7 @@ export class BoostCore extends Deployable<
   public async createBoostWithTransparentBudgetRaw(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
-    _boostPayload: CreateBoostPayload,
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
     _params?: WriteParams,
   ): Promise<HashAndSimulatedResult> {
     const { request, result } =
@@ -626,11 +631,16 @@ export class BoostCore extends Deployable<
   public async simulateCreateBoostWithTransparentBudget(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
-    _boostPayload: CreateBoostPayload,
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
     _params?: WriteParams,
   ) {
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
     const desiredChainId = _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,
@@ -677,14 +687,19 @@ export class BoostCore extends Deployable<
   public async createBoostWithPermit2(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
-    _boostPayload: CreateBoostPayload,
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
     permit2Signature: Hex,
     nonce: bigint,
     deadline: bigint,
     _params?: WriteParams,
   ) {
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
     const desiredChainId = _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,
@@ -765,7 +780,7 @@ export class BoostCore extends Deployable<
   public async createBoostWithPermit2Raw(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
-    _boostPayload: CreateBoostPayload,
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
     permit2Signature: Hex,
     nonce: bigint,
     deadline: bigint,
@@ -804,14 +819,19 @@ export class BoostCore extends Deployable<
   public async simulateCreateBoostWithPermit2(
     budget: TransparentBudget | Address,
     allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
-    _boostPayload: CreateBoostPayload,
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
     permit2Signature: Hex,
     nonce: bigint,
     deadline: bigint,
     _params?: WriteParams,
   ) {
     const [payload, options] =
-      this.validateDeploymentConfig<CreateBoostPayload>(_boostPayload);
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
     const desiredChainId = _params?.chainId;
     const { chainId, address: coreAddress } = assertValidAddressByChainId(
       options.config,
@@ -895,8 +915,10 @@ export class BoostCore extends Deployable<
     let budgetPayload: BoostPayload['budget'] = zeroAddress;
     if (payload.budget.address) {
       budgetPayload = payload.budget.address;
-      if (!(await payload.budget.isAuthorized(coreAddress))) {
-        throw new BudgetMustAuthorizeBoostCore(coreAddress);
+      if (!(payload.budget instanceof TransparentBudget)) {
+        if (!(await payload.budget.isAuthorized(coreAddress))) {
+          throw new BudgetMustAuthorizeBoostCore(coreAddress);
+        }
       }
     } else {
       throw new MustInitializeBudgetError();

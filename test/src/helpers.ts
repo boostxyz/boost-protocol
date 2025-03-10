@@ -967,10 +967,9 @@ export function freshTransparentBudget(
   fixtures: Fixtures,
 ) {
   return async function freshTransparentBudget() {
-    return await fixtures.registry.initialize(
-      crypto.randomUUID(),
-      new fixtures.bases.TransparentBudget(options),
-    );
+    const budget = new fixtures.bases.TransparentBudget(options);
+    await budget.deploy();
+    return budget;
   };
 }
 

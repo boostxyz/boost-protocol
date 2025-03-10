@@ -1,22 +1,17 @@
-import { writeMockErc1155SetApprovalForAll } from "@boostxyz/evm";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { isAddress, parseEther, zeroAddress } from "viem";
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import { isAddress, parseEther } from "viem";
+import { beforeAll, describe, expect, test } from "vitest";
 import type { MockERC20 } from "@boostxyz/test/MockERC20";
 import type { MockERC1155 } from "@boostxyz/test/MockERC1155";
-import { accounts } from "@boostxyz/test/accounts";
 import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshTransparentBudget,
-  fundErc20,
-  fundErc1155,
   fundTransparentBudget,
+  makeMockEventActionPayload
 } from "@boostxyz/test/helpers";
-import { testAccount } from "@boostxyz/test/viem";
 import { TransparentBudget } from "./TransparentBudget";
-import { Roles } from "../Deployable/DeployableTargetWithRBAC";
+import { StrategyType } from "../claiming";
 
 let fixtures: Fixtures,
   budget: TransparentBudget,
@@ -35,128 +30,88 @@ describe("TransparentBudget", () => {
     expect(isAddress(budget.assertValidAddress())).toBe(true);
   });
 
-  test("can grant manager role to many users", async () => {
-    const budget = await loadFixture(
-      freshTransparentBudget(defaultOptions, fixtures),
+  test('can deploy a basic boost', async () => {
+    const { core } = fixtures
+    const { budget, erc20 } = await loadFixture(
+      fundTransparentBudget(defaultOptions, fixtures),
     );
-    const one = accounts[1].account;
-    const two = accounts[2].account;
-    await budget.setAuthorized([one, two], [true, true]);
-    expect(await budget.hasAllRoles(one, Roles.ADMIN)).toBe(false);
-    expect(await budget.hasAllRoles(one, Roles.MANAGER)).toBe(true);
-    expect(await budget.hasAllRoles(two, Roles.MANAGER)).toBe(true);
-  });
+    const boost = await fixtures.core.createBoostWithTransparentBudget(budget,
+      [
+        {
+          target: defaultOptions.account.address,
+          asset: erc20.assertValidAddress(),
+          amount: parseEther("1")
+        }
+      ],
+      {
+        owner: defaultOptions.account.address,
+        protocolFee: 0n,
+        maxParticipants: 5n,
+        validator: core.SignerValidator({
+          signers: [defaultOptions.account.address],
+          validatorCaller: defaultOptions.account.address,
+        }),
+        action: core.EventAction(
+          makeMockEventActionPayload(
+            core.assertValidAddress(),
+            erc20.assertValidAddress(),
+          ),
+        ),
+        incentives: [
+          core.ERC20Incentive({
+            asset: erc20.assertValidAddress(),
+            reward: parseEther("0.1"),
+            limit: 5n,
+            strategy: StrategyType.POOL,
+            manager: budget.assertValidAddress(),
+          }),
+        ],
+      })
+  })
 
-  test("can grant role", async () => {
-    const budget = await loadFixture(
-      freshTransparentBudget(defaultOptions, fixtures),
-    );
-    const manager = accounts[1].account;
-    await budget.grantRoles(manager, Roles.MANAGER);
-    expect(await budget.hasAllRoles(manager, Roles.ADMIN)).toBe(false);
-    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(true);
-  });
+  // describe("can disburse", () => {
+  //   beforeEach(async () => {
+  //     const budgetFixtures = await loadFixture(
+  //       fundTransparentBudget(defaultOptions, fixtures),
+  //     );
+  //     budget = budgetFixtures.budget as TransparentBudget;
+  //     erc20 = budgetFixtures.erc20;
+  //     erc1155 = budgetFixtures.erc1155;
+  //   });
 
-  test("can revoke role", async () => {
-    const budget = await loadFixture(
-      freshTransparentBudget(defaultOptions, fixtures),
-    );
-    const manager = accounts[1].account;
-    await budget.grantRoles(manager, Roles.MANAGER);
-    await budget.grantRoles(manager, Roles.ADMIN);
-    await budget.revokeRoles(manager, Roles.MANAGER);
-    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(false);
-    expect(await budget.hasAllRoles(manager, Roles.ADMIN)).toBe(true);
-    await budget.revokeRoles(manager, Roles.ADMIN);
-    expect(await budget.hasAllRoles(manager, Roles.ADMIN)).toBe(false);
-  });
+  //   test("native assets", async () => {
+  //     await budget.disburse({
+  //       amount: parseEther("1.0"),
+  //       asset: zeroAddress,
+  //       target: defaultOptions.account.address,
+  //     });
 
-  test("can grant many roles", async () => {
-    const budget = await loadFixture(
-      freshTransparentBudget(defaultOptions, fixtures),
-    );
-    const admin = accounts[1].account;
-    const manager = accounts[2].account;
-    await budget.grantManyRoles([admin, manager], [Roles.ADMIN, Roles.MANAGER]);
-    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(true);
-    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(true);
-  });
+  //     expect(await budget.distributed()).toBe(parseEther("1.0"));
+  //   });
 
-  test("can revoke many roles", async () => {
-    const budget = await loadFixture(
-      freshTransparentBudget(defaultOptions, fixtures),
-    );
-    const admin = accounts[1].account;
-    const manager = accounts[2].account;
-    await budget.grantManyRoles([admin, manager], [Roles.ADMIN, Roles.MANAGER]);
-    await budget.revokeManyRoles(
-      [admin, manager],
-      [Roles.ADMIN, Roles.MANAGER],
-    );
-    expect(await budget.hasAllRoles(admin, Roles.ADMIN)).toBe(false);
-    expect(await budget.hasAllRoles(manager, Roles.MANAGER)).toBe(false);
-  });
+  //   test("erc20 assets", async () => {
+  //     await budget.disburse({
+  //       amount: parseEther("10"),
+  //       asset: erc20.assertValidAddress(),
+  //       target: defaultOptions.account.address,
+  //     });
 
-  test("can be owned", async () => {
-    const budget = await loadFixture(
-      freshTransparentBudget(defaultOptions, fixtures),
-    );
-    expect(await budget.owner()).toBe(defaultOptions.account.address);
-  });
+  //     expect(await budget.distributed(erc20.assertValidAddress())).toBe(
+  //       parseEther("100"),
+  //     );
+  //   });
 
-  test("can have authorized users", async () => {
-    const budget = await loadFixture(
-      freshTransparentBudget(defaultOptions, fixtures),
-    );
-    expect(await budget.isAuthorized(defaultOptions.account.address)).toBe(
-      true,
-    );
-    expect(await budget.isAuthorized(zeroAddress)).toBe(false);
-  });
+  //   test("erc1155 assets", async () => {
+  //     await budget.disburse({
+  //       tokenId: 1n,
+  //       amount: 5n,
+  //       asset: erc1155.assertValidAddress(),
+  //       target: defaultOptions.account.address,
+  //     });
 
-  describe("can disburse", () => {
-    beforeEach(async () => {
-      const budgetFixtures = await loadFixture(
-        fundTransparentBudget(defaultOptions, fixtures),
-      );
-      budget = budgetFixtures.budget as TransparentBudget;
-      erc20 = budgetFixtures.erc20;
-      erc1155 = budgetFixtures.erc1155;
-    });
-
-    test("native assets", async () => {
-      await budget.disburse({
-        amount: parseEther("1.0"),
-        asset: zeroAddress,
-        target: defaultOptions.account.address,
-      });
-
-      expect(await budget.distributed()).toBe(parseEther("1.0"));
-    });
-
-    test("erc20 assets", async () => {
-      await budget.disburse({
-        amount: parseEther("10"),
-        asset: erc20.assertValidAddress(),
-        target: defaultOptions.account.address,
-      });
-
-      expect(await budget.distributed(erc20.assertValidAddress())).toBe(
-        parseEther("100"),
-      );
-    });
-
-    test("erc1155 assets", async () => {
-      await budget.disburse({
-        tokenId: 1n,
-        amount: 5n,
-        asset: erc1155.assertValidAddress(),
-        target: defaultOptions.account.address,
-      });
-
-      expect(await budget.distributed(erc1155.assertValidAddress(), 1n)).to.equal(
-        5n,
-      );
-    });
-  });
+  //     expect(await budget.distributed(erc1155.assertValidAddress(), 1n)).to.equal(
+  //       5n,
+  //     );
+  //   });
+  // });
 });

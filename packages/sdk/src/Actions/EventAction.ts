@@ -147,6 +147,19 @@ export enum SignatureType {
 }
 
 /**
+ * The type of value used for the scalar value (RAW or WAD).
+ * - RAW: Raw integer value (e.g., NFT quantity)
+ * - WAD: Value with 18 decimals (e.g., token amount)
+ *
+ * @export
+ * @enum {number}
+ */
+export enum ValueType {
+  RAW = 0,
+  WAD = 1,
+}
+
+/**
  *  The payload describing how claimants are identified
  *
  * @export

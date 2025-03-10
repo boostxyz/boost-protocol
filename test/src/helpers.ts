@@ -1173,7 +1173,7 @@ export function fundManagedBudget(
   erc1155?: MockERC1155,
   points?: MockPoints,
 ) {
-  return async function fundBudget() {
+  return async function fundManagedBudget() {
     if (!budget)
       budget = await loadFixture(freshManagedBudget(options, fixtures));
     if (!erc20) erc20 = await loadFixture(fundErc20(options));
@@ -1317,7 +1317,7 @@ export function fundManagedBudgetWithFeesV2(
 export function fundTransparentBudget(
   options: DeployableTestOptions,
   fixtures: Fixtures,
-  budget?: ManagedBudget,
+  budget?: TransparentBudget,
   erc20?: MockERC20,
   erc1155?: MockERC1155,
   points?: MockPoints,
@@ -1358,7 +1358,7 @@ export function fundTransparentBudget(
     // });
 
     return { budget, erc20, erc1155, points } as BudgetFixtures & {
-      budget: ManagedBudget;
+      budget: TransparentBudget;
     };
   };
 }

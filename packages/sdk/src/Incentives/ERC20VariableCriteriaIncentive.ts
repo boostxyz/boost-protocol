@@ -111,6 +111,7 @@ export interface GetIncentiveScalarParams {
  * @class ERC20VariableCriteriaIncentive
  * @typedef {ERC20VariableCriteriaIncentive}
  * @extends {ERC20VariableIncentive<ERC20VariableCriteriaIncentivePayload, typeof erc20VariableCriteriaIncentiveAbi>}
+ * @deprecated This class is deprecated. Please use ERC20VariableCriteriaIncentiveV2 instead.
  */
 export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
   ERC20VariableCriteriaIncentivePayload,
@@ -356,6 +357,7 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
  * - `fieldIndex`: 255, indicating the use of transaction gas cost using CheatCodes enum.
  * - `targetContract`: A zeroed address (0x0000...0000), applicable to any contract.
  *
+ * @deprecated Do not use with ERC20VariableCriteriaIncentiveV2 or ERC20PeggedVariableCriteriaIncentiveV2.
  * @returns {IncentiveCriteria} Returns an IncentiveCriteria object for a gas rebate.
  *
  * @example

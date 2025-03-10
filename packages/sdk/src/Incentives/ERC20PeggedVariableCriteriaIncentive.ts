@@ -137,6 +137,7 @@ export type Erc20PeggedVariableCriteriaIncentiveLog<
  * @class Erc20PeggedVariableCriteriaIncentive
  * @typedef {ERC20PeggedVariableCriteriaIncentive}
  * @extends {DeployableTarget<ERC20PeggedVariableCriteriaIncentive>}
+ * @deprecated This class is deprecated. Please use ERC20PeggedVariableCriteriaIncentiveV2 instead.
  */
 export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
   ERC20PeggedVariableCriteriaIncentivePayload,

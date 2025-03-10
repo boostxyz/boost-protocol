@@ -1645,7 +1645,7 @@ export class BoostCore extends Deployable<
    * @param {?boolean} [isBase]
    * @returns {ERC20PeggedVariableCriteriaIncentiveV2}
    * */
-  ERC20PeggedVariableCriteriaIncentive(
+  ERC20PeggedVariableCriteriaIncentiveV2(
     options: DeployablePayloadOrAddress<ERC20PeggedVariableCriteriaIncentiveV2Payload>,
     isBase?: boolean,
   ) {

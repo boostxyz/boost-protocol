@@ -31,6 +31,7 @@ import {
   type SimpleAllowListPayload,
   type SimpleDenyListPayload,
   StrategyType,
+  ValueType,
   allowListFromAddress,
 } from '@boostxyz/sdk';
 import { MockERC20 } from '@boostxyz/test/MockERC20';
@@ -449,6 +450,7 @@ export const IncentiveCriteriaSchema = z.object({
   signature: zAbiItemSchema,
   fieldIndex: z.number().nonnegative(),
   targetContract: AddressSchema,
+  valueType: z.nativeEnum(ValueType),
 });
 
 export const ERC20VariableCriteriaIncentiveSchema = z.object({

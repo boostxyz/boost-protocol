@@ -19,7 +19,7 @@ import {
   zeroHash,
 } from 'viem';
 import { ERC20VariableCriteriaIncentive as ERC20VariableCriteriaIncentiveBases } from '../../dist/deployments.json';
-import { SignatureType } from '../Actions/EventAction';
+import { SignatureType, ValueType } from '../Actions/EventAction';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -94,6 +94,14 @@ export interface IncentiveCriteria {
    * @type {Address}
    */
   targetContract: Address;
+  /**
+   * The type of value used for the scalar value (RAW or WAD).
+   * - RAW: Raw integer value (e.g., NFT quantity)
+   * - WAD: Value with 18 decimals (e.g., token amount)
+   *
+   * @type {ValueType}
+   */
+  valueType: ValueType;
 }
 
 export interface ReadIncentiveCriteriaParams extends ReadParams {}
@@ -374,6 +382,7 @@ export function gasRebateIncentiveCriteria(): IncentiveCriteria {
     signature: zeroHash,
     fieldIndex: CheatCodes.GAS_REBATE_INCENTIVE,
     targetContract: zeroAddress,
+    valueType: ValueType.WAD,
   };
 }
 
@@ -413,6 +422,7 @@ export function prepareERC20VariableCriteriaIncentivePayload({
               { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'fieldIndex' },
               { type: 'address', name: 'targetContract' },
+              { type: 'uint8', name: 'valueType' },
             ],
           },
         ],
@@ -429,6 +439,7 @@ export function prepareERC20VariableCriteriaIncentivePayload({
           signature: criteria.signature,
           fieldIndex: criteria.fieldIndex,
           targetContract: criteria.targetContract,
+          valueType: criteria.valueType,
         },
       },
     ],

@@ -17,7 +17,7 @@ import CGDAIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/
 import ERC20IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20Incentive.sol/ERC20Incentive.json';
 import ERC20PeggedIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedIncentive.sol/ERC20PeggedIncentive.json';
 import ERC20PeggedVariableCriteriaIncentiveV2Artifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedVariableCriteriaIncentiveV2.sol/ERC20PeggedVariableCriteriaIncentiveV2.json';
-import ERC20VariableCriteriaIncentiveV2Artifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentiveV2.sol/ERC20VariableCriteriaIncentive.V2json';
+import ERC20VariableCriteriaIncentiveV2Artifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentiveV2.sol/ERC20VariableCriteriaIncentiveV2.json';
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';

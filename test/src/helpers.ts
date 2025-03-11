@@ -1274,7 +1274,7 @@ export function fundManagedBudgetWithFeesV2(
   erc1155?: MockERC1155,
   points?: MockPoints,
 ) {
-  return async function fundBudget() {
+  return async function fundManagedBudgetWithFeesV2() {
     if (!budget)
       budget = await loadFixture(
         freshManagedBudgetWithFeesV2(options, fixtures),
@@ -1325,40 +1325,20 @@ export function fundTransparentBudget(
   erc1155?: MockERC1155,
   points?: MockPoints,
 ) {
-  return async function fundBudget() {
+  return async function fundTransparentBudget() {
     if (!budget)
       budget = await loadFixture(freshTransparentBudget(options, fixtures));
     if (!erc20) erc20 = await loadFixture(fundErc20(options));
     if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
     if (!points) points = await loadFixture(fundPoints(options));
 
-    // await budget.allocate(
-    //   {
-    //     amount: parseEther('1.0'),
-    //     asset: zeroAddress,
-    //     target: options.account.address,
-    //   },
-    //   { value: parseEther('1.0') },
-    // );
-
     await erc20.approve(budget.assertValidAddress(), parseEther('110'));
-    // await budget.allocate({
-    //   amount: parseEther('110'),
-    //   asset: erc20.assertValidAddress(),
-    //   target: options.account.address,
-    // });
 
     await writeMockErc1155SetApprovalForAll(options.config, {
       args: [budget.assertValidAddress(), true],
       address: erc1155.assertValidAddress(),
       account: options.account,
     });
-    // await budget.allocate({
-    //   tokenId: 1n,
-    //   amount: 110n,
-    //   asset: erc1155.assertValidAddress(),
-    //   target: options.account.address,
-    // });
 
     return { budget, erc20, erc1155, points } as BudgetFixtures & {
       budget: TransparentBudget;

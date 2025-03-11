@@ -223,21 +223,12 @@ contract LogComponentInterface is ScriptUtils {
         );
     }
 
-<<<<<<< HEAD
     function _getInterfaceAERC20PeggedVariableCriteriaIncentiveV2() internal {
         string memory interfaceId = uint256(
             uint32(type(AERC20PeggedVariableCriteriaIncentiveV2).interfaceId)
         ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AERC20PeggedVariableCriteriaIncentiveV2",
-=======
-    function _getInterfaceAERC20PeggedVariableCriteriaIncentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AERC20PeggedVariableCriteriaIncentive).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "AERC20PeggedVariableCriteriaIncentive",
->>>>>>> 1eaa613f (fix: build)
             interfaceId
         );
     }
@@ -252,21 +243,12 @@ contract LogComponentInterface is ScriptUtils {
         );
     }
 
-<<<<<<< HEAD
     function _getInterfaceAERC20VariableCriteriaIncentiveV2() internal {
         string memory interfaceId = uint256(
             uint32(type(AERC20VariableCriteriaIncentiveV2).interfaceId)
         ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AERC20VariableCriteriaIncentiveV2",
-=======
-    function _getInterfaceAERC20VariableCriteriaIncentive() internal {
-        string memory interfaceId = uint256(
-            uint32(type(AERC20VariableCriteriaIncentive).interfaceId)
-        ).toHexString(4);
-        componentJson = componentJsonKey.serialize(
-            "AERC20VariableCriteriaIncentive",
->>>>>>> 1eaa613f (fix: build)
             interfaceId
         );
     }

@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/evm",
-  "version": "6.0.4",
+  "version": "7.0.0-canary.0",
   "description": "",
   "private": true,
   "publishConfig": {

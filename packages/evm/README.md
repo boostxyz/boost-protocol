@@ -93,6 +93,6 @@ by the Signer.
 `LimitedSignerValidator` hard caps the claim quantity for a given incentive
 regardless of the validity of individual action requests presented to the signer.
 
-Most incentives hard-cap each address to one claim, but `ERC20PeggedVariableCriteriaIncentive`
+Most incentives hard-cap each address to one claim, but `ERC20PeggedVariableCriteriaIncentiveV2`
 and `ERC20VariableIncentive` do not, by design. `ERC1155Incentive` catalogs
 individual claims by transaction hash, as opposed to claimant.

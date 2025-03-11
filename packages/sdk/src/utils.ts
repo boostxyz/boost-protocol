@@ -58,7 +58,7 @@ export enum CheatCodes {
   ANY_ACTION_PARAM = 255,
   /* An Event Action `ActionClaimant` with a `fieldIndex` set to `CheatCodes.TX_SENDER_CLAIMANT`, will always validate with the sender of a given transaction. */
   TX_SENDER_CLAIMANT = 255,
-  /* For use with `ERC20VariableCriteriaIncentive`, if the criteria's `fieldIndex` is set to `CheatCodes.GAS_REBATE_INCENTIVE`, will claim an incentive amount equal to the transaction's gas used. */
+  /* For use with `ERC20VariableCriteriaIncentiveV2`, if the criteria's `fieldIndex` is set to `CheatCodes.GAS_REBATE_INCENTIVE`, will claim an incentive amount equal to the transaction's gas used. */
   GAS_REBATE_INCENTIVE = 255,
 }
 

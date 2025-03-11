@@ -1,9 +1,9 @@
 import {
-  erc20VariableCriteriaIncentiveAbi,
-  readErc20VariableCriteriaIncentiveGetIncentiveCriteria,
-  readErc20VariableCriteriaIncentiveGetMaxReward,
+  erc20VariableCriteriaIncentiveV2Abi,
+  readErc20VariableCriteriaIncentiveV2GetIncentiveCriteria,
+  readErc20VariableCriteriaIncentiveV2GetMaxReward,
 } from '@boostxyz/evm';
-import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentive.sol/ERC20VariableCriteriaIncentive.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableCriteriaIncentiveV2.sol/ERC20VariableCriteriaIncentiveV2.json';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
 import {
   type AbiEvent,
@@ -18,7 +18,7 @@ import {
   zeroAddress,
   zeroHash,
 } from 'viem';
-import { ERC20VariableCriteriaIncentive as ERC20VariableCriteriaIncentiveBases } from '../../dist/deployments.json';
+import { ERC20VariableCriteriaIncentiveV2 as ERC20VariableCriteriaIncentiveV2Bases } from '../../dist/deployments.json';
 import { SignatureType, ValueType } from '../Actions/EventAction';
 import type {
   DeployableOptions,
@@ -33,9 +33,9 @@ import {
 import { CheatCodes, type ReadParams } from '../utils';
 import { ERC20VariableIncentive } from './ERC20VariableIncentive';
 
-export { erc20VariableCriteriaIncentiveAbi };
+export { erc20VariableCriteriaIncentiveV2Abi };
 
-export interface ERC20VariableCriteriaIncentivePayload {
+export interface ERC20VariableCriteriaIncentiveV2Payload {
   /**
    * The address of the incentivized asset.
    *
@@ -117,16 +117,16 @@ export interface GetIncentiveScalarParams {
  *
  * @export
  * @class ERC20VariableCriteriaIncentive
- * @typedef {ERC20VariableCriteriaIncentive}
- * @extends {ERC20VariableIncentive<ERC20VariableCriteriaIncentivePayload, typeof erc20VariableCriteriaIncentiveAbi>}
+ * @typedef {ERC20VariableCriteriaIncentiveV2}
+ * @extends {ERC20VariableIncentive<ERC20VariableCriteriaIncentiveV2Payload, typeof erc20VariableCriteriaIncentiveV2Abi>}
  */
-export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
-  ERC20VariableCriteriaIncentivePayload,
-  typeof erc20VariableCriteriaIncentiveAbi,
+export class ERC20VariableCriteriaIncentiveV2 extends ERC20VariableIncentive<
+  ERC20VariableCriteriaIncentiveV2Payload,
+  typeof erc20VariableCriteriaIncentiveV2Abi,
   Promise<bigint>
 > {
   //@ts-expect-error instantiated correctly
-  public override readonly abi = erc20VariableCriteriaIncentiveAbi;
+  public override readonly abi = erc20VariableCriteriaIncentiveV2Abi;
   /**
    * @inheritdoc
    *
@@ -135,8 +135,8 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_ERC20_VARIABLE_CRITERIA_INCENTIVE_BASE,
-    ...(ERC20VariableCriteriaIncentiveBases as Record<number, Address>),
+    31337: import.meta.env.VITE_ERC20_VARIABLE_CRITERIA_INCENTIVE_V2_BASE,
+    ...(ERC20VariableCriteriaIncentiveV2Bases as Record<number, Address>),
   };
 
   /**
@@ -155,7 +155,7 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
   ): Promise<IncentiveCriteria> {
     try {
       const criteria =
-        await readErc20VariableCriteriaIncentiveGetIncentiveCriteria(
+        await readErc20VariableCriteriaIncentiveV2GetIncentiveCriteria(
           this._config,
           {
             ...params,
@@ -170,7 +170,7 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
   }
 
   /**
-   * Decodes claim data for the ERC20VariableCriteriaIncentive, returning the claim amount.
+   * Decodes claim data for the ERC20VariableCriteriaIncentiveV2, returning the claim amount.
    * Useful when deriving amount claimed from logs.
    *
    * @public
@@ -222,7 +222,7 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
    * @throws {IncentiveCriteriaNotFoundError}
    */
   public async getMaxReward(params?: ReadParams): Promise<bigint> {
-    const maxReward = await readErc20VariableCriteriaIncentiveGetMaxReward(
+    const maxReward = await readErc20VariableCriteriaIncentiveV2GetMaxReward(
       this._config,
       {
         ...params,
@@ -330,12 +330,12 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
    * @inheritdoc
    *
    * @public
-   * @param {?ERC20VariableCriteriaIncentivePayload} [_payload]
+   * @param {?ERC20VariableCriteriaIncentiveV2Payload} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: ERC20VariableCriteriaIncentivePayload,
+    _payload?: ERC20VariableCriteriaIncentiveV2Payload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [payload, options] = this.validateDeploymentConfig(
@@ -343,9 +343,9 @@ export class ERC20VariableCriteriaIncentive extends ERC20VariableIncentive<
       _options,
     );
     return {
-      abi: erc20VariableCriteriaIncentiveAbi,
+      abi: erc20VariableCriteriaIncentiveV2Abi,
       bytecode: bytecode as Hex,
-      args: [prepareERC20VariableCriteriaIncentivePayload(payload)],
+      args: [prepareERC20VariableCriteriaIncentiveV2Payload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
   }
@@ -397,13 +397,13 @@ export function gasRebateIncentiveCriteria(): IncentiveCriteria {
  * @param {IncentiveCriteria} param0.criteria - The incentive criteria for reward distribution.
  * @returns {Hex}
  */
-export function prepareERC20VariableCriteriaIncentivePayload({
+export function prepareERC20VariableCriteriaIncentiveV2Payload({
   asset,
   reward,
   limit,
   maxReward = 0n,
   criteria,
-}: ERC20VariableCriteriaIncentivePayload) {
+}: ERC20VariableCriteriaIncentiveV2Payload) {
   return encodeAbiParameters(
     [
       {

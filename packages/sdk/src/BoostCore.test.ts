@@ -959,12 +959,12 @@ describe("BoostCore", () => {
   test("can create a boost with a pegged variable criteria incentive", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
-    
+
     // Create a new MockERC721 instance
     const erc721 = await loadFixture(fundErc721(defaultOptions));
 
     // Create the pegged variable criteria incentive
-    const peggedVariableCriteriaIncentive = core.ERC20PeggedVariableCriteriaIncentive({
+    const peggedVariableCriteriaIncentive = core.ERC20PeggedVariableCriteriaIncentiveV2({
       asset: erc20.assertValidAddress(),
       peg: erc20.assertValidAddress(), // Using same token as peg for simplicity
       reward: parseEther("1"),
@@ -1049,7 +1049,7 @@ describe("Top-Up Incentives", () => {
       asset: erc20.assertValidAddress(),
       target: defaultOptions.account.address,
     });
-    
+
 
     const createdBoost = await core.createBoost({
       protocolFee: 0n,
@@ -1150,7 +1150,7 @@ describe("Top-Up Incentives", () => {
 });
 
 describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
-  let incentive: ReturnType<typeof fixtures.core.ERC20PeggedVariableCriteriaIncentive>;
+  let incentive: ReturnType<typeof fixtures.core.ERC20PeggedVariableCriteriaIncentiveV2>;
   let boostId: bigint;
   let erc721: MockERC721;
 
@@ -1161,7 +1161,7 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
     // Create a new MockERC721 instance
     erc721 = await loadFixture(fundErc721(defaultOptions));
 
-    incentive = core.ERC20PeggedVariableCriteriaIncentive({
+    incentive = core.ERC20PeggedVariableCriteriaIncentiveV2({
       asset: erc20.assertValidAddress(),
       peg: erc20.assertValidAddress(),
       reward: parseEther("1"),
@@ -1292,11 +1292,11 @@ describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () 
     const { budget, erc20 } = budgets;
 
     const erc721 = await loadFixture(fundErc721(defaultOptions));
-    const incentive = core.ERC20PeggedVariableCriteriaIncentive({
+    const incentive = core.ERC20PeggedVariableCriteriaIncentiveV2({
       asset: erc20.assertValidAddress(),
       peg: erc20.assertValidAddress(),
       reward: parseEther("1"),
-      limit: parseEther("10"), 
+      limit: parseEther("10"),
       maxReward: parseEther("2"),
       manager: budget.assertValidAddress(),
       criteria: {

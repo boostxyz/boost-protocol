@@ -8,16 +8,16 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {ERC20VariableCriteriaIncentive} from "contracts/incentives/ERC20VariableCriteriaIncentive.sol";
-import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
+import {ERC20VariableCriteriaIncentiveV2} from "contracts/incentives/ERC20VariableCriteriaIncentiveV2.sol";
+import {AERC20VariableCriteriaIncentiveV2} from "contracts/incentives/AERC20VariableCriteriaIncentiveV2.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive, IBoostClaim} from "contracts/incentives/AIncentive.sol";
-import {SignatureType, ValueType} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
+import {SignatureType, ValueType} from "contracts/incentives/AERC20VariableCriteriaIncentiveV2.sol";
 
 contract ERC20VariableCriteriaIncentiveTest is Test {
     using SafeTransferLib for address;
 
-    ERC20VariableCriteriaIncentive public incentive;
+    ERC20VariableCriteriaIncentiveV2 public incentive;
     MockERC20 public mockAsset = new MockERC20();
 
     function setUp() public {
@@ -37,7 +37,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testInitialize() public {
         // Define the IncentiveCriteria struct
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
@@ -55,7 +55,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         assertEq(incentive.limit(), 5);
 
         // Verify the stored IncentiveCriteria
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory storedCriteria = incentive.getIncentiveCriteria();
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory storedCriteria = incentive.getIncentiveCriteria();
         assertEq(uint8(storedCriteria.criteriaType), uint8(SignatureType.EVENT));
         assertEq(storedCriteria.signature, keccak256("Transfer(address,address,uint256)"));
         assertEq(storedCriteria.fieldIndex, 2);
@@ -64,7 +64,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testInitialize_InsufficientAllocation() public {
         // Define criteria as in the positive case
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
@@ -74,7 +74,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         });
 
         // Attempt to initialize with a limit greater than available funds => revert
-        ERC20VariableCriteriaIncentive.InitPayloadExtended memory initPayload = AERC20VariableCriteriaIncentive
+        ERC20VariableCriteriaIncentiveV2.InitPayloadExtended memory initPayload = AERC20VariableCriteriaIncentiveV2
             .InitPayloadExtended({
             asset: address(mockAsset),
             reward: 100 ether,
@@ -89,7 +89,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testInitialize_InvalidInitialization() public {
         // Define criteria as in the positive case
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
@@ -102,7 +102,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         vm.expectRevert(BoostError.InvalidInitialization.selector);
         incentive.initialize(
             abi.encode(
-                AERC20VariableCriteriaIncentive.InitPayloadExtended({
+                AERC20VariableCriteriaIncentiveV2.InitPayloadExtended({
                     asset: address(mockAsset),
                     reward: 1 ether,
                     limit: 0,
@@ -119,7 +119,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testClaim_LimitedByMaxReward() public {
         // Define the IncentiveCriteria struct
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
@@ -151,7 +151,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testClaim() public {
         // Define the IncentiveCriteria struct
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
@@ -189,7 +189,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testTopup() public {
         // Define the IncentiveCriteria struct
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
@@ -220,7 +220,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testTopup_ZeroAmount() public {
         // Define the IncentiveCriteria struct
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
             signature: keccak256("Transfer(address,address,uint256)"),
@@ -247,7 +247,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testGetIncentiveCriteria() public {
         // Initialize with valid data
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentive
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
             .IncentiveCriteria({
             criteriaType: SignatureType.FUNC,
             signature: keccak256("transfer(address,uint256)"),
@@ -258,7 +258,7 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         _initialize(address(mockAsset), 2 ether, 10, 0, criteria);
 
         // Retrieve and validate the incentive criteria
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory storedCriteria = incentive.getIncentiveCriteria();
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory storedCriteria = incentive.getIncentiveCriteria();
 
         assertEq(uint8(storedCriteria.criteriaType), uint8(SignatureType.FUNC));
         assertEq(storedCriteria.signature, keccak256("transfer(address,uint256)"));
@@ -272,15 +272,15 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
 
     function testGetComponentInterface() public view {
         console.logBytes4(incentive.getComponentInterface());
-        assertEq(incentive.getComponentInterface(), type(AERC20VariableCriteriaIncentive).interfaceId);
+        assertEq(incentive.getComponentInterface(), type(AERC20VariableCriteriaIncentiveV2).interfaceId);
     }
 
     ///////////////////////////////////////
     // Test Helper Functions            //
     ///////////////////////////////////////
 
-    function _newIncentiveClone() internal returns (ERC20VariableCriteriaIncentive) {
-        return ERC20VariableCriteriaIncentive(LibClone.clone(address(new ERC20VariableCriteriaIncentive())));
+    function _newIncentiveClone() internal returns (ERC20VariableCriteriaIncentiveV2) {
+        return ERC20VariableCriteriaIncentiveV2(LibClone.clone(address(new ERC20VariableCriteriaIncentiveV2())));
     }
 
     function _initialize(
@@ -288,9 +288,9 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         uint256 reward,
         uint256 limit,
         uint256 maxReward,
-        AERC20VariableCriteriaIncentive.IncentiveCriteria memory criteria
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria
     ) internal {
-        ERC20VariableCriteriaIncentive.InitPayloadExtended memory initPayload = AERC20VariableCriteriaIncentive
+        ERC20VariableCriteriaIncentiveV2.InitPayloadExtended memory initPayload = AERC20VariableCriteriaIncentiveV2
             .InitPayloadExtended({asset: asset, reward: reward, limit: limit, maxReward: maxReward, criteria: criteria});
         incentive.initialize(abi.encode(initPayload));
     }

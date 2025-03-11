@@ -5,7 +5,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
-import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
+import {AERC20VariableCriteriaIncentiveV2} from "contracts/incentives/AERC20VariableCriteriaIncentiveV2.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
@@ -18,7 +18,7 @@ enum SignatureType {
 
 /// @title ERC20 Incentive with Variable Criteria-Based Rewards
 /// @notice Extends the ERC20VariableIncentive to include incentive variability criteria on-chain
-contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
+contract ERC20VariableCriteriaIncentiveV2 is AERC20VariableCriteriaIncentiveV2 {
     using SafeTransferLib for address;
 
     event ERC20VariableCriteriaIncentiveInitialized(
@@ -74,7 +74,7 @@ contract ERC20VariableCriteriaIncentive is AERC20VariableCriteriaIncentive {
             claimAmount = signedAmount;
         } else {
             // NOTE: this is assuming that the signed scalar is in ETH decimal format
-            claimAmount = reward * signedAmount / 1e18;
+            claimAmount = (reward * signedAmount) / 1e18;
         }
         if (maxReward != 0 && claimAmount > maxReward) {
             claimAmount = maxReward;

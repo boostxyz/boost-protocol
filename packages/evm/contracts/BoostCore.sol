@@ -45,17 +45,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice Emitted when an additional incentive is added to a Boost on initial creation or after the fact
     event IncentiveAdded(
-        uint256 indexed boostId,
-        uint256 indexed incentiveId,
-        address indexed incentiveAddress,
-        bool isNewBoost
+        uint256 indexed boostId, uint256 indexed incentiveId, address indexed incentiveAddress, bool isNewBoost
     );
 
     event ProtocolFeesCollected(
-        uint256 indexed boostId,
-        uint256 indexed incentiveId,
-        uint256 amount,
-        address indexed recipient
+        uint256 indexed boostId, uint256 indexed incentiveId, uint256 amount, address indexed recipient
     );
 
     struct IncentiveDisbursalInfo {
@@ -67,19 +61,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     event BoostClaimed(
-        uint256 indexed boostId,
-        uint256 indexed incentiveId,
-        address indexed claimant,
-        address referrer,
-        bytes data
+        uint256 indexed boostId, uint256 indexed incentiveId, address indexed claimant, address referrer, bytes data
     );
 
     event BoostToppedUp(
-        uint256 indexed boostId,
-        uint256 indexed incentiveId,
-        address indexed sender,
-        uint256 amount,
-        uint256 fee
+        uint256 indexed boostId, uint256 indexed incentiveId, address indexed sender, uint256 amount, uint256 fee
     );
 
     /// @notice The list of boosts
@@ -110,21 +96,14 @@ contract BoostCore is Ownable, ReentrancyGuard {
     mapping(bytes32 => IncentiveDisbursalInfo) public incentivesFeeInfo;
 
     modifier canCreateBoost(address sender) {
-        if (
-            address(createBoostAuth) != address(0) &&
-            !createBoostAuth.isAuthorized(sender)
-        ) {
+        if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
             revert BoostError.Unauthorized();
         }
         _;
     }
 
     /// @notice Constructor to initialize the owner
-    constructor(
-        BoostRegistry registry_,
-        address protocolFeeReceiver_,
-        address owner_
-    ) {
+    constructor(BoostRegistry registry_, address protocolFeeReceiver_, address owner_) {
         _initializeOwner(owner_);
         registry = registry_;
         protocolFeeReceiver = protocolFeeReceiver_;
@@ -146,18 +125,13 @@ contract BoostCore is Ownable, ReentrancyGuard {
     ///         - `uint256` for the protocolFee (added to the base protocol fee)
     ///         - `uint256` for the maxParticipants
     ///         - `address` for the owner of the Boost
-    function createBoost(
-        bytes calldata data_
-    )
+    function createBoost(bytes calldata data_)
         external
         canCreateBoost(msg.sender)
         nonReentrant
         returns (BoostLib.Boost memory)
     {
-        BoostLib.CreateBoostPayload memory payload_ = abi.decode(
-            data_.cdDecompress(),
-            (BoostLib.CreateBoostPayload)
-        );
+        BoostLib.CreateBoostPayload memory payload_ = abi.decode(data_.cdDecompress(), (BoostLib.CreateBoostPayload));
 
         // Validate the Budget
         _checkBudget(payload_.budget);
@@ -167,44 +141,24 @@ contract BoostCore is Ownable, ReentrancyGuard {
         boost.owner = payload_.owner;
         boost.budget = payload_.budget;
         boost.protocolFee = address(protocolFeeModule) != address(0)
-            ? IProtocolFeeModule(protocolFeeModule).getProtocolFee(data_) +
-                payload_.protocolFee
+            ? IProtocolFeeModule(protocolFeeModule).getProtocolFee(data_) + payload_.protocolFee
             : protocolFee + payload_.protocolFee;
         boost.maxParticipants = payload_.maxParticipants;
 
         // Setup the Boost components
-        boost.action = AAction(
-            _makeTarget(type(AAction).interfaceId, payload_.action, true)
-        );
-        boost.allowList = AAllowList(
-            _makeTarget(type(AAllowList).interfaceId, payload_.allowList, true)
-        );
-        address protocolAsset = protocolFeeModule != address(0)
-            ? IProtocolFeeModule(protocolFeeModule).getProtocolAsset(data_)
-            : address(0);
-        boost.incentives = _makeIncentives(
-            payload_.incentives,
-            payload_.budget,
-            boost.protocolFee,
-            protocolAsset
-        );
+        boost.action = AAction(_makeTarget(type(AAction).interfaceId, payload_.action, true));
+        boost.allowList = AAllowList(_makeTarget(type(AAllowList).interfaceId, payload_.allowList, true));
+        address protocolAsset =
+            protocolFeeModule != address(0) ? IProtocolFeeModule(protocolFeeModule).getProtocolAsset(data_) : address(0);
+        boost.incentives = _makeIncentives(payload_.incentives, payload_.budget, boost.protocolFee, protocolAsset);
         boost.validator = AValidator(
             payload_.validator.instance == address(0)
-                ? boost.action.supportsInterface(type(AValidator).interfaceId)
-                    ? address(boost.action)
-                    : address(0)
-                : _makeTarget(
-                    type(AValidator).interfaceId,
-                    payload_.validator,
-                    true
-                )
+                ? boost.action.supportsInterface(type(AValidator).interfaceId) ? address(boost.action) : address(0)
+                : _makeTarget(type(AValidator).interfaceId, payload_.validator, true)
         );
 
         if (address(boost.validator) == address(0)) {
-            revert BoostError.InvalidInstance(
-                type(AValidator).interfaceId,
-                address(0)
-            );
+            revert BoostError.InvalidInstance(type(AValidator).interfaceId, address(0));
         }
 
         emit BoostCreated(
@@ -229,10 +183,11 @@ contract BoostCore is Ownable, ReentrancyGuard {
      * @param target The `BoostLib.Target` describing the new incentive (base implementation, params, etc.)
      * @return newIncentive The newly created AIncentive contract instance
      */
-    function addIncentiveToBoost(
-        uint256 boostId,
-        BoostLib.Target calldata target
-    ) external nonReentrant returns (AIncentive newIncentive) {
+    function addIncentiveToBoost(uint256 boostId, BoostLib.Target calldata target)
+        external
+        nonReentrant
+        returns (AIncentive newIncentive)
+    {
         // 1) Load the boost and check ownership
         BoostLib.Boost storage boost = _boosts[boostId];
         if (msg.sender != boost.owner) {
@@ -243,28 +198,15 @@ contract BoostCore is Ownable, ReentrancyGuard {
         AIncentive[] storage existingIncentives = boost.incentives;
         uint256 newIncentiveId = existingIncentives.length;
         address protocolAsset = protocolFeeModule != address(0)
-            ? IProtocolFeeModule(protocolFeeModule).getProtocolAsset(
-                abi.encode(boostId, target)
-            )
+            ? IProtocolFeeModule(protocolFeeModule).getProtocolAsset(abi.encode(boostId, target))
             : address(0);
 
-        newIncentive = _createSingleIncentive(
-            target,
-            boost.budget,
-            boost.protocolFee,
-            protocolAsset,
-            boostId,
-            newIncentiveId
-        );
+        newIncentive =
+            _createSingleIncentive(target, boost.budget, boost.protocolFee, protocolAsset, boostId, newIncentiveId);
 
         existingIncentives.push(newIncentive);
 
-        emit IncentiveAdded(
-            boostId,
-            newIncentiveId,
-            address(newIncentive),
-            false
-        );
+        emit IncentiveAdded(boostId, newIncentiveId, address(newIncentive), false);
     }
 
     /// @notice Top up an existing incentive using tokens from a budget.
@@ -275,12 +217,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param incentiveId The ID of the incentive within that Boost
     /// @param data_ The raw data to pass to the incentive’s `preflight` and eventually `topup`
     /// @param budget The budget contract from which to disburse; if zero, we use the boost's default budget
-    function topupIncentiveFromBudget(
-        uint256 boostId,
-        uint256 incentiveId,
-        bytes calldata data_,
-        address budget
-    ) external nonReentrant {
+    function topupIncentiveFromBudget(uint256 boostId, uint256 incentiveId, bytes calldata data_, address budget)
+        external
+        nonReentrant
+    {
         BoostLib.Boost storage boost = _boosts[boostId];
         AIncentive incentiveContract = boost.incentives[incentiveId];
 
@@ -289,38 +229,24 @@ contract BoostCore is Ownable, ReentrancyGuard {
             revert BoostError.InvalidInitialization();
         }
 
-        ABudget.Transfer memory request = abi.decode(
-            preflightData,
-            (ABudget.Transfer)
-        );
+        ABudget.Transfer memory request = abi.decode(preflightData, (ABudget.Transfer));
 
-        ABudget budget_ = (budget == address(0))
-            ? boost.budget
-            : ABudget(payable(budget));
+        ABudget budget_ = (budget == address(0)) ? boost.budget : ABudget(payable(budget));
         _checkBudget(budget_);
 
         uint256 topupAmount;
         uint256 fee;
         uint256 totalAmount;
         {
-            if (
-                request.assetType == ABudget.AssetType.ERC20 ||
-                request.assetType == ABudget.AssetType.ETH
-            ) {
-                ABudget.FungiblePayload memory payload = abi.decode(
-                    request.data,
-                    (ABudget.FungiblePayload)
-                );
+            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+                ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
                 topupAmount = payload.amount;
                 fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
                 totalAmount = topupAmount + fee;
                 payload.amount = totalAmount;
                 request.data = abi.encode(payload);
             } else if (request.assetType == ABudget.AssetType.ERC1155) {
-                ABudget.ERC1155Payload memory payload = abi.decode(
-                    request.data,
-                    (ABudget.ERC1155Payload)
-                );
+                ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
                 topupAmount = payload.amount;
                 fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
                 totalAmount = topupAmount + fee;
@@ -345,10 +271,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
         if (topupAmount > 0) {
             {
-                if (
-                    request.assetType == ABudget.AssetType.ERC20 ||
-                    request.assetType == ABudget.AssetType.ETH
-                ) {
+                if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
                     // Approve exactly `topupAmount` tokens
                     IERC20 token = IERC20(request.asset);
                     token.approve(address(incentiveContract), topupAmount);
@@ -359,19 +282,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
                     IERC1155 erc1155 = IERC1155(request.asset);
                     erc1155.setApprovalForAll(address(incentiveContract), true);
                     IToppable(address(incentiveContract)).topup(topupAmount);
-                    erc1155.setApprovalForAll(
-                        address(incentiveContract),
-                        false
-                    );
+                    erc1155.setApprovalForAll(address(incentiveContract), false);
                 }
             }
-            emit BoostToppedUp(
-                boostId,
-                incentiveId,
-                msg.sender,
-                topupAmount,
-                fee
-            );
+            emit BoostToppedUp(boostId, incentiveId, msg.sender, topupAmount, fee);
         }
     }
 
@@ -381,43 +295,30 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param boostId The ID of the Boost
     /// @param incentiveId The ID of the incentive within that Boost
     /// @param data_ The raw data to pass to the incentive’s `preflight` and eventually `topup`
-    function topupIncentiveFromSender(
-        uint256 boostId,
-        uint256 incentiveId,
-        bytes calldata data_
-    ) external nonReentrant {
+    function topupIncentiveFromSender(uint256 boostId, uint256 incentiveId, bytes calldata data_)
+        external
+        nonReentrant
+    {
         BoostLib.Boost storage boost = _boosts[boostId];
         AIncentive incentiveContract = boost.incentives[incentiveId];
         bytes memory preflightData = incentiveContract.preflight(data_);
         if (preflightData.length == 0) {
             revert BoostError.InvalidInitialization();
         }
-        ABudget.Transfer memory request = abi.decode(
-            preflightData,
-            (ABudget.Transfer)
-        );
+        ABudget.Transfer memory request = abi.decode(preflightData, (ABudget.Transfer));
 
         uint256 topupAmount;
         uint256 fee;
         uint256 totalAmount;
         uint256 tokenId;
-        if (
-            request.assetType == ABudget.AssetType.ERC20 ||
-            request.assetType == ABudget.AssetType.ETH
-        ) {
-            ABudget.FungiblePayload memory payload = abi.decode(
-                request.data,
-                (ABudget.FungiblePayload)
-            );
+        if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
+            ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
             topupAmount = payload.amount;
             fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
             totalAmount = topupAmount + fee;
             payload.amount = totalAmount;
         } else if (request.assetType == ABudget.AssetType.ERC1155) {
-            ABudget.ERC1155Payload memory payload = abi.decode(
-                request.data,
-                (ABudget.ERC1155Payload)
-            );
+            ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
             topupAmount = payload.amount;
             fee = (topupAmount * boost.protocolFee) / FEE_DENOMINATOR;
             totalAmount = topupAmount + fee;
@@ -434,10 +335,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
 
         if (topupAmount > 0) {
-            if (
-                request.assetType == ABudget.AssetType.ERC20 ||
-                request.assetType == ABudget.AssetType.ETH
-            ) {
+            if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
                 // Approve exactly `topupAmount` tokens
                 IERC20 token = IERC20(request.asset);
                 token.transferFrom(msg.sender, address(this), totalAmount);
@@ -447,24 +345,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
             } else {
                 // ERC1155 => setApprovalForAll
                 IERC1155 erc1155 = IERC1155(request.asset);
-                erc1155.safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    tokenId,
-                    totalAmount,
-                    ""
-                );
+                erc1155.safeTransferFrom(msg.sender, address(this), tokenId, totalAmount, "");
                 erc1155.setApprovalForAll(address(incentiveContract), true);
                 IToppable(address(incentiveContract)).topup(topupAmount);
                 erc1155.setApprovalForAll(address(incentiveContract), false);
             }
-            emit BoostToppedUp(
-                boostId,
-                incentiveId,
-                msg.sender,
-                topupAmount,
-                fee
-            );
+            emit BoostToppedUp(boostId, incentiveId, msg.sender, topupAmount, fee);
         }
     }
 
@@ -473,12 +359,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param incentiveId_ The ID of the AIncentive
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
-    function claimIncentive(
-        uint256 boostId_,
-        uint256 incentiveId_,
-        address referrer_,
-        bytes calldata data_
-    ) external payable {
+    function claimIncentive(uint256 boostId_, uint256 incentiveId_, address referrer_, bytes calldata data_)
+        external
+        payable
+    {
         claimIncentiveFor(boostId_, incentiveId_, referrer_, data_, msg.sender);
     }
 
@@ -502,24 +386,16 @@ contract BoostCore is Ownable, ReentrancyGuard {
         AIncentive incentiveContract = boost.incentives[incentiveId_];
 
         // Validate the claimant against the allow list and the validator
-        if (!boost.allowList.isAllowed(claimant, data_))
+        if (!boost.allowList.isAllowed(claimant, data_)) {
             revert BoostError.Unauthorized();
+        }
 
         // Call validate and pass along the value
-        if (
-            !boost.validator.validate{value: msg.value}(
-                boostId_,
-                incentiveId_,
-                claimant,
-                data_
-            )
-        ) {
+        if (!boost.validator.validate{value: msg.value}(boostId_, incentiveId_, claimant, data_)) {
             revert BoostError.Unauthorized();
         }
         // Get the balance of the asset before the claim
-        uint256 initialBalance = incentive.asset != ZERO_ADDRESS
-            ? _getAssetBalance(incentive, incentiveContract)
-            : 0;
+        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
 
         // Execute the claim
         // wake-disable-next-line reentrancy (protected)
@@ -528,27 +404,17 @@ contract BoostCore is Ownable, ReentrancyGuard {
         }
 
         // Get the balance of the asset after the claim
-        uint256 finalBalance = incentive.asset != ZERO_ADDRESS
-            ? _getAssetBalance(incentive, incentiveContract)
-            : 0;
+        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
 
         // Calculate the change in balance and the protocol fee amount
-        uint256 balanceChange = initialBalance > finalBalance
-            ? initialBalance - finalBalance
-            : 0;
-        uint256 protocolFeeAmount = (balanceChange * incentive.protocolFee) /
-            FEE_DENOMINATOR;
+        uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
+        uint256 protocolFeeAmount = (balanceChange * incentive.protocolFee) / FEE_DENOMINATOR;
 
         // Transfer the protocol fee to the protocol fee receiver if applicable
         if (protocolFeeAmount > 0) {
             _transferProtocolFee(incentive, protocolFeeAmount);
             incentive.protocolFeesRemaining -= protocolFeeAmount;
-            emit ProtocolFeesCollected(
-                boostId_,
-                incentiveId_,
-                protocolFeeAmount,
-                protocolFeeReceiver
-            );
+            emit ProtocolFeesCollected(boostId_, incentiveId_, protocolFeeAmount, protocolFeeReceiver);
         }
 
         emit BoostClaimed(boostId_, incentiveId_, claimant, referrer_, data_);
@@ -557,9 +423,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Get a Boost by index
     /// @param index The index of the Boost
     /// @return The Boost at the specified index
-    function getBoost(
-        uint256 index
-    ) external view returns (BoostLib.Boost memory) {
+    function getBoost(uint256 index) external view returns (BoostLib.Boost memory) {
         return _boosts[index];
     }
 
@@ -571,19 +435,17 @@ contract BoostCore is Ownable, ReentrancyGuard {
 
     /// @notice Get the incentives for a Boost
     /// @param key The key composed of the Boost ID and the Incentive ID - keccak256(abi.encodePacked(boostId, incentiveId))
-    function getIncentiveFeesInfo(
-        bytes32 key
-    ) external view returns (IncentiveDisbursalInfo memory) {
+    function getIncentiveFeesInfo(bytes32 key) external view returns (IncentiveDisbursalInfo memory) {
         return incentivesFeeInfo[key];
     }
 
     /// @notice Returns the protocol fee and any remaining incentive value to the owner or budget
     /// @param boostId The ID of the Boost
-    function clawback(
-        bytes calldata data_,
-        uint256 boostId,
-        uint256 incentiveId
-    ) external nonReentrant returns (uint256, address) {
+    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        nonReentrant
+        returns (uint256, address)
+    {
         BoostLib.Boost memory boost = _boosts[boostId];
 
         if (msg.sender != address(boost.budget)) {
@@ -595,44 +457,26 @@ contract BoostCore is Ownable, ReentrancyGuard {
         IncentiveDisbursalInfo storage incentive = incentivesFeeInfo[key];
 
         // Decode the data for clawback
-        AIncentive.ClawbackPayload memory claim_ = abi.decode(
-            data_,
-            (AIncentive.ClawbackPayload)
-        );
+        AIncentive.ClawbackPayload memory claim_ = abi.decode(data_, (AIncentive.ClawbackPayload));
         uint256 amount = abi.decode(claim_.data, (uint256));
 
         // Calculate the protocol fee based on the clawback amount and the protocol fee percentage
-        uint256 protocolFeeAmount = (amount * incentive.protocolFee) /
-            FEE_DENOMINATOR;
+        uint256 protocolFeeAmount = (amount * incentive.protocolFee) / FEE_DENOMINATOR;
 
         // Transfer the protocol fee to the target of the clawback
         if (protocolFeeAmount > 0) {
-            if (
-                incentive.assetType == ABudget.AssetType.ERC20 ||
-                incentive.assetType == ABudget.AssetType.ETH
-            ) {
+            if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
                 incentive.asset.safeTransfer(claim_.target, protocolFeeAmount);
             } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
                 // wake-disable-next-line reentrancy (false positive, function is nonReentrant)
                 IERC1155(incentive.asset).safeTransferFrom(
-                    address(this),
-                    claim_.target,
-                    incentive.tokenId,
-                    protocolFeeAmount,
-                    ""
+                    address(this), claim_.target, incentive.tokenId, protocolFeeAmount, ""
                 );
             }
-            emit ProtocolFeesCollected(
-                boostId,
-                incentiveId,
-                protocolFeeAmount,
-                claim_.target
-            );
+            emit ProtocolFeesCollected(boostId, incentiveId, protocolFeeAmount, claim_.target);
         }
 
-        (uint256 clawbackAmount, address asset) = boost
-            .incentives[incentiveId]
-            .clawback(abi.encode(claim_));
+        (uint256 clawbackAmount, address asset) = boost.incentives[incentiveId].clawback(abi.encode(claim_));
         // Throw a custom error here
         if (clawbackAmount == 0) {
             revert BoostError.ClawbackFailed(msg.sender, data_);
@@ -644,18 +488,14 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Settle any outstanding protocol fees for a Boost incentive
     /// @param boostId The ID of the Boost
     /// @param incentiveId The ID of the AIncentive
-    function settleProtocolFees(
-        uint256 boostId,
-        uint256 incentiveId
-    ) external nonReentrant {
+    function settleProtocolFees(uint256 boostId, uint256 incentiveId) external nonReentrant {
         // Generate the unique key for the incentive
         bytes32 key = _generateKey(boostId, incentiveId);
         IncentiveDisbursalInfo storage incentive = incentivesFeeInfo[key];
         AIncentive incentiveContract = _boosts[boostId].incentives[incentiveId];
 
         // Get the expected balance based on protocolFeesRemaining and the specific incentive.protocolFee
-        uint256 expectedFeeBalance = (incentive.protocolFeesRemaining *
-            FEE_DENOMINATOR) / incentive.protocolFee;
+        uint256 expectedFeeBalance = (incentive.protocolFeesRemaining * FEE_DENOMINATOR) / incentive.protocolFee;
 
         // Get the actual balance of the asset
         uint256 actualBalance = _getAssetBalance(incentive, incentiveContract);
@@ -665,8 +505,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             uint256 discrepancy = actualBalance - expectedFeeBalance;
 
             // Scale the amount to transfer based on the specific incentive protocol fee
-            uint256 feeToCollect = (discrepancy * incentive.protocolFee) /
-                FEE_DENOMINATOR;
+            uint256 feeToCollect = (discrepancy * incentive.protocolFee) / FEE_DENOMINATOR;
 
             // Transfer the discrepancy to the protocol fee receiver
             _transferProtocolFee(incentive, feeToCollect);
@@ -678,12 +517,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
                 incentive.protocolFeesRemaining = 0;
             }
 
-            emit ProtocolFeesCollected(
-                boostId,
-                incentiveId,
-                feeToCollect,
-                protocolFeeReceiver
-            );
+            emit ProtocolFeesCollected(boostId, incentiveId, feeToCollect, protocolFeeReceiver);
         }
     }
 
@@ -696,9 +530,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Set the protocol fee receiver address
     /// @param protocolFeeReceiver_ The new protocol fee receiver address
     /// @dev This function is only callable by the owner
-    function setProtocolFeeReceiver(
-        address protocolFeeReceiver_
-    ) external onlyOwner {
+    function setProtocolFeeReceiver(address protocolFeeReceiver_) external onlyOwner {
         protocolFeeReceiver = protocolFeeReceiver_;
     }
 
@@ -721,9 +553,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Set the protocol fee module address
     /// @param protocolFeeModule_ The new protocol fee module address
     /// @dev This function is only callable by the owner
-    function setProtocolFeeModule(
-        address protocolFeeModule_
-    ) external onlyOwner {
+    function setProtocolFeeModule(address protocolFeeModule_) external onlyOwner {
         protocolFeeModule = protocolFeeModule_;
     }
 
@@ -741,10 +571,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @dev This function will revert if the Target does not implement the expected interface
     /// @dev This check costs ~376 gas, which is worth it to validate the target
     function _checkTarget(bytes4 interfaceId, address instance) internal view {
-        if (
-            instance == address(0) ||
-            !ACloneable(instance).supportsInterface(interfaceId)
-        ) {
+        if (instance == address(0) || !ACloneable(instance).supportsInterface(interfaceId)) {
             revert BoostError.InvalidInstance(interfaceId, instance);
         }
     }
@@ -755,11 +582,10 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @param shouldInitialize Whether or not to initialize the target
     /// @return instance The target instance
     /// @dev This function will revert if the target does not implement the expected interface
-    function _makeTarget(
-        bytes4 interfaceId,
-        BoostLib.Target memory target,
-        bool shouldInitialize
-    ) internal returns (address instance) {
+    function _makeTarget(bytes4 interfaceId, BoostLib.Target memory target, bool shouldInitialize)
+        internal
+        returns (address instance)
+    {
         _checkTarget(interfaceId, target.instance);
         instance = _maybeClone(target, shouldInitialize);
     }
@@ -779,14 +605,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         newIncentives = new AIncentive[](targets_.length);
 
         for (uint256 i = 0; i < targets_.length; i++) {
-            newIncentives[i] = _createSingleIncentive(
-                targets_[i],
-                budget_,
-                protocolFee_,
-                protocolAsset,
-                boostId,
-                i
-            );
+            newIncentives[i] = _createSingleIncentive(targets_[i], budget_, protocolFee_, protocolAsset, boostId, i);
             emit IncentiveAdded(boostId, i, address(newIncentives[i]), true);
         }
     }
@@ -812,31 +631,22 @@ contract BoostCore is Ownable, ReentrancyGuard {
         _checkTarget(type(AIncentive).interfaceId, target.instance);
 
         if (!target.isBase) {
-            revert BoostError.InvalidInstance(
-                type(AIncentive).interfaceId,
-                target.instance
-            );
+            revert BoostError.InvalidInstance(type(AIncentive).interfaceId, target.instance);
         }
 
-        incentive = AIncentive(
-            _makeTarget(type(AIncentive).interfaceId, target, false)
-        );
+        incentive = AIncentive(_makeTarget(type(AIncentive).interfaceId, target, false));
 
         bytes memory preflight = incentive.preflight(incentiveParams);
         if (preflight.length != 0) {
-            (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(
-                preflight,
-                protocolFee_
-            );
-            if (!budget_.disburse(disbursal))
+            (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
+            if (!budget_.disburse(disbursal)) {
                 revert BoostError.InvalidInitialization();
-            if (!budget_.disburse(preflight))
+            }
+            if (!budget_.disburse(preflight)) {
                 revert BoostError.InvalidInitialization();
+            }
 
-            ABudget.Transfer memory request = abi.decode(
-                preflight,
-                (ABudget.Transfer)
-            );
+            ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
 
             _addIncentive(
                 boostId,
@@ -857,33 +667,24 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @notice Internal helper function to calculate the protocol fee and prepare the modified disbursal
     /// @param preflight The encoded data for the original disbursement
     /// @return The modified preflight data for the protocol fee disbursement
-    function _getFeeDisbursal(
-        bytes memory preflight,
-        uint64 _protocolFee
-    ) internal view returns (bytes memory, uint256) {
+    function _getFeeDisbursal(bytes memory preflight, uint64 _protocolFee)
+        internal
+        view
+        returns (bytes memory, uint256)
+    {
         // Decode the preflight data to extract the transfer details
-        ABudget.Transfer memory request = abi.decode(
-            preflight,
-            (ABudget.Transfer)
-        );
+        ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
         uint64 totalFee = _protocolFee;
 
-        if (
-            request.assetType == ABudget.AssetType.ERC20 ||
-            request.assetType == ABudget.AssetType.ETH
-        ) {
+        if (request.assetType == ABudget.AssetType.ERC20 || request.assetType == ABudget.AssetType.ETH) {
             // Decode the fungible payload
-            ABudget.FungiblePayload memory payload = abi.decode(
-                request.data,
-                (ABudget.FungiblePayload)
-            );
+            ABudget.FungiblePayload memory payload = abi.decode(request.data, (ABudget.FungiblePayload));
 
             // Calculate the protocol fee based on BIPS
             uint256 feeAmount = (payload.amount * totalFee) / FEE_DENOMINATOR;
 
             // Create a new fungible payload for the protocol fee
-            ABudget.FungiblePayload memory feePayload = ABudget
-                .FungiblePayload({amount: feeAmount});
+            ABudget.FungiblePayload memory feePayload = ABudget.FungiblePayload({amount: feeAmount});
 
             // Modify the original request for the fee disbursal
             request.data = abi.encode(feePayload);
@@ -893,10 +694,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
             return (abi.encode(request), feeAmount);
         } else if (request.assetType == ABudget.AssetType.ERC1155) {
             // Decode the ERC1155 payload
-            ABudget.ERC1155Payload memory payload = abi.decode(
-                request.data,
-                (ABudget.ERC1155Payload)
-            );
+            ABudget.ERC1155Payload memory payload = abi.decode(request.data, (ABudget.ERC1155Payload));
 
             // Calculate the protocol fee based on BIPS
             uint256 feeAmount = (payload.amount * totalFee) / FEE_DENOMINATOR;
@@ -920,10 +718,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     /// @notice Get the target instance, optionally cloning and initializing from a base implementation
-    function _maybeClone(
-        BoostLib.Target memory target_,
-        bool shouldInitialize_
-    ) internal returns (address instance) {
+    function _maybeClone(BoostLib.Target memory target_, bool shouldInitialize_) internal returns (address instance) {
         instance = target_.isBase ? target_.instance.clone() : target_.instance;
         if (target_.isBase && shouldInitialize_) {
             // wake-disable-next-line reentrancy (false positive, entrypoint is nonReentrant)
@@ -932,17 +727,16 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     /// @notice Generate a unique key for an incentive
-    function _generateKey(
-        uint256 boostId,
-        uint256 incentiveId
-    ) internal pure returns (bytes32) {
+    function _generateKey(uint256 boostId, uint256 incentiveId) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(boostId, incentiveId));
     }
 
     /// @notice Decode the ERC1155 data
-    function _decodeERC1155Data(
-        bytes memory data
-    ) internal pure returns (uint256 tokenId, bytes memory additionalData) {
+    function _decodeERC1155Data(bytes memory data)
+        internal
+        pure
+        returns (uint256 tokenId, bytes memory additionalData)
+    {
         return abi.decode(data, (uint256, bytes));
     }
 
@@ -958,7 +752,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
         uint256 tokenId;
 
         if (assetType == ABudget.AssetType.ERC1155) {
-            (tokenId, ) = abi.decode(extraData, (uint256, bytes));
+            (tokenId,) = abi.decode(extraData, (uint256, bytes));
         }
 
         IncentiveDisbursalInfo memory info = IncentiveDisbursalInfo(
@@ -973,44 +767,27 @@ contract BoostCore is Ownable, ReentrancyGuard {
     }
 
     // Helper function to get the balance of the asset depending on its type
-    function _getAssetBalance(
-        IncentiveDisbursalInfo storage incentive,
-        AIncentive incentiveContract
-    ) internal view returns (uint256) {
-        if (
-            incentive.assetType == ABudget.AssetType.ERC20 ||
-            incentive.assetType == ABudget.AssetType.ETH
-        ) {
-            return
-                IERC20(incentive.asset).balanceOf(address(incentiveContract));
+    function _getAssetBalance(IncentiveDisbursalInfo storage incentive, AIncentive incentiveContract)
+        internal
+        view
+        returns (uint256)
+    {
+        if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
+            return IERC20(incentive.asset).balanceOf(address(incentiveContract));
         } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
-            return
-                IERC1155(incentive.asset).balanceOf(
-                    address(incentiveContract),
-                    incentive.tokenId
-                );
+            return IERC1155(incentive.asset).balanceOf(address(incentiveContract), incentive.tokenId);
         }
         return 0;
     }
 
     // Helper function to transfer the protocol fee based on the asset type
-    function _transferProtocolFee(
-        IncentiveDisbursalInfo storage incentive,
-        uint256 amount
-    ) internal {
-        if (
-            incentive.assetType == ABudget.AssetType.ERC20 ||
-            incentive.assetType == ABudget.AssetType.ETH
-        ) {
+    function _transferProtocolFee(IncentiveDisbursalInfo storage incentive, uint256 amount) internal {
+        if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
             incentive.asset.safeTransfer(protocolFeeReceiver, amount);
             _dustHatch(incentive.asset);
         } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
             IERC1155(incentive.asset).safeTransferFrom(
-                address(this),
-                protocolFeeReceiver,
-                incentive.tokenId,
-                amount,
-                ""
+                address(this), protocolFeeReceiver, incentive.tokenId, amount, ""
             );
         }
     }

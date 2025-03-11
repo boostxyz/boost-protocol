@@ -512,7 +512,7 @@ export class BoostCore extends Deployable<
    * @async
    * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
-   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
    * @param {?WriteParams} [params]
    * @returns {Promise<Boost>}
    */
@@ -596,7 +596,7 @@ export class BoostCore extends Deployable<
    * @async
    * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
-   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
    * @param {?WriteParams} [params]
    * @returns {Promise<HashAndSimulatedResult>}
    */
@@ -624,7 +624,7 @@ export class BoostCore extends Deployable<
    * @async
    * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
-   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
    * @param {?WriteParams} [params]
    * @returns {Promise<SimulateContractReturnType>}
    */
@@ -677,7 +677,7 @@ export class BoostCore extends Deployable<
    * @async
    * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
-   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
    * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
    * @param {bigint} nonce - The nonce for the permit2 batch transfer
    * @param {bigint} deadline - The deadline for the permit2 batch transfer
@@ -770,7 +770,7 @@ export class BoostCore extends Deployable<
    * @async
    * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
-   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
    * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
    * @param {bigint} nonce - The nonce for the permit2 batch transfer
    * @param {bigint} deadline - The deadline for the permit2 batch transfer
@@ -809,7 +809,7 @@ export class BoostCore extends Deployable<
    * @async
    * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
    * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
-   * @param {CreateBoostPayload} _boostPayload - The core Boost configuration
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
    * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
    * @param {bigint} nonce - The nonce for the permit2 batch transfer
    * @param {bigint} deadline - The deadline for the permit2 batch transfer

@@ -35,18 +35,18 @@ describe("TransparentBudget", () => {
     const { budget, erc20 } = await loadFixture(
       fundTransparentBudget(defaultOptions, fixtures),
     );
-    const boost = await fixtures.core.createBoostWithTransparentBudget(budget,
+    await fixtures.core.createBoostWithTransparentBudget(budget,
       [
         {
           target: defaultOptions.account.address,
           asset: erc20.assertValidAddress(),
-          amount: parseEther("1")
+          amount: parseEther("110")
         }
       ],
       {
         owner: defaultOptions.account.address,
         protocolFee: 0n,
-        maxParticipants: 5n,
+        maxParticipants: 10000n,
         validator: core.SignerValidator({
           signers: [defaultOptions.account.address],
           validatorCaller: defaultOptions.account.address,
@@ -60,58 +60,11 @@ describe("TransparentBudget", () => {
         incentives: [
           core.ERC20Incentive({
             asset: erc20.assertValidAddress(),
-            reward: parseEther("0.1"),
-            limit: 5n,
+            reward: parseEther("10"),
+            limit: 10n,
             strategy: StrategyType.POOL,
-            manager: budget.assertValidAddress(),
           }),
         ],
       })
   })
-
-  // describe("can disburse", () => {
-  //   beforeEach(async () => {
-  //     const budgetFixtures = await loadFixture(
-  //       fundTransparentBudget(defaultOptions, fixtures),
-  //     );
-  //     budget = budgetFixtures.budget as TransparentBudget;
-  //     erc20 = budgetFixtures.erc20;
-  //     erc1155 = budgetFixtures.erc1155;
-  //   });
-
-  //   test("native assets", async () => {
-  //     await budget.disburse({
-  //       amount: parseEther("1.0"),
-  //       asset: zeroAddress,
-  //       target: defaultOptions.account.address,
-  //     });
-
-  //     expect(await budget.distributed()).toBe(parseEther("1.0"));
-  //   });
-
-  //   test("erc20 assets", async () => {
-  //     await budget.disburse({
-  //       amount: parseEther("10"),
-  //       asset: erc20.assertValidAddress(),
-  //       target: defaultOptions.account.address,
-  //     });
-
-  //     expect(await budget.distributed(erc20.assertValidAddress())).toBe(
-  //       parseEther("100"),
-  //     );
-  //   });
-
-  //   test("erc1155 assets", async () => {
-  //     await budget.disburse({
-  //       tokenId: 1n,
-  //       amount: 5n,
-  //       asset: erc1155.assertValidAddress(),
-  //       target: defaultOptions.account.address,
-  //     });
-
-  //     expect(await budget.distributed(erc1155.assertValidAddress(), 1n)).to.equal(
-  //       5n,
-  //     );
-  //   });
-  // });
 });

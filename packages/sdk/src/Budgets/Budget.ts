@@ -3,6 +3,7 @@ import {
   AManagedBudget,
   AManagedBudgetWithFees,
   AManagedBudgetWithFeesV2,
+  ATransparentBudget,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import type { Address, Hex } from 'viem';
@@ -45,7 +46,7 @@ export const BudgetByComponentInterface = {
   [AManagedBudget as Hex]: ManagedBudget,
   [AManagedBudgetWithFees as Hex]: ManagedBudgetWithFees,
   [AManagedBudgetWithFeesV2 as Hex]: ManagedBudgetWithFeesV2,
-  ['0x2929d19c']: TransparentBudget,
+  [ATransparentBudget as Hex]: TransparentBudget,
 };
 
 /**

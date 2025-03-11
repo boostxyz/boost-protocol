@@ -969,6 +969,7 @@ export function freshTransparentBudget(
 ) {
   return async function freshTransparentBudget() {
     const budget = new fixtures.bases.TransparentBudget(options);
+    //@ts-expect-error this is fine
     await budget.deploy();
     return budget;
   };
@@ -1133,21 +1134,23 @@ export function fundBudget(
     // if (!erc1155) erc1155 = await loadFixture(fundErc1155(options));
     if (!points) points = await loadFixture(fundPoints(options));
 
-    await budget.allocate(
-      {
-        amount: parseEther('1.0'),
-        asset: zeroAddress,
-        target: options.account.address,
-      },
-      { value: parseEther('1.0') },
-    );
+    if ('allocate' in budget) {
+      await budget.allocate(
+        {
+          amount: parseEther('1.0'),
+          asset: zeroAddress,
+          target: options.account.address,
+        },
+        { value: parseEther('1.0') },
+      );
 
-    await erc20.approve(budget.assertValidAddress(), parseEther('110'));
-    await budget.allocate({
-      amount: parseEther('110'),
-      asset: erc20.assertValidAddress(),
-      target: options.account.address,
-    });
+      await erc20.approve(budget.assertValidAddress(), parseEther('110'));
+      await budget.allocate({
+        amount: parseEther('110'),
+        asset: erc20.assertValidAddress(),
+        target: options.account.address,
+      });
+    }
 
     // await writeMockErc1155SetApprovalForAll(options.config, {
     //   args: [budget.assertValidAddress(), true],

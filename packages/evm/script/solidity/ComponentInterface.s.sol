@@ -12,6 +12,7 @@ import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
 import {AManagedBudgetWithFees} from "contracts/budgets/AManagedBudgetWithFees.sol";
 import {AManagedBudgetWithFeesV2} from "contracts/budgets/AManagedBudgetWithFeesV2.sol";
 import {AVestingBudget} from "contracts/budgets/AVestingBudget.sol";
+import {ATransparentBudget} from "contracts/budgets/ATransparentBudget.sol";
 
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
 import {ALimitedSignerValidator} from "contracts/validators/ALimitedSignerValidator.sol";
@@ -46,6 +47,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAERC20PeggedVariableCriteriaIncentiveV2();
         _getInterfaceACloneable();
         _getInterfaceABudget();
+        _getInterfaceATransparentBudget();
         _getInterfaceAManagedBudget();
         _getInterfaceAManagedBudgetWithFees();
         _getInterfaceAManagedBudgetWithFeesV2();
@@ -144,6 +146,16 @@ contract LogComponentInterface is ScriptUtils {
         componentJson = componentJsonKey.serialize("ABudget", interfaceId);
     }
 
+    function _getInterfaceATransparentBudget() internal {
+        string memory interfaceId = uint256(
+            uint32(type(ATransparentBudget).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "ATransparentBudget",
+            interfaceId
+        );
+    }
+
     function _getInterfaceAVestingBudget() internal {
         string memory interfaceId = uint256(
             uint32(type(AVestingBudget).interfaceId)
@@ -211,12 +223,21 @@ contract LogComponentInterface is ScriptUtils {
         );
     }
 
+<<<<<<< HEAD
     function _getInterfaceAERC20PeggedVariableCriteriaIncentiveV2() internal {
         string memory interfaceId = uint256(
             uint32(type(AERC20PeggedVariableCriteriaIncentiveV2).interfaceId)
         ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AERC20PeggedVariableCriteriaIncentiveV2",
+=======
+    function _getInterfaceAERC20PeggedVariableCriteriaIncentive() internal {
+        string memory interfaceId = uint256(
+            uint32(type(AERC20PeggedVariableCriteriaIncentive).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "AERC20PeggedVariableCriteriaIncentive",
+>>>>>>> 1eaa613f (fix: build)
             interfaceId
         );
     }
@@ -231,12 +252,21 @@ contract LogComponentInterface is ScriptUtils {
         );
     }
 
+<<<<<<< HEAD
     function _getInterfaceAERC20VariableCriteriaIncentiveV2() internal {
         string memory interfaceId = uint256(
             uint32(type(AERC20VariableCriteriaIncentiveV2).interfaceId)
         ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AERC20VariableCriteriaIncentiveV2",
+=======
+    function _getInterfaceAERC20VariableCriteriaIncentive() internal {
+        string memory interfaceId = uint256(
+            uint32(type(AERC20VariableCriteriaIncentive).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "AERC20VariableCriteriaIncentive",
+>>>>>>> 1eaa613f (fix: build)
             interfaceId
         );
     }

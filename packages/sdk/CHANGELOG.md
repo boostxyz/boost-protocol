@@ -1,5 +1,17 @@
 # @boostxyz/sdk
 
+## 7.0.0-canary.0
+
+### Major Changes
+
+- 015e29e: **BREAKING** Append v2 to ERC20VariableCriteria and ERC20PeggedVariableCriteria to force upgrades to new variable criteria functionality
+
+### Minor Changes
+
+- 507bf0b: ERC20VariableIncentive and ERC20VaribleCritieriaIncentive decodeClaimData functions return Promise<bigint>
+- 836d814: TransparentBudget implementation
+- 06becaa: add valueType to variable incentive criteria
+
 ## 6.1.3
 
 ### Patch Changes

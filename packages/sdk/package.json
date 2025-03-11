@@ -210,7 +210,7 @@
     }
   },
   "scripts": {
-    "build": "mkdir -p dist && vite build && tsc -p ./tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap",
+    "build": "mkdir -p dist && vite build && npx tsc -p ./tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap",
     "typecheck": "tsc -p ./tsconfig.build.json --noEmit",
     "lint:ci": "npx biome ci",
     "lint": "npx biome check",

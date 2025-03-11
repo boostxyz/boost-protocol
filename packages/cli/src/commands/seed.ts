@@ -554,11 +554,13 @@ async function fundBudget(
   await erc20.mint(options.account.address, amount);
 
   await erc20.approve(budget.assertValidAddress(), amount);
-  await budget.allocate({
-    amount,
-    asset: erc20.assertValidAddress(),
-    target: options.account.address,
-  });
+  if ('allocate' in budget) {
+    await budget.allocate({
+      amount,
+      asset: erc20.assertValidAddress(),
+      target: options.account.address,
+    });
+  }
 
   return { budget, erc20 };
 }

@@ -214,6 +214,15 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         vm.assertEq(mockERC20.balanceOf(boostOwner), 110 ether);
     }
 
+    ////////////////////////////////////
+    // TransparentBudget.getComponentInterface //
+    ////////////////////////////////////
+
+    function testGetComponentInterface() public view {
+        // Ensure the contract supports the ABudget interface
+        console.logBytes4(budget.getComponentInterface());
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

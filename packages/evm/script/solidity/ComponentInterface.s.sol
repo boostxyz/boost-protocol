@@ -12,6 +12,7 @@ import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
 import {AManagedBudgetWithFees} from "contracts/budgets/AManagedBudgetWithFees.sol";
 import {AManagedBudgetWithFeesV2} from "contracts/budgets/AManagedBudgetWithFeesV2.sol";
 import {AVestingBudget} from "contracts/budgets/AVestingBudget.sol";
+import {ATransparentBudget} from "contracts/budgets/ATransparentBudget.sol";
 
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
 import {ALimitedSignerValidator} from "contracts/validators/ALimitedSignerValidator.sol";
@@ -46,6 +47,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAERC20PeggedVariableCriteriaIncentiveV2();
         _getInterfaceACloneable();
         _getInterfaceABudget();
+        _getInterfaceATransparentBudget();
         _getInterfaceAManagedBudget();
         _getInterfaceAManagedBudgetWithFees();
         _getInterfaceAManagedBudgetWithFeesV2();
@@ -142,6 +144,16 @@ contract LogComponentInterface is ScriptUtils {
         string memory interfaceId = uint256(uint32(type(ABudget).interfaceId))
             .toHexString(4);
         componentJson = componentJsonKey.serialize("ABudget", interfaceId);
+    }
+
+    function _getInterfaceATransparentBudget() internal {
+        string memory interfaceId = uint256(
+            uint32(type(ATransparentBudget).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "ATransparentBudget",
+            interfaceId
+        );
     }
 
     function _getInterfaceAVestingBudget() internal {

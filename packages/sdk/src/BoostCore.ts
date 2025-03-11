@@ -14,6 +14,9 @@ import {
   simulateBoostCoreSetProtocolFeeReceiver,
   simulateBoostCoreTopupIncentiveFromBudget,
   simulateBoostCoreTopupIncentiveFromSender,
+  simulateTransparentBudgetCreateBoost,
+  simulateTransparentBudgetCreateBoostWithPermit2,
+  transparentBudgetAbi,
   writeBoostCoreClaimIncentive,
   writeBoostCoreClaimIncentiveFor,
   writeBoostCoreCreateBoost,
@@ -21,6 +24,8 @@ import {
   writeBoostCoreSetProtocolFeeReceiver,
   writeBoostCoreTopupIncentiveFromBudget,
   writeBoostCoreTopupIncentiveFromSender,
+  writeTransparentBudgetCreateBoost,
+  writeTransparentBudgetCreateBoostWithPermit2,
 } from '@boostxyz/evm';
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import {
@@ -28,7 +33,6 @@ import {
   getAccount,
   getChains,
   getTransactionReceipt,
-  readContract,
   waitForTransactionReceipt,
 } from '@wagmi/core';
 import { createWriteContract } from '@wagmi/core/codegen';
@@ -36,8 +40,6 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
-  decodeAbiParameters,
-  encodeAbiParameters,
   encodePacked,
   keccak256,
   parseEventLogs,
@@ -69,6 +71,7 @@ import { type Budget, budgetFromAddress } from './Budgets/Budget';
 import {
   ManagedBudget,
   type ManagedBudgetPayload,
+  prepareTransfer,
 } from './Budgets/ManagedBudget';
 import {
   ManagedBudgetWithFees,
@@ -78,6 +81,7 @@ import {
   ManagedBudgetWithFeesV2,
   type ManagedBudgetWithFeesV2Payload,
 } from './Budgets/ManagedBudgetWithFeesV2';
+import { TransparentBudget } from './Budgets/TransparentBudget';
 import {
   Deployable,
   type DeployableOptions,
@@ -141,7 +145,11 @@ import {
   InvalidProtocolChainIdError,
   MustInitializeBudgetError,
 } from './errors';
-import type { AssetType } from './transfers';
+import type {
+  AssetType,
+  ERC1155TransferPayload,
+  FungibleTransferPayload,
+} from './transfers';
 import {
   type GenericLog,
   type HashAndSimulatedResult,
@@ -370,7 +378,6 @@ export class BoostCore extends Deployable<
   /**
    * Create a new Boost.
    *
-   *
    * @public
    * @async
    * @param {CreateBoostPayload} _boostPayload
@@ -498,6 +505,365 @@ export class BoostCore extends Deployable<
     });
   }
 
+  /**
+   * Creates a new Boost with a given TransparentBudget, which transfers assets to the budget on Boost creation.
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
+   * @param {?WriteParams} [params]
+   * @returns {Promise<Boost>}
+   */
+  public async createBoostWithTransparentBudget(
+    budget: TransparentBudget | Address,
+    allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
+    _params?: WriteParams,
+  ) {
+    const [payload, options] =
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
+    const desiredChainId = _params?.chainId;
+    const { chainId, address: coreAddress } = assertValidAddressByChainId(
+      options.config,
+      this.addresses,
+      desiredChainId,
+    );
+
+    const boostFactory = createWriteContract({
+      abi: transparentBudgetAbi,
+      functionName: 'createBoost',
+      address:
+        typeof budget === 'string' ? budget : budget.assertValidAddress(),
+    });
+
+    const onChainPayload = await this.prepareCreateBoostPayload(
+      coreAddress,
+      chainId,
+      payload,
+      options,
+    );
+
+    const boostHash = await boostFactory(options.config, {
+      ...this.optionallyAttachAccount(options.account),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(_params as any),
+      chainId,
+      args: [
+        allocations.map(prepareTransfer),
+        coreAddress,
+        prepareBoostPayload(onChainPayload),
+      ],
+    });
+    const receipt = await waitForTransactionReceipt(options.config, {
+      hash: boostHash,
+    });
+    const boostCreatedLog = parseEventLogs({
+      abi: boostCoreAbi,
+      eventName: 'BoostCreated',
+      logs: receipt.logs,
+    }).at(0);
+    let boostId = 0n;
+    if (!boostCreatedLog) throw new BoostCoreNoIdentifierEmitted();
+    boostId = boostCreatedLog?.args.boostId;
+    const boost = await this.readBoost(boostId);
+    return new Boost({
+      id: boostId,
+      budget: payload.budget.at(boost.budget),
+      action: payload.action.at(boost.action),
+      validator: payload.validator!.at(boost.validator),
+      allowList: payload.allowList!.at(boost.allowList),
+      incentives: payload.incentives.map((incentive, i) =>
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
+        incentive.at(boost.incentives.at(i)!),
+      ),
+      protocolFee: boost.protocolFee,
+      maxParticipants: boost.maxParticipants,
+      owner: boost.owner,
+    });
+  }
+
+  /**
+   * Returns a transaction hash and simulated Boost creation using a transparent budget
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
+   * @param {?WriteParams} [params]
+   * @returns {Promise<HashAndSimulatedResult>}
+   */
+  public async createBoostWithTransparentBudgetRaw(
+    budget: TransparentBudget | Address,
+    allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
+    _params?: WriteParams,
+  ): Promise<HashAndSimulatedResult> {
+    const { request, result } =
+      await this.simulateCreateBoostWithTransparentBudget(
+        budget,
+        allocations,
+        _boostPayload,
+        _params,
+      );
+    const hash = await writeTransparentBudgetCreateBoost(this._config, request);
+    return { hash, result };
+  }
+
+  /**
+   * Returns a simulated Boost creation using a transparent budget
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
+   * @param {?WriteParams} [params]
+   * @returns {Promise<SimulateContractReturnType>}
+   */
+  public async simulateCreateBoostWithTransparentBudget(
+    budget: TransparentBudget | Address,
+    allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
+    _params?: WriteParams,
+  ) {
+    const [payload, options] =
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
+    const desiredChainId = _params?.chainId;
+    const { chainId, address: coreAddress } = assertValidAddressByChainId(
+      options.config,
+      this.addresses,
+      desiredChainId,
+    );
+
+    const onChainPayload = await this.prepareCreateBoostPayload(
+      coreAddress,
+      chainId,
+      payload,
+      options,
+    );
+
+    return await simulateTransparentBudgetCreateBoost(this._config, {
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(_params as any),
+      address:
+        typeof budget === 'string' ? budget : budget.assertValidAddress(),
+      chainId,
+      args: [
+        allocations.map(prepareTransfer),
+        coreAddress,
+        prepareBoostPayload(onChainPayload),
+      ],
+    });
+  }
+
+  /**
+   * Creates a new Boost with a given a TransparentBudget and Permit2, which transfers assets to the budget on Boost creation.
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
+   * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
+   * @param {bigint} nonce - The nonce for the permit2 batch transfer
+   * @param {bigint} deadline - The deadline for the permit2 batch transfer
+   * @param {?WriteParams} [params]
+   * @returns {Promise<Boost>}
+   */
+  public async createBoostWithPermit2(
+    budget: TransparentBudget | Address,
+    allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
+    permit2Signature: Hex,
+    nonce: bigint,
+    deadline: bigint,
+    _params?: WriteParams,
+  ) {
+    const [payload, options] =
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
+    const desiredChainId = _params?.chainId;
+    const { chainId, address: coreAddress } = assertValidAddressByChainId(
+      options.config,
+      this.addresses,
+      desiredChainId,
+    );
+
+    const boostFactory = createWriteContract({
+      abi: transparentBudgetAbi,
+      functionName: 'createBoostWithPermit2',
+      address:
+        typeof budget === 'string' ? budget : budget.assertValidAddress(),
+    });
+
+    const onChainPayload = await this.prepareCreateBoostPayload(
+      coreAddress,
+      chainId,
+      payload,
+      options,
+    );
+
+    const boostHash = await boostFactory(options.config, {
+      ...this.optionallyAttachAccount(options.account),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(_params as any),
+      chainId,
+      args: [
+        allocations.map(prepareTransfer),
+        coreAddress,
+        prepareBoostPayload(onChainPayload),
+        permit2Signature,
+        nonce,
+        deadline,
+      ],
+    });
+    const receipt = await waitForTransactionReceipt(options.config, {
+      hash: boostHash,
+    });
+    const boostCreatedLog = parseEventLogs({
+      abi: boostCoreAbi,
+      eventName: 'BoostCreated',
+      logs: receipt.logs,
+    }).at(0);
+    let boostId = 0n;
+    if (!boostCreatedLog) throw new BoostCoreNoIdentifierEmitted();
+    boostId = boostCreatedLog?.args.boostId;
+    const boost = await this.readBoost(boostId);
+    return new Boost({
+      id: boostId,
+      budget: payload.budget.at(boost.budget),
+      action: payload.action.at(boost.action),
+      validator: payload.validator!.at(boost.validator),
+      allowList: payload.allowList!.at(boost.allowList),
+      incentives: payload.incentives.map((incentive, i) =>
+        // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
+        incentive.at(boost.incentives.at(i)!),
+      ),
+      protocolFee: boost.protocolFee,
+      maxParticipants: boost.maxParticipants,
+      owner: boost.owner,
+    });
+  }
+
+  /**
+   * Returns a transaction hash and simulated Boost creation using a TransparentBudget and Permit2
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
+   * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
+   * @param {bigint} nonce - The nonce for the permit2 batch transfer
+   * @param {bigint} deadline - The deadline for the permit2 batch transfer
+   * @param {?WriteParams} [params]
+   * @returns {Promise<HashAndSimulatedResult>}
+   */
+  public async createBoostWithPermit2Raw(
+    budget: TransparentBudget | Address,
+    allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
+    permit2Signature: Hex,
+    nonce: bigint,
+    deadline: bigint,
+    _params?: WriteParams,
+  ): Promise<HashAndSimulatedResult> {
+    const { request, result } = await this.simulateCreateBoostWithPermit2(
+      budget,
+      allocations,
+      _boostPayload,
+      permit2Signature,
+      nonce,
+      deadline,
+      _params,
+    );
+    const hash = await writeTransparentBudgetCreateBoostWithPermit2(
+      this._config,
+      request,
+    );
+    return { hash, result };
+  }
+
+  /**
+   * Returns a simulated Boost creation using a TransparentBudget and Permit2
+   *
+   * @public
+   * @async
+   * @param {TransparentBudget | Address} budget - Either an instance of a transparent budget, or the address of a transparent budget
+   * @param {(FungibleTransferPayload | ERC1155TransferPayload)[]} allocations - An array of transfers to be allocated to the budget prior to Boost creation
+   * @param {Omit<CreateBoostPayload, 'budget'>} _boostPayload - The core Boost configuration sans budget
+   * @param {Hex} permit2Signature - The packed signature that was the result of signing the EIP712 hash of `permit`.
+   * @param {bigint} nonce - The nonce for the permit2 batch transfer
+   * @param {bigint} deadline - The deadline for the permit2 batch transfer
+   * @param {?WriteParams} [params]
+   * @returns {Promise<SimulateContractReturnType>}
+   */
+  public async simulateCreateBoostWithPermit2(
+    budget: TransparentBudget | Address,
+    allocations: (FungibleTransferPayload | ERC1155TransferPayload)[],
+    _boostPayload: Omit<CreateBoostPayload, 'budget'>,
+    permit2Signature: Hex,
+    nonce: bigint,
+    deadline: bigint,
+    _params?: WriteParams,
+  ) {
+    const [payload, options] =
+      this.validateDeploymentConfig<CreateBoostPayload>({
+        ..._boostPayload,
+        budget: this.TransparentBudget(
+          typeof budget === 'string' ? budget : budget.assertValidAddress(),
+        ),
+      });
+    const desiredChainId = _params?.chainId;
+    const { chainId, address: coreAddress } = assertValidAddressByChainId(
+      options.config,
+      this.addresses,
+      desiredChainId,
+    );
+
+    const onChainPayload = await this.prepareCreateBoostPayload(
+      coreAddress,
+      chainId,
+      payload,
+      options,
+    );
+
+    return await simulateTransparentBudgetCreateBoostWithPermit2(this._config, {
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(_params as any),
+      address:
+        typeof budget === 'string' ? budget : budget.assertValidAddress(),
+      chainId,
+      args: [
+        allocations.map(prepareTransfer),
+        coreAddress,
+        prepareBoostPayload(onChainPayload),
+        permit2Signature,
+        nonce,
+        deadline,
+      ],
+    });
+  }
+
   // This function mutates payload, which isn't awesome but it's fine
   private async prepareCreateBoostPayload(
     coreAddress: Address,
@@ -549,8 +915,10 @@ export class BoostCore extends Deployable<
     let budgetPayload: BoostPayload['budget'] = zeroAddress;
     if (payload.budget.address) {
       budgetPayload = payload.budget.address;
-      if (!(await payload.budget.isAuthorized(coreAddress))) {
-        throw new BudgetMustAuthorizeBoostCore(coreAddress);
+      if (!(payload.budget instanceof TransparentBudget)) {
+        if (!(await payload.budget.isAuthorized(coreAddress))) {
+          throw new BudgetMustAuthorizeBoostCore(coreAddress);
+        }
       }
     } else {
       throw new MustInitializeBudgetError();
@@ -1438,6 +1806,40 @@ export class BoostCore extends Deployable<
     }
 
     return new ManagedBudgetWithFeesV2(
+      { config: this._config, account: this._account },
+      options,
+    );
+  }
+  // /**
+  //  * Bound {@link TransparentBudget} constructor that reuses the same configuration as the Boost Core instance.
+  //  *
+  //  * @example
+  //  * ```ts
+  //  * const budget = core.TransparentBudget('0x') // is roughly equivalent to
+  //  * const budget = new TransparentBudget({ config: core._config, account: core._account }, '0x')
+  //  * ```
+  //  * @param {DeployablePayloadOrAddress<never>} options
+  //  * @returns {TransparentBudget}
+  //  */
+  // TransparentBudget(options: DeployablePayloadOrAddress<never>) {
+  //   return new TransparentBudget(
+  //     { config: this._config, account: this._account },
+  //     options,
+  //   );
+  // }
+  /**
+   * Bound {@link TransparentBudget} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const budget = core.TransparentBudget('0x') // is roughly equivalent to
+   * const budget = new TransparentBudget({ config: core._config, account: core._account }, '0x')
+   * ```
+   * @param {DeployablePayloadOrAddress<ManagedBudgetPayload>} options
+   * @returns {TransparentBudget}
+   */
+  TransparentBudget(options: DeployablePayloadOrAddress<never>) {
+    return new TransparentBudget(
       { config: this._config, account: this._account },
       options,
     );

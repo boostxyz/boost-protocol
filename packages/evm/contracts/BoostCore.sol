@@ -365,6 +365,7 @@ contract BoostCore is Ownable, ReentrancyGuard {
     {
         claimIncentiveFor(boostId_, incentiveId_, referrer_, data_, msg.sender);
     }
+
     /// @notice Claim an incentive for a Boost on behalf of another user
     /// @param boostId_ The ID of the Boost
     /// @param incentiveId_ The ID of the AIncentive
@@ -385,7 +386,9 @@ contract BoostCore is Ownable, ReentrancyGuard {
         AIncentive incentiveContract = boost.incentives[incentiveId_];
 
         // Validate the claimant against the allow list and the validator
-        if (!boost.allowList.isAllowed(claimant, data_)) revert BoostError.Unauthorized();
+        if (!boost.allowList.isAllowed(claimant, data_)) {
+            revert BoostError.Unauthorized();
+        }
 
         // Call validate and pass along the value
         if (!boost.validator.validate{value: msg.value}(boostId_, incentiveId_, claimant, data_)) {
@@ -636,8 +639,12 @@ contract BoostCore is Ownable, ReentrancyGuard {
         bytes memory preflight = incentive.preflight(incentiveParams);
         if (preflight.length != 0) {
             (bytes memory disbursal, uint256 feeAmount) = _getFeeDisbursal(preflight, protocolFee_);
-            if (!budget_.disburse(disbursal)) revert BoostError.InvalidInitialization();
-            if (!budget_.disburse(preflight)) revert BoostError.InvalidInitialization();
+            if (!budget_.disburse(disbursal)) {
+                revert BoostError.InvalidInitialization();
+            }
+            if (!budget_.disburse(preflight)) {
+                revert BoostError.InvalidInitialization();
+            }
 
             ABudget.Transfer memory request = abi.decode(preflight, (ABudget.Transfer));
 

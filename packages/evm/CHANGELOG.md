@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 7.0.0-canary.1
+
+### Patch Changes
+
+- dca8622: Re-add V1 VariableCriteriaIncentives for backwards compatibility
+
 ## 7.0.0-canary.0
 
 ### Major Changes

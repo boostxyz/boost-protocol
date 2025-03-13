@@ -28,8 +28,8 @@ import type { Boost } from "../Boost";
 import {
   type ERC20VariableCriteriaIncentiveV2,
   type ERC20VariableCriteriaIncentiveV2Payload,
-  type IncentiveCriteria,
-  gasRebateIncentiveCriteria,
+  type IncentiveCriteriaV2,
+  gasRebateIncentiveCriteriaV2,
 } from "./ERC20VariableCriteriaIncentiveV2";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 
@@ -41,7 +41,7 @@ import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
  */
 export function basicErc721TransferScalarCriteria(
   erc721: MockERC721,
-): IncentiveCriteria {
+): IncentiveCriteriaV2 {
   return {
     criteriaType: SignatureType.FUNC,
     signature: funcSelectors["transferFrom(address,address,uint256)"] as Hex, // Function selector for mint
@@ -59,7 +59,7 @@ export function basicErc721TransferScalarCriteria(
  */
 export function basicErc721MintScalarCriteria(
   erc721: MockERC721,
-): IncentiveCriteria {
+): IncentiveCriteriaV2 {
   return {
     criteriaType: SignatureType.EVENT,
     signature: eventSelectors[
@@ -179,9 +179,9 @@ describe("ERC20VariableCriteriaIncentiveV2", () => {
       expect(scalar).toBe(1n);
     });
 
-    test("gasRebateIncentiveCriteria generates correct incentive criteria", async () => {
+    test("gasRebateIncentiveCriteriaV2 generates correct incentive criteria", async () => {
       // Ensure that the gasRebateIncentiveCriteria returns the correct structure
-      const gasRebateCriteria = gasRebateIncentiveCriteria();
+      const gasRebateCriteria = gasRebateIncentiveCriteriaV2();
 
       erc20Incentive = fixtures.core.ERC20VariableCriteriaIncentiveV2({
         asset: budgets.erc20.assertValidAddress(),

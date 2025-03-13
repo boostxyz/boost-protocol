@@ -1,24 +1,24 @@
 import {
-  erc20PeggedVariableCriteriaIncentiveV2Abi,
-  readErc20PeggedVariableCriteriaIncentiveV2Asset,
-  readErc20PeggedVariableCriteriaIncentiveV2Claimed,
-  readErc20PeggedVariableCriteriaIncentiveV2Claims,
-  readErc20PeggedVariableCriteriaIncentiveV2CurrentReward,
-  readErc20PeggedVariableCriteriaIncentiveV2GetIncentiveCriteria,
-  readErc20PeggedVariableCriteriaIncentiveV2GetMaxReward,
-  readErc20PeggedVariableCriteriaIncentiveV2GetPeg,
-  readErc20PeggedVariableCriteriaIncentiveV2IsClaimable,
-  readErc20PeggedVariableCriteriaIncentiveV2Limit,
-  readErc20PeggedVariableCriteriaIncentiveV2Owner,
-  readErc20PeggedVariableCriteriaIncentiveV2Peg,
-  readErc20PeggedVariableCriteriaIncentiveV2Reward,
-  readErc20PeggedVariableCriteriaIncentiveV2TotalClaimed,
-  simulateErc20PeggedVariableCriteriaIncentiveV2Claim,
-  simulateErc20PeggedVariableCriteriaIncentiveV2Clawback,
-  writeErc20PeggedVariableCriteriaIncentiveV2Claim,
-  writeErc20PeggedVariableCriteriaIncentiveV2Clawback,
+  erc20PeggedVariableCriteriaIncentiveAbi,
+  readErc20PeggedVariableCriteriaIncentiveAsset,
+  readErc20PeggedVariableCriteriaIncentiveClaimed,
+  readErc20PeggedVariableCriteriaIncentiveClaims,
+  readErc20PeggedVariableCriteriaIncentiveCurrentReward,
+  readErc20PeggedVariableCriteriaIncentiveGetIncentiveCriteria,
+  readErc20PeggedVariableCriteriaIncentiveGetMaxReward,
+  readErc20PeggedVariableCriteriaIncentiveGetPeg,
+  readErc20PeggedVariableCriteriaIncentiveIsClaimable,
+  readErc20PeggedVariableCriteriaIncentiveLimit,
+  readErc20PeggedVariableCriteriaIncentiveOwner,
+  readErc20PeggedVariableCriteriaIncentivePeg,
+  readErc20PeggedVariableCriteriaIncentiveReward,
+  readErc20PeggedVariableCriteriaIncentiveTotalClaimed,
+  simulateErc20PeggedVariableCriteriaIncentiveClaim,
+  simulateErc20PeggedVariableCriteriaIncentiveClawback,
+  writeErc20PeggedVariableCriteriaIncentiveClaim,
+  writeErc20PeggedVariableCriteriaIncentiveClawback,
 } from '@boostxyz/evm';
-import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedVariableCriteriaIncentiveV2.sol/ERC20PeggedVariableCriteriaIncentiveV2.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/incentives/ERC20PeggedVariableCriteriaIncentive.sol/ERC20PeggedVariableCriteriaIncentive.json';
 import { getTransaction, getTransactionReceipt } from '@wagmi/core';
 import type { AbiEvent } from 'abitype';
 import {
@@ -34,7 +34,7 @@ import {
   zeroAddress,
   zeroHash,
 } from 'viem';
-import { ERC20PeggedVariableCriteriaIncentiveV2 as ERC20PeggedVariableCriteriaIncentiveV2Bases } from '../../dist/deployments.json';
+import { ERC20PeggedVariableCriteriaIncentive as ERC20PeggedVariableCriteriaIncentiveBases } from '../../dist/deployments.json';
 import { SignatureType } from '../Actions/EventAction';
 import type {
   DeployableOptions,
@@ -56,20 +56,21 @@ import {
   type WriteParams,
 } from '../utils';
 import type {
-  GetIncentiveScalarV2Params,
-  IncentiveCriteriaV2,
-} from './ERC20VariableCriteriaIncentiveV2';
+  GetIncentiveScalarParams,
+  IncentiveCriteria,
+} from './ERC20VariableCriteriaIncentive';
 
-export { erc20PeggedVariableCriteriaIncentiveV2Abi };
+export { erc20PeggedVariableCriteriaIncentiveAbi };
 
 /**
- * The object representation of a `Erc20PeggedVariableCriteriaIncentiveV2.InitPayload`
+ * The object representation of a `Erc20PeggedVariableCriteriaIncentive.InitPayload`
  *
  * @export
- * @interface Erc20PeggedVariableCriteriaIncentiveV2
- * @typedef {Erc20PeggedVariableCriteriaIncentiveV2}
+ * @deprecated Please use only v2 implementations
+ * @interface Erc20PeggedVariableCriteriaIncentive
+ * @typedef {Erc20PeggedVariableCriteriaIncentive}
  */
-export interface ERC20PeggedVariableCriteriaIncentiveV2Payload {
+export interface ERC20PeggedVariableCriteriaIncentivePayload {
   /**
    * The address of the incentivized asset.
    *
@@ -112,37 +113,38 @@ export interface ERC20PeggedVariableCriteriaIncentiveV2Payload {
    *
    * @type {IncentiveCriteria}
    */
-  criteria: IncentiveCriteriaV2;
+  criteria: IncentiveCriteria;
 }
 
 /**
- * A generic `viem.Log` event with support for `Erc20PeggedVariableCriteriaIncentiveV2` event types.
+ * A generic `viem.Log` event with support for `Erc20PeggedVariableCriteriaIncentive` event types.
  *
  * @export
- * @typedef {Erc20PeggedVariableCriteriaIncentiveV2Log}
- * @template {ContractEventName<typeof erc20PeggedVariableCriteriaIncentiveV2Abi>} [event=ContractEventName<
- *     typeof erc20PeggedVariableCriteriaIncentiveV2Abi
+ * @typedef {Erc20PeggedVariableCriteriaIncentiveLog}
+ * @template {ContractEventName<typeof erc20PeggedVariableCriteriaIncentiveAbi>} [event=ContractEventName<
+ *     typeof erc20PeggedVariableCriteriaIncentiveAbi
  *   >]
  */
-export type Erc20PeggedVariableCriteriaIncentiveV2Log<
+export type Erc20PeggedVariableCriteriaIncentiveLog<
   event extends ContractEventName<
-    typeof erc20PeggedVariableCriteriaIncentiveV2Abi
-  > = ContractEventName<typeof erc20PeggedVariableCriteriaIncentiveV2Abi>,
-> = GenericLog<typeof erc20PeggedVariableCriteriaIncentiveV2Abi, event>;
+    typeof erc20PeggedVariableCriteriaIncentiveAbi
+  > = ContractEventName<typeof erc20PeggedVariableCriteriaIncentiveAbi>,
+> = GenericLog<typeof erc20PeggedVariableCriteriaIncentiveAbi, event>;
 
 /**
  * A simple ERC20 incentive implementation that allows claiming of tokens
  *
  * @export
+ * @deprecated Please use only v2 implementations
  * @class Erc20PeggedVariableCriteriaIncentive
- * @typedef {ERC20PeggedVariableCriteriaIncentiveV2}
- * @extends {DeployableTarget<ERC20PeggedVariableCriteriaIncentiveV2>}
+ * @typedef {ERC20PeggedVariableCriteriaIncentive}
+ * @extends {DeployableTarget<ERC20PeggedVariableCriteriaIncentive>}
  */
-export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
-  ERC20PeggedVariableCriteriaIncentiveV2Payload,
-  typeof erc20PeggedVariableCriteriaIncentiveV2Abi
+export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
+  ERC20PeggedVariableCriteriaIncentivePayload,
+  typeof erc20PeggedVariableCriteriaIncentiveAbi
 > {
-  public override readonly abi = erc20PeggedVariableCriteriaIncentiveV2Abi;
+  public override readonly abi = erc20PeggedVariableCriteriaIncentiveAbi;
   /**
    * @inheritdoc
    *
@@ -151,9 +153,8 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env
-      .VITE_ERC20_PEGGED_VARIABLE_CRITERIA_INCENTIVE_V2_BASE,
-    ...(ERC20PeggedVariableCriteriaIncentiveV2Bases as Record<number, Address>),
+    31337: import.meta.env.VITE_ERC20_INCENTIVE_BASE,
+    ...(ERC20PeggedVariableCriteriaIncentiveBases as Record<number, Address>),
   };
   /**
    * @inheritdoc
@@ -173,7 +174,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<Address>}
    */
   public async owner(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2Owner(this._config, {
+    return await readErc20PeggedVariableCriteriaIncentiveOwner(this._config, {
       address: this.assertValidAddress(),
       args: [],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -190,7 +191,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<bigint>} - The current reward
    */
   public async currentReward(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2CurrentReward(
+    return await readErc20PeggedVariableCriteriaIncentiveCurrentReward(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -211,13 +212,10 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    */
   public async getMaxReward(params?: ReadParams): Promise<bigint> {
     const maxReward =
-      await readErc20PeggedVariableCriteriaIncentiveV2GetMaxReward(
-        this._config,
-        {
-          ...params,
-          address: this.assertValidAddress(),
-        },
-      );
+      await readErc20PeggedVariableCriteriaIncentiveGetMaxReward(this._config, {
+        ...params,
+        address: this.assertValidAddress(),
+      });
 
     return maxReward;
   }
@@ -231,7 +229,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @throws {InvalidCriteriaTypeError | NoMatchingLogsError | DecodedArgsError}
    */
   public async getIncentiveScalar(
-    { chainId, hash, knownSignatures }: GetIncentiveScalarV2Params,
+    { chainId, hash, knownSignatures }: GetIncentiveScalarParams,
     params?: ReadParams,
   ): Promise<bigint> {
     const criteria = await this.getIncentiveCriteria(params);
@@ -324,15 +322,12 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async claims(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2Claims(
-      this._config,
-      {
-        address: this.assertValidAddress(),
-        args: [],
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
+    return await readErc20PeggedVariableCriteriaIncentiveClaims(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   /**
@@ -344,7 +339,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async totalClaimed(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2TotalClaimed(
+    return await readErc20PeggedVariableCriteriaIncentiveTotalClaimed(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -365,15 +360,12 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<boolean>}
    */
   public async claimed(address: Address, params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2Claimed(
-      this._config,
-      {
-        address: this.assertValidAddress(),
-        args: [address],
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
+    return await readErc20PeggedVariableCriteriaIncentiveClaimed(this._config, {
+      address: this.assertValidAddress(),
+      args: [address],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   /**
@@ -385,7 +377,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<Address>}
    */
   public async asset(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2Asset(this._config, {
+    return await readErc20PeggedVariableCriteriaIncentiveAsset(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -401,7 +393,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<Address>}
    */
   public async peg(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2Peg(this._config, {
+    return await readErc20PeggedVariableCriteriaIncentivePeg(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -417,14 +409,11 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async reward(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2Reward(
-      this._config,
-      {
-        address: this.assertValidAddress(),
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
+    return await readErc20PeggedVariableCriteriaIncentiveReward(this._config, {
+      address: this.assertValidAddress(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   /**
@@ -436,7 +425,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async limit(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2Limit(this._config, {
+    return await readErc20PeggedVariableCriteriaIncentiveLimit(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -467,14 +456,14 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    */
   protected async claimRaw(payload: ClaimPayload, params?: WriteParams) {
     const { request, result } =
-      await simulateErc20PeggedVariableCriteriaIncentiveV2Claim(this._config, {
+      await simulateErc20PeggedVariableCriteriaIncentiveClaim(this._config, {
         address: this.assertValidAddress(),
         args: [prepareClaimPayload(payload)],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),
       });
-    const hash = await writeErc20PeggedVariableCriteriaIncentiveV2Claim(
+    const hash = await writeErc20PeggedVariableCriteriaIncentiveClaim(
       this._config,
       request,
     );
@@ -505,17 +494,14 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    */
   public async clawbackRaw(payload: ClaimPayload, params?: WriteParams) {
     const { request, result } =
-      await simulateErc20PeggedVariableCriteriaIncentiveV2Clawback(
-        this._config,
-        {
-          address: this.assertValidAddress(),
-          args: [prepareClaimPayload(payload)],
-          ...this.optionallyAttachAccount(),
-          // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-          ...(params as any),
-        },
-      );
-    const hash = await writeErc20PeggedVariableCriteriaIncentiveV2Clawback(
+      await simulateErc20PeggedVariableCriteriaIncentiveClawback(this._config, {
+        address: this.assertValidAddress(),
+        args: [prepareClaimPayload(payload)],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      });
+    const hash = await writeErc20PeggedVariableCriteriaIncentiveClawback(
       this._config,
       request,
     );
@@ -532,7 +518,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<boolean>} = True if the incentive is claimable based on the data payload
    */
   public async isClaimable(payload: ClaimPayload, params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2IsClaimable(
+    return await readErc20PeggedVariableCriteriaIncentiveIsClaimable(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -552,15 +538,12 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Promise<Address>} = The address of the token the reward is pegged to
    */
   public async getPeg(params?: ReadParams) {
-    return await readErc20PeggedVariableCriteriaIncentiveV2GetPeg(
-      this._config,
-      {
-        address: this.assertValidAddress(),
-        args: [],
-        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-        ...(params as any),
-      },
-    );
+    return await readErc20PeggedVariableCriteriaIncentiveGetPeg(this._config, {
+      address: this.assertValidAddress(),
+      args: [],
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
   }
 
   /**
@@ -616,10 +599,10 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    */
   public async getIncentiveCriteria(
     params?: ReadParams,
-  ): Promise<IncentiveCriteriaV2> {
+  ): Promise<IncentiveCriteria> {
     try {
       const criteria =
-        await readErc20PeggedVariableCriteriaIncentiveV2GetIncentiveCriteria(
+        await readErc20PeggedVariableCriteriaIncentiveGetIncentiveCriteria(
           this._config,
           {
             ...params,
@@ -643,7 +626,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @returns {Hex} The ABI-encoded payload with the updated `limit`.
    */
   public async getTopupPayload(netAmount: bigint): Promise<Hex> {
-    return prepareERC20PeggedVariableCriteriaIncentiveV2Payload({
+    return prepareERC20PeggedVariableCriteriaIncentivePayload({
       asset: (await this.asset()) ?? zeroAddress,
       peg: this.payload?.peg ?? zeroAddress,
       reward: this.payload?.reward ?? 0n,
@@ -655,7 +638,6 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
         signature: zeroHash,
         fieldIndex: 0,
         targetContract: zeroAddress,
-        valueType: 0,
       },
     });
   }
@@ -664,12 +646,12 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @inheritdoc
    *
    * @public
-   * @param {?ERC20PeggedVariableCriteriaIncentiveV2Payload} [_payload]
+   * @param {?ERC20PeggedVariableCriteriaIncentivePayload} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: ERC20PeggedVariableCriteriaIncentiveV2Payload,
+    _payload?: ERC20PeggedVariableCriteriaIncentivePayload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [payload, options] = this.validateDeploymentConfig(
@@ -677,9 +659,9 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
       _options,
     );
     return {
-      abi: erc20PeggedVariableCriteriaIncentiveV2Abi,
+      abi: erc20PeggedVariableCriteriaIncentiveAbi,
       bytecode: bytecode as Hex,
-      args: [prepareERC20PeggedVariableCriteriaIncentiveV2Payload(payload)],
+      args: [prepareERC20PeggedVariableCriteriaIncentivePayload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
   }
@@ -701,7 +683,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @public
    * @param {bigint} signedAmount
    * @returns {Hash} Returns the encoded claim data
-   * @description This function returns the encoded claim data for the ERC20PeggedVariableCriteriaIncentiveV2Payload.
+   * @description This function returns the encoded claim data for the ERC20PeggedVariableCriteriaIncentivePayload.
    */
   public buildClaimData(signedAmount: bigint) {
     return encodeAbiParameters(
@@ -711,7 +693,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
   }
 
   /**
-   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentiveV2, returning the claim amount.
+   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentive, returning the claim amount.
    * Useful when deriving amount claimed from logs.
    *
    * @public
@@ -756,7 +738,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
   }
 
   /**
-   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentiveV2, returning the claim amount.
+   * Decodes claim data for the ERC20PeggedVariableCriteriaIncentive, returning the claim amount.
    * Useful when deriving amount claimed from logs.
    * Use this function instead of `decodeClaimData` if you have reward details.
    *
@@ -805,9 +787,9 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
 }
 
 /**
- * Given a {@link ERC20PeggedVariableCriteriaIncentiveV2Payload}, properly encode a `ERC20PeggedVariableCriteriaIncentiveV2Payload.InitPayload` for use with {@link ERC20PeggedVariableCriteriaIncentiveV2Payload} initialization.
+ * Given a {@link ERC20PeggedVariableCriteriaIncentivePayload}, properly encode a `ERC20PeggedVariableCriteriaIncentivePayload.InitPayload` for use with {@link ERC20PeggedVariableCriteriaIncentivePayload} initialization.
  *
- * @param {ERC20PeggedVariableCriteriaIncentiveV2Payload} param0
+ * @param {ERC20PeggedVariableCriteriaIncentivePayload} param0
  * @param {Address} param0.asset - The address of the incentivized asset.
  * @param {Address} param0.peg - The peg to normalize to.
  * @param {bigint} param0.reward - The amount of the asset to distribute.
@@ -816,7 +798,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
  * @param {IncentiveCriteria} param0.criteria - The incentive criteria for reward distribution.
  * @returns {Hex}
  */
-export function prepareERC20PeggedVariableCriteriaIncentiveV2Payload({
+export function prepareERC20PeggedVariableCriteriaIncentivePayload({
   asset,
   peg,
   reward,
@@ -824,7 +806,7 @@ export function prepareERC20PeggedVariableCriteriaIncentiveV2Payload({
   maxReward = 0n,
   manager = zeroAddress,
   criteria,
-}: ERC20PeggedVariableCriteriaIncentiveV2Payload) {
+}: ERC20PeggedVariableCriteriaIncentivePayload) {
   return encodeAbiParameters(
     [
       {
@@ -845,7 +827,6 @@ export function prepareERC20PeggedVariableCriteriaIncentiveV2Payload({
               { type: 'bytes32', name: 'signature' },
               { type: 'uint8', name: 'fieldIndex' },
               { type: 'address', name: 'targetContract' },
-              { type: 'uint8', name: 'valueType' },
             ],
           },
         ],
@@ -864,7 +845,6 @@ export function prepareERC20PeggedVariableCriteriaIncentiveV2Payload({
           signature: criteria.signature,
           fieldIndex: criteria.fieldIndex,
           targetContract: criteria.targetContract,
-          valueType: criteria.valueType,
         },
       },
     ],

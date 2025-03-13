@@ -172,11 +172,23 @@
       "node": "./dist/Incentives/ERC20VariableIncentive.js",
       "types": "./dist/Incentives/ERC20VariableIncentive.d.ts"
     },
+    "./Incentives/ERC20VariableCriteriaIncentive": {
+      "require": "./dist/Incentives/ERC20VariableCriteriaIncentive.cjs",
+      "import": "./dist/Incentives/ERC20VariableCriteriaIncentive.js",
+      "node": "./dist/Incentives/ERC20VariableCriteriaIncentive.js",
+      "types": "./dist/Incentives/ERC20VariableCriteriaIncentive.d.ts"
+    },
     "./Incentives/ERC20VariableCriteriaIncentiveV2": {
       "require": "./dist/Incentives/ERC20VariableCriteriaIncentiveV2.cjs",
       "import": "./dist/Incentives/ERC20VariableCriteriaIncentiveV2.js",
       "node": "./dist/Incentives/ERC20VariableCriteriaIncentiveV2.js",
       "types": "./dist/Incentives/ERC20VariableCriteriaIncentiveV2.d.ts"
+    },
+    "./Incentives/ERC20PeggedVariableCriteriaIncentive": {
+      "require": "./dist/Incentives/ERC20PeggedVariableCriteriaIncentive.cjs",
+      "import": "./dist/Incentives/ERC20PeggedVariableCriteriaIncentive.js",
+      "node": "./dist/Incentives/ERC20PeggedVariableCriteriaIncentive.js",
+      "types": "./dist/Incentives/ERC20PeggedVariableCriteriaIncentive.d.ts"
     },
     "./Incentives/ERC20PeggedVariableCriteriaIncentiveV2": {
       "require": "./dist/Incentives/ERC20PeggedVariableCriteriaIncentiveV2.cjs",

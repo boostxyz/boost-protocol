@@ -25,6 +25,8 @@ import {AERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {AERC20PeggedIncentive} from "contracts/incentives/AERC20PeggedIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {AERC20VariableIncentive} from "contracts/incentives/ERC20VariableIncentive.sol";
+import {AERC20VariableCriteriaIncentive} from "contracts/incentives/AERC20VariableCriteriaIncentive.sol";
+import {AERC20PeggedVariableCriteriaIncentive} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentive.sol";
 import {AERC20VariableCriteriaIncentiveV2} from "contracts/incentives/AERC20VariableCriteriaIncentiveV2.sol";
 import {AERC20PeggedVariableCriteriaIncentiveV2} from "contracts/incentives/AERC20PeggedVariableCriteriaIncentiveV2.sol";
 import {APointsIncentive} from "contracts/incentives/PointsIncentive.sol";
@@ -43,7 +45,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAEventAction();
         _getInterfaceAERC20Incentive();
         _getInterfaceAERC20PeggedIncentive();
-        // _getInterfaceAERC20PeggedVariableCriteriaIncentive();
+        _getInterfaceAERC20PeggedVariableCriteriaIncentive();
         _getInterfaceAERC20PeggedVariableCriteriaIncentiveV2();
         _getInterfaceACloneable();
         _getInterfaceABudget();
@@ -61,7 +63,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAPointsIncentive();
         _getInterfaceASimpleAllowList();
         _getInterfaceASimpleDenyList();
-        // _getInterfaceAERC20VariableCriteriaIncentive();
+        _getInterfaceAERC20VariableCriteriaIncentive();
         _getInterfaceAERC20VariableCriteriaIncentiveV2();
 
         _saveJson();
@@ -233,12 +235,32 @@ contract LogComponentInterface is ScriptUtils {
         );
     }
 
+    function _getInterfaceAERC20PeggedVariableCriteriaIncentive() internal {
+        string memory interfaceId = uint256(
+            uint32(type(AERC20PeggedVariableCriteriaIncentive).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "AERC20PeggedVariableCriteriaIncentive",
+            interfaceId
+        );
+    }
+
     function _getInterfaceAERC20VariableIncentive() internal {
         string memory interfaceId = uint256(
             uint32(type(AERC20VariableIncentive).interfaceId)
         ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "AERC20VariableIncentive",
+            interfaceId
+        );
+    }
+
+    function _getInterfaceAERC20VariableCriteriaIncentive() internal {
+        string memory interfaceId = uint256(
+            uint32(type(AERC20VariableCriteriaIncentive).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "AERC20VariableCriteriaIncentive",
             interfaceId
         );
     }

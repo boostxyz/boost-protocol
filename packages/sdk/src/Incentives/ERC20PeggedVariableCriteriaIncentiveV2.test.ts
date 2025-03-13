@@ -29,8 +29,8 @@ import {
   type ERC20PeggedVariableCriteriaIncentiveV2,
 } from "./ERC20PeggedVariableCriteriaIncentiveV2";
 import {
-  type IncentiveCriteria,
-  gasRebateIncentiveCriteria,
+  type IncentiveCriteriaV2,
+  gasRebateIncentiveCriteriaV2,
 } from "./ERC20VariableCriteriaIncentiveV2";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { readMockErc20BalanceOf } from "@boostxyz/evm";
@@ -43,7 +43,7 @@ import { readMockErc20BalanceOf } from "@boostxyz/evm";
  */
 export function basicErc721TransferScalarCriteria(
   erc721: MockERC721,
-): IncentiveCriteria {
+): IncentiveCriteriaV2 {
   return {
     criteriaType: SignatureType.FUNC,
     signature: funcSelectors["transferFrom(address,address,uint256)"] as Hex, // Function selector for mint
@@ -61,7 +61,7 @@ export function basicErc721TransferScalarCriteria(
  */
 export function basicErc721MintScalarCriteria(
   erc721: MockERC721,
-): IncentiveCriteria {
+): IncentiveCriteriaV2 {
   return {
     criteriaType: SignatureType.EVENT,
     signature: eventSelectors[

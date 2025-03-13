@@ -18,9 +18,7 @@ enum SignatureType {
 /// @title AERC20PeggedIncentive
 /// @notice An ERC20 incentive with pegged variable rewards
 /// @notice DEPRECATED, USE v2 INSTEAD
-abstract contract AERC20PeggedVariableCriteriaIncentive is
-    AERC20PeggedIncentive
-{
+abstract contract AERC20PeggedVariableCriteriaIncentive is AERC20PeggedIncentive {
     using SafeTransferLib for address;
 
     struct IncentiveCriteria {
@@ -34,30 +32,16 @@ abstract contract AERC20PeggedVariableCriteriaIncentive is
 
     /// @notice Returns the incentive criteria (abstract)
     /// @return The stored IncentiveCriteria struct
-    function getIncentiveCriteria()
-        external
-        view
-        virtual
-        returns (IncentiveCriteria memory);
+    function getIncentiveCriteria() external view virtual returns (IncentiveCriteria memory);
 
     /// @inheritdoc ACloneable
-    function getComponentInterface()
-        public
-        pure
-        virtual
-        override(AERC20PeggedIncentive)
-        returns (bytes4)
-    {
+    function getComponentInterface() public pure virtual override(AERC20PeggedIncentive) returns (bytes4) {
         return type(AERC20PeggedVariableCriteriaIncentive).interfaceId;
     }
 
     /// @inheritdoc ACloneable
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(AERC20PeggedIncentive) returns (bool) {
-        return
-            interfaceId ==
-            type(AERC20PeggedVariableCriteriaIncentive).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AERC20PeggedIncentive) returns (bool) {
+        return interfaceId == type(AERC20PeggedVariableCriteriaIncentive).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 }

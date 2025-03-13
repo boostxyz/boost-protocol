@@ -222,9 +222,9 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
       expect(scalar).toBe(1n);
     });
 
-    test("gasRebateIncentiveCriteria generates correct incentive criteria", async () => {
+    test("gasRebateIncentiveCriteriaV2 generates correct incentive criteria", async () => {
       // Ensure that the gasRebateIncentiveCriteria returns the correct structure
-      const gasRebateCriteria = gasRebateIncentiveCriteria();
+      const gasRebateCriteria = gasRebateIncentiveCriteriaV2();
 
       erc20PeggedVariableCriteriaIncentive = fixtures.core.ERC20PeggedVariableCriteriaIncentiveV2({
         asset: budgets.erc20.assertValidAddress(),

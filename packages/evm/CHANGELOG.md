@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 7.0.0-canary.2
+
+### Patch Changes
+
+- 8dde59c: deployments for ERC20PeggedVariableCriteriaIncentive, ERC20VariableCriteriaIncentive, ManagedBudgetWithFeesV2, and TransparentBudget
+
 ## 7.0.0-canary.1
 
 ### Patch Changes

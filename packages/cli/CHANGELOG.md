@@ -1,5 +1,7 @@
 # @boostxyz/cli
 
+## 6.0.0-canary.2
+
 ## 6.0.0-canary.1
 
 ## 6.0.0-canary.0

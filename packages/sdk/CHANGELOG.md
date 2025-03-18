@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 7.0.0-canary.2
+
+### Patch Changes
+
+- 8fa7e9c: use updated addresses for ERC20PeggedVariableCriteriaIncentive, ERC20VariableCriteriaIncentive, ManagedBudgetWithFeesV2, and TransparentBudget
+
 ## 7.0.0-canary.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 7.0.0-canary.3
+
+### Patch Changes
+
+- 146aa95: deploys contracts on Optimism
+
 ## 7.0.0-canary.2
 
 ### Patch Changes

@@ -1,5 +1,23 @@
 # @boostxyz/sdk
 
+## 7.0.0
+
+### Major Changes
+
+- 015e29e: **BREAKING** Append v2 to ERC20VariableCriteria and ERC20PeggedVariableCriteria to force upgrades to new variable criteria functionality
+
+### Minor Changes
+
+- 507bf0b: ERC20VariableIncentive and ERC20VaribleCritieriaIncentive decodeClaimData functions return Promise<bigint>
+- 836d814: TransparentBudget implementation
+- 06becaa: add valueType to variable incentive criteria
+
+### Patch Changes
+
+- dca8622: Re-add V1 VariableCriteriaIncentives for backwards compatibility
+- 8fa7e9c: use updated addresses for ERC20PeggedVariableCriteriaIncentive, ERC20VariableCriteriaIncentive, ManagedBudgetWithFeesV2, and TransparentBudget
+- 146aa95: deploys contracts on Optimism
+
 ## 7.0.0-canary.3
 
 ### Patch Changes

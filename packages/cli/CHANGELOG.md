@@ -1,5 +1,15 @@
 # @boostxyz/cli
 
+## 6.0.0
+
+### Major Changes
+
+- 015e29e: **BREAKING** Append v2 to ERC20VariableCriteria and ERC20PeggedVariableCriteria to force upgrades to new variable criteria functionality
+
+### Minor Changes
+
+- 06becaa: add valueType to variable incentive criteria
+
 ## 6.0.0-canary.3
 
 ## 6.0.0-canary.2

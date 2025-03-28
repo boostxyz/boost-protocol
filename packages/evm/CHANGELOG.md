@@ -1,5 +1,22 @@
 # @boostxyz/evm
 
+## 7.0.0
+
+### Major Changes
+
+- 015e29e: **BREAKING** Append v2 to ERC20VariableCriteria and ERC20PeggedVariableCriteria to force upgrades to new variable criteria functionality
+
+### Minor Changes
+
+- 06becaa: add valueType to variable incentive criteria
+- a0f4430: new contract base deployments for all modules on testnets
+
+### Patch Changes
+
+- dca8622: Re-add V1 VariableCriteriaIncentives for backwards compatibility
+- 8dde59c: deployments for ERC20PeggedVariableCriteriaIncentive, ERC20VariableCriteriaIncentive, ManagedBudgetWithFeesV2, and TransparentBudget
+- 146aa95: deploys contracts on Optimism
+
 ## 7.0.0-canary.3
 
 ### Patch Changes

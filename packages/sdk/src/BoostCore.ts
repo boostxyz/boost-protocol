@@ -865,7 +865,7 @@ export class BoostCore extends Deployable<
   }
 
   // This function mutates payload, which isn't awesome but it's fine
-  private async prepareCreateBoostPayload(
+  public async prepareCreateBoostPayload(
     coreAddress: Address,
     chainId: number,
     payload: CreateBoostPayload,

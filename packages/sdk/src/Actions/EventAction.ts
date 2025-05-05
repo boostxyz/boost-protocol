@@ -1781,3 +1781,74 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     args: reorderedArgs,
   } as EventLog;
 }
+
+/**
+ * Packs field indices into a single uint8 value for criteria tuple access.
+ * - Single index < 32 is returned directly
+ * - Two indices are packed with a base offset of 32
+ *
+ * @export
+ * @param {number[]} indexes - Array of indices (1 or 2 elements)
+ * @returns {number} - Packed uint8 value between 0-236
+ * @throws {InvalidTupleEncodingError} - If indices are invalid
+ */
+export function packCriteriaFieldIndexes(indexes: number[]): number {
+  if (indexes.length !== 2) {
+    throw new InvalidTupleEncodingError(
+      `Expected 2 indices, got ${indexes.length} indices`,
+    );
+  }
+
+  const [first, second] = indexes;
+  if (
+    first === undefined ||
+    second === undefined ||
+    first < 0 ||
+    first > 12 ||
+    second < 0 ||
+    second > 12
+  ) {
+    throw new InvalidTupleEncodingError(
+      `Tuple indices must be between 0-12, got: [${first}, ${second}]`,
+    );
+  }
+  return 32 + (first << 4) + second;
+}
+
+/**
+ * Unpacks a uint8 fieldIndex value into an array of indices.
+ * If the value is < 32, it's treated as a simple field index.
+ * Otherwise, it's always unpacked as exactly two tuple indices.
+ *
+ * @export
+ * @param {number} fieldIndex - Field index value
+ * @returns {number[]} - Either [singleIndex] or [firstIndex, secondIndex]
+ */
+export function unpackCriteriaFieldIndexes(packed: number): number[] {
+  if (packed < 0 || packed > 236) {
+    throw new InvalidTupleEncodingError(
+      `Field index must be between 0-236, got: ${packed}`,
+    );
+  }
+
+  if (packed < 32) {
+    // not a tuple, return the single index
+    return [packed];
+  }
+
+  const tupleValue = packed - 32;
+  const firstIndex = (tupleValue >> 4) & 0xf;
+  const secondIndex = tupleValue & 0xf;
+  return [firstIndex, secondIndex];
+}
+
+/**
+ * Determines if a fieldIndex represents a tuple index (value >= 32) or a normal field index.
+ *
+ * @export
+ * @param {number} fieldIndex - The field index to check
+ * @returns {boolean} - True if it's a tuple index, false if it's a normal field index
+ */
+export function isCriteriaFieldIndexTuple(fieldIndex: number): boolean {
+  return fieldIndex >= 32;
+}

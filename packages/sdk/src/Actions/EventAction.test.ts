@@ -1520,7 +1520,8 @@ describe("criteria field index tuple support", () => {
   describe("packCriteriaFieldIndexes", () => {
     test("packs two indices into a single value", () => {
       const packed = packCriteriaFieldIndexes([3, 5])
-      expect(packed).toBeGreaterThanOrEqual(32); // Should be offset by 32 to indicate tuple
+      expect(packed).toBeGreaterThanOrEqual(32);
+      expect(packed).toBeLessThanOrEqual(236);
     });
 
     test("throws error if any index exceeds the allowed range (0-12)", () => {

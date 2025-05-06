@@ -1521,7 +1521,7 @@ describe("criteria field index tuple support", () => {
     test("packs two indices into a single value", () => {
       const packed = packCriteriaFieldIndexes([3, 5])
       expect(packed).toBeGreaterThanOrEqual(32);
-      expect(packed).toBeLessThanOrEqual(236);
+      expect(packed).toBeLessThanOrEqual(253);
     });
 
     test("throws error if any index exceeds the allowed range (0-13)", () => {

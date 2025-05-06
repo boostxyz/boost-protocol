@@ -584,7 +584,7 @@ export class EventAction extends DeployableTarget<
             claimant,
             log,
           );
-          if (addressCandidate) address = addressCandidate;
+          if (addressCandidate) return addressCandidate;
         }
         return address;
       }
@@ -611,7 +611,7 @@ export class EventAction extends DeployableTarget<
       for (let log of decodedLogs) {
         if (!isAddressEqual(log.address, claimant.targetContract)) continue;
         let addressCandidate = this.validateClaimantAgainstArgs(claimant, log);
-        if (addressCandidate) address = addressCandidate;
+        if (addressCandidate) return addressCandidate;
       }
       return address;
     }

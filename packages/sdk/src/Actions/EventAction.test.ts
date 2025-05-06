@@ -1519,22 +1519,8 @@ describe('decodeAndReorderLogArgs', () => {
 describe("criteria field index tuple support", () => {
   describe("packCriteriaFieldIndexes", () => {
     test("packs two indices into a single value", () => {
-      const indexes = [3, 5]; // sample indices for tuple access
-      const packed = packCriteriaFieldIndexes(indexes);
-
+      const packed = packCriteriaFieldIndexes([3, 5])
       expect(packed).toBeGreaterThanOrEqual(32); // Should be offset by 32 to indicate tuple
-    });
-
-    test("throws error if more than 2 indices are provided", () => {
-      expect(() => packCriteriaFieldIndexes([1, 2, 3])).toThrowError(
-        "Expected 2 indices, got 3 indices"
-      );
-    });
-
-    test("throws error if fewer than 2 indices are provided", () => {
-      expect(() => packCriteriaFieldIndexes([1])).toThrowError(
-        "Expected 2 indices, got 1 indices"
-      );
     });
 
     test("throws error if any index exceeds the allowed range (0-12)", () => {
@@ -1564,12 +1550,11 @@ describe("criteria field index tuple support", () => {
 
   describe("unpackCriteriaFieldIndexes", () => {
     test("unpacks tuple index values (>= 32) correctly", () => {
-      const indexes = [4, 7];
-      const packed = packCriteriaFieldIndexes(indexes);
+      const packed = packCriteriaFieldIndexes([4, 7]);
 
       const result = unpackCriteriaFieldIndexes(packed);
       expect(result.length).toBe(2);
-      expect(result).toEqual(indexes);
+      expect(result).toEqual([4, 7]);
     });
 
     test("correctly identifies simple index values (< 32)", () => {
@@ -1612,7 +1597,7 @@ describe("criteria field index tuple support", () => {
     test("round-trip packing and unpacking preserves the original values", () => {
       for (let i = 0; i <= 12; i++) {
         for (let j = 0; j <= 12; j++) {
-          const original = [i, j];
+          const original: [number, number] = [i, j];
           const packed = packCriteriaFieldIndexes(original);
           const unpacked = unpackCriteriaFieldIndexes(packed);
           expect(unpacked).toEqual(original);

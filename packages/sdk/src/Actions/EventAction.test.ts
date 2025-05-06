@@ -1524,7 +1524,7 @@ describe("criteria field index tuple support", () => {
       expect(packed).toBeLessThanOrEqual(236);
     });
 
-    test("throws error if any index exceeds the allowed range (0-12)", () => {
+    test("throws error if any index exceeds the allowed range (0-13)", () => {
       expect(() => packCriteriaFieldIndexes([14, 5])).toThrowError(
         "Tuple indices must be between 0-13"
       );

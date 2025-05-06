@@ -1525,16 +1525,16 @@ describe("criteria field index tuple support", () => {
     });
 
     test("throws error if any index exceeds the allowed range (0-12)", () => {
-      expect(() => packCriteriaFieldIndexes([13, 5])).toThrowError(
-        "Tuple indices must be between 0-12"
+      expect(() => packCriteriaFieldIndexes([14, 5])).toThrowError(
+        "Tuple indices must be between 0-13"
       );
 
-      expect(() => packCriteriaFieldIndexes([5, 13])).toThrowError(
-        "Tuple indices must be between 0-12"
+      expect(() => packCriteriaFieldIndexes([5, 14])).toThrowError(
+        "Tuple indices must be between 0-13"
       );
 
       expect(() => packCriteriaFieldIndexes([-1, 5])).toThrowError(
-        "Tuple indices must be between 0-12"
+        "Tuple indices must be between 0-13"
       );
     });
 
@@ -1560,15 +1560,15 @@ describe("criteria field index tuple support", () => {
 
     test("throws error if packed value is out of valid range", () => {
       expect(() => unpackCriteriaFieldIndexes(15)).toThrowError(
-        "Field index must be between 32-236"
+        "Field index must be between 32-253"
       );
       
-      expect(() => unpackCriteriaFieldIndexes(237)).toThrowError(
-        "Field index must be between 32-236"
+      expect(() => unpackCriteriaFieldIndexes(254)).toThrowError(
+        "Field index must be between 32-253"
       );
 
       expect(() => unpackCriteriaFieldIndexes(-1)).toThrowError(
-        "Field index must be between 32-236"
+        "Field index must be between 32-253"
       );
     });
   });
@@ -1591,8 +1591,8 @@ describe("criteria field index tuple support", () => {
 
   describe("criteria field index functions in practice", () => {
     test("round-trip packing and unpacking preserves the original values", () => {
-      for (let i = 0; i <= 12; i++) {
-        for (let j = 0; j <= 12; j++) {
+      for (let i = 0; i <= 13; i++) {
+        for (let j = 0; j <= 13; j++) {
           const original: [number, number] = [i, j];
           const packed = packCriteriaFieldIndexes(original);
           const unpacked = unpackCriteriaFieldIndexes(packed);

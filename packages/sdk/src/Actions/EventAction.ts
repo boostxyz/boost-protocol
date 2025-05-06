@@ -1788,8 +1788,8 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
  * - Two indices are packed with a base offset of 32
  *
  * @export
- * @param {number[]} indexes - Array of indices (1 or 2 elements)
- * @returns {number} - Packed uint8 value between 0-236
+ * @param {number[]} indexes - Array of indices
+ * @returns {number} - Packed uint8 value
  * @throws {InvalidTupleEncodingError} - If indices are invalid
  */
 export function packCriteriaFieldIndexes(indexes: number[]): number {

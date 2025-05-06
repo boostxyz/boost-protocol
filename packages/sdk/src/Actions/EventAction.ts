@@ -1810,23 +1810,16 @@ export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
 
 /**
  * Unpacks a uint8 fieldIndex value into an array of indices.
- * If the value is < 32, it's treated as a simple field index.
- * Otherwise, it's always unpacked as exactly two tuple indices.
  *
  * @export
  * @param {number} fieldIndex - Field index value
- * @returns {number[]} - Either [singleIndex] or [firstIndex, secondIndex]
+ * @returns {[number, number]} - [firstIndex, secondIndex]
  */
-export function unpackCriteriaFieldIndexes(packed: number): number[] {
-  if (packed < 0 || packed > 236) {
+export function unpackCriteriaFieldIndexes(packed: number): [number, number] {
+  if (packed < 32 || packed > 236) {
     throw new InvalidTupleEncodingError(
-      `Field index must be between 0-236, got: ${packed}`,
+      `Field index must be between 32-236, got: ${packed}`,
     );
-  }
-
-  if (packed < 32) {
-    // not a tuple, return the single index
-    return [packed];
   }
 
   const tupleValue = packed - 32;

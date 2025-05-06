@@ -1789,7 +1789,7 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
  * @export
  * @param {[number, number]} param0 - A tuple of [firstIndex, secondIndex]
  * @returns {number} - Packed uint8 value with base offset of 32
- * @throws {InvalidTupleEncodingError} - If either index is outside the valid range (0-12)
+ * @throws {InvalidTupleEncodingError} - If either index is outside the valid range (0-13)
  */
 export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
   number,
@@ -1797,12 +1797,12 @@ export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
 ]): number {
   if (
     firstIndex < 0 ||
-    firstIndex > 12 ||
+    firstIndex > 13 ||
     secondIndex < 0 ||
-    secondIndex > 12
+    secondIndex > 13
   ) {
     throw new InvalidTupleEncodingError(
-      `Tuple indices must be between 0-12, got: [${firstIndex}, ${secondIndex}]`,
+      `Tuple indices must be between 0-13, got: [${firstIndex}, ${secondIndex}]`,
     );
   }
   return 32 + (firstIndex << 4) + secondIndex;
@@ -1816,9 +1816,9 @@ export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
  * @returns {[number, number]} - [firstIndex, secondIndex]
  */
 export function unpackCriteriaFieldIndexes(packed: number): [number, number] {
-  if (packed < 32 || packed > 236) {
+  if (packed < 32 || packed > 253) {
     throw new InvalidTupleEncodingError(
-      `Field index must be between 32-236, got: ${packed}`,
+      `Field index must be between 32-253, got: ${packed}`,
     );
   }
 

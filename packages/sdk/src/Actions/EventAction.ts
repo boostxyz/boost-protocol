@@ -1783,36 +1783,29 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
 }
 
 /**
- * Packs field indices into a single uint8 value for criteria tuple access.
- * - Single index < 32 is returned directly
- * - Two indices are packed with a base offset of 32
+ * Packs two field indices into a single uint8 value for criteria tuple access.
+ * Both indices must be between 0-12 to fit in the packed format.
  *
  * @export
- * @param {number[]} indexes - Array of indices
- * @returns {number} - Packed uint8 value
- * @throws {InvalidTupleEncodingError} - If indices are invalid
+ * @param {[number, number]} param0 - A tuple of [firstIndex, secondIndex]
+ * @returns {number} - Packed uint8 value with base offset of 32
+ * @throws {InvalidTupleEncodingError} - If either index is outside the valid range (0-12)
  */
-export function packCriteriaFieldIndexes(indexes: number[]): number {
-  if (indexes.length !== 2) {
-    throw new InvalidTupleEncodingError(
-      `Expected 2 indices, got ${indexes.length} indices`,
-    );
-  }
-
-  const [first, second] = indexes;
+export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
+  number,
+  number,
+]): number {
   if (
-    first === undefined ||
-    second === undefined ||
-    first < 0 ||
-    first > 12 ||
-    second < 0 ||
-    second > 12
+    firstIndex < 0 ||
+    firstIndex > 12 ||
+    secondIndex < 0 ||
+    secondIndex > 12
   ) {
     throw new InvalidTupleEncodingError(
-      `Tuple indices must be between 0-12, got: [${first}, ${second}]`,
+      `Tuple indices must be between 0-12, got: [${firstIndex}, ${secondIndex}]`,
     );
   }
-  return 32 + (first << 4) + second;
+  return 32 + (firstIndex << 4) + secondIndex;
 }
 
 /**

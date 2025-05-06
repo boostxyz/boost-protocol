@@ -1852,3 +1852,57 @@ export function unpackCriteriaFieldIndexes(packed: number): number[] {
 export function isCriteriaFieldIndexTuple(fieldIndex: number): boolean {
   return fieldIndex >= 32;
 }
+
+/**
+ * Extracts a scalar value from a tuple within event or function arguments.
+ * This is used for incentive criteria when determining reward amounts.
+ *
+ * @export
+ * @param {unknown[]} args - The decoded arguments from an event or function call
+ * @param {number} fieldIndex - The tuple-encoded index
+ * @returns {bigint} The extracted scalar value as a bigint
+ * @throws {DecodedArgsError} If arguments are missing or cannot be converted to bigint
+ */
+export function getScalarValueFromTuple(
+  args: unknown[],
+  fieldIndex: number,
+): bigint {
+  if (!isCriteriaFieldIndexTuple(fieldIndex)) {
+    throw new DecodedArgsError(
+      `Field index ${fieldIndex} is invalid. Expected index >= 32`,
+    );
+  }
+
+  const [index0, index1] = unpackCriteriaFieldIndexes(fieldIndex);
+
+  if (index0 === undefined || index1 === undefined) {
+    throw new DecodedArgsError(
+      `Failed to unpack field indexes from ${fieldIndex}`,
+    );
+  }
+
+  if (!args || args.length <= index0) {
+    throw new DecodedArgsError(`Decoded args missing item at index ${index0}`);
+  }
+
+  const tuple = args[index0];
+  if (!tuple || !Array.isArray(tuple)) {
+    throw new DecodedArgsError(
+      `Expected array at index ${index0}, but got ${typeof tuple}`,
+    );
+  }
+  if (tuple.length <= index1) {
+    throw new DecodedArgsError(
+      `index ${index1} is out of bounds. tuple length is ${tuple.length}`,
+    );
+  }
+
+  const scalarValue = tuple[index1] as unknown;
+  if (typeof scalarValue !== 'bigint') {
+    throw new DecodedArgsError(
+      `Expected bigint at tuple index ${index1}, but got ${typeof scalarValue}`,
+    );
+  }
+
+  return scalarValue;
+}

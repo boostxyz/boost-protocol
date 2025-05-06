@@ -1557,22 +1557,17 @@ describe("criteria field index tuple support", () => {
       expect(result).toEqual([4, 7]);
     });
 
-    test("correctly identifies simple index values (< 32)", () => {
-      // Simple index value (not a tuple)
-      const simpleIndex = 15;
-      const result = unpackCriteriaFieldIndexes(simpleIndex);
-
-      expect(result).toEqual([15]); // Should return as a single-element array
-      expect(result.length).toBe(1);
-    });
-
     test("throws error if packed value is out of valid range", () => {
+      expect(() => unpackCriteriaFieldIndexes(15)).toThrowError(
+        "Field index must be between 32-236"
+      );
+      
       expect(() => unpackCriteriaFieldIndexes(237)).toThrowError(
-        "Field index must be between 0-236"
+        "Field index must be between 32-236"
       );
 
       expect(() => unpackCriteriaFieldIndexes(-1)).toThrowError(
-        "Field index must be between 0-236"
+        "Field index must be between 32-236"
       );
     });
   });

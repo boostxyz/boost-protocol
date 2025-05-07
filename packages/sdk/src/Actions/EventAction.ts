@@ -1784,7 +1784,7 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
 
 /**
  * Packs two field indices into a single uint8 value for criteria tuple access.
- * Both indices must be between 0-12 to fit in the packed format.
+ * Both indices must be between 0-13 to fit in the packed format.
  *
  * @export
  * @param {[number, number]} param0 - A tuple of [firstIndex, secondIndex]

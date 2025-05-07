@@ -1809,10 +1809,10 @@ export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
 }
 
 /**
- * Unpacks a uint8 fieldIndex value into an array of indices.
+ * Unpacks a uint8 packed index value into an array of indices.
  *
  * @export
- * @param {number} fieldIndex - Field index value
+ * @param {number} packed - Packed index value
  * @returns {[number, number]} - [firstIndex, secondIndex]
  */
 export function unpackCriteriaFieldIndexes(packed: number): [number, number] {

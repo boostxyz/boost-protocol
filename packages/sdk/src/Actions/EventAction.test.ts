@@ -41,6 +41,9 @@ import {
   transactionSenderClaimant,
   packFieldIndexes,
   unpackFieldIndexes,
+  packCriteriaFieldIndexes,
+  unpackCriteriaFieldIndexes,
+  isCriteriaFieldIndexTuple,
   decodeAndReorderLogArgs
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
@@ -1512,3 +1515,90 @@ describe('decodeAndReorderLogArgs', () => {
     expect(result.args[3]).toBe(5284n);
   });
 }); 
+
+describe("criteria field index tuple support", () => {
+  describe("packCriteriaFieldIndexes", () => {
+    test("packs two indices into a single value", () => {
+      const packed = packCriteriaFieldIndexes([3, 5])
+      expect(packed).toBeGreaterThanOrEqual(32);
+      expect(packed).toBeLessThanOrEqual(253);
+    });
+
+    test("throws error if any index exceeds the allowed range (0-13)", () => {
+      expect(() => packCriteriaFieldIndexes([14, 5])).toThrowError(
+        "Tuple indices must be between 0-13"
+      );
+
+      expect(() => packCriteriaFieldIndexes([5, 14])).toThrowError(
+        "Tuple indices must be between 0-13"
+      );
+
+      expect(() => packCriteriaFieldIndexes([-1, 5])).toThrowError(
+        "Tuple indices must be between 0-13"
+      );
+    });
+
+    test("different input pairs result in different packed values", () => {
+      const packed1 = packCriteriaFieldIndexes([1, 2]);
+      const packed2 = packCriteriaFieldIndexes([2, 1]);
+      const packed3 = packCriteriaFieldIndexes([1, 3]);
+
+      expect(packed1).not.toBe(packed2);
+      expect(packed1).not.toBe(packed3);
+      expect(packed2).not.toBe(packed3);
+    });
+  });
+
+  describe("unpackCriteriaFieldIndexes", () => {
+    test("unpacks tuple index values (>= 32) correctly", () => {
+      const packed = packCriteriaFieldIndexes([4, 7]);
+
+      const result = unpackCriteriaFieldIndexes(packed);
+      expect(result.length).toBe(2);
+      expect(result).toEqual([4, 7]);
+    });
+
+    test("throws error if packed value is out of valid range", () => {
+      expect(() => unpackCriteriaFieldIndexes(15)).toThrowError(
+        "Field index must be between 32-253"
+      );
+      
+      expect(() => unpackCriteriaFieldIndexes(254)).toThrowError(
+        "Field index must be between 32-253"
+      );
+
+      expect(() => unpackCriteriaFieldIndexes(-1)).toThrowError(
+        "Field index must be between 32-253"
+      );
+    });
+  });
+
+  describe("isCriteriaFieldIndexTuple", () => {
+    test("correctly identifies tuple indices vs simple indices", () => {
+      // Test with simple index (< 32)
+      expect(isCriteriaFieldIndexTuple(15)).toBe(false);
+
+      // Test with tuple index (>= 32)
+      const packed = packCriteriaFieldIndexes([2, 3]);
+      expect(isCriteriaFieldIndexTuple(packed)).toBe(true);
+
+      // Test edge cases
+      expect(isCriteriaFieldIndexTuple(0)).toBe(false);
+      expect(isCriteriaFieldIndexTuple(31)).toBe(false);
+      expect(isCriteriaFieldIndexTuple(32)).toBe(true);
+    });
+  });
+
+  describe("criteria field index functions in practice", () => {
+    test("round-trip packing and unpacking preserves the original values", () => {
+      for (let i = 0; i <= 13; i++) {
+        for (let j = 0; j <= 13; j++) {
+          const original: [number, number] = [i, j];
+          const packed = packCriteriaFieldIndexes(original);
+          const unpacked = unpackCriteriaFieldIndexes(packed);
+          expect(unpacked).toEqual(original);
+        }
+      }
+    });
+  });
+});

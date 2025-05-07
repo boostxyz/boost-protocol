@@ -1781,3 +1781,120 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     args: reorderedArgs,
   } as EventLog;
 }
+
+/**
+ * IMPORTANT: For variable incentive criteria use only.
+ * Do NOT use for action steps - use {@link packFieldIndexes} instead.
+ *
+ * Packs two field indices into a single uint8 value for criteria tuple access.
+ * Both indices must be between 0-13 to fit in the packed format.
+ *
+ * Uses an offset of 32 to avoid collision with normal field indices (which are 0-31),
+ * allowing the system to distinguish between direct field access and tuple access.
+ *
+ * @export
+ * @param {[number, number]} param0 - A tuple of [firstIndex, secondIndex]
+ * @returns {number} - Packed uint8 value with base offset of 32
+ * @throws {InvalidTupleEncodingError} - If either index is outside the valid range (0-13)
+ */
+export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
+  number,
+  number,
+]): number {
+  if (
+    firstIndex < 0 ||
+    firstIndex > 13 ||
+    secondIndex < 0 ||
+    secondIndex > 13
+  ) {
+    throw new InvalidTupleEncodingError(
+      `Tuple indices must be between 0-13, got: [${firstIndex}, ${secondIndex}]`,
+    );
+  }
+  return 32 + (firstIndex << 4) + secondIndex;
+}
+
+/**
+ * Unpacks a uint8 packed index value into an array of indices.
+ *
+ * @export
+ * @param {number} packed - Packed index value
+ * @returns {[number, number]} - [firstIndex, secondIndex]
+ */
+export function unpackCriteriaFieldIndexes(packed: number): [number, number] {
+  if (packed < 32 || packed > 253) {
+    throw new InvalidTupleEncodingError(
+      `Field index must be between 32-253, got: ${packed}`,
+    );
+  }
+
+  const tupleValue = packed - 32;
+  const firstIndex = (tupleValue >> 4) & 0xf;
+  const secondIndex = tupleValue & 0xf;
+  return [firstIndex, secondIndex];
+}
+
+/**
+ * Determines if a fieldIndex represents a tuple index (value >= 32) or a normal field index.
+ *
+ * @export
+ * @param {number} fieldIndex - The field index to check
+ * @returns {boolean} - True if it's a tuple index, false if it's a normal field index
+ */
+export function isCriteriaFieldIndexTuple(fieldIndex: number): boolean {
+  return fieldIndex >= 32;
+}
+
+/**
+ * Extracts a scalar value from a tuple within event or function arguments.
+ * This is used for incentive criteria when determining reward amounts.
+ *
+ * @export
+ * @param {unknown[]} args - The decoded arguments from an event or function call
+ * @param {number} fieldIndex - The tuple-encoded index
+ * @returns {bigint} The extracted scalar value as a bigint
+ * @throws {DecodedArgsError} If arguments are missing or cannot be converted to bigint
+ */
+export function getScalarValueFromTuple(
+  args: unknown[],
+  fieldIndex: number,
+): bigint {
+  if (!isCriteriaFieldIndexTuple(fieldIndex)) {
+    throw new DecodedArgsError(
+      `Field index ${fieldIndex} is invalid. Expected index >= 32`,
+    );
+  }
+
+  const [index0, index1] = unpackCriteriaFieldIndexes(fieldIndex);
+
+  if (index0 === undefined || index1 === undefined) {
+    throw new DecodedArgsError(
+      `Failed to unpack field indexes from ${fieldIndex}`,
+    );
+  }
+
+  if (!args || args.length <= index0) {
+    throw new DecodedArgsError(`Decoded args missing item at index ${index0}`);
+  }
+
+  const tuple = args[index0];
+  if (!tuple || !Array.isArray(tuple)) {
+    throw new DecodedArgsError(
+      `Expected array at index ${index0}, but got ${typeof tuple}`,
+    );
+  }
+  if (tuple.length <= index1) {
+    throw new DecodedArgsError(
+      `index ${index1} is out of bounds. tuple length is ${tuple.length}`,
+    );
+  }
+
+  const scalarValue = tuple[index1] as unknown;
+  if (typeof scalarValue !== 'bigint') {
+    throw new DecodedArgsError(
+      `Expected bigint at tuple index ${index1}, but got ${typeof scalarValue}`,
+    );
+  }
+
+  return scalarValue;
+}

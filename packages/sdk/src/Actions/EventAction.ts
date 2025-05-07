@@ -1783,8 +1783,14 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
 }
 
 /**
+ * IMPORTANT: For variable incentive criteria use only.
+ * Do NOT use for action steps - use {@link packFieldIndexes} instead.
+ *
  * Packs two field indices into a single uint8 value for criteria tuple access.
  * Both indices must be between 0-13 to fit in the packed format.
+ *
+ * Uses an offset of 32 to avoid collision with normal field indices (which are 0-31),
+ * allowing the system to distinguish between direct field access and tuple access.
  *
  * @export
  * @param {[number, number]} param0 - A tuple of [firstIndex, secondIndex]

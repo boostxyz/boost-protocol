@@ -19,7 +19,12 @@ import {
   zeroHash,
 } from 'viem';
 import { ERC20VariableCriteriaIncentiveV2 as ERC20VariableCriteriaIncentiveV2Bases } from '../../dist/deployments.json';
-import { SignatureType, ValueType } from '../Actions/EventAction';
+import {
+  SignatureType,
+  ValueType,
+  getScalarValueFromTuple,
+  isCriteriaFieldIndexTuple,
+} from '../Actions/EventAction';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -268,7 +273,6 @@ export class ERC20VariableCriteriaIncentiveV2 extends ERC20VariableIncentive<
 
       // Decode the event log
       try {
-        // Decode function data
         const eventAbi = knownSignatures[criteria.signature] as AbiEvent;
         const decodedEvents = parseEventLogs({
           abi: [eventAbi],
@@ -279,10 +283,18 @@ export class ERC20VariableCriteriaIncentiveV2 extends ERC20VariableIncentive<
             `No logs found for event signature ${criteria.signature}`,
           );
         }
-        const scalarValue = (decodedEvents[0]?.args as string[])[
-          criteria.fieldIndex
-        ];
 
+        if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
+          return getScalarValueFromTuple(
+            decodedEvents[0]?.args as unknown[],
+            criteria.fieldIndex,
+          );
+        }
+
+        const scalarValue =
+          decodedEvents[0] && decodedEvents[0].args
+            ? (decodedEvents[0].args as string[])[criteria.fieldIndex]
+            : undefined;
         if (scalarValue === undefined) {
           throw new DecodedArgsError(
             `Decoded argument at index ${criteria.fieldIndex} is undefined`,
@@ -307,6 +319,14 @@ export class ERC20VariableCriteriaIncentiveV2 extends ERC20VariableIncentive<
           abi: [func],
           data: transaction.input,
         });
+
+        if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
+          return getScalarValueFromTuple(
+            decodedFunction.args as unknown[],
+            criteria.fieldIndex,
+          );
+        }
+
         const scalarValue = decodedFunction.args[criteria.fieldIndex] as string;
         if (scalarValue === undefined || scalarValue === null) {
           throw new DecodedArgsError(

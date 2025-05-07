@@ -1,5 +1,15 @@
 # @boostxyz/sdk
 
+## 7.2.0
+
+### Minor Changes
+
+- 83249bc: add tuple support for incentive criteria
+
+### Patch Changes
+
+- 8db0796: update claimant matching logic
+
 ## 7.1.0
 
 ### Minor Changes

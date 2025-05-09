@@ -576,18 +576,25 @@ export class EventAction extends DeployableTarget<
         throw new ValidationAbiMissingError(signature);
       }
 
-      let address: Address | undefined;
       if ('logs' in params) {
-        for (let log of params.logs) {
+        const signatureMatchingLogs = params.logs
+          .filter((log) => log.topics[0] === signature)
+          .map((log) => decodeAndReorderLogArgs(event, log));
+
+        for (const log of signatureMatchingLogs) {
           if (!isAddressEqual(log.address, claimant.targetContract)) continue;
-          let addressCandidate = this.validateClaimantAgainstArgs(
+          const addressCandidate = this.validateClaimantAgainstArgs(
             claimant,
             log,
           );
           if (addressCandidate) return addressCandidate;
         }
-        return address;
       }
+
+      if (!('hash' in params)) {
+        return undefined;
+      }
+
       const receipt = await getTransactionReceipt(this._config, {
         ...params,
         chainId: claimant.chainid,
@@ -613,7 +620,6 @@ export class EventAction extends DeployableTarget<
         let addressCandidate = this.validateClaimantAgainstArgs(claimant, log);
         if (addressCandidate) return addressCandidate;
       }
-      return address;
     }
     if (claimant.signatureType === SignatureType.FUNC && 'hash' in params) {
       const transaction = await getTransaction(this._config, {
@@ -1251,6 +1257,143 @@ export class EventAction extends DeployableTarget<
       return true;
     }
     return false;
+  }
+
+  /**
+   * Validates action steps and returns both the result and the matching logs.
+   * Returns early with {valid: false, matchedLogs: []} if any step fails validation.
+   *
+   * @public
+   * @async
+   * @param {ValidateActionStepParams} params
+   * @returns {Promise<{valid: boolean; matchedLogs: EventLog[]}>}
+   */
+  public async validateActionStepsWithLogs(
+    params: ValidateActionStepParams,
+  ): Promise<{
+    valid: boolean;
+    matchedLogs: EventLog[];
+  }> {
+    const actionSteps = await this.getActionSteps();
+    const matchedLogs: EventLog[] = [];
+
+    for (const actionStep of actionSteps) {
+      if (!(await this.isActionStepValid(actionStep, params))) {
+        return { valid: false, matchedLogs: [] };
+      }
+
+      if (actionStep.signatureType === SignatureType.EVENT) {
+        const logs = await this.findMatchingLogsForActionStep(
+          actionStep,
+          params,
+        );
+        matchedLogs.push(...logs);
+      }
+    }
+
+    return { valid: true, matchedLogs };
+  }
+
+  /**
+   * Finds logs that match a specific action step.
+   *
+   * @private
+   * @async
+   * @param {ActionStep} actionStep - The action step to find logs for
+   * @param {ValidateActionStepParams} params - Parameters for validation
+   * @returns {Promise<EventLog[]>}
+   */
+  private async findMatchingLogsForActionStep(
+    actionStep: ActionStep,
+    params: ValidateActionStepParams,
+  ): Promise<EventLog[]> {
+    if (actionStep.signatureType !== SignatureType.EVENT) {
+      return [];
+    }
+
+    const signature = actionStep.signature;
+    let event: AbiEvent;
+    if (params.abiItem) event = params.abiItem as AbiEvent;
+    else {
+      const sigPool = params.knownSignatures as Record<Hex, AbiEvent>;
+      event = sigPool[signature] as AbiEvent;
+    }
+
+    if (!event) {
+      throw new ValidationAbiMissingError(signature);
+    }
+
+    if ('logs' in params) {
+      return this.findMatchingEventLogs(actionStep, params.logs, event);
+    }
+
+    const receipt = await getTransactionReceipt(this._config, {
+      ...params,
+      chainId: actionStep.chainid,
+    });
+
+    if (
+      params.notBeforeBlockNumber &&
+      receipt.blockNumber < params.notBeforeBlockNumber
+    ) {
+      return [];
+    }
+
+    // Special handling for Transfer events
+    if (actionStep.signature === TRANSFER_SIGNATURE) {
+      const { decodedLogs, event } = await this.decodeTransferLogs(receipt);
+      return this.findMatchingEventLogs(actionStep, decodedLogs, event);
+    }
+
+    const decodedLogs = receipt.logs
+      .filter((log) => log.topics[0] === toEventSelector(event))
+      .map((log) => decodeAndReorderLogArgs(event, log));
+
+    return this.findMatchingEventLogs(actionStep, decodedLogs, event);
+  }
+
+  /**
+   * Finds logs that match the given action step criteria
+   *
+   * @private
+   * @param {ActionStep} actionStep
+   * @param {EventLogs} logs
+   * @param {AbiEvent} eventAbi
+   * @returns {EventLog[]}
+   */
+  private findMatchingEventLogs(
+    actionStep: ActionStep,
+    logs: EventLogs,
+    eventAbi: AbiEvent,
+  ): EventLog[] {
+    const criteria = actionStep.actionParameter;
+    const matchingLogs: EventLog[] = [];
+
+    if (!logs.length) return matchingLogs;
+
+    for (let log of logs) {
+      if (!isAddressEqual(log.address, actionStep.targetContract)) continue;
+
+      try {
+        if (!Array.isArray(log.args)) {
+          continue;
+        }
+        const { value, type } = this.parseFieldFromAbi(
+          log.args,
+          criteria.fieldIndex,
+          eventAbi.inputs || [],
+          criteria.fieldType,
+        );
+        criteria.fieldType = type;
+        if (this.validateFieldAgainstCriteria(criteria, value, { log })) {
+          matchingLogs.push(log as EventLog);
+        }
+      } catch {
+        // If there's an error on this log, keep trying with the next one
+      }
+    }
+
+    return matchingLogs;
   }
 }
 

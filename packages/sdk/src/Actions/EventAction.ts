@@ -1283,7 +1283,7 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Finds logs that match a specific action step.
+   * Finds logs that match the criteria for a specific action step.
    *
    * @public
    * @async

@@ -1260,50 +1260,38 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Validates action steps and returns any matching logs.
+   * Retrieves logs that match the criteria for event-based action steps.
    *
    * @public
    * @async
-   * @param {ValidateActionStepParams} params
-   * @returns {Promise<{allStepsValid: boolean; matchedLogs: EventLog[]}>}
+   * @param {ValidateActionStepParams} params - Parameters for fetching and filtering logs.
+   * @returns {Promise<EventLog[]>} - A promise that resolves to an array of matching event logs.
    */
-  public async validateActionStepsWithLogs(
+  public async getLogsForActionSteps(
     params: ValidateActionStepParams,
-  ): Promise<{
-    allStepsValid: boolean;
-    matchedLogs: EventLog[];
-  }> {
+  ): Promise<EventLog[]> {
     const actionSteps = await this.getActionSteps();
-    const matchedLogs: EventLog[] = [];
-    let allStepsValid = true;
+    const actionStepLogs: EventLog[] = [];
 
     for (const actionStep of actionSteps) {
-      if (!(await this.isActionStepValid(actionStep, params))) {
-        allStepsValid = false;
-      }
-
       if (actionStep.signatureType === SignatureType.EVENT) {
-        const logs = await this.findMatchingLogsForActionStep(
-          actionStep,
-          params,
-        );
-        matchedLogs.push(...logs);
+        const logs = await this.getLogsForActionStep(actionStep, params);
+        actionStepLogs.push(...logs);
       }
     }
-
-    return { allStepsValid, matchedLogs };
+    return actionStepLogs;
   }
 
   /**
    * Finds logs that match a specific action step.
    *
-   * @private
+   * @public
    * @async
    * @param {ActionStep} actionStep - The action step to find logs for
    * @param {ValidateActionStepParams} params - Parameters for validation
    * @returns {Promise<EventLog[]>}
    */
-  private async findMatchingLogsForActionStep(
+  public async getLogsForActionStep(
     actionStep: ActionStep,
     params: ValidateActionStepParams,
   ): Promise<EventLog[]> {
@@ -1324,7 +1312,11 @@ export class EventAction extends DeployableTarget<
     }
 
     if ('logs' in params) {
-      return this.findMatchingEventLogs(actionStep, params.logs, event);
+      return this.filterLogsByActionStepCriteria(
+        actionStep,
+        params.logs,
+        event,
+      );
     }
 
     const receipt = await getTransactionReceipt(this._config, {
@@ -1342,18 +1334,22 @@ export class EventAction extends DeployableTarget<
     // Special handling for Transfer events
     if (actionStep.signature === TRANSFER_SIGNATURE) {
       const { decodedLogs, event } = await this.decodeTransferLogs(receipt);
-      return this.findMatchingEventLogs(actionStep, decodedLogs, event);
+      return this.filterLogsByActionStepCriteria(
+        actionStep,
+        decodedLogs,
+        event,
+      );
     }
 
     const decodedLogs = receipt.logs
       .filter((log) => log.topics[0] === toEventSelector(event))
       .map((log) => decodeAndReorderLogArgs(event, log));
 
-    return this.findMatchingEventLogs(actionStep, decodedLogs, event);
+    return this.filterLogsByActionStepCriteria(actionStep, decodedLogs, event);
   }
 
   /**
-   * Finds logs that match the given action step criteria
+   * Filters logs that meet the given action step criteria
    *
    * @private
    * @param {ActionStep} actionStep
@@ -1361,15 +1357,15 @@ export class EventAction extends DeployableTarget<
    * @param {AbiEvent} eventAbi
    * @returns {EventLog[]}
    */
-  private findMatchingEventLogs(
+  private filterLogsByActionStepCriteria(
     actionStep: ActionStep,
     logs: EventLogs,
     eventAbi: AbiEvent,
   ): EventLog[] {
     const criteria = actionStep.actionParameter;
-    const matchingLogs: EventLog[] = [];
+    const filteredLogs: EventLog[] = [];
 
-    if (!logs.length) return matchingLogs;
+    if (!logs.length) return filteredLogs;
 
     for (let log of logs) {
       if (!isAddressEqual(log.address, actionStep.targetContract)) continue;
@@ -1386,14 +1382,14 @@ export class EventAction extends DeployableTarget<
         );
         criteria.fieldType = type;
         if (this.validateFieldAgainstCriteria(criteria, value, { log })) {
-          matchingLogs.push(log as EventLog);
+          filteredLogs.push(log as EventLog);
         }
       } catch {
         // If there's an error on this log, keep trying with the next one
       }
     }
 
-    return matchingLogs;
+    return filteredLogs;
   }
 }
 

@@ -1260,26 +1260,26 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Validates action steps and returns both the result and the matching logs.
-   * Returns early with {valid: false, matchedLogs: []} if any step fails validation.
+   * Validates action steps and returns any matching logs.
    *
    * @public
    * @async
    * @param {ValidateActionStepParams} params
-   * @returns {Promise<{valid: boolean; matchedLogs: EventLog[]}>}
+   * @returns {Promise<{allStepsValid: boolean; matchedLogs: EventLog[]}>}
    */
   public async validateActionStepsWithLogs(
     params: ValidateActionStepParams,
   ): Promise<{
-    valid: boolean;
+    allStepsValid: boolean;
     matchedLogs: EventLog[];
   }> {
     const actionSteps = await this.getActionSteps();
     const matchedLogs: EventLog[] = [];
+    let allStepsValid = true;
 
     for (const actionStep of actionSteps) {
       if (!(await this.isActionStepValid(actionStep, params))) {
-        return { valid: false, matchedLogs: [] };
+        allStepsValid = false;
       }
 
       if (actionStep.signatureType === SignatureType.EVENT) {
@@ -1291,7 +1291,7 @@ export class EventAction extends DeployableTarget<
       }
     }
 
-    return { valid: true, matchedLogs };
+    return { allStepsValid, matchedLogs };
   }
 
   /**

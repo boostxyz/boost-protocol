@@ -1,4 +1,8 @@
-import { aIncentiveAbi } from '@boostxyz/evm';
+import {
+  aIncentiveAbi,
+  readErc20PeggedVariableCriteriaIncentiveV2GetIncentiveCriteria,
+  readErc20VariableCriteriaIncentiveV2GetIncentiveCriteria,
+} from '@boostxyz/evm';
 import {
   AAllowListIncentive,
   ACGDAIncentive,
@@ -9,7 +13,6 @@ import {
   AERC20VariableCriteriaIncentive,
   AERC20VariableCriteriaIncentiveV2,
   AERC20VariableIncentive,
-  // AERC20VariableCriteriaIncentive
   APointsIncentive,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
@@ -111,5 +114,33 @@ export async function incentiveFromAddress(
       interfaceId as Hex,
     );
   }
+
+  /*
+   * Because the interfaceId is identical for V1 and V2 variable criteria incentive types,
+   * a V2-specific read is performed. This read is expected to succeed only for V2 contracts,
+   * allowing for selection of the correct SDK constructor.
+   */
+  if (interfaceId === AERC20VariableCriteriaIncentive) {
+    try {
+      await readErc20VariableCriteriaIncentiveV2GetIncentiveCriteria(
+        options.config,
+        { address, ...params },
+      );
+      return new ERC20VariableCriteriaIncentiveV2(options, address);
+    } catch {
+      return new ERC20VariableCriteriaIncentive(options, address);
+    }
+  } else if (interfaceId === AERC20PeggedVariableCriteriaIncentive) {
+    try {
+      await readErc20PeggedVariableCriteriaIncentiveV2GetIncentiveCriteria(
+        options.config,
+        { address, ...params },
+      );
+      return new ERC20PeggedVariableCriteriaIncentiveV2(options, address);
+    } catch {
+      return new ERC20PeggedVariableCriteriaIncentive(options, address);
+    }
+  }
+
   return new Ctor(options, address);
 }

@@ -15,7 +15,6 @@ import {
   decodeFunctionData,
   encodeAbiParameters,
   parseEther,
-  parseEventLogs,
   zeroAddress,
   zeroHash,
 } from 'viem';
@@ -23,6 +22,7 @@ import { ERC20VariableCriteriaIncentiveV2 as ERC20VariableCriteriaIncentiveV2Bas
 import {
   SignatureType,
   ValueType,
+  decodeAndReorderLogArgs,
   getScalarValueFromTuple,
   isCriteriaFieldIndexTuple,
 } from '../Actions/EventAction';
@@ -272,25 +272,20 @@ export class ERC20VariableCriteriaIncentiveV2 extends ERC20VariableIncentive<
       if (logs && logs.length > 0) {
         try {
           // only check logs that match the criteria signature
-          const signatureMatchingLogs = logs.filter(
-            (log) => log.topics && log.topics[0] === criteria.signature,
-          );
+          const signatureMatchingLogs = logs
+            .filter((log) => log.topics && log.topics[0] === criteria.signature)
+            .map((log) => decodeAndReorderLogArgs(eventAbi, log));
 
           if (signatureMatchingLogs.length > 0) {
-            const decodedEvents = parseEventLogs({
-              abi: [eventAbi],
-              logs: signatureMatchingLogs,
-            });
-
-            if (decodedEvents && decodedEvents.length > 0 && decodedEvents[0]) {
+            for (const log of signatureMatchingLogs) {
               if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
                 return getScalarValueFromTuple(
-                  decodedEvents[0].args as unknown[],
+                  log.args as unknown[],
                   criteria.fieldIndex,
                 );
               }
-              const scalarValue = decodedEvents[0].args
-                ? (decodedEvents[0].args as string[])[criteria.fieldIndex]
+              const scalarValue = log.args
+                ? (log.args as string[])[criteria.fieldIndex]
                 : undefined;
               if (scalarValue !== undefined) {
                 return BigInt(scalarValue);
@@ -304,47 +299,44 @@ export class ERC20VariableCriteriaIncentiveV2 extends ERC20VariableIncentive<
         }
       }
 
-      const transactionReceipt = await getTransactionReceipt(this._config, {
-        chainId,
-        hash,
-      });
-      const eventLogs = transactionReceipt.logs;
-
-      if (eventLogs.length === 0) {
-        throw new NoMatchingLogsError(
-          `No logs found for event signature ${criteria.signature}`,
-        );
-      }
-
-      // Decode the event log
+      // Decode the event logs
       try {
-        const decodedEvents = parseEventLogs({
-          abi: [eventAbi],
-          logs: eventLogs,
+        const transactionReceipt = await getTransactionReceipt(this._config, {
+          chainId,
+          hash,
         });
-        if (decodedEvents == undefined || decodedEvents.length === 0) {
+        const eventLogs = transactionReceipt.logs
+          .filter((log) => log.topics && log.topics[0] === criteria.signature)
+          .map((log) => decodeAndReorderLogArgs(eventAbi, log));
+
+        if (eventLogs.length === 0) {
           throw new NoMatchingLogsError(
             `No logs found for event signature ${criteria.signature}`,
           );
         }
 
-        if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
-          return getScalarValueFromTuple(
-            decodedEvents[0]?.args as unknown[],
-            criteria.fieldIndex,
-          );
-        }
+        for (const log of eventLogs) {
+          if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
+            return getScalarValueFromTuple(
+              log.args as unknown[],
+              criteria.fieldIndex,
+            );
+          }
 
-        const scalarValue =
-          decodedEvents[0] && decodedEvents[0].args
-            ? (decodedEvents[0].args as string[])[criteria.fieldIndex]
-            : undefined;
-        if (scalarValue === undefined) {
-          throw new DecodedArgsError(
-            `Decoded argument at index ${criteria.fieldIndex} is undefined`,
-          );
+          const scalarValue =
+            log.args && log.args.length > criteria.fieldIndex
+              ? (log.args as string[])[criteria.fieldIndex]
+              : undefined;
+          if (scalarValue === undefined) {
+            throw new DecodedArgsError(
+              `Decoded argument at index ${criteria.fieldIndex} is undefined`,
+            );
+          }
+          return BigInt(scalarValue);
         }
-        return BigInt(scalarValue);
+        throw new DecodedArgsError(
+          `No scalar value found for event signature ${criteria.signature}`,
+        );
       } catch (e) {
         throw new DecodedArgsError(
           `Failed to decode event log for signature ${criteria.signature}: ${(e as Error).message}`,

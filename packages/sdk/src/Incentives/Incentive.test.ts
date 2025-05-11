@@ -7,12 +7,12 @@ import {
   CGDAIncentive,
   ERC20Incentive,
   ERC20VariableIncentive,
-  incentiveFromAddress,
   ERC20VariableCriteriaIncentive,
   ERC20VariableCriteriaIncentiveV2,
   ERC20PeggedVariableCriteriaIncentive,
   ERC20PeggedVariableCriteriaIncentiveV2,
   ERC20PeggedIncentive,
+  incentiveFromAddress,
 } from './Incentive';
 import { PointsIncentive } from './PointsIncentive';
 import { SignatureType, ValueType } from '../Actions/EventAction';
@@ -102,6 +102,23 @@ describe('Incentive', () => {
         incentive.assertValidAddress(),
       ),
     ).toBeInstanceOf(ERC20VariableIncentive);
+  });
+
+  test('can automatically instantiate ERC20PeggedIncentive given an address', async () => {
+    const incentive = new ERC20PeggedIncentive(defaultOptions, {
+      asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      peg: zeroAddress,
+      limit: 1000000n,
+      reward: 100000n,
+    });
+    // @ts-expect-error private method
+    await incentive.deploy();
+    expect(
+      await incentiveFromAddress(
+        defaultOptions,
+        incentive.assertValidAddress(),
+      ),
+    ).toBeInstanceOf(ERC20PeggedIncentive);
   });
 
   test('can automatically instantiate ERC20VariableCriteriaIncentive (V1) given an address', async () => {
@@ -200,39 +217,5 @@ describe('Incentive', () => {
         incentive.assertValidAddress(),
       ),
     ).toBeInstanceOf(ERC20PeggedVariableCriteriaIncentiveV2);
-  });
-
-  test('can automatically instantiate ERC20Incentive given an address', async () => {
-    const incentive = new ERC20Incentive(defaultOptions, {
-      asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-      limit: 1000000n,
-      reward: 100000n,
-      strategy: StrategyType.POOL,
-    });
-    // @ts-expect-error private method
-    await incentive.deploy();
-    expect(
-      await incentiveFromAddress(
-        defaultOptions,
-        incentive.assertValidAddress(),
-      ),
-    ).toBeInstanceOf(ERC20Incentive);
-  });
-
-  test('can automatically instantiate ERC20PeggedIncentive given an address', async () => {
-    const incentive = new ERC20PeggedIncentive(defaultOptions, {
-      asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-      peg: zeroAddress,
-      limit: 1000000n,
-      reward: 100000n,
-    });
-    // @ts-expect-error private method
-    await incentive.deploy();
-    expect(
-      await incentiveFromAddress(
-        defaultOptions,
-        incentive.assertValidAddress(),
-      ),
-    ).toBeInstanceOf(ERC20PeggedIncentive);
   });
 });

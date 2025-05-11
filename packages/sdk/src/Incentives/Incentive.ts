@@ -82,8 +82,8 @@ export const IncentiveByComponentInterface = {
   // [AERC1155Incentive as Hex]: ERC1155Incentive,
   [ACGDAIncentive as Hex]: CGDAIncentive,
   [AERC20VariableIncentive as Hex]: ERC20VariableIncentive,
-  [AERC20VariableCriteriaIncentiveV2 as Hex]: ERC20VariableCriteriaIncentiveV2,
   [AERC20VariableCriteriaIncentive as Hex]: ERC20VariableCriteriaIncentive,
+  [AERC20VariableCriteriaIncentiveV2 as Hex]: ERC20VariableCriteriaIncentiveV2,
 };
 
 /**

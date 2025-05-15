@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 7.3.0
+
+### Minor Changes
+
+- b1f7a7b: add optional logs to GetIncentiveScalarV2Params
+- 341a01e: derive claimant from actionStep logs
+
 ## 7.2.0
 
 ### Minor Changes

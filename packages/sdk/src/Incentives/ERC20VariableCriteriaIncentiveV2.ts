@@ -14,6 +14,7 @@ import {
   decodeAbiParameters,
   decodeFunctionData,
   encodeAbiParameters,
+  pad,
   parseEther,
   parseEventLogs,
   zeroAddress,
@@ -497,7 +498,7 @@ export function prepareERC20VariableCriteriaIncentiveV2Payload({
         maxReward: maxReward,
         criteria: {
           criteriaType: criteria.criteriaType,
-          signature: criteria.signature,
+          signature: pad(criteria.signature),
           fieldIndex: criteria.fieldIndex,
           targetContract: criteria.targetContract,
           valueType: criteria.valueType,

@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 7.1.0
+
+### Minor Changes
+
+- a49f302: support world chain sepolia
+
 ## 7.0.0
 
 ### Major Changes

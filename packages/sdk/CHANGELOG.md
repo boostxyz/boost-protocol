@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 7.4.0
+
+### Minor Changes
+
+- a49f302: support world chain sepolia
+
 ## 7.3.0
 
 ### Minor Changes

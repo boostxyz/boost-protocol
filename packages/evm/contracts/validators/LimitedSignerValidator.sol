@@ -40,6 +40,7 @@ contract LimitedSignerValidator is ALimitedSignerValidator, SignerValidator {
     function validate(uint256 boostId, uint256 incentiveId, address claimant, bytes calldata claimData)
         public
         payable
+        virtual
         override(AValidator, SignerValidator)
         returns (bool)
     {
@@ -65,7 +66,13 @@ contract LimitedSignerValidator is ALimitedSignerValidator, SignerValidator {
         return true;
     }
 
-    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+    function _domainNameAndVersion()
+        internal
+        pure
+        virtual
+        override
+        returns (string memory name, string memory version)
+    {
         name = "LimitedSignerValidator";
         version = "1";
     }

@@ -32,6 +32,7 @@ contract PayableLimitedSignerValidatorTest is Test {
         bytes claimData;
     }
 
+    PayableLimitedSignerValidator baseValidator;
     PayableLimitedSignerValidator validator;
     PayableLimitedSignerValidator clonedValidator;
     MockBoostCore mockBoostCore;
@@ -58,14 +59,18 @@ contract PayableLimitedSignerValidatorTest is Test {
         mockBoostCore = new MockBoostCore(protocolFeeReceiver);
 
         // Deploy the base validator (not initialized)
-        PayableLimitedSignerValidator baseValidator = new PayableLimitedSignerValidator();
+        baseValidator = new PayableLimitedSignerValidator();
 
-        // Prepare initialization data
+        // Set the claim fee on the base validator
+        vm.prank(baseValidator.owner());
+        baseValidator.setClaimFee(claimFee);
+
+        // Prepare initialization data (now includes base implementation address instead of claim fee)
         address[] memory signers = new address[](2);
         signers[0] = owner;
         signers[1] = signer;
 
-        bytes memory data = abi.encode(signers, address(mockBoostCore), maxClaims, claimFee);
+        bytes memory data = abi.encode(signers, address(mockBoostCore), maxClaims, address(baseValidator));
 
         // Create and initialize a clone
         validator = PayableLimitedSignerValidator(LibClone.clone(address(baseValidator)));
@@ -79,7 +84,7 @@ contract PayableLimitedSignerValidatorTest is Test {
     function testInitialize() public view {
         assertEq(validator.owner(), owner);
         assertEq(validator.maxClaimCount(), maxClaims);
-        assertEq(validator.claimFee(), claimFee);
+        assertEq(validator.getClaimFee(), claimFee); // Clone reads from base
         assertTrue(validator.signers(owner));
         assertTrue(validator.signers(signer));
     }
@@ -151,9 +156,9 @@ contract PayableLimitedSignerValidatorTest is Test {
     }
 
     function testValidateZeroFee() public {
-        // Set claim fee to 0
-        vm.prank(owner);
-        validator.setClaimFee(0);
+        // Set claim fee to 0 on base
+        vm.prank(baseValidator.owner());
+        baseValidator.setClaimFee(0);
 
         TestParams memory params = createTestParams(1);
 
@@ -217,19 +222,28 @@ contract PayableLimitedSignerValidatorTest is Test {
     function testSetClaimFee() public {
         uint256 newFee = 0.02 ether;
 
-        // Only owner can set claim fee
+        // Clone cannot set claim fee
+        vm.prank(owner);
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        validator.setClaimFee(newFee);
+
+        // Only base implementation owner can set claim fee
         vm.prank(claimant);
         vm.expectRevert();
-        validator.setClaimFee(newFee);
+        baseValidator.setClaimFee(newFee);
 
-        // Owner sets claim fee
-        vm.prank(owner);
+        // Base owner sets claim fee
+        vm.prank(baseValidator.owner());
         vm.expectEmit(true, true, true, true);
         emit ClaimFeeUpdated(newFee);
-        validator.setClaimFee(newFee);
+        baseValidator.setClaimFee(newFee);
 
-        assertEq(validator.claimFee(), newFee);
+        assertEq(baseValidator.claimFee(), newFee);
+        assertEq(baseValidator.getClaimFee(), newFee);
+
+        // Verify clones see the updated fee
         assertEq(validator.getClaimFee(), newFee);
+        assertEq(clonedValidator.getClaimFee(), newFee);
     }
 
     function testGetClaimFee() public view {
@@ -277,7 +291,7 @@ contract PayableLimitedSignerValidatorTest is Test {
         // Test that cloned validator behaves the same as the original
         assertEq(clonedValidator.owner(), owner);
         assertEq(clonedValidator.maxClaimCount(), maxClaims);
-        assertEq(clonedValidator.claimFee(), claimFee);
+        assertEq(clonedValidator.getClaimFee(), claimFee); // Clone reads from base
         assertTrue(clonedValidator.signers(owner));
         assertTrue(clonedValidator.signers(signer));
 
@@ -308,6 +322,35 @@ contract PayableLimitedSignerValidatorTest is Test {
 
         assertTrue(result);
         assertEq(protocolFeeReceiver.balance, claimFee);
+    }
+
+    function testGlobalFeeUpdate() public {
+        // Initial fee is 0.01 ether
+        assertEq(validator.getClaimFee(), claimFee);
+        assertEq(clonedValidator.getClaimFee(), claimFee);
+
+        // Update fee on base to 0.02 ether
+        uint256 newFee = 0.02 ether;
+        vm.prank(baseValidator.owner());
+        baseValidator.setClaimFee(newFee);
+
+        // All clones should see the new fee
+        assertEq(validator.getClaimFee(), newFee);
+        assertEq(clonedValidator.getClaimFee(), newFee);
+
+        // Validation should now require the new fee
+        TestParams memory params = createTestParams(1);
+        vm.deal(address(mockBoostCore), 1 ether);
+
+        // Old fee should fail
+        vm.prank(address(mockBoostCore));
+        vm.expectRevert(APayableLimitedSignerValidator.InvalidClaimFee.selector);
+        validator.validate{value: claimFee}(params.boostId, params.incentiveId, claimant, params.claimData);
+
+        // New fee should succeed
+        vm.prank(address(mockBoostCore));
+        bool result = validator.validate{value: newFee}(params.boostId, params.incentiveId, claimant, params.claimData);
+        assertTrue(result);
     }
 
     receive() external payable {}

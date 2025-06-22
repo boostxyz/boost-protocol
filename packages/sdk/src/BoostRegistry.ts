@@ -48,7 +48,9 @@ export { boostRegistryAbi };
  * @type {Record<number, Address>}
  */
 export const BOOST_REGISTRY_ADDRESSES: Record<number, Address> = {
-  31337: import.meta.env.VITE_BOOST_REGISTRY_ADDRESS,
+  ...(import.meta.env?.VITE_BOOST_REGISTRY_ADDRESS
+    ? { 31337: import.meta.env.VITE_BOOST_REGISTRY_ADDRESS }
+    : {}),
   ...(BoostRegistryBases as Record<number, Address>),
 };
 

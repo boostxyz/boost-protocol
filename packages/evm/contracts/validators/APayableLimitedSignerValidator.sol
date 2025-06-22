@@ -12,9 +12,9 @@ import {ALimitedSignerValidator} from "contracts/validators/ALimitedSignerValida
 
 /// @title Payable Limited Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers.
-/// @dev The claim fee is forwarded to the protocol fee receiver from BoostCore
+/// @dev The claim fee is stored on the base implementation and read by all clones. Fee is forwarded to the protocol fee receiver from BoostCore.
 abstract contract APayableLimitedSignerValidator is ALimitedSignerValidator {
-    /// @notice The claim fee required to validate a claim
+    /// @notice The claim fee required to validate a claim (only meaningful on base implementation)
     uint256 public claimFee;
 
     /// @notice Emitted when the claim fee is updated

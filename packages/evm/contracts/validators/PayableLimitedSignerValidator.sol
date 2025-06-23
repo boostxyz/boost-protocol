@@ -98,7 +98,10 @@ contract PayableLimitedSignerValidator is APayableLimitedSignerValidator, Limite
     /// @notice Internal function to get the claim fee from the appropriate source
     /// @return The current claim fee amount
     function _getClaimFee() internal view returns (uint256) {
-        return PayableLimitedSignerValidator(_baseImplementation).claimFee();
+        if (_baseImplementation != address(0)) {
+            return PayableLimitedSignerValidator(_baseImplementation).claimFee();
+        }
+        return claimFee;
     }
 
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {

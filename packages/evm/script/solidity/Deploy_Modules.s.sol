@@ -30,6 +30,7 @@ import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 import {LimitedSignerValidator} from "contracts/validators/LimitedSignerValidator.sol";
+import {PayableLimitedSignerValidator} from "contracts/validators/PayableLimitedSignerValidator.sol";
 
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
@@ -70,6 +71,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployAllowListIncentive(registry);
         _deploySignerValidator(registry);
         _deployLimitedSignerValidator(registry);
+        _deployPayableLimitedSignerValidator(registry);
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
@@ -452,6 +454,31 @@ contract ModuleBaseDeployer is ScriptUtils {
                 )
             ),
             limitedSignerValidator,
+            registry,
+            ABoostRegistry.RegistryType.VALIDATOR
+        );
+    }
+
+    function _deployPayableLimitedSignerValidator(
+        BoostRegistry registry
+    ) internal returns (address payableLimitedSignerValidator) {
+        bytes memory initCode = type(PayableLimitedSignerValidator).creationCode;
+        payableLimitedSignerValidator = _getCreate2Address(initCode, "");
+        console.log("PayableLimitedSignerValidator: ", payableLimitedSignerValidator);
+        deployJson = deployJsonKey.serialize(
+            "PayableLimitedSignerValidator",
+            payableLimitedSignerValidator
+        );
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(
+            newDeploy,
+            string(
+                abi.encodePacked(
+                    "PayableLimitedSignerValidator",
+                    payableLimitedSignerValidator
+                )
+            ),
+            payableLimitedSignerValidator,
             registry,
             ABoostRegistry.RegistryType.VALIDATOR
         );

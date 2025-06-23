@@ -409,7 +409,7 @@ export const PayableLimitedSignerValidatorSchema = z.object({
   signers: z.array(AddressSchema),
   validatorCaller: AddressSchema,
   maxClaimCount: z.coerce.number(),
-  claimFee: z.coerce.bigint(),
+  baseImplementation: AddressSchema,
 });
 
 export const SignerValidatorSchema = z.object({

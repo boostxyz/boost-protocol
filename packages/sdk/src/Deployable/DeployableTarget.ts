@@ -64,9 +64,8 @@ export class DeployableTarget<
   public get isBase() {
     if (
       !!this.address &&
-      Object.values(this.bases).some((base) =>
-        // biome-ignore lint/style/noNonNullAssertion: won't evaluate this if address checked and defined above
-        isAddressEqual(this.address!, base),
+      Object.values(this.bases).some(
+        (base) => base && this.address && isAddressEqual(this.address, base),
       )
     )
       return true;

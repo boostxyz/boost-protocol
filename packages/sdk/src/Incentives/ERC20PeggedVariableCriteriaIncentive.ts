@@ -153,7 +153,9 @@ export class ERC20PeggedVariableCriteriaIncentive extends DeployableTarget<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_ERC20_INCENTIVE_BASE,
+    ...(import.meta.env?.VITE_ERC20_INCENTIVE_BASE
+      ? { 31337: import.meta.env.VITE_ERC20_INCENTIVE_BASE }
+      : {}),
     ...(ERC20PeggedVariableCriteriaIncentiveBases as Record<number, Address>),
   };
   /**

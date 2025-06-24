@@ -82,7 +82,9 @@ export class TransparentBudget extends DeployableTargetWithRBAC<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_TRANSPARENT_BUDGET_BASE,
+    ...(import.meta.env?.VITE_TRANSPARENT_BUDGET_BASE
+      ? { 31337: import.meta.env.VITE_TRANSPARENT_BUDGET_BASE }
+      : {}),
     ...(TransparentBudgetBases as Record<number, Address>),
   };
   /**

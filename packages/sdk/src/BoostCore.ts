@@ -179,7 +179,9 @@ export const FEE_DENOMINATOR = 10000n;
  * @type {Record<number, Address>}
  */
 export const BOOST_CORE_ADDRESSES: Record<number, Address> = {
-  31337: import.meta.env.VITE_BOOST_CORE_ADDRESS,
+  ...(import.meta.env?.VITE_BOOST_CORE_ADDRESS
+    ? { 31337: import.meta.env.VITE_BOOST_CORE_ADDRESS }
+    : {}),
   ...(BoostCoreBases as Record<number, Address>),
 };
 

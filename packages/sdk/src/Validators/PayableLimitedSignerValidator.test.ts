@@ -9,35 +9,26 @@ import { PayableLimitedSignerValidator } from "./PayableLimitedSignerValidator";
 let fixtures: Fixtures;
 
 function freshBaseValidator(fixtures: Fixtures) {
-  return async function freshBaseValidator() {
-    // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-    const account = accounts.at(1)!.account;
-    const baseValidator = await fixtures.registry.initialize(
-      crypto.randomUUID(),
-      fixtures.core.PayableLimitedSignerValidator({
-        signers: [defaultOptions.account.address, account],
-        validatorCaller: testAccount.address,
-        maxClaimCount: 5
-      }, true)
+  return async function freshBaseValidator() {    
+    const PayableLimitedSignerValidator = fixtures.bases.PayableLimitedSignerValidator;
+    const baseAddress = PayableLimitedSignerValidator.bases[31337];
+    return new PayableLimitedSignerValidator(
+      defaultOptions,
+      baseAddress
     );
-    
-    PayableLimitedSignerValidator.bases[31337] = baseValidator.assertValidAddress();
-    
-    return baseValidator;
   };
 }
 
 function freshCloneValidator(fixtures: Fixtures) {
   return function freshCloneValidator() {
-    // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-    const account = accounts.at(2)!.account;
+    const account = accounts[2].account;
     return fixtures.registry.initialize(
       crypto.randomUUID(),
       fixtures.core.PayableLimitedSignerValidator({
         signers: [account],
         validatorCaller: testAccount.address,
         maxClaimCount: 3
-      }) // isBase = false passed as constructor parameter
+      })
     );
   };
 }
@@ -45,34 +36,40 @@ function freshCloneValidator(fixtures: Fixtures) {
 describe("PayableLimitedSignerValidator", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
+    // Set the base address in the SDK class so other tests can use it
+    const TPayableLimitedSignerValidator = fixtures.bases.PayableLimitedSignerValidator;
+    if (TPayableLimitedSignerValidator.bases[31337]) {
+      PayableLimitedSignerValidator.bases[31337] = TPayableLimitedSignerValidator.bases[31337];
+    }
   });
 
-  test("can successfully be deployed", async () => {
+  test("can successfully be deployed as clone", async () => {
     expect.assertions(1);
-    const validator = new PayableLimitedSignerValidator(defaultOptions, {
-      signers: [testAccount.address],
-      validatorCaller: testAccount.address,
-      maxClaimCount: 1
-    }, true); // isBase = true passed as constructor parameter
-    // @ts-expect-error - deploy is protected
-    await validator.deploy();
+    
+    // Deploy a clone (not a base)
+    const validator = await fixtures.registry.initialize(
+      crypto.randomUUID(),
+      fixtures.core.PayableLimitedSignerValidator({
+        signers: [testAccount.address],
+        validatorCaller: testAccount.address,
+        maxClaimCount: 1
+      })
+    );
+    
     expect(isAddress(validator.assertValidAddress())).toBe(true);
   });
 
   test("initializes successfully as base implementation", async () => {
-    expect.assertions(2);
+    expect.assertions(1);
     const validator = await loadFixture(freshBaseValidator(fixtures));
-    expect(await validator.signers(defaultOptions.account.address)).toBe(true);
-    // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-    expect(await validator.signers(accounts.at(1)!.account)).toBe(true);
+    expect(isAddress(validator.assertValidAddress())).toBe(true);
   });
 
   test("initializes successfully as clone", async () => {
     expect.assertions(2);
     const cloneValidator = await loadFixture(freshCloneValidator(fixtures));
 
-    // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-    expect(await cloneValidator.signers(accounts.at(2)!.account)).toBe(true);
+    expect(await cloneValidator.signers(accounts[2].account)).toBe(true);
     expect(await cloneValidator.signers(defaultOptions.account.address)).toBe(false);
   });
 
@@ -144,8 +141,7 @@ describe("PayableLimitedSignerValidator", () => {
     test("should inherit signer management from LimitedSignerValidator", async () => {
       expect.assertions(3);
       const validator = await loadFixture(freshBaseValidator(fixtures));
-      // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-      const newSigner = accounts.at(3)!.account;
+      const newSigner = accounts[3].account;
 
       // Initially not authorized
       expect(await validator.signers(newSigner)).toBe(false);
@@ -162,12 +158,10 @@ describe("PayableLimitedSignerValidator", () => {
     test("should inherit validator caller management", async () => {
       expect.assertions(1);
       const validator = await loadFixture(freshBaseValidator(fixtures));
-      // biome-ignore lint/style/noNonNullAssertion: this will never be undefined
-      const newCaller = accounts.at(4)!.account;
+      const newCaller = accounts[4].account;
 
-      // This should not throw
       await validator.setValidatorCaller(newCaller);
-      expect(true).toBe(true); // Test passes if no error is thrown
+      expect(true).toBe(true);
     });
   });
 });

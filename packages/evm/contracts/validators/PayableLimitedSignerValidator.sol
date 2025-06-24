@@ -30,8 +30,11 @@ contract PayableLimitedSignerValidator is APayableLimitedSignerValidator, Limite
     address private _baseImplementation;
 
     /// @notice Construct a new PayableLimitedSignerValidator
-    /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
-    constructor() {
+    /// @dev The base implementation needs an owner to manage the global claim fee
+    /// @param owner_ The address that will be the owner of the base implementation
+    constructor(address owner_) {
+        if (owner_ == address(0)) revert BoostError.Unauthorized();
+        _initializeOwner(owner_);
         _disableInitializers();
     }
 

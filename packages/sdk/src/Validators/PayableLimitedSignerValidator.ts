@@ -512,18 +512,12 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
       _options,
     );
 
-    // Automatically determine base implementation address based on isBase flag
-    let baseImplementation: Address;
-    if (this.isBase) {
-      // This is a base implementation
-      baseImplementation = zeroAddress;
-    } else {
-      // This is a clone - get base address from the bases array
-      const chainId = this._config.getClient().chain?.id;
-      baseImplementation = chainId
-        ? PayableLimitedSignerValidator.bases[chainId] || zeroAddress
-        : zeroAddress;
-    }
+    // SDK only deploys clones, not base implementations
+    // Base implementations are deployed by the CLI
+    const chainId = this._config.getClient().chain?.id;
+    const baseImplementation = chainId
+      ? PayableLimitedSignerValidator.bases[chainId] || zeroAddress
+      : zeroAddress;
 
     return {
       abi: payableLimitedSignerValidatorAbi,

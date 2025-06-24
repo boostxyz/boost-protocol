@@ -58,11 +58,11 @@ contract PayableLimitedSignerValidatorTest is Test {
         // Create mock BoostCore
         mockBoostCore = new MockBoostCore(protocolFeeReceiver);
 
-        // Deploy the base validator (not initialized)
-        baseValidator = new PayableLimitedSignerValidator();
+        // Deploy the base validator with owner
+        baseValidator = new PayableLimitedSignerValidator(owner);
 
         // Set the claim fee on the base validator
-        vm.prank(baseValidator.owner());
+        vm.prank(owner);
         baseValidator.setClaimFee(claimFee);
 
         // Prepare initialization data (now includes base implementation address instead of claim fee)
@@ -157,7 +157,7 @@ contract PayableLimitedSignerValidatorTest is Test {
 
     function testValidateZeroFee() public {
         // Set claim fee to 0 on base
-        vm.prank(baseValidator.owner());
+        vm.prank(owner);
         baseValidator.setClaimFee(0);
 
         TestParams memory params = createTestParams(1);
@@ -233,7 +233,7 @@ contract PayableLimitedSignerValidatorTest is Test {
         baseValidator.setClaimFee(newFee);
 
         // Base owner sets claim fee
-        vm.prank(baseValidator.owner());
+        vm.prank(owner);
         vm.expectEmit(true, true, true, true);
         emit ClaimFeeUpdated(newFee);
         baseValidator.setClaimFee(newFee);
@@ -331,7 +331,7 @@ contract PayableLimitedSignerValidatorTest is Test {
 
         // Update fee on base to 0.02 ether
         uint256 newFee = 0.02 ether;
-        vm.prank(baseValidator.owner());
+        vm.prank(owner);
         baseValidator.setClaimFee(newFee);
 
         // All clones should see the new fee

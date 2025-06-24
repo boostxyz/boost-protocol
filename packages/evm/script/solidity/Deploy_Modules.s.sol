@@ -463,12 +463,13 @@ contract ModuleBaseDeployer is ScriptUtils {
         BoostRegistry registry
     ) internal returns (address payableLimitedSignerValidator) {
         // Use the deployer as the owner of the base implementation
-        address baseOwner = vm.addr(vm.envUint("SIGNER_PRIVATE_KEY"));
+        address baseOwner = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
         bytes memory initCode = abi.encodePacked(
             type(PayableLimitedSignerValidator).creationCode,
             abi.encode(baseOwner)
         );
         payableLimitedSignerValidator = _getCreate2Address(initCode, "");
+        console.log("BaseOwner: ", baseOwner);
         console.log("PayableLimitedSignerValidator: ", payableLimitedSignerValidator);
         deployJson = deployJsonKey.serialize(
             "PayableLimitedSignerValidator",

@@ -512,8 +512,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
       _options,
     );
 
-    // SDK only deploys clones, not base implementations
-    // Base implementations are deployed by the CLI
+    // set the base implementation address
     const chainId = this._config.getClient().chain?.id;
     const baseImplementation = chainId
       ? PayableLimitedSignerValidator.bases[chainId] || zeroAddress

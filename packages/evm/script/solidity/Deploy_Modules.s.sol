@@ -53,28 +53,28 @@ contract ModuleBaseDeployer is ScriptUtils {
         BoostRegistry registry = _getRegistry();
         console.log("Boost Registry: ", address(registry));
 
-        _deployManagedBudget(registry);
-        _deployManagedBudgetWithFees(registry);
-        _deployTransparentBudget(registry);
+        // _deployManagedBudget(registry);
+        // _deployManagedBudgetWithFees(registry);
+        // _deployTransparentBudget(registry);
 
-        _deployEventAction(registry);
+        // _deployEventAction(registry);
 
-        _deployERC20Incentive(registry);
-        _deployERC20VariableIncentive(registry);
-        _deployERC20VariableCriteriaIncentive(registry);
-        _deployERC20VariableCriteriaIncentiveV2(registry);
-        _deployERC20PeggedIncentive(registry);
-        _deployERC20PeggedVariableCriteriaIncentive(registry);
-        _deployERC20PeggedVariableCriteriaIncentiveV2(registry);
-        _deployCGDAIncentive(registry);
-        _deployPointsIncentive(registry);
-        _deployAllowListIncentive(registry);
-        _deploySignerValidator(registry);
-        _deployLimitedSignerValidator(registry);
+        // _deployERC20Incentive(registry);
+        // _deployERC20VariableIncentive(registry);
+        // _deployERC20VariableCriteriaIncentive(registry);
+        // _deployERC20VariableCriteriaIncentiveV2(registry);
+        // _deployERC20PeggedIncentive(registry);
+        // _deployERC20PeggedVariableCriteriaIncentive(registry);
+        // _deployERC20PeggedVariableCriteriaIncentiveV2(registry);
+        // _deployCGDAIncentive(registry);
+        // _deployPointsIncentive(registry);
+        // _deployAllowListIncentive(registry);
+        // _deploySignerValidator(registry);
+        // _deployLimitedSignerValidator(registry);
         _deployPayableLimitedSignerValidator(registry);
-        _deploySimpleAllowList(registry);
-        address denyList = _deploySimpleDenyList(registry);
-        _deployOpenAllowList(registry, SimpleDenyList(denyList));
+        // _deploySimpleAllowList(registry);
+        // address denyList = _deploySimpleDenyList(registry);
+        // _deployOpenAllowList(registry, SimpleDenyList(denyList));
 
         _saveJson();
     }
@@ -463,7 +463,8 @@ contract ModuleBaseDeployer is ScriptUtils {
         BoostRegistry registry
     ) internal returns (address payableLimitedSignerValidator) {
         // Use the deployer as the owner of the base implementation
-        address baseOwner = vm.addr(vm.envUint("SIGNER_PRIVATE_KEY"));
+        address baseOwner = vm.addr(vm.envUint("OWNER_PRIVATE_KEY"));
+        console.log("baseOwner: ", baseOwner);
         bytes memory initCode = abi.encodePacked(
             type(PayableLimitedSignerValidator).creationCode,
             abi.encode(baseOwner)

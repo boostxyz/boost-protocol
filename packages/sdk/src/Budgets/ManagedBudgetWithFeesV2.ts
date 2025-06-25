@@ -134,7 +134,9 @@ export class ManagedBudgetWithFeesV2 extends DeployableTargetWithRBAC<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_MANAGED_BUDGET_WITH_FEES_BASE,
+    ...(import.meta.env?.VITE_MANAGED_BUDGET_WITH_FEES_BASE
+      ? { 31337: import.meta.env.VITE_MANAGED_BUDGET_WITH_FEES_BASE }
+      : {}),
     ...(ManagedBudgetWithFeesV2Bases as Record<number, Address>),
   };
   /**

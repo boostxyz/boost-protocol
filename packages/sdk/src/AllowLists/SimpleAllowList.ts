@@ -99,7 +99,9 @@ export class SimpleAllowList extends DeployableTargetWithRBAC<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE,
+    ...(import.meta.env?.VITE_SIMPLE_ALLOWLIST_BASE
+      ? { 31337: import.meta.env.VITE_SIMPLE_ALLOWLIST_BASE }
+      : {}),
     ...(SimpleAllowListBases as Record<number, Address>),
   };
   /**

@@ -20,6 +20,11 @@ abstract contract APayableLimitedSignerValidator is ALimitedSignerValidator {
     /// @notice Emitted when the claim fee is updated
     event ClaimFeeUpdated(uint256 newFee);
 
+    /// @notice Emitted when a claim fee is paid
+    event ClaimFeePaid(
+        address indexed claimant, uint256 indexed boostId, uint256 indexed incentiveId, uint256 fee, address feeReceiver
+    );
+
     /// @notice Thrown when the provided fee does not match the required claim fee
     error InvalidClaimFee();
 

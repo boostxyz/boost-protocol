@@ -512,8 +512,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
       _options,
     );
 
-    // SDK only deploys clones, not base implementations
-    // Base implementations are deployed by the CLI
+    // set the base implementation address
     const chainId = this._config.getClient().chain?.id;
     const baseImplementation = chainId
       ? PayableLimitedSignerValidator.bases[chainId] || zeroAddress
@@ -657,25 +656,4 @@ export function preparePayableLimitedSignerValidatorPayload(
       payload.baseImplementation,
     ],
   );
-}
-
-/**
- * Helper to prepare claim data with proper fee consideration
- *
- * @export
- * @param {PayableLimitedSignerValidatorClaimDataParams & { validator: PayableLimitedSignerValidator }} params
- * @returns {Promise<{ claimData: Hex; requiredFee: bigint }>}
- */
-export async function preparePayableLimitedSignerValidatorClaimData(
-  params: PayableLimitedSignerValidatorClaimDataParams & {
-    validator: PayableLimitedSignerValidator;
-  },
-): Promise<{ claimData: Hex; requiredFee: bigint }> {
-  const claimData = await params.validator.encodeClaimData(params);
-  const requiredFee = await params.validator.getClaimFee();
-
-  return {
-    claimData,
-    requiredFee,
-  };
 }

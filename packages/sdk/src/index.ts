@@ -51,6 +51,7 @@ export * from './Incentives/PointsIncentive';
 
 export * from './Validators/SignerValidator';
 export * from './Validators/LimitedSignerValidator';
+export * from './Validators/PayableLimitedSignerValidator';
 export * from './Validators/Validator';
 
 // Extra

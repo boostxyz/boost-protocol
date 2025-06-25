@@ -1,6 +1,7 @@
 import { aValidatorAbi } from '@boostxyz/evm';
 import {
   ALimitedSignerValidator,
+  APayableLimitedSignerValidator,
   ASignerValidator,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
@@ -9,6 +10,7 @@ import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
 import type { ReadParams } from '../utils';
 import { LimitedSignerValidator } from './LimitedSignerValidator';
+import { PayableLimitedSignerValidator } from './PayableLimitedSignerValidator';
 import { SignerValidator } from './SignerValidator';
 
 export { SignerValidator, LimitedSignerValidator };
@@ -19,7 +21,10 @@ export { SignerValidator, LimitedSignerValidator };
  * @export
  * @typedef {Validator}
  */
-export type Validator = SignerValidator | LimitedSignerValidator;
+export type Validator =
+  | SignerValidator
+  | LimitedSignerValidator
+  | PayableLimitedSignerValidator;
 
 /**
  * A map of Validator component interfaces to their constructors.
@@ -29,6 +34,7 @@ export type Validator = SignerValidator | LimitedSignerValidator;
 export const ValidatorByComponentInterface = {
   [ASignerValidator as Hex]: SignerValidator,
   [ALimitedSignerValidator as Hex]: LimitedSignerValidator,
+  [APayableLimitedSignerValidator as Hex]: PayableLimitedSignerValidator,
 };
 
 /**

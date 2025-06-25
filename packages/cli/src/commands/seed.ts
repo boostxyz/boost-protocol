@@ -23,6 +23,7 @@ import {
   type ManagedBudgetPayload,
   type ManagedBudgetWithFeesV2,
   type ManagedBudgetWithFeesV2Payload,
+  type PayableLimitedSignerValidatorPayload,
   type PointsIncentivePayload,
   PrimitiveType,
   Roles,
@@ -340,6 +341,7 @@ export type BoostConfig = {
   validator: DeployablePayloadOrAddress<
     | Identifiable<SignerValidatorPayload>
     | Identifiable<LimitedSignerValidatorPayload>
+    | Identifiable<PayableLimitedSignerValidatorPayload>
   >;
   allowList: DeployablePayloadOrAddress<
     Identifiable<SimpleDenyListPayload> | Identifiable<SimpleAllowListPayload>
@@ -400,6 +402,14 @@ export const LimitedSignerValidatorSchema = z.object({
   signers: z.array(AddressSchema),
   validatorCaller: AddressSchema,
   maxClaimCount: z.coerce.number(),
+});
+
+export const PayableLimitedSignerValidatorSchema = z.object({
+  type: z.literal('PayableLimitedSignerValidator'),
+  signers: z.array(AddressSchema),
+  validatorCaller: AddressSchema,
+  maxClaimCount: z.coerce.number(),
+  baseImplementation: AddressSchema,
 });
 
 export const SignerValidatorSchema = z.object({
@@ -504,7 +514,12 @@ export const BoostSeedConfigSchema = z.object({
   ]),
   action: z.union([AddressSchema, EventActionSchema]),
   validator: z
-    .union([AddressSchema, SignerValidatorSchema, LimitedSignerValidatorSchema])
+    .union([
+      AddressSchema,
+      SignerValidatorSchema,
+      LimitedSignerValidatorSchema,
+      PayableLimitedSignerValidatorSchema,
+    ])
     .optional(),
   allowList: z
     .union([AddressSchema, SimpleDenyListSchema, SimpleAllowListSchema])
@@ -682,6 +697,12 @@ export async function getCreateBoostPayloadFromBoostConfig(
         boostConfig.validator = core.LimitedSignerValidator(
           seedConfig.validator,
         );
+        break;
+      case 'PayableLimitedSignerValidator':
+        boostConfig.validator = core.PayableLimitedSignerValidator(
+          seedConfig.validator,
+        );
+        break;
       default:
         throw new Error('unsupported Validator: ' + seedConfig.validator);
     }

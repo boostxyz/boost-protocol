@@ -14,13 +14,13 @@ import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/in
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
+import PayableLimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/PayableLimitedSignerValidator.sol/PayableLimitedSignerValidator.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import {
   AllowListIncentive,
   BoostCore,
   BoostRegistry,
   CGDAIncentive,
-  type DeployableOptions,
   ERC20Incentive,
   ERC20VariableCriteriaIncentiveV2,
   ERC20VariableIncentive,
@@ -28,27 +28,15 @@ import {
   LimitedSignerValidator,
   ManagedBudget,
   ManagedBudgetWithFees,
+  PayableLimitedSignerValidator,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
   SimpleDenyList,
   getDeployedContractAddress,
 } from '@boostxyz/sdk';
-import { createConfig, deployContract } from '@wagmi/core';
-import type { Client, Hex } from 'viem';
-import {
-  http,
-  createTestClient,
-  createWalletClient,
-  publicActions,
-  walletActions,
-} from 'viem';
-import {
-  type Address,
-  mnemonicToAccount,
-  privateKeyToAccount,
-} from 'viem/accounts';
-
+import { deployContract } from '@wagmi/core';
+import type { Address, Hex } from 'viem';
 import { Chains, type Command, getDeployableOptions } from '../utils';
 
 export type DeployResult = {
@@ -70,6 +58,7 @@ export type DeployResult = {
   POINTS_INCENTIVE_BASE: string;
   SIGNER_VALIDATOR_BASE: string;
   LIMITED_SIGNER_VALIDATOR_BASE: string;
+  PAYABLE_LIMITED_SIGNER_VALIDATOR_BASE: string;
 };
 
 export const deploy: Command<DeployResult> = async function deploy(
@@ -272,6 +261,16 @@ export const deploy: Command<DeployResult> = async function deploy(
     }),
   );
 
+  const payableLimitedSignerValidatorBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: PayableLimitedSignerValidatorArtifact.abi,
+      bytecode: PayableLimitedSignerValidatorArtifact.bytecode as Hex,
+      args: [account.address, 1000000000000000n],
+      account,
+    }),
+  );
+
   const bases = {
     // ContractAction: class TContractAction extends ContractAction {
     //   public static override base = contractActionBase;
@@ -350,6 +349,11 @@ export const deploy: Command<DeployResult> = async function deploy(
         [chainId]: limitedSignerValidatorBase,
       } as Record<number, Address>;
     },
+    PayableLimitedSignerValidator: class TPayableLimitedSignerValidator extends PayableLimitedSignerValidator {
+      public static override bases: Record<number, Address> = {
+        [chainId]: payableLimitedSignerValidatorBase,
+      } as Record<number, Address>;
+    },
   };
 
   for (const [name, deployable] of Object.entries(bases)) {
@@ -380,5 +384,6 @@ export const deploy: Command<DeployResult> = async function deploy(
     POINTS_INCENTIVE_BASE: pointsIncentiveBase,
     SIGNER_VALIDATOR_BASE: signerValidatorBase,
     LIMITED_SIGNER_VALIDATOR_BASE: limitedSignerValidatorBase,
+    PAYABLE_LIMITED_SIGNER_VALIDATOR_BASE: payableLimitedSignerValidatorBase,
   };
 };

@@ -514,9 +514,17 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
 
     // set the base implementation address
     const chainId = this._config.getClient().chain?.id;
-    const baseImplementation = chainId
-      ? PayableLimitedSignerValidator.bases[chainId] || zeroAddress
-      : zeroAddress;
+    if (!chainId) {
+      throw new Error(
+        'Chain ID is required for PayableLimitedSignerValidator deployment',
+      );
+    }
+    const baseImplementation = PayableLimitedSignerValidator.bases[chainId];
+    if (!baseImplementation) {
+      throw new Error(
+        `Base implementation not found for chain ID ${chainId}. Please ensure PayableLimitedSignerValidator is deployed on this chain.`,
+      );
+    }
 
     return {
       abi: payableLimitedSignerValidatorAbi,

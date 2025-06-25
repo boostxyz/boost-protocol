@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {LibClone} from "@solady/utils/LibClone.sol";
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test, console, Vm} from "lib/forge-std/src/Test.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
@@ -49,6 +49,9 @@ contract PayableLimitedSignerValidatorTest is Test {
     uint256 claimFee = 0.01 ether;
 
     event ClaimFeeUpdated(uint256 newFee);
+    event ClaimFeePaid(
+        address indexed claimant, uint256 indexed boostId, uint256 indexed incentiveId, uint256 fee, address feeReceiver
+    );
 
     function hashClaimantData(uint256 boostId, uint256 incentiveId, address claimant_) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(boostId, incentiveId, claimant_));
@@ -124,6 +127,21 @@ contract PayableLimitedSignerValidatorTest is Test {
         assertEq(validator.quantityClaimed(hashClaimantData(params.boostId, params.incentiveId, claimant)), 1);
     }
 
+    function testClaimFeePaidEvent() public {
+        TestParams memory params = createTestParams(1);
+
+        // Give the mockBoostCore some ETH
+        vm.deal(address(mockBoostCore), 1 ether);
+
+        // Expect the ClaimFeePaid event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit ClaimFeePaid(claimant, params.boostId, params.incentiveId, claimFee, protocolFeeReceiver);
+
+        // Validate with exact fee (must be called from validatorCaller)
+        vm.prank(address(mockBoostCore));
+        validator.validate{value: claimFee}(params.boostId, params.incentiveId, claimant, params.claimData);
+    }
+
     function testValidateWithExcessFee() public {
         TestParams memory params = createTestParams(1);
         uint256 excessAmount = 0.05 ether;
@@ -164,6 +182,31 @@ contract PayableLimitedSignerValidatorTest is Test {
 
         assertTrue(result);
         assertEq(validator.quantityClaimed(hashClaimantData(params.boostId, params.incentiveId, claimant)), 1);
+    }
+
+    function testNoEventWhenZeroFee() public {
+        // Set claim fee to 0 on base
+        vm.prank(owner);
+        baseValidator.setClaimFee(0);
+
+        TestParams memory params = createTestParams(1);
+
+        // Expect NO ClaimFeePaid event to be emitted when fee is 0
+        vm.recordLogs();
+
+        // Validate with no value sent (must be called from validatorCaller)
+        vm.prank(address(mockBoostCore));
+        bool result = validator.validate(params.boostId, params.incentiveId, claimant, params.claimData);
+
+        assertTrue(result);
+
+        // Check that no ClaimFeePaid event was emitted
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bytes32 claimFeePaidSelector = keccak256("ClaimFeePaid(address,uint256,uint256,uint256,address)");
+        for (uint256 i = 0; i < logs.length; i++) {
+            // ClaimFeePaid event selector
+            assertNotEq(logs[i].topics[0], claimFeePaidSelector);
+        }
     }
 
     function testMaxClaimsPerUser() public {

@@ -32,9 +32,11 @@ contract PayableLimitedSignerValidator is APayableLimitedSignerValidator, Limite
     /// @notice Construct a new PayableLimitedSignerValidator
     /// @dev The base implementation needs an owner to manage the global claim fee
     /// @param owner_ The address that will be the owner of the base implementation
-    constructor(address owner_) {
+    /// @param initialClaimFee_ The initial claim fee amount
+    constructor(address owner_, uint256 initialClaimFee_) {
         if (owner_ == address(0)) revert BoostError.Unauthorized();
         _initializeOwner(owner_);
+        claimFee = initialClaimFee_;
         _disableInitializers();
     }
 

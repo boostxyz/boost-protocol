@@ -58,12 +58,8 @@ contract PayableLimitedSignerValidatorTest is Test {
         // Create mock BoostCore
         mockBoostCore = new MockBoostCore(protocolFeeReceiver);
 
-        // Deploy the base validator with owner
-        baseValidator = new PayableLimitedSignerValidator(owner);
-
-        // Set the claim fee on the base validator
-        vm.prank(owner);
-        baseValidator.setClaimFee(claimFee);
+        // Deploy the base validator with owner and initial claim fee
+        baseValidator = new PayableLimitedSignerValidator(owner, claimFee);
 
         // Prepare initialization data (now includes base implementation address instead of claim fee)
         address[] memory signers = new address[](2);

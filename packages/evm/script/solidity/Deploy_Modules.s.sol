@@ -464,9 +464,10 @@ contract ModuleBaseDeployer is ScriptUtils {
     ) internal returns (address payableLimitedSignerValidator) {
         // Use the deployer as the owner of the base implementation
         address baseOwner = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
+        uint256 claimFee = vm.envOr("CLAIM_FEE", uint256(0));
         bytes memory initCode = abi.encodePacked(
             type(PayableLimitedSignerValidator).creationCode,
-            abi.encode(baseOwner)
+            abi.encode(baseOwner, claimFee)
         );
         payableLimitedSignerValidator = _getCreate2Address(initCode, "");
         console.log("BaseOwner: ", baseOwner);

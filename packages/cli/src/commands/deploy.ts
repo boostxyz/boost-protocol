@@ -266,7 +266,7 @@ export const deploy: Command<DeployResult> = async function deploy(
     deployContract(config, {
       abi: PayableLimitedSignerValidatorArtifact.abi,
       bytecode: PayableLimitedSignerValidatorArtifact.bytecode as Hex,
-      args: [account.address],
+      args: [account.address, 1000000000000000n],
       account,
     }),
   );

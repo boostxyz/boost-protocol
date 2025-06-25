@@ -409,7 +409,7 @@ export function deployFixtures(
       deployContract(config, {
         abi: PayableLimitedSignerValidatorArtifact.abi,
         bytecode: PayableLimitedSignerValidatorArtifact.bytecode as Hex,
-        args: [account.address], // Owner address required by constructor
+        args: [account.address, parseEther('0.001')], // Owner address and initial claim fee
         account,
       }),
     );

@@ -74,6 +74,41 @@ describe("PayableLimitedSignerValidator", () => {
   });
 
   describe("Claim Fee Management", () => {
+    test("should have initial claim fee set from constructor", async () => {
+      expect.assertions(1);
+      const baseValidator = await loadFixture(freshBaseValidator(fixtures));
+      const initialFee = await baseValidator.getClaimFee();
+      
+      // Should have the initial fee set during deployment (0.001 ETH)
+      expect(initialFee).toBe(parseEther("0.001"));
+    });
+
+    test("should update initial claim fee and reflect changes on both base and clones", async () => {
+      expect.assertions(6);
+      const baseValidator = await loadFixture(freshBaseValidator(fixtures));
+      const cloneValidator = await loadFixture(freshCloneValidator(fixtures));
+      const newFee = parseEther("0.005"); // 0.005 ETH
+      
+      // Verify initial fees are set correctly (0.001 ETH from constructor)
+      const initialBaseFee = await baseValidator.getClaimFee();
+      const initialCloneFee = await cloneValidator.getClaimFee();
+      expect(initialBaseFee).toBe(parseEther("0.001"));
+      expect(initialCloneFee).toBe(parseEther("0.001"));
+      
+      // Update the fee on the base implementation
+      await baseValidator.setClaimFee(newFee);
+      
+      // Verify both base and clone now reflect the new fee
+      const updatedBaseFee = await baseValidator.getClaimFee();
+      const updatedCloneFee = await cloneValidator.getClaimFee();
+      expect(updatedBaseFee).toBe(newFee);
+      expect(updatedCloneFee).toBe(newFee);
+      
+      // Verify the fees are different from the initial fees
+      expect(updatedBaseFee).not.toBe(initialBaseFee);
+      expect(updatedCloneFee).not.toBe(initialCloneFee);
+    });
+
     test("should set and read claim fee on base implementation", async () => {
       expect.assertions(1);
       const baseValidator = await loadFixture(freshBaseValidator(fixtures));

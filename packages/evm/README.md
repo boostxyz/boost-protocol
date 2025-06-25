@@ -100,16 +100,16 @@ individual claims by transaction hash, as opposed to claimant.
 
 ## Deploying PayableLimitedSignerValidator
 
-When deploying the PayableLimitedSignerValidator, you will need to add a `DEPLOYER_PRIVATE_KEY` to the env file. This should be the same key you use to deploy the contracts with. Once set, you can also use it in commands like so.. `--private-key $DEPLOYER_PRIVATE_KEY` instead of pasting it directly in the command. Make sure to run `source .env` before running the command to load the env variables into your environment. You can also add an optional `CLAIM_FEE` env variable if you want to set an initial claim fee. If you do not add this, the claim fee will be set to zero, and you will need to update it manually on the base PayableLimitedSignerValidator contract using the deployer address.
+When deploying the PayableLimitedSignerValidator, you will need to add a `DEPLOYER_PRIVATE_KEY` to the env file. This should be the same key you use to deploy the contracts with. Once set, you can also use it in commands like so: `--private-key $DEPLOYER_PRIVATE_KEY` instead of pasting it directly in the command. Make sure to run `source .env` before running the command to load the env variables into your environment. You can also add an optional `CLAIM_FEE` env variable if you want to set an initial claim fee. If you do not add this, the claim fee will be set to zero, and you will need to update it manually on the base PayableLimitedSignerValidator contract using the deployer address.
 
-To verify the PayableLimitedSignerValidator you can run this command: 
+To verify the PayableLimitedSignerValidator, you can run this command: 
 
-```
+```bash
 forge verify-contract {contractAddress} contracts/validators/PayableLimitedSignerValidator.sol:PayableLimitedSignerValidator --chain {chain} --constructor-args $(cast abi-encode "constructor(address,uint256)" {deployerAddress} {claimFee}) --etherscan-api-key {etherscanApiKey} --watch
 ```
 The items in brackets are variables
-  - {contractAddress}: This is the deployed address of the base PayableLimitedSignerValidator (check deploys folder)
-  - {chain}: the forge chain name (base, optimism, sepolia, etc.)
-  - {deployerAddress}: The address that deployed the contract
-  - {claimFee}: The initial `CLAIM_FEE` set when deploying
-  - {etherscanApiKey}: Your Etherscan Api Key
+- {contractAddress}: Deployed address of the base PayableLimitedSignerValidator (see *deploys* folder)
+- {chain}: Forge chain name (base, optimism, sepolia, etc.)
+- {deployerAddress}: Address that deployed the contract
+- {claimFee}: Initial `CLAIM_FEE` used during deployment
+- {etherscanApiKey}: Your Etherscan API key

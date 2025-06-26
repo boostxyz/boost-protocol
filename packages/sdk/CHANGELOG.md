@@ -1,5 +1,15 @@
 # @boostxyz/sdk
 
+## 7.5.0
+
+### Minor Changes
+
+- 62c3456: add PayableLimitedSignerValidator implementation
+
+### Patch Changes
+
+- ed4c633: conditionally add hardhat chain to bases
+
 ## 7.4.0
 
 ### Minor Changes

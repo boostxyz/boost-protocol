@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 6.1.0
+
+### Minor Changes
+
+- 62c3456: add PayableLimitedSignerValidator implementation
+
 ## 6.0.4
 
 ## 6.0.3

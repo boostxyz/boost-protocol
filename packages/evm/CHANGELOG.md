@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 7.2.0
+
+### Minor Changes
+
+- 62c3456: add PayableLimitedSignerValidator implementation
+
 ## 7.1.0
 
 ### Minor Changes

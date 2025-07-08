@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 7.5.1
+
+### Patch Changes
+
+- 982f379: fix fieldType mutation
+
 ## 7.5.0
 
 ### Minor Changes

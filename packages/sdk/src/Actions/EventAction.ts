@@ -817,8 +817,10 @@ export class EventAction extends DeployableTarget<
           eventAbi.inputs || [],
           criteria.fieldType,
         );
-        criteria.fieldType = type;
-        if (this.validateFieldAgainstCriteria(criteria, value, { log })) {
+        const resolvedCriteria = { ...criteria, fieldType: type };
+        if (
+          this.validateFieldAgainstCriteria(resolvedCriteria, value, { log })
+        ) {
           return true;
         }
       } catch {
@@ -1014,8 +1016,8 @@ export class EventAction extends DeployableTarget<
         func.inputs || [],
         criteria.fieldType,
       );
-      criteria.fieldType = type;
-      return this.validateFieldAgainstCriteria(criteria, value, {
+      const resolvedCriteria = { ...criteria, fieldType: type };
+      return this.validateFieldAgainstCriteria(resolvedCriteria, value, {
         decodedArgs: decodedData.args as readonly (string | bigint)[],
       });
     } catch {
@@ -1382,8 +1384,10 @@ export class EventAction extends DeployableTarget<
           eventAbi.inputs || [],
           criteria.fieldType,
         );
-        criteria.fieldType = type;
-        if (this.validateFieldAgainstCriteria(criteria, value, { log })) {
+        const resolvedCriteria = { ...criteria, fieldType: type };
+        if (
+          this.validateFieldAgainstCriteria(resolvedCriteria, value, { log })
+        ) {
           filteredLogs.push(log as EventLog);
         }
       } catch {

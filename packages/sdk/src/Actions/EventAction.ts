@@ -797,13 +797,13 @@ export class EventAction extends DeployableTarget<
     logs: EventLogs,
     eventAbi: AbiEvent,
   ): boolean {
-    const criteria = actionStep.actionParameter;
     if (!logs.length) return false;
 
     // Check each log
     for (let log of logs) {
       // parse out final (scalar) field from the log args
       try {
+        const criteria = actionStep.actionParameter;
         if (!Array.isArray(log.args)) {
           throw new DecodedArgsMalformedError({
             log,
@@ -1366,7 +1366,6 @@ export class EventAction extends DeployableTarget<
     logs: EventLogs,
     eventAbi: AbiEvent,
   ): EventLog[] {
-    const criteria = actionStep.actionParameter;
     const filteredLogs: EventLog[] = [];
 
     if (!logs.length) return filteredLogs;
@@ -1375,6 +1374,7 @@ export class EventAction extends DeployableTarget<
       if (!isAddressEqual(log.address, actionStep.targetContract)) continue;
 
       try {
+        const criteria = actionStep.actionParameter;
         if (!Array.isArray(log.args)) {
           continue;
         }

@@ -13,6 +13,7 @@ import {ManagedBudgetWithFeesV2} from "contracts/budgets/ManagedBudgetWithFeesV2
 import {TransparentBudget} from "contracts/budgets/TransparentBudget.sol";
 
 import {EventAction} from "contracts/actions/EventAction.sol";
+import {OffchainAction} from "contracts/actions/OffchainAction.sol";
 
 import {ERC20Incentive} from "contracts/incentives/ERC20Incentive.sol";
 import {ERC20PeggedIncentive} from "contracts/incentives/ERC20PeggedIncentive.sol";
@@ -58,6 +59,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployTransparentBudget(registry);
 
         _deployEventAction(registry);
+        _deployOffchainAction(registry);
 
         _deployERC20Incentive(registry);
         _deployERC20VariableIncentive(registry);
@@ -169,6 +171,23 @@ contract ModuleBaseDeployer is ScriptUtils {
             newDeploy,
             string(abi.encodePacked("EventAction", eventAction)),
             eventAction,
+            registry,
+            ABoostRegistry.RegistryType.ACTION
+        );
+    }
+
+    function _deployOffchainAction(
+        BoostRegistry registry
+    ) internal returns (address offchainAction) {
+        bytes memory initCode = type(EventAction).creationCode;
+        offchainAction = _getCreate2Address(initCode, "");
+        console.log("OffchainAction: ", offchainAction);
+        deployJson = deployJsonKey.serialize("OffchainAction", offchainAction);
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(
+            newDeploy,
+            string(abi.encodePacked("OffchainAction", offchainAction)),
+            offchainAction,
             registry,
             ABoostRegistry.RegistryType.ACTION
         );
@@ -471,7 +490,10 @@ contract ModuleBaseDeployer is ScriptUtils {
         );
         payableLimitedSignerValidator = _getCreate2Address(initCode, "");
         console.log("BaseOwner: ", baseOwner);
-        console.log("PayableLimitedSignerValidator: ", payableLimitedSignerValidator);
+        console.log(
+            "PayableLimitedSignerValidator: ",
+            payableLimitedSignerValidator
+        );
         deployJson = deployJsonKey.serialize(
             "PayableLimitedSignerValidator",
             payableLimitedSignerValidator

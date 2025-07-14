@@ -19,6 +19,7 @@ import {ALimitedSignerValidator} from "contracts/validators/ALimitedSignerValida
 import {APayableLimitedSignerValidator} from "contracts/validators/APayableLimitedSignerValidator.sol";
 
 import {AEventAction} from "contracts/actions/EventAction.sol";
+import {AOffchainAction} from "contracts/actions/OffchainAction.sol";
 
 import {AAllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
 import {ACGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
@@ -44,6 +45,7 @@ contract LogComponentInterface is ScriptUtils {
 
     function run() public {
         _getInterfaceAEventAction();
+        _getInterfaceAOffchainAction();
         _getInterfaceAERC20Incentive();
         _getInterfaceAERC20PeggedIncentive();
         _getInterfaceAERC20PeggedVariableCriteriaIncentive();
@@ -125,6 +127,16 @@ contract LogComponentInterface is ScriptUtils {
             uint32(type(AEventAction).interfaceId)
         ).toHexString(4);
         componentJson = componentJsonKey.serialize("AEventAction", interfaceId);
+    }
+
+    function _getInterfaceAOffchainAction() internal {
+        string memory interfaceId = uint256(
+            uint32(type(AOffchainAction).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "AOffchainAction",
+            interfaceId
+        );
     }
 
     function _getInterfaceAERC20Incentive() internal {

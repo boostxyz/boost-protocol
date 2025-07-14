@@ -35,3 +35,4 @@ packages/evm/broadcast/**/dry-run/
 
 #cursor-rules
 .cursor/rules/*
+.cursorignore

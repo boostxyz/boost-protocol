@@ -50,6 +50,10 @@ import { BoostCore as BoostCoreBases } from '../dist/deployments.json';
 import { type Action, actionFromAddress } from './Actions/Action';
 import { EventAction, type EventActionPayload } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
+import {
+  OffchainAccessList,
+  type OffchainAccessListPayload,
+} from './AllowLists/OffchainAccessList';
 import { OpenAllowList } from './AllowLists/OpenAllowList';
 import {
   SimpleAllowList,
@@ -1714,6 +1718,28 @@ export class BoostCore extends Deployable<
     isBase?: boolean,
   ) {
     return new SimpleDenyList(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
+  /**
+   * Bound {@link OffchainAccessList} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const list = core.OffchainAccessList('0x') // is roughly equivalent to
+   * const list = new OffchainAccessList({ config: core._config, account: core._account }, '0x')
+   * ```
+   * @param {DeployablePayloadOrAddress<OffchainAccessListPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {OffchainAccessList}
+   */
+  OffchainAccessList(
+    options: DeployablePayloadOrAddress<OffchainAccessListPayload>,
+    isBase?: boolean,
+  ) {
+    return new OffchainAccessList(
       { config: this._config, account: this._account },
       options,
       isBase,

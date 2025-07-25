@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {AOffchainAccessList} from "contracts/allowlists/AOffchainAccessList.sol";
-import {BoostError} from "contracts/shared/BoostError.sol";
 
 /// @title OffchainAccessList
 /// @notice A module for linking on-chain boosts to off-chain access lists stored in a database
@@ -13,6 +12,9 @@ contract OffchainAccessList is AOffchainAccessList {
 
     /// @notice Array of off-chain denylist IDs
     string[] public denylistIds;
+
+    /// @notice Thrown when an offchain access list ID is not found
+    error AccessListIdNotFound(string id);
 
     /// @notice Construct a new OffchainAccessList
     /// @dev Because this contract is a base implementation, it should not be initialized through the constructor. Instead, it should be cloned and initialized using the {initialize} function.
@@ -104,7 +106,7 @@ contract OffchainAccessList is AOffchainAccessList {
                 return;
             }
         }
-        revert BoostError.AccessListIdNotFound(id_);
+        revert AccessListIdNotFound(id_);
     }
 
     /// @notice Remove a denylist ID
@@ -118,7 +120,7 @@ contract OffchainAccessList is AOffchainAccessList {
                 return;
             }
         }
-        revert BoostError.AccessListIdNotFound(id_);
+        revert AccessListIdNotFound(id_);
     }
 
     /// @notice Check if an allowlist ID exists in the array

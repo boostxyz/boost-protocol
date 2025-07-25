@@ -7,6 +7,7 @@ import {
   writePointsInitialize,
 } from '@boostxyz/evm';
 import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
+import OffchainAccessListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/OffchainAccessList.sol/OffchainAccessList.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
@@ -72,6 +73,8 @@ import {
   type ManagedBudgetWithFeesPayload,
   ManagedBudgetWithFeesV2,
   type ManagedBudgetWithFeesV2Payload,
+  OffchainAccessList,
+  type OffchainAccessListPayload,
   OpenAllowList,
   PayableLimitedSignerValidator,
   type PayableLimitedSignerValidatorPayload,
@@ -254,6 +257,14 @@ export function deployFixtures(
       deployContract(config, {
         abi: SimpleDenyListArtifact.abi,
         bytecode: SimpleDenyListArtifact.bytecode as Hex,
+        account,
+      }),
+    );
+    const offchainAccessListBase = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: OffchainAccessListArtifact.abi,
+        bytecode: OffchainAccessListArtifact.bytecode as Hex,
         account,
       }),
     );
@@ -445,6 +456,11 @@ export function deployFixtures(
           [chainId]: simpleDenyListBase,
         };
       },
+      OffchainAccessList: class TOffchainAccessList extends OffchainAccessList {
+        public static override bases: Record<number, Address> = {
+          [chainId]: offchainAccessListBase,
+        };
+      },
       // SimpleBudget: class TSimpleBudget extends SimpleBudget {
       //   public static override bases: Record<number, Address> = {
       //     [chainId]: simpleBudgetBase,
@@ -543,6 +559,7 @@ export function deployFixtures(
       SimpleAllowList: typeof SimpleAllowList;
       SimpleDenyList: typeof SimpleDenyList;
       OpenAllowList: typeof OpenAllowList;
+      OffchainAccessList: typeof OffchainAccessList;
       // SimpleBudget: typeof SimpleBudget;
       ManagedBudget: typeof ManagedBudget;
       ManagedBudgetWithFees: typeof ManagedBudgetWithFees;
@@ -642,6 +659,16 @@ export function deployFixtures(
         return new bases.OpenAllowList(
           { config: this._config, account: this._account },
           undefined,
+          isBase,
+        );
+      }
+      override OffchainAccessList(
+        options: DeployablePayloadOrAddress<OffchainAccessListPayload>,
+        isBase?: boolean,
+      ) {
+        return new bases.OffchainAccessList(
+          { config: this._config, account: this._account },
+          options,
           isBase,
         );
       }

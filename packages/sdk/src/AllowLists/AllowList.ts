@@ -1,5 +1,6 @@
 import { aAllowListAbi } from '@boostxyz/evm';
 import {
+  AOffchainAccessList,
   ASimpleAllowList,
   ASimpleDenyList,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
@@ -8,11 +9,12 @@ import type { Address, Hex } from 'viem';
 import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
 import type { ReadParams } from '../utils';
+import { OffchainAccessList } from './OffchainAccessList';
 import { OpenAllowList } from './OpenAllowList';
 import { SimpleAllowList } from './SimpleAllowList';
 import { SimpleDenyList } from './SimpleDenyList';
 
-export { OpenAllowList, SimpleAllowList, SimpleDenyList };
+export { OffchainAccessList, OpenAllowList, SimpleAllowList, SimpleDenyList };
 
 /**
  * A union type representing all valid protocol AllowList implementations
@@ -20,16 +22,21 @@ export { OpenAllowList, SimpleAllowList, SimpleDenyList };
  * @export
  * @typedef {AllowList}
  */
-export type AllowList = OpenAllowList | SimpleAllowList | SimpleDenyList;
+export type AllowList =
+  | OffchainAccessList
+  | OpenAllowList
+  | SimpleAllowList
+  | SimpleDenyList;
 
 /**
  * A map of AllowList component interfaces to their constructors.
  *
- * @type {{ "0x2bc9016b": SimpleAllowList; "0x9d585f63": SimpleDenyList; }}
+ * @type {{ "0x1392d798": SimpleAllowList; "0x3d30a22c": SimpleDenyList; "0x2a6b3c38": OffchainAccessList; }}
  */
 export const AllowListByComponentInterface = {
   [ASimpleAllowList as Hex]: SimpleAllowList,
   [ASimpleDenyList as Hex]: SimpleDenyList,
+  [AOffchainAccessList as Hex]: OffchainAccessList,
 };
 
 /**
@@ -61,5 +68,8 @@ export async function allowListFromAddress(
       interfaceId as Hex,
     );
   }
-  return new Ctor(options, address) as SimpleDenyList | SimpleAllowList;
+  return new Ctor(options, address) as
+    | SimpleDenyList
+    | SimpleAllowList
+    | OffchainAccessList;
 }

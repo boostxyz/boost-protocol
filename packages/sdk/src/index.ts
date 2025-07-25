@@ -12,6 +12,7 @@ export * from './Actions/EventAction';
 // AllowLists
 
 export * from './AllowLists/AllowList';
+export * from './AllowLists/OffchainAccessList';
 export * from './AllowLists/SimpleAllowList';
 export * from './AllowLists/SimpleDenyList';
 

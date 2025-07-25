@@ -5,7 +5,6 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 
-import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
 import {AOffchainAccessList} from "contracts/allowlists/AOffchainAccessList.sol";
@@ -355,7 +354,7 @@ contract OffchainAccessListTest is Test {
     }
 
     function testRemoveAllowlistIdNotFound() public {
-        vm.expectRevert(abi.encodeWithSelector(BoostError.AccessListIdNotFound.selector, "non-existent-id"));
+        vm.expectRevert(abi.encodeWithSelector(OffchainAccessList.AccessListIdNotFound.selector, "non-existent-id"));
         accessList.removeAllowListId("non-existent-id");
     }
 
@@ -365,7 +364,7 @@ contract OffchainAccessListTest is Test {
         accessList.setAllowListIds(emptyIds);
 
         // Try to remove from empty list
-        vm.expectRevert(abi.encodeWithSelector(BoostError.AccessListIdNotFound.selector, "any-id"));
+        vm.expectRevert(abi.encodeWithSelector(OffchainAccessList.AccessListIdNotFound.selector, "any-id"));
         accessList.removeAllowListId("any-id");
     }
 
@@ -427,7 +426,7 @@ contract OffchainAccessListTest is Test {
     }
 
     function testRemoveDenylistIdNotFound() public {
-        vm.expectRevert(abi.encodeWithSelector(BoostError.AccessListIdNotFound.selector, "non-existent-id"));
+        vm.expectRevert(abi.encodeWithSelector(OffchainAccessList.AccessListIdNotFound.selector, "non-existent-id"));
         accessList.removeDenyListId("non-existent-id");
     }
 

@@ -150,11 +150,10 @@ export class OffchainAccessList extends DeployableTargetWithRBAC<
    * @returns {Promise<boolean>} - True if the user is allowed
    */
   public isAllowed(_address: Address, _params?: ReadParams) {
-    // TODO: Make API calls to check address against these lists
-    // const allowlistIds = await this.getAllowlistIds();
-    // const denylistIds = await this.getDenylistIds();
-    // return await checkOffchainAccess(address, allowlistIds, denylistIds);
-    throw new Error('isAllowed() not implemented for OffchainAccessList');
+    // TODO: check address against offchain allowlist/denylist using api calls
+    throw new Error(
+      'isAllowed() not available for OffchainAccessList, implementation should be done offchain',
+    );
   }
 
   /**

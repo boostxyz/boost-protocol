@@ -17,6 +17,9 @@ library BoostError {
     /// @notice Thrown when an invalid initialization is attempted
     error InvalidInitialization();
 
+    /// @notice Thrown when an offchain access list ID is not found
+    error AccessListIdNotFound(string id);
+
     /// @notice Thrown when the length of two arrays are not equal
     error LengthMismatch();
 

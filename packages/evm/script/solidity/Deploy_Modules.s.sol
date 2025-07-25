@@ -27,6 +27,7 @@ import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
 
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
+import {OffchainAccessList} from "contracts/allowlists/OffchainAccessList.sol";
 
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 import {LimitedSignerValidator} from "contracts/validators/LimitedSignerValidator.sol";
@@ -75,6 +76,7 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
+        _deployOffchainAccessList(registry);
 
         _saveJson();
     }
@@ -546,6 +548,24 @@ contract ModuleBaseDeployer is ScriptUtils {
             newDeploy,
             string(abi.encodePacked("SimpleDenyList", simpleDenyList)),
             simpleDenyList,
+            registry,
+            ABoostRegistry.RegistryType.ALLOW_LIST
+        );
+    }
+
+    function _deployOffchainAccessList(
+        BoostRegistry registry
+    ) internal returns (address offchainAccessList) {
+        bytes memory initCode = type(OffchainAccessList).creationCode;
+        offchainAccessList = _getCreate2Address(initCode, "");
+        console.log("OffchainAccessList: ", offchainAccessList);
+        deployJson = deployJsonKey.serialize("OffchainAccessList", offchainAccessList);
+        bool newDeploy = _deploy2(initCode, "");
+
+        _registerIfNew(
+            newDeploy,
+            string(abi.encodePacked("OffchainAccessList", offchainAccessList)),
+            offchainAccessList,
             registry,
             ABoostRegistry.RegistryType.ALLOW_LIST
         );

@@ -1,6 +1,7 @@
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
+import OffchainAccessListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/OffchainAccessList.sol/OffchainAccessList.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
@@ -28,6 +29,7 @@ import {
   LimitedSignerValidator,
   ManagedBudget,
   ManagedBudgetWithFees,
+  OffchainAccessList,
   PayableLimitedSignerValidator,
   PointsIncentive,
   SignerValidator,
@@ -47,6 +49,7 @@ export type DeployResult = {
   ERC721_MINT_ACTION_BASE: string;
   SIMPLE_ALLOWLIST_BASE: string;
   SIMPLE_DENYLIST_BASE: string;
+  OFFCHAIN_ACCESS_LIST_BASE: string;
   MANAGED_BUDGET_BASE: string;
   VESTING_BUDGET_BASE: string;
   ALLOWLIST_INCENTIVE_BASE: string;
@@ -144,6 +147,14 @@ export const deploy: Command<DeployResult> = async function deploy(
     deployContract(config, {
       abi: SimpleDenyListArtifact.abi,
       bytecode: SimpleDenyListArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const offchainAccessListBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: OffchainAccessListArtifact.abi,
+      bytecode: OffchainAccessListArtifact.bytecode as Hex,
       account,
     }),
   );
@@ -293,6 +304,11 @@ export const deploy: Command<DeployResult> = async function deploy(
         [chainId]: simpleDenyListBase,
       };
     },
+    OffchainAccessList: class TOffchainAccessList extends OffchainAccessList {
+      public static override bases: Record<number, Address> = {
+        [chainId]: offchainAccessListBase,
+      };
+    },
     ManagedBudget: class TManagedBudget extends ManagedBudget {
       public static override bases: Record<number, Address> = {
         [chainId]: managedBudgetBase,
@@ -372,6 +388,7 @@ export const deploy: Command<DeployResult> = async function deploy(
     ERC721_MINT_ACTION_BASE: erc721MintActionBase,
     SIMPLE_ALLOWLIST_BASE: simpleAllowListBase,
     SIMPLE_DENYLIST_BASE: simpleDenyListBase,
+    OFFCHAIN_ACCESS_LIST_BASE: offchainAccessListBase,
     MANAGED_BUDGET_BASE: managedBudgetBase,
     VESTING_BUDGET_BASE: vestingBudgetBase,
     ALLOWLIST_INCENTIVE_BASE: allowListIncentiveBase,

@@ -23,6 +23,7 @@ import {
   type ManagedBudgetPayload,
   type ManagedBudgetWithFeesV2,
   type ManagedBudgetWithFeesV2Payload,
+  type OffchainAccessListPayload,
   type PayableLimitedSignerValidatorPayload,
   type PointsIncentivePayload,
   PrimitiveType,
@@ -344,7 +345,9 @@ export type BoostConfig = {
     | Identifiable<PayableLimitedSignerValidatorPayload>
   >;
   allowList: DeployablePayloadOrAddress<
-    Identifiable<SimpleDenyListPayload> | Identifiable<SimpleAllowListPayload>
+    | Identifiable<SimpleDenyListPayload>
+    | Identifiable<SimpleAllowListPayload>
+    | Identifiable<OffchainAccessListPayload>
   >;
   incentives: (
     | Identifiable<AllowListIncentivePayload>
@@ -428,6 +431,13 @@ export const SimpleAllowListSchema = z.object({
   type: z.literal('SimpleAllowList'),
   owner: AddressSchema,
   allowed: z.array(AddressSchema),
+});
+
+export const OffchainAccessListSchema = z.object({
+  type: z.literal('OffchainAccessList'),
+  owner: AddressSchema,
+  allowlistIds: z.array(z.string()),
+  denylistIds: z.array(z.string()),
 });
 
 export const AllowListIncentiveSchema = z.object({
@@ -522,7 +532,12 @@ export const BoostSeedConfigSchema = z.object({
     ])
     .optional(),
   allowList: z
-    .union([AddressSchema, SimpleDenyListSchema, SimpleAllowListSchema])
+    .union([
+      AddressSchema,
+      SimpleDenyListSchema,
+      SimpleAllowListSchema,
+      OffchainAccessListSchema,
+    ])
     .optional(),
   incentives: z.array(
     z.union([
@@ -555,6 +570,8 @@ async function getAllowList(
       return core.SimpleAllowList(allowList as SimpleAllowListPayload);
     case 'SimpleDenyList':
       return core.SimpleDenyList(allowList as SimpleDenyListPayload);
+    case 'OffchainAccessList':
+      return core.OffchainAccessList(allowList as OffchainAccessListPayload);
     default:
       throw new Error('unusupported AllowList: ' + allowList);
   }

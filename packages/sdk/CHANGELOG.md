@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 7.6.0
+
+### Minor Changes
+
+- 6e05afb: add OffchainAccessList SDK implementation
+
 ## 7.5.1
 
 ### Patch Changes

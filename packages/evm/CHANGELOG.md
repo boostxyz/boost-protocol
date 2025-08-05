@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 7.4.0
+
+### Minor Changes
+
+- 115a70c: support world chain mainnet
+
 ## 7.3.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 7.7.0
+
+### Minor Changes
+
+- 115a70c: support world chain mainnet
+
 ## 7.6.0
 
 ### Minor Changes

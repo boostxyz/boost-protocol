@@ -44,7 +44,9 @@ import {
   packCriteriaFieldIndexes,
   unpackCriteriaFieldIndexes,
   isCriteriaFieldIndexTuple,
-  decodeAndReorderLogArgs
+  packClaimantFieldIndexes,
+  decodeAndReorderLogArgs,
+  ActionClaimant
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";
@@ -1599,6 +1601,164 @@ describe("criteria field index tuple support", () => {
           expect(unpacked).toEqual(original);
         }
       }
+    });
+  });
+});
+
+describe("claimant tuple field support", () => {
+  describe("validateClaimantAgainstArgs with tuple access", () => {
+    test("correctly extracts address from tuple field", () => {
+      const eventAction = new EventAction({ config: {} as any });
+      
+      // Test args with a tuple containing an address at position [2][1]
+      const testArgs = [
+        "0x1111111111111111111111111111111111111111",
+        100n,
+        ["0x2222222222222222222222222222222222222222", "0x3333333333333333333333333333333333333333", 500n],
+        "test"
+      ];
+
+      // Test extracting from tuple at args[2][1]
+      const claimant: ActionClaimant = {
+        signatureType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: packClaimantFieldIndexes([2, 1]),
+        targetContract: zeroAddress,
+        chainid: 1
+      };
+
+      const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
+      expect(result).toBe("0x3333333333333333333333333333333333333333");
+    });
+
+    test("returns undefined if tuple index is out of bounds", () => {
+      const eventAction = new EventAction({ config: {} as any });
+      
+      const testArgs = [
+        "0x1111111111111111111111111111111111111111",
+        ["0x2222222222222222222222222222222222222222"]
+      ];
+
+      // Try to access args[1][2] which doesn't exist
+      const claimant: ActionClaimant = {
+        signatureType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: packClaimantFieldIndexes([1, 2]),
+        targetContract: zeroAddress,
+        chainid: 1
+      };
+
+      const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
+      expect(result).toBeUndefined();
+    });
+
+    test("returns undefined if first index is out of bounds", () => {
+      const eventAction = new EventAction({ config: {} as any });
+      
+      const testArgs = ["0x1111111111111111111111111111111111111111"];
+
+      // Try to access args[5][0] where args[5] doesn't exist
+      const claimant: ActionClaimant = {
+        signatureType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: packClaimantFieldIndexes([5, 0]),
+        targetContract: zeroAddress,
+        chainid: 1
+      };
+
+      const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
+      expect(result).toBeUndefined();
+    });
+
+    test("returns undefined if tuple field is not an address", () => {
+      const eventAction = new EventAction({ config: {} as any });
+      
+      const testArgs = [
+        ["not-an-address", 123n, "test"]
+      ];
+
+      // Try to access args[0][0] which is not an address
+      const claimant: ActionClaimant = {
+        signatureType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: packClaimantFieldIndexes([0, 0]),
+        targetContract: zeroAddress,
+        chainid: 1
+      };
+
+      const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
+      expect(result).toBeUndefined();
+    });
+
+    test("returns undefined if field at first index is not a tuple", () => {
+      const eventAction = new EventAction({ config: {} as any });
+      
+      const testArgs = [
+        "0x1111111111111111111111111111111111111111",
+        "not-a-tuple"
+      ];
+
+      // Try to access args[1][0] but args[1] is not an array
+      const claimant: ActionClaimant = {
+        signatureType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: packClaimantFieldIndexes([1, 0]),
+        targetContract: zeroAddress,
+        chainid: 1
+      };
+
+      const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
+      expect(result).toBeUndefined();
+    });
+
+    test("still handles direct field access correctly", () => {
+      const eventAction = new EventAction({ config: {} as any });
+      
+      const testArgs = [
+        "0x1111111111111111111111111111111111111111",
+        "0x2222222222222222222222222222222222222222",
+        100n
+      ];
+
+      // Direct access to args[1] (not a tuple index)
+      const claimant: ActionClaimant = {
+        signatureType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: 1,
+        targetContract: zeroAddress,
+        chainid: 1
+      };
+
+      const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
+      expect(result).toBe("0x2222222222222222222222222222222222222222");
+    });
+
+    test("handles complex tuple with correct address", () => {
+      const eventAction = new EventAction({ config: {} as any });
+      
+      // Complex nested structure
+      const testArgs = [
+        { someField: "data" },
+        100n,
+        [
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          ["nested", "data"],
+          "0xcccccccccccccccccccccccccccccccccccccccc"
+        ]
+      ];
+
+      // Access args[2][3] which is an address
+      const claimant: ActionClaimant = {
+        signatureType: SignatureType.EVENT,
+        signature: zeroHash,
+        fieldIndex: packClaimantFieldIndexes([2, 3]),
+        targetContract: zeroAddress,
+        chainid: 1
+      };
+
+      const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
+      expect(result).toBe("0xcccccccccccccccccccccccccccccccccccccccc");
     });
   });
 });

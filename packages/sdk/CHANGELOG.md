@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 7.8.0
+
+### Minor Changes
+
+- 81bc7a7: add tuple support for claimant
+
 ## 7.7.0
 
 ### Minor Changes

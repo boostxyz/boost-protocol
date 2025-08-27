@@ -2011,7 +2011,7 @@ export function isCriteriaFieldIndexTuple(fieldIndex: number): boolean {
  * Helper function to check if a claimant fieldIndex represents tuple access.
  *
  * @param {number} fieldIndex - The field index to check
- * @returns {boolean} - True if it's a tuple index (32-254), false for direct access (0-31)
+ * @returns {boolean} - True if it's a tuple index, false for direct access
  */
 export function isClaimantFieldIndexTuple(fieldIndex: number): boolean {
   return isCriteriaFieldIndexTuple(fieldIndex);

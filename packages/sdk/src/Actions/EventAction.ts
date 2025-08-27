@@ -671,11 +671,28 @@ export class EventAction extends DeployableTarget<
       args: Array<unknown> | readonly unknown[] | Record<string, unknown>;
     },
   ): Address | undefined {
-    if (
-      !logOrFnData ||
-      !Array.isArray(logOrFnData?.args) ||
-      logOrFnData?.args.length <= claimant.fieldIndex
-    ) {
+    if (!logOrFnData || !Array.isArray(logOrFnData?.args)) {
+      return;
+    }
+
+    if (isClaimantFieldIndexTuple(claimant.fieldIndex)) {
+      const [index0, index1] = unpackClaimantFieldIndexes(claimant.fieldIndex);
+
+      if (logOrFnData.args.length <= index0) {
+        return;
+      }
+
+      const tuple = logOrFnData.args[index0];
+      if (!Array.isArray(tuple) || tuple.length <= index1) {
+        return;
+      }
+
+      const maybeAddress = tuple[index1];
+      if (isAddress(maybeAddress)) return maybeAddress;
+      return;
+    }
+
+    if (logOrFnData.args.length <= claimant.fieldIndex) {
       return;
     }
     const maybeAddress = logOrFnData.args.at(claimant.fieldIndex);
@@ -1988,6 +2005,36 @@ export function unpackCriteriaFieldIndexes(packed: number): [number, number] {
  */
 export function isCriteriaFieldIndexTuple(fieldIndex: number): boolean {
   return fieldIndex >= 32;
+}
+
+/**
+ * Helper function to check if a claimant fieldIndex represents tuple access.
+ *
+ * @param {number} fieldIndex - The field index to check
+ * @returns {boolean} - True if it's a tuple index (32-254), false for direct access (0-31)
+ */
+export function isClaimantFieldIndexTuple(fieldIndex: number): boolean {
+  return isCriteriaFieldIndexTuple(fieldIndex);
+}
+
+/**
+ * Packs two indices for claimant tuple access.
+ *
+ * @param {[number, number]} indices - Tuple of [firstIndex, secondIndex]
+ * @returns {number} - Packed uint8 value for the claimant fieldIndex
+ */
+export function packClaimantFieldIndexes(indices: [number, number]): number {
+  return packCriteriaFieldIndexes(indices);
+}
+
+/**
+ * Unpacks a claimant fieldIndex into tuple indices.
+ *
+ * @param {number} packed - Packed fieldIndex value
+ * @returns {[number, number]} - [firstIndex, secondIndex]
+ */
+export function unpackClaimantFieldIndexes(packed: number): [number, number] {
+  return unpackCriteriaFieldIndexes(packed);
 }
 
 /**

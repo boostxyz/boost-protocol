@@ -14,13 +14,8 @@ fs_permissions = [{access = "read-write", path = "./deploys"}]
 remappings=[
   '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
   '@openzeppelin-upgrades/contracts/=lib/openzeppelin-contracts-upgradeable/contracts/',
-  'ds-test/=lib/forge-std/lib/ds-test/src/',
   'forge-std/=lib/forge-std/src/',
   '@solady/=lib/solady/src/',
-  '@eigenlayer/contracts/=lib/eigenlayer-contracts/src/contracts/',
-  '@eigenlayer-middleware/=lib/eigenlayer-middleware/src/',
-  'eigenlayer-contracts/=lib/eigenlayer-middleware/lib/eigenlayer-contracts/',
-  '@eth-infinitism/account-abstraction/=lib/account-abstraction/contracts/',
   '@boost/contracts/=contracts/'
 ]
 

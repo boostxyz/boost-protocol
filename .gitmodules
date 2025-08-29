@@ -10,17 +10,6 @@
 [submodule "packages/evm/lib/modular-account"]
 	path = packages/evm/lib/modular-account
 	url = https://github.com/alchemyplatform/modular-account
-[submodule "packages/evm/lib/eigenlayer-contracts"]
-	path = packages/evm/lib/eigenlayer-contracts
-	url = https://github.com/Layr-Labs/eigenlayer-contracts
-	branch = dev
-[submodule "packages/evm/lib/eigenlayer-middleware"]
-	path = packages/evm/lib/eigenlayer-middleware
-	url = https://github.com/Layr-Labs/eigenlayer-middleware
-	branch = dev
 [submodule "packages/evm/lib/openzeppelin-contracts-upgradeable"]
 	path = packages/evm/lib/openzeppelin-contracts-upgradeable
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
-[submodule "packages/evm/lib/account-abstraction"]
-	path = packages/evm/lib/account-abstraction
-	url = https://github.com/eth-infinitism/account-abstraction.git

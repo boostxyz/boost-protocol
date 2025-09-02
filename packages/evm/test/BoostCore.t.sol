@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {MockERC20, MockERC721, MockAuth} from "contracts/shared/Mocks.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
@@ -50,33 +51,36 @@ contract BoostCoreTest is Test {
     MockAuth mockAuth;
     address[] mockAddresses;
 
-    BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
+    BoostRegistry registry = new BoostRegistry();
+    BoostCore boostCoreImpl = new BoostCore();
+    BoostCore boostCore;
     BoostLib.Target action =
         _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
     BoostLib.Target contractAction =
         _makeContractAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
     BoostLib.Target allowList = _makeAllowList(address(this));
 
-    address[] authorized = [address(boostCore), address(1)];
-    uint256[] roles = [1 << 0, 1 << 0];
-    ABudget budget = _makeBudget(address(this), authorized, roles);
-
-    bytes validCreateCalldata = LibZip.cdCompress(
-        abi.encode(
-            BoostLib.CreateBoostPayload({
-                budget: budget,
-                action: action,
-                validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
-                allowList: allowList,
-                incentives: _makeIncentives(1, 1 ether, 100),
-                protocolFee: 0, // 5%
-                maxParticipants: 10_000,
-                owner: address(1)
-            })
-        )
-    );
+    address[] authorized;
+    uint256[] roles;
+    ABudget budget;
+    bytes validCreateCalldata;
 
     function setUp() public {
+        // Deploy and initialize BoostCore proxy
+        bytes memory initData = abi.encodeWithSelector(
+            BoostCore.initialize.selector,
+            registry,
+            address(1), // protocolFeeReceiver
+            address(this) // owner
+        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(boostCoreImpl), initData);
+        boostCore = BoostCore(address(proxy));
+
+        // Create budget with proxy address authorized
+        authorized = [address(boostCore), address(1)];
+        roles = [1 << 0, 1 << 0];
+        budget = _makeBudget(address(this), authorized, roles);
+
         // We allocate 100 for the boost and 10 for protocol fees
         mockERC20.mint(address(this), 110 ether);
         mockERC20.approve(address(budget), 110 ether);
@@ -92,6 +96,22 @@ contract BoostCoreTest is Test {
         );
         mockAddresses.push(address(this));
         mockAuth = new MockAuth(mockAddresses);
+
+        // Create validCreateCalldata after budget is initialized
+        validCreateCalldata = LibZip.cdCompress(
+            abi.encode(
+                BoostLib.CreateBoostPayload({
+                    budget: budget,
+                    action: action,
+                    validator: BoostLib.Target({isBase: true, instance: address(0), parameters: ""}),
+                    allowList: allowList,
+                    incentives: _makeIncentives(1, 1 ether, 100),
+                    protocolFee: 0,
+                    maxParticipants: 10_000,
+                    owner: address(1)
+                })
+            )
+        );
     }
 
     ///////////////////////////
@@ -99,18 +119,17 @@ contract BoostCoreTest is Test {
     ///////////////////////////
 
     function testConstructor() public {
-        BoostRegistry registry = new BoostRegistry();
-        address protocolFeeReceiver = address(1);
-        BoostCore boostCoreInstance = new BoostCore(registry, protocolFeeReceiver, address(this));
+        // Deploy implementation - should not be initialized
+        BoostCore implementation = new BoostCore();
 
-        // Check the owner
-        assertEq(address(this), boostCoreInstance.owner());
+        // Implementation should have zero address for registry (not initialized)
+        assertEq(address(implementation.registry()), address(0));
+        assertEq(implementation.protocolFeeReceiver(), address(0));
+        assertEq(implementation.owner(), address(0));
 
-        // Check the registry
-        assertEq(address(registry), address(boostCoreInstance.registry()));
-
-        // Check the protocol fee receiver
-        assertEq(protocolFeeReceiver, boostCoreInstance.protocolFeeReceiver());
+        // Trying to initialize the implementation should fail
+        vm.expectRevert(BoostError.InvalidInitialization.selector);
+        implementation.initialize(registry, address(1), address(this));
     }
 
     /////////////////////////////
@@ -501,7 +520,14 @@ contract BoostCoreTest is Test {
 
         // 3) Expect the IncentiveAdded event
         vm.expectEmit(true, true, false, true);
-        emit BoostCore.IncentiveAdded(0, /* incentiveId = */ 1, /* ignored */ address(0), false /* not a new boost */ );
+        emit BoostCore.IncentiveAdded(
+            0,
+            /* incentiveId = */
+            1,
+            /* ignored */
+            address(0),
+            false /* not a new boost */
+        );
 
         // 4) Call addIncentiveToBoost as the boost owner (originalBoost.owner)
         vm.prank(originalBoost.owner);
@@ -590,9 +616,6 @@ contract BoostCoreTest is Test {
     /// @notice Tests that adding an incentive fails if the budget is not authorized or lacks sufficient funds
     function testAddIncentiveToBoost_BudgetAuthorizationOrFunds() public {
         boostCore.createBoost(validCreateCalldata);
-        BoostLib.Boost memory createdBoost = boostCore.getBoost(0);
-
-        ABudget restrictedBudget = _makeBudget(address(0), new address[](0), new uint256[](0));
 
         BoostLib.Target memory incentive = BoostLib.Target({
             isBase: true,
@@ -708,7 +731,7 @@ contract BoostCoreTest is Test {
         additionalProtocolFee = uint64(bound(additionalProtocolFee, 0, 9_000));
         rewardAmount = bound(rewardAmount, 10_000, (type(uint256).max >> 15) / claimLimit);
         uint64 totalFee = uint64(boostCore.protocolFee()) + additionalProtocolFee;
-        uint256 amountToMint = (rewardAmount + rewardAmount * totalFee / boostCore.FEE_DENOMINATOR()) * claimLimit;
+        uint256 amountToMint = (rewardAmount + (rewardAmount * totalFee) / boostCore.FEE_DENOMINATOR()) * claimLimit;
         mockERC20.mint(address(this), amountToMint);
         mockERC20.approve(address(budget), amountToMint);
         budget.allocate(
@@ -780,7 +803,7 @@ contract BoostCoreTest is Test {
         additionalProtocolFee = uint64(bound(additionalProtocolFee, 0, 9_000));
         rewardAmount = bound(rewardAmount, 10_000, (type(uint256).max >> 15) / claimLimit);
         uint64 totalFee = uint64(boostCore.protocolFee()) + additionalProtocolFee;
-        uint256 amountToMint = (rewardAmount + rewardAmount * totalFee / boostCore.FEE_DENOMINATOR()) * claimLimit;
+        uint256 amountToMint = (rewardAmount + (rewardAmount * totalFee) / boostCore.FEE_DENOMINATOR()) * claimLimit;
         mockERC20.mint(address(this), amountToMint);
         mockERC20.approve(address(budget), amountToMint);
         budget.allocate(
@@ -875,7 +898,7 @@ contract BoostCoreTest is Test {
 
         vm.expectEmit(true, true, true, true, address(boostCore));
         emit BoostCore.BoostToppedUp(
-            0, 0, address(this), rewardAmount * claimLimit, rewardAmount * claimLimit * feePercentage / 10_000
+            0, 0, address(this), rewardAmount * claimLimit, (rewardAmount * claimLimit * feePercentage) / 10_000
         );
         boostCore.topupIncentiveFromBudget(0, 0, topupCalldata, address(budget));
     }
@@ -922,7 +945,7 @@ contract BoostCoreTest is Test {
         );
         assertEq(
             mockERC20.balanceOf(address(boostCore)),
-            (incentiveContract.limit() - 1) * claimAmount * protocolFeePercentage / boostCore.FEE_DENOMINATOR(),
+            ((incentiveContract.limit() - 1) * claimAmount * protocolFeePercentage) / boostCore.FEE_DENOMINATOR(),
             "unclaimed funds in boost core"
         );
     }

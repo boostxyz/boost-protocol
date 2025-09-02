@@ -5,6 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -31,7 +32,9 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     MockERC721 mockERC721 = new MockERC721();
     address boostOwner = makeAddr("boost owner");
     TransparentBudget budget = new TransparentBudget();
-    BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
+    BoostRegistry registry = new BoostRegistry();
+    BoostCore boostCoreImpl = new BoostCore();
+    BoostCore boostCore;
     bytes32 constant TOKEN_PERMISSIONS_TYPEHASH = keccak256("TokenPermissions(address token,uint256 amount)");
     bytes32 constant PERMIT_TRANSFER_FROM_TYPEHASH = keccak256(
         "PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)"
@@ -47,6 +50,16 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     string SEPOLIA_RPC_URL = vm.envString("VITE_SEPOLIA_RPC_URL");
 
     function setUp() public {
+        // Deploy and initialize BoostCore proxy
+        bytes memory initData = abi.encodeWithSelector(
+            BoostCore.initialize.selector,
+            registry,
+            address(1), // protocolFeeReceiver
+            address(this) // owner
+        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(boostCoreImpl), initData);
+        boostCore = BoostCore(address(proxy));
+
         // We allocate 100 for the boost and 10 for protocol fees
         mockERC20.mint(address(this), 110 ether);
         mockERC20.approve(address(budget), 110 ether);
@@ -56,7 +69,12 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         (address permit2Creator, uint256 permit2CreatorKey) = makeAddrAndKey("permit2 boost creator");
         uint256 amount = 110 ether;
         sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL, 2356288);
-        boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
+        BoostRegistry testRegistry = new BoostRegistry();
+        BoostCore testImpl = new BoostCore();
+        bytes memory testInitData =
+            abi.encodeWithSelector(BoostCore.initialize.selector, testRegistry, address(1), address(this));
+        ERC1967Proxy testProxy = new ERC1967Proxy(address(testImpl), testInitData);
+        boostCore = BoostCore(address(testProxy));
         mockERC721 = new MockERC721();
         action = _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
         mockERC20 = new MockERC20();

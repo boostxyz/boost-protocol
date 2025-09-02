@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
@@ -37,7 +38,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
     BoostRegistry public registry = new BoostRegistry();
     address fee_recipient = address(1);
     address boost_core_owner = address(this);
-    BoostCore public core = new BoostCore(registry, fee_recipient, boost_core_owner);
+    BoostCore public core;
 
     address budgetManager = makeAddr("ABudget Manager");
     address budgetAdmin = makeAddr("ABudget Admin");
@@ -55,6 +56,13 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
     ManagedBudget public _budget;
 
     function setUp() public {
+        // Deploy and initialize BoostCore proxy
+        BoostCore coreImpl = new BoostCore();
+        bytes memory initData =
+            abi.encodeWithSelector(BoostCore.initialize.selector, registry, fee_recipient, boost_core_owner);
+        ERC1967Proxy proxy = new ERC1967Proxy(address(coreImpl), initData);
+        core = BoostCore(address(proxy));
+
         // Before we can fulfill our stories, we need to get some setup out of the way...
         erc20.mint(address(this), 1000 ether);
 

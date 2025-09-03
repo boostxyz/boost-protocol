@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {MockERC20, MockERC721, MockAuth} from "contracts/shared/Mocks.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
@@ -52,7 +52,6 @@ contract BoostCoreTest is Test {
     address[] mockAddresses;
 
     BoostRegistry registry = new BoostRegistry();
-    BoostCore boostCoreImpl = new BoostCore();
     BoostCore boostCore;
     BoostLib.Target action =
         _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
@@ -66,15 +65,19 @@ contract BoostCoreTest is Test {
     bytes validCreateCalldata;
 
     function setUp() public {
-        // Deploy and initialize BoostCore proxy
-        bytes memory initData = abi.encodeWithSelector(
-            BoostCore.initialize.selector,
-            registry,
-            address(1), // protocolFeeReceiver
-            address(this) // owner
+        // Deploy and initialize BoostCore proxy and implementation
+        address proxy = Upgrades.deployUUPSProxy(
+            "BoostCore.sol",
+            abi.encodeCall(
+                BoostCore.initialize,
+                (
+                    registry,
+                    address(1), // protocolFeeReceiver
+                    address(this) // owner
+                )
+            )
         );
-        ERC1967Proxy proxy = new ERC1967Proxy(address(boostCoreImpl), initData);
-        boostCore = BoostCore(address(proxy));
+        boostCore = BoostCore(proxy);
 
         // Create budget with proxy address authorized
         authorized = [address(boostCore), address(1)];

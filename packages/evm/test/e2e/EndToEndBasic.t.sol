@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
@@ -78,15 +78,18 @@ contract EndToEndBasic is Test {
 
     function setUp() public {
         // Deploy and initialize BoostCore proxy
-        BoostCore coreImpl = new BoostCore();
-        bytes memory initData = abi.encodeWithSelector(
-            BoostCore.initialize.selector,
-            registry,
-            address(1), // protocolFeeReceiver
-            address(this) // owner
+        address proxy = Upgrades.deployUUPSProxy(
+            "BoostCore.sol",
+            abi.encodeCall(
+                BoostCore.initialize,
+                (
+                    registry,
+                    address(1), // protocolFeeReceiver
+                    address(this) // owner
+                )
+            )
         );
-        ERC1967Proxy proxy = new ERC1967Proxy(address(coreImpl), initData);
-        core = BoostCore(address(proxy));
+        core = BoostCore(proxy);
 
         // Before we can fulfill our stories, we need to get some setup out of the way...
         erc20.mint(address(this), 1000 ether);

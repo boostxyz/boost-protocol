@@ -5,7 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -33,7 +33,6 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     address boostOwner = makeAddr("boost owner");
     TransparentBudget budget = new TransparentBudget();
     BoostRegistry registry = new BoostRegistry();
-    BoostCore boostCoreImpl = new BoostCore();
     BoostCore boostCore;
     bytes32 constant TOKEN_PERMISSIONS_TYPEHASH = keccak256("TokenPermissions(address token,uint256 amount)");
     bytes32 constant PERMIT_TRANSFER_FROM_TYPEHASH = keccak256(
@@ -51,14 +50,18 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
 
     function setUp() public {
         // Deploy and initialize BoostCore proxy
-        bytes memory initData = abi.encodeWithSelector(
-            BoostCore.initialize.selector,
-            registry,
-            address(1), // protocolFeeReceiver
-            address(this) // owner
+        address proxy = Upgrades.deployUUPSProxy(
+            "BoostCore.sol",
+            abi.encodeCall(
+                BoostCore.initialize,
+                (
+                    registry,
+                    address(1), // protocolFeeReceiver
+                    address(this) // owner
+                )
+            )
         );
-        ERC1967Proxy proxy = new ERC1967Proxy(address(boostCoreImpl), initData);
-        boostCore = BoostCore(address(proxy));
+        boostCore = BoostCore(proxy);
 
         // We allocate 100 for the boost and 10 for protocol fees
         mockERC20.mint(address(this), 110 ether);
@@ -70,11 +73,18 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         uint256 amount = 110 ether;
         sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL, 2356288);
         BoostRegistry testRegistry = new BoostRegistry();
-        BoostCore testImpl = new BoostCore();
-        bytes memory testInitData =
-            abi.encodeWithSelector(BoostCore.initialize.selector, testRegistry, address(1), address(this));
-        ERC1967Proxy testProxy = new ERC1967Proxy(address(testImpl), testInitData);
-        boostCore = BoostCore(address(testProxy));
+        address testProxy = Upgrades.deployUUPSProxy(
+            "BoostCore.sol",
+            abi.encodeCall(
+                BoostCore.initialize,
+                (
+                    testRegistry,
+                    address(1), // protocolFeeReceiver
+                    address(this) // owner
+                )
+            )
+        );
+        boostCore = BoostCore(testProxy);
         mockERC721 = new MockERC721();
         action = _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
         mockERC20 = new MockERC20();
@@ -114,7 +124,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         incentiveQty = bound(incentiveQty, 1, 8);
         uint64 totalFee = uint64(boostCore.protocolFee()) + additionalProtocolFee;
         uint256 amountToMint =
-            (rewardAmount * claimLimit + claimLimit * rewardAmount * totalFee / boostCore.FEE_DENOMINATOR());
+            (rewardAmount * claimLimit + (claimLimit * rewardAmount * totalFee) / boostCore.FEE_DENOMINATOR());
         mockERC20.mint(address(this), incentiveQty * amountToMint);
         mockERC20.approve(address(budget), incentiveQty * amountToMint);
         bytes memory transferPayload = abi.encode(
@@ -382,6 +392,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerKey, _getEIP712Hash(permit, spender, permit2Instance));
         return abi.encodePacked(r, s, v);
     }
+
     // Compute the EIP712 hash of the batch permit object.
     // Normally this would be implemented off-chain.
 

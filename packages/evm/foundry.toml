@@ -13,10 +13,10 @@ cache_path  = 'cache_forge'
 libs = ['node_modules', 'lib']
 solc_version = '0.8.26'
 evm_version = 'cancun'
-fs_permissions = [{access = "read-write", path = "./deploys"}]
+fs_permissions = [{access = "read-write", path = "./deploys"}, {access = "read", path = "./out"}]
 remappings=[
-  '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
-  '@openzeppelin-upgrades/contracts/=lib/openzeppelin-contracts-upgradeable/contracts/',
+  '@openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/',
+  '@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/',
   'forge-std/=lib/forge-std/src/',
   '@solady/=lib/solady/src/',
   '@boost/contracts/=contracts/'

@@ -4,9 +4,6 @@
 [submodule "packages/evm/lib/solady"]
 	path = packages/evm/lib/solady
 	url = https://github.com/vectorized/solady
-[submodule "packages/evm/lib/openzeppelin-contracts"]
-	path = packages/evm/lib/openzeppelin-contracts
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "packages/evm/lib/modular-account"]
 	path = packages/evm/lib/modular-account
 	url = https://github.com/alchemyplatform/modular-account

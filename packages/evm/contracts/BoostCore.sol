@@ -7,7 +7,6 @@ import {LibZip} from "@solady/utils/LibZip.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -29,7 +28,7 @@ import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
-contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
+contract BoostCore is UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
     using SafeTransferLib for address;

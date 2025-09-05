@@ -30,6 +30,7 @@ import {
 import { bytecode } from '@boostxyz/evm/artifacts/contracts/BoostCore.sol/BoostCore.json';
 import {
   type GetTransactionReceiptParameters,
+  deployContract,
   getAccount,
   getChains,
   getTransactionReceipt,
@@ -40,6 +41,8 @@ import {
   type Address,
   type ContractEventName,
   type Hex,
+  encodeDeployData,
+  encodeFunctionData,
   encodePacked,
   keccak256,
   parseEventLogs,
@@ -164,6 +167,7 @@ import {
   type ReadParams,
   type WriteParams,
   assertValidAddressByChainId,
+  getDeployedContractAddress,
 } from './utils';
 
 /**
@@ -273,25 +277,12 @@ export interface BoostCoreOptionsWithPayload extends DeployableOptions {
 }
 
 /**
- * Typeguard to determine if a user is intending to deploy a new instance of the Boost Core contracts with {@link BoostCoreOptionsWithPayload}.
- *
- * @param {*} opts
- * @returns {opts is BoostCoreOptionsWithPayload}
- */
-// biome-ignore lint/suspicious/noExplicitAny: type guard
-function isBoostCoreDeployable(opts: any): opts is BoostCoreOptionsWithPayload {
-  return opts.registryAddress && opts.protocolFeeReceiver && opts.owner;
-}
-
-/**
  * A union representing both of the valid Boost Core instantiation parameters.
  *
  * @export
  * @typedef {BoostCoreConfig}
  */
-export type BoostCoreConfig =
-  | BoostCoreDeployedOptions
-  | BoostCoreOptionsWithPayload;
+export type BoostCoreConfig = BoostCoreDeployedOptions;
 
 /**
  * The interface required to create a new Boost.
@@ -330,10 +321,10 @@ export type IncentiveDisbursalInfo = {
  * @export
  * @class BoostCore
  * @typedef {BoostCore}
- * @extends {Deployable<[Address, Address, Address]>}
+ * @extends {Deployable<[]>}
  */
 export class BoostCore extends Deployable<
-  [Address, Address, Address],
+  BoostCoreOptionsWithPayload,
   typeof boostCoreAbi
 > {
   /**
@@ -368,12 +359,6 @@ export class BoostCore extends Deployable<
   constructor({ config, account, ...options }: BoostCoreConfig) {
     if (isBoostCoreDeployed(options) && options.address) {
       super({ account, config }, options.address);
-    } else if (isBoostCoreDeployable(options)) {
-      super({ account, config }, [
-        options.registryAddress,
-        options.protocolFeeReceiver,
-        options.owner,
-      ]);
     } else {
       const { address } = assertValidAddressByChainId(
         config,
@@ -2140,25 +2125,138 @@ export class BoostCore extends Deployable<
    * @inheritdoc
    *
    * @public
-   * @param {?[Address, Address, Address]} [_payload]
+   * @param {?[]} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: [Address, Address, Address],
+    _payload?: BoostCoreOptionsWithPayload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {
-    const [payload, options] = this.validateDeploymentConfig(
+    const [_unused, options] = this.validateDeploymentConfig(
       _payload,
       _options,
     );
     return {
       abi: boostCoreAbi,
       bytecode: bytecode as Hex,
-      args: payload,
+      args: [], // UUPS constructor should have no arguments - uses initializer instead
       ...this.optionallyAttachAccount(options.account),
     };
   }
+
+  /**
+   * Override the deploy method to handle UUPS proxy deployment with initialization
+   *
+   * @protected
+   * @async
+   * @param {?[]} [_payload]
+   * @param {?DeployableOptions} [_options]
+   * @param {?Omit<WaitForTransactionReceiptParameters, 'hash'>} [waitParams]
+   * @returns {Promise<this>}
+   */
+  public override async deploy(
+    _payload?: BoostCoreOptionsWithPayload,
+    _options?: DeployableOptions,
+    waitParams?: Omit<Parameters<typeof waitForTransactionReceipt>[1], 'hash'>,
+  ): Promise<this> {
+    // Check if this is a UUPS deployment by checking if we have the required parameters
+    const payload = _payload || this._payload;
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'registryAddress' in payload
+    ) {
+      const corePayload = payload;
+      const options = _options || {
+        config: this._config,
+        account: this._account,
+      };
+
+      // Deploy the implementation contract first
+      const implementationAddress = await getDeployedContractAddress(
+        options.config,
+        deployContract(options.config, {
+          abi: boostCoreAbi,
+          bytecode: bytecode as Hex,
+          args: [], // UUPS constructor has no arguments
+          ...this.optionallyAttachAccount(options.account),
+        }),
+        waitParams,
+      );
+
+      // Prepare the initialization call data
+      const initializeCalldata = encodeFunctionData({
+        abi: boostCoreAbi,
+        functionName: 'initialize',
+        args: [
+          corePayload.registryAddress,
+          corePayload.protocolFeeReceiver,
+          corePayload.owner,
+        ],
+      });
+
+      // ERC1967Proxy ABI (constructor only)
+      const ERC1967ProxyABI = [
+        {
+          type: 'constructor',
+          inputs: [
+            {
+              name: 'implementation',
+              type: 'address',
+              internalType: 'address',
+            },
+            {
+              name: '_data',
+              type: 'bytes',
+              internalType: 'bytes',
+            },
+          ],
+          stateMutability: 'payable',
+        },
+      ];
+
+      // ERC1967Proxy bytecode (OpenZeppelin implementation)
+      const ERC1967ProxyBytecode =
+        '0x60806040526040516103dc3803806103dc8339810160408190526100229161023b565b61002c8282610033565b5050610320565b61003c82610091565b6040516001600160a01b038316907fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b905f90a280511561008557610080828261010c565b505050565b61008d61017f565b5050565b806001600160a01b03163b5f036100cb57604051634c9c8ce360e01b81526001600160a01b03821660048201526024015b60405180910390fd5b7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc80546001600160a01b0319166001600160a01b0392909216919091179055565b60605f80846001600160a01b031684604051610128919061030a565b5f60405180830381855af49150503d805f8114610160576040519150601f19603f3d011682016040523d82523d5f602084013e610165565b606091505b5090925090506101768583836101a0565b95945050505050565b341561019e5760405163b398979f60e01b815260040160405180910390fd5b565b6060826101b5576101b0826101ff565b6101f8565b81511580156101cc57506001600160a01b0384163b155b156101f557604051639996b31560e01b81526001600160a01b03851660048201526024016100c2565b50805b9392505050565b80511561020e57805160208201fd5b60405163d6bda27560e01b815260040160405180910390fd5b634e487b7160e01b5f52604160045260245ffd5b5f806040838503121561024c575f80fd5b82516001600160a01b0381168114610262575f80fd5b60208401519092506001600160401b0381111561027d575f80fd5b8301601f8101851361028d575f80fd5b80516001600160401b038111156102a6576102a6610227565b604051601f8201601f19908116603f011681016001600160401b03811182821017156102d4576102d4610227565b6040528181528282016020018710156102eb575f80fd5b8160208401602083015e5f602083830101528093505050509250929050565b5f82518060208501845e5f920191825250919050565b60b08061032c5f395ff3fe6080604052600a600c565b005b60186014601a565b605d565b565b5f60587f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc5473ffffffffffffffffffffffffffffffffffffffff1690565b905090565b365f80375f80365f845af43d5f803e8080156076573d5ff35b3d5ffdfea2646970667358221220f563f31c0aa14bad619f09897012e95da451776c4af1ecde8d7624c84200077664736f6c634300081a0033';
+
+      // Deploy ERC1967Proxy with implementation and initialization call
+      const proxyAddress = await getDeployedContractAddress(
+        options.config,
+        deployContract(options.config, {
+          abi: ERC1967ProxyABI,
+          bytecode: encodeDeployData({
+            abi: ERC1967ProxyABI,
+            bytecode: ERC1967ProxyBytecode,
+            args: [implementationAddress, initializeCalldata],
+          }),
+          args: [implementationAddress, initializeCalldata],
+          ...this.optionallyAttachAccount(options.account),
+        }),
+        waitParams,
+      );
+
+      // Set the proxy address as our contract address
+      this._address = proxyAddress;
+
+      // Update the static addresses object so other methods can find this deployment
+      const chainId = options.config.getClient().chain?.id;
+      if (chainId) {
+        (this.constructor as typeof BoostCore).addresses[chainId] =
+          proxyAddress;
+      } else {
+        console.log(
+          'WARNING: No chain ID found, cannot update addresses object',
+        );
+      }
+    } else {
+      // Fallback to regular deployment if no initialization payload
+      await super.deploy(_payload, _options, waitParams);
+    }
+
+    return this;
+  }
+
   /**
    * Prepares and executes a top-up from a Budget, specifying the net top-up amount
    * that should land in the incentive (the protocol fee is added automatically).

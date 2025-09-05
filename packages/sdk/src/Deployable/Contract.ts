@@ -68,6 +68,17 @@ export class Contract<ContractAbi extends Abi> {
   }
 
   /**
+   * A getter returning this contract's Wagmi configuration.
+   *
+   * @public
+   * @readonly
+   * @type {Config}
+   */
+  public get config() {
+    return this._config;
+  }
+
+  /**
    * Will set this contract's address and return the instance for chaining. Does not verify that provided address is valid.
    *
    * @public

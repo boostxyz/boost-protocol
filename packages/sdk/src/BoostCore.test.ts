@@ -648,20 +648,20 @@ describe("BoostCore", () => {
     // expect(erc721MintAction._account).toEqual(defaultOptions.account);
 
     const eventAction = core.EventAction(zeroAddress);
-    expect(eventAction._config).toEqual(defaultOptions.config);
-    expect(eventAction._account).toEqual(defaultOptions.account);
+    expect(eventAction.config).toEqual(defaultOptions.config);
+    expect(eventAction.account).toEqual(defaultOptions.account);
 
     const allowList = core.SimpleAllowList(zeroAddress);
-    expect(allowList._config).toEqual(defaultOptions.config);
-    expect(allowList._account).toEqual(defaultOptions.account);
+    expect(allowList.config).toEqual(defaultOptions.config);
+    expect(allowList.account).toEqual(defaultOptions.account);
 
     const denyList = core.SimpleDenyList(zeroAddress);
-    expect(denyList._config).toEqual(defaultOptions.config);
-    expect(denyList._account).toEqual(defaultOptions.account);
+    expect(denyList.config).toEqual(defaultOptions.config);
+    expect(denyList.account).toEqual(defaultOptions.account);
 
     const managedBudget = core.ManagedBudget(zeroAddress);
-    expect(managedBudget._config).toEqual(defaultOptions.config);
-    expect(managedBudget._account).toEqual(defaultOptions.account);
+    expect(managedBudget.config).toEqual(defaultOptions.config);
+    expect(managedBudget.account).toEqual(defaultOptions.account);
 
     // const simpleBudget = core.SimpleBudget(zeroAddress);
     // expect(simpleBudget._config).toEqual(defaultOptions.config);
@@ -675,8 +675,8 @@ describe("BoostCore", () => {
       allowList: zeroAddress,
       limit: 0n,
     });
-    expect(allowListIncentive._config).toEqual(defaultOptions.config);
-    expect(allowListIncentive._account).toEqual(defaultOptions.account);
+    expect(allowListIncentive.config).toEqual(defaultOptions.config);
+    expect(allowListIncentive.account).toEqual(defaultOptions.account);
 
     const cgdaIncentive = core.CGDAIncentive({
       asset: zeroAddress,
@@ -686,8 +686,8 @@ describe("BoostCore", () => {
       totalBudget: 0n,
       manager: zeroAddress,
     });
-    expect(cgdaIncentive._config).toEqual(defaultOptions.config);
-    expect(cgdaIncentive._account).toEqual(defaultOptions.account);
+    expect(cgdaIncentive.config).toEqual(defaultOptions.config);
+    expect(cgdaIncentive.account).toEqual(defaultOptions.account);
 
     const erc20Incentive = core.ERC20Incentive({
       asset: zeroAddress,
@@ -695,16 +695,17 @@ describe("BoostCore", () => {
       reward: 0n,
       limit: 0n,
     });
-    expect(erc20Incentive._config).toEqual(defaultOptions.config);
-    expect(erc20Incentive._account).toEqual(defaultOptions.account);
+    expect(erc20Incentive.config).toEqual(defaultOptions.config);
+    expect(erc20Incentive.account).toEqual(defaultOptions.account);
 
     const erc20VariableIncentive = core.ERC20VariableIncentive({
       asset: zeroAddress,
       reward: 0n,
       limit: 0n,
+      manager: zeroAddress,
     });
-    expect(erc20VariableIncentive._config).toEqual(defaultOptions.config);
-    expect(erc20VariableIncentive._account).toEqual(defaultOptions.account);
+    expect(erc20VariableIncentive.config).toEqual(defaultOptions.config);
+    expect(erc20VariableIncentive.account).toEqual(defaultOptions.account);
 
     // const erc1155Incentive = core.ERC1155Incentive({
     //   asset: zeroAddress,
@@ -722,12 +723,12 @@ describe("BoostCore", () => {
       reward: 0n,
       limit: 0n,
     });
-    expect(pointsIncentive._config).toEqual(defaultOptions.config);
-    expect(pointsIncentive._account).toEqual(defaultOptions.account);
+    expect(pointsIncentive.config).toEqual(defaultOptions.config);
+    expect(pointsIncentive.account).toEqual(defaultOptions.account);
 
     const signerValidator = core.SignerValidator(zeroAddress);
-    expect(signerValidator._config).toEqual(defaultOptions.config);
-    expect(signerValidator._account).toEqual(defaultOptions.account);
+    expect(signerValidator.config).toEqual(defaultOptions.config);
+    expect(signerValidator.account).toEqual(defaultOptions.account);
   });
 
   test("can subscribe to contract events", async () => {
@@ -1078,12 +1079,9 @@ describe("Top-Up Incentives", () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
-    console.log("budget", budget.assertValidAddress());
-
     const netTopup = parseEther("5");
 
     await core.topupIncentiveFromBudgetPreFee(boostId, 0n, netTopup, budget.assertValidAddress());
-    console.log("topup done");
 
     expect(await incentive.limit()).toBe(5n + 5n); // original limit 5 + topup 5
   });

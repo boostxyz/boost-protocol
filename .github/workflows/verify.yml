@@ -32,6 +32,9 @@ jobs:
           NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
         run: npx turbo build --cache-dir=".cache"
 
+      - name: Build EVM package
+        run: npx turbo build --cache-dir=".cache" --filter="@boostxyz/evm"
+        
       - name: Make envfile
         uses: SpicyPizza/create-envfile@v2.0
         with:

@@ -6,8 +6,8 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
-
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -28,7 +28,7 @@ import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
-contract BoostCore is UUPSUpgradeable, Ownable, ReentrancyGuard {
+contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
     using SafeTransferLib for address;
@@ -103,13 +103,11 @@ contract BoostCore is UUPSUpgradeable, Ownable, ReentrancyGuard {
         _;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
     function initialize(BoostRegistry registry_, address protocolFeeReceiver_, address owner_) public initializer {
-        __UUPSUpgradeable_init();
         _initializeOwner(owner_);
         registry = registry_;
         protocolFeeReceiver = protocolFeeReceiver_;

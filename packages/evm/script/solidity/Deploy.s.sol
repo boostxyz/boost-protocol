@@ -5,7 +5,7 @@ import "./Util.s.sol";
 
 import {BoostCore} from "contracts/BoostCore.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 
 contract CoreDeployer is ScriptUtils {
     address BOOST_FEE_RECIPIENT;
@@ -34,15 +34,14 @@ contract CoreDeployer is ScriptUtils {
 
     function _deployCore(address registry) internal returns (address core) {
         address owner = vm.envAddress("BOOST_CORE_OWNER_ADDRESS");
-
-        core = Upgrades.deployUUPSProxy(
-            "BoostCore.sol",
-            abi.encodeCall(
-                BoostCore.initialize,
-                (BoostRegistry(registry), BOOST_FEE_RECIPIENT, owner)
-            )
+        bytes memory initCode = type(BoostCore).creationCode;
+        address impl = _getCreate2Address(initCode, "");
+        core = LibClone.deployERC1967(impl);
+        BoostCore(core).initialize(
+            BoostRegistry(registry),
+            BOOST_FEE_RECIPIENT,
+            owner
         );
-        address impl = Upgrades.getImplementationAddress(core);
         console.log("BoostCore Proxy: ", core);
         console.log("BoostCore Implementation: ", impl);
     }

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
-
+import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -78,17 +77,9 @@ contract EndToEndBasic is Test {
 
     function setUp() public {
         // Deploy and initialize BoostCore proxy
-        address proxy = Upgrades.deployUUPSProxy(
-            "BoostCore.sol",
-            abi.encodeCall(
-                BoostCore.initialize,
-                (
-                    registry,
-                    address(1), // protocolFeeReceiver
-                    address(this) // owner
-                )
-            )
-        );
+        BoostCore boostCoreImpl = new BoostCore();
+        address proxy = LibClone.deployERC1967(address(boostCoreImpl));
+        BoostCore(proxy).initialize(registry, address(1), address(this));
         core = BoostCore(proxy);
 
         // Before we can fulfill our stories, we need to get some setup out of the way...

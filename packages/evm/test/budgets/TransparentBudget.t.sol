@@ -5,7 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -50,17 +50,9 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
 
     function setUp() public {
         // Deploy and initialize BoostCore proxy
-        address proxy = Upgrades.deployUUPSProxy(
-            "BoostCore.sol",
-            abi.encodeCall(
-                BoostCore.initialize,
-                (
-                    registry,
-                    address(1), // protocolFeeReceiver
-                    address(this) // owner
-                )
-            )
-        );
+        BoostCore boostCoreImpl = new BoostCore();
+        address proxy = LibClone.deployERC1967(address(boostCoreImpl));
+        BoostCore(proxy).initialize(registry, address(1), address(this));
         boostCore = BoostCore(proxy);
 
         // We allocate 100 for the boost and 10 for protocol fees
@@ -73,17 +65,9 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         uint256 amount = 110 ether;
         sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL, 2356288);
         BoostRegistry testRegistry = new BoostRegistry();
-        address testProxy = Upgrades.deployUUPSProxy(
-            "BoostCore.sol",
-            abi.encodeCall(
-                BoostCore.initialize,
-                (
-                    testRegistry,
-                    address(1), // protocolFeeReceiver
-                    address(this) // owner
-                )
-            )
-        );
+        BoostCore boostCoreImpl = new BoostCore();
+        address testProxy = LibClone.deployERC1967(address(boostCoreImpl));
+        BoostCore(testProxy).initialize(testRegistry, address(1), address(this));
         boostCore = BoostCore(testProxy);
         mockERC721 = new MockERC721();
         action = _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());

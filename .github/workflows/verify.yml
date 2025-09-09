@@ -38,6 +38,7 @@ jobs:
         with:
           envkey_TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
           envkey_VITE_SEPOLIA_RPC_URL: ${{ secrets.VITE_SEPOLIA_RPC_URL }}
+          envkey_VITE_BOOST_CORE_ADDRESS: ${{ vars.VITE_BOOST_CORE_ADDRESS }}
           directory: packages/evm
           file_name: .env
 

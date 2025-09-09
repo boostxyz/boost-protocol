@@ -1029,10 +1029,13 @@ describe("BoostCore", () => {
 });
 
 describe("Top-Up Incentives", () => {
-  let incentive: ReturnType<typeof fixtures.core.ERC20Incentive>;
+  let incentive: ERC20Incentive;
   let boostId: bigint;
 
   beforeAll(async () => {
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
+    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+    
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
@@ -1148,11 +1151,14 @@ describe("Top-Up Incentives", () => {
 });
 
 describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
-  let incentive: ReturnType<typeof fixtures.core.ERC20PeggedVariableCriteriaIncentiveV2>;
+  let incentive: any; // Type will be set after fixtures are loaded
   let boostId: bigint;
   let erc721: MockERC721;
 
   beforeAll(async () => {
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
+    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+    
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
@@ -1283,8 +1289,6 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
 });
 
 describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () => {
-  let fixtures: Fixtures, budgets: BudgetFixtures;
-  
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });

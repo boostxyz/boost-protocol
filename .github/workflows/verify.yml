@@ -32,12 +32,19 @@ jobs:
           NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
         run: npx turbo build --cache-dir=".cache"
 
-      - name: Make envfile
+      - name: Make envfile for EVM
         uses: SpicyPizza/create-envfile@v2.0
         with:
           envkey_TEST_SIGNER_PRIVATE_KEY: ${{ secrets.TEST_SIGNER_PRIVATE_KEY }}
           envkey_VITE_SEPOLIA_RPC_URL: ${{ secrets.VITE_SEPOLIA_RPC_URL }}
           directory: packages/evm
+          file_name: .env
+
+      - name: Make envfile for SDK
+        uses: SpicyPizza/create-envfile@v2.0
+        with:
+          envkey_VITE_BOOST_CORE_ADDRESS: ${{ vars.VITE_BOOST_CORE_ADDRESS }}
+          directory: packages/sdk
           file_name: .env
 
       - name: Run tests

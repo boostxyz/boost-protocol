@@ -8,9 +8,6 @@ const exclude = [
   // Ignore tests and scripts
   '**.t.sol/*.json',
   '**.s.sol/*.json',
-
-  // Exclude specific Initializable contract
-  '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol/**',
 ];
 
 export default defineConfig({

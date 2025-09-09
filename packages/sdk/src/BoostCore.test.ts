@@ -1283,6 +1283,16 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
 });
 
 describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () => {
+  let fixtures: Fixtures, budgets: BudgetFixtures;
+  
+  beforeAll(async () => {
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
+  });
+  
+  beforeEach(async () => {
+    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+  });
+  
   test("enforces validator claim limit", async () => {
     const referrer = accounts[1].account!;
     const signer = accounts[0];

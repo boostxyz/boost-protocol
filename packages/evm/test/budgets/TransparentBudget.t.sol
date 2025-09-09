@@ -5,7 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -49,19 +49,21 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     string SEPOLIA_RPC_URL = vm.envString("VITE_SEPOLIA_RPC_URL");
 
     function setUp() public {
-        // Deploy and initialize BoostCore proxy
-        address proxy = Upgrades.deployUUPSProxy(
-            "BoostCore.sol",
-            abi.encodeCall(
-                BoostCore.initialize,
-                (
-                    registry,
-                    address(1), // protocolFeeReceiver
-                    address(this) // owner
-                )
+        // Deploy implementation
+        BoostCore implementation = new BoostCore();
+        
+        // Deploy proxy with implementation and initialization data
+        bytes memory initData = abi.encodeCall(
+            BoostCore.initialize,
+            (
+                registry,
+                address(1), // protocolFeeReceiver
+                address(this) // owner
             )
         );
-        boostCore = BoostCore(proxy);
+        
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        boostCore = BoostCore(address(proxy));
 
         // We allocate 100 for the boost and 10 for protocol fees
         mockERC20.mint(address(this), 110 ether);
@@ -73,18 +75,21 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         uint256 amount = 110 ether;
         sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL, 2356288);
         BoostRegistry testRegistry = new BoostRegistry();
-        address testProxy = Upgrades.deployUUPSProxy(
-            "BoostCore.sol",
-            abi.encodeCall(
-                BoostCore.initialize,
-                (
-                    testRegistry,
-                    address(1), // protocolFeeReceiver
-                    address(this) // owner
-                )
+        // Deploy test implementation
+        BoostCore testImplementation = new BoostCore();
+        
+        // Deploy test proxy with implementation and initialization data
+        bytes memory testInitData = abi.encodeCall(
+            BoostCore.initialize,
+            (
+                testRegistry,
+                address(1), // protocolFeeReceiver
+                address(this) // owner
             )
         );
-        boostCore = BoostCore(testProxy);
+        
+        ERC1967Proxy testProxy = new ERC1967Proxy(address(testImplementation), testInitData);
+        boostCore = BoostCore(address(testProxy));
         mockERC721 = new MockERC721();
         action = _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
         mockERC20 = new MockERC20();

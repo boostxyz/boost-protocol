@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Ownable} from "@solady/auth/Ownable.sol";
 
 import {MockERC20, MockERC721, MockAuth} from "contracts/shared/Mocks.sol";
@@ -96,12 +96,18 @@ contract BoostCoreUUPSTest is Test {
         mockERC721 = new MockERC721();
         registry = new BoostRegistry();
 
-        // Deploy proxy and implementation
-        proxy = Upgrades.deployUUPSProxy(
-            "BoostCore.sol", abi.encodeCall(BoostCore.initialize, (registry, protocolFeeReceiver, owner))
+        // Deploy implementation
+        implementation = new BoostCore();
+        
+        // Deploy proxy with implementation and initialization data
+        bytes memory initData = abi.encodeCall(
+            BoostCore.initialize,
+            (registry, protocolFeeReceiver, owner)
         );
+        
+        ERC1967Proxy proxyContract = new ERC1967Proxy(address(implementation), initData);
+        proxy = address(proxyContract);
         boostCore = BoostCore(proxy);
-        implementation = BoostCore(Upgrades.getImplementationAddress(proxy));
 
         // Set up test data
         action = _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
@@ -202,7 +208,9 @@ contract BoostCoreUUPSTest is Test {
     ////////////////////////
 
     function testSuccessfulUpgrade() public {
-        Upgrades.upgradeProxy(proxy, "BoostCoreUUPS.t.sol:BoostCoreV2", "");
+        // Deploy new implementation and upgrade
+        BoostCoreV2 newImplementation = new BoostCoreV2();
+        boostCore.upgradeToAndCall(address(newImplementation), "");
 
         // Test that the upgrade worked
         BoostCoreV2 upgradedCore = BoostCoreV2(proxy);
@@ -221,7 +229,9 @@ contract BoostCoreUUPSTest is Test {
 
     function testUpgradeWithCall() public {
         // Upgrade with call
-        Upgrades.upgradeProxy(proxy, "BoostCoreUUPS.t.sol:BoostCoreV2", abi.encodeCall(BoostCoreV2.setNewFeature, 123));
+        // Deploy new implementation and upgrade with call
+        BoostCoreV2 newImplementation = new BoostCoreV2();
+        boostCore.upgradeToAndCall(address(newImplementation), abi.encodeCall(BoostCoreV2.setNewFeature, 123));
 
         // Test that the upgrade and call worked
         BoostCoreV2 upgradedCore = BoostCoreV2(address(proxy));
@@ -258,7 +268,9 @@ contract BoostCoreUUPSTest is Test {
         boostCore.setProtocolFeeReceiver(newReceiver);
 
         // Upgrade
-        Upgrades.upgradeProxy(proxy, "BoostCoreUUPS.t.sol:BoostCoreV2", "");
+        // Deploy new implementation and upgrade
+        BoostCoreV2 newImplementation = new BoostCoreV2();
+        boostCore.upgradeToAndCall(address(newImplementation), "");
 
         // Test that state is preserved
         BoostCoreV2 upgradedCore = BoostCoreV2(proxy);
@@ -277,7 +289,9 @@ contract BoostCoreUUPSTest is Test {
         assertEq(boostCore.version(), "1.0.0", "Initial version should be 1.0.0");
 
         // First upgrade to V2
-        Upgrades.upgradeProxy(proxy, "BoostCoreUUPS.t.sol:BoostCoreV2", "");
+        // Deploy new implementation and upgrade
+        BoostCoreV2 newImplementation = new BoostCoreV2();
+        boostCore.upgradeToAndCall(address(newImplementation), "");
         BoostCoreV2 coreV2 = BoostCoreV2(proxy);
         assertEq(coreV2.version(), "2.0.0", "Version should be 2.0.0 after first upgrade");
 
@@ -286,7 +300,9 @@ contract BoostCoreUUPSTest is Test {
         assertEq(coreV2.newFeature(), 999, "V2 feature should work");
 
         // Second upgrade to another V2 (simulating bug fix)
-        Upgrades.upgradeProxy(proxy, "BoostCoreUUPS.t.sol:BoostCoreV2", "");
+        // Deploy new implementation and upgrade
+        BoostCoreV2 newImplementation2 = new BoostCoreV2();
+        boostCore.upgradeToAndCall(address(newImplementation2), "");
         BoostCoreV2 coreV2Fixed = BoostCoreV2(proxy);
 
         // State should be preserved across upgrades
@@ -311,7 +327,9 @@ contract BoostCoreUUPSTest is Test {
 
         // New owner should be able to upgrade
         vm.startPrank(newOwner);
-        Upgrades.upgradeProxy(proxy, "BoostCoreUUPS.t.sol:BoostCoreV2", "");
+        // Deploy new implementation and upgrade
+        BoostCoreV2 newImplementation3 = new BoostCoreV2();
+        boostCore.upgradeToAndCall(address(newImplementation3), "");
         vm.stopPrank();
 
         // Verify upgrade worked
@@ -340,7 +358,9 @@ contract BoostCoreUUPSTest is Test {
         boostCore.createBoost(validCreateCalldata);
 
         // Upgrade
-        Upgrades.upgradeProxy(proxy, "BoostCoreUUPS.t.sol:BoostCoreV2", "");
+        // Deploy new implementation and upgrade
+        BoostCoreV2 newImplementation = new BoostCoreV2();
+        boostCore.upgradeToAndCall(address(newImplementation), "");
         BoostCoreV2 upgradedCore = BoostCoreV2(proxy);
 
         // Set aside more funds to create new boost

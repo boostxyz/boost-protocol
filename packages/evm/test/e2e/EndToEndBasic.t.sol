@@ -79,7 +79,7 @@ contract EndToEndBasic is Test {
     function setUp() public {
         // Deploy implementation
         BoostCore implementation = new BoostCore();
-        
+
         // Deploy proxy with implementation and initialization data
         bytes memory initData = abi.encodeCall(
             BoostCore.initialize,
@@ -89,7 +89,7 @@ contract EndToEndBasic is Test {
                 address(this) // owner
             )
         );
-        
+
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         core = BoostCore(address(proxy));
 

@@ -58,7 +58,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
     function setUp() public {
         // Deploy implementation
         BoostCore implementation = new BoostCore();
-        
+
         // Deploy proxy with implementation and initialization data
         bytes memory initData = abi.encodeCall(
             BoostCore.initialize,
@@ -68,7 +68,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
                 address(this) // owner
             )
         );
-        
+
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         core = BoostCore(address(proxy));
 

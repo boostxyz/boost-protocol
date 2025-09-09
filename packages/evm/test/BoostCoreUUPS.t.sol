@@ -98,13 +98,10 @@ contract BoostCoreUUPSTest is Test {
 
         // Deploy implementation
         implementation = new BoostCore();
-        
+
         // Deploy proxy with implementation and initialization data
-        bytes memory initData = abi.encodeCall(
-            BoostCore.initialize,
-            (registry, protocolFeeReceiver, owner)
-        );
-        
+        bytes memory initData = abi.encodeCall(BoostCore.initialize, (registry, protocolFeeReceiver, owner));
+
         ERC1967Proxy proxyContract = new ERC1967Proxy(address(implementation), initData);
         proxy = address(proxyContract);
         boostCore = BoostCore(proxy);

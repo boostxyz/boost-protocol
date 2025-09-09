@@ -51,7 +51,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     function setUp() public {
         // Deploy implementation
         BoostCore implementation = new BoostCore();
-        
+
         // Deploy proxy with implementation and initialization data
         bytes memory initData = abi.encodeCall(
             BoostCore.initialize,
@@ -61,7 +61,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
                 address(this) // owner
             )
         );
-        
+
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         boostCore = BoostCore(address(proxy));
 
@@ -77,7 +77,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         BoostRegistry testRegistry = new BoostRegistry();
         // Deploy test implementation
         BoostCore testImplementation = new BoostCore();
-        
+
         // Deploy test proxy with implementation and initialization data
         bytes memory testInitData = abi.encodeCall(
             BoostCore.initialize,
@@ -87,7 +87,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
                 address(this) // owner
             )
         );
-        
+
         ERC1967Proxy testProxy = new ERC1967Proxy(address(testImplementation), testInitData);
         boostCore = BoostCore(address(testProxy));
         mockERC721 = new MockERC721();

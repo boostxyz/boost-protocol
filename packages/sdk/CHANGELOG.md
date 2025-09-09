@@ -1,5 +1,52 @@
 # @boostxyz/sdk
 
+## 7.8.0
+
+### Minor Changes
+
+- 81bc7a7: add tuple support for claimant
+
+## 7.7.0
+
+### Minor Changes
+
+- 115a70c: support world chain mainnet
+
+## 7.6.0
+
+### Minor Changes
+
+- 6e05afb: add OffchainAccessList SDK implementation
+
+## 7.5.1
+
+### Patch Changes
+
+- 982f379: fix fieldType mutation
+
+## 7.5.0
+
+### Minor Changes
+
+- 62c3456: add PayableLimitedSignerValidator implementation
+
+### Patch Changes
+
+- ed4c633: conditionally add hardhat chain to bases
+
+## 7.4.0
+
+### Minor Changes
+
+- a49f302: support world chain sepolia
+
+## 7.3.0
+
+### Minor Changes
+
+- b1f7a7b: add optional logs to GetIncentiveScalarV2Params
+- 341a01e: derive claimant from actionStep logs
+
 ## 7.2.0
 
 ### Minor Changes

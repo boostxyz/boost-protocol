@@ -1,6 +1,7 @@
 import ContractActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ContractAction.sol/ContractAction.json';
 import ERC721MintActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/ERC721MintAction.sol/ERC721MintAction.json';
 import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
+import OffchainAccessListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/OffchainAccessList.sol/OffchainAccessList.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
@@ -14,13 +15,13 @@ import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/in
 import ERC1155IncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC1155Incentive.sol/ERC1155Incentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
+import PayableLimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/PayableLimitedSignerValidator.sol/PayableLimitedSignerValidator.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import {
   AllowListIncentive,
   BoostCore,
   BoostRegistry,
   CGDAIncentive,
-  type DeployableOptions,
   ERC20Incentive,
   ERC20VariableCriteriaIncentiveV2,
   ERC20VariableIncentive,
@@ -28,27 +29,16 @@ import {
   LimitedSignerValidator,
   ManagedBudget,
   ManagedBudgetWithFees,
+  OffchainAccessList,
+  PayableLimitedSignerValidator,
   PointsIncentive,
   SignerValidator,
   SimpleAllowList,
   SimpleDenyList,
   getDeployedContractAddress,
 } from '@boostxyz/sdk';
-import { createConfig, deployContract } from '@wagmi/core';
-import type { Client, Hex } from 'viem';
-import {
-  http,
-  createTestClient,
-  createWalletClient,
-  publicActions,
-  walletActions,
-} from 'viem';
-import {
-  type Address,
-  mnemonicToAccount,
-  privateKeyToAccount,
-} from 'viem/accounts';
-
+import { deployContract } from '@wagmi/core';
+import type { Address, Hex } from 'viem';
 import { Chains, type Command, getDeployableOptions } from '../utils';
 
 export type DeployResult = {
@@ -59,6 +49,7 @@ export type DeployResult = {
   ERC721_MINT_ACTION_BASE: string;
   SIMPLE_ALLOWLIST_BASE: string;
   SIMPLE_DENYLIST_BASE: string;
+  OFFCHAIN_ACCESS_LIST_BASE: string;
   MANAGED_BUDGET_BASE: string;
   VESTING_BUDGET_BASE: string;
   ALLOWLIST_INCENTIVE_BASE: string;
@@ -70,6 +61,7 @@ export type DeployResult = {
   POINTS_INCENTIVE_BASE: string;
   SIGNER_VALIDATOR_BASE: string;
   LIMITED_SIGNER_VALIDATOR_BASE: string;
+  PAYABLE_LIMITED_SIGNER_VALIDATOR_BASE: string;
 };
 
 export const deploy: Command<DeployResult> = async function deploy(
@@ -155,6 +147,14 @@ export const deploy: Command<DeployResult> = async function deploy(
     deployContract(config, {
       abi: SimpleDenyListArtifact.abi,
       bytecode: SimpleDenyListArtifact.bytecode as Hex,
+      account,
+    }),
+  );
+  const offchainAccessListBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: OffchainAccessListArtifact.abi,
+      bytecode: OffchainAccessListArtifact.bytecode as Hex,
       account,
     }),
   );
@@ -272,6 +272,16 @@ export const deploy: Command<DeployResult> = async function deploy(
     }),
   );
 
+  const payableLimitedSignerValidatorBase = await getDeployedContractAddress(
+    config,
+    deployContract(config, {
+      abi: PayableLimitedSignerValidatorArtifact.abi,
+      bytecode: PayableLimitedSignerValidatorArtifact.bytecode as Hex,
+      args: [account.address, 1000000000000000n],
+      account,
+    }),
+  );
+
   const bases = {
     // ContractAction: class TContractAction extends ContractAction {
     //   public static override base = contractActionBase;
@@ -292,6 +302,11 @@ export const deploy: Command<DeployResult> = async function deploy(
     SimpleDenyList: class TSimpleDenyList extends SimpleDenyList {
       public static override bases: Record<number, Address> = {
         [chainId]: simpleDenyListBase,
+      };
+    },
+    OffchainAccessList: class TOffchainAccessList extends OffchainAccessList {
+      public static override bases: Record<number, Address> = {
+        [chainId]: offchainAccessListBase,
       };
     },
     ManagedBudget: class TManagedBudget extends ManagedBudget {
@@ -350,6 +365,11 @@ export const deploy: Command<DeployResult> = async function deploy(
         [chainId]: limitedSignerValidatorBase,
       } as Record<number, Address>;
     },
+    PayableLimitedSignerValidator: class TPayableLimitedSignerValidator extends PayableLimitedSignerValidator {
+      public static override bases: Record<number, Address> = {
+        [chainId]: payableLimitedSignerValidatorBase,
+      } as Record<number, Address>;
+    },
   };
 
   for (const [name, deployable] of Object.entries(bases)) {
@@ -368,6 +388,7 @@ export const deploy: Command<DeployResult> = async function deploy(
     ERC721_MINT_ACTION_BASE: erc721MintActionBase,
     SIMPLE_ALLOWLIST_BASE: simpleAllowListBase,
     SIMPLE_DENYLIST_BASE: simpleDenyListBase,
+    OFFCHAIN_ACCESS_LIST_BASE: offchainAccessListBase,
     MANAGED_BUDGET_BASE: managedBudgetBase,
     VESTING_BUDGET_BASE: vestingBudgetBase,
     ALLOWLIST_INCENTIVE_BASE: allowListIncentiveBase,
@@ -380,5 +401,6 @@ export const deploy: Command<DeployResult> = async function deploy(
     POINTS_INCENTIVE_BASE: pointsIncentiveBase,
     SIGNER_VALIDATOR_BASE: signerValidatorBase,
     LIMITED_SIGNER_VALIDATOR_BASE: limitedSignerValidatorBase,
+    PAYABLE_LIMITED_SIGNER_VALIDATOR_BASE: payableLimitedSignerValidatorBase,
   };
 };

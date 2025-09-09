@@ -38,6 +38,7 @@ import {
 import { ERC20PeggedVariableCriteriaIncentiveV2 as ERC20PeggedVariableCriteriaIncentiveV2Bases } from '../../dist/deployments.json';
 import {
   SignatureType,
+  decodeAndReorderLogArgs,
   getScalarValueFromTuple,
   isCriteriaFieldIndexTuple,
 } from '../Actions/EventAction';
@@ -156,8 +157,12 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env
-      .VITE_ERC20_PEGGED_VARIABLE_CRITERIA_INCENTIVE_V2_BASE,
+    ...(import.meta.env?.VITE_ERC20_PEGGED_VARIABLE_CRITERIA_INCENTIVE_V2_BASE
+      ? {
+          31337: import.meta.env
+            .VITE_ERC20_PEGGED_VARIABLE_CRITERIA_INCENTIVE_V2_BASE,
+        }
+      : {}),
     ...(ERC20PeggedVariableCriteriaIncentiveV2Bases as Record<number, Address>),
   };
   /**
@@ -236,25 +241,63 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
    * @throws {InvalidCriteriaTypeError | NoMatchingLogsError | DecodedArgsError}
    */
   public async getIncentiveScalar(
-    { chainId, hash, knownSignatures }: GetIncentiveScalarV2Params,
+    { chainId, hash, knownSignatures, logs }: GetIncentiveScalarV2Params,
     params?: ReadParams,
   ): Promise<bigint> {
     const criteria = await this.getIncentiveCriteria(params);
     if (criteria.criteriaType === SignatureType.EVENT) {
-      const transactionReceipt = await getTransactionReceipt(this._config, {
-        chainId,
-        hash,
-      });
+      const eventAbi = knownSignatures[criteria.signature] as AbiEvent;
+
       if (criteria.fieldIndex === CheatCodes.GAS_REBATE_INCENTIVE) {
+        const transactionReceipt = await getTransactionReceipt(this._config, {
+          chainId,
+          hash,
+        });
         const totalCost =
           transactionReceipt.gasUsed * transactionReceipt.effectiveGasPrice + // Normal gas cost
           (transactionReceipt.blobGasUsed ?? 0n) *
             (transactionReceipt.blobGasPrice ?? 0n); // Blob gas cost - account for potential undefined values
         return totalCost;
       }
-      const logs = transactionReceipt.logs;
 
-      if (logs.length === 0) {
+      // if logs are provided, use them to extract the scalar
+      if (logs && logs.length > 0) {
+        try {
+          // only check logs that match the criteria signature
+          const signatureMatchingLogs = logs
+            .filter((log) => log.topics && log.topics[0] === criteria.signature)
+            .map((log) => decodeAndReorderLogArgs(eventAbi, log));
+
+          if (signatureMatchingLogs.length > 0) {
+            for (const log of signatureMatchingLogs) {
+              if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
+                return getScalarValueFromTuple(
+                  log.args as unknown[],
+                  criteria.fieldIndex,
+                );
+              }
+              const scalarValue = log.args
+                ? (log.args as string[])[criteria.fieldIndex]
+                : undefined;
+              if (scalarValue !== undefined) {
+                return BigInt(scalarValue);
+              }
+            }
+          }
+        } catch (e) {
+          throw new DecodedArgsError(
+            `An error occurred while extracting scalar from logs: ${(e as Error).message}`,
+          );
+        }
+      }
+
+      const transactionReceipt = await getTransactionReceipt(this._config, {
+        chainId,
+        hash,
+      });
+      const receiptLogs = transactionReceipt.logs;
+
+      if (receiptLogs.length === 0) {
         throw new NoMatchingLogsError(
           `No logs found for event signature ${criteria.signature}`,
         );
@@ -265,7 +308,7 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
         const eventAbi = knownSignatures[criteria.signature] as AbiEvent;
         const decodedEvents = parseEventLogs({
           abi: [eventAbi],
-          logs,
+          logs: receiptLogs,
         });
         if (decodedEvents == undefined || decodedEvents.length === 0) {
           throw new NoMatchingLogsError(

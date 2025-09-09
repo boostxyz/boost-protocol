@@ -1,5 +1,35 @@
 # @boostxyz/evm
 
+## 7.4.0
+
+### Minor Changes
+
+- 115a70c: support world chain mainnet
+
+## 7.3.0
+
+### Minor Changes
+
+- 0d418cc: add OffchainAccesslist Module
+- 6e05afb: add OffchainAccessList SDK implementation
+- a881361: deploy OffchainAccessList Module
+
+### Patch Changes
+
+- 3d80186: move AccessListIdNotFound error to OffchainAccessList
+
+## 7.2.0
+
+### Minor Changes
+
+- 62c3456: add PayableLimitedSignerValidator implementation
+
+## 7.1.0
+
+### Minor Changes
+
+- a49f302: support world chain sepolia
+
 ## 7.0.0
 
 ### Major Changes

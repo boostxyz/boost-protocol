@@ -7,6 +7,7 @@ import {
   writePointsInitialize,
 } from '@boostxyz/evm';
 import EventActionArtifact from '@boostxyz/evm/artifacts/contracts/actions/EventAction.sol/EventAction.json';
+import OffchainAccessListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/OffchainAccessList.sol/OffchainAccessList.json';
 import SimpleAllowListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleAllowList.sol/SimpleAllowList.json';
 import SimpleDenyListArtifact from '@boostxyz/evm/artifacts/contracts/allowlists/SimpleDenyList.sol/SimpleDenyList.json';
 import ManagedBudgetArtifact from '@boostxyz/evm/artifacts/contracts/budgets/ManagedBudget.sol/ManagedBudget.json';
@@ -22,6 +23,7 @@ import ERC20VariableCriteriaIncentiveV2Artifact from '@boostxyz/evm/artifacts/co
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
+import PayableLimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/PayableLimitedSignerValidator.sol/PayableLimitedSignerValidator.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { deployContract, simulateContract, writeContract } from '@wagmi/core';
@@ -71,7 +73,11 @@ import {
   type ManagedBudgetWithFeesPayload,
   ManagedBudgetWithFeesV2,
   type ManagedBudgetWithFeesV2Payload,
+  OffchainAccessList,
+  type OffchainAccessListPayload,
   OpenAllowList,
+  PayableLimitedSignerValidator,
+  type PayableLimitedSignerValidatorPayload,
   PointsIncentive,
   type PointsIncentivePayload,
   PrimitiveType,
@@ -179,6 +185,7 @@ export function useTestFixtures(
       // ERC1155Incentive: typeof ERC1155Incentive;
       PointsIncentive,
       SignerValidator,
+      PayableLimitedSignerValidator,
     },
   };
 }
@@ -250,6 +257,14 @@ export function deployFixtures(
       deployContract(config, {
         abi: SimpleDenyListArtifact.abi,
         bytecode: SimpleDenyListArtifact.bytecode as Hex,
+        account,
+      }),
+    );
+    const offchainAccessListBase = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: OffchainAccessListArtifact.abi,
+        bytecode: OffchainAccessListArtifact.bytecode as Hex,
         account,
       }),
     );
@@ -400,6 +415,16 @@ export function deployFixtures(
       }),
     );
 
+    const payableLimitedSignerValidatorBase = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: PayableLimitedSignerValidatorArtifact.abi,
+        bytecode: PayableLimitedSignerValidatorArtifact.bytecode as Hex,
+        args: [account.address, parseEther('0.001')], // Owner address and initial claim fee
+        account,
+      }),
+    );
+
     const bases = {
       // ContractAction: class TContractAction extends ContractAction {
       //   public static override bases: Record<number, Address> = {
@@ -429,6 +454,11 @@ export function deployFixtures(
       OpenAllowList: class TOpenAllowList extends OpenAllowList {
         public static override bases: Record<number, Address> = {
           [chainId]: simpleDenyListBase,
+        };
+      },
+      OffchainAccessList: class TOffchainAccessList extends OffchainAccessList {
+        public static override bases: Record<number, Address> = {
+          [chainId]: offchainAccessListBase,
         };
       },
       // SimpleBudget: class TSimpleBudget extends SimpleBudget {
@@ -516,6 +546,11 @@ export function deployFixtures(
           [chainId]: limitedSignerValidatorBase,
         };
       },
+      PayableLimitedSignerValidator: class TPayableLimitedSignerValidator extends PayableLimitedSignerValidator {
+        public static override bases: Record<number, Address> = {
+          [chainId]: payableLimitedSignerValidatorBase,
+        };
+      },
       // biome-ignore lint/suspicious/noExplicitAny: test helpers, everything is permitted
     } as any as {
       // ContractAction: typeof ContractAction;
@@ -524,6 +559,7 @@ export function deployFixtures(
       SimpleAllowList: typeof SimpleAllowList;
       SimpleDenyList: typeof SimpleDenyList;
       OpenAllowList: typeof OpenAllowList;
+      OffchainAccessList: typeof OffchainAccessList;
       // SimpleBudget: typeof SimpleBudget;
       ManagedBudget: typeof ManagedBudget;
       ManagedBudgetWithFees: typeof ManagedBudgetWithFees;
@@ -541,6 +577,7 @@ export function deployFixtures(
       PointsIncentive: typeof PointsIncentive;
       SignerValidator: typeof SignerValidator;
       LimitedSignerValidator: typeof LimitedSignerValidator;
+      PayableLimitedSignerValidator: typeof PayableLimitedSignerValidator;
     };
 
     for (const [name, deployable] of Object.entries(bases)) {
@@ -622,6 +659,16 @@ export function deployFixtures(
         return new bases.OpenAllowList(
           { config: this._config, account: this._account },
           undefined,
+          isBase,
+        );
+      }
+      override OffchainAccessList(
+        options: DeployablePayloadOrAddress<OffchainAccessListPayload>,
+        isBase?: boolean,
+      ) {
+        return new bases.OffchainAccessList(
+          { config: this._config, account: this._account },
+          options,
           isBase,
         );
       }
@@ -725,6 +772,16 @@ export function deployFixtures(
           { config: this._config, account: this._account },
           options,
           isBase,
+        );
+      }
+      override PayableLimitedSignerValidator(
+        options: DeployablePayloadOrAddress<PayableLimitedSignerValidatorPayload>,
+        isBase?: boolean,
+      ) {
+        return new bases.PayableLimitedSignerValidator(
+          { config: this._config, account: this._account },
+          options,
+          isBase ?? false,
         );
       }
       override ERC20VariableIncentive(

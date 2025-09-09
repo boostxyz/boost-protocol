@@ -27,9 +27,11 @@ import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
 
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
+import {OffchainAccessList} from "contracts/allowlists/OffchainAccessList.sol";
 
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 import {LimitedSignerValidator} from "contracts/validators/LimitedSignerValidator.sol";
+import {PayableLimitedSignerValidator} from "contracts/validators/PayableLimitedSignerValidator.sol";
 
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
@@ -70,9 +72,11 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployAllowListIncentive(registry);
         _deploySignerValidator(registry);
         _deployLimitedSignerValidator(registry);
+        _deployPayableLimitedSignerValidator(registry);
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
+        _deployOffchainAccessList(registry);
 
         _saveJson();
     }
@@ -457,6 +461,38 @@ contract ModuleBaseDeployer is ScriptUtils {
         );
     }
 
+    function _deployPayableLimitedSignerValidator(
+        BoostRegistry registry
+    ) internal returns (address payableLimitedSignerValidator) {
+        // Use the deployer as the owner of the base implementation
+        address baseOwner = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
+        uint256 claimFee = vm.envOr("CLAIM_FEE", uint256(0));
+        bytes memory initCode = abi.encodePacked(
+            type(PayableLimitedSignerValidator).creationCode,
+            abi.encode(baseOwner, claimFee)
+        );
+        payableLimitedSignerValidator = _getCreate2Address(initCode, "");
+        console.log("BaseOwner: ", baseOwner);
+        console.log("PayableLimitedSignerValidator: ", payableLimitedSignerValidator);
+        deployJson = deployJsonKey.serialize(
+            "PayableLimitedSignerValidator",
+            payableLimitedSignerValidator
+        );
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(
+            newDeploy,
+            string(
+                abi.encodePacked(
+                    "PayableLimitedSignerValidator",
+                    payableLimitedSignerValidator
+                )
+            ),
+            payableLimitedSignerValidator,
+            registry,
+            ABoostRegistry.RegistryType.VALIDATOR
+        );
+    }
+
     function _deploySimpleAllowList(
         BoostRegistry registry
     ) internal returns (address simpleAllowList) {
@@ -512,6 +548,24 @@ contract ModuleBaseDeployer is ScriptUtils {
             newDeploy,
             string(abi.encodePacked("SimpleDenyList", simpleDenyList)),
             simpleDenyList,
+            registry,
+            ABoostRegistry.RegistryType.ALLOW_LIST
+        );
+    }
+
+    function _deployOffchainAccessList(
+        BoostRegistry registry
+    ) internal returns (address offchainAccessList) {
+        bytes memory initCode = type(OffchainAccessList).creationCode;
+        offchainAccessList = _getCreate2Address(initCode, "");
+        console.log("OffchainAccessList: ", offchainAccessList);
+        deployJson = deployJsonKey.serialize("OffchainAccessList", offchainAccessList);
+        bool newDeploy = _deploy2(initCode, "");
+
+        _registerIfNew(
+            newDeploy,
+            string(abi.encodePacked("OffchainAccessList", offchainAccessList)),
+            offchainAccessList,
             registry,
             ABoostRegistry.RegistryType.ALLOW_LIST
         );

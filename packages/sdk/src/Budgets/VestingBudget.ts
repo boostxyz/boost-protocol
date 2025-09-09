@@ -130,7 +130,9 @@ export class VestingBudget extends DeployableTargetWithRBAC<
    * @type {Record<number, Address>}
    */
   public static override bases: Record<number, Address> = {
-    31337: import.meta.env.VITE_VESTING_BUDGET_BASE,
+    ...(import.meta.env?.VITE_VESTING_BUDGET_BASE
+      ? { 31337: import.meta.env.VITE_VESTING_BUDGET_BASE }
+      : {}),
   };
   /**
    * @inheritdoc

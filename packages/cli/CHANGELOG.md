@@ -1,5 +1,27 @@
 # @boostxyz/cli
 
+## 6.2.2
+
+## 6.2.1
+
+## 6.2.0
+
+### Minor Changes
+
+- 6e05afb: add OffchainAccessList SDK implementation
+
+## 6.1.1
+
+## 6.1.0
+
+### Minor Changes
+
+- 62c3456: add PayableLimitedSignerValidator implementation
+
+## 6.0.4
+
+## 6.0.3
+
 ## 6.0.2
 
 ## 6.0.1

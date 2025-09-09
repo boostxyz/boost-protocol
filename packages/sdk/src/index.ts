@@ -12,6 +12,7 @@ export * from './Actions/EventAction';
 // AllowLists
 
 export * from './AllowLists/AllowList';
+export * from './AllowLists/OffchainAccessList';
 export * from './AllowLists/SimpleAllowList';
 export * from './AllowLists/SimpleDenyList';
 
@@ -51,6 +52,7 @@ export * from './Incentives/PointsIncentive';
 
 export * from './Validators/SignerValidator';
 export * from './Validators/LimitedSignerValidator';
+export * from './Validators/PayableLimitedSignerValidator';
 export * from './Validators/Validator';
 
 // Extra

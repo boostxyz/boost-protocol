@@ -50,6 +50,10 @@ import { BoostCore as BoostCoreBases } from '../dist/deployments.json';
 import { type Action, actionFromAddress } from './Actions/Action';
 import { EventAction, type EventActionPayload } from './Actions/EventAction';
 import { type AllowList, allowListFromAddress } from './AllowLists/AllowList';
+import {
+  OffchainAccessList,
+  type OffchainAccessListPayload,
+} from './AllowLists/OffchainAccessList';
 import { OpenAllowList } from './AllowLists/OpenAllowList';
 import {
   SimpleAllowList,
@@ -128,6 +132,10 @@ import {
   type LimitedSignerValidatorPayload,
 } from './Validators/LimitedSignerValidator';
 import {
+  PayableLimitedSignerValidator,
+  type PayableLimitedSignerValidatorPayload,
+} from './Validators/PayableLimitedSignerValidator';
+import {
   SignerValidator,
   type SignerValidatorPayload,
 } from './Validators/SignerValidator';
@@ -179,7 +187,9 @@ export const FEE_DENOMINATOR = 10000n;
  * @type {Record<number, Address>}
  */
 export const BOOST_CORE_ADDRESSES: Record<number, Address> = {
-  31337: import.meta.env.VITE_BOOST_CORE_ADDRESS,
+  ...(import.meta.env?.VITE_BOOST_CORE_ADDRESS
+    ? { 31337: import.meta.env.VITE_BOOST_CORE_ADDRESS }
+    : {}),
   ...(BoostCoreBases as Record<number, Address>),
 };
 
@@ -1713,6 +1723,28 @@ export class BoostCore extends Deployable<
       isBase,
     );
   }
+  /**
+   * Bound {@link OffchainAccessList} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const list = core.OffchainAccessList('0x') // is roughly equivalent to
+   * const list = new OffchainAccessList({ config: core._config, account: core._account }, '0x')
+   * ```
+   * @param {DeployablePayloadOrAddress<OffchainAccessListPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {OffchainAccessList}
+   */
+  OffchainAccessList(
+    options: DeployablePayloadOrAddress<OffchainAccessListPayload>,
+    isBase?: boolean,
+  ) {
+    return new OffchainAccessList(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
   // /**
   //  * Bound {@link SimpleBudget} constructor that reuses the same configuration as the Boost Core instance.
   //  *
@@ -2009,6 +2041,29 @@ export class BoostCore extends Deployable<
       { config: this._config, account: this._account },
       options,
       isBase,
+    );
+  }
+
+  /**
+   * Bound {@link PayableLimitedSignerValidator} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const validator = core.PayableLimitedSignerValidator({ ... }) // is roughly equivalent to
+   * const validator = new PayableLimitedSignerValidator({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<PayableLimitedSignerValidatorPayload>} options
+   * @param {?boolean} [isBase]
+   * @returns {PayableLimitedSignerValidator}
+   */
+  PayableLimitedSignerValidator(
+    options: DeployablePayloadOrAddress<PayableLimitedSignerValidatorPayload>,
+    isBase?: boolean,
+  ) {
+    return new PayableLimitedSignerValidator(
+      { config: this._config, account: this._account },
+      options,
+      isBase ?? false,
     );
   }
 

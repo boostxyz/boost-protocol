@@ -32,3 +32,6 @@ packages/evm/artifacts/
 !packages/evm/broadcast
 packages/evm/broadcast/*/31337/
 packages/evm/broadcast/**/dry-run/
+
+#cursor-rules
+.cursor/rules/*

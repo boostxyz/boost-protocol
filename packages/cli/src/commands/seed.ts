@@ -23,6 +23,8 @@ import {
   type ManagedBudgetPayload,
   type ManagedBudgetWithFeesV2,
   type ManagedBudgetWithFeesV2Payload,
+  type OffchainAccessListPayload,
+  type PayableLimitedSignerValidatorPayload,
   type PointsIncentivePayload,
   PrimitiveType,
   Roles,
@@ -340,9 +342,12 @@ export type BoostConfig = {
   validator: DeployablePayloadOrAddress<
     | Identifiable<SignerValidatorPayload>
     | Identifiable<LimitedSignerValidatorPayload>
+    | Identifiable<PayableLimitedSignerValidatorPayload>
   >;
   allowList: DeployablePayloadOrAddress<
-    Identifiable<SimpleDenyListPayload> | Identifiable<SimpleAllowListPayload>
+    | Identifiable<SimpleDenyListPayload>
+    | Identifiable<SimpleAllowListPayload>
+    | Identifiable<OffchainAccessListPayload>
   >;
   incentives: (
     | Identifiable<AllowListIncentivePayload>
@@ -402,6 +407,14 @@ export const LimitedSignerValidatorSchema = z.object({
   maxClaimCount: z.coerce.number(),
 });
 
+export const PayableLimitedSignerValidatorSchema = z.object({
+  type: z.literal('PayableLimitedSignerValidator'),
+  signers: z.array(AddressSchema),
+  validatorCaller: AddressSchema,
+  maxClaimCount: z.coerce.number(),
+  baseImplementation: AddressSchema,
+});
+
 export const SignerValidatorSchema = z.object({
   type: z.literal('SignerValidator'),
   signers: z.array(AddressSchema),
@@ -418,6 +431,13 @@ export const SimpleAllowListSchema = z.object({
   type: z.literal('SimpleAllowList'),
   owner: AddressSchema,
   allowed: z.array(AddressSchema),
+});
+
+export const OffchainAccessListSchema = z.object({
+  type: z.literal('OffchainAccessList'),
+  owner: AddressSchema,
+  allowlistIds: z.array(z.string()),
+  denylistIds: z.array(z.string()),
 });
 
 export const AllowListIncentiveSchema = z.object({
@@ -504,10 +524,20 @@ export const BoostSeedConfigSchema = z.object({
   ]),
   action: z.union([AddressSchema, EventActionSchema]),
   validator: z
-    .union([AddressSchema, SignerValidatorSchema, LimitedSignerValidatorSchema])
+    .union([
+      AddressSchema,
+      SignerValidatorSchema,
+      LimitedSignerValidatorSchema,
+      PayableLimitedSignerValidatorSchema,
+    ])
     .optional(),
   allowList: z
-    .union([AddressSchema, SimpleDenyListSchema, SimpleAllowListSchema])
+    .union([
+      AddressSchema,
+      SimpleDenyListSchema,
+      SimpleAllowListSchema,
+      OffchainAccessListSchema,
+    ])
     .optional(),
   incentives: z.array(
     z.union([
@@ -540,6 +570,8 @@ async function getAllowList(
       return core.SimpleAllowList(allowList as SimpleAllowListPayload);
     case 'SimpleDenyList':
       return core.SimpleDenyList(allowList as SimpleDenyListPayload);
+    case 'OffchainAccessList':
+      return core.OffchainAccessList(allowList as OffchainAccessListPayload);
     default:
       throw new Error('unusupported AllowList: ' + allowList);
   }
@@ -682,6 +714,12 @@ export async function getCreateBoostPayloadFromBoostConfig(
         boostConfig.validator = core.LimitedSignerValidator(
           seedConfig.validator,
         );
+        break;
+      case 'PayableLimitedSignerValidator':
+        boostConfig.validator = core.PayableLimitedSignerValidator(
+          seedConfig.validator,
+        );
+        break;
       default:
         throw new Error('unsupported Validator: ' + seedConfig.validator);
     }

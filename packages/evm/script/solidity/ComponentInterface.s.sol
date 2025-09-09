@@ -16,6 +16,7 @@ import {ATransparentBudget} from "contracts/budgets/ATransparentBudget.sol";
 
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
 import {ALimitedSignerValidator} from "contracts/validators/ALimitedSignerValidator.sol";
+import {APayableLimitedSignerValidator} from "contracts/validators/APayableLimitedSignerValidator.sol";
 
 import {AEventAction} from "contracts/actions/EventAction.sol";
 
@@ -33,6 +34,7 @@ import {APointsIncentive} from "contracts/incentives/PointsIncentive.sol";
 
 import {ASimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {ASimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
+import {AOffchainAccessList} from "contracts/allowlists/AOffchainAccessList.sol";
 
 contract LogComponentInterface is ScriptUtils {
     using stdJson for string;
@@ -56,6 +58,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAVestingBudget();
         _getInterfaceASignerValidator();
         _getInterfaceALimitedSignerValidator();
+        _getInterfaceAPayableLimitedSignerValidator();
         _getInterfaceAAllowListIncentive();
         _getInterfaceACGDAIncentive();
         _getInterfaceAIncentive();
@@ -63,6 +66,7 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceAPointsIncentive();
         _getInterfaceASimpleAllowList();
         _getInterfaceASimpleDenyList();
+        _getInterfaceAOffchainAccessList();
         _getInterfaceAERC20VariableCriteriaIncentive();
         _getInterfaceAERC20VariableCriteriaIncentiveV2();
 
@@ -188,6 +192,16 @@ contract LogComponentInterface is ScriptUtils {
         );
     }
 
+    function _getInterfaceAPayableLimitedSignerValidator() internal {
+        string memory interfaceId = uint256(
+            uint32(type(APayableLimitedSignerValidator).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "APayableLimitedSignerValidator",
+            interfaceId
+        );
+    }
+
     function _getInterfaceAAllowListIncentive() internal {
         string memory interfaceId = uint256(
             uint32(type(AAllowListIncentive).interfaceId)
@@ -301,6 +315,16 @@ contract LogComponentInterface is ScriptUtils {
         ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "ASimpleDenyList",
+            interfaceId
+        );
+    }
+
+    function _getInterfaceAOffchainAccessList() internal {
+        string memory interfaceId = uint256(
+            uint32(type(AOffchainAccessList).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "AOffchainAccessList",
             interfaceId
         );
     }

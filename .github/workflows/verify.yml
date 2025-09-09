@@ -11,6 +11,7 @@ jobs:
     env:
       VITE_BOOST_TESTNET_SIGNER_EOA: ${{ vars.VITE_BOOST_TESTNET_SIGNER_EOA}}
       VITE_BOOST_MAINNET_SIGNER_EOA: ${{ vars.VITE_BOOST_MAINNET_SIGNER_EOA}}
+      VITE_BOOST_CORE_ADDRESS: ${{ vars.VITE_BOOST_CORE_ADDRESS}}
 
     steps:
       - name: Checkout

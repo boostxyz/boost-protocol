@@ -15,7 +15,6 @@ import type {
   AbiEvent,
   Address,
   ContractEventName,
-  ContractFunctionName,
   GetLogsParameters,
   Hash,
   Hex,

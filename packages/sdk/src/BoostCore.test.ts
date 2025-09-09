@@ -1033,6 +1033,8 @@ describe("Top-Up Incentives", () => {
   let boostId: bigint;
 
   beforeAll(async () => {
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
+    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 
@@ -1283,6 +1285,13 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
 });
 
 describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () => {
+  beforeAll(async () => {
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
+  });
+  beforeEach(async () => {
+    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
+  });
+
   test("enforces validator claim limit", async () => {
     const referrer = accounts[1].account!;
     const signer = accounts[0];

@@ -77,6 +77,7 @@ describe("BoostCore", () => {
       await core.getBoost(1000n);
     } catch (e) {
       expect(e instanceof BoostNotFoundError).toBe(true);
+      // @ts-ignore
       expect(e.id).toBe("1000");
     }
   });
@@ -777,6 +778,7 @@ describe("BoostCore", () => {
     const { core } = fixtures;
 
     const auth = core.PassthroughAuth();
+    // @ts-ignore
     await auth.deploy();
     await core.setCreateBoostAuth(auth);
     expect((await core.createBoostAuth()).toLowerCase()).toBe(
@@ -1155,6 +1157,8 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
   let erc721: MockERC721;
 
   beforeAll(async () => {
+    fixtures = await loadFixture(deployFixtures(defaultOptions));
+    budgets = await loadFixture(fundBudget(defaultOptions, fixtures));
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
 

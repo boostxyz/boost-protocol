@@ -37,7 +37,10 @@ contract CoreDeployer is ScriptUtils {
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
         bytes memory initCode = type(BoostCore).creationCode;
         address impl = _getCreate2Address(initCode, "");
+        vm.broadcast();
         core = LibClone.deployDeterministicERC1967(impl, salt);
+        _deploy2(initCode, "");
+        vm.broadcast();
         BoostCore(core).initialize(
             BoostRegistry(registry),
             BOOST_FEE_RECIPIENT,

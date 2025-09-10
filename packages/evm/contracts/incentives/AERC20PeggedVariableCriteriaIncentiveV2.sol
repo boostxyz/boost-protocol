@@ -28,7 +28,7 @@ abstract contract AERC20PeggedVariableCriteriaIncentiveV2 is AERC20PeggedIncenti
     struct IncentiveCriteria {
         SignatureType criteriaType;
         bytes32 signature;
-        uint8 fieldIndex;
+        uint32 fieldIndex;
         address targetContract;
         ValueType valueType;
     }

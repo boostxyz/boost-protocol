@@ -97,7 +97,8 @@ contract BoostCoreUUPSTest is Test {
 
         // Deploy proxy and implementation
         implementation = new BoostCore();
-        proxy = LibClone.deployERC1967(address(implementation));
+        bytes32 salt = keccak256(bytes("salt"));
+        proxy = LibClone.deployDeterministicERC1967(address(implementation), salt);
         BoostCore(proxy).initialize(registry, protocolFeeReceiver, owner);
         boostCore = BoostCore(proxy);
 

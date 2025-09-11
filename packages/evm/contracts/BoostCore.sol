@@ -96,6 +96,9 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     // @notice The set of incentives for the Boost
     mapping(bytes32 => IncentiveDisbursalInfo) public incentivesFeeInfo;
 
+    // @notice allocated gap space for future variables
+    uint256[50] private __gap;
+
     modifier canCreateBoost(address sender) {
         if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
             revert BoostError.Unauthorized();

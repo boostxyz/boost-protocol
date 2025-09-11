@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 8.0.0-canary.0
+
+### Major Changes
+
+- a170c2b: **BREAKING** UUPS BoostCore (testnet deployments)
+
 ## 7.4.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 7.0.0-canary.0
+
+### Major Changes
+
+- a170c2b: **BREAKING** UUPS BoostCore (testnet deployments)
+
 ## 6.2.2
 
 ## 6.2.1

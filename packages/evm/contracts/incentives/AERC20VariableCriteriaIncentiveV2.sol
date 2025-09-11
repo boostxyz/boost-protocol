@@ -28,7 +28,7 @@ abstract contract AERC20VariableCriteriaIncentiveV2 is ERC20VariableIncentive {
     struct IncentiveCriteria {
         SignatureType criteriaType;
         bytes32 signature;
-        uint8 fieldIndex;
+        uint32 fieldIndex;
         address targetContract;
         ValueType valueType;
     }

@@ -5,6 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
@@ -31,7 +32,8 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     MockERC721 mockERC721 = new MockERC721();
     address boostOwner = makeAddr("boost owner");
     TransparentBudget budget = new TransparentBudget();
-    BoostCore boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
+    BoostRegistry registry = new BoostRegistry();
+    BoostCore boostCore;
     bytes32 constant TOKEN_PERMISSIONS_TYPEHASH = keccak256("TokenPermissions(address token,uint256 amount)");
     bytes32 constant PERMIT_TRANSFER_FROM_TYPEHASH = keccak256(
         "PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)"
@@ -47,6 +49,12 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
     string SEPOLIA_RPC_URL = vm.envString("VITE_SEPOLIA_RPC_URL");
 
     function setUp() public {
+        // Deploy and initialize BoostCore proxy
+        BoostCore boostCoreImpl = new BoostCore();
+        address proxy = LibClone.deployERC1967(address(boostCoreImpl));
+        BoostCore(proxy).initialize(registry, address(1), address(this));
+        boostCore = BoostCore(proxy);
+
         // We allocate 100 for the boost and 10 for protocol fees
         mockERC20.mint(address(this), 110 ether);
         mockERC20.approve(address(budget), 110 ether);
@@ -56,7 +64,11 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         (address permit2Creator, uint256 permit2CreatorKey) = makeAddrAndKey("permit2 boost creator");
         uint256 amount = 110 ether;
         sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL, 2356288);
-        boostCore = new BoostCore(new BoostRegistry(), address(1), address(this));
+        BoostRegistry testRegistry = new BoostRegistry();
+        BoostCore boostCoreImpl = new BoostCore();
+        address testProxy = LibClone.deployERC1967(address(boostCoreImpl));
+        BoostCore(testProxy).initialize(testRegistry, address(1), address(this));
+        boostCore = BoostCore(testProxy);
         mockERC721 = new MockERC721();
         action = _makeERC721MintAction(address(mockERC721), MockERC721.mint.selector, mockERC721.mintPrice());
         mockERC20 = new MockERC20();
@@ -96,7 +108,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         incentiveQty = bound(incentiveQty, 1, 8);
         uint64 totalFee = uint64(boostCore.protocolFee()) + additionalProtocolFee;
         uint256 amountToMint =
-            (rewardAmount * claimLimit + claimLimit * rewardAmount * totalFee / boostCore.FEE_DENOMINATOR());
+            (rewardAmount * claimLimit + (claimLimit * rewardAmount * totalFee) / boostCore.FEE_DENOMINATOR());
         mockERC20.mint(address(this), incentiveQty * amountToMint);
         mockERC20.approve(address(budget), incentiveQty * amountToMint);
         bytes memory transferPayload = abi.encode(
@@ -364,6 +376,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerKey, _getEIP712Hash(permit, spender, permit2Instance));
         return abi.encodePacked(r, s, v);
     }
+
     // Compute the EIP712 hash of the batch permit object.
     // Normally this would be implemented off-chain.
 

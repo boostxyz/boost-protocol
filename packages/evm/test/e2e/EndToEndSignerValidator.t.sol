@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-
+import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {OwnableRoles} from "@solady/auth/OwnableRoles.sol";
@@ -37,7 +37,7 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
     BoostRegistry public registry = new BoostRegistry();
     address fee_recipient = address(1);
     address boost_core_owner = address(this);
-    BoostCore public core = new BoostCore(registry, fee_recipient, boost_core_owner);
+    BoostCore public core;
 
     address budgetManager = makeAddr("ABudget Manager");
     address budgetAdmin = makeAddr("ABudget Admin");
@@ -55,6 +55,12 @@ contract EndToEndSignerValidator is Test, OwnableRoles {
     ManagedBudget public _budget;
 
     function setUp() public {
+        // Deploy and initialize BoostCore proxy
+        BoostCore boostCoreImpl = new BoostCore();
+        address proxy = LibClone.deployERC1967(address(boostCoreImpl));
+        BoostCore(proxy).initialize(registry, address(1), address(this));
+        core = BoostCore(proxy);
+
         // Before we can fulfill our stories, we need to get some setup out of the way...
         erc20.mint(address(this), 1000 ether);
 

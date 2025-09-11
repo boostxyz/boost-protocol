@@ -127,6 +127,16 @@ export class Deployable<
   }
 
   /**
+   * Returns the attached account, if it exists
+   *
+   * @readonly
+   * @type {Account | undefined}
+   */
+  get account() {
+    return this._account;
+  }
+
+  /**
    * Attaches a new payload for use with this deployable's initialization
    *
    * @public

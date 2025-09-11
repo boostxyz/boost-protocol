@@ -71,7 +71,7 @@ abstract contract AEventAction is AAction {
     struct ActionClaimant {
         SignatureType signatureType;
         bytes32 signature;
-        uint8 fieldIndex;
+        uint32 fieldIndex;
         address targetContract;
         uint256 chainid;
     }

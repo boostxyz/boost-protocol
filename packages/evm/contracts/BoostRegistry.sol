@@ -46,7 +46,9 @@ contract BoostRegistry is ABoostRegistry, ReentrancyGuard {
     {
         bytes32 identifier = getIdentifier(type_, name_);
 
-        if (address(_bases[identifier]) != address(0)) revert AlreadyRegistered(type_, identifier);
+        if (address(_bases[identifier]) != address(0)) {
+            revert AlreadyRegistered(type_, identifier);
+        }
         _bases[identifier] = ACloneable(implementation_);
 
         emit Registered(type_, identifier, implementation_);
@@ -71,7 +73,9 @@ contract BoostRegistry is ABoostRegistry, ReentrancyGuard {
 
         // Ensure the clone's identifier is unique
         bytes32 identifier = getCloneIdentifier(type_, base_, msg.sender, name_);
-        if (address(_clones[identifier].instance) != address(0)) revert AlreadyRegistered(type_, identifier);
+        if (address(_clones[identifier].instance) != address(0)) {
+            revert AlreadyRegistered(type_, identifier);
+        }
 
         // Register and report the newly deployed clone
         _deployedClones[msg.sender].push(identifier);
@@ -86,7 +90,9 @@ contract BoostRegistry is ABoostRegistry, ReentrancyGuard {
     /// @dev This function will revert if the implementation is not registered
     function getBaseImplementation(bytes32 identifier_) public view override returns (ACloneable implementation) {
         implementation = _bases[identifier_];
-        if (address(implementation) == address(0)) revert NotRegistered(identifier_);
+        if (address(implementation) == address(0)) {
+            revert NotRegistered(identifier_);
+        }
     }
 
     /// @notice Get the address of a deployed clone by its identifier
@@ -94,7 +100,9 @@ contract BoostRegistry is ABoostRegistry, ReentrancyGuard {
     /// @return clone The address of the deployed clone
     function getClone(bytes32 identifier_) external view override returns (Clone memory clone) {
         clone = _clones[identifier_];
-        if (address(clone.instance) == address(0)) revert NotRegistered(identifier_);
+        if (address(clone.instance) == address(0)) {
+            revert NotRegistered(identifier_);
+        }
     }
 
     /// @notice Get the list of identifiers of deployed clones for a given deployer

@@ -6,6 +6,8 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {LibZip} from "@solady/utils/LibZip.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
+import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -26,8 +28,7 @@ import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
-/// @dev This contract is currently `Ownable` for simplicity, but this will be replaced with a decentralized governance mechanism prior to GA
-contract BoostCore is Ownable, ReentrancyGuard {
+contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
     using SafeTransferLib for address;
@@ -82,18 +83,21 @@ contract BoostCore is Ownable, ReentrancyGuard {
     address public protocolFeeModule;
 
     /// @notice The base protocol fee (in bps)
-    uint64 public protocolFee = 1_000; // 10%
+    uint64 public protocolFee; // 10%
 
     /// @notice The fee denominator (basis points, i.e. 10000 == 100%)
     uint64 public constant FEE_DENOMINATOR = 10_000;
 
     /// @notice the max erc20 amount that can be cleared as dust
-    uint64 public DUST_THRESHOLD = 1_000;
+    uint64 public DUST_THRESHOLD;
 
     address private constant ZERO_ADDRESS = address(0);
 
     // @notice The set of incentives for the Boost
     mapping(bytes32 => IncentiveDisbursalInfo) public incentivesFeeInfo;
+
+    // @notice allocated gap space for future variables
+    uint256[50] private __gap;
 
     modifier canCreateBoost(address sender) {
         if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
@@ -102,11 +106,16 @@ contract BoostCore is Ownable, ReentrancyGuard {
         _;
     }
 
-    /// @notice Constructor to initialize the owner
-    constructor(BoostRegistry registry_, address protocolFeeReceiver_, address owner_) {
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(BoostRegistry registry_, address protocolFeeReceiver_, address owner_) public initializer {
         _initializeOwner(owner_);
         registry = registry_;
         protocolFeeReceiver = protocolFeeReceiver_;
+        protocolFee = 1_000; // 10%
+        DUST_THRESHOLD = 1_000;
     }
 
     /// @notice Create a new Boost
@@ -555,6 +564,17 @@ contract BoostCore is Ownable, ReentrancyGuard {
     /// @dev This function is only callable by the owner
     function setProtocolFeeModule(address protocolFeeModule_) external onlyOwner {
         protocolFeeModule = protocolFeeModule_;
+    }
+
+    /// @notice Authorize the upgrade to a new implementation
+    /// @param newImplementation The address of the new implementation
+    /// @dev This function is only callable by the owner
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    /// @notice Get the version of the contract
+    /// @return The version string
+    function version() public pure virtual returns (string memory) {
+        return "1.0.0";
     }
 
     /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it

@@ -592,13 +592,15 @@ export function deployFixtures(
       );
     }
 
+    // Deploy BoostCore with UUPS proxy deployment and initialization
     const _core = await new BoostCore({
       ...options,
+    }).deploy({
       registryAddress: registry.assertValidAddress(),
       protocolFeeReceiver: account.address,
       owner: account.address,
-      // @ts-ignore
-    }).deploy();
+      ...options,
+    });
 
     class TBoostCore extends BoostCore {
       public static override addresses: Record<number, Address> = {

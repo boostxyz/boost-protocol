@@ -1,6 +1,6 @@
 {
   "name": "@boostxyz/cli",
-  "version": "7.0.0-canary.0",
+  "version": "7.0.0-canary.1",
   "description": "A repository of useful scripts to interact with the protocol",
   "repository": "https://github.com/boostxyz/boost-protocol",
   "author": "Boost Team<boost-team@boost.xyz>",

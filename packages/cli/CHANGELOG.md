@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 7.0.0-canary.1
+
+### Patch Changes
+
+- b42ebd1: Include deployments for Base, Optimism, and World Chain
+
 ## 7.0.0-canary.0
 
 ### Major Changes

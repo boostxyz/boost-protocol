@@ -25,11 +25,6 @@ contract ValidateBoostCoreUpgrade is Script {
         Upgrades.validateImplementation("BoostCore.sol", opts);
 
         console.log("[SUCCESS] BoostCore upgrade is safe!");
-        console.log("- Storage layout compatible with V1");
-        console.log("- Constructor properly disables initializers");
-        console.log("- UUPS upgradeability correctly implemented");
-        console.log("- Only added event (Clawback), no storage changes");
-        console.log("- All safety checks passed");
 
         console.log("\nValidation complete - safe to upgrade!");
     }

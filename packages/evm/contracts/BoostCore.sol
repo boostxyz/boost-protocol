@@ -28,7 +28,7 @@ import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
-/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1.sol:BoostCore
+/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1.sol:BoostCoreV1
 contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;

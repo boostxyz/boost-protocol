@@ -26,9 +26,9 @@ import {IAuth} from "contracts/auth/IAuth.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 import {IToppable} from "contracts/shared/IToppable.sol";
 
-/// @title Boost Core
-/// @notice The core contract for the Boost protocol
-contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
+/// @title Boost Core V1
+/// @notice The core contract for the Boost protocol (Version 1)
+contract BoostCoreV1 is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
     using SafeTransferLib for address;

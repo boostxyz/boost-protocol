@@ -38,6 +38,8 @@ contract UpgradeBoostCore is ScriptUtils {
         // Verify the upgrade
         console.log("New Implementation: ", newImpl);
         require(newImpl != currentImpl, "Implementation did not change");
+        address implAfter = Upgrades.getImplementationAddress(BOOST_CORE_PROXY);
+        require(implAfter == newImpl, "Proxy implementation mismatch");
 
         // Verify contract still works
         string memory newVersion = boostCore.version();

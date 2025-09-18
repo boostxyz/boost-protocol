@@ -28,6 +28,7 @@ import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
+/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1.sol:BoostCore
 contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
@@ -69,6 +70,15 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         uint256 indexed boostId, uint256 indexed incentiveId, address indexed sender, uint256 amount, uint256 fee
     );
 
+    event Clawback(
+        uint256 indexed boostId,
+        uint256 incentiveId,
+        address indexed caller,
+        address indexed receiver,
+        uint256 amount,
+        address asset
+    );
+
     /// @notice The list of boosts
     BoostLib.Boost[] private _boosts;
 
@@ -106,6 +116,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
@@ -491,6 +502,9 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
             revert BoostError.ClawbackFailed(msg.sender, data_);
         }
         incentive.protocolFeesRemaining -= protocolFeeAmount;
+
+        emit Clawback(boostId, incentiveId, msg.sender, claim_.target, clawbackAmount, asset);
+
         return (clawbackAmount, asset);
     }
 
@@ -574,7 +588,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "1.0.0";
+        return "1.1.0";
     }
 
     /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it

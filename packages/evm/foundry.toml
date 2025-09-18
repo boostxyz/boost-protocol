@@ -1,5 +1,9 @@
 [profile.default]
+ffi = true
+ast = true
 build_info = true
+extra_output = ["storageLayout"]
+
 optimizer = true
 optimizer_runs = 10_000
 out = 'out'
@@ -10,7 +14,11 @@ cache_path  = 'cache_forge'
 libs = ['node_modules', 'lib']
 solc_version = '0.8.26'
 evm_version = 'cancun'
-fs_permissions = [{access = "read-write", path = "./deploys"}]
+fs_permissions = [
+  {access = "read-write", path = "./deploys"},
+  {access = "read", path = "./out"},
+  {access = "read", path = "./contracts"}
+]
 remappings=[
   '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
   'forge-std/=lib/forge-std/src/',

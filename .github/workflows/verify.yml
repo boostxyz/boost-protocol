@@ -54,6 +54,13 @@ jobs:
           max_attempts: 3
           command: npx turbo test:ci --cache-dir=".cache" --filter="./packages/*"
 
+      - name: Validate BoostCore Upgrade Safety
+        run: |
+          cd packages/evm
+          forge clean
+          forge build
+          forge script script/solidity/ValidateBoostCoreUpgrade.s.sol
+
       # - name: Upload coverage reports to Codecov
       #   uses: codecov/codecov-action@v4.3.0
       #   with:

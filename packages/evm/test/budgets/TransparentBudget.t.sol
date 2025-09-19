@@ -226,6 +226,35 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
         vm.assertEq(mockERC20.balanceOf(boostOwner), 110 ether);
     }
 
+    function testClawbackFromTarget_EmitsClawbackEvent() public {
+        vm.pauseGasMetering();
+        bytes memory transferPayload = abi.encode(
+            ABudget.Transfer({
+                assetType: ABudget.AssetType.ERC20,
+                asset: address(mockERC20),
+                target: address(this),
+                data: abi.encode(ABudget.FungiblePayload({amount: 110 ether}))
+            })
+        );
+        bytes[] memory allocations = new bytes[](1);
+        allocations[0] = transferPayload;
+        bytes memory createBoostPayload =
+            _makeValidCreateCalldataWithVariableRewardAmount(1, 10 ether, 10, 0, address(mockERC20));
+        vm.assertEq(mockERC20.balanceOf(address(this)), 110 ether);
+        budget.createBoost(allocations, boostCore, createBoostPayload);
+        vm.assertEq(mockERC20.balanceOf(address(this)), 0);
+
+        vm.expectEmit(true, false, true, true, address(boostCore));
+        emit BoostCore.Clawback(0, 0, address(budget), boostOwner, 100 ether, address(mockERC20));
+
+        hoax(boostOwner);
+        vm.resumeGasMetering();
+        budget.clawbackFromTarget(address(boostCore), abi.encode(100 ether), 0, 0);
+
+        // Verify owner receives fees and incentive amount
+        vm.assertEq(mockERC20.balanceOf(boostOwner), 110 ether);
+    }
+
     ////////////////////////////////////
     // TransparentBudget.getComponentInterface //
     ////////////////////////////////////

@@ -32,14 +32,14 @@ import {AValidator} from "contracts/validators/AValidator.sol";
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 
 // Core and Shared
-import {BoostCore} from "contracts/BoostCore.sol";
+import {BoostCoreV1 as BoostCore} from "contracts/archive/BoostCoreV1.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 
 // Mock upgraded version for testing
-/// @custom:oz-upgrades-from contracts/BoostCore.sol:BoostCore
+/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1.sol:BoostCoreV1
 contract BoostCoreV2 is BoostCore {
     // New functionality in V2
     uint256 public newFeature;

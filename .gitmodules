@@ -10,3 +10,6 @@
 [submodule "packages/evm/lib/openzeppelin-contracts"]
 	path = packages/evm/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/evm/lib/openzeppelin-foundry-upgrades"]
+	path = packages/evm/lib/openzeppelin-foundry-upgrades
+	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades.git

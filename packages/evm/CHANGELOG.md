@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 8.0.0-canary.2
+
+### Minor Changes
+
+- a6e97a3: add clawback event
+
 ## 8.0.0-canary.1
 
 ### Patch Changes

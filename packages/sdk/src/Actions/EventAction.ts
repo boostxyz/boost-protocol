@@ -2051,40 +2051,43 @@ export function getScalarValueFromTuple(
   args: unknown[],
   fieldIndex: number,
 ): bigint {
-  if (!isCriteriaFieldIndexTuple(fieldIndex)) {
+  const indexes = unpackFieldIndexes(fieldIndex);
+
+  if (indexes.length === 0) {
     throw new DecodedArgsError(
-      `Field index ${fieldIndex} is invalid. Expected index >= 32`,
+      `Failed to unpack any indexes from fieldIndex ${fieldIndex}`,
     );
   }
 
-  const [index0, index1] = unpackCriteriaFieldIndexes(fieldIndex);
+  let current: unknown = args;
 
-  if (index0 === undefined || index1 === undefined) {
-    throw new DecodedArgsError(
-      `Failed to unpack field indexes from ${fieldIndex}`,
-    );
+  for (let level = 0; level < indexes.length; level++) {
+    const idx = indexes[level];
+
+    if (idx === undefined) {
+      throw new DecodedArgsError(`Undefined index at level ${level}`);
+    }
+
+    if (!Array.isArray(current)) {
+      throw new DecodedArgsError(
+        `Expected array at level ${level}, but got ${typeof current}`,
+      );
+    }
+
+    if (idx >= current.length) {
+      throw new DecodedArgsError(
+        `Index ${idx} is out of bounds at level ${level}. Array length is ${current.length}`,
+      );
+    }
+
+    current = current[idx];
   }
 
-  if (!args || args.length <= index0) {
-    throw new DecodedArgsError(`Decoded args missing item at index ${index0}`);
-  }
+  const scalarValue = current;
 
-  const tuple = args[index0];
-  if (!tuple || !Array.isArray(tuple)) {
-    throw new DecodedArgsError(
-      `Expected array at index ${index0}, but got ${typeof tuple}`,
-    );
-  }
-  if (tuple.length <= index1) {
-    throw new DecodedArgsError(
-      `index ${index1} is out of bounds. tuple length is ${tuple.length}`,
-    );
-  }
-
-  const scalarValue = tuple[index1] as unknown;
   if (typeof scalarValue !== 'bigint') {
     throw new DecodedArgsError(
-      `Expected bigint at tuple index ${index1}, but got ${typeof scalarValue}`,
+      `Expected bigint at final position, but got ${typeof scalarValue}`,
     );
   }
 

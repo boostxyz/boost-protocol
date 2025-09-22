@@ -2062,7 +2062,7 @@ export function getScalarValue(args: unknown[], fieldIndex: number): bigint {
     );
   }
 
-  let current: unknown = args;
+  let scalarValue: unknown = args;
 
   for (let level = 0; level < indexes.length; level++) {
     const idx = indexes[level];
@@ -2071,22 +2071,24 @@ export function getScalarValue(args: unknown[], fieldIndex: number): bigint {
       throw new DecodedArgsError(`Undefined index at level ${level}`);
     }
 
-    if (!Array.isArray(current)) {
+    if (typeof scalarValue === 'bigint') {
+      return scalarValue;
+    }
+
+    if (!Array.isArray(scalarValue)) {
       throw new DecodedArgsError(
-        `Expected array at level ${level}, but got ${typeof current}`,
+        `Expected array at level ${level}, but got ${typeof scalarValue}`,
       );
     }
 
-    if (idx >= current.length) {
+    if (idx >= scalarValue.length) {
       throw new DecodedArgsError(
-        `Index ${idx} is out of bounds at level ${level}. Array length is ${current.length}`,
+        `Index ${idx} is out of bounds at level ${level}. Array length is ${scalarValue.length}`,
       );
     }
 
-    current = current[idx];
+    scalarValue = scalarValue[idx];
   }
-
-  const scalarValue = current;
 
   if (typeof scalarValue !== 'bigint') {
     throw new DecodedArgsError(

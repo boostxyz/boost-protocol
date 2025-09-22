@@ -44,7 +44,7 @@ import {
   packClaimantFieldIndexes,
   decodeAndReorderLogArgs,
   ActionClaimant,
-  getScalarValueFromTuple
+  getScalarValue,
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";
@@ -1520,7 +1520,7 @@ describe("criteria field index tuple support", () => {
   test("extracts scalar value from single-level tuple", () => {
     const args = [123n, [456n, 789n], 999n];
     const fieldIndex = packFieldIndexes([1, 0]);
-    const result = getScalarValueFromTuple(args, fieldIndex);
+    const result = getScalarValue(args, fieldIndex);
     expect(result).toBe(456n);
   });
 
@@ -1536,7 +1536,7 @@ describe("criteria field index tuple support", () => {
     ];
     const fieldIndex = packFieldIndexes([1, 1, 2]);
 
-    const result = getScalarValueFromTuple(args, fieldIndex);
+    const result = getScalarValue(args, fieldIndex);
     expect(result).toBe(500n);
   });
 
@@ -1553,7 +1553,7 @@ describe("criteria field index tuple support", () => {
     ];
     const fieldIndex = packFieldIndexes([0, 0, 1, 1]);
 
-    const result = getScalarValueFromTuple(args, fieldIndex);
+    const result = getScalarValue(args, fieldIndex);
     expect(result).toBe(444n);
   });
 
@@ -1571,7 +1571,7 @@ describe("criteria field index tuple support", () => {
     ];
     const fieldIndex = packFieldIndexes([0, 0, 0, 1, 2]);
 
-    const result = getScalarValueFromTuple(args, fieldIndex);
+    const result = getScalarValue(args, fieldIndex);
     expect(result).toBe(6n);
   });
 
@@ -1579,7 +1579,7 @@ describe("criteria field index tuple support", () => {
     const args = [123n, 456n];
     const fieldIndex = 0xFFFFFFF;
 
-    expect(() => getScalarValueFromTuple(args, fieldIndex)).toThrowError(
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
       "Failed to unpack any indexes from fieldIndex"
     );
   });
@@ -1588,7 +1588,7 @@ describe("criteria field index tuple support", () => {
     const args = [123n, 456n, 789n];
     const fieldIndex = packFieldIndexes([1, 0]);
 
-    expect(() => getScalarValueFromTuple(args, fieldIndex)).toThrowError(
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
       "Expected array at level 1, but got bigint"
     );
   });
@@ -1597,7 +1597,7 @@ describe("criteria field index tuple support", () => {
     const args = [[100n, 200n], [300n]];
     const fieldIndex = packFieldIndexes([1, 5]);
 
-    expect(() => getScalarValueFromTuple(args, fieldIndex)).toThrowError(
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
       "Index 5 is out of bounds at level 1. Array length is 1"
     );
   });
@@ -1606,7 +1606,7 @@ describe("criteria field index tuple support", () => {
     const args = [["hello", "world"], [123n, 456n]];
     const fieldIndex = packFieldIndexes([0, 0]);
 
-    expect(() => getScalarValueFromTuple(args, fieldIndex)).toThrowError(
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
       "Expected bigint at final position, but got string"
     );
   });
@@ -1615,7 +1615,7 @@ describe("criteria field index tuple support", () => {
     const args = [111n, 222n, 333n];
     const fieldIndex = packFieldIndexes([2]);
 
-    const result = getScalarValueFromTuple(args, fieldIndex);
+    const result = getScalarValue(args, fieldIndex);
     expect(result).toBe(333n);
   });
 

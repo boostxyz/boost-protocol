@@ -38,8 +38,7 @@ import { ERC20PeggedVariableCriteriaIncentiveV2 as ERC20PeggedVariableCriteriaIn
 import {
   SignatureType,
   decodeAndReorderLogArgs,
-  getScalarValueFromTuple,
-  isCriteriaFieldIndexTuple,
+  getScalarValue,
 } from '../Actions/EventAction';
 import type {
   DeployableOptions,
@@ -269,17 +268,13 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
 
           if (signatureMatchingLogs.length > 0) {
             for (const log of signatureMatchingLogs) {
-              if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
-                return getScalarValueFromTuple(
+              try {
+                return getScalarValue(
                   log.args as unknown[],
                   criteria.fieldIndex,
                 );
-              }
-              const scalarValue = log.args
-                ? (log.args as string[])[criteria.fieldIndex]
-                : undefined;
-              if (scalarValue !== undefined) {
-                return BigInt(scalarValue);
+              } catch {
+                continue;
               }
             }
           }
@@ -315,23 +310,10 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
           );
         }
 
-        if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
-          return getScalarValueFromTuple(
-            decodedEvents[0]?.args as unknown[],
-            criteria.fieldIndex,
-          );
-        }
-
-        const scalarValue =
-          decodedEvents[0] && decodedEvents[0].args
-            ? (decodedEvents[0].args as string[])[criteria.fieldIndex]
-            : undefined;
-        if (scalarValue === undefined) {
-          throw new DecodedArgsError(
-            `Decoded argument at index ${criteria.fieldIndex} is undefined`,
-          );
-        }
-        return BigInt(scalarValue);
+        return getScalarValue(
+          decodedEvents[0]?.args as unknown[],
+          criteria.fieldIndex,
+        );
       } catch (e) {
         throw new DecodedArgsError(
           `Failed to decode event log for signature ${criteria.signature}: ${(e as Error).message}`,
@@ -351,20 +333,10 @@ export class ERC20PeggedVariableCriteriaIncentiveV2 extends DeployableTarget<
           data: transaction.input,
         });
 
-        if (isCriteriaFieldIndexTuple(criteria.fieldIndex)) {
-          return getScalarValueFromTuple(
-            decodedFunction.args as unknown[],
-            criteria.fieldIndex,
-          );
-        }
-
-        const scalarValue = decodedFunction.args[criteria.fieldIndex] as string;
-        if (scalarValue === undefined || scalarValue === null) {
-          throw new DecodedArgsError(
-            `Decoded argument at index ${criteria.fieldIndex} is undefined`,
-          );
-        }
-        return BigInt(scalarValue);
+        return getScalarValue(
+          decodedFunction.args as unknown[],
+          criteria.fieldIndex,
+        );
       } catch (e) {
         throw new DecodedArgsError(
           `Failed to decode function data for signature ${criteria.signature}: ${(e as Error).message}`,

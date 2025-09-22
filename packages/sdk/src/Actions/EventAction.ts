@@ -1945,6 +1945,8 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
 }
 
 /**
+ * @deprecated Do not use CriteriaFieldIndex methods. Use {@link packFieldIndexes} instead.
+ *
  * IMPORTANT: For variable incentive criteria use only.
  * Do NOT use for action steps - use {@link packFieldIndexes} instead.
  *
@@ -1977,6 +1979,8 @@ export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
 }
 
 /**
+ * @deprecated Do not use CriteriaFieldIndex methods. Use {@link unpackFieldIndexes} instead.
+ *
  * Unpacks a uint8 packed index value into an array of indices.
  *
  * @export
@@ -1997,6 +2001,8 @@ export function unpackCriteriaFieldIndexes(packed: number): [number, number] {
 }
 
 /**
+ * @deprecated Do not use CriteriaFieldIndex methods. Use {@link packFieldIndexes} instead.
+ *
  * Determines if a fieldIndex represents a tuple index (value >= 32) or a normal field index.
  *
  * @export

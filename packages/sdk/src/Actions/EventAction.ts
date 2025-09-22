@@ -2044,19 +2044,16 @@ export function unpackClaimantFieldIndexes(packed: number): [number, number] {
 }
 
 /**
- * Extracts a scalar value from a tuple within event or function arguments.
- * This is used for incentive criteria when determining reward amounts.
+ * Extracts a scalar value from event or function arguments using a field index.
+ * Supports both direct field access and nested tuple access (up to 4 levels).
  *
  * @export
  * @param {unknown[]} args - The decoded arguments from an event or function call
- * @param {number} fieldIndex - The tuple-encoded index
+ * @param {number} fieldIndex - The packed field index (supports both direct and nested access)
  * @returns {bigint} The extracted scalar value as a bigint
  * @throws {DecodedArgsError} If arguments are missing or cannot be converted to bigint
  */
-export function getScalarValueFromTuple(
-  args: unknown[],
-  fieldIndex: number,
-): bigint {
+export function getScalarValue(args: unknown[], fieldIndex: number): bigint {
   const indexes = unpackFieldIndexes(fieldIndex);
 
   if (indexes.length === 0) {
@@ -2098,4 +2095,23 @@ export function getScalarValueFromTuple(
   }
 
   return scalarValue;
+}
+
+/**
+ * @deprecated Use {@link getScalarValue} instead.
+ *
+ * Extracts a scalar value from a tuple within event or function arguments.
+ * This is used for incentive criteria when determining reward amounts.
+ *
+ * @export
+ * @param {unknown[]} args - The decoded arguments from an event or function call
+ * @param {number} fieldIndex - The tuple-encoded index
+ * @returns {bigint} The extracted scalar value as a bigint
+ * @throws {DecodedArgsError} If arguments are missing or cannot be converted to bigint
+ */
+export function getScalarValueFromTuple(
+  args: unknown[],
+  fieldIndex: number,
+): bigint {
+  return getScalarValue(args, fieldIndex);
 }

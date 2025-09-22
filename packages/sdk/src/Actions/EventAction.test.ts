@@ -1585,12 +1585,20 @@ describe("criteria field index tuple support", () => {
   });
 
   test("throws error when accessing non-array at intermediate level", () => {
-    const args = [123n, 456n, 789n];
+    const args = [123n, 'not-an-array', 789n];
     const fieldIndex = packFieldIndexes([1, 0]);
 
     expect(() => getScalarValue(args, fieldIndex)).toThrowError(
-      "Expected array at level 1, but got bigint"
+      "Expected array at level 1, but got string"
     );
+  });
+
+  test("returns early if bigint is found at intermediate level", () => {
+    const args = [123n, 456n, 789n];
+    const fieldIndex = packFieldIndexes([1, 0]);
+
+    const result = getScalarValue(args, fieldIndex);
+    expect(result).toBe(456n);
   });
 
   test("throws error when index is out of bounds", () => {

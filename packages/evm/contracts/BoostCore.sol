@@ -28,7 +28,7 @@ import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
-/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1.sol:BoostCoreV1
+/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1_1.sol:BoostCoreV1_1
 contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
@@ -79,6 +79,14 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         address asset
     );
 
+    event ReferralFeeSent(
+        address indexed referrer,
+        address indexed claimant,
+        uint256 boostId,
+        address tokenAddress,
+        uint256 referralAmount
+    );
+
     /// @notice The list of boosts
     BoostLib.Boost[] private _boosts;
 
@@ -106,8 +114,14 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     // @notice The set of incentives for the Boost
     mapping(bytes32 => IncentiveDisbursalInfo) public incentivesFeeInfo;
 
+    // @notice The referral fee (in bps)
+    uint64 public referralFee;
+
+    // @notice allocated padding space for future variables
+    uint192 private __padding;
+
     // @notice allocated gap space for future variables
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     modifier canCreateBoost(address sender) {
         if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
@@ -414,26 +428,22 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         if (!boost.validator.validate{value: msg.value}(boostId_, incentiveId_, claimant, data_)) {
             revert BoostError.Unauthorized();
         }
-        // Get the balance of the asset before the claim
-        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
 
-        // Execute the claim
-        // wake-disable-next-line reentrancy (protected)
-        if (!incentiveContract.claim(claimant, data_)) {
-            revert BoostError.ClaimFailed(claimant, data_);
+        // Process the claim and calculate fees
+        (uint256 referralFeeAmount, uint256 protocolFeeAmount) =
+            _processClaim(incentive, incentiveContract, claimant, referrer_, data_);
+
+        // Transfer the referral fee to the referrer if applicable
+        if (referralFeeAmount > 0) {
+            _transferReferralFee(incentive, referralFeeAmount, referrer_);
+            address asset = incentive.asset;
+            emit ReferralFeeSent(referrer_, claimant, boostId_, asset, referralFeeAmount);
         }
-
-        // Get the balance of the asset after the claim
-        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
-
-        // Calculate the change in balance and the protocol fee amount
-        uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
-        uint256 protocolFeeAmount = (balanceChange * incentive.protocolFee) / FEE_DENOMINATOR;
 
         // Transfer the protocol fee to the protocol fee receiver if applicable
         if (protocolFeeAmount > 0) {
             _transferProtocolFee(incentive, protocolFeeAmount);
-            incentive.protocolFeesRemaining -= protocolFeeAmount;
+            incentive.protocolFeesRemaining -= protocolFeeAmount + referralFeeAmount; // account for any referral fees
             emit ProtocolFeesCollected(boostId_, incentiveId_, protocolFeeAmount, protocolFeeReceiver);
         }
 
@@ -561,6 +571,8 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @param protocolFee_ The new protocol fee (in bps)
     /// @dev This function is only callable by the owner
     function setProtocolFee(uint64 protocolFee_) external onlyOwner {
+        require(protocolFee_ <= FEE_DENOMINATOR, "protocol fee cannot be set higher than the fee denominator");
+        require(protocolFee_ > referralFee, "protocol fee cannot be set lower than the referral fee");
         protocolFee = protocolFee_;
     }
 
@@ -578,6 +590,14 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @dev This function is only callable by the owner
     function setProtocolFeeModule(address protocolFeeModule_) external onlyOwner {
         protocolFeeModule = protocolFeeModule_;
+    }
+
+    /// @notice Set the referral fee
+    /// @param referralFee_ The new referral fee (in bps)
+    /// @dev This function is only callable by the owner
+    function setReferralFee(uint64 referralFee_) external onlyOwner {
+        require(referralFee_ <= protocolFee, "referral fee cannot be set higher than the protocol fee");
+        referralFee = referralFee_;
     }
 
     /// @notice Authorize the upgrade to a new implementation
@@ -812,6 +832,53 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
             return IERC1155(incentive.asset).balanceOf(address(incentiveContract), incentive.tokenId);
         }
         return 0;
+    }
+
+    /// @notice Process the claim and calculate fees
+    /// @param incentive The incentive info
+    /// @param incentiveContract The incentive contract
+    /// @param claimant The claimant address
+    /// @param referrer_ The referrer address
+    /// @param data_ The claim data
+    /// @return referralFeeAmount The referral fee amount
+    /// @return protocolFeeAmount The protocol fee amount
+    function _processClaim(
+        IncentiveDisbursalInfo storage incentive,
+        AIncentive incentiveContract,
+        address claimant,
+        address referrer_,
+        bytes calldata data_
+    ) internal returns (uint256 referralFeeAmount, uint256 protocolFeeAmount) {
+        // Get the balance of the asset before the claim
+        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
+
+        // Execute the claim
+        // wake-disable-next-line reentrancy (protected)
+        if (!incentiveContract.claim(claimant, data_)) {
+            revert BoostError.ClaimFailed(claimant, data_);
+        }
+
+        // Get the balance of the asset after the claim
+        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
+
+        // Calculate the change in balance and the protocol fee amount
+        uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
+
+        referralFeeAmount =
+            referrer_ == claimant || referrer_ == address(0) ? 0 : (balanceChange * referralFee) / FEE_DENOMINATOR;
+
+        protocolFeeAmount = ((balanceChange * incentive.protocolFee) / FEE_DENOMINATOR) - referralFeeAmount;
+    }
+
+    // Helper function to transfer the referral fee based on the asset type
+    function _transferReferralFee(IncentiveDisbursalInfo storage incentive, uint256 amount, address referrer)
+        internal
+    {
+        if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
+            incentive.asset.safeTransfer(referrer, amount);
+        } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
+            IERC1155(incentive.asset).safeTransferFrom(address(this), referrer, incentive.tokenId, amount, "");
+        }
     }
 
     // Helper function to transfer the protocol fee based on the asset type

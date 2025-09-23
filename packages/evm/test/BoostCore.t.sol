@@ -980,7 +980,7 @@ contract BoostCoreTest is Test {
             ((claimAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR()) - expectedReferralFee;
 
         vm.expectEmit(true, true, false, true);
-        emit BoostCore.ReferralFeeSent(referrer, claimant, 0, address(mockERC20), expectedReferralFee);
+        emit BoostCore.ReferralFeeSent(referrer, claimant, 0, 0, address(mockERC20), expectedReferralFee);
 
         vm.expectEmit(true, true, false, true);
         emit BoostCore.ProtocolFeesCollected(0, 0, expectedProtocolFee, boostCore.protocolFeeReceiver());

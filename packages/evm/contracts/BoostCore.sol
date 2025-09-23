@@ -83,6 +83,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         address indexed referrer,
         address indexed claimant,
         uint256 boostId,
+        uint256 incentiveId,
         address tokenAddress,
         uint256 referralAmount
     );
@@ -437,7 +438,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         if (referralFeeAmount > 0) {
             _transferReferralFee(incentive, referralFeeAmount, referrer_);
             address asset = incentive.asset;
-            emit ReferralFeeSent(referrer_, claimant, boostId_, asset, referralFeeAmount);
+            emit ReferralFeeSent(referrer_, claimant, boostId_, incentiveId_, asset, referralFeeAmount);
         }
 
         // Transfer the protocol fee to the protocol fee receiver if applicable

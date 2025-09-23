@@ -1,5 +1,12 @@
 # @boostxyz/sdk
 
+## 8.0.0-canary.2
+
+### Minor Changes
+
+- 1e1c0d5: add nested tuple support to variable incentives
+- a6e97a3: add clawback event
+
 ## 8.0.0-canary.1
 
 ### Patch Changes

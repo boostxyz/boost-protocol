@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.0.0-canary.3
+
+### Patch Changes
+
+- 883c4d4: fix fieldIndex type for variableCriteriaIncentives and actionClaimant
+
 ## 8.0.0-canary.2
 
 ### Minor Changes

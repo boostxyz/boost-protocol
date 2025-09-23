@@ -877,7 +877,7 @@ export function prepareERC20PeggedVariableCriteriaIncentiveV2Payload({
             components: [
               { type: 'uint8', name: 'criteriaType' },
               { type: 'bytes32', name: 'signature' },
-              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'uint32', name: 'fieldIndex' },
               { type: 'address', name: 'targetContract' },
               { type: 'uint8', name: 'valueType' },
             ],

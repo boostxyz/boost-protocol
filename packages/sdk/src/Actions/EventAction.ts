@@ -1668,7 +1668,7 @@ export function prepareEventActionPayload({
             components: [
               { type: 'uint8', name: 'signatureType' },
               { type: 'bytes32', name: 'signature' },
-              { type: 'uint8', name: 'fieldIndex' },
+              { type: 'uint32', name: 'fieldIndex' },
               { type: 'address', name: 'targetContract' },
               { type: 'uint256', name: 'chainid' },
             ],

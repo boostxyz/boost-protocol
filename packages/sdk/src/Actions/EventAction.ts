@@ -1945,6 +1945,8 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
 }
 
 /**
+ * @deprecated Do not use CriteriaFieldIndex methods. Use {@link packFieldIndexes} instead.
+ *
  * IMPORTANT: For variable incentive criteria use only.
  * Do NOT use for action steps - use {@link packFieldIndexes} instead.
  *
@@ -1977,6 +1979,8 @@ export function packCriteriaFieldIndexes([firstIndex, secondIndex]: [
 }
 
 /**
+ * @deprecated Do not use CriteriaFieldIndex methods. Use {@link unpackFieldIndexes} instead.
+ *
  * Unpacks a uint8 packed index value into an array of indices.
  *
  * @export
@@ -1997,6 +2001,8 @@ export function unpackCriteriaFieldIndexes(packed: number): [number, number] {
 }
 
 /**
+ * @deprecated Do not use CriteriaFieldIndex methods. Use {@link packFieldIndexes} instead.
+ *
  * Determines if a fieldIndex represents a tuple index (value >= 32) or a normal field index.
  *
  * @export
@@ -2038,6 +2044,64 @@ export function unpackClaimantFieldIndexes(packed: number): [number, number] {
 }
 
 /**
+ * Extracts a scalar value from event or function arguments using a field index.
+ * Supports both direct field access and nested tuple access (up to 4 levels).
+ *
+ * @export
+ * @param {unknown[]} args - The decoded arguments from an event or function call
+ * @param {number} fieldIndex - The packed field index (supports both direct and nested access)
+ * @returns {bigint} The extracted scalar value as a bigint
+ * @throws {DecodedArgsError} If arguments are missing or cannot be converted to bigint
+ */
+export function getScalarValue(args: unknown[], fieldIndex: number): bigint {
+  const indexes = unpackFieldIndexes(fieldIndex);
+
+  if (indexes.length === 0) {
+    throw new DecodedArgsError(
+      `Failed to unpack any indexes from fieldIndex ${fieldIndex}`,
+    );
+  }
+
+  let scalarValue: unknown = args;
+
+  for (let level = 0; level < indexes.length; level++) {
+    const idx = indexes[level];
+
+    if (idx === undefined) {
+      throw new DecodedArgsError(`Undefined index at level ${level}`);
+    }
+
+    if (typeof scalarValue === 'bigint') {
+      return scalarValue;
+    }
+
+    if (!Array.isArray(scalarValue)) {
+      throw new DecodedArgsError(
+        `Expected array at level ${level}, but got ${typeof scalarValue}`,
+      );
+    }
+
+    if (idx >= scalarValue.length) {
+      throw new DecodedArgsError(
+        `Index ${idx} is out of bounds at level ${level}. Array length is ${scalarValue.length}`,
+      );
+    }
+
+    scalarValue = scalarValue[idx];
+  }
+
+  if (typeof scalarValue !== 'bigint') {
+    throw new DecodedArgsError(
+      `Expected bigint at final position, but got ${typeof scalarValue}`,
+    );
+  }
+
+  return scalarValue;
+}
+
+/**
+ * @deprecated Use {@link getScalarValue} instead.
+ *
  * Extracts a scalar value from a tuple within event or function arguments.
  * This is used for incentive criteria when determining reward amounts.
  *
@@ -2051,42 +2115,5 @@ export function getScalarValueFromTuple(
   args: unknown[],
   fieldIndex: number,
 ): bigint {
-  if (!isCriteriaFieldIndexTuple(fieldIndex)) {
-    throw new DecodedArgsError(
-      `Field index ${fieldIndex} is invalid. Expected index >= 32`,
-    );
-  }
-
-  const [index0, index1] = unpackCriteriaFieldIndexes(fieldIndex);
-
-  if (index0 === undefined || index1 === undefined) {
-    throw new DecodedArgsError(
-      `Failed to unpack field indexes from ${fieldIndex}`,
-    );
-  }
-
-  if (!args || args.length <= index0) {
-    throw new DecodedArgsError(`Decoded args missing item at index ${index0}`);
-  }
-
-  const tuple = args[index0];
-  if (!tuple || !Array.isArray(tuple)) {
-    throw new DecodedArgsError(
-      `Expected array at index ${index0}, but got ${typeof tuple}`,
-    );
-  }
-  if (tuple.length <= index1) {
-    throw new DecodedArgsError(
-      `index ${index1} is out of bounds. tuple length is ${tuple.length}`,
-    );
-  }
-
-  const scalarValue = tuple[index1] as unknown;
-  if (typeof scalarValue !== 'bigint') {
-    throw new DecodedArgsError(
-      `Expected bigint at tuple index ${index1}, but got ${typeof scalarValue}`,
-    );
-  }
-
-  return scalarValue;
+  return getScalarValue(args, fieldIndex);
 }

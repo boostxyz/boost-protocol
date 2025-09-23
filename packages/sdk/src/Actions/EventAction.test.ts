@@ -41,12 +41,10 @@ import {
   transactionSenderClaimant,
   packFieldIndexes,
   unpackFieldIndexes,
-  packCriteriaFieldIndexes,
-  unpackCriteriaFieldIndexes,
-  isCriteriaFieldIndexTuple,
   packClaimantFieldIndexes,
   decodeAndReorderLogArgs,
-  ActionClaimant
+  ActionClaimant,
+  getScalarValue,
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";
@@ -1519,89 +1517,120 @@ describe('decodeAndReorderLogArgs', () => {
 }); 
 
 describe("criteria field index tuple support", () => {
-  describe("packCriteriaFieldIndexes", () => {
-    test("packs two indices into a single value", () => {
-      const packed = packCriteriaFieldIndexes([3, 5])
-      expect(packed).toBeGreaterThanOrEqual(32);
-      expect(packed).toBeLessThanOrEqual(253);
-    });
-
-    test("throws error if any index exceeds the allowed range (0-13)", () => {
-      expect(() => packCriteriaFieldIndexes([14, 5])).toThrowError(
-        "Tuple indices must be between 0-13"
-      );
-
-      expect(() => packCriteriaFieldIndexes([5, 14])).toThrowError(
-        "Tuple indices must be between 0-13"
-      );
-
-      expect(() => packCriteriaFieldIndexes([-1, 5])).toThrowError(
-        "Tuple indices must be between 0-13"
-      );
-    });
-
-    test("different input pairs result in different packed values", () => {
-      const packed1 = packCriteriaFieldIndexes([1, 2]);
-      const packed2 = packCriteriaFieldIndexes([2, 1]);
-      const packed3 = packCriteriaFieldIndexes([1, 3]);
-
-      expect(packed1).not.toBe(packed2);
-      expect(packed1).not.toBe(packed3);
-      expect(packed2).not.toBe(packed3);
-    });
+  test("extracts scalar value from single-level tuple", () => {
+    const args = [123n, [456n, 789n], 999n];
+    const fieldIndex = packFieldIndexes([1, 0]);
+    const result = getScalarValue(args, fieldIndex);
+    expect(result).toBe(456n);
   });
 
-  describe("unpackCriteriaFieldIndexes", () => {
-    test("unpacks tuple index values (>= 32) correctly", () => {
-      const packed = packCriteriaFieldIndexes([4, 7]);
+  test("extracts scalar value from two-level nested tuple", () => {
+    const args = [
+      100n,
+      [
+        200n,
+        [300n, 400n, 500n],
+        600n
+      ],
+      700n
+    ];
+    const fieldIndex = packFieldIndexes([1, 1, 2]);
 
-      const result = unpackCriteriaFieldIndexes(packed);
-      expect(result.length).toBe(2);
-      expect(result).toEqual([4, 7]);
-    });
-
-    test("throws error if packed value is out of valid range", () => {
-      expect(() => unpackCriteriaFieldIndexes(15)).toThrowError(
-        "Field index must be between 32-253"
-      );
-      
-      expect(() => unpackCriteriaFieldIndexes(254)).toThrowError(
-        "Field index must be between 32-253"
-      );
-
-      expect(() => unpackCriteriaFieldIndexes(-1)).toThrowError(
-        "Field index must be between 32-253"
-      );
-    });
+    const result = getScalarValue(args, fieldIndex);
+    expect(result).toBe(500n);
   });
 
-  describe("isCriteriaFieldIndexTuple", () => {
-    test("correctly identifies tuple indices vs simple indices", () => {
-      // Test with simple index (< 32)
-      expect(isCriteriaFieldIndexTuple(15)).toBe(false);
+  test("extracts scalar value from three-level nested tuple", () => {
+    const args = [
+      [
+        [
+          [111n, 222n],
+          [333n, 444n]
+        ],
+        555n
+      ],
+      666n
+    ];
+    const fieldIndex = packFieldIndexes([0, 0, 1, 1]);
 
-      // Test with tuple index (>= 32)
-      const packed = packCriteriaFieldIndexes([2, 3]);
-      expect(isCriteriaFieldIndexTuple(packed)).toBe(true);
-
-      // Test edge cases
-      expect(isCriteriaFieldIndexTuple(0)).toBe(false);
-      expect(isCriteriaFieldIndexTuple(31)).toBe(false);
-      expect(isCriteriaFieldIndexTuple(32)).toBe(true);
-    });
+    const result = getScalarValue(args, fieldIndex);
+    expect(result).toBe(444n);
   });
 
-  describe("criteria field index functions in practice", () => {
-    test("round-trip packing and unpacking preserves the original values", () => {
-      for (let i = 0; i <= 13; i++) {
-        for (let j = 0; j <= 13; j++) {
-          const original: [number, number] = [i, j];
-          const packed = packCriteriaFieldIndexes(original);
-          const unpacked = unpackCriteriaFieldIndexes(packed);
-          expect(unpacked).toEqual(original);
-        }
-      }
-    });
+  test("extracts scalar value from four-level nested tuple (max depth)", () => {
+    const args = [
+      [
+        [
+          [
+            [1n, 2n, 3n],
+            [4n, 5n, 6n]
+          ],
+          [[7n, 8n], [9n, 10n]]
+        ]
+      ]
+    ];
+    const fieldIndex = packFieldIndexes([0, 0, 0, 1, 2]);
+
+    const result = getScalarValue(args, fieldIndex);
+    expect(result).toBe(6n);
+  });
+
+  test("throws error when field index unpacks to empty array", () => {
+    const args = [123n, 456n];
+    const fieldIndex = 0xFFFFFFF;
+
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
+      "Failed to unpack any indexes from fieldIndex"
+    );
+  });
+
+  test("throws error when accessing non-array at intermediate level", () => {
+    const args = [123n, 'not-an-array', 789n];
+    const fieldIndex = packFieldIndexes([1, 0]);
+
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
+      "Expected array at level 1, but got string"
+    );
+  });
+
+  test("returns early if bigint is found at intermediate level", () => {
+    const args = [123n, 456n, 789n];
+    const fieldIndex = packFieldIndexes([1, 0]);
+
+    const result = getScalarValue(args, fieldIndex);
+    expect(result).toBe(456n);
+  });
+
+  test("throws error when index is out of bounds", () => {
+    const args = [[100n, 200n], [300n]];
+    const fieldIndex = packFieldIndexes([1, 5]);
+
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
+      "Index 5 is out of bounds at level 1. Array length is 1"
+    );
+  });
+
+  test("throws error when final value is not a bigint", () => {
+    const args = [["hello", "world"], [123n, 456n]];
+    const fieldIndex = packFieldIndexes([0, 0]);
+
+    expect(() => getScalarValue(args, fieldIndex)).toThrowError(
+      "Expected bigint at final position, but got string"
+    );
+  });
+
+  test("handles direct field access (single index)", () => {
+    const args = [111n, 222n, 333n];
+    const fieldIndex = packFieldIndexes([2]);
+
+    const result = getScalarValue(args, fieldIndex);
+    expect(result).toBe(333n);
+  });
+
+  test("throws error for index exceeding max field index", () => {
+    expect(() => packFieldIndexes([0, 64])).toThrowError(
+      "Index 64 exceeds the maximum allowed value"
+    );
   });
 });
 

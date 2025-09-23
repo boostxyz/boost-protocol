@@ -1418,6 +1418,22 @@ contract BoostCoreTest is Test {
         assertEq(boostCore.protocolFee(), newProtocolFee);
     }
 
+    function testSetProtocolFee_RevertFeeDenominatorIsLower() public {
+        uint64 newProtocolFee = boostCore.FEE_DENOMINATOR() + 1;
+        vm.expectRevert("protocol fee cannot be set higher than the fee denominator");
+        boostCore.setProtocolFee(newProtocolFee);
+    }
+
+    function testSetProtocolFee_RevertReferralFeeIsHigher() public {
+        uint64 newReferralFee = 500; // 5%
+        boostCore.setReferralFee(newReferralFee);
+        assertEq(boostCore.referralFee(), newReferralFee);
+
+        uint64 newProtocolFee = newReferralFee;
+        vm.expectRevert("protocol fee cannot be set lower than the referral fee");
+        boostCore.setProtocolFee(newProtocolFee);
+    }
+
     ////////////////////////////////////
     // BoostCore.setProtocolFeeModule //
     ////////////////////////////////////
@@ -1454,8 +1470,9 @@ contract BoostCoreTest is Test {
         uint64 newReferralFee = 500; // 5%
         boostCore.setReferralFee(newReferralFee);
         assertEq(boostCore.referralFee(), newReferralFee);
+    }
 
-        // test invalid referral fee
+    function testSetReferralFee_Revert() public {
         uint64 invalidReferralFee = boostCore.protocolFee() + 1;
         vm.expectRevert("referral fee cannot be set higher than the protocol fee");
         boostCore.setReferralFee(invalidReferralFee);

@@ -15,19 +15,12 @@ import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
-import {
-    LimitedSignerValidator, ASignerValidator, IncentiveBits
-} from "contracts/validators/LimitedSignerValidator.sol";
+import {SignerValidatorV2, ASignerValidatorV2, IncentiveBits} from "contracts/validators/SignerValidatorV2.sol";
 
-contract LimitedSignerValidatorTest is Test {
-    LimitedSignerValidator baseValidator = new LimitedSignerValidator();
-    LimitedSignerValidator validator;
+contract SignerValidatorV2Test is Test {
+    SignerValidatorV2 baseValidator = new SignerValidatorV2();
+    SignerValidatorV2 validator;
     address _validatorCaller;
-
-    struct MockIncentiveData {
-        uint256 iterableValue;
-        bytes32 filler;
-    }
 
     uint256 testSignerKey = uint256(vm.envUint("TEST_SIGNER_PRIVATE_KEY"));
     address testSigner = vm.addr(testSignerKey);
@@ -37,8 +30,6 @@ contract LimitedSignerValidatorTest is Test {
 
     uint256 fakeSignerKey = uint256(0xdeadbeef);
     address fakeSigner = vm.addr(fakeSignerKey);
-
-    uint256 defaultMaxClaimedCount = 2;
 
     MockERC1271Wallet smartSignerMock = new MockERC1271Wallet(testSigner);
     MockERC1271Malicious maliciousSignerMock = new MockERC1271Malicious();
@@ -61,8 +52,8 @@ contract LimitedSignerValidatorTest is Test {
         signers[2] = address(smartSignerMock);
         _validatorCaller = address(this);
 
-        bytes memory data = abi.encode(signers, _validatorCaller, defaultMaxClaimedCount);
-        validator = LimitedSignerValidator(LibClone.clone(address(baseValidator)));
+        bytes memory data = abi.encode(signers, _validatorCaller);
+        validator = SignerValidatorV2(LibClone.clone(address(baseValidator)));
         validator.initialize(data);
     }
 
@@ -85,12 +76,12 @@ contract LimitedSignerValidatorTest is Test {
     }
 
     function testInitialize_InvalidData() public {
-        LimitedSignerValidator badValidator = new LimitedSignerValidator();
+        SignerValidatorV2 badValidator = new SignerValidatorV2();
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         badValidator.initialize(abi.encode(address(0)));
     }
 
-    function test_InitializerDisabled() public view {
+    function test_InitializerDisabled() public {
         // Because the slot is private, we use `vm.load` to access it then parse out the bits:
         //   - [0] is the `initializing` flag (which should be 0 == false)
         //   - [1..64] hold the `initializedVersion` (which should be 1)
@@ -104,9 +95,9 @@ contract LimitedSignerValidatorTest is Test {
         assertNotEq(version, 0, "Version should not be 0");
     }
 
-    ////////////////////////////////////
-    // LimitedSignerValidator.signers //
-    ////////////////////////////////////
+    /////////////////////////////
+    // SignerValidator.signers //
+    /////////////////////////////
 
     function testSigners() public view {
         assertTrue(validator.signers(address(this)));
@@ -115,27 +106,65 @@ contract LimitedSignerValidatorTest is Test {
         assertFalse(validator.signers(fakeSigner));
     }
 
-    /////////////////////////////////////
-    // LimitedSignerValidator.validate //
-    /////////////////////////////////////
+    //////////////////////////////
+    // SignerValidator.validate //
+    //////////////////////////////
 
     function testValidate_ValidSignature() public {
         uint256 boostId = 5;
         uint256 incentiveId = 1;
         uint8 incentiveQuantity = 2;
         address claimant = makeAddr("claimant");
+        address referrer = makeAddr("referrer");
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, testSignerKey);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
         assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
+    }
+
+    function testValidate_MalleableSignature() public {
+        uint256 boostId = 5;
+        uint256 incentiveId = 1;
+        uint8 incentiveQuantity = 2;
+        address claimant = makeAddr("claimant");
+        address referrer = makeAddr("referrer");
+        bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(testSignerKey, msgHash);
+
+        bytes memory originalSignature = _packSignature(v, r, s);
+
+        s = bytes32(uint256(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141) - uint256(s));
+
+        if (v == 27) {
+            v = 28;
+        } else {
+            v = 27;
+        }
+
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(testSigner, _packSignature(v, r, s), incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
+        assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
+
+        // attempt to replay the signature
+        validatorData = ASignerValidatorV2.SignerValidatorInputParams(testSigner, originalSignature, incentiveQuantity);
+        claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
+
+        vm.expectRevert(abi.encodeWithSelector(BoostError.IncentiveClaimed.selector, incentiveId));
+        validator.validate(boostId, incentiveId, claimant, claimData);
     }
 
     function testValidate_UnauthorizerCaller() public {
         address badCaller = makeAddr("badValidatorCaller");
+        address referrer = makeAddr("referrer");
 
         hoax(badCaller);
         vm.expectRevert(BoostError.Unauthorized.selector);
@@ -146,12 +175,13 @@ contract LimitedSignerValidatorTest is Test {
         uint256 boostId = 5;
         uint8 incentiveQuantity = 2;
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
-
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, address(0), incentiveData);
+        address referrer = makeAddr("referrer");
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, address(0), incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, fakeSignerKey);
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(fakeSigner, signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(fakeSigner, signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
 
         vm.expectRevert(BoostError.Unauthorized.selector);
         validator.validate(0, 0, address(0), claimData);
@@ -162,13 +192,15 @@ contract LimitedSignerValidatorTest is Test {
         uint256 incentiveId = 0;
         uint8 incentiveQuantity = 1;
         address claimant = address(0);
+        address referrer = makeAddr("referrer");
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, testSignerKey);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
         // First validation should pass
         assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
 
@@ -177,40 +209,20 @@ contract LimitedSignerValidatorTest is Test {
         validator.validate(boostId, incentiveId, claimant, claimData);
     }
 
-    function testValidate_ValidSignatureMaxClaims() public {
-        uint256 boostId = 5;
-        uint256 incentiveId = 0;
-        uint8 incentiveQuantity = 1;
-        address claimant = makeAddr("claimant");
-
-        for (uint256 claimAttempt; claimAttempt <= defaultMaxClaimedCount; claimAttempt++) {
-            bytes memory incentiveData = abi.encode(MockIncentiveData(claimAttempt, hex""));
-            bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
-            bytes memory signature = _signHash(msgHash, testSignerKey);
-            ASignerValidator.SignerValidatorInputParams memory validatorData =
-                ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
-            bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
-            if (claimAttempt < defaultMaxClaimedCount) {
-                assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
-            } else {
-                vm.expectRevert(abi.encodeWithSelector(BoostError.MaximumClaimed.selector, claimant));
-                validator.validate(boostId, incentiveId, claimant, claimData);
-            }
-        }
-    }
-
     function testValidate_SmartContractSigner() public {
         uint256 boostId = 5;
         uint256 incentiveId = 1;
         uint8 incentiveQuantity = 2;
         address claimant = makeAddr("claimant");
+        address referrer = makeAddr("referrer");
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, testSignerKey);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(address(smartSignerMock), signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(address(smartSignerMock), signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
         assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
@@ -219,13 +231,15 @@ contract LimitedSignerValidatorTest is Test {
         uint256 incentiveId = 1;
         uint8 incentiveQuantity = 2;
         address claimant = makeAddr("claimant");
+        address referrer = makeAddr("referrer");
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, fakeSignerKey);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(address(smartSignerMock), signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(address(smartSignerMock), signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
         assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
@@ -234,38 +248,17 @@ contract LimitedSignerValidatorTest is Test {
         uint256 incentiveId = 1;
         uint8 incentiveQuantity = 2;
         address claimant = makeAddr("claimant");
+        address referrer = makeAddr("referrer");
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, fakeSignerKey);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(address(maliciousSignerMock), signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(address(maliciousSignerMock), signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
         vm.expectRevert(BoostError.Unauthorized.selector);
         validator.validate(boostId, incentiveId, claimant, claimData);
-    }
-
-    function testValidate_ValidSignatureFuzzMaxClaims(uint8 maxClaims, bytes32 incentiveDataFiller) public {
-        _setUpVariableMaxClaims(maxClaims);
-        uint256 boostId = 5;
-        uint256 incentiveId = 0;
-        uint8 incentiveQuantity = 1;
-        address claimant = makeAddr("claimant");
-
-        for (uint256 claimAttempt; claimAttempt <= maxClaims; claimAttempt++) {
-            bytes memory incentiveData = abi.encode(MockIncentiveData(claimAttempt, incentiveDataFiller));
-            bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
-            bytes memory signature = _signHash(msgHash, testSignerKey);
-            ASignerValidator.SignerValidatorInputParams memory validatorData =
-                ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
-            bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
-            if (claimAttempt < maxClaims) {
-                assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
-            } else {
-                vm.expectRevert(abi.encodeWithSelector(BoostError.MaximumClaimed.selector, claimant));
-                validator.validate(boostId, incentiveId, claimant, claimData);
-            }
-        }
     }
 
     function testValidate_FuzzValidInputs(
@@ -287,12 +280,15 @@ contract LimitedSignerValidatorTest is Test {
 
         validator.setAuthorized(signers, signers_authorized);
 
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        address referrer = makeAddr("referrer");
+
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, pk);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(signers[0], signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(signers[0], signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
 
         validator.validate(boostId, incentiveId, claimant, claimData);
     }
@@ -306,13 +302,15 @@ contract LimitedSignerValidatorTest is Test {
     ) public {
         incentiveQuantity = uint8(bound(incentiveQuantity, 1, 7));
         incentiveId = bound(incentiveId, 0, incentiveQuantity - 1);
+        address referrer = makeAddr("referrer");
 
-        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData);
+        bytes32 msgHash = validator.hashSignerData(boostId, incentiveQuantity, claimant, incentiveData, referrer);
         bytes memory signature = _signHash(msgHash, fakeSignerKey);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
         assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
@@ -322,19 +320,21 @@ contract LimitedSignerValidatorTest is Test {
         uint256 incentiveId = 1;
         uint8 incentiveQuantity = 2;
         address claimant = makeAddr("claimant");
+        address referrer = makeAddr("referrer");
         bytes memory incentiveData = hex"def456232173821931823712381232131391321934";
 
         bytes memory signature = _packSignature(v, r, s);
 
-        ASignerValidator.SignerValidatorInputParams memory validatorData =
-            ASignerValidator.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
-        bytes memory claimData = abi.encode(IBoostClaim.BoostClaimData(abi.encode(validatorData), incentiveData));
+        ASignerValidatorV2.SignerValidatorInputParams memory validatorData =
+            ASignerValidatorV2.SignerValidatorInputParams(testSigner, signature, incentiveQuantity);
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
 
         assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
     ///////////////////////////////////
-    // LimitedSignerValidator.setAuthorized //
+    // SignerValidator.setAuthorized //
     ///////////////////////////////////
 
     function testSetAuthorized() public {
@@ -350,7 +350,7 @@ contract LimitedSignerValidatorTest is Test {
     }
 
     /////////////////////////////////////////
-    // LimitedSignerValidator.getComponentInterface //
+    // VestingBudget.getComponentInterface //
     /////////////////////////////////////////
 
     function testGetComponentInterface() public view {
@@ -359,7 +359,7 @@ contract LimitedSignerValidatorTest is Test {
     }
 
     ///////////////////////////////////////
-    // LimitedSignerValidator.supportsInterface //
+    // SignerValidatorV2.supportsInterface //
     ///////////////////////////////////////
 
     function testSupportsInterface() public view {
@@ -382,17 +382,5 @@ contract LimitedSignerValidatorTest is Test {
 
     function _packSignature(uint8 v, bytes32 r, bytes32 s) internal pure returns (bytes memory) {
         return abi.encodePacked(r, s, v);
-    }
-
-    function _setUpVariableMaxClaims(uint256 maxClaims) internal {
-        address[] memory signers = new address[](3);
-        signers[0] = address(this);
-        signers[1] = testSigner;
-        signers[2] = address(smartSignerMock);
-        _validatorCaller = address(this);
-
-        bytes memory data = abi.encode(signers, _validatorCaller, maxClaims);
-        validator = LimitedSignerValidator(LibClone.clone(address(baseValidator)));
-        validator.initialize(data);
     }
 }

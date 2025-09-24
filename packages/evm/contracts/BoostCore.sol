@@ -17,6 +17,7 @@ import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {IProtocolFeeModule} from "contracts/shared/IProtocolFeeModule.sol";
+import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 
 import {AAction} from "contracts/actions/AAction.sol";
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
@@ -24,6 +25,7 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IAuth} from "contracts/auth/IAuth.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
+import {ASignerValidatorV2} from "contracts/validators/ASignerValidatorV2.sol";
 import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
@@ -407,7 +409,6 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     /// @param claimant the address of the user eligible for the incentive payout
-
     function claimIncentiveFor(
         uint256 boostId_,
         uint256 incentiveId_,
@@ -430,25 +431,27 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
             revert BoostError.Unauthorized();
         }
 
-        // Process the claim and calculate fees
-        (uint256 referralFeeAmount, uint256 protocolFeeAmount) =
-            _processClaim(incentive, incentiveContract, claimant, referrer_, data_);
+        // Get verified referrer based on validator type
+        address verifiedReferrer = _getVerifiedReferrer(boost.validator, referrer_, data_);
 
-        // Transfer the referral fee to the referrer if applicable
+        // Process the claim and calculate fees using verified referrer
+        (uint256 referralFeeAmount, uint256 protocolFeeAmount) =
+            _processClaim(incentive, incentiveContract, claimant, verifiedReferrer, data_);
+
+        // Transfer the referral fee to the verified referrer if applicable
         if (referralFeeAmount > 0) {
-            _transferReferralFee(incentive, referralFeeAmount, referrer_);
-            address asset = incentive.asset;
-            emit ReferralFeeSent(referrer_, claimant, boostId_, incentiveId_, asset, referralFeeAmount);
+            _transferReferralFee(incentive, referralFeeAmount, verifiedReferrer);
+            emit ReferralFeeSent(verifiedReferrer, claimant, boostId_, incentiveId_, incentive.asset, referralFeeAmount);
         }
 
         // Transfer the protocol fee to the protocol fee receiver if applicable
         if (protocolFeeAmount > 0) {
             _transferProtocolFee(incentive, protocolFeeAmount);
-            incentive.protocolFeesRemaining -= protocolFeeAmount + referralFeeAmount; // account for any referral fees
+            incentive.protocolFeesRemaining -= protocolFeeAmount + referralFeeAmount;
             emit ProtocolFeesCollected(boostId_, incentiveId_, protocolFeeAmount, protocolFeeReceiver);
         }
 
-        emit BoostClaimed(boostId_, incentiveId_, claimant, referrer_, data_);
+        emit BoostClaimed(boostId_, incentiveId_, claimant, verifiedReferrer, data_);
     }
 
     /// @notice Get a Boost by index
@@ -900,5 +903,35 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         if (balance > 0 && balance < DUST_THRESHOLD) {
             asset.safeTransfer(protocolFeeReceiver, balance);
         }
+    }
+
+    /// @notice Get verified referrer based on validator type
+    function _getVerifiedReferrer(AValidator validator, address referrer_, bytes calldata data_)
+        internal
+        pure
+        returns (address)
+    {
+        // Check if this is a V2 validator by checking the component interface directly
+        // This is more reliable than supportsInterface which can have inheritance issues
+        try ACloneable(address(validator)).getComponentInterface() returns (bytes4 componentInterface) {
+            if (componentInterface == type(ASignerValidatorV2).interfaceId) {
+                // V2 validator - extract verified referrer from claim data
+                IBoostClaim.BoostClaimDataWithReferrer memory claimData =
+                    abi.decode(data_, (IBoostClaim.BoostClaimDataWithReferrer));
+
+                // Validate that external referrer matches the signed referrer
+                if (referrer_ != claimData.referrer) {
+                    revert BoostError.Unauthorized();
+                }
+
+                return claimData.referrer;
+            }
+        } catch {
+            // If getComponentInterface fails, treat as V1
+        }
+
+        // V1 validator or unknown - overwrite the referrer to use zero address, which doesn't pass out referral rewards
+        // Note: V1 validators use the old BoostClaimData format, so we don't need to decode anything
+        return address(0);
     }
 }

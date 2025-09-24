@@ -123,6 +123,28 @@ contract ERC20VariableIncentiveTest is Test {
         incentive.claim(CLAIM_RECIPIENT, _encodeBoostClaim(1 ether));
     }
 
+    ////////////////////////////////////////////////
+    // ERC20VariableIncentive.claim with referrer //
+    ////////////////////////////////////////////////
+
+    function testClaim_WithReferrer() public {
+        address referrer = makeAddr("referrer");
+        // Initialize the ERC20VariableIncentive
+        _initialize(address(mockAsset), 1 ether, 5 ether);
+
+        vm.expectEmit(true, false, false, true);
+        emit AIncentive.Claimed(
+            CLAIM_RECIPIENT, abi.encodePacked(address(mockAsset), CLAIM_RECIPIENT, uint256(1 ether))
+        );
+
+        // Claim the incentive
+        incentive.claim(CLAIM_RECIPIENT, _encodeBoostClaimWithReferrer(1 ether, referrer));
+
+        // Check the claim status and balance
+        assertEq(mockAsset.balanceOf(CLAIM_RECIPIENT), 1 ether);
+        assertTrue(incentive.isClaimable(CLAIM_RECIPIENT, abi.encode(1 ether)));
+    }
+
     //////////////////////////////////////
     // ERC20VariableIncentive.preflight //
     //////////////////////////////////////
@@ -227,6 +249,14 @@ contract ERC20VariableIncentiveTest is Test {
 
     function _encodeBoostClaim(uint256 amount) internal pure returns (bytes memory data) {
         return abi.encode(IBoostClaim.BoostClaimData(hex"", abi.encode(amount)));
+    }
+
+    function _encodeBoostClaimWithReferrer(uint256 amount, address referrer)
+        internal
+        pure
+        returns (bytes memory data)
+    {
+        return abi.encode(IBoostClaim.BoostClaimDataWithReferrer(hex"", abi.encode(amount), referrer));
     }
 
     function _newIncentiveClone() internal returns (ERC20VariableIncentive) {

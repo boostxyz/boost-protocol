@@ -44,9 +44,9 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
         );
     }
 
-    /////////////////////////////////////////////////
-    // ERC20PeggedVariableCriteriaIncentive.initialize
-    /////////////////////////////////////////////////
+    /////////////////////////////////////////////////////
+    // ERC20PeggedVariableCriteriaIncentive.initialize //
+    /////////////////////////////////////////////////////
 
     function testInitialize() public {
         // Initialize the ERC20PeggedVariableCriteriaIncentive with a maxReward of 2 ether
@@ -75,9 +75,9 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
         _initialize(address(mockAsset), address(pegAsset), 0, 0, 0, address(this));
     }
 
-    /////////////////////////////////////////////////
-    // ERC20PeggedVariableCriteriaIncentive.claim   //
-    /////////////////////////////////////////////////
+    ////////////////////////////////////////////////
+    // ERC20PeggedVariableCriteriaIncentive.claim //
+    ////////////////////////////////////////////////
 
     function testClaim_Simple() public {
         // Initialize with a fixed reward and a nonzero maxReward
@@ -167,11 +167,35 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
         assertEq(incentive.claims(), 1);
     }
 
-    //////////////////////////////////////////////////////
-    // ERC20PeggedVariableCriteriaIncentive.preflight    //
-    //////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////
+    // ERC20PeggedVariableCriteriaIncentive.claim with referrer //
+    //////////////////////////////////////////////////////////////
 
-    function testPreflight() public {
+    function testClaim_WithReferrer() public {
+        address referrer = makeAddr("referrer");
+        // Initialize with a fixed reward and a nonzero maxReward
+        _initialize(address(mockAsset), address(pegAsset), 1 ether, 5 ether, 2 ether, address(this));
+
+        // Expect a claim event
+        vm.expectEmit(true, false, false, true);
+        emit AIncentive.Claimed(address(this), abi.encodePacked(address(mockAsset), address(this), uint256(1 ether)));
+
+        // Claim with a signedAmount that leads directly to claimAmount = reward
+        // signedAmount = 1 ether * (1e18 / reward) to get exactly 1 ether claim
+        incentive.claim(address(this), _encodeBoostClaimWithReferrer(1 ether, referrer));
+
+        // Check balances and accounting
+        assertEq(mockAsset.balanceOf(address(this)), 1 ether);
+        assertFalse(incentive.isClaimable(address(this), _encodeBoostClaimWithReferrer(5 ether, referrer))); // already claimed
+        assertEq(incentive.totalClaimed(), 1 ether);
+        assertEq(incentive.claims(), 1);
+    }
+
+    ////////////////////////////////////////////////////
+    // ERC20PeggedVariableCriteriaIncentive.preflight //
+    ////////////////////////////////////////////////////
+
+    function testPreflight() public view {
         AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria memory criteria =
         AERC20PeggedVariableCriteriaIncentiveV2.IncentiveCriteria({
             criteriaType: SignatureType.EVENT,
@@ -200,9 +224,9 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
         assertEq(abi.decode(transfer.data, (ABudget.FungiblePayload)).amount, 5 ether);
     }
 
-    //////////////////////////////////////////////
-    // ERC20PeggedVariableCriteriaIncentive.clawback
-    //////////////////////////////////////////////
+    ///////////////////////////////////////////////////
+    // ERC20PeggedVariableCriteriaIncentive.clawback //
+    ///////////////////////////////////////////////////
 
     function testClawback() public {
         // Initialize the ERC20PeggedVariableCriteriaIncentive
@@ -240,7 +264,7 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
     }
 
     ////////////////////////////////////////////////
-    // ERC20PeggedVariableCriteriaIncentive.topup
+    // ERC20PeggedVariableCriteriaIncentive.topup //
     ////////////////////////////////////////////////
 
     function testTopup() public {
@@ -275,9 +299,9 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
         incentive.topup(0);
     }
 
-    //////////////////////////////////////////////////////////////
-    // ERC20PeggedVariableCriteriaIncentive.getComponentInterface
-    //////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////
+    // ERC20PeggedVariableCriteriaIncentive.getComponentInterface //
+    ////////////////////////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
         // Retrieve the component interface
@@ -285,9 +309,9 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
         assertEq(incentive.getComponentInterface(), type(AERC20PeggedVariableCriteriaIncentiveV2).interfaceId);
     }
 
-    //////////////////////////////////////////////////
-    // ERC20PeggedVariableCriteriaIncentive.supportsInterface
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    // ERC20PeggedVariableCriteriaIncentive.supportsInterface //
+    ////////////////////////////////////////////////////////////
 
     function testSupportsInterface() public view {
         // Ensure the contract supports the AIncentive interface
@@ -365,5 +389,13 @@ contract ERC20PeggedVariableCriteriaIncentiveV2Test is Test {
 
     function _encodeBoostClaim(uint256 amount) internal pure returns (bytes memory data) {
         return abi.encode(IBoostClaim.BoostClaimData(hex"", abi.encode(amount)));
+    }
+
+    function _encodeBoostClaimWithReferrer(uint256 amount, address referrer)
+        internal
+        pure
+        returns (bytes memory data)
+    {
+        return abi.encode(IBoostClaim.BoostClaimDataWithReferrer(hex"", abi.encode(amount), referrer));
     }
 }

@@ -9,7 +9,7 @@ import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 import {PayableLimitedSignerValidatorV2} from "contracts/validators/PayableLimitedSignerValidatorV2.sol";
 import {APayableLimitedSignerValidatorV2} from "contracts/validators/APayableLimitedSignerValidatorV2.sol";
 import {ASignerValidatorV2} from "contracts/validators/ASignerValidatorV2.sol";
-import {IBoostCore} from "contracts/validators/PayableLimitedSignerValidatorV2.sol";
+import {IBoostCore} from "contracts/validators/PayableLimitedSignerValidator.sol";
 
 contract MockBoostCore is IBoostCore {
     address public protocolFeeReceiver;

@@ -13,10 +13,7 @@ import {IncentiveBits} from "contracts/shared/IncentiveBits.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 import {LimitedSignerValidatorV2, ALimitedSignerValidatorV2} from "contracts/validators/LimitedSignerValidatorV2.sol";
 import {APayableLimitedSignerValidatorV2} from "contracts/validators/APayableLimitedSignerValidatorV2.sol";
-
-interface IBoostCore {
-    function protocolFeeReceiver() external view returns (address);
-}
+import {IBoostCore} from "contracts/validators/PayableLimitedSignerValidator.sol";
 
 /// @title Payable Limited Signer Validator V2
 /// @notice A validator that verifies signatures, limits claims per address, and requires a claim fee

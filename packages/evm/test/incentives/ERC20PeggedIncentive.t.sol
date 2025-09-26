@@ -192,9 +192,9 @@ contract ERC20PeggedIncentiveTest is Test {
         assertEq(incentive.getPeg(), address(pegAsset));
     }
 
-    ////////////////////////////////////////
-    // ERC20VariablePeggedIncentive.topup //
-    ////////////////////////////////////////
+    ////////////////////////////////
+    // ERC20PeggedIncentive.topup //
+    ////////////////////////////////
 
     function testTopup() public {
         // Initialize with reward=1 ether, limit=5 ether.

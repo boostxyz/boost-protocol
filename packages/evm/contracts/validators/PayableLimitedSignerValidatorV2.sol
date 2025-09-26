@@ -76,14 +76,19 @@ contract PayableLimitedSignerValidatorV2 is APayableLimitedSignerValidatorV2, Li
 
         bool isValid = super.validate(boostId, incentiveId, claimant, claimData);
 
-        if (currentClaimFee > 0 && isValid) {
+        if (!isValid) {
+            // Avoid retaining ETH on failed validations.
+            revert BoostError.Unauthorized();
+        }
+
+        if (currentClaimFee > 0) {
             address protocolFeeReceiver = IBoostCore(_validatorCaller).protocolFeeReceiver();
             (bool success,) = protocolFeeReceiver.call{value: currentClaimFee}("");
             if (!success) revert FeeTransferFailed();
             emit ClaimFeePaid(claimant, boostId, incentiveId, currentClaimFee, protocolFeeReceiver);
         }
 
-        return isValid;
+        return true;
     }
 
     /// @notice Set the claim fee (only callable on the base implementation)

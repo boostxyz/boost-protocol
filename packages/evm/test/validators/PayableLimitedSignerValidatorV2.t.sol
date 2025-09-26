@@ -323,7 +323,8 @@ contract PayableLimitedSignerValidatorV2Test is Test {
 
         // Try to validate with invalid signature - should fail signature validation
         vm.prank(address(mockBoostCore));
-        assertFalse(validator.validate{value: claimFee}(boostId, incentiveId, claimant, claimData));
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        validator.validate{value: claimFee}(boostId, incentiveId, claimant, claimData);
 
         // Check that fee was not transferred
         assertEq(protocolFeeReceiver.balance, 0);

@@ -994,7 +994,9 @@ contract BoostCoreTest is Test {
         // Check that ReferralFeeSent was not emitted
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i = 0; i < logs.length; i++) {
-            assertNotEq(logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,address,uint256)"));
+            assertNotEq(
+                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
+            );
         }
 
         // Verify referrer received the referral fee
@@ -1048,7 +1050,9 @@ contract BoostCoreTest is Test {
         // Check that ReferralFeeSent was not emitted
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i = 0; i < logs.length; i++) {
-            assertNotEq(logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,address,uint256)"));
+            assertNotEq(
+                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
+            );
         }
 
         // Verify claimant received the reward minus only protocol fee
@@ -1097,7 +1101,9 @@ contract BoostCoreTest is Test {
         // Check that ReferralFeeSent was not emitted
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i = 0; i < logs.length; i++) {
-            assertNotEq(logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,address,uint256)"));
+            assertNotEq(
+                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
+            );
         }
 
         // Verify protocol fee receiver got full protocol fee
@@ -1321,7 +1327,7 @@ contract BoostCoreTest is Test {
         boostCore.setReferralFee(newReferralFee);
         assertEq(boostCore.referralFee(), newReferralFee);
 
-        uint64 newProtocolFee = newReferralFee;
+        uint64 newProtocolFee = newReferralFee - 1;
         vm.expectRevert("protocol fee cannot be set lower than the referral fee");
         boostCore.setProtocolFee(newProtocolFee);
     }

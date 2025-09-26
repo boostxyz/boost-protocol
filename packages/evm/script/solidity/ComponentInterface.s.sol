@@ -17,6 +17,9 @@ import {ATransparentBudget} from "contracts/budgets/ATransparentBudget.sol";
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
 import {ALimitedSignerValidator} from "contracts/validators/ALimitedSignerValidator.sol";
 import {APayableLimitedSignerValidator} from "contracts/validators/APayableLimitedSignerValidator.sol";
+import {ASignerValidatorV2} from "contracts/validators/ASignerValidatorV2.sol";
+import {ALimitedSignerValidatorV2} from "contracts/validators/ALimitedSignerValidatorV2.sol";
+import {APayableLimitedSignerValidatorV2} from "contracts/validators/APayableLimitedSignerValidatorV2.sol";
 
 import {AEventAction} from "contracts/actions/EventAction.sol";
 
@@ -59,6 +62,9 @@ contract LogComponentInterface is ScriptUtils {
         _getInterfaceASignerValidator();
         _getInterfaceALimitedSignerValidator();
         _getInterfaceAPayableLimitedSignerValidator();
+        _getInterfaceASignerValidatorV2();
+        _getInterfaceALimitedSignerValidatorV2();
+        _getInterfaceAPayableLimitedSignerValidatorV2();
         _getInterfaceAAllowListIncentive();
         _getInterfaceACGDAIncentive();
         _getInterfaceAIncentive();
@@ -198,6 +204,36 @@ contract LogComponentInterface is ScriptUtils {
         ).toHexString(4);
         componentJson = componentJsonKey.serialize(
             "APayableLimitedSignerValidator",
+            interfaceId
+        );
+    }
+
+    function _getInterfaceASignerValidatorV2() internal {
+        string memory interfaceId = uint256(
+            uint32(type(ASignerValidatorV2).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "ASignerValidatorV2",
+            interfaceId
+        );
+    }
+
+    function _getInterfaceALimitedSignerValidatorV2() internal {
+        string memory interfaceId = uint256(
+            uint32(type(ALimitedSignerValidatorV2).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "ALimitedSignerValidatorV2",
+            interfaceId
+        );
+    }
+
+    function _getInterfaceAPayableLimitedSignerValidatorV2() internal {
+        string memory interfaceId = uint256(
+            uint32(type(APayableLimitedSignerValidatorV2).interfaceId)
+        ).toHexString(4);
+        componentJson = componentJsonKey.serialize(
+            "APayableLimitedSignerValidatorV2",
             interfaceId
         );
     }

@@ -30,6 +30,7 @@ jobs:
       - name: Build
         env:
           NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
+          NODE_OPTIONS: --max-old-space-size=8192
         run: npx turbo build --cache-dir=".cache"
 
       - name: Make envfile for EVM
@@ -49,6 +50,8 @@ jobs:
 
       - name: Run tests
         uses: nick-fields/retry@v3
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         with:
           timeout_minutes: 20
           max_attempts: 3

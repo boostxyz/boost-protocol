@@ -26,6 +26,8 @@ import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IAuth} from "contracts/auth/IAuth.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 import {ASignerValidatorV2} from "contracts/validators/ASignerValidatorV2.sol";
+import {ALimitedSignerValidatorV2} from "contracts/validators/ALimitedSignerValidatorV2.sol";
+import {APayableLimitedSignerValidatorV2} from "contracts/validators/APayableLimitedSignerValidatorV2.sol";
 import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
@@ -927,7 +929,11 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         // Check if this is a V2 validator by checking the component interface directly
         // This is more reliable than supportsInterface which can have inheritance issues
         try ACloneable(address(validator)).getComponentInterface() returns (bytes4 componentInterface) {
-            if (componentInterface == type(ASignerValidatorV2).interfaceId) {
+            if (
+                componentInterface == type(ASignerValidatorV2).interfaceId
+                    || componentInterface == type(ALimitedSignerValidatorV2).interfaceId
+                    || componentInterface == type(APayableLimitedSignerValidatorV2).interfaceId
+            ) {
                 // V2 validator - extract verified referrer from claim data
                 IBoostClaim.BoostClaimDataWithReferrer memory claimData =
                     abi.decode(data_, (IBoostClaim.BoostClaimDataWithReferrer));

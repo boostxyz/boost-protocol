@@ -6,6 +6,7 @@ import {SignatureCheckerLib} from "@solady/utils/SignatureCheckerLib.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 
+import {ASignerValidatorV2} from "contracts/validators/ASignerValidatorV2.sol";
 import {ALimitedSignerValidatorV2} from "contracts/validators/ALimitedSignerValidatorV2.sol";
 
 /// @title Payable Limited Signer Validator V2
@@ -28,6 +29,12 @@ abstract contract APayableLimitedSignerValidatorV2 is ALimitedSignerValidatorV2 
 
     /// @notice Thrown when fee transfer fails
     error FeeTransferFailed();
+
+    /// @notice Returns the version of this validator. Prevent generating the same interface as APayableLimitedSignerValidator
+    /// @return The version string
+    function validatorName() external pure virtual override returns (string memory) {
+        return "APayableLimitedSignerValidatorV2";
+    }
 
     /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {

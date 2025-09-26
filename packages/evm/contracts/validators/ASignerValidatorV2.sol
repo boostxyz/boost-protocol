@@ -40,8 +40,8 @@ abstract contract ASignerValidatorV2 is IBoostClaim, AValidator {
 
     /// @notice Returns the version of this validator. Prevent generating the same interface as ASignerValidator
     /// @return The version string
-    function validatorVersion() external pure virtual returns (string memory) {
-        return "v2";
+    function validatorName() external pure virtual returns (string memory) {
+        return "ASignerValidatorV2";
     }
 
     /// @inheritdoc ACloneable

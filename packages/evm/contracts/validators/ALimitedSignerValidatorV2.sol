@@ -17,6 +17,12 @@ abstract contract ALimitedSignerValidatorV2 is ASignerValidatorV2 {
     /// @dev the maximum quantity of claims an address can submit
     uint256 public maxClaimCount;
 
+    /// @notice Returns the version of this validator. Prevent generating the same interface as ALimitedSignerValidator
+    /// @return The version string
+    function validatorName() external pure virtual override(ASignerValidatorV2) returns (string memory) {
+        return "ALimitedSignerValidatorV2";
+    }
+
     /// @inheritdoc ACloneable
     function getComponentInterface() public pure virtual override returns (bytes4) {
         return type(ALimitedSignerValidatorV2).interfaceId;

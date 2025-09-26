@@ -13,6 +13,7 @@ import {IncentiveBits} from "contracts/shared/IncentiveBits.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 import {LimitedSignerValidatorV2, ALimitedSignerValidatorV2} from "contracts/validators/LimitedSignerValidatorV2.sol";
 import {APayableLimitedSignerValidatorV2} from "contracts/validators/APayableLimitedSignerValidatorV2.sol";
+import {ASignerValidatorV2} from "contracts/validators/SignerValidatorV2.sol";
 import {IBoostCore} from "contracts/validators/PayableLimitedSignerValidator.sol";
 
 /// @title Payable Limited Signer Validator V2
@@ -115,6 +116,17 @@ contract PayableLimitedSignerValidatorV2 is APayableLimitedSignerValidatorV2, Li
             return PayableLimitedSignerValidatorV2(_baseImplementation).claimFee();
         }
         return claimFee;
+    }
+
+    /// @notice Returns the name of this validator
+    /// @return The validator name
+    function validatorName()
+        external
+        pure
+        override(APayableLimitedSignerValidatorV2, LimitedSignerValidatorV2)
+        returns (string memory)
+    {
+        return "PayableLimitedSignerValidatorV2";
     }
 
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {

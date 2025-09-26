@@ -66,6 +66,18 @@ contract LimitedSignerValidatorV2 is ALimitedSignerValidatorV2, SignerValidatorV
         return true;
     }
 
+    /// @notice Returns the name of this validator
+    /// @return The validator name
+    function validatorName()
+        external
+        pure
+        virtual
+        override(ALimitedSignerValidatorV2, ASignerValidatorV2)
+        returns (string memory)
+    {
+        return "LimitedSignerValidatorV2";
+    }
+
     function _domainNameAndVersion()
         internal
         pure

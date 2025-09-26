@@ -436,7 +436,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
 
         // Process the claim and calculate fees using verified referrer
         (uint256 referralFeeAmount, uint256 protocolFeeAmount) =
-            _processClaim(incentive, incentiveContract, claimant, verifiedReferrer, data_);
+            _calculateFees(incentive, incentiveContract, claimant, verifiedReferrer, data_);
 
         // Transfer the referral fee to the verified referrer if applicable
         if (referralFeeAmount > 0) {
@@ -447,8 +447,13 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         // Transfer the protocol fee to the protocol fee receiver if applicable
         if (protocolFeeAmount > 0) {
             _transferProtocolFee(incentive, protocolFeeAmount);
-            incentive.protocolFeesRemaining -= protocolFeeAmount + referralFeeAmount;
             emit ProtocolFeesCollected(boostId_, incentiveId_, protocolFeeAmount, protocolFeeReceiver);
+        }
+
+        // Always update remaining fees if any were collected
+        uint256 totalFeesCollected = protocolFeeAmount + referralFeeAmount;
+        if (totalFeesCollected > 0) {
+            incentive.protocolFeesRemaining -= totalFeesCollected;
         }
 
         emit BoostClaimed(boostId_, incentiveId_, claimant, verifiedReferrer, data_);
@@ -838,7 +843,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         return 0;
     }
 
-    /// @notice Process the claim and calculate fees
+    /// @notice Calculate fees
     /// @param incentive The incentive info
     /// @param incentiveContract The incentive contract
     /// @param claimant The claimant address
@@ -846,7 +851,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @param data_ The claim data
     /// @return referralFeeAmount The referral fee amount
     /// @return protocolFeeAmount The protocol fee amount
-    function _processClaim(
+    function _calculateFees(
         IncentiveDisbursalInfo storage incentive,
         AIncentive incentiveContract,
         address claimant,
@@ -868,10 +873,18 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         // Calculate the change in balance and the protocol fee amount
         uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
 
-        referralFeeAmount =
-            referrer_ == claimant || referrer_ == address(0) ? 0 : (balanceChange * referralFee) / FEE_DENOMINATOR;
+        // Calculate the total protocol fee
+        uint256 totalProtocolFee = (balanceChange * incentive.protocolFee) / FEE_DENOMINATOR;
 
-        protocolFeeAmount = ((balanceChange * incentive.protocolFee) / FEE_DENOMINATOR) - referralFeeAmount;
+        // Calculate potential referral fee
+        uint256 potentialReferralFee =
+            (referrer_ == claimant || referrer_ == address(0)) ? 0 : (balanceChange * referralFee) / FEE_DENOMINATOR;
+
+        // Cap referral fee at total protocol fee to prevent underflow
+        referralFeeAmount = potentialReferralFee > totalProtocolFee ? totalProtocolFee : potentialReferralFee;
+
+        // Protocol gets remainder
+        protocolFeeAmount = totalProtocolFee - referralFeeAmount;
     }
 
     // Helper function to transfer the referral fee based on the asset type

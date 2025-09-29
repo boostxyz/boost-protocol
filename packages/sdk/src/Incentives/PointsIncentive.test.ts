@@ -5,7 +5,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
   freshPoints,
 } from "@boostxyz/test/helpers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
@@ -48,7 +48,7 @@ describe("PointsIncentive", () => {
       reward: 1n,
       limit: 10n,
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [pointsIncentive],
     });
 
@@ -93,7 +93,7 @@ describe("PointsIncentive", () => {
       reward: 1n,
       limit: 1n,
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [pointsIncentive],
     });
 
@@ -139,7 +139,7 @@ describe("PointsIncentive", () => {
       reward,
       limit: 10n,
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [pointsIncentive],
     });
 
@@ -188,7 +188,7 @@ describe("PointsIncentive", () => {
       reward: 1n,
       limit: 1n,
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [pointsIncentive],
     });
 

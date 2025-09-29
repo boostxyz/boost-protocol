@@ -12,7 +12,7 @@ import {
   freshManagedBudgetWithFeesV2,
   fundErc20,
   fundErc1155,
-  freshBoost,
+  freshBoostWithV1Validator,
   fundManagedBudgetWithFeesV2,
 } from "@boostxyz/test/helpers";
 import { testAccount } from "@boostxyz/test/viem";
@@ -210,7 +210,7 @@ describe("ManagedBudgetWithFeesV2", () => {
         manager: budget.assertValidAddress(),
       });
       await budget.grantRoles(fixtures.core.assertValidAddress(), Roles.MANAGER);
-      const boost = await freshBoost(fixtures, {
+      const boost = await freshBoostWithV1Validator(fixtures, {
         budget: budget,
         incentives: [erc20Incentive],
       });
@@ -252,7 +252,7 @@ describe("ManagedBudgetWithFeesV2", () => {
         manager: budget.assertValidAddress(),
       });
       await budget.grantRoles(fixtures.core.assertValidAddress(), Roles.MANAGER);
-      const boost = await freshBoost(fixtures, {
+      const boost = await freshBoostWithV1Validator(fixtures, {
         budget: budget,
         incentives: [erc20Incentive],
       });

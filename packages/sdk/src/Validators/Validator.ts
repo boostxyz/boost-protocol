@@ -1,8 +1,11 @@
 import { aValidatorAbi } from '@boostxyz/evm';
 import {
   ALimitedSignerValidator,
+  ALimitedSignerValidatorV2,
   APayableLimitedSignerValidator,
+  APayableLimitedSignerValidatorV2,
   ASignerValidator,
+  ASignerValidatorV2,
 } from '@boostxyz/evm/deploys/componentInterfaces.json';
 import { readContract } from '@wagmi/core';
 import { type Address, type Hex, decodeAbiParameters } from 'viem';
@@ -10,10 +13,20 @@ import type { DeployableOptions } from '../Deployable/Deployable';
 import { InvalidComponentInterfaceError } from '../errors';
 import type { ReadParams } from '../utils';
 import { LimitedSignerValidator } from './LimitedSignerValidator';
+import { LimitedSignerValidatorV2 } from './LimitedSignerValidatorV2';
 import { PayableLimitedSignerValidator } from './PayableLimitedSignerValidator';
+import { PayableLimitedSignerValidatorV2 } from './PayableLimitedSignerValidatorV2';
 import { SignerValidator } from './SignerValidator';
+import { SignerValidatorV2 } from './SignerValidatorV2';
 
-export { SignerValidator, LimitedSignerValidator };
+export {
+  SignerValidator,
+  LimitedSignerValidator,
+  PayableLimitedSignerValidator,
+  SignerValidatorV2,
+  LimitedSignerValidatorV2,
+  PayableLimitedSignerValidatorV2,
+};
 
 /**
  * A union type representing all valid protocol Validator implementations
@@ -24,7 +37,10 @@ export { SignerValidator, LimitedSignerValidator };
 export type Validator =
   | SignerValidator
   | LimitedSignerValidator
-  | PayableLimitedSignerValidator;
+  | PayableLimitedSignerValidator
+  | SignerValidatorV2
+  | LimitedSignerValidatorV2
+  | PayableLimitedSignerValidatorV2;
 
 /**
  * A map of Validator component interfaces to their constructors.
@@ -35,6 +51,9 @@ export const ValidatorByComponentInterface = {
   [ASignerValidator as Hex]: SignerValidator,
   [ALimitedSignerValidator as Hex]: LimitedSignerValidator,
   [APayableLimitedSignerValidator as Hex]: PayableLimitedSignerValidator,
+  [ASignerValidatorV2 as Hex]: SignerValidatorV2,
+  [ALimitedSignerValidatorV2 as Hex]: LimitedSignerValidatorV2,
+  [APayableLimitedSignerValidatorV2 as Hex]: PayableLimitedSignerValidatorV2,
 };
 
 /**
@@ -104,6 +123,30 @@ export function decodeClaimData(data: Hex) {
         components: [
           { type: 'bytes', name: 'validatorData' },
           { type: 'bytes', name: 'incentiveData' },
+        ],
+      },
+    ],
+    data,
+  )[0];
+}
+
+/**
+ * Decodes a claim data hex string into its validator data, incentive data, and referrer components.
+ *
+ * @export
+ * @param {Hex} data - The hex-encoded claim data to decode
+ * @returns {{ validatorData: Hex; incentiveData: Hex, referrer: Address }} The decoded claim data components
+ */
+export function decodeClaimDataWithReferrer(data: Hex) {
+  return decodeAbiParameters(
+    [
+      {
+        type: 'tuple',
+        name: 'BoostClaimDataWithReferrer',
+        components: [
+          { type: 'bytes', name: 'validatorData' },
+          { type: 'bytes', name: 'incentiveData' },
+          { type: 'address', name: 'referrer' },
         ],
       },
     ],

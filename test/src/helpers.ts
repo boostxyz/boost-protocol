@@ -23,8 +23,11 @@ import ERC20VariableCriteriaIncentiveV2Artifact from '@boostxyz/evm/artifacts/co
 import ERC20VariableIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/ERC20VariableIncentive.sol/ERC20VariableIncentive.json';
 import PointsIncentiveArtifact from '@boostxyz/evm/artifacts/contracts/incentives/PointsIncentive.sol/PointsIncentive.json';
 import LimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
+import LimitedSignerValidatorV2Artifact from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidatorV2.sol/LimitedSignerValidatorV2.json';
 import PayableLimitedSignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/PayableLimitedSignerValidator.sol/PayableLimitedSignerValidator.json';
+import PayableLimitedSignerValidatorV2Artifact from '@boostxyz/evm/artifacts/contracts/validators/PayableLimitedSignerValidatorV2.sol/PayableLimitedSignerValidatorV2.json';
 import SignerValidatorArtifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidator.sol/SignerValidator.json';
+import SignerValidatorV2Artifact from '@boostxyz/evm/artifacts/contracts/validators/SignerValidatorV2.sol/SignerValidatorV2.json';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 import { deployContract, simulateContract, writeContract } from '@wagmi/core';
 import { type Address, type Hex, parseEther, zeroAddress } from 'viem';
@@ -67,6 +70,8 @@ import {
   FilterType,
   LimitedSignerValidator,
   type LimitedSignerValidatorPayload,
+  LimitedSignerValidatorV2,
+  type LimitedSignerValidatorV2Payload,
   ManagedBudget,
   type ManagedBudgetPayload,
   ManagedBudgetWithFees,
@@ -78,6 +83,8 @@ import {
   OpenAllowList,
   PayableLimitedSignerValidator,
   type PayableLimitedSignerValidatorPayload,
+  PayableLimitedSignerValidatorV2,
+  type PayableLimitedSignerValidatorV2Payload,
   PointsIncentive,
   type PointsIncentivePayload,
   PrimitiveType,
@@ -85,6 +92,8 @@ import {
   SignatureType,
   SignerValidator,
   type SignerValidatorPayload,
+  SignerValidatorV2,
+  type SignerValidatorV2Payload,
   SimpleAllowList,
   type SimpleAllowListPayload,
   SimpleDenyList,
@@ -120,7 +129,7 @@ export type BudgetWithFeeFixtures = BudgetFixtures & {
   budget: ManagedBudgetWithFees | ManagedBudgetWithFeesV2;
 };
 
-export async function freshBoost(
+export async function freshBoostWithV1Validator(
   fixtures: Fixtures,
   options: Partial<CreateBoostPayload>,
 ): Promise<Boost> {
@@ -143,6 +152,42 @@ export async function freshBoost(
     validator:
       options.validator ||
       fixtures.core.SignerValidator({
+        signers: [defaultOptions.account.address],
+        validatorCaller: fixtures.core.assertValidAddress(),
+      }),
+    allowList:
+      options.allowList ||
+      fixtures.core.SimpleAllowList({
+        owner: defaultOptions.account.address,
+        allowed: [defaultOptions.account.address],
+      }),
+    incentives: options.incentives || [],
+  });
+}
+
+export async function freshBoostWithV2Validator(
+  fixtures: Fixtures,
+  options: Partial<CreateBoostPayload>,
+): Promise<Boost> {
+  const { core } = fixtures;
+  const { budget, erc20 } = await loadFixture(
+    fundBudget(defaultOptions, fixtures),
+  );
+  return core.createBoost({
+    protocolFee: options.protocolFee || 1n,
+    maxParticipants: options.maxParticipants || 100n,
+    budget: options.budget || budget,
+    action:
+      options.action ||
+      core.EventAction(
+        makeMockEventActionPayload(
+          core.assertValidAddress(),
+          erc20.assertValidAddress(),
+        ),
+      ),
+    validator:
+      options.validator ||
+      fixtures.core.SignerValidatorV2({
         signers: [defaultOptions.account.address],
         validatorCaller: fixtures.core.assertValidAddress(),
       }),
@@ -186,6 +231,9 @@ export function useTestFixtures(
       PointsIncentive,
       SignerValidator,
       PayableLimitedSignerValidator,
+      SignerValidatorV2,
+      LimitedSignerValidatorV2,
+      PayableLimitedSignerValidatorV2,
     },
   };
 }
@@ -425,6 +473,35 @@ export function deployFixtures(
       }),
     );
 
+    const signerValidatorV2Base = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: SignerValidatorV2Artifact.abi,
+        bytecode: SignerValidatorV2Artifact.bytecode as Hex,
+        account,
+      }),
+    );
+
+    const limitedSignerValidatorV2Base = await getDeployedContractAddress(
+      config,
+      deployContract(config, {
+        abi: LimitedSignerValidatorV2Artifact.abi,
+        bytecode: LimitedSignerValidatorV2Artifact.bytecode as Hex,
+        account,
+      }),
+    );
+
+    const payableLimitedSignerValidatorV2Base =
+      await getDeployedContractAddress(
+        config,
+        deployContract(config, {
+          abi: PayableLimitedSignerValidatorV2Artifact.abi,
+          bytecode: PayableLimitedSignerValidatorV2Artifact.bytecode as Hex,
+          args: [account.address, parseEther('0.001')], // Owner address and initial claim fee
+          account,
+        }),
+      );
+
     const bases = {
       // ContractAction: class TContractAction extends ContractAction {
       //   public static override bases: Record<number, Address> = {
@@ -551,6 +628,21 @@ export function deployFixtures(
           [chainId]: payableLimitedSignerValidatorBase,
         };
       },
+      SignerValidatorV2: class TSignerValidatorV2 extends SignerValidatorV2 {
+        public static override bases: Record<number, Address> = {
+          [chainId]: signerValidatorV2Base,
+        };
+      },
+      LimitedSignerValidatorV2: class TLimitedSignerValidatorV2 extends LimitedSignerValidatorV2 {
+        public static override bases: Record<number, Address> = {
+          [chainId]: limitedSignerValidatorV2Base,
+        };
+      },
+      PayableLimitedSignerValidatorV2: class TPayableLimitedSignerValidatorV2 extends PayableLimitedSignerValidatorV2 {
+        public static override bases: Record<number, Address> = {
+          [chainId]: payableLimitedSignerValidatorV2Base,
+        };
+      },
       // biome-ignore lint/suspicious/noExplicitAny: test helpers, everything is permitted
     } as any as {
       // ContractAction: typeof ContractAction;
@@ -578,6 +670,9 @@ export function deployFixtures(
       SignerValidator: typeof SignerValidator;
       LimitedSignerValidator: typeof LimitedSignerValidator;
       PayableLimitedSignerValidator: typeof PayableLimitedSignerValidator;
+      SignerValidatorV2: typeof SignerValidatorV2;
+      LimitedSignerValidatorV2: typeof LimitedSignerValidatorV2;
+      PayableLimitedSignerValidatorV2: typeof PayableLimitedSignerValidatorV2;
     };
 
     for (const [name, deployable] of Object.entries(bases)) {
@@ -595,6 +690,7 @@ export function deployFixtures(
     // Deploy BoostCore with UUPS proxy deployment and initialization
     const _core = await new BoostCore({
       ...options,
+      address: zeroAddress, // Dummy address to bypass chain validation
     }).deploy({
       registryAddress: registry.assertValidAddress(),
       protocolFeeReceiver: account.address,
@@ -784,6 +880,36 @@ export function deployFixtures(
           { config: this._config, account: this._account },
           options,
           isBase ?? false,
+        );
+      }
+      override SignerValidatorV2(
+        options: DeployablePayloadOrAddress<SignerValidatorV2Payload>,
+        isBase?: boolean,
+      ) {
+        return new bases.SignerValidatorV2(
+          { config: this._config, account: this._account },
+          options,
+          isBase,
+        );
+      }
+      override LimitedSignerValidatorV2(
+        options: DeployablePayloadOrAddress<LimitedSignerValidatorV2Payload>,
+        isBase?: boolean,
+      ) {
+        return new bases.LimitedSignerValidatorV2(
+          { config: this._config, account: this._account },
+          options,
+          isBase,
+        );
+      }
+      override PayableLimitedSignerValidatorV2(
+        options: DeployablePayloadOrAddress<PayableLimitedSignerValidatorV2Payload>,
+        isBase?: boolean,
+      ) {
+        return new bases.PayableLimitedSignerValidatorV2(
+          { config: this._config, account: this._account },
+          options,
+          isBase,
         );
       }
       override ERC20VariableIncentive(

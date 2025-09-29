@@ -4,7 +4,8 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
+  freshBoostWithV2Validator,
   fundBudget,
   makeMockEventActionPayload,
   fundErc721,
@@ -47,7 +48,7 @@ describe("BoostCore", () => {
           erc20.assertValidAddress(),
         ),
       ),
-      validator: core.SignerValidator({
+      validator: core.SignerValidatorV2({
         signers: [defaultOptions.account.address],
         validatorCaller: defaultOptions.account.address,
       }),
@@ -790,7 +791,7 @@ describe("BoostCore", () => {
   test("uses the provided validator when one is specified", async () => {
     const { core } = fixtures;
     const { budget, erc20 } = budgets;
-    const customValidator = core.SignerValidator({
+    const customValidator = core.SignerValidatorV2({
       signers: [budget.assertValidAddress()],
       validatorCaller: core.assertValidAddress(),
     });
@@ -859,7 +860,7 @@ describe("BoostCore", () => {
     expect(signer).toBe(true);
   });
 
-  test("can retrieve the BoostClaimed event from a transaction hash", async () => {
+  test("[v1-validator] can retrieve the BoostClaimed event from a transaction hash", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
     const referrer = accounts.at(1)!.account!,
       // biome-ignore lint/style/noNonNullAssertion: we know this is defined
@@ -871,7 +872,7 @@ describe("BoostCore", () => {
       limit: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -885,6 +886,50 @@ describe("BoostCore", () => {
       incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
+      referrer,
+    });
+
+    const { hash } = await fixtures.core.claimIncentiveRaw(
+      boost.id,
+      0n,
+      referrer,
+      claimDataPayload,
+    );
+
+    const claimInfo = await fixtures.core.getClaimFromTransaction({ hash });
+    expect(claimInfo).toBeDefined();
+    expect(claimInfo?.claimant).toBe(claimant);
+    expect(typeof claimInfo?.boostId).toBe("bigint");
+    expect(claimInfo?.referrer).toBe(zeroAddress);
+  });
+
+  test("[v2-validator] can retrieve the BoostClaimed event from a transaction hash", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const referrer = accounts.at(1)!.account!,
+      // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+      trustedSigner = accounts.at(0)!;
+    const erc20Incentive = fixtures.core.ERC20Incentive({
+      asset: budgets.erc20.assertValidAddress(),
+      strategy: StrategyType.POOL,
+      reward: 1n,
+      limit: 1n,
+      manager: budgets.budget.assertValidAddress(),
+    });
+    const boost = await freshBoostWithV2Validator(fixtures, {
+      budget: budgets.budget,
+      incentives: [erc20Incentive],
+    });
+
+    const claimant = trustedSigner.account;
+    const incentiveData = pad("0xdef456232173821931823712381232131391321934");
+    const claimDataPayload = await boost.validator.encodeClaimData({
+      signer: trustedSigner,
+      incentiveData,
+      chainId: defaultOptions.config.chains[0].id,
+      incentiveQuantity: boost.incentives.length,
+      claimant,
+      boostId: boost.id,
+      referrer,
     });
 
     const { hash } = await fixtures.core.claimIncentiveRaw(
@@ -1288,7 +1333,7 @@ describe("ERC20PeggedVariableCriteriaIncentive Top-Ups", () => {
   });
 });
 
-describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () => {
+describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidatorV2", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });
@@ -1355,6 +1400,7 @@ describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () 
       incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
+      referrer,
     });
 
     // First claim should succeed
@@ -1368,6 +1414,7 @@ describe("ERC20PeggedVariableCriteriaIncentive with LimitedSignerValidator", () 
       incentiveQuantity: boost.incentives.length,
       claimant,
       boostId: boost.id,
+      referrer,
     });
 
     // Second claim should fail due to validator limit (specific error code)

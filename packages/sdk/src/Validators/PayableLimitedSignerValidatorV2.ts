@@ -1,18 +1,18 @@
 import {
-  payableLimitedSignerValidatorAbi,
-  readPayableLimitedSignerValidatorGetClaimFee,
-  readPayableLimitedSignerValidatorHashSignerData,
-  readPayableLimitedSignerValidatorSigners,
-  simulatePayableLimitedSignerValidatorSetAuthorized,
-  simulatePayableLimitedSignerValidatorSetClaimFee,
-  simulatePayableLimitedSignerValidatorSetValidatorCaller,
-  simulatePayableLimitedSignerValidatorValidate,
-  writePayableLimitedSignerValidatorSetAuthorized,
-  writePayableLimitedSignerValidatorSetClaimFee,
-  writePayableLimitedSignerValidatorSetValidatorCaller,
-  writePayableLimitedSignerValidatorValidate,
+  payableLimitedSignerValidatorV2Abi,
+  readPayableLimitedSignerValidatorV2GetClaimFee,
+  readPayableLimitedSignerValidatorV2HashSignerData,
+  readPayableLimitedSignerValidatorV2Signers,
+  simulatePayableLimitedSignerValidatorV2SetAuthorized,
+  simulatePayableLimitedSignerValidatorV2SetClaimFee,
+  simulatePayableLimitedSignerValidatorV2SetValidatorCaller,
+  simulatePayableLimitedSignerValidatorV2Validate,
+  writePayableLimitedSignerValidatorV2SetAuthorized,
+  writePayableLimitedSignerValidatorV2SetClaimFee,
+  writePayableLimitedSignerValidatorV2SetValidatorCaller,
+  writePayableLimitedSignerValidatorV2Validate,
 } from '@boostxyz/evm';
-import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/PayableLimitedSignerValidator.sol/PayableLimitedSignerValidator.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/PayableLimitedSignerValidatorV2.sol/PayableLimitedSignerValidatorV2.json';
 import {
   type Address,
   type ContractEventName,
@@ -20,7 +20,7 @@ import {
   type PrivateKeyAccount,
   encodeAbiParameters,
 } from 'viem';
-import { PayableLimitedSignerValidator as PayableLimitedSignerValidatorBases } from '../../dist/deployments.json';
+import { PayableLimitedSignerValidatorV2 as PayableLimitedSignerValidatorV2Bases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -37,16 +37,16 @@ import type {
   LimitedSignerValidatorValidatePayload,
 } from './LimitedSignerValidator';
 
-export { payableLimitedSignerValidatorAbi };
+export { payableLimitedSignerValidatorV2Abi };
 
 /**
- * Object representation of a {@link PayableLimitedSignerValidator} initialization payload
+ * Object representation of a {@link PayableLimitedSignerValidatorV2} initialization payload
  *
  * @export
- * @interface PayableLimitedSignerValidatorPayload
- * @typedef {PayableLimitedSignerValidatorPayload}
+ * @interface PayableLimitedSignerValidatorV2Payload
+ * @typedef {PayableLimitedSignerValidatorV2Payload}
  */
-export interface PayableLimitedSignerValidatorPayload {
+export interface PayableLimitedSignerValidatorV2Payload {
   /**
    * The list of authorized signers. The first address in the list will be the initial owner of the contract.
    *
@@ -69,10 +69,10 @@ export interface PayableLimitedSignerValidatorPayload {
  * Extended validate payload that includes the payment value
  *
  * @export
- * @interface PayableLimitedSignerValidatorValidatePayload
- * @typedef {PayableLimitedSignerValidatorValidatePayload}
+ * @interface PayableLimitedSignerValidatorV2ValidatePayload
+ * @typedef {PayableLimitedSignerValidatorV2ValidatePayload}
  */
-export interface PayableLimitedSignerValidatorValidatePayload
+export interface PayableLimitedSignerValidatorV2ValidatePayload
   extends LimitedSignerValidatorValidatePayload {
   /**
    * The amount of ETH to send with the validation call (must match claimFee exactly)
@@ -86,10 +86,10 @@ export interface PayableLimitedSignerValidatorValidatePayload
  * Signer Validator Claim Data Payload
  *
  * @export
- * @interface PayableLimitedSignerValidatorClaimDataParams
- * @typedef {PayableLimitedSignerValidatorClaimDataParams}
+ * @interface PayableLimitedSignerValidatorV2ClaimDataParams
+ * @typedef {PayableLimitedSignerValidatorV2ClaimDataParams}
  */
-export interface PayableLimitedSignerValidatorClaimDataParams {
+export interface PayableLimitedSignerValidatorV2ClaimDataParams {
   /**
    * The signer with which to sign the input
    *
@@ -140,16 +140,22 @@ export interface PayableLimitedSignerValidatorClaimDataParams {
    * @type {bigint}
    */
   boostId: bigint;
+  /**
+   * The address of the referrer
+   *
+   * @type {?Address}
+   */
+  referrer?: Address;
 }
 
 /**
  * Object representing the payload for signing before validation.
  *
  * @export
- * @interface PayableLimitedSignerValidatorSignaturePayload
- * @typedef {PayableLimitedSignerValidatorSignaturePayload}
+ * @interface PayableLimitedSignerValidatorV2SignaturePayload
+ * @typedef {PayableLimitedSignerValidatorV2SignaturePayload}
  */
-export interface PayableLimitedSignerValidatorSignaturePayload {
+export interface PayableLimitedSignerValidatorV2SignaturePayload {
   /**
    * The ID of the boost.
    *
@@ -174,19 +180,25 @@ export interface PayableLimitedSignerValidatorSignaturePayload {
    * @type {Hex}
    */
   incentiveData: Hex;
+  /**
+   * The address of the referrer
+   *
+   * @type {Address}
+   */
+  referrer: Address;
 }
 
 /**
- * A generic `viem.Log` event with support for `PayableLimitedSignerValidator` event types.
+ * A generic `viem.Log` event with support for `PayableLimitedSignerValidatorV2` event types.
  *
  * @export
- * @typedef {PayableLimitedSignerValidatorLog}
+ * @typedef {PayableLimitedSignerValidatorV2Log}
  */
-export type PayableLimitedSignerValidatorLog<
+export type PayableLimitedSignerValidatorV2Log<
   event extends ContractEventName<
-    typeof payableLimitedSignerValidatorAbi
-  > = ContractEventName<typeof payableLimitedSignerValidatorAbi>,
-> = GenericLog<typeof payableLimitedSignerValidatorAbi, event>;
+    typeof payableLimitedSignerValidatorV2Abi
+  > = ContractEventName<typeof payableLimitedSignerValidatorV2Abi>,
+> = GenericLog<typeof payableLimitedSignerValidatorV2Abi, event>;
 
 /**
  * A validator that verifies signatures, limits claims per address, and requires a claim fee.
@@ -194,12 +206,12 @@ export type PayableLimitedSignerValidatorLog<
  * This allows updating the fee globally by only changing it on the base.
  *
  * @export
- * @class PayableLimitedSignerValidator
+ * @class PayableLimitedSignerValidatorV2
  * @extends {DeployableTarget}
  */
-export class PayableLimitedSignerValidator extends DeployableTarget<
-  PayableLimitedSignerValidatorPayload,
-  typeof payableLimitedSignerValidatorAbi
+export class PayableLimitedSignerValidatorV2 extends DeployableTarget<
+  PayableLimitedSignerValidatorV2Payload,
+  typeof payableLimitedSignerValidatorV2Abi
 > {
   /**
    * @inheritdoc
@@ -208,7 +220,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    * @readonly
    * @type {*}
    */
-  public override readonly abi = payableLimitedSignerValidatorAbi;
+  public override readonly abi = payableLimitedSignerValidatorV2Abi;
 
   /**
    * @inheritdoc
@@ -221,7 +233,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
     ...(import.meta.env?.VITE_PAYABLE_LIMITED_SIGNER_VALIDATOR_BASE
       ? { 31337: import.meta.env.VITE_PAYABLE_LIMITED_SIGNER_VALIDATOR_BASE }
       : {}),
-    ...(PayableLimitedSignerValidatorBases as Record<number, Address>),
+    ...(PayableLimitedSignerValidatorV2Bases as Record<number, Address>),
   };
 
   /**
@@ -242,7 +254,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    * @returns {Promise<bigint>}
    */
   public async getClaimFee(params?: ReadParams): Promise<bigint> {
-    return await readPayableLimitedSignerValidatorGetClaimFee(this._config, {
+    return await readPayableLimitedSignerValidatorV2GetClaimFee(this._config, {
       address: this.assertValidAddress(),
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters
       ...(params as any),
@@ -276,14 +288,14 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    */
   public async setClaimFeeRaw(newFee: bigint, params?: WriteParams) {
     const { request, result } =
-      await simulatePayableLimitedSignerValidatorSetClaimFee(this._config, {
+      await simulatePayableLimitedSignerValidatorV2SetClaimFee(this._config, {
         address: this.assertValidAddress(),
         args: [newFee],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters
         ...(params as any),
       });
-    const hash = await writePayableLimitedSignerValidatorSetClaimFee(
+    const hash = await writePayableLimitedSignerValidatorV2SetClaimFee(
       this._config,
       request,
     );
@@ -300,7 +312,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    * @returns {Promise<boolean>}
    */
   public async signers(address: Address, params?: ReadParams) {
-    return await readPayableLimitedSignerValidatorSigners(this._config, {
+    return await readPayableLimitedSignerValidatorV2Signers(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -313,25 +325,28 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {PayableLimitedSignerValidatorSignaturePayload} payload
+   * @param {PayableLimitedSignerValidatorV2SignaturePayload} payload
    * @param {?ReadParams} [params]
    * @returns {Promise<Hex>}
    */
   public async hashSignerData(
-    payload: PayableLimitedSignerValidatorSignaturePayload,
+    payload: PayableLimitedSignerValidatorV2SignaturePayload,
     params?: ReadParams,
   ) {
-    return await readPayableLimitedSignerValidatorHashSignerData(this._config, {
-      address: this.assertValidAddress(),
-      args: [
-        payload.boostId,
-        payload.incentiveQuantity,
-        payload.claimant,
-        payload.incentiveData,
-      ],
-      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
-      ...(params as any),
-    });
+    return await readPayableLimitedSignerValidatorV2HashSignerData(
+      this._config,
+      {
+        address: this.assertValidAddress(),
+        args: [
+          payload.boostId,
+          payload.incentiveQuantity,
+          payload.claimant,
+          payload.incentiveData,
+        ],
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
   }
 
   /**
@@ -340,12 +355,12 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {PayableLimitedSignerValidatorValidatePayload} payload
+   * @param {PayableLimitedSignerValidatorV2ValidatePayload} payload
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated
    */
   protected async validate(
-    payload: PayableLimitedSignerValidatorValidatePayload,
+    payload: PayableLimitedSignerValidatorV2ValidatePayload,
     params?: WriteParams,
   ): Promise<boolean> {
     return await this.awaitResult(this.validateRaw(payload, params));
@@ -357,16 +372,16 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {PayableLimitedSignerValidatorValidatePayload} payload
+   * @param {PayableLimitedSignerValidatorV2ValidatePayload} payload
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: boolean; }>}
    */
   protected async validateRaw(
-    payload: PayableLimitedSignerValidatorValidatePayload,
+    payload: PayableLimitedSignerValidatorV2ValidatePayload,
     params?: WriteParams,
   ) {
     const { request, result } =
-      await simulatePayableLimitedSignerValidatorValidate(this._config, {
+      await simulatePayableLimitedSignerValidatorV2Validate(this._config, {
         address: this.assertValidAddress(),
         args: [
           payload.boostId,
@@ -379,7 +394,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters
         ...(params as any),
       });
-    const hash = await writePayableLimitedSignerValidatorValidate(
+    const hash = await writePayableLimitedSignerValidatorV2Validate(
       this._config,
       request,
     );
@@ -422,14 +437,14 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
     params?: WriteParams,
   ) {
     const { request, result } =
-      await simulatePayableLimitedSignerValidatorSetAuthorized(this._config, {
+      await simulatePayableLimitedSignerValidatorV2SetAuthorized(this._config, {
         address: this.assertValidAddress(),
         args: [addresses, allowed],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters
         ...(params as any),
       });
-    const hash = await writePayableLimitedSignerValidatorSetAuthorized(
+    const hash = await writePayableLimitedSignerValidatorV2SetAuthorized(
       this._config,
       request,
     );
@@ -447,7 +462,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    */
   public async setValidatorCallerRaw(address: Address, params?: WriteParams) {
     const { request, result } =
-      await simulatePayableLimitedSignerValidatorSetValidatorCaller(
+      await simulatePayableLimitedSignerValidatorV2SetValidatorCaller(
         this._config,
         {
           address: this.assertValidAddress(),
@@ -457,7 +472,7 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
           ...(params as any),
         },
       );
-    const hash = await writePayableLimitedSignerValidatorSetValidatorCaller(
+    const hash = await writePayableLimitedSignerValidatorV2SetValidatorCaller(
       this._config,
       request,
     );
@@ -482,13 +497,13 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {PayableLimitedSignerValidatorClaimDataParams} params
+   * @param {PayableLimitedSignerValidatorV2ClaimDataParams} params
    * @returns {Promise<Hex>}
    */
   public async encodeClaimData(
-    params: Omit<PayableLimitedSignerValidatorClaimDataParams, 'validator'>,
+    params: Omit<PayableLimitedSignerValidatorV2ClaimDataParams, 'validator'>,
   ): Promise<Hex> {
-    return await preparePayableLimitedSignerValidatorClaimDataPayload({
+    return await preparePayableLimitedSignerValidatorV2ClaimDataPayload({
       ...params,
       validator: this.assertValidAddress(),
     });
@@ -498,12 +513,12 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
    * @inheritdoc
    *
    * @public
-   * @param {?PayableLimitedSignerValidatorPayload} [_payload]
+   * @param {?PayableLimitedSignerValidatorV2Payload} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: PayableLimitedSignerValidatorPayload,
+    _payload?: PayableLimitedSignerValidatorV2Payload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [payload, options] = this.validateDeploymentConfig(
@@ -515,21 +530,21 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
     const chainId = this._config.getClient().chain?.id;
     if (!chainId) {
       throw new Error(
-        'Chain ID is required for PayableLimitedSignerValidator deployment',
+        'Chain ID is required for PayableLimitedSignerValidatorV2 deployment',
       );
     }
-    const baseImplementation = PayableLimitedSignerValidator.bases[chainId];
+    const baseImplementation = PayableLimitedSignerValidatorV2.bases[chainId];
     if (!baseImplementation) {
       throw new Error(
-        `Base implementation not found for chain ID ${chainId}. Please ensure PayableLimitedSignerValidator is deployed on this chain.`,
+        `Base implementation not found for chain ID ${chainId}. Please ensure PayableLimitedSignerValidatorV2 is deployed on this chain.`,
       );
     }
 
     return {
-      abi: payableLimitedSignerValidatorAbi,
+      abi: payableLimitedSignerValidatorV2Abi,
       bytecode: bytecode as Hex,
       args: [
-        preparePayableLimitedSignerValidatorPayload({
+        preparePayableLimitedSignerValidatorV2Payload({
           ...payload,
           baseImplementation,
         }),
@@ -544,10 +559,10 @@ export class PayableLimitedSignerValidator extends DeployableTarget<
  *
  * @export
  * @async
- * @param {PayableLimitedSignerValidatorClaimDataParams} param0
+ * @param {PayableLimitedSignerValidatorV2ClaimDataParams} param0
  * @returns {Promise<Hex>}
  */
-export async function preparePayableLimitedSignerValidatorClaimDataPayload({
+export async function preparePayableLimitedSignerValidatorV2ClaimDataPayload({
   signer,
   incentiveData,
   chainId,
@@ -555,9 +570,11 @@ export async function preparePayableLimitedSignerValidatorClaimDataPayload({
   incentiveQuantity,
   claimant,
   boostId,
-}: PayableLimitedSignerValidatorClaimDataParams): Promise<Hex> {
+  referrer,
+}: PayableLimitedSignerValidatorV2ClaimDataParams): Promise<Hex> {
+  const _referrer = referrer ?? claimant;
   const domain = {
-    name: 'PayableLimitedSignerValidator',
+    name: 'PayableLimitedSignerValidatorV2',
     version: '1',
     chainId: chainId,
     verifyingContract: validator,
@@ -570,6 +587,7 @@ export async function preparePayableLimitedSignerValidatorClaimDataPayload({
         { name: 'incentiveQuantity', type: 'uint8' },
         { name: 'claimant', type: 'address' },
         { name: 'incentiveData', type: 'bytes' },
+        { name: 'referrer', type: 'address' },
       ],
     },
     primaryType: 'SignerValidatorData' as const,
@@ -578,13 +596,14 @@ export async function preparePayableLimitedSignerValidatorClaimDataPayload({
       incentiveQuantity,
       claimant,
       incentiveData: incentiveData,
+      referrer: _referrer,
     },
   };
 
   const trustedSignature = await signer.privateKey.signTypedData(typedData);
 
   // Prepare the claim data payload using the new helper
-  const validatorData = preparePayableLimitedSignerValidatorInputParams({
+  const validatorData = preparePayableLimitedSignerValidatorV2InputParams({
     signer: signer.account,
     signature: trustedSignature,
     incentiveQuantity,
@@ -598,17 +617,18 @@ export async function preparePayableLimitedSignerValidatorClaimDataPayload({
         components: [
           { type: 'bytes', name: 'validatorData' },
           { type: 'bytes', name: 'incentiveData' },
+          { type: 'address', name: 'referrer' },
         ],
       },
     ],
-    [{ validatorData, incentiveData }],
+    [{ validatorData, incentiveData, referrer: _referrer }],
   );
 
   return boostClaimDataPayload;
 }
 
 /**
- * Given a {@link PayableLimitedSignerValidatorInputParams}, properly encode the initialization payload.
+ * Given a {@link PayableLimitedSignerValidatorV2InputParams}, properly encode the initialization payload.
  *
  * @param {LimitedSignerValidatorInputParams} param0
  * @param {Address} param0.signer
@@ -616,7 +636,7 @@ export async function preparePayableLimitedSignerValidatorClaimDataPayload({
  * @param {number} param0.incentiveQuantity
  * @returns {Hex}
  */
-export function preparePayableLimitedSignerValidatorInputParams({
+export function preparePayableLimitedSignerValidatorV2InputParams({
   signer,
   signature,
   incentiveQuantity,
@@ -638,14 +658,14 @@ export function preparePayableLimitedSignerValidatorInputParams({
 }
 
 /**
- * Prepare the initialization payload for a PayableLimitedSignerValidator
+ * Prepare the initialization payload for a PayableLimitedSignerValidatorV2
  *
  * @export
- * @param {PayableLimitedSignerValidatorPayload & { baseImplementation: Address }} payload
+ * @param {PayableLimitedSignerValidatorV2Payload & { baseImplementation: Address }} payload
  * @returns {Hex}
  */
-export function preparePayableLimitedSignerValidatorPayload(
-  payload: PayableLimitedSignerValidatorPayload & {
+export function preparePayableLimitedSignerValidatorV2Payload(
+  payload: PayableLimitedSignerValidatorV2Payload & {
     baseImplementation: Address;
   },
 ): Hex {

@@ -8,7 +8,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
   fundBudget,
   fundErc20,
   fundErc721,
@@ -98,7 +98,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
       peg: erc20.assertValidAddress(),
     });
 
-    boost = await freshBoost(fixtures, {
+    boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20PeggedVariableCriteriaIncentive],
     });
@@ -203,7 +203,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
     });
 
     test("should return a valid scalar for event-based criteria", async () => {
-      boost = await freshBoost(fixtures, {
+      boost = await freshBoostWithV1Validator(fixtures, {
         budget: budgets.budget,
         incentives: [erc20PeggedVariableCriteriaIncentive],
       });
@@ -244,7 +244,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
         valueType: ValueType.WAD,
       });
 
-      boost = await freshBoost(fixtures, {
+      boost = await freshBoostWithV1Validator(fixtures, {
         budget: budgets.budget,
         incentives: [erc20PeggedVariableCriteriaIncentive],
       });
@@ -302,7 +302,7 @@ describe("ERC20PeggedVariableCriteriaIncentive", () => {
 
   test("can clawback via a budget", async () => {
     // rebase this
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20PeggedVariableCriteriaIncentive],
     });

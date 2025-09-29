@@ -6,6 +6,7 @@ import {
   readBoostCoreGetIncentiveFeesInfo,
   readBoostCoreProtocolFee,
   readBoostCoreProtocolFeeReceiver,
+  readBoostCoreReferralFee,
   readIAuthIsAuthorized,
   simulateBoostCoreClaimIncentive,
   simulateBoostCoreClaimIncentiveFor,
@@ -135,13 +136,25 @@ import {
   type LimitedSignerValidatorPayload,
 } from './Validators/LimitedSignerValidator';
 import {
+  LimitedSignerValidatorV2,
+  type LimitedSignerValidatorV2Payload,
+} from './Validators/LimitedSignerValidatorV2';
+import {
   PayableLimitedSignerValidator,
   type PayableLimitedSignerValidatorPayload,
 } from './Validators/PayableLimitedSignerValidator';
 import {
+  PayableLimitedSignerValidatorV2,
+  type PayableLimitedSignerValidatorV2Payload,
+} from './Validators/PayableLimitedSignerValidatorV2';
+import {
   SignerValidator,
   type SignerValidatorPayload,
 } from './Validators/SignerValidator';
+import {
+  SignerValidatorV2,
+  type SignerValidatorV2Payload,
+} from './Validators/SignerValidatorV2';
 import {
   BoostValidatorEOA,
   type Validator,
@@ -900,7 +913,7 @@ export class BoostCore extends Deployable<
         signers.push('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
       }
 
-      payload.validator = this.LimitedSignerValidator({
+      payload.validator = this.LimitedSignerValidatorV2({
         signers,
         validatorCaller: coreAddress,
         maxClaimCount: 1,
@@ -1471,6 +1484,28 @@ export class BoostCore extends Deployable<
   }
 
   /**
+   * Get the referral fee.
+   *
+   * @public
+   * @async
+   * @param {?ReadParams} [params]
+   * @returns {unknown}
+   */
+  public async referralFee(params?: ReadParams) {
+    return await readBoostCoreReferralFee(this._config, {
+      ...assertValidAddressByChainId(
+        this._config,
+        this.addresses,
+        params?.chainId,
+      ),
+      args: [],
+      ...this.optionallyAttachAccount(),
+      // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+      ...(params as any),
+    });
+  }
+
+  /**
    * Get the incentives fees information for a given Boost ID and Incentive ID.
    *
    * @public
@@ -1983,7 +2018,10 @@ export class BoostCore extends Deployable<
       options,
     );
   }
+
   /**
+   * @deprecated Use {@link SignerValidatorV2} instead.
+   *
    * Bound {@link SignerValidator} constructor that reuses the same configuration as the Boost Core instance.
    *
    * @example
@@ -2007,6 +2045,8 @@ export class BoostCore extends Deployable<
   }
 
   /**
+   * @deprecated Use {@link LimitedSignerValidatorV2} instead.
+   *
    * Bound {@link LimitedSignerValidator} constructor that reuses the same configuration as the Boost Core instance.
    *
    * @example
@@ -2030,6 +2070,8 @@ export class BoostCore extends Deployable<
   }
 
   /**
+   * @deprecated Use {@link PayableLimitedSignerValidatorV2} instead.
+   *
    * Bound {@link PayableLimitedSignerValidator} constructor that reuses the same configuration as the Boost Core instance.
    *
    * @example
@@ -2046,6 +2088,75 @@ export class BoostCore extends Deployable<
     isBase?: boolean,
   ) {
     return new PayableLimitedSignerValidator(
+      { config: this._config, account: this._account },
+      options,
+      isBase ?? false,
+    );
+  }
+
+  /**
+   * Bound {@link SignerValidatorV2} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const validator = core.SignerValidatorV2({ ... }) // is roughly equivalent to
+   * const validator = new SignerValidatorV2({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<SignerValidatorV2Payload>} options
+   * @param {?boolean} [isBase]
+   * @returns {SignerValidatorV2}
+   */
+  SignerValidatorV2(
+    options: DeployablePayloadOrAddress<SignerValidatorV2Payload>,
+    isBase?: boolean,
+  ) {
+    return new SignerValidatorV2(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
+
+  /**
+   * Bound {@link LimitedSignerValidatorV2} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const validator = core.LimitedSignerValidatorV2({ ... }) // is roughly equivalent to
+   * const validator = new LimitedSignerValidatorV2({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<LimitedSignerValidatorV2Payload>} options
+   * @param {?boolean} [isBase]
+   * @returns {LimitedSignerValidatorV2}
+   */
+  LimitedSignerValidatorV2(
+    options: DeployablePayloadOrAddress<LimitedSignerValidatorV2Payload>,
+    isBase?: boolean,
+  ) {
+    return new LimitedSignerValidatorV2(
+      { config: this._config, account: this._account },
+      options,
+      isBase,
+    );
+  }
+
+  /**
+   * Bound {@link PayableLimitedSignerValidatorV2} constructor that reuses the same configuration as the Boost Core instance.
+   *
+   * @example
+   * ```ts
+   * const validator = core.PayableLimitedSignerValidatorV2({ ... }) // is roughly equivalent to
+   * const validator = new PayableLimitedSignerValidatorV2({ config: core._config, account: core._account }, { ... })
+   * ```
+   * @param {DeployablePayloadOrAddress<PayableLimitedSignerValidatorV2Payload>} options
+   * @param {?boolean} [isBase]
+   * @returns {PayableLimitedSignerValidatorV2}
+   */
+  PayableLimitedSignerValidatorV2(
+    options: DeployablePayloadOrAddress<PayableLimitedSignerValidatorV2Payload>,
+    isBase?: boolean,
+  ) {
+    return new PayableLimitedSignerValidatorV2(
       { config: this._config, account: this._account },
       options,
       isBase ?? false,

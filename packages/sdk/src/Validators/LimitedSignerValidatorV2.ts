@@ -1,15 +1,15 @@
 import {
-  limitedSignerValidatorAbi,
-  readLimitedSignerValidatorHashSignerData,
-  readLimitedSignerValidatorSigners,
-  simulateLimitedSignerValidatorSetAuthorized,
-  simulateLimitedSignerValidatorSetValidatorCaller,
-  simulateLimitedSignerValidatorValidate,
-  writeLimitedSignerValidatorSetAuthorized,
-  writeLimitedSignerValidatorSetValidatorCaller,
-  writeLimitedSignerValidatorValidate,
+  limitedSignerValidatorV2Abi,
+  readLimitedSignerValidatorV2HashSignerData,
+  readLimitedSignerValidatorV2Signers,
+  simulateLimitedSignerValidatorV2SetAuthorized,
+  simulateLimitedSignerValidatorV2SetValidatorCaller,
+  simulateLimitedSignerValidatorV2Validate,
+  writeLimitedSignerValidatorV2SetAuthorized,
+  writeLimitedSignerValidatorV2SetValidatorCaller,
+  writeLimitedSignerValidatorV2Validate,
 } from '@boostxyz/evm';
-import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidator.sol/LimitedSignerValidator.json';
+import { bytecode } from '@boostxyz/evm/artifacts/contracts/validators/LimitedSignerValidatorV2.sol/LimitedSignerValidatorV2.json';
 import {
   type Address,
   type ContractEventName,
@@ -17,7 +17,7 @@ import {
   type PrivateKeyAccount,
   encodeAbiParameters,
 } from 'viem';
-import { LimitedSignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
+import { LimitedSignerValidatorV2 as SignerValidatorBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
   GenericDeployableParams,
@@ -30,16 +30,16 @@ import {
   type WriteParams,
 } from '../utils';
 
-export { limitedSignerValidatorAbi };
+export { limitedSignerValidatorV2Abi };
 
 /**
- * Object reprentation of a {@link LimitedSignerValidator} initialization payload
+ * Object reprentation of a {@link LimitedSignerValidatorV2} initialization payload
  *
  * @export
- * @interface LimitedSignerValidatorPayload
- * @typedef {LimitedSignerValidatorPayload}
+ * @interface LimitedSignerValidatorV2Payload
+ * @typedef {LimitedSignerValidatorV2Payload}
  */
-export interface LimitedSignerValidatorPayload {
+export interface LimitedSignerValidatorV2Payload {
   /**
    * The list of authorized signers. The first address in the list will be the initial owner of the contract.
    *
@@ -63,10 +63,10 @@ export interface LimitedSignerValidatorPayload {
  * Description placeholder
  *
  * @export
- * @interface LimitedSignerValidatorValidatePayload
- * @typedef {LimitedSignerValidatorValidatePayload}
+ * @interface LimitedSignerValidatorV2ValidatePayload
+ * @typedef {LimitedSignerValidatorV2ValidatePayload}
  */
-export interface LimitedSignerValidatorValidatePayload {
+export interface LimitedSignerValidatorV2ValidatePayload {
   /**
    * The ID of the boost.
    *
@@ -94,13 +94,13 @@ export interface LimitedSignerValidatorValidatePayload {
 }
 
 /**
- * Object reprentation of a {@link LimitedSignerValidator} initialization payload
+ * Object reprentation of a {@link LimitedSignerValidatorV2} initialization payload
  *
  * @export
- * @interface LimitedSignerValidatorPayload
- * @typedef {LimitedSignerValidatorPayload}
+ * @interface LimitedSignerValidatorV2Payload
+ * @typedef {LimitedSignerValidatorV2Payload}
  */
-export interface LimitedSignerValidatorPayload {
+export interface LimitedSignerValidatorV2Payload {
   /**
    * The list of authorized signers. The first address in the list will be the initial owner of the contract.
    *
@@ -118,10 +118,10 @@ export interface LimitedSignerValidatorPayload {
  * Description placeholder
  *
  * @export
- * @interface LimitedSignerValidatorValidatePayload
- * @typedef {LimitedSignerValidatorValidatePayload}
+ * @interface LimitedSignerValidatorV2ValidatePayload
+ * @typedef {LimitedSignerValidatorV2ValidatePayload}
  */
-export interface LimitedSignerValidatorValidatePayload {
+export interface LimitedSignerValidatorV2ValidatePayload {
   /**
    * The ID of the boost.
    *
@@ -152,10 +152,10 @@ export interface LimitedSignerValidatorValidatePayload {
  * Signer Validator Claim Data Payload
  *
  * @export
- * @interface LimitedSignerValidatorClaimDataParams
- * @typedef {LimitedSignerValidatorClaimDataParams}
+ * @interface LimitedSignerValidatorV2ClaimDataParams
+ * @typedef {LimitedSignerValidatorV2ClaimDataParams}
  */
-export interface LimitedSignerValidatorClaimDataParams {
+export interface LimitedSignerValidatorV2ClaimDataParams {
   /**
    * The signer with which to sign the input
    *
@@ -206,16 +206,22 @@ export interface LimitedSignerValidatorClaimDataParams {
    * @type {bigint}
    */
   boostId: bigint;
+  /**
+   * The address of the referrer
+   *
+   * @type {?Address}
+   */
+  referrer?: Address;
 }
 
 /**
- * Object representation of a {@link LimitedSignerValidatorInputParams} initialization payload
+ * Object representation of a {@link LimitedSignerValidatorV2InputParams} initialization payload
  *
  * @export
- * @interface LimitedSignerValidatorInputParams
- * @typedef {LimitedSignerValidatorInputParams}
+ * @interface LimitedSignerValidatorV2InputParams
+ * @typedef {LimitedSignerValidatorV2InputParams}
  */
-export interface LimitedSignerValidatorInputParams {
+export interface LimitedSignerValidatorV2InputParams {
   /**
    * The signer address.
    *
@@ -242,10 +248,10 @@ export interface LimitedSignerValidatorInputParams {
  * Object representing the payload for signing before validaton.
  *
  * @export
- * @interface LimitedSignerValidatorSignaturePayload
- * @typedef {LimitedSignerValidatorSignaturePayload}
+ * @interface LimitedSignerValidatorV2SignaturePayload
+ * @typedef {LimitedSignerValidatorV2SignaturePayload}
  */
-export interface LimitedSignerValidatorSignaturePayload {
+export interface LimitedSignerValidatorV2SignaturePayload {
   /**
    * The ID of the boost.
    *
@@ -270,34 +276,40 @@ export interface LimitedSignerValidatorSignaturePayload {
    * @type {Hex}
    */
   incentiveData: Hex;
+  /**
+   * The address of the referrer
+   *
+   * @type {Address}
+   */
+  referrer: Address;
 }
 
 /**
  * A generic `viem.Log` event with support for `BoostCore` event types.
  *
  * @export
- * @typedef {LimitedSignerValidatorLog}
+ * @typedef {LimitedSignerValidatorV2Log}
  * @template {ContractEventName<
- *     typeof limitedSignerValidatorAbi
- *   >} [event=ContractEventName<typeof limitedSignerValidatorAbi>]
+ *     typeof limitedSignerValidatorV2Abi
+ *   >} [event=ContractEventName<typeof limitedSignerValidatorV2Abi>]
  */
-export type LimitedSignerValidatorLog<
+export type LimitedSignerValidatorV2Log<
   event extends ContractEventName<
-    typeof limitedSignerValidatorAbi
-  > = ContractEventName<typeof limitedSignerValidatorAbi>,
-> = GenericLog<typeof limitedSignerValidatorAbi, event>;
+    typeof limitedSignerValidatorV2Abi
+  > = ContractEventName<typeof limitedSignerValidatorV2Abi>,
+> = GenericLog<typeof limitedSignerValidatorV2Abi, event>;
 
 /**
  *  A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
  *
  * @export
- * @class LimitedSignerValidator
- * @typedef {LimitedSignerValidator}
- * @extends {DeployableTarget<LimitedSignerValidatorPayload>}
+ * @class LimitedSignerValidatorV2
+ * @typedef {LimitedSignerValidatorV2}
+ * @extends {DeployableTarget<LimitedSignerValidatorV2Payload>}
  */
-export class LimitedSignerValidator extends DeployableTarget<
-  LimitedSignerValidatorPayload,
-  typeof limitedSignerValidatorAbi
+export class LimitedSignerValidatorV2 extends DeployableTarget<
+  LimitedSignerValidatorV2Payload,
+  typeof limitedSignerValidatorV2Abi
 > {
   /**
    * @inheritdoc
@@ -306,7 +318,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @readonly
    * @type {*}
    */
-  public override readonly abi = limitedSignerValidatorAbi;
+  public override readonly abi = limitedSignerValidatorV2Abi;
   /**
    * @inheritdoc
    *
@@ -339,7 +351,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @returns {Promise<boolean>}
    */
   public async signers(address: Address, params?: ReadParams) {
-    return await readLimitedSignerValidatorSigners(this._config, {
+    return await readLimitedSignerValidatorV2Signers(this._config, {
       address: this.assertValidAddress(),
       args: [address],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
@@ -357,10 +369,10 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @returns {Promise<Hex>}
    */
   public async hashSignerData(
-    payload: LimitedSignerValidatorSignaturePayload,
+    payload: LimitedSignerValidatorV2SignaturePayload,
     params?: ReadParams,
   ) {
-    return await readLimitedSignerValidatorHashSignerData(this._config, {
+    return await readLimitedSignerValidatorV2HashSignerData(this._config, {
       address: this.assertValidAddress(),
       args: [
         payload.boostId,
@@ -378,12 +390,12 @@ export class LimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {LimitedSignerValidatorValidatePayload} payload
+   * @param {LimitedSignerValidatorV2ValidatePayload} payload
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   public async validate(
-    payload: LimitedSignerValidatorValidatePayload,
+    payload: LimitedSignerValidatorV2ValidatePayload,
     params?: WriteParams,
   ) {
     return await this.awaitResult(this.validateRaw(payload, params));
@@ -394,15 +406,15 @@ export class LimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {LimitedSignerValidatorValidatePayload} payload
+   * @param {LimitedSignerValidatorV2ValidatePayload} payload
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
   public async validateRaw(
-    payload: LimitedSignerValidatorValidatePayload,
+    payload: LimitedSignerValidatorV2ValidatePayload,
     params?: WriteParams,
   ) {
-    const { request, result } = await simulateLimitedSignerValidatorValidate(
+    const { request, result } = await simulateLimitedSignerValidatorV2Validate(
       this._config,
       {
         address: this.assertValidAddress(),
@@ -417,7 +429,7 @@ export class LimitedSignerValidator extends DeployableTarget<
         ...(params as any),
       },
     );
-    const hash = await writeLimitedSignerValidatorValidate(
+    const hash = await writeLimitedSignerValidatorV2Validate(
       this._config,
       request,
     );
@@ -460,14 +472,14 @@ export class LimitedSignerValidator extends DeployableTarget<
     params?: WriteParams,
   ) {
     const { request, result } =
-      await simulateLimitedSignerValidatorSetAuthorized(this._config, {
+      await simulateLimitedSignerValidatorV2SetAuthorized(this._config, {
         address: this.assertValidAddress(),
         args: [addresses, allowed],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),
       });
-    const hash = await writeLimitedSignerValidatorSetAuthorized(
+    const hash = await writeLimitedSignerValidatorV2SetAuthorized(
       this._config,
       request,
     );
@@ -485,14 +497,14 @@ export class LimitedSignerValidator extends DeployableTarget<
    */
   public async setValidatorCallerRaw(address: Address, params?: WriteParams) {
     const { request, result } =
-      await simulateLimitedSignerValidatorSetValidatorCaller(this._config, {
+      await simulateLimitedSignerValidatorV2SetValidatorCaller(this._config, {
         address: this.assertValidAddress(),
         args: [address],
         ...this.optionallyAttachAccount(),
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),
       });
-    const hash = await writeLimitedSignerValidatorSetValidatorCaller(
+    const hash = await writeLimitedSignerValidatorV2SetValidatorCaller(
       this._config,
       request,
     );
@@ -517,13 +529,13 @@ export class LimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {LimitedSignerValidatorClaimDataParams} params
+   * @param {LimitedSignerValidatorV2ClaimDataParams} params
    * @returns {Promise<Hex>}
    */
   public async encodeClaimData(
-    params: Omit<LimitedSignerValidatorClaimDataParams, 'validator'>,
+    params: Omit<LimitedSignerValidatorV2ClaimDataParams, 'validator'>,
   ): Promise<Hex> {
-    return await prepareLimitedSignerValidatorClaimDataPayload({
+    return await prepareLimitedSignerValidatorV2ClaimDataPayload({
       ...params,
       validator: this.assertValidAddress(),
     });
@@ -533,12 +545,12 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @inheritdoc
    *
    * @public
-   * @param {?LimitedSignerValidatorPayload} [_payload]
+   * @param {?LimitedSignerValidatorV2Payload} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {GenericDeployableParams}
    */
   public override buildParameters(
-    _payload?: LimitedSignerValidatorPayload,
+    _payload?: LimitedSignerValidatorV2Payload,
     _options?: DeployableOptions,
   ): GenericDeployableParams {
     const [payload, options] = this.validateDeploymentConfig(
@@ -546,9 +558,9 @@ export class LimitedSignerValidator extends DeployableTarget<
       _options,
     );
     return {
-      abi: limitedSignerValidatorAbi,
+      abi: limitedSignerValidatorV2Abi,
       bytecode: bytecode as Hex,
-      args: [prepareLimitedSignerValidatorPayload(payload)],
+      args: [prepareLimitedSignerValidatorV2Payload(payload)],
       ...this.optionallyAttachAccount(options.account),
     };
   }
@@ -559,7 +571,7 @@ export class LimitedSignerValidator extends DeployableTarget<
  *
  * @export
  * @async
- * @param {SignerValidatorClaimDataParams} param0
+ * @param {LimitedSignerValidatorV2ClaimDataParams} param0
  * @param {{ account: Address; key: Hex; privateKey: PrivateKeyAccount; }} param0.signer
  * @param {Hex} param0.incentiveData
  * @param {number} param0.chainId
@@ -569,7 +581,7 @@ export class LimitedSignerValidator extends DeployableTarget<
  * @param {bigint} param0.boostId
  * @returns {Promise<Hex>}
  */
-export async function prepareLimitedSignerValidatorClaimDataPayload({
+export async function prepareLimitedSignerValidatorV2ClaimDataPayload({
   signer,
   incentiveData,
   chainId,
@@ -577,9 +589,11 @@ export async function prepareLimitedSignerValidatorClaimDataPayload({
   incentiveQuantity,
   claimant,
   boostId,
-}: LimitedSignerValidatorClaimDataParams): Promise<Hex> {
+  referrer,
+}: LimitedSignerValidatorV2ClaimDataParams): Promise<Hex> {
+  const _referrer = referrer ?? claimant;
   const domain = {
-    name: 'LimitedSignerValidator',
+    name: 'LimitedSignerValidatorV2',
     version: '1',
     chainId: chainId,
     verifyingContract: validator,
@@ -592,6 +606,7 @@ export async function prepareLimitedSignerValidatorClaimDataPayload({
         { name: 'incentiveQuantity', type: 'uint8' },
         { name: 'claimant', type: 'address' },
         { name: 'incentiveData', type: 'bytes' },
+        { name: 'referrer', type: 'address' },
       ],
     },
     primaryType: 'SignerValidatorData' as const,
@@ -600,13 +615,14 @@ export async function prepareLimitedSignerValidatorClaimDataPayload({
       incentiveQuantity,
       claimant,
       incentiveData: incentiveData,
+      referrer: _referrer,
     },
   };
 
   const trustedSignature = await signer.privateKey.signTypedData(typedData);
 
   // Prepare the claim data payload using the new helper
-  const validatorData = prepareLimitedSignerValidatorInputParams({
+  const validatorData = prepareLimitedSignerValidatorV2InputParams({
     signer: signer.account,
     signature: trustedSignature,
     incentiveQuantity, // Adjust incentive quantity as necessary
@@ -616,14 +632,15 @@ export async function prepareLimitedSignerValidatorClaimDataPayload({
     [
       {
         type: 'tuple',
-        name: 'BoostClaimData',
+        name: 'BoostClaimDataWithReferrer',
         components: [
           { type: 'bytes', name: 'validatorData' },
           { type: 'bytes', name: 'incentiveData' },
+          { type: 'address', name: 'referrer' },
         ],
       },
     ],
-    [{ validatorData, incentiveData }],
+    [{ validatorData, incentiveData, referrer: _referrer }],
   );
 
   return boostClaimDataPayload;
@@ -638,11 +655,11 @@ export async function prepareLimitedSignerValidatorClaimDataPayload({
  * @param {number} param0.incentiveQuantity
  * @returns {Hex}
  */
-export function prepareLimitedSignerValidatorInputParams({
+export function prepareLimitedSignerValidatorV2InputParams({
   signer,
   signature,
   incentiveQuantity,
-}: LimitedSignerValidatorInputParams) {
+}: LimitedSignerValidatorV2InputParams) {
   return encodeAbiParameters(
     [
       {
@@ -660,23 +677,23 @@ export function prepareLimitedSignerValidatorInputParams({
 }
 
 /**
- * Given a {@link SignerValidatorPayload}, properly encode the initialization payload.
- *
- * @param {SignerValidatorPayload} param0
-      SignerValidator: class TSignerValidator extends SignerValidator {
-        public static override bases: Record<number, Address> = {
-          [chainId]: signerValidatorBase,
-        };
-      },
- * @param {Address[]} param0.signers
- * @param {Address} param0.validatorCaller
- * @returns {Hex}
- */
-export function prepareLimitedSignerValidatorPayload({
+   * Given a {@link SignerValidatorPayload}, properly encode the initialization payload.
+   *
+   * @param {SignerValidatorPayload} param0
+        SignerValidator: class TSignerValidator extends SignerValidator {
+          public static override bases: Record<number, Address> = {
+            [chainId]: signerValidatorBase,
+          };
+        },
+   * @param {Address[]} param0.signers
+   * @param {Address} param0.validatorCaller
+   * @returns {Hex}
+   */
+export function prepareLimitedSignerValidatorV2Payload({
   signers,
   validatorCaller,
   maxClaimCount,
-}: LimitedSignerValidatorPayload) {
+}: LimitedSignerValidatorV2Payload) {
   return encodeAbiParameters(
     [
       { type: 'address[]', name: 'signers' },

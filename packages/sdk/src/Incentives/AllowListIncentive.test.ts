@@ -3,7 +3,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
 } from "@boostxyz/test/helpers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { isAddress, pad, parseEther, zeroAddress } from "viem";
@@ -55,7 +55,7 @@ describe("AllowListIncentive", () => {
         limit: 3n,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [allowListIncentive],
     });
     await allowList.grantManyRoles(
@@ -100,7 +100,7 @@ describe("AllowListIncentive", () => {
         limit: 1n,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [allowListIncentive],
     });
     await allowList.grantManyRoles(
@@ -148,7 +148,7 @@ describe("AllowListIncentive", () => {
         limit: 3n,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [allowListIncentive],
     });
     await allowList.grantManyRoles(
@@ -199,7 +199,7 @@ describe("AllowListIncentive", () => {
         limit: 1n,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       incentives: [allowListIncentive],
     });
     await allowList.grantManyRoles(

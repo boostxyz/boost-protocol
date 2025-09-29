@@ -5,7 +5,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
   fundBudget,
 } from "@boostxyz/test/helpers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
@@ -56,7 +56,7 @@ describe("ERC20Incentive", () => {
       limit: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -98,7 +98,7 @@ describe("ERC20Incentive", () => {
       limit: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -140,7 +140,7 @@ describe("ERC20Incentive", () => {
       limit: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -191,7 +191,7 @@ describe("ERC20Incentive", () => {
       limit: 10n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -217,7 +217,7 @@ describe("ERC20Incentive", () => {
       limit: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });

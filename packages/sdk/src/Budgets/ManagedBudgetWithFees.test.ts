@@ -12,7 +12,8 @@ import {
   freshManagedBudgetWithFees,
   fundErc20,
   fundErc1155,
-  freshBoost,
+  freshBoostWithV1Validator,
+  freshBoostWithV2Validator,
   fundManagedBudgetWithFees,
 } from "@boostxyz/test/helpers";
 import { testAccount } from "@boostxyz/test/viem";
@@ -199,7 +200,6 @@ describe("ManagedBudgetWithFees", () => {
     });
 
     test("to a fee-compatible incentive", async () => {
-
       const reward = 1_000_000_000n;
       const fee = await budget.managementFee();
       const erc20Incentive = fixtures.core.ERC20Incentive({
@@ -210,7 +210,7 @@ describe("ManagedBudgetWithFees", () => {
         manager: budget.assertValidAddress(),
       });
       await budget.grantRoles(fixtures.core.assertValidAddress(), Roles.MANAGER);
-      const boost = await freshBoost(fixtures, {
+      const boost = await freshBoostWithV1Validator(fixtures, {
         budget: budget,
         incentives: [erc20Incentive],
       });
@@ -226,19 +226,20 @@ describe("ManagedBudgetWithFees", () => {
         claimant,
         boostId: boost.id,
       });
-    await fixtures.core.claimIncentive(
-      boost.id,
-      0n,
-      trustedSigner.account,
-      claimDataPayload,
-    );
-    let originalBalance = await erc20.balanceOf(accounts[0].account);
+      await fixtures.core.claimIncentive(
+        boost.id,
+        0n,
+        trustedSigner.account,
+        claimDataPayload,
+      );
+      let originalBalance = await erc20.balanceOf(accounts[0].account);
 
-    await budget.payManagementFee(boost.id, 0n);
-    let balance = await erc20.balanceOf(accounts[0].account);
+      await budget.payManagementFee(boost.id, 0n);
+      let balance = await erc20.balanceOf(accounts[0].account);
 
-    expect(balance - originalBalance).toBe(reward*fee/10_000n);
+      expect(balance - originalBalance).toBe(reward*fee/10_000n);
     })
+
 
     test("native assets", async () => {
       const originalAmount = await budget.available();
@@ -249,7 +250,6 @@ describe("ManagedBudgetWithFees", () => {
         asset: zeroAddress,
         target: defaultOptions.account.address,
       });
-
 
       expect(await budget.available()).toBe(originalAmount - disbursalAmount - disbursalAmount*fee / 10_000n);
     });

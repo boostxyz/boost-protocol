@@ -164,7 +164,6 @@ contract SignerValidatorV2Test is Test {
 
     function testValidate_UnauthorizerCaller() public {
         address badCaller = makeAddr("badValidatorCaller");
-        address referrer = makeAddr("referrer");
 
         hoax(badCaller);
         vm.expectRevert(BoostError.Unauthorized.selector);

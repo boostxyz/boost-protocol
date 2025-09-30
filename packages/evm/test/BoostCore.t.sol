@@ -943,13 +943,13 @@ contract BoostCoreTest is Test {
         );
     }
 
-    ///////////////////////////////////////////////////
-    // BoostCore.claimIncentive with Referral        //
-    // Note: these tests will check for 0 referral   //
-    // when claiming. actual testing can be found at //
-    // contracts/validators/SignerValidatorV2.t.sol  //
-    ///////////////////////////////////////////////////
+    ////////////////////////////////////////////
+    // BoostCore.claimIncentive with Referral //
+    ////////////////////////////////////////////
 
+    /**
+     * @notice This test will check for a 0 referral when claiming. Actual testing can be found at contracts/validators/SignerValidatorV2.t.sol and test/e2e/EndToEndSignerValidatorV2.t.sol
+     */
     function testClaimIncentiveWithReferralFee() public {
         // Set referral fee to 5%
         uint64 referralFeeRate = 500; // 5%
@@ -978,32 +978,24 @@ contract BoostCoreTest is Test {
 
         // Expected events
         uint256 claimAmount = incentiveContract.reward();
-        uint256 expectedReferralFee = 0;
-        uint256 expectedProtocolFee =
-            ((claimAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR()) - expectedReferralFee;
+        uint256 totalProtocolFee = (claimAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
+        uint256 expectedReferralFee = (totalProtocolFee * referralFeeRate) / boostCore.FEE_DENOMINATOR();
+        uint256 expectedProtocolFee = totalProtocolFee - expectedReferralFee;
+
+        vm.expectEmit(true, true, false, true);
+        emit BoostCore.ReferralFeeSent(referrer, claimant, 0, 0, address(mockERC20), expectedReferralFee);
 
         vm.expectEmit(true, true, false, true);
         emit BoostCore.ProtocolFeesCollected(0, 0, expectedProtocolFee, boostCore.protocolFeeReceiver());
 
-        // Should NOT emit ReferralFeeSent event
-        vm.recordLogs();
-
         // Claim with referrer
         boostCore.claimIncentive{value: 0.000075 ether}(0, 0, referrer, data);
-
-        // Check that ReferralFeeSent was not emitted
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        for (uint256 i = 0; i < logs.length; i++) {
-            assertNotEq(
-                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
-            );
-        }
 
         // Verify referrer received the referral fee
         assertEq(
             mockERC20.balanceOf(referrer),
             initialReferrerBalance + expectedReferralFee,
-            "Referrer should not receive a referral fee"
+            "Referrer should receive the referral fee"
         );
 
         // Verify protocol fee receiver got the full protocol fee

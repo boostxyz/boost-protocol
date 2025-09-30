@@ -44,8 +44,15 @@ contract LimitedSignerValidatorV2 is ALimitedSignerValidatorV2, SignerValidatorV
         override(AValidator, SignerValidatorV2)
         returns (bool)
     {
-        if (!_incrementClaim(boostId, incentiveId, claimant)) revert BoostError.MaximumClaimed(claimant);
-        return super.validate(boostId, incentiveId, claimant, claimData);
+        bytes32 claimantHash = hashClaimantData(boostId, incentiveId, claimant);
+        uint256 nextCount = quantityClaimed[claimantHash] + 1;
+        if (nextCount > maxClaimCount) revert BoostError.MaximumClaimed(claimant);
+
+        bool isValid = super.validate(boostId, incentiveId, claimant, claimData);
+        if (!isValid) return false;
+
+        quantityClaimed[claimantHash] = nextCount;
+        return true;
     }
 
     function hashClaimantData(uint256 boostId, uint256 incentiveId, address claimant)
@@ -54,16 +61,6 @@ contract LimitedSignerValidatorV2 is ALimitedSignerValidatorV2, SignerValidatorV
         returns (bytes32 hash)
     {
         return keccak256(abi.encodePacked(boostId, incentiveId, claimant));
-    }
-
-    function _incrementClaim(uint256 boostId, uint256 incentiveId, address claimant) internal returns (bool) {
-        bytes32 claimantHash = hashClaimantData(boostId, incentiveId, claimant);
-        uint256 claimCount = quantityClaimed[claimantHash] + 1;
-
-        if (claimCount > maxClaimCount) return false;
-
-        quantityClaimed[claimantHash] = claimCount;
-        return true;
     }
 
     /// @notice Returns the name of this validator

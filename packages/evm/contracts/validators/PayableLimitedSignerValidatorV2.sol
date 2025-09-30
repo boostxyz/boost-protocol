@@ -84,6 +84,7 @@ contract PayableLimitedSignerValidatorV2 is APayableLimitedSignerValidatorV2, Li
 
         if (currentClaimFee > 0) {
             address protocolFeeReceiver = IBoostCore(_validatorCaller).protocolFeeReceiver();
+            if (protocolFeeReceiver == address(0)) revert FeeTransferFailed();
             (bool success,) = protocolFeeReceiver.call{value: currentClaimFee}("");
             if (!success) revert FeeTransferFailed();
             emit ClaimFeePaid(claimant, boostId, incentiveId, currentClaimFee, protocolFeeReceiver);

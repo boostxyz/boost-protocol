@@ -455,6 +455,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         // Always update remaining fees if any were collected
         uint256 totalFeesCollected = protocolFeeAmount + referralFeeAmount;
         if (totalFeesCollected > 0) {
+            require(incentive.protocolFeesRemaining >= totalFeesCollected, "insufficient reserved fees");
             incentive.protocolFeesRemaining -= totalFeesCollected;
         }
 
@@ -583,7 +584,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @dev This function is only callable by the owner
     function setProtocolFee(uint64 protocolFee_) external onlyOwner {
         require(protocolFee_ <= FEE_DENOMINATOR, "protocol fee cannot be set higher than the fee denominator");
-        require(protocolFee_ > referralFee, "protocol fee cannot be set lower than the referral fee");
+        require(protocolFee_ > referralFee, "protocol fee must be set higher than the referral fee");
         protocolFee = protocolFee_;
     }
 
@@ -921,9 +922,10 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     }
 
     /// @notice Get verified referrer based on validator type
+    /// @dev Uses view instead of pure because it calls getComponentInterface() on the validator
     function _getVerifiedReferrer(AValidator validator, address referrer_, bytes calldata data_)
         internal
-        pure
+        view
         returns (address)
     {
         // Check if this is a V2 validator by checking the component interface directly

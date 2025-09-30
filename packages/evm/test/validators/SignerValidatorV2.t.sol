@@ -57,9 +57,9 @@ contract SignerValidatorV2Test is Test {
         validator.initialize(data);
     }
 
-    ////////////////////////////////
-    // SignerValidator.initialize //
-    ////////////////////////////////
+    //////////////////////////////////
+    // SignerValidatorV2.initialize //
+    //////////////////////////////////
 
     function testInitialize() public view {
         // The initializer should have set 3 signers:
@@ -95,9 +95,9 @@ contract SignerValidatorV2Test is Test {
         assertNotEq(version, 0, "Version should not be 0");
     }
 
-    /////////////////////////////
-    // SignerValidator.signers //
-    /////////////////////////////
+    ///////////////////////////////
+    // SignerValidatorV2.signers //
+    ///////////////////////////////
 
     function testSigners() public view {
         assertTrue(validator.signers(address(this)));
@@ -106,9 +106,9 @@ contract SignerValidatorV2Test is Test {
         assertFalse(validator.signers(fakeSigner));
     }
 
-    //////////////////////////////
-    // SignerValidator.validate //
-    //////////////////////////////
+    ////////////////////////////////
+    // SignerValidatorV2.validate //
+    ////////////////////////////////
 
     function testValidate_ValidSignature() public {
         uint256 boostId = 5;
@@ -289,7 +289,7 @@ contract SignerValidatorV2Test is Test {
         bytes memory claimData =
             abi.encode(IBoostClaim.BoostClaimDataWithReferrer(abi.encode(validatorData), incentiveData, referrer));
 
-        validator.validate(boostId, incentiveId, claimant, claimData);
+        assertTrue(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
     function testValidate_FuzzMaliciousSigner(
@@ -332,9 +332,9 @@ contract SignerValidatorV2Test is Test {
         assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
-    ///////////////////////////////////
-    // SignerValidator.setAuthorized //
-    ///////////////////////////////////
+    /////////////////////////////////////
+    // SignerValidatorV2.setAuthorized //
+    /////////////////////////////////////
 
     function testSetAuthorized() public {
         address[] memory signers = new address[](1);
@@ -348,18 +348,17 @@ contract SignerValidatorV2Test is Test {
         assertTrue(validator.signers(fakeSigner));
     }
 
-    /////////////////////////////////////////
-    // VestingBudget.getComponentInterface //
-    /////////////////////////////////////////
+    /////////////////////////////////////////////
+    // SignerValidatorV2.getComponentInterface //
+    /////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
-        // Ensure the contract supports the ABudget interface
-        console.logBytes4(validator.getComponentInterface());
+        assertEq(validator.getComponentInterface(), type(ASignerValidatorV2).interfaceId);
     }
 
-    ///////////////////////////////////////
+    /////////////////////////////////////////
     // SignerValidatorV2.supportsInterface //
-    ///////////////////////////////////////
+    /////////////////////////////////////////
 
     function testSupportsInterface() public view {
         assertTrue(validator.supportsInterface(type(ACloneable).interfaceId));
@@ -370,9 +369,9 @@ contract SignerValidatorV2Test is Test {
         assertFalse(validator.supportsInterface(type(Test).interfaceId));
     }
 
-    /////////////////////
-    // Test Helpers    //
-    /////////////////////
+    ///////////////////
+    // Test Helpers  //
+    ///////////////////
 
     function _signHash(bytes32 digest, uint256 privateKey) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);

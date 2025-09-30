@@ -950,7 +950,7 @@ contract BoostCoreTest is Test {
     /**
      * @notice This test will check for a 0 referral when claiming. Actual testing can be found at contracts/validators/SignerValidatorV2.t.sol and test/e2e/EndToEndSignerValidatorV2.t.sol
      */
-    function testClaimIncentiveWithReferralFee() public {
+    function testClaimIncentiveWithReferralFee_WithoutV2Validator() public {
         // Set referral fee to 5%
         uint64 referralFeeRate = 500; // 5%
         boostCore.setReferralFee(referralFeeRate);
@@ -979,17 +979,25 @@ contract BoostCoreTest is Test {
         // Expected events
         uint256 claimAmount = incentiveContract.reward();
         uint256 totalProtocolFee = (claimAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
-        uint256 expectedReferralFee = (totalProtocolFee * referralFeeRate) / boostCore.FEE_DENOMINATOR();
+        uint256 expectedReferralFee = 0; // no referral fee occurred because the boost is not using a V2 Validator
         uint256 expectedProtocolFee = totalProtocolFee - expectedReferralFee;
 
-        vm.expectEmit(true, true, false, true);
-        emit BoostCore.ReferralFeeSent(referrer, claimant, 0, 0, address(mockERC20), expectedReferralFee);
+        // Should NOT emit ReferralFeeSent event
+        vm.recordLogs();
 
         vm.expectEmit(true, true, false, true);
         emit BoostCore.ProtocolFeesCollected(0, 0, expectedProtocolFee, boostCore.protocolFeeReceiver());
 
         // Claim with referrer
         boostCore.claimIncentive{value: 0.000075 ether}(0, 0, referrer, data);
+
+        // Check that ReferralFeeSent was not emitted
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(
+                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
+            );
+        }
 
         // Verify referrer received the referral fee
         assertEq(
@@ -1320,7 +1328,7 @@ contract BoostCoreTest is Test {
         assertEq(boostCore.referralFee(), newReferralFee);
 
         uint64 newProtocolFee = newReferralFee - 1;
-        vm.expectRevert("protocol fee cannot be set lower than the referral fee");
+        vm.expectRevert("protocol fee must be set higher than the referral fee");
         boostCore.setProtocolFee(newProtocolFee);
     }
 

@@ -13,6 +13,7 @@ import {
   simulateBoostCoreCreateBoost,
   simulateBoostCoreSetCreateBoostAuth,
   simulateBoostCoreSetProtocolFeeReceiver,
+  simulateBoostCoreSetReferralFee,
   simulateBoostCoreTopupIncentiveFromBudget,
   simulateBoostCoreTopupIncentiveFromSender,
   simulateTransparentBudgetCreateBoost,
@@ -23,6 +24,7 @@ import {
   writeBoostCoreCreateBoost,
   writeBoostCoreSetCreateBoostAuth,
   writeBoostCoreSetProtocolFeeReceiver,
+  writeBoostCoreSetReferralFee,
   writeBoostCoreTopupIncentiveFromBudget,
   writeBoostCoreTopupIncentiveFromSender,
   writeTransparentBudgetCreateBoost,
@@ -1444,9 +1446,9 @@ export class BoostCore extends Deployable<
    * @param {?WriteParams} [params]
    * @returns {Promise<void>}
    */
-  public async setProcolFeeReceiver(address: Address, params?: WriteParams) {
+  public async setProtocolFeeReceiver(address: Address, params?: WriteParams) {
     return await this.awaitResult(
-      this.setProcolFeeReceiverRaw(address, {
+      this.setProtocolFeeReceiverRaw(address, {
         ...params,
       }),
     );
@@ -1461,7 +1463,10 @@ export class BoostCore extends Deployable<
    * @param {?WriteParams} [params]
    * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
    */
-  public async setProcolFeeReceiverRaw(address: Address, params?: WriteParams) {
+  public async setProtocolFeeReceiverRaw(
+    address: Address,
+    params?: WriteParams,
+  ) {
     const { request, result } = await simulateBoostCoreSetProtocolFeeReceiver(
       this._config,
       {
@@ -1503,6 +1508,51 @@ export class BoostCore extends Deployable<
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
     });
+  }
+
+  /**
+   * Set the referral fee. This function is only callable by the owner.
+   *
+   * @public
+   * @async
+   * @param {bigint} fee
+   * @param {?WriteParams} [params]
+   * @returns {Promise<void>}
+   */
+  public async setReferralFee(fee: bigint, params?: WriteParams) {
+    return await this.awaitResult(
+      this.setReferralFeeRaw(fee, {
+        ...params,
+      }),
+    );
+  }
+
+  /**
+   * Set the referral fee. This function is only callable by the owner.
+   *
+   * @public
+   * @async
+   * @param {bigint} fee
+   * @param {?WriteParams} [params]
+   * @returns {Promise<{ hash: `0x${string}`; result: void; }>}
+   */
+  public async setReferralFeeRaw(fee: bigint, params?: WriteParams) {
+    const { request, result } = await simulateBoostCoreSetReferralFee(
+      this._config,
+      {
+        ...assertValidAddressByChainId(
+          this._config,
+          this.addresses,
+          params?.chainId,
+        ),
+        args: [fee],
+        ...this.optionallyAttachAccount(),
+        // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
+        ...(params as any),
+      },
+    );
+    const hash = await writeBoostCoreSetReferralFee(this._config, request);
+    return { hash, result };
   }
 
   /**

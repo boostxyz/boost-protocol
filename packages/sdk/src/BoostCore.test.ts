@@ -616,7 +616,7 @@ describe("BoostCore", () => {
     expect(await pointsIncentive.limit()).toEqual(10n);
   });
 
-  test("can get  the protocol fee", async () => {
+  test("can get the protocol fee", async () => {
     const { core } = fixtures;
 
     expect(await core.protocolFee()).toBe(1000n);
@@ -633,10 +633,19 @@ describe("BoostCore", () => {
   test("can set the protocol fee receiver", async () => {
     const { core } = fixtures;
 
-    await core.setProcolFeeReceiver(zeroAddress);
+    await core.setProtocolFeeReceiver(zeroAddress);
 
     expect(await core.protocolFeeReceiver()).toBe(zeroAddress);
   });
+
+  test("can set the referral fee", async () => {
+    const { core } = fixtures;
+    const fee = 500n;
+
+    await core.setReferralFee(fee);
+
+    expect(await core.referralFee()).toBe(fee);
+  })
 
   test("binds all actions, budgets, allowlists, incentives, and validators to reuse core options and account", () => {
     const { core } = fixtures;
@@ -862,9 +871,9 @@ describe("BoostCore", () => {
 
   test("[v1-validator] can retrieve the BoostClaimed event from a transaction hash", async () => {
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
-    const referrer = accounts.at(1)!.account!,
-      // biome-ignore lint/style/noNonNullAssertion: we know this is defined
-      trustedSigner = accounts.at(0)!;
+    const referrer = accounts.at(1)!.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const trustedSigner = accounts.at(0)!;
     const erc20Incentive = fixtures.core.ERC20Incentive({
       asset: budgets.erc20.assertValidAddress(),
       strategy: StrategyType.POOL,
@@ -904,19 +913,25 @@ describe("BoostCore", () => {
   });
 
   test("[v2-validator] can retrieve the BoostClaimed event from a transaction hash", async () => {
+    const { budget, erc20 } = budgets;
+
+    // set referral fee
+    const referralFee = 500n;
+    await fixtures.core.setReferralFee(referralFee);
+
     // biome-ignore lint/style/noNonNullAssertion: we know this is defined
-    const referrer = accounts.at(1)!.account!,
-      // biome-ignore lint/style/noNonNullAssertion: we know this is defined
-      trustedSigner = accounts.at(0)!;
+    const referrer = accounts.at(1)!.account!;
+    // biome-ignore lint/style/noNonNullAssertion: we know this is defined
+    const trustedSigner = accounts.at(0)!;
     const erc20Incentive = fixtures.core.ERC20Incentive({
-      asset: budgets.erc20.assertValidAddress(),
+      asset: erc20.assertValidAddress(),
       strategy: StrategyType.POOL,
-      reward: 1n,
+      reward: parseEther('1'),
       limit: 1n,
-      manager: budgets.budget.assertValidAddress(),
+      manager: budget.assertValidAddress(),
     });
     const boost = await freshBoostWithV2Validator(fixtures, {
-      budget: budgets.budget,
+      budget,
       incentives: [erc20Incentive],
     });
 
@@ -932,6 +947,8 @@ describe("BoostCore", () => {
       referrer,
     });
 
+    const referrerInitBalance = await erc20.balanceOf(referrer);
+
     const { hash } = await fixtures.core.claimIncentiveRaw(
       boost.id,
       0n,
@@ -939,11 +956,13 @@ describe("BoostCore", () => {
       claimDataPayload,
     );
 
+    const referrerFinalBalance = await erc20.balanceOf(referrer);
     const claimInfo = await fixtures.core.getClaimFromTransaction({ hash });
     expect(claimInfo).toBeDefined();
     expect(claimInfo?.claimant).toBe(claimant);
     expect(typeof claimInfo?.boostId).toBe("bigint");
     expect(claimInfo?.referrer).toBe(referrer);
+    expect(referrerFinalBalance - referrerInitBalance).toBe(parseEther('1') * referralFee / 10_000n);
   });
 
   test("can calculate an incentive's protocol fee ahead of creation time", async () => {

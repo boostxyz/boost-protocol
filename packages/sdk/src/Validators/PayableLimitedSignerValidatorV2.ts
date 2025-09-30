@@ -181,11 +181,11 @@ export interface PayableLimitedSignerValidatorV2SignaturePayload {
    */
   incentiveData: Hex;
   /**
-   * The address of the referrer
+   * The address of the referrer (defaults to claimant if omitted)
    *
-   * @type {Address}
+   * @type {?Address}
    */
-  referrer: Address;
+  referrer?: Address;
 }
 
 /**
@@ -333,6 +333,7 @@ export class PayableLimitedSignerValidatorV2 extends DeployableTarget<
     payload: PayableLimitedSignerValidatorV2SignaturePayload,
     params?: ReadParams,
   ) {
+    const referrer = payload.referrer ?? payload.claimant;
     return await readPayableLimitedSignerValidatorV2HashSignerData(
       this._config,
       {
@@ -342,6 +343,7 @@ export class PayableLimitedSignerValidatorV2 extends DeployableTarget<
           payload.incentiveQuantity,
           payload.claimant,
           payload.incentiveData,
+          referrer,
         ],
         // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
         ...(params as any),

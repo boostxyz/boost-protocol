@@ -27,7 +27,7 @@ function freshValidator(fixtures: Fixtures) {
   };
 }
 
-describe.skip('LimitedSignerValidatorV2', () => {
+describe('LimitedSignerValidatorV2', () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
   });

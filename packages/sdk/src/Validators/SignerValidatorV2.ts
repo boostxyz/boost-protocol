@@ -88,61 +88,6 @@ export interface SignerValidatorV2ValidatePayload {
 }
 
 /**
- * Object reprentation of a {@link SignerValidatorV2} initialization payload
- *
- * @export
- * @interface SignerValidatorV2Payload
- * @typedef {SignerValidatorV2Payload}
- */
-export interface SignerValidatorV2Payload {
-  /**
-   * The list of authorized signers. The first address in the list will be the initial owner of the contract.
-   *
-   * @type {Address[]}
-   */
-  signers: Address[];
-  /**
-   * The authorized caller of the {@link prepareSignerValidatorV2} function
-   * @type {Address}
-   */
-  validatorCaller: Address;
-}
-
-/**
- * Description placeholder
- *
- * @export
- * @interface SignerValidatorV2ValidatePayload
- * @typedef {SignerValidatorV2ValidatePayload}
- */
-export interface SignerValidatorV2ValidatePayload {
-  /**
-   * The ID of the boost.
-   *
-   * @type {bigint}
-   */
-  boostId: bigint;
-  /**
-   * The ID of the incentive.
-   *
-   * @type {bigint}
-   */
-  incentiveId: bigint;
-  /**
-   * The address of the claimant.
-   *
-   * @type {Address}
-   */
-  claimant: Address;
-  /**
-   * The claim data.
-   *
-   * @type {Hex}
-   */
-  claimData: Hex;
-}
-
-/**
  * Signer Validator Claim Data Payload
  *
  * @export
@@ -226,7 +171,7 @@ export interface SignerValidatorV2InputParams {
   /**
    * The signature data.
    *
-   * @type {string}
+   * @type {Hex}
    */
   signature: Hex;
 
@@ -271,11 +216,11 @@ export interface SignerValidatorV2SignaturePayload {
    */
   incentiveData: Hex;
   /**
-   * The address of the referrer
+   * The address of the referrer (defaults to claimant if omitted)
    *
-   * @type {Address}
+   * @type {?Address}
    */
-  referrer: Address;
+  referrer?: Address;
 }
 
 /**
@@ -366,6 +311,7 @@ export class SignerValidatorV2 extends DeployableTarget<
     payload: SignerValidatorV2SignaturePayload,
     params?: ReadParams,
   ) {
+    const referrer = payload.referrer ?? payload.claimant;
     return await readSignerValidatorV2HashSignerData(this._config, {
       address: this.assertValidAddress(),
       args: [
@@ -373,6 +319,7 @@ export class SignerValidatorV2 extends DeployableTarget<
         payload.incentiveQuantity,
         payload.claimant,
         payload.incentiveData,
+        referrer,
       ],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),

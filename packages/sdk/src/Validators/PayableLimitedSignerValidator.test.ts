@@ -158,7 +158,7 @@ describe("PayableLimitedSignerValidator", () => {
       const cloneValidator = await loadFixture(freshCloneValidator(fixtures));
       const newFee = parseEther("0.05");
 
-      await expect(() => cloneValidator.setClaimFee(newFee)).rejects.toThrow();
+      await expect(cloneValidator.setClaimFee(newFee)).rejects.toThrow();
     });
 
     test("should allow setting fee to zero", async () => {

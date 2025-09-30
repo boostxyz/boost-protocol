@@ -33,7 +33,7 @@ function freshCloneValidator(fixtures: Fixtures) {
   };
 }
 
-describe.skip("PayableLimitedSignerValidatorV2", () => {
+describe("PayableLimitedSignerValidatorV2", () => {
   beforeAll(async () => {
     fixtures = await loadFixture(deployFixtures(defaultOptions));
     // Set the base address in the SDK class so other tests can use it
@@ -158,7 +158,7 @@ describe.skip("PayableLimitedSignerValidatorV2", () => {
       const cloneValidator = await loadFixture(freshCloneValidator(fixtures));
       const newFee = parseEther("0.05");
 
-      await expect(() => cloneValidator.setClaimFee(newFee)).rejects.toThrow();
+      await expect(cloneValidator.setClaimFee(newFee)).rejects.toThrow();
     });
 
     test("should allow setting fee to zero", async () => {

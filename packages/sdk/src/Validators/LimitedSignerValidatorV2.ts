@@ -232,7 +232,7 @@ export interface LimitedSignerValidatorV2InputParams {
   /**
    * The signature data.
    *
-   * @type {string}
+   * @type {Hex}
    */
   signature: Hex;
 
@@ -277,11 +277,11 @@ export interface LimitedSignerValidatorV2SignaturePayload {
    */
   incentiveData: Hex;
   /**
-   * The address of the referrer
+   * The address of the referrer (defaults to claimant if omitted)
    *
-   * @type {Address}
+   * @type {?Address}
    */
-  referrer: Address;
+  referrer?: Address;
 }
 
 /**
@@ -372,6 +372,7 @@ export class LimitedSignerValidatorV2 extends DeployableTarget<
     payload: LimitedSignerValidatorV2SignaturePayload,
     params?: ReadParams,
   ) {
+    const referrer = payload.referrer ?? payload.claimant;
     return await readLimitedSignerValidatorV2HashSignerData(this._config, {
       address: this.assertValidAddress(),
       args: [
@@ -379,6 +380,7 @@ export class LimitedSignerValidatorV2 extends DeployableTarget<
         payload.incentiveQuantity,
         payload.claimant,
         payload.incentiveData,
+        referrer,
       ],
       // biome-ignore lint/suspicious/noExplicitAny: Accept any shape of valid wagmi/viem parameters, wagmi does the same thing internally
       ...(params as any),
@@ -677,9 +679,9 @@ export function prepareLimitedSignerValidatorV2InputParams({
 }
 
 /**
-   * Given a {@link SignerValidatorPayload}, properly encode the initialization payload.
+   * Given a {@link LimitedSignerValidatorV2Payload}, properly encode the initialization payload.
    *
-   * @param {SignerValidatorPayload} param0
+   * @param {LimitedSignerValidatorV2Payload} param0
         SignerValidator: class TSignerValidator extends SignerValidator {
           public static override bases: Record<number, Address> = {
             [chainId]: signerValidatorBase,

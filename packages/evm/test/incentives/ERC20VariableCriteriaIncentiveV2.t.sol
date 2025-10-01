@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {MockERC20} from "contracts/shared/Mocks.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
@@ -311,7 +311,6 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
     //////////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
-        console.logBytes4(incentive.getComponentInterface());
         assertEq(incentive.getComponentInterface(), type(AERC20VariableCriteriaIncentiveV2).interfaceId);
     }
 

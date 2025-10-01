@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -1184,18 +1184,18 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
         assertTrue(managedBudget.isAuthorized(address(this)));
     }
 
-    ////////////////////////////////////
+    /////////////////////////////////////////
     // ManagedBudget.getComponentInterface //
-    ////////////////////////////////////
+    /////////////////////////////////////////
 
     function testGetComponentInterface() public view {
         // Ensure the contract supports the ABudget interface
-        console.logBytes4(managedBudget.getComponentInterface());
+        assertEq(managedBudget.getComponentInterface(), type(AManagedBudget).interfaceId);
     }
 
-    ////////////////////////////////////
+    /////////////////////////////////////
     // ManagedBudget.supportsInterface //
-    ////////////////////////////////////
+    /////////////////////////////////////
 
     function testSupportsBudgetInterface() public view {
         // Ensure the contract supports the ABudget interface
@@ -1218,7 +1218,7 @@ contract ManagedBudgetTest is Test, IERC1155Receiver {
     }
 
     ////////////////////////////
-    // ManagedBudget.fallback  //
+    // ManagedBudget.fallback //
     ////////////////////////////
 
     function testFallback() public {

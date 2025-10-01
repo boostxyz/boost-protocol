@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {MockERC1155} from "contracts/shared/Mocks.sol";
 
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -232,18 +232,18 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         assertEq(payload.amount, 0);
     }
 
-    ////////////////////////////////////
+    ////////////////////////////////////////////
     // ERC1155Incentive.getComponentInterface //
-    ////////////////////////////////////
+    ////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(incentive.getComponentInterface());
+        assertEq(incentive.getComponentInterface(), type(AERC1155Incentive).interfaceId);
     }
 
-    /////////////////////////////////////
+    ////////////////////////////////////////
     // ERC1155Incentive.supportsInterface //
-    /////////////////////////////////////
+    ////////////////////////////////////////
 
     function testSupportsInterface() public view {
         // Ensure the contract supports the ABudget interface

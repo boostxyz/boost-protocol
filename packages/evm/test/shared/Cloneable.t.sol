@@ -35,21 +35,21 @@ contract ACloneableTest is Test {
         cloneable2 = new ACloneableImpl2();
     }
 
-    /////////////////////////////////
+    //////////////////////////////////
     // ACloneable.supportsInterface //
-    /////////////////////////////////
+    //////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         assertTrue(cloneable.supportsInterface(type(ACloneable).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         assertFalse(cloneable.supportsInterface(type(Test).interfaceId));
     }
 
-    //////////////////////////
+    ///////////////////////////
     // ACloneable.initialize //
-    //////////////////////////
+    ///////////////////////////
 
     function testInitialize() public {
         cloneable2.initialize(abi.encode(type(uint256).max));
@@ -65,12 +65,12 @@ contract ACloneableTest is Test {
     // ACloneable.getComponentInterface //
     //////////////////////////////////////
 
-    function testGetComponentInterface_ACloneableImpl() public {
+    function testGetComponentInterface_ACloneableImpl() public view {
         bytes4 expectedInterfaceId = type(ACloneable).interfaceId;
         assertEq(cloneable.getComponentInterface(), expectedInterfaceId);
     }
 
-    function testGetComponentInterface_ACloneableImpl2() public {
+    function testGetComponentInterface_ACloneableImpl2() public view {
         bytes4 expectedInterfaceId = type(ACloneable).interfaceId;
         assertEq(cloneable2.getComponentInterface(), expectedInterfaceId);
     }

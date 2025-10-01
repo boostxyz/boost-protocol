@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {LibClone} from "@solady/utils/LibClone.sol";
-import {Test, console, Vm} from "lib/forge-std/src/Test.sol";
+import {Test, Vm} from "lib/forge-std/src/Test.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";

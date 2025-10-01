@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {ECDSA} from "@solady/utils/ECDSA.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
@@ -327,13 +327,12 @@ contract SignerValidatorTest is Test {
         assertTrue(validator.signers(fakeSigner));
     }
 
-    /////////////////////////////////////////
-    // VestingBudget.getComponentInterface //
-    /////////////////////////////////////////
+    ///////////////////////////////////////////
+    // SignerValidator.getComponentInterface //
+    ///////////////////////////////////////////
 
     function testGetComponentInterface() public view {
-        // Ensure the contract supports the ABudget interface
-        console.logBytes4(validator.getComponentInterface());
+        assertEq(validator.getComponentInterface(), type(ASignerValidator).interfaceId);
     }
 
     ///////////////////////////////////////
@@ -349,9 +348,9 @@ contract SignerValidatorTest is Test {
         assertFalse(validator.supportsInterface(type(Test).interfaceId));
     }
 
-    /////////////////////
-    // Test Helpers    //
-    /////////////////////
+    //////////////////
+    // Test Helpers //
+    //////////////////
 
     function _signHash(bytes32 digest, uint256 privateKey) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);

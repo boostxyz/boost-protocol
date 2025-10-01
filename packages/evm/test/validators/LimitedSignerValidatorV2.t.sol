@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {ECDSA} from "@solady/utils/ECDSA.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {PointsIncentive} from "contracts/incentives/PointsIncentive.sol";
+import {APointsIncentive} from "contracts/incentives/APointsIncentive.sol";
 import {Points} from "contracts/tokens/Points.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 
@@ -175,18 +176,18 @@ contract PointsIncentiveTest is Test {
         incentive.clawback(new bytes(0));
     }
 
-    ////////////////////////////////////
+    ///////////////////////////////////////////
     // PointsIncentive.getComponentInterface //
-    ////////////////////////////////////
+    ///////////////////////////////////////////
 
     function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(incentive.getComponentInterface());
+        assertEq(incentive.getComponentInterface(), type(APointsIncentive).interfaceId);
     }
 
-    /////////////////////////////////////
+    ///////////////////////////////////////
     // PointsIncentive.supportsInterface //
-    /////////////////////////////////////
+    ///////////////////////////////////////
 
     function testSupportsInterface() public view {
         // Ensure the contract supports the ABudget interface

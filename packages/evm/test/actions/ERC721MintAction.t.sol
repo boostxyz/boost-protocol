@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {ERC721} from "@solady/tokens/ERC721.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 
 import {AAction} from "contracts/actions/AAction.sol";
+import {AERC721MintAction} from "contracts/actions/AERC721MintAction.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ERC721MintAction} from "contracts/actions/ERC721MintAction.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
@@ -161,13 +162,13 @@ contract ERC721MintActionTest is Test {
         assertFalse(action.validated(1));
     }
 
-    ////////////////////////////////////
+    ////////////////////////////////////////////
     // ERC721MintAction.getComponentInterface //
-    ////////////////////////////////////
+    ////////////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(action.getComponentInterface());
+        assertEq(action.getComponentInterface(), type(AERC721MintAction).interfaceId);
     }
 
     ////////////////////////////////////////

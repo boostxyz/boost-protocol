@@ -620,7 +620,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "1.1.0";
+        return "1.2.0";
     }
 
     /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it

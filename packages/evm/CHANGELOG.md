@@ -1,5 +1,12 @@
 # @boostxyz/evm
 
+## 8.0.0-canary.3
+
+### Minor Changes
+
+- 3ef7d72: - adds referral fees
+  - deploy new modules and upgrade BoostCore on Ethereum Sepolia
+
 ## 8.0.0-canary.2
 
 ### Minor Changes

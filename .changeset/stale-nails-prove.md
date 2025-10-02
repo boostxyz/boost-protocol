@@ -4,4 +4,5 @@
 "@boostxyz/sdk": minor
 ---
 
-adds referral fees
+- adds referral fees
+- deploy new modules and upgrade BoostCore on Ethereum Sepolia

@@ -103,6 +103,7 @@ jobs:
       - name: Build
         env:
           NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
+          NODE_OPTIONS: --max-old-space-size=8192
         run: npx turbo build --cache-dir=".cache" --filter="./packages/*"
 
       - run: git update-index --assume-unchanged .npmrc

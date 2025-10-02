@@ -7,4 +7,11 @@ interface IBoostClaim {
         bytes validatorData;
         bytes incentiveData;
     }
+
+    /// @notice A higher order struct for encoding and decoding arbitrary claims
+    struct BoostClaimDataWithReferrer {
+        bytes validatorData;
+        bytes incentiveData;
+        address referrer;
+    }
 }

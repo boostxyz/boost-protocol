@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
@@ -100,27 +100,27 @@ contract ContractActionTest is Test {
     // ContractAction.prepare //
     ////////////////////////////
 
-    function testPrepare() public {
+    function testPrepare() public view {
         assertEq(
             action.prepare(abi.encode(address(0xdeadbeef), 100 ether)),
             abi.encodeWithSelector(target.mintPayable.selector, address(0xdeadbeef), 100 ether)
         );
     }
 
-    ////////////////////////////////////
+    //////////////////////////////////////////
     // ContractAction.getComponentInterface //
-    ////////////////////////////////////
+    //////////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(action.getComponentInterface());
+        assertEq(action.getComponentInterface(), type(AContractAction).interfaceId);
     }
 
-    ////////////////////////////////////
+    //////////////////////////////////////
     // ContractAction.supportsInterface //
-    ////////////////////////////////////
+    //////////////////////////////////////
 
-    function testSupportsActionInterface() public {
+    function testSupportsActionInterface() public view {
         // Ensure the contract supports the ABudget interface
         assertTrue(action.supportsInterface(type(AAction).interfaceId));
     }

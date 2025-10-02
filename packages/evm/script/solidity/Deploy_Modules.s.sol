@@ -32,6 +32,9 @@ import {OffchainAccessList} from "contracts/allowlists/OffchainAccessList.sol";
 import {SignerValidator} from "contracts/validators/SignerValidator.sol";
 import {LimitedSignerValidator} from "contracts/validators/LimitedSignerValidator.sol";
 import {PayableLimitedSignerValidator} from "contracts/validators/PayableLimitedSignerValidator.sol";
+import {SignerValidatorV2} from "contracts/validators/SignerValidatorV2.sol";
+import {LimitedSignerValidatorV2} from "contracts/validators/LimitedSignerValidatorV2.sol";
+import {PayableLimitedSignerValidatorV2} from "contracts/validators/PayableLimitedSignerValidatorV2.sol";
 
 /// @notice this script deploys and registers budgets, actions, and incentives
 contract ModuleBaseDeployer is ScriptUtils {
@@ -70,13 +73,16 @@ contract ModuleBaseDeployer is ScriptUtils {
         _deployCGDAIncentive(registry);
         _deployPointsIncentive(registry);
         _deployAllowListIncentive(registry);
-        _deploySignerValidator(registry);
-        _deployLimitedSignerValidator(registry);
-        _deployPayableLimitedSignerValidator(registry);
         _deploySimpleAllowList(registry);
         address denyList = _deploySimpleDenyList(registry);
         _deployOpenAllowList(registry, SimpleDenyList(denyList));
         _deployOffchainAccessList(registry);
+        _deploySignerValidator(registry);
+        _deployLimitedSignerValidator(registry);
+        _deployPayableLimitedSignerValidator(registry);
+        _deploySignerValidatorV2(registry);
+        _deployLimitedSignerValidatorV2(registry);
+        _deployPayableLimitedSignerValidatorV2(registry);
 
         _saveJson();
     }
@@ -488,6 +494,83 @@ contract ModuleBaseDeployer is ScriptUtils {
                 )
             ),
             payableLimitedSignerValidator,
+            registry,
+            ABoostRegistry.RegistryType.VALIDATOR
+        );
+    }
+
+    function _deploySignerValidatorV2(
+        BoostRegistry registry
+    ) internal returns (address signerValidatorV2) {
+        bytes memory initCode = type(SignerValidatorV2).creationCode;
+        signerValidatorV2 = _getCreate2Address(initCode, "");
+        console.log("SignerValidator: ", signerValidatorV2);
+        deployJson = deployJsonKey.serialize(
+            "SignerValidatorV2",
+            signerValidatorV2
+        );
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(
+            newDeploy,
+            string(abi.encodePacked("SignerValidatorV2", signerValidatorV2)),
+            signerValidatorV2,
+            registry,
+            ABoostRegistry.RegistryType.VALIDATOR
+        );
+    }
+
+    function _deployLimitedSignerValidatorV2(
+        BoostRegistry registry
+    ) internal returns (address limitedSignerValidatorV2) {
+        bytes memory initCode = type(LimitedSignerValidatorV2).creationCode;
+        limitedSignerValidatorV2 = _getCreate2Address(initCode, "");
+        console.log("LimitedSignerValidatorV2: ", limitedSignerValidatorV2);
+        deployJson = deployJsonKey.serialize(
+            "LimitedSignerValidatorV2",
+            limitedSignerValidatorV2
+        );
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(
+            newDeploy,
+            string(
+                abi.encodePacked(
+                    "LimitedSignerValidatorV2",
+                    limitedSignerValidatorV2
+                )
+            ),
+            limitedSignerValidatorV2,
+            registry,
+            ABoostRegistry.RegistryType.VALIDATOR
+        );
+    }
+
+    function _deployPayableLimitedSignerValidatorV2(
+        BoostRegistry registry
+    ) internal returns (address payableLimitedSignerValidatorV2) {
+        // Use the deployer as the owner of the base implementation
+        address baseOwner = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
+        uint256 claimFee = vm.envOr("CLAIM_FEE", uint256(0));
+        bytes memory initCode = abi.encodePacked(
+            type(PayableLimitedSignerValidatorV2).creationCode,
+            abi.encode(baseOwner, claimFee)
+        );
+        payableLimitedSignerValidatorV2 = _getCreate2Address(initCode, "");
+        console.log("BaseOwner: ", baseOwner);
+        console.log("PayableLimitedSignerValidatorV2: ", payableLimitedSignerValidatorV2);
+        deployJson = deployJsonKey.serialize(
+            "PayableLimitedSignerValidatorV2",
+            payableLimitedSignerValidatorV2
+        );
+        bool newDeploy = _deploy2(initCode, "");
+        _registerIfNew(
+            newDeploy,
+            string(
+                abi.encodePacked(
+                    "PayableLimitedSignerValidatorV2",
+                    payableLimitedSignerValidatorV2
+                )
+            ),
+            payableLimitedSignerValidatorV2,
             registry,
             ABoostRegistry.RegistryType.VALIDATOR
         );

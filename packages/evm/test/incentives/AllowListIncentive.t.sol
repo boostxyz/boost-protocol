@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 import {AllowListIncentive} from "contracts/incentives/AllowListIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {AAllowListIncentive} from "contracts/incentives/AAllowListIncentive.sol";
 
 contract AllowListIncentiveTest is Test {
     SimpleAllowList public allowList;
@@ -111,7 +112,7 @@ contract AllowListIncentiveTest is Test {
 
     function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(incentive.getComponentInterface());
+        assertEq(incentive.getComponentInterface(), type(AAllowListIncentive).interfaceId);
     }
 
     /////////////////////////////////////

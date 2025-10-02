@@ -10,7 +10,7 @@ import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 import {ASignerValidator} from "contracts/validators/ASignerValidator.sol";
 
-/// @title Signer Validator
+/// @title Limited Signer Validator
 /// @notice A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
 abstract contract ALimitedSignerValidator is ASignerValidator {
     /// @dev track claimants and the amount of times they've claimed an incentive

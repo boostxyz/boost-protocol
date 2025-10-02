@@ -225,6 +225,30 @@
       "import": "./dist/Validators/LimitedSignerValidator.js",
       "node": "./dist/Validators/LimitedSignerValidator.js",
       "types": "./dist/Validators/LimitedSignerValidator.d.ts"
+    },
+    "./Validators/PayableLimitedSignerValidator": {
+      "require": "./dist/Validators/PayableLimitedSignerValidator.cjs",
+      "import": "./dist/Validators/PayableLimitedSignerValidator.js",
+      "node": "./dist/Validators/PayableLimitedSignerValidator.js",
+      "types": "./dist/Validators/PayableLimitedSignerValidator.d.ts"
+    },
+    "./Validators/SignerValidatorV2": {
+      "require": "./dist/Validators/SignerValidatorV2.cjs",
+      "import": "./dist/Validators/SignerValidatorV2.js",
+      "node": "./dist/Validators/SignerValidatorV2.js",
+      "types": "./dist/Validators/SignerValidatorV2.d.ts"
+    },
+    "./Validators/LimitedSignerValidatorV2": {
+      "require": "./dist/Validators/LimitedSignerValidatorV2.cjs",
+      "import": "./dist/Validators/LimitedSignerValidatorV2.js",
+      "node": "./dist/Validators/LimitedSignerValidatorV2.js",
+      "types": "./dist/Validators/LimitedSignerValidatorV2.d.ts"
+    },
+    "./Validators/PayableLimitedSignerValidatorV2": {
+      "require": "./dist/Validators/PayableLimitedSignerValidatorV2.cjs",
+      "import": "./dist/Validators/PayableLimitedSignerValidatorV2.js",
+      "node": "./dist/Validators/PayableLimitedSignerValidatorV2.js",
+      "types": "./dist/Validators/PayableLimitedSignerValidatorV2.d.ts"
     }
   },
   "scripts": {

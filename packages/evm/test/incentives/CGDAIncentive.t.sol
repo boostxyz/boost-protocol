@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {MockERC20} from "contracts/shared/Mocks.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
@@ -10,6 +10,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {CGDAIncentive} from "contracts/incentives/CGDAIncentive.sol";
+import {ACGDAIncentive} from "contracts/incentives/ACGDAIncentive.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
@@ -317,7 +318,7 @@ contract CGDAIncentiveTest is Test {
 
     function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(incentive.getComponentInterface());
+        assertEq(incentive.getComponentInterface(), type(ACGDAIncentive).interfaceId);
     }
 
     /////////////////////////////////////

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -25,6 +25,7 @@ import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {TransparentBudget} from "contracts/budgets/TransparentBudget.sol";
+import {ATransparentBudget} from "contracts/budgets/ATransparentBudget.sol";
 import {IPermit2} from "contracts/shared/IPermit2.sol";
 
 contract TransparentBudgetTest is Test, IERC1155Receiver {
@@ -261,7 +262,7 @@ contract TransparentBudgetTest is Test, IERC1155Receiver {
 
     function testGetComponentInterface() public view {
         // Ensure the contract supports the ABudget interface
-        console.logBytes4(budget.getComponentInterface());
+        assertEq(budget.getComponentInterface(), type(ATransparentBudget).interfaceId);
     }
 
     ///////////////////////////

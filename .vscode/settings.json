@@ -14,6 +14,9 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "[solidity]": {
+    "editor.formatOnSave": false
+  },
   "slither.solcPath": "",
   "slither.hiddenDetectors": [],
   "wake.compiler.solc.remappings": [

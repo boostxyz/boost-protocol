@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test, console, Vm} from "lib/forge-std/src/Test.sol";
 import {MockERC20, MockERC721, MockAuth} from "contracts/shared/Mocks.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
@@ -665,9 +665,9 @@ contract BoostCoreTest is Test {
         assertEq(0, boostCore.getBoostCount(), "Unauthorized user should not be able to create boost");
     }
 
-    ///////////////////////////
+    //////////////////////////////
     // BoostCore.claimIncentive //
-    ///////////////////////////
+    //////////////////////////////
 
     function testClaimIncentive() public {
         // Create a Boost first
@@ -943,9 +943,180 @@ contract BoostCoreTest is Test {
         );
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////////
+    // BoostCore.claimIncentive with Referral //
+    ////////////////////////////////////////////
+
+    /**
+     * @notice This test will check for a 0 referral when claiming. Actual testing can be found at contracts/validators/SignerValidatorV2.t.sol and test/e2e/EndToEndSignerValidatorV2.t.sol
+     */
+    function testClaimIncentiveWithReferralFee_WithoutV2Validator() public {
+        // Set referral fee to 5%
+        uint64 referralFeeRate = 500; // 5%
+        boostCore.setReferralFee(referralFeeRate);
+        assertEq(boostCore.referralFee(), referralFeeRate);
+
+        // Create boost
+        boostCore.createBoost(validCreateCalldata);
+
+        // Get the boost and incentive contract
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive incentiveContract = ERC20Incentive(address(boost.incentives[0]));
+
+        // Mint an ERC721 token to the claimant
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Setup claim parameters
+        address referrer = makeAddr("referrer");
+        address claimant = address(this);
+        bytes memory data = abi.encode(claimant, abi.encode(tokenId));
+
+        // Get initial balances
+        uint256 initialReferrerBalance = mockERC20.balanceOf(referrer);
+        uint256 initialProtocolFeeReceiver = mockERC20.balanceOf(boostCore.protocolFeeReceiver());
+
+        // Expected events
+        uint256 claimAmount = incentiveContract.reward();
+        uint256 totalProtocolFee = (claimAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
+        uint256 expectedReferralFee = 0; // no referral fee occurred because the boost is not using a V2 Validator
+        uint256 expectedProtocolFee = totalProtocolFee - expectedReferralFee;
+
+        // Should NOT emit ReferralFeeSent event
+        vm.recordLogs();
+
+        vm.expectEmit(true, true, false, true);
+        emit BoostCore.ProtocolFeesCollected(0, 0, expectedProtocolFee, boostCore.protocolFeeReceiver());
+
+        // Claim with referrer
+        boostCore.claimIncentive{value: 0.000075 ether}(0, 0, referrer, data);
+
+        // Check that ReferralFeeSent was not emitted
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(
+                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
+            );
+        }
+
+        // Verify referrer received the referral fee
+        assertEq(
+            mockERC20.balanceOf(referrer),
+            initialReferrerBalance + expectedReferralFee,
+            "Referrer should receive the referral fee"
+        );
+
+        // Verify protocol fee receiver got the full protocol fee
+        assertEq(
+            mockERC20.balanceOf(boostCore.protocolFeeReceiver()),
+            initialProtocolFeeReceiver + expectedProtocolFee,
+            "Protocol fee receiver didn't receive correct reduced fee"
+        );
+    }
+
+    function testClaimIncentiveNoReferralFeeWhenReferrerIsClaimant() public {
+        // Set referral fee to 5%
+        uint64 referralFeeRate = 500;
+        boostCore.setReferralFee(referralFeeRate);
+
+        // Create boost
+        boostCore.createBoost(validCreateCalldata);
+
+        // Get the boost and incentive contract
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive incentiveContract = ERC20Incentive(address(boost.incentives[0]));
+
+        // Mint an ERC721 token to the claimant
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Setup claim where referrer is the claimant
+        address claimant = address(this);
+        bytes memory data = abi.encode(claimant, abi.encode(tokenId));
+
+        uint256 initialClaimantBalance = mockERC20.balanceOf(claimant);
+        uint256 initialProtocolFeeReceiver = mockERC20.balanceOf(boostCore.protocolFeeReceiver());
+
+        // Expected protocol fee (no referral fee deducted)
+        uint256 claimAmount = incentiveContract.reward();
+        uint256 expectedProtocolFee = (claimAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
+
+        // Should NOT emit ReferralFeeSent event
+        vm.recordLogs();
+
+        // Claim with self as referrer
+        boostCore.claimIncentive{value: 0.000075 ether}(0, 0, claimant, data);
+
+        // Check that ReferralFeeSent was not emitted
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(
+                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
+            );
+        }
+
+        // Verify claimant received the reward minus only protocol fee
+        uint256 claimantReward = mockERC20.balanceOf(claimant) - initialClaimantBalance;
+        assertEq(claimantReward, claimAmount, "Claimant didn't receive correct amount");
+
+        // Verify protocol fee receiver got full protocol fee
+        assertEq(
+            mockERC20.balanceOf(boostCore.protocolFeeReceiver()),
+            initialProtocolFeeReceiver + expectedProtocolFee,
+            "Protocol fee receiver didn't receive correct full fee"
+        );
+    }
+
+    function testClaimIncentiveNoReferralFeeWhenZeroAddress() public {
+        // Set referral fee to 5%
+        uint64 referralFeeRate = 500;
+        boostCore.setReferralFee(referralFeeRate);
+
+        // Create boost
+        boostCore.createBoost(validCreateCalldata);
+
+        // Get the boost and incentive contract
+        BoostLib.Boost memory boost = boostCore.getBoost(0);
+        ERC20Incentive incentiveContract = ERC20Incentive(address(boost.incentives[0]));
+
+        // Mint an ERC721 token to the claimant
+        uint256 tokenId = 1;
+        mockERC721.mint{value: 0.1 ether}(address(this));
+
+        // Setup claim with zero address as referrer
+        bytes memory data = abi.encode(address(this), abi.encode(tokenId));
+
+        uint256 initialProtocolFeeReceiver = mockERC20.balanceOf(boostCore.protocolFeeReceiver());
+
+        // Expected protocol fee (no referral fee deducted)
+        uint256 claimAmount = incentiveContract.reward();
+        uint256 expectedProtocolFee = (claimAmount * boostCore.protocolFee()) / boostCore.FEE_DENOMINATOR();
+
+        // Should NOT emit ReferralFeeSent event
+        vm.recordLogs();
+
+        // Claim with zero address as referrer
+        boostCore.claimIncentive{value: 0.000075 ether}(0, 0, address(0), data);
+
+        // Check that ReferralFeeSent was not emitted
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(
+                logs[i].topics[0], keccak256("ReferralFeeSent(address,address,uint256,uint256,address,uint256)")
+            );
+        }
+
+        // Verify protocol fee receiver got full protocol fee
+        assertEq(
+            mockERC20.balanceOf(boostCore.protocolFeeReceiver()),
+            initialProtocolFeeReceiver + expectedProtocolFee,
+            "Protocol fee receiver didn't receive correct full fee"
+        );
+    }
+
+    ////////////////////////
     // BoostCore.getBoost //
-    ///////////////////////////
+    ////////////////////////
 
     function testGetBoost() public {
         // Create a Boost first
@@ -978,6 +1149,7 @@ contract BoostCoreTest is Test {
     ////////////////////////
     // BoostCore.clawback //
     ////////////////////////
+
     function testFuzz_SingleClawbackPrecision(uint256 multiple) public {
         // Assume clawbackAmount is between 1 wei and 1 ether for the sake of precision testing
         vm.assume(multiple > 0 && multiple <= 100);
@@ -1144,6 +1316,22 @@ contract BoostCoreTest is Test {
         assertEq(boostCore.protocolFee(), newProtocolFee);
     }
 
+    function testSetProtocolFee_RevertFeeDenominatorIsLower() public {
+        uint64 newProtocolFee = boostCore.FEE_DENOMINATOR() + 1;
+        vm.expectRevert("protocol fee cannot be set higher than the fee denominator");
+        boostCore.setProtocolFee(newProtocolFee);
+    }
+
+    function testSetProtocolFee_RevertReferralFeeIsHigher() public {
+        uint64 newReferralFee = 500; // 5%
+        boostCore.setReferralFee(newReferralFee);
+        assertEq(boostCore.referralFee(), newReferralFee);
+
+        uint64 newProtocolFee = newReferralFee - 1;
+        vm.expectRevert("protocol fee must be set higher than the referral fee");
+        boostCore.setProtocolFee(newProtocolFee);
+    }
+
     ////////////////////////////////////
     // BoostCore.setProtocolFeeModule //
     ////////////////////////////////////
@@ -1170,6 +1358,33 @@ contract BoostCoreTest is Test {
         vm.prank(unauthorizedUser);
         vm.expectRevert(BoostError.Unauthorized.selector);
         boostCore.setProtocolFeeModule(address(mockModule));
+    }
+
+    //////////////////////////////
+    // BoostCore.setReferralFee //
+    //////////////////////////////
+
+    function testSetReferralFee() public {
+        uint64 newReferralFee = 500; // 5%
+        boostCore.setReferralFee(newReferralFee);
+        assertEq(boostCore.referralFee(), newReferralFee);
+    }
+
+    function testSetReferralFee_Revert() public {
+        uint64 invalidReferralFee = boostCore.protocolFee() + 1;
+        vm.expectRevert("referral fee cannot be set higher than the protocol fee");
+        boostCore.setReferralFee(invalidReferralFee);
+    }
+
+    function testSetReferralFee_Unauthorized() public {
+        // Create a mock protocol fee module
+        uint64 mockFee = 1000; // 10%
+
+        // Attempt to set the protocol fee module from a non-owner account
+        address unauthorizedUser = makeAddr("unauthorizedUser");
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(BoostError.Unauthorized.selector);
+        boostCore.setReferralFee(mockFee);
     }
 
     ///////////////////////////

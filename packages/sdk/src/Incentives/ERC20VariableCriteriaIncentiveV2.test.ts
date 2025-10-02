@@ -8,7 +8,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
   fundBudget,
   fundErc20,
   fundErc721,
@@ -112,7 +112,7 @@ describe("ERC20VariableCriteriaIncentiveV2", () => {
       criteria: basicErc721TransferScalarCriteria(erc721),
     });
 
-    boost = await freshBoost(fixtures, {
+    boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -160,7 +160,7 @@ describe("ERC20VariableCriteriaIncentiveV2", () => {
         criteria: basicErc721MintScalarCriteria(erc721),
       });
 
-      boost = await freshBoost(fixtures, {
+      boost = await freshBoostWithV1Validator(fixtures, {
         budget: budgets.budget,
         incentives: [erc20Incentive],
       });
@@ -200,7 +200,7 @@ describe("ERC20VariableCriteriaIncentiveV2", () => {
         valueType: ValueType.WAD,
       });
 
-      boost = await freshBoost(fixtures, {
+      boost = await freshBoostWithV1Validator(fixtures, {
         budget: budgets.budget,
         incentives: [erc20Incentive],
       });
@@ -257,7 +257,7 @@ describe("ERC20VariableCriteriaIncentiveV2", () => {
   });
 
   test("can clawback via a budget", async () => {
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });

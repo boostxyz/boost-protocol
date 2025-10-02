@@ -32,6 +32,8 @@ jobs:
 
       - name: Run tests
         uses: nick-fields/retry@v3
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         with:
           timeout_minutes: 20
           max_attempts: 3

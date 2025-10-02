@@ -17,6 +17,7 @@ import {BoostLib} from "contracts/shared/BoostLib.sol";
 import {BoostRegistry} from "contracts/BoostRegistry.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {IProtocolFeeModule} from "contracts/shared/IProtocolFeeModule.sol";
+import {IBoostClaim} from "contracts/shared/IBoostClaim.sol";
 
 import {AAction} from "contracts/actions/AAction.sol";
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
@@ -24,11 +25,14 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IAuth} from "contracts/auth/IAuth.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
+import {ASignerValidatorV2} from "contracts/validators/ASignerValidatorV2.sol";
+import {ALimitedSignerValidatorV2} from "contracts/validators/ALimitedSignerValidatorV2.sol";
+import {APayableLimitedSignerValidatorV2} from "contracts/validators/APayableLimitedSignerValidatorV2.sol";
 import {IToppable} from "contracts/shared/IToppable.sol";
 
 /// @title Boost Core
 /// @notice The core contract for the Boost protocol
-/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1.sol:BoostCoreV1
+/// @custom:oz-upgrades-from contracts/archive/BoostCoreV1_1.sol:BoostCoreV1_1
 contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     using LibClone for address;
     using LibZip for bytes;
@@ -79,6 +83,15 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         address asset
     );
 
+    event ReferralFeeSent(
+        address indexed referrer,
+        address indexed claimant,
+        uint256 boostId,
+        uint256 incentiveId,
+        address tokenAddress,
+        uint256 referralAmount
+    );
+
     /// @notice The list of boosts
     BoostLib.Boost[] private _boosts;
 
@@ -106,8 +119,14 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     // @notice The set of incentives for the Boost
     mapping(bytes32 => IncentiveDisbursalInfo) public incentivesFeeInfo;
 
+    // @notice The referral fee (in bps)
+    uint64 public referralFee;
+
+    // @notice allocated padding space for future variables
+    uint192 private __padding;
+
     // @notice allocated gap space for future variables
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     modifier canCreateBoost(address sender) {
         if (address(createBoostAuth) != address(0) && !createBoostAuth.isAuthorized(sender)) {
@@ -392,7 +411,6 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @param referrer_ The address of the referrer (if any)
     /// @param data_ The data for the claim
     /// @param claimant the address of the user eligible for the incentive payout
-
     function claimIncentiveFor(
         uint256 boostId_,
         uint256 incentiveId_,
@@ -414,30 +432,34 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         if (!boost.validator.validate{value: msg.value}(boostId_, incentiveId_, claimant, data_)) {
             revert BoostError.Unauthorized();
         }
-        // Get the balance of the asset before the claim
-        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
 
-        // Execute the claim
-        // wake-disable-next-line reentrancy (protected)
-        if (!incentiveContract.claim(claimant, data_)) {
-            revert BoostError.ClaimFailed(claimant, data_);
+        // Get verified referrer based on validator type
+        address verifiedReferrer = _getVerifiedReferrer(boost.validator, referrer_, data_);
+
+        // Process the claim and calculate fees using verified referrer
+        (uint256 referralFeeAmount, uint256 protocolFeeAmount) =
+            _calculateFees(incentive, incentiveContract, claimant, verifiedReferrer, data_);
+
+        // Transfer the referral fee to the verified referrer if applicable
+        if (referralFeeAmount > 0) {
+            _transferReferralFee(incentive, referralFeeAmount, verifiedReferrer);
+            emit ReferralFeeSent(verifiedReferrer, claimant, boostId_, incentiveId_, incentive.asset, referralFeeAmount);
         }
-
-        // Get the balance of the asset after the claim
-        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
-
-        // Calculate the change in balance and the protocol fee amount
-        uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
-        uint256 protocolFeeAmount = (balanceChange * incentive.protocolFee) / FEE_DENOMINATOR;
 
         // Transfer the protocol fee to the protocol fee receiver if applicable
         if (protocolFeeAmount > 0) {
             _transferProtocolFee(incentive, protocolFeeAmount);
-            incentive.protocolFeesRemaining -= protocolFeeAmount;
             emit ProtocolFeesCollected(boostId_, incentiveId_, protocolFeeAmount, protocolFeeReceiver);
         }
 
-        emit BoostClaimed(boostId_, incentiveId_, claimant, referrer_, data_);
+        // Always update remaining fees if any were collected
+        uint256 totalFeesCollected = protocolFeeAmount + referralFeeAmount;
+        if (totalFeesCollected > 0) {
+            require(incentive.protocolFeesRemaining >= totalFeesCollected, "insufficient reserved fees");
+            incentive.protocolFeesRemaining -= totalFeesCollected;
+        }
+
+        emit BoostClaimed(boostId_, incentiveId_, claimant, verifiedReferrer, data_);
     }
 
     /// @notice Get a Boost by index
@@ -561,6 +583,8 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @param protocolFee_ The new protocol fee (in bps)
     /// @dev This function is only callable by the owner
     function setProtocolFee(uint64 protocolFee_) external onlyOwner {
+        require(protocolFee_ <= FEE_DENOMINATOR, "protocol fee cannot be set higher than the fee denominator");
+        require(protocolFee_ > referralFee, "protocol fee must be set higher than the referral fee");
         protocolFee = protocolFee_;
     }
 
@@ -580,6 +604,14 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         protocolFeeModule = protocolFeeModule_;
     }
 
+    /// @notice Set the referral fee
+    /// @param referralFee_ The new referral fee (in bps)
+    /// @dev This function is only callable by the owner
+    function setReferralFee(uint64 referralFee_) external onlyOwner {
+        require(referralFee_ <= protocolFee, "referral fee cannot be set higher than the protocol fee");
+        referralFee = referralFee_;
+    }
+
     /// @notice Authorize the upgrade to a new implementation
     /// @param newImplementation The address of the new implementation
     /// @dev This function is only callable by the owner
@@ -588,7 +620,7 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "1.1.0";
+        return "1.2.0";
     }
 
     /// @notice Check that the provided ABudget is valid and that the caller is authorized to use it
@@ -814,6 +846,61 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         return 0;
     }
 
+    /// @notice Calculate fees
+    /// @param incentive The incentive info
+    /// @param incentiveContract The incentive contract
+    /// @param claimant The claimant address
+    /// @param referrer_ The referrer address
+    /// @param data_ The claim data
+    /// @return referralFeeAmount The referral fee amount
+    /// @return protocolFeeAmount The protocol fee amount
+    function _calculateFees(
+        IncentiveDisbursalInfo storage incentive,
+        AIncentive incentiveContract,
+        address claimant,
+        address referrer_,
+        bytes calldata data_
+    ) internal returns (uint256 referralFeeAmount, uint256 protocolFeeAmount) {
+        // Get the balance of the asset before the claim
+        uint256 initialBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
+
+        // Execute the claim
+        // wake-disable-next-line reentrancy (protected)
+        if (!incentiveContract.claim(claimant, data_)) {
+            revert BoostError.ClaimFailed(claimant, data_);
+        }
+
+        // Get the balance of the asset after the claim
+        uint256 finalBalance = incentive.asset != ZERO_ADDRESS ? _getAssetBalance(incentive, incentiveContract) : 0;
+
+        // Calculate the change in balance and the protocol fee amount
+        uint256 balanceChange = initialBalance > finalBalance ? initialBalance - finalBalance : 0;
+
+        // Calculate the total protocol fee
+        uint256 totalProtocolFee = (balanceChange * incentive.protocolFee) / FEE_DENOMINATOR;
+
+        // Calculate potential referral fee
+        uint256 potentialReferralFee =
+            (referrer_ == claimant || referrer_ == address(0)) ? 0 : (balanceChange * referralFee) / FEE_DENOMINATOR;
+
+        // Cap referral fee at total protocol fee to prevent underflow
+        referralFeeAmount = potentialReferralFee > totalProtocolFee ? totalProtocolFee : potentialReferralFee;
+
+        // Protocol gets remainder
+        protocolFeeAmount = totalProtocolFee - referralFeeAmount;
+    }
+
+    // Helper function to transfer the referral fee based on the asset type
+    function _transferReferralFee(IncentiveDisbursalInfo storage incentive, uint256 amount, address referrer)
+        internal
+    {
+        if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
+            incentive.asset.safeTransfer(referrer, amount);
+        } else if (incentive.assetType == ABudget.AssetType.ERC1155) {
+            IERC1155(incentive.asset).safeTransferFrom(address(this), referrer, incentive.tokenId, amount, "");
+        }
+    }
+
     // Helper function to transfer the protocol fee based on the asset type
     function _transferProtocolFee(IncentiveDisbursalInfo storage incentive, uint256 amount) internal {
         if (incentive.assetType == ABudget.AssetType.ERC20 || incentive.assetType == ABudget.AssetType.ETH) {
@@ -832,5 +919,40 @@ contract BoostCore is Initializable, UUPSUpgradeable, Ownable, ReentrancyGuard {
         if (balance > 0 && balance < DUST_THRESHOLD) {
             asset.safeTransfer(protocolFeeReceiver, balance);
         }
+    }
+
+    /// @notice Get verified referrer based on validator type
+    /// @dev Uses view instead of pure because it calls getComponentInterface() on the validator
+    function _getVerifiedReferrer(AValidator validator, address referrer_, bytes calldata data_)
+        internal
+        view
+        returns (address)
+    {
+        // Check if this is a V2 validator by checking the component interface directly
+        // This is more reliable than supportsInterface which can have inheritance issues
+        try ACloneable(address(validator)).getComponentInterface() returns (bytes4 componentInterface) {
+            if (
+                componentInterface == type(ASignerValidatorV2).interfaceId
+                    || componentInterface == type(ALimitedSignerValidatorV2).interfaceId
+                    || componentInterface == type(APayableLimitedSignerValidatorV2).interfaceId
+            ) {
+                // V2 validator - extract verified referrer from claim data
+                IBoostClaim.BoostClaimDataWithReferrer memory claimData =
+                    abi.decode(data_, (IBoostClaim.BoostClaimDataWithReferrer));
+
+                // Validate that external referrer matches the signed referrer
+                if (referrer_ != claimData.referrer) {
+                    revert BoostError.Unauthorized();
+                }
+
+                return claimData.referrer;
+            }
+        } catch {
+            // If getComponentInterface fails, treat as V1
+        }
+
+        // V1 validator or unknown - overwrite the referrer to use zero address, which doesn't pass out referral rewards
+        // Note: V1 validators use the old BoostClaimData format, so we don't need to decode anything
+        return address(0);
     }
 }

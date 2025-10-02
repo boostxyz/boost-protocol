@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 
@@ -113,7 +113,7 @@ contract EventActionTest is Test {
     // EventAction.getActionStep //
     /////////////////////////////////
 
-    function testGetActionStep() public {
+    function testGetActionStep() public view {
         // Ensure the action event is retrieved correctly
         AEventAction.ActionStep memory retrievedEvent = action.getActionStep(0);
 
@@ -124,7 +124,7 @@ contract EventActionTest is Test {
     // EventAction.getActionClaimant //
     /////////////////////////////////
 
-    function testGetActionClaimant() public {
+    function testGetActionClaimant() public view {
         // Ensure the action event is retrieved correctly
         AEventAction.ActionClaimant memory retrievedClaimant = action.getActionClaimant();
 
@@ -133,19 +133,19 @@ contract EventActionTest is Test {
         assertEq(retrievedClaimant.targetContract, address(mockAsset));
     }
 
-    ////////////////////////////////////
+    ///////////////////////////////////////
     // EventAction.getComponentInterface //
-    ////////////////////////////////////
+    ///////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(action.getComponentInterface());
+        assertEq(action.getComponentInterface(), type(AEventAction).interfaceId);
     }
-    ////////////////////////////////////
+    ///////////////////////////////////
     // EventAction.supportsInterface //
-    ////////////////////////////////////
+    ///////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // Check the interface support
         assertTrue(action.supportsInterface(type(AEventAction).interfaceId));
         assertTrue(action.supportsInterface(type(ACloneable).interfaceId));

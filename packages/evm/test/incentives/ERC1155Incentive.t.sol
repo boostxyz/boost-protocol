@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {MockERC1155} from "contracts/shared/Mocks.sol";
 
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -40,9 +40,9 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         budget.disburse(_makeERC1155Transfer(address(mockAsset), address(incentive), 42, 100, bytes("")));
     }
 
-    ///////////////////////////////
+    /////////////////////////////////
     // ERC1155Incentive.initialize //
-    ///////////////////////////////
+    /////////////////////////////////
 
     function testInitialize() public {
         // Initialize the ERC1155Incentive
@@ -77,9 +77,9 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         _initialize(mockAsset, AERC1155Incentive.Strategy.MINT, 42, 5);
     }
 
-    //////////////////////////
+    ////////////////////////////
     // ERC1155Incentive.claim //
-    //////////////////////////
+    ////////////////////////////
 
     function testClaim() public {
         // Initialize the ERC1155Incentive
@@ -112,9 +112,32 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         incentive.claim(address(1), data);
     }
 
-    ////////////////////////////
+    //////////////////////////////////////////
+    // ERC1155Incentive.claim with referrer //
+    //////////////////////////////////////////
+
+    function testClaim_WithReferrer() public {
+        address referrer = makeAddr("referrer");
+        // Initialize the ERC1155Incentive
+        _initialize(mockAsset, AERC1155Incentive.Strategy.POOL, 42, 5);
+
+        bytes memory data = _encodeTxHashWithReferrer(mockTxHash, referrer);
+
+        vm.expectEmit(true, false, false, true);
+        emit AIncentive.Claimed(
+            address(1), abi.encodePacked(address(mockAsset), address(1), uint256(42), uint256(1), data)
+        );
+
+        // Claim the incentive
+        incentive.claim(address(1), data);
+
+        // Check the claim status
+        assertFalse(incentive.isClaimable(address(1), data));
+    }
+
+    //////////////////////////////
     // ERC1155Incentive.reclaim //
-    ////////////////////////////
+    //////////////////////////////
 
     function testReclaim() public {
         // Initialize the ERC1155Incentive
@@ -209,18 +232,18 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
         assertEq(payload.amount, 0);
     }
 
-    ////////////////////////////////////
+    ////////////////////////////////////////////
     // ERC1155Incentive.getComponentInterface //
-    ////////////////////////////////////
+    ////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(incentive.getComponentInterface());
+        assertEq(incentive.getComponentInterface(), type(AERC1155Incentive).interfaceId);
     }
 
-    /////////////////////////////////////
+    ////////////////////////////////////////
     // ERC1155Incentive.supportsInterface //
-    /////////////////////////////////////
+    ////////////////////////////////////////
 
     function testSupportsInterface() public view {
         // Ensure the contract supports the ABudget interface
@@ -317,5 +340,16 @@ contract ERC1155IncentiveTest is Test, IERC1155Receiver {
     function _encodeTxHash(bytes32 hash) internal pure returns (bytes memory encoded) {
         bytes memory incentiveData = abi.encode(ERC1155Incentive.ERC1155ClaimPayload({transactionHash: hash}));
         return abi.encode(IBoostClaim.BoostClaimData({validatorData: hex"", incentiveData: incentiveData}));
+    }
+
+    function _encodeTxHashWithReferrer(bytes32 hash, address referrer) internal pure returns (bytes memory encoded) {
+        bytes memory incentiveData = abi.encode(ERC1155Incentive.ERC1155ClaimPayload({transactionHash: hash}));
+        return abi.encode(
+            IBoostClaim.BoostClaimDataWithReferrer({
+                validatorData: hex"",
+                incentiveData: incentiveData,
+                referrer: referrer
+            })
+        );
     }
 }

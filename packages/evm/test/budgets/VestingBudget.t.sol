@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {Initializable} from "@solady/utils/Initializable.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
@@ -14,6 +14,7 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {VestingBudget} from "contracts/budgets/VestingBudget.sol";
+import {AVestingBudget} from "contracts/budgets/AVestingBudget.sol";
 
 contract VestingBudgetTest is Test {
     MockERC20 mockERC20;
@@ -44,31 +45,31 @@ contract VestingBudgetTest is Test {
         );
     }
 
-    ////////////////////////////////
+    /////////////////////////////////
     // VestingBudget initial state //
-    ////////////////////////////////
+    /////////////////////////////////
 
-    function test_InitialOwner() public {
+    function test_InitialOwner() public view {
         // Ensure the budget has the correct owner
         assertEq(vestingBudget.owner(), address(this));
     }
 
-    function test_InitialDistributed() public {
+    function test_InitialDistributed() public view {
         // Ensure the budget has 0 tokens distributed
         assertEq(vestingBudget.total(address(mockERC20)), 0);
     }
 
-    function test_InitialTotal() public {
+    function test_InitialTotal() public view {
         // Ensure the budget has 0 tokens allocated
         assertEq(vestingBudget.total(address(mockERC20)), 0);
     }
 
-    function test_InitialAvailable() public {
+    function test_InitialAvailable() public view {
         // Ensure the budget has 0 tokens available
         assertEq(vestingBudget.available(address(mockERC20)), 0);
     }
 
-    function test_InitializerDisabled() public {
+    function test_InitializerDisabled() public view {
         // Because the slot is private, we use `vm.load` to access it then parse out the bits:
         //   - [0] is the `initializing` flag (which should be 0 == false)
         //   - [1..64] hold the `initializedVersion` (which should be 1)
@@ -710,29 +711,29 @@ contract VestingBudgetTest is Test {
         assertFalse(vestingBudget.isAuthorized(address(0xdeadbeef)));
     }
 
-    function testIsAuthorized_Owner() public {
+    function testIsAuthorized_Owner() public view {
         assertTrue(vestingBudget.isAuthorized(address(this)));
     }
 
-    ////////////////////////////////////
+    /////////////////////////////////////////
     // VestingBudget.getComponentInterface //
-    ////////////////////////////////////
+    /////////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Ensure the contract supports the ABudget interface
-        console.logBytes4(vestingBudget.getComponentInterface());
+        assertEq(vestingBudget.getComponentInterface(), type(AVestingBudget).interfaceId);
     }
 
     /////////////////////////////////////
     // VestingBudget.supportsInterface //
     /////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // Ensure the contract supports the ABudget interface
         assertTrue(vestingBudget.supportsInterface(type(ABudget).interfaceId));
     }
 
-    function testSupportsInterface_NotSupported() public {
+    function testSupportsInterface_NotSupported() public view {
         // Ensure the contract does not support an unsupported interface
         assertFalse(vestingBudget.supportsInterface(type(Test).interfaceId));
     }

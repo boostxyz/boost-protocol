@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {MockERC20} from "contracts/shared/Mocks.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
@@ -183,9 +183,49 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
         assertTrue(incentive.isClaimable(CLAIM_RECIPIENT, abi.encode(1 ether)));
     }
 
-    /////////////////////////////////////////
-    // ERC20VariableCriteriaIncentive.topup
-    /////////////////////////////////////////
+    ////////////////////////////////////////////////////////
+    // ERC20VariableCriteriaIncentive.claim with referrer //
+    ////////////////////////////////////////////////////////
+
+    function testClaim_WithReferrer() public {
+        address referrer = makeAddr("referrer");
+        // Define the IncentiveCriteria struct
+        AERC20VariableCriteriaIncentiveV2.IncentiveCriteria memory criteria = AERC20VariableCriteriaIncentiveV2
+            .IncentiveCriteria({
+            criteriaType: SignatureType.EVENT,
+            signature: keccak256("Transfer(address,address,uint256)"),
+            fieldIndex: 2,
+            targetContract: address(mockAsset),
+            valueType: ValueType.WAD
+        });
+        // Initialize the ERC20VariableIncentive with reward and maxReward constraints
+        uint256 reward = 0; // set to zero to test maxReward cap
+        uint256 maxReward = 1.5 ether; // Set a max reward cap
+        address CLAIM_RECIPIENT = makeAddr("CLAIM_RECIPIENT");
+        _initialize(address(mockAsset), reward, 2 ether, maxReward, criteria);
+
+        // Encode a claim with signedAmount exceeding the maxReward cap
+        uint256 signedAmount = 2 ether; // Exceeds maxReward
+        bytes memory claimData =
+            abi.encode(IBoostClaim.BoostClaimDataWithReferrer(hex"", abi.encode(signedAmount), referrer));
+
+        vm.expectEmit(true, false, false, true);
+        emit AIncentive.Claimed(
+            CLAIM_RECIPIENT, abi.encodePacked(address(mockAsset), CLAIM_RECIPIENT, uint256(1.5 ether))
+        );
+
+        // Attempt to claim
+        incentive.claim(CLAIM_RECIPIENT, claimData);
+
+        // Check the claim status and balance
+        assertEq(mockAsset.balanceOf(CLAIM_RECIPIENT), 1.5 ether);
+        assertEq(incentive.claims(), 1);
+        assertTrue(incentive.isClaimable(CLAIM_RECIPIENT, abi.encode(1 ether)));
+    }
+
+    //////////////////////////////////////////
+    // ERC20VariableCriteriaIncentive.topup //
+    //////////////////////////////////////////
 
     function testTopup() public {
         // Define the IncentiveCriteria struct
@@ -271,13 +311,12 @@ contract ERC20VariableCriteriaIncentiveTest is Test {
     //////////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
-        console.logBytes4(incentive.getComponentInterface());
         assertEq(incentive.getComponentInterface(), type(AERC20VariableCriteriaIncentiveV2).interfaceId);
     }
 
-    ///////////////////////////////////////
-    // Test Helper Functions            //
-    ///////////////////////////////////////
+    ///////////////////////////
+    // Test Helper Functions //
+    ///////////////////////////
 
     function _newIncentiveClone() internal returns (ERC20VariableCriteriaIncentiveV2) {
         return ERC20VariableCriteriaIncentiveV2(LibClone.clone(address(new ERC20VariableCriteriaIncentiveV2())));

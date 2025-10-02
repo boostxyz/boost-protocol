@@ -88,6 +88,8 @@ export interface SignerValidatorValidatePayload {
 }
 
 /**
+ * @deprecated Use {@link SignerValidatorV2} instead.
+ *
  * Object reprentation of a {@link SignerValidator} initialization payload
  *
  * @export
@@ -376,7 +378,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
-  protected async validate(
+  public async validate(
     payload: SignerValidatorValidatePayload,
     params?: WriteParams,
   ) {
@@ -392,7 +394,7 @@ export class SignerValidator extends DeployableTarget<
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
-  protected async validateRaw(
+  public async validateRaw(
     payload: SignerValidatorValidatePayload,
     params?: WriteParams,
   ) {

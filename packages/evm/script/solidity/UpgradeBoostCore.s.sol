@@ -45,6 +45,8 @@ contract UpgradeBoostCore is ScriptUtils {
         string memory newVersion = boostCore.version();
         console.log("New version: ", newVersion);
 
+        require(keccak256(abi.encodePacked(currentVersion)) != keccak256(abi.encodePacked(newVersion)), "BoostCore version did not change");
+
         console.log("Protocol Fee Receiver: ", boostCore.protocolFeeReceiver());
         console.log("Protocol Fee: ", boostCore.protocolFee());
         console.log("Boost Count: ", boostCore.getBoostCount());

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {MockERC20} from "contracts/shared/Mocks.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
@@ -37,9 +37,9 @@ contract ERC20PeggedIncentiveTest is Test {
         );
     }
 
-    ///////////////////////////////////////
+    /////////////////////////////////////
     // ERC20PeggedIncentive.initialize //
-    ///////////////////////////////////////
+    /////////////////////////////////////
 
     function testInitialize() public {
         // Initialize the ERC20PeggedIncentive
@@ -66,9 +66,9 @@ contract ERC20PeggedIncentiveTest is Test {
         _initialize(address(mockAsset), address(pegAsset), 0, 0, address(this));
     }
 
-    //////////////////////////////////
+    ////////////////////////////////
     // ERC20PeggedIncentive.claim //
-    //////////////////////////////////
+    ////////////////////////////////
 
     function testClaim() public {
         // Initialize the ERC20PeggedIncentive
@@ -108,11 +108,33 @@ contract ERC20PeggedIncentiveTest is Test {
         incentive.claim(address(this), _encodeBoostClaim(6 ether));
     }
 
-    //////////////////////////////////////
-    // ERC20PeggedIncentive.preflight //
-    //////////////////////////////////////
+    //////////////////////////////////////////////
+    // ERC20PeggedIncentive.claim with referrer //
+    //////////////////////////////////////////////
 
-    function testPreflight() public {
+    function testClaim_WithReferrer() public {
+        address referrer = makeAddr("referrer");
+        // Initialize the ERC20PeggedIncentive
+        _initialize(address(mockAsset), address(pegAsset), 1 ether, 5 ether, address(this));
+
+        vm.expectEmit(true, false, false, true);
+        emit AIncentive.Claimed(address(this), abi.encodePacked(address(mockAsset), address(this), uint256(1 ether)));
+
+        // Claim the incentive
+        incentive.claim(address(this), _encodeBoostClaimWithReferrer(1 ether, referrer));
+
+        // Check the claim status and balance
+        assertEq(mockAsset.balanceOf(address(this)), 1 ether);
+        assertFalse(incentive.isClaimable(address(this), _encodeBoostClaimWithReferrer(5 ether, referrer)));
+        assertEq(incentive.totalClaimed(), 1 ether);
+        assertEq(incentive.claims(), 1);
+    }
+
+    /////////////////////////////////////
+    // ERC20PeggedIncentive.preflight //
+    /////////////////////////////////////
+
+    function testPreflight() public view {
         bytes memory preflightPayload = incentive.preflight(
             abi.encode(
                 ERC20PeggedIncentive.InitPayload({
@@ -131,9 +153,9 @@ contract ERC20PeggedIncentiveTest is Test {
         assertEq(abi.decode(transfer.data, (ABudget.FungiblePayload)).amount, 5 ether);
     }
 
-    ////////////////////////////////////
+    ///////////////////////////////////
     // ERC20PeggedIncentive.clawback //
-    ////////////////////////////////////
+    ///////////////////////////////////
 
     function testClawback() public {
         // Initialize the ERC20PeggedIncentive
@@ -170,9 +192,9 @@ contract ERC20PeggedIncentiveTest is Test {
         assertEq(incentive.getPeg(), address(pegAsset));
     }
 
-    ////////////////////////////////////////
-    // ERC20VariablePeggedIncentive.topup
-    ////////////////////////////////////////
+    ////////////////////////////////
+    // ERC20PeggedIncentive.topup //
+    ////////////////////////////////
 
     function testTopup() public {
         // Initialize with reward=1 ether, limit=5 ether.
@@ -205,19 +227,18 @@ contract ERC20PeggedIncentiveTest is Test {
         incentive.topup(0);
     }
 
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////
     // ERC20PeggedIncentive.getComponentInterface //
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(incentive.getComponentInterface());
         assertEq(incentive.getComponentInterface(), type(AERC20PeggedIncentive).interfaceId);
     }
 
-    //////////////////////////////////////////////
+    ////////////////////////////////////////////
     // ERC20PeggedIncentive.supportsInterface //
-    //////////////////////////////////////////////
+    ////////////////////////////////////////////
 
     function testSupportsInterface() public view {
         // Ensure the contract supports the AIncentive interface
@@ -275,5 +296,13 @@ contract ERC20PeggedIncentiveTest is Test {
 
     function _encodeBoostClaim(uint256 amount) internal pure returns (bytes memory data) {
         return abi.encode(IBoostClaim.BoostClaimData(hex"", abi.encode(amount)));
+    }
+
+    function _encodeBoostClaimWithReferrer(uint256 amount, address referrer)
+        internal
+        pure
+        returns (bytes memory data)
+    {
+        return abi.encode(IBoostClaim.BoostClaimDataWithReferrer(hex"", abi.encode(amount), referrer));
     }
 }

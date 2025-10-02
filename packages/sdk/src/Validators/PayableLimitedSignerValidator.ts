@@ -19,7 +19,6 @@ import {
   type Hex,
   type PrivateKeyAccount,
   encodeAbiParameters,
-  zeroAddress,
 } from 'viem';
 import { PayableLimitedSignerValidator as PayableLimitedSignerValidatorBases } from '../../dist/deployments.json';
 import type {

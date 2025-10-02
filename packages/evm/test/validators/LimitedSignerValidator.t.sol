@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {ECDSA} from "@solady/utils/ECDSA.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
@@ -16,7 +16,10 @@ import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AValidator} from "contracts/validators/AValidator.sol";
 import {
-    LimitedSignerValidator, ASignerValidator, IncentiveBits
+    ALimitedSignerValidator,
+    LimitedSignerValidator,
+    ASignerValidator,
+    IncentiveBits
 } from "contracts/validators/LimitedSignerValidator.sol";
 
 contract LimitedSignerValidatorTest is Test {
@@ -104,9 +107,9 @@ contract LimitedSignerValidatorTest is Test {
         assertNotEq(version, 0, "Version should not be 0");
     }
 
-    /////////////////////////////
-    // SignerValidator.signers //
-    /////////////////////////////
+    ////////////////////////////////////
+    // LimitedSignerValidator.signers //
+    ////////////////////////////////////
 
     function testSigners() public view {
         assertTrue(validator.signers(address(this)));
@@ -115,9 +118,9 @@ contract LimitedSignerValidatorTest is Test {
         assertFalse(validator.signers(fakeSigner));
     }
 
-    //////////////////////////////
-    // SignerValidator.validate //
-    //////////////////////////////
+    /////////////////////////////////////
+    // LimitedSignerValidator.validate //
+    /////////////////////////////////////
 
     function testValidate_ValidSignature() public {
         uint256 boostId = 5;
@@ -333,9 +336,9 @@ contract LimitedSignerValidatorTest is Test {
         assertFalse(validator.validate(boostId, incentiveId, claimant, claimData));
     }
 
-    ///////////////////////////////////
-    // SignerValidator.setAuthorized //
-    ///////////////////////////////////
+    //////////////////////////////////////////
+    // LimitedSignerValidator.setAuthorized //
+    //////////////////////////////////////////
 
     function testSetAuthorized() public {
         address[] memory signers = new address[](1);
@@ -349,18 +352,18 @@ contract LimitedSignerValidatorTest is Test {
         assertTrue(validator.signers(fakeSigner));
     }
 
-    /////////////////////////////////////////
-    // VestingBudget.getComponentInterface //
-    /////////////////////////////////////////
+    //////////////////////////////////////////////////
+    // LimitedSignerValidator.getComponentInterface //
+    //////////////////////////////////////////////////
 
     function testGetComponentInterface() public view {
         // Ensure the contract supports the ABudget interface
-        console.logBytes4(validator.getComponentInterface());
+        assertEq(validator.getComponentInterface(), type(ALimitedSignerValidator).interfaceId);
     }
 
-    ///////////////////////////////////////
-    // SignerValidator.supportsInterface //
-    ///////////////////////////////////////
+    //////////////////////////////////////////////
+    // LimitedSignerValidator.supportsInterface //
+    //////////////////////////////////////////////
 
     function testSupportsInterface() public view {
         assertTrue(validator.supportsInterface(type(ACloneable).interfaceId));
@@ -371,9 +374,9 @@ contract LimitedSignerValidatorTest is Test {
         assertFalse(validator.supportsInterface(type(Test).interfaceId));
     }
 
-    /////////////////////
-    // Test Helpers    //
-    /////////////////////
+    //////////////////
+    // Test Helpers //
+    //////////////////
 
     function _signHash(bytes32 digest, uint256 privateKey) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);

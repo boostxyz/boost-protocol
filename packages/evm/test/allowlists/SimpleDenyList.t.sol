@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
+import {ASimpleDenyList} from "contracts/allowlists/ASimpleDenyList.sol";
 import {SimpleDenyList} from "contracts/allowlists/SimpleDenyList.sol";
 
 contract SimpleDenyListTest is Test {
@@ -80,13 +81,13 @@ contract SimpleDenyListTest is Test {
     // SimpleDenyList.isAllowed //
     ///////////////////////////////
 
-    function testIsAllowed() public {
+    function testIsAllowed() public view {
         assertFalse(denyList.isAllowed(address(1), ""));
         assertTrue(denyList.isAllowed(address(2), ""));
         assertFalse(denyList.isAllowed(address(3), ""));
     }
 
-    function testIsAllowed_UnnecessaryData() public {
+    function testIsAllowed_UnnecessaryData() public view {
         // Extra data should have no effect on the result because it is ignored in this implementation
         assertFalse(denyList.isAllowed(address(1), unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"));
         assertTrue(
@@ -128,25 +129,25 @@ contract SimpleDenyListTest is Test {
         denyList.setDenied(new address[](1), new bool[](1));
     }
 
-    ////////////////////////////////////
+    //////////////////////////////////////////
     // SimpleDenyList.getComponentInterface //
-    ////////////////////////////////////
+    //////////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(denyList.getComponentInterface());
+        assertEq(denyList.getComponentInterface(), type(ASimpleDenyList).interfaceId);
     }
 
-    ///////////////////////////////////////
+    //////////////////////////////////////
     // SimpleDenyList.supportsInterface //
-    ///////////////////////////////////////
+    //////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         assertTrue(denyList.supportsInterface(type(ACloneable).interfaceId));
         assertTrue(denyList.supportsInterface(type(AAllowList).interfaceId));
     }
 
-    function testSupportsInterface_Unsupported() public {
+    function testSupportsInterface_Unsupported() public view {
         assertFalse(denyList.supportsInterface(type(Test).interfaceId));
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -19,6 +19,7 @@ import {ManagedBudgetWithFeesV2 as ManagedBudgetWithFees} from "contracts/budget
 //import {ManagedBudgetWithFees} from "contracts/budgets/ManagedBudgetWithFeesV2.sol";
 import {ManagedBudgetWithFees as MBWithFees} from "contracts/budgets/ManagedBudgetWithFees.sol";
 import {AManagedBudget} from "contracts/budgets/AManagedBudget.sol";
+import {AManagedBudgetWithFeesV2} from "contracts/budgets/AManagedBudgetWithFeesV2.sol";
 import {AERC20Incentive} from "contracts/incentives/AERC20Incentive.sol";
 import {AERC20VariableIncentive} from "contracts/incentives/AERC20VariableIncentive.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
@@ -1444,7 +1445,7 @@ contract ManagedBudgetWithFeesV2Test is Test, IERC1155Receiver {
 
     function testGetComponentInterface() public view {
         // Ensure the contract supports the ABudget interface
-        console.logBytes4(managedBudget.getComponentInterface());
+        assertEq(managedBudget.getComponentInterface(), type(AManagedBudgetWithFeesV2).interfaceId);
     }
 
     ////////////////////////////////////

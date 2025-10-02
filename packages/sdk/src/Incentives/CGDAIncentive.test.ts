@@ -5,7 +5,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
   fundBudget,
 } from "@boostxyz/test/helpers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
@@ -51,7 +51,7 @@ describe("CGDAIncentive", () => {
       rewardDecay: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -96,7 +96,7 @@ describe("CGDAIncentive", () => {
       rewardDecay: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -141,7 +141,7 @@ describe("CGDAIncentive", () => {
       rewardDecay: 1n,
       manager: budgets.budget.address || zeroAddress,
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20Incentive],
     });
@@ -194,7 +194,7 @@ describe("CGDAIncentive", () => {
       rewardDecay: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [cgdaIncentive],
     });
@@ -221,7 +221,7 @@ describe("CGDAIncentive", () => {
       rewardDecay: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [cgdaIncentive],
     });

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {BoostError} from "contracts/shared/BoostError.sol";
 import {ACloneable} from "contracts/shared/ACloneable.sol";
 import {AAllowList} from "contracts/allowlists/AAllowList.sol";
+import {ASimpleAllowList} from "contracts/allowlists/ASimpleAllowList.sol";
 import {SimpleAllowList} from "contracts/allowlists/SimpleAllowList.sol";
 
 contract SimpleAllowListTest is Test {
@@ -73,13 +74,13 @@ contract SimpleAllowListTest is Test {
     // SimpleAllowList.isAllowed //
     ///////////////////////////////
 
-    function testIsAllowed() public {
+    function testIsAllowed() public view {
         assertTrue(allowList.isAllowed(address(1), ""));
         assertFalse(allowList.isAllowed(address(2), ""));
         assertTrue(allowList.isAllowed(address(3), ""));
     }
 
-    function testIsAllowed_UnnecessaryData() public {
+    function testIsAllowed_UnnecessaryData() public view {
         // Extra data should have no effect on the result because it is ignored in this implementation
         assertTrue(allowList.isAllowed(address(1), unicode"🦄 unicorns (and 🌈 rainbows!) are *so cool*"));
         assertFalse(
@@ -121,25 +122,25 @@ contract SimpleAllowListTest is Test {
         allowList.setAllowed(new address[](1), new bool[](1));
     }
 
-    ////////////////////////////////////
+    ///////////////////////////////////////////
     // SimpleAllowList.getComponentInterface //
-    ////////////////////////////////////
+    ///////////////////////////////////////////
 
-    function testGetComponentInterface() public {
+    function testGetComponentInterface() public view {
         // Retrieve the component interface
-        console.logBytes4(allowList.getComponentInterface());
+        assertEq(allowList.getComponentInterface(), type(ASimpleAllowList).interfaceId);
     }
 
     ///////////////////////////////////////
     // SimpleAllowList.supportsInterface //
     ///////////////////////////////////////
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         assertTrue(allowList.supportsInterface(type(ACloneable).interfaceId));
         assertTrue(allowList.supportsInterface(type(AAllowList).interfaceId));
     }
 
-    function testSupportsInterface_Unsupported() public {
+    function testSupportsInterface_Unsupported() public view {
         assertFalse(allowList.supportsInterface(type(Test).interfaceId));
     }
 }

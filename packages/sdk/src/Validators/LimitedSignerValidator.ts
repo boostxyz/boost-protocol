@@ -17,7 +17,6 @@ import {
   type PrivateKeyAccount,
   encodeAbiParameters,
 } from 'viem';
-import { signTypedData } from 'viem/accounts';
 import { LimitedSignerValidator as SignerValidatorBases } from '../../dist/deployments.json';
 import type {
   DeployableOptions,
@@ -292,9 +291,9 @@ export type LimitedSignerValidatorLog<
  *  A simple implementation of a Validator that verifies a given signature and checks the recovered address against a set of authorized signers
  *
  * @export
- * @class SignerValidator
- * @typedef {SignerValidator}
- * @extends {DeployableTarget<SignerValidatorPayload>}
+ * @class LimitedSignerValidator
+ * @typedef {LimitedSignerValidator}
+ * @extends {DeployableTarget<LimitedSignerValidatorPayload>}
  */
 export class LimitedSignerValidator extends DeployableTarget<
   LimitedSignerValidatorPayload,
@@ -379,11 +378,11 @@ export class LimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {SignerValidatorValidatePayload} payload
+   * @param {LimitedSignerValidatorValidatePayload} payload
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
-  protected async validate(
+  public async validate(
     payload: LimitedSignerValidatorValidatePayload,
     params?: WriteParams,
   ) {
@@ -395,11 +394,11 @@ export class LimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {SignerValidatorValidatePayload} payload
+   * @param {LimitedSignerValidatorValidatePayload} payload
    * @param {?WriteParams} [params]
    * @returns {Promise<boolean>} - True if the action has been validated based on the data payload
    */
-  protected async validateRaw(
+  public async validateRaw(
     payload: LimitedSignerValidatorValidatePayload,
     params?: WriteParams,
   ) {
@@ -518,7 +517,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    *
    * @public
    * @async
-   * @param {SignerValidatorClaimDataParams} params
+   * @param {LimitedSignerValidatorClaimDataParams} params
    * @returns {Promise<Hex>}
    */
   public async encodeClaimData(
@@ -534,7 +533,7 @@ export class LimitedSignerValidator extends DeployableTarget<
    * @inheritdoc
    *
    * @public
-   * @param {?SignerValidatorPayload} [_payload]
+   * @param {?LimitedSignerValidatorPayload} [_payload]
    * @param {?DeployableOptions} [_options]
    * @returns {GenericDeployableParams}
    */

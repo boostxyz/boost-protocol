@@ -5,7 +5,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
   fundBudget,
 } from "@boostxyz/test/helpers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
@@ -18,7 +18,6 @@ import {
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { decodeClaimData } from "../Validators/Validator";
 import { ERC20VariableIncentive } from "./ERC20VariableIncentive";
-
 
 let fixtures: Fixtures, budgets: BudgetFixtures;
 
@@ -57,7 +56,7 @@ describe("ERC20VariableIncentive", () => {
         manager: zeroAddress,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20VariableIncentive],
     });
@@ -99,7 +98,7 @@ describe("ERC20VariableIncentive", () => {
         manager: zeroAddress,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20VariableIncentive],
     });
@@ -139,7 +138,7 @@ describe("ERC20VariableIncentive", () => {
         manager: zeroAddress,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20VariableIncentive],
     });
@@ -186,7 +185,7 @@ describe("ERC20VariableIncentive", () => {
         manager: zeroAddress,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20VariableIncentive],
     });
@@ -223,7 +222,7 @@ describe("ERC20VariableIncentive", () => {
         manager: zeroAddress,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20VariableIncentive],
     });
@@ -248,7 +247,7 @@ describe("ERC20VariableIncentive", () => {
       limit: 1n,
       manager: budgets.budget.assertValidAddress(),
     });
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc20VariableIncentive],
     });

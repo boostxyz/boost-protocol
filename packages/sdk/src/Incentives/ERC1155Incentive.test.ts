@@ -8,7 +8,7 @@ import {
   type Fixtures,
   defaultOptions,
   deployFixtures,
-  freshBoost,
+  freshBoostWithV1Validator,
   fundBudget,
 } from "@boostxyz/test/helpers";
 import { ERC1155Incentive, ERC1155StrategyType } from "./ERC1155Incentive";
@@ -53,7 +53,7 @@ describe.skip("ERC1155Incentive", () => {
         extraData: zeroHash,
       },
     );
-    const boost = await freshBoost(fixtures, {
+    const boost = await freshBoostWithV1Validator(fixtures, {
       budget: budgets.budget,
       incentives: [erc1155Incentive],
     });

@@ -819,6 +819,13 @@ export class EventAction extends DeployableTarget<
 
     // Check each log
     for (let log of logs) {
+      // Log address must match the target contract. Zero address is a wildcard.
+      if (
+        actionStep.targetContract !== zeroAddress &&
+        !isAddressEqual(log.address, actionStep.targetContract)
+      ) {
+        continue;
+      }
       // parse out final (scalar) field from the log args
       try {
         if (!Array.isArray(log.args)) {
@@ -999,6 +1006,14 @@ export class EventAction extends DeployableTarget<
     transaction: Transaction,
     params: Pick<ValidateActionStepParams, 'abiItem' | 'knownSignatures'>,
   ) {
+    // Log address must match the target contract. Zero address is a wildcard.
+    if (
+      actionStep.targetContract !== zeroAddress &&
+      (!transaction.to ||
+        !isAddressEqual(transaction.to, actionStep.targetContract))
+    ) {
+      return false;
+    }
     const criteria = actionStep.actionParameter;
     const signature = actionStep.signature;
 
@@ -1389,7 +1404,12 @@ export class EventAction extends DeployableTarget<
     if (!logs.length) return filteredLogs;
 
     for (let log of logs) {
-      if (!isAddressEqual(log.address, actionStep.targetContract)) continue;
+      // Log address must match the target contract. Zero address is a wildcard.
+      if (
+        actionStep.targetContract !== zeroAddress &&
+        !isAddressEqual(log.address, actionStep.targetContract)
+      )
+        continue;
 
       try {
         if (!Array.isArray(log.args)) {

@@ -1,5 +1,7 @@
 # @boostxyz/cli
 
+## 7.0.0-canary.5
+
 ## 7.0.0-canary.4
 
 ### Minor Changes

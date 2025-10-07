@@ -14,6 +14,8 @@
     "@boostxyz/test": "1.0.1-alpha.3"
   },
   "changesets": [
+    "beige-radios-cry",
+    "early-keys-sort",
     "loud-spies-nail",
     "modern-moose-cough",
     "odd-cobras-yawn",

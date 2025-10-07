@@ -1,5 +1,15 @@
 # @boostxyz/sdk
 
+## 8.0.0-canary.5
+
+### Minor Changes
+
+- 6ff3c1c: add targetContract check in action validation
+
+### Patch Changes
+
+- cb705f0: use actionStep signature to filter decoded logs
+
 ## 8.0.0-canary.4
 
 ### Minor Changes

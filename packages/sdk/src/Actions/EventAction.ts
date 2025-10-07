@@ -27,7 +27,6 @@ import {
   isAddress,
   isAddressEqual,
   pad,
-  toEventSelector,
   trim,
   zeroAddress,
   zeroHash,
@@ -613,7 +612,7 @@ export class EventAction extends DeployableTarget<
         ({ decodedLogs } = await this.decodeTransferLogs(receipt));
       } else {
         decodedLogs = receipt.logs
-          .filter((log) => log.topics[0] === toEventSelector(event))
+          .filter((log) => log.topics[0] === signature)
           .map((log) => decodeAndReorderLogArgs(event, log));
       }
 
@@ -1363,7 +1362,7 @@ export class EventAction extends DeployableTarget<
     }
 
     const decodedLogs = receipt.logs
-      .filter((log) => log.topics[0] === toEventSelector(event))
+      .filter((log) => log.topics[0] === signature)
       .map((log) => decodeAndReorderLogArgs(event, log));
 
     return this.filterLogsByActionStepCriteria(actionStep, decodedLogs, event);

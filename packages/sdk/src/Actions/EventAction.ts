@@ -777,7 +777,7 @@ export class EventAction extends DeployableTarget<
       }
 
       const decodedLogs = receipt.logs
-        .filter((log) => log.topics[0] === toEventSelector(event))
+        .filter((log) => log.topics[0] === signature)
         .map((log) => decodeAndReorderLogArgs(event, log));
 
       return this.isActionEventValid(actionStep, decodedLogs, event);

@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 8.0.0-canary.4
+
+### Minor Changes
+
+- 2c328ac: deploy modules and upgrades on: base sepolia, base mainnet, optimism, worldchain
+
 ## 8.0.0-canary.3
 
 ### Minor Changes

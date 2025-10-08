@@ -1,5 +1,11 @@
 # @boostxyz/cli
 
+## 7.0.0-canary.6
+
+### Minor Changes
+
+- 2c328ac: deploy modules and upgrades on: base sepolia, base mainnet, optimism, worldchain
+
 ## 7.0.0-canary.5
 
 ## 7.0.0-canary.4

@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 8.0.0-canary.5
+
+### Minor Changes
+
+- 99181d5: deployment to celo mainnet
+
 ## 8.0.0-canary.4
 
 ### Minor Changes

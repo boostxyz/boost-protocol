@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.0.0-canary.7
+
+### Minor Changes
+
+- 99181d5: deployment to celo mainnet
+
 ## 8.0.0-canary.6
 
 ### Minor Changes

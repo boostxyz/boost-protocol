@@ -28,7 +28,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         baseAddress = new ManagedBudgetWithFeesV2();
 
         // Deploy factory
-        factory = new ManagedBudgetWithFeesV2Factory(address(baseAddress));
+        factory = new ManagedBudgetWithFeesV2Factory(address(baseAddress), address(this));
 
         // Deploy mock ERC20
         mockERC20 = new MockERC20();

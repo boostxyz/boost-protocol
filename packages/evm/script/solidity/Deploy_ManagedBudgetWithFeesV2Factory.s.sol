@@ -21,7 +21,7 @@ contract DeployManagedBudgetWithFeesV2Factory is ScriptUtils {
         address implementation = _getImplementation();
         console.log("ManagedBudgetWithFeesV2 implementation: ", implementation);
 
-        _deployFactory(implementation);
+        _deployFactory(implementation, vm.addr(vm.envUint("SIGNER_PRIVATE_KEY")));
 
         _saveJson();
     }
@@ -50,11 +50,12 @@ contract DeployManagedBudgetWithFeesV2Factory is ScriptUtils {
     }
 
     function _deployFactory(
-        address implementation
+        address implementation,
+        address owner
     ) internal returns (address factory) {
         bytes memory initCode = abi.encodePacked(
             type(ManagedBudgetWithFeesV2Factory).creationCode,
-            abi.encode(implementation)
+            abi.encode(implementation, owner)
         );
         factory = _getCreate2Address(initCode, "");
         console.log("ManagedBudgetWithFeesV2Factory: ", factory);

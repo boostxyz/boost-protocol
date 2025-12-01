@@ -26,10 +26,12 @@ contract ManagedBudgetWithFeesV2Factory is Ownable {
 
     /// @notice Deploys the factory with the specified implementation
     /// @param _managedBudgetWithFeesV2BaseAddress The address of the ManagedBudgetWithFeesV2 implementation
-    constructor(address _managedBudgetWithFeesV2BaseAddress) {
+    /// @param _owner The owner of the factory
+    constructor(address _managedBudgetWithFeesV2BaseAddress, address _owner) {
         require(_managedBudgetWithFeesV2BaseAddress != address(0), "Implementation cannot be zero address");
+        require(_owner != address(0), "Owner cannot be zero address");
         implementation = _managedBudgetWithFeesV2BaseAddress;
-        _initializeOwner(msg.sender);
+        _initializeOwner(_owner);
     }
 
     /// @notice Deploys a new ManagedBudgetWithFeesV2 contract using CREATE2

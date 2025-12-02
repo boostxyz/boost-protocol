@@ -57,8 +57,9 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         bytes32 expectedSalt = keccak256(abi.encodePacked(owner, nonce));
 
         vm.expectEmit(true, true, true, true);
-        emit ManagedBudgetWithFeesV2Factory.BudgetDeployed(predictedBudget, owner, address(baseAddress), expectedSalt);
+        emit ManagedBudgetWithFeesV2Factory.BudgetDeployed(predictedBudget, owner, address(baseAddress), expectedSalt, nonce);
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
 
         // Verify budget was deployed
@@ -75,7 +76,9 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256 nonce1 = 1;
         uint256 nonce2 = 2;
 
+        vm.prank(owner);
         address budget1 = factory.deployBudget(owner, authorized, roles, managementFee, nonce1);
+        vm.prank(owner);
         address budget2 = factory.deployBudget(owner, authorized, roles, managementFee, nonce2);
 
         // Verify different nonces produce different addresses
@@ -86,10 +89,12 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256 nonce = 1;
 
         // First deployment should succeed
+        vm.prank(owner);
         factory.deployBudget(owner, authorized, roles, managementFee, nonce);
 
         // Second deployment with same owner + nonce should revert
         vm.expectRevert();
+        vm.prank(owner);
         factory.deployBudget(owner, authorized, roles, managementFee, nonce);
     }
 
@@ -97,7 +102,9 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256 nonce = 1;
         address owner2 = makeAddr("owner2");
 
+        vm.prank(owner);
         address budget1 = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        vm.prank(owner2);
         address budget2 = factory.deployBudget(owner2, authorized, roles, managementFee, nonce);
 
         // Different owners with same nonce should produce different addresses
@@ -124,6 +131,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         address predicted = factory.predictBudgetAddress(owner, nonce);
 
         // Deploy with same owner + nonce
+        vm.prank(owner);
         address actual = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
 
         // Verify prediction matches actual
@@ -167,6 +175,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256 snapshot = vm.snapshot();
 
         // Deploy on "chain 1" (current state)
+        vm.prank(owner);
         address chain1Address = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
 
         // Revert and redeploy factory at same address (simulating different chain)
@@ -180,6 +189,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         address chain2Prediction = factory.predictBudgetAddress(owner, nonce);
 
         // Deploy on "chain 2"
+        vm.prank(owner);
         address chain2Address = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
 
         // Verify addresses match across "chains"
@@ -194,6 +204,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     function test_DeployedBudgetIsInitialized() public {
         uint256 nonce = 1;
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -211,6 +222,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     function test_DeployedBudget_CoreIsSet() public {
         uint256 nonce = 1;
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -221,6 +233,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     function test_DeployedBudget_RolesAreSet() public {
         uint256 nonce = 1;
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -239,6 +252,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256[] memory emptyRoles = new uint256[](0);
 
         vm.expectRevert("Must have at least one authorized address");
+        vm.prank(owner);
         factory.deployBudget(owner, emptyAuth, emptyRoles, managementFee, nonce);
     }
 
@@ -248,6 +262,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         shortRoles[0] = 0;
 
         vm.expectRevert("Authorized and roles length mismatch");
+        vm.prank(owner);
         factory.deployBudget(owner, authorized, shortRoles, managementFee, nonce);
     }
 
@@ -256,6 +271,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256 excessiveFee = 10001; // > 100%
 
         vm.expectRevert("Fee cannot exceed 100%");
+        vm.prank(owner);
         factory.deployBudget(owner, authorized, roles, excessiveFee, nonce);
     }
 
@@ -263,6 +279,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256 nonce = 1;
         uint256 maxFee = 10000; // 100%
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, maxFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -273,6 +290,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         uint256 nonce = 2;
         uint256 zeroFee = 0;
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, zeroFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -286,6 +304,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     function test_DeployedBudget_CanAllocate() public {
         uint256 nonce = 1;
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -304,6 +323,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     function test_DeployedBudget_OnlyOwnerCanDisburse() public {
         uint256 nonce = 1;
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -336,6 +356,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         address predictedAddress = factory.predictBudgetAddress(owner, nonce);
 
         // Deploy
+        vm.prank(owner);
         address actualAddress = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
 
         // Verify match
@@ -351,6 +372,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
             return;
         }
 
+        vm.prank(_owner);
         address budget = factory.deployBudget(_owner, authorized, roles, managementFee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
@@ -366,6 +388,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
             return;
         }
 
+        vm.prank(owner);
         address budget = factory.deployBudget(owner, authorized, roles, _fee, nonce);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 

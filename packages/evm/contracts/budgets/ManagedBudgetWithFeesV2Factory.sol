@@ -17,7 +17,8 @@ contract ManagedBudgetWithFeesV2Factory is Ownable {
     /// @param owner The owner of the budget
     /// @param implementation The implementation address used for cloning
     /// @param salt The salt used for CREATE2 deployment
-    event BudgetDeployed(address indexed budget, address indexed owner, address indexed implementation, bytes32 salt);
+    /// @param nonce The nonce used to derive the salt
+    event BudgetDeployed(address indexed budget, address indexed owner, address indexed implementation, bytes32 salt, uint256 nonce);
 
     /// @notice Emitted when the implementation address is updated
     /// @param oldImplementation The previous implementation address
@@ -50,6 +51,7 @@ contract ManagedBudgetWithFeesV2Factory is Ownable {
         uint256 managementFee,
         uint256 nonce
     ) external returns (address budget) {
+        require(owner == msg.sender, "Owner must be msg.sender");
         require(authorized.length > 0, "Must have at least one authorized address");
         require(authorized.length == roles.length, "Authorized and roles length mismatch");
         require(managementFee <= 10000, "Fee cannot exceed 100%");
@@ -73,7 +75,7 @@ contract ManagedBudgetWithFeesV2Factory is Ownable {
         // Initialize the budget
         ManagedBudgetWithFeesV2(payable(budget)).initialize(initData);
 
-        emit BudgetDeployed(budget, owner, implementation, salt);
+        emit BudgetDeployed(budget, owner, implementation, salt, nonce);
     }
 
     /// @notice Computes the deterministic address for a budget deployment

@@ -12,6 +12,10 @@ import {ManagedBudgetWithFees} from "./ManagedBudgetWithFees.sol";
 contract ManagedBudgetWithFeesV2Factory is Ownable {
     /// @notice The base implementation of ManagedBudgetWithFeesV2 used for cloning
     address public implementation;
+
+    /// @notice Tracks the next nonce for each deployer address
+    mapping(address => uint256) public nonces;
+
     /// @notice Emitted when a new ManagedBudgetWithFeesV2 is deployed
     /// @param budget The address of the newly deployed budget
     /// @param owner The owner of the budget
@@ -36,28 +40,26 @@ contract ManagedBudgetWithFeesV2Factory is Ownable {
     }
 
     /// @notice Deploys a new ManagedBudgetWithFeesV2 contract using CREATE2
-    /// @param owner The owner address for the budget
     /// @param authorized Array of authorized addresses (first address should be the BoostCore contract)
     /// @param roles Array of roles corresponding to each authorized address
     /// @param managementFee The management fee in basis points (100 = 1%)
-    /// @param nonce A nonce value that combines with owner to generate deterministic address
     /// @return budget The address of the newly deployed budget
     /// @dev The same owner + nonce will generate the same address across different chains
     /// @dev The first address in the authorized array must be the BoostCore contract
     function deployBudget(
-        address owner,
         address[] calldata authorized,
         uint256[] calldata roles,
-        uint256 managementFee,
-        uint256 nonce
+        uint256 managementFee
     ) external returns (address budget) {
-        require(owner == msg.sender, "Owner must be msg.sender");
         require(authorized.length > 0, "Must have at least one authorized address");
         require(authorized.length == roles.length, "Authorized and roles length mismatch");
         require(managementFee <= 10000, "Fee cannot exceed 100%");
 
+        // Get the current nonce for this deployer and increment it
+        uint256 nonce = nonces[msg.sender]++;
+
         // Derive salt from owner + nonce to ensure only this owner can deploy at this address
-        bytes32 salt = keccak256(abi.encodePacked(owner, nonce));
+        bytes32 salt = keccak256(abi.encodePacked(msg.sender, nonce));
 
         // Clone the implementation using CREATE2 for deterministic address
         budget = LibClone.cloneDeterministic(implementation, salt);
@@ -65,7 +67,7 @@ contract ManagedBudgetWithFeesV2Factory is Ownable {
         // Prepare initialization data
         bytes memory initData = abi.encode(
             ManagedBudgetWithFees.InitPayloadWithFee({
-                owner: owner,
+                owner: msg.sender,
                 authorized: authorized,
                 roles: roles,
                 managementFee: managementFee
@@ -75,7 +77,7 @@ contract ManagedBudgetWithFeesV2Factory is Ownable {
         // Initialize the budget
         ManagedBudgetWithFeesV2(payable(budget)).initialize(initData);
 
-        emit BudgetDeployed(budget, owner, implementation, salt, nonce);
+        emit BudgetDeployed(budget, msg.sender, implementation, salt, nonce);
     }
 
     /// @notice Computes the deterministic address for a budget deployment

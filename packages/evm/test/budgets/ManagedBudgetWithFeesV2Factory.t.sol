@@ -48,7 +48,8 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     //////////////////////////////
 
     function test_DeployBudget() public {
-        uint256 nonce = 1;
+        // Get the current nonce for owner (should be 0)
+        uint256 nonce = factory.nonces(owner);
 
         // Predict the address that will be deployed
         address predictedBudget = factory.predictBudgetAddress(owner, nonce);
@@ -60,10 +61,13 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         emit ManagedBudgetWithFeesV2Factory.BudgetDeployed(predictedBudget, owner, address(baseAddress), expectedSalt, nonce);
 
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, managementFee);
 
         // Verify budget was deployed
         assertTrue(budget != address(0), "Budget should be deployed");
+
+        // Verify nonce was incremented
+        assertEq(factory.nonces(owner), nonce + 1, "Nonce should be incremented");
 
         // Verify budget is initialized
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
@@ -73,42 +77,36 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     }
 
     function test_DeployBudget_MultipleDeployments() public {
-        uint256 nonce1 = 1;
-        uint256 nonce2 = 2;
-
         vm.prank(owner);
-        address budget1 = factory.deployBudget(owner, authorized, roles, managementFee, nonce1);
+        address budget1 = factory.deployBudget(authorized, roles, managementFee);
         vm.prank(owner);
-        address budget2 = factory.deployBudget(owner, authorized, roles, managementFee, nonce2);
+        address budget2 = factory.deployBudget(authorized, roles, managementFee);
 
-        // Verify different nonces produce different addresses
-        assertTrue(budget1 != budget2, "Different nonces should produce different addresses");
+        // Verify sequential deployments produce different addresses
+        assertTrue(budget1 != budget2, "Sequential deployments should produce different addresses");
+
+        // Verify nonce was incremented twice
+        assertEq(factory.nonces(owner), 2, "Nonce should be 2 after two deployments");
     }
 
-    function test_DeployBudget_SameOwnerAndNonceReverts() public {
-        uint256 nonce = 1;
-
-        // First deployment should succeed
-        vm.prank(owner);
-        factory.deployBudget(owner, authorized, roles, managementFee, nonce);
-
-        // Second deployment with same owner + nonce should revert
-        vm.expectRevert();
-        vm.prank(owner);
-        factory.deployBudget(owner, authorized, roles, managementFee, nonce);
-    }
-
-    function test_DeployBudget_DifferentOwnersCanUseSameNonce() public {
-        uint256 nonce = 1;
+    function test_DeployBudget_DifferentOwnersStartAtNonceZero() public {
         address owner2 = makeAddr("owner2");
 
-        vm.prank(owner);
-        address budget1 = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
-        vm.prank(owner2);
-        address budget2 = factory.deployBudget(owner2, authorized, roles, managementFee, nonce);
+        // Both owners start at nonce 0
+        assertEq(factory.nonces(owner), 0, "Owner nonce should start at 0");
+        assertEq(factory.nonces(owner2), 0, "Owner2 nonce should start at 0");
 
-        // Different owners with same nonce should produce different addresses
+        vm.prank(owner);
+        address budget1 = factory.deployBudget(authorized, roles, managementFee);
+        vm.prank(owner2);
+        address budget2 = factory.deployBudget(authorized, roles, managementFee);
+
+        // Different owners with same starting nonce should produce different addresses
         assertTrue(budget1 != budget2, "Different owners should produce different addresses even with same nonce");
+
+        // Each owner's nonce incremented independently
+        assertEq(factory.nonces(owner), 1, "Owner nonce should be 1");
+        assertEq(factory.nonces(owner2), 1, "Owner2 nonce should be 1");
     }
 
     ///////////////////////////////
@@ -116,7 +114,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     ///////////////////////////////
 
     function test_PredictBudgetAddress() public view {
-        uint256 nonce = 1;
+        uint256 nonce = factory.nonces(owner);
 
         address predicted = factory.predictBudgetAddress(owner, nonce);
 
@@ -125,14 +123,15 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     }
 
     function test_PredictBudgetAddress_MatchesActualDeployment() public {
-        uint256 nonce = 1;
+        // Get current nonce
+        uint256 nonce = factory.nonces(owner);
 
-        // Predict address
+        // Predict address using current nonce
         address predicted = factory.predictBudgetAddress(owner, nonce);
 
-        // Deploy with same owner + nonce
+        // Deploy
         vm.prank(owner);
-        address actual = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address actual = factory.deployBudget(authorized, roles, managementFee);
 
         // Verify prediction matches actual
         assertEq(predicted, actual, "Predicted address should match actual deployment");
@@ -165,8 +164,6 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     //////////////////////////////
 
     function test_CrossChainDeterminism_SimulatedWithSnapshot() public {
-        uint256 nonce = 1;
-
         // Store the factory address and bytecode for redeployment
         address factoryAddress = address(factory);
         bytes memory factoryCode = factoryAddress.code;
@@ -174,9 +171,12 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         // Take snapshot and revert to simulate fresh chain
         uint256 snapshot = vm.snapshot();
 
+        // Get nonce (should be 0 on fresh factory)
+        uint256 nonce = factory.nonces(owner);
+
         // Deploy on "chain 1" (current state)
         vm.prank(owner);
-        address chain1Address = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address chain1Address = factory.deployBudget(authorized, roles, managementFee);
 
         // Revert and redeploy factory at same address (simulating different chain)
         vm.revertTo(snapshot);
@@ -185,12 +185,12 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         vm.etch(factoryAddress, factoryCode);
         factory = ManagedBudgetWithFeesV2Factory(factoryAddress);
 
-        // Predict address on "chain 2"
+        // Predict address on "chain 2" using same nonce
         address chain2Prediction = factory.predictBudgetAddress(owner, nonce);
 
-        // Deploy on "chain 2"
+        // Deploy on "chain 2" (nonce also starts at 0)
         vm.prank(owner);
-        address chain2Address = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address chain2Address = factory.deployBudget(authorized, roles, managementFee);
 
         // Verify addresses match across "chains"
         assertEq(chain1Address, chain2Address, "Addresses should match across chains");
@@ -202,10 +202,8 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     ///////////////////////////
 
     function test_DeployedBudgetIsInitialized() public {
-        uint256 nonce = 1;
-
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, managementFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         // Verify cannot re-initialize
@@ -220,10 +218,8 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     }
 
     function test_DeployedBudget_CoreIsSet() public {
-        uint256 nonce = 1;
-
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, managementFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         // Verify core is set to first authorized address
@@ -231,10 +227,8 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     }
 
     function test_DeployedBudget_RolesAreSet() public {
-        uint256 nonce = 1;
-
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, managementFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         // Verify roles are set
@@ -247,51 +241,46 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     //////////////////////////////
 
     function test_DeployBudget_RevertsWithNoAuthorized() public {
-        uint256 nonce = 1;
         address[] memory emptyAuth = new address[](0);
         uint256[] memory emptyRoles = new uint256[](0);
 
         vm.expectRevert("Must have at least one authorized address");
         vm.prank(owner);
-        factory.deployBudget(owner, emptyAuth, emptyRoles, managementFee, nonce);
+        factory.deployBudget(emptyAuth, emptyRoles, managementFee);
     }
 
     function test_DeployBudget_RevertsWithMismatchedArrays() public {
-        uint256 nonce = 1;
         uint256[] memory shortRoles = new uint256[](1);
         shortRoles[0] = 0;
 
         vm.expectRevert("Authorized and roles length mismatch");
         vm.prank(owner);
-        factory.deployBudget(owner, authorized, shortRoles, managementFee, nonce);
+        factory.deployBudget(authorized, shortRoles, managementFee);
     }
 
     function test_DeployBudget_RevertsWithExcessiveFee() public {
-        uint256 nonce = 1;
         uint256 excessiveFee = 10001; // > 100%
 
         vm.expectRevert("Fee cannot exceed 100%");
         vm.prank(owner);
-        factory.deployBudget(owner, authorized, roles, excessiveFee, nonce);
+        factory.deployBudget(authorized, roles, excessiveFee);
     }
 
     function test_DeployBudget_MaxFee() public {
-        uint256 nonce = 1;
         uint256 maxFee = 10000; // 100%
 
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, maxFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, maxFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         assertEq(budgetContract.managementFee(), maxFee, "Max fee should be set");
     }
 
     function test_DeployBudget_ZeroFee() public {
-        uint256 nonce = 2;
         uint256 zeroFee = 0;
 
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, zeroFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, zeroFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         assertEq(budgetContract.managementFee(), zeroFee, "Zero fee should be set");
@@ -302,10 +291,8 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     ////////////////////////////
 
     function test_DeployedBudget_CanAllocate() public {
-        uint256 nonce = 1;
-
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, managementFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         // Mint tokens and approve budget
@@ -321,10 +308,8 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     }
 
     function test_DeployedBudget_OnlyOwnerCanDisburse() public {
-        uint256 nonce = 1;
-
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, managementFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         // Mint and allocate tokens
@@ -345,51 +330,41 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
     // Fuzz Tests            //
     ///////////////////////////
 
-    function testFuzz_PredictAndDeploy(uint256 nonce) public {
-        // Skip if would cause collision (already deployed)
-        address predicted = factory.predictBudgetAddress(owner, nonce);
-        if (predicted.code.length > 0) {
-            return;
-        }
+    function testFuzz_PredictAndDeploy(address _owner) public {
+        vm.assume(_owner != address(0));
+
+        // Get current nonce for this owner
+        uint256 nonce = factory.nonces(_owner);
 
         // Predict address
-        address predictedAddress = factory.predictBudgetAddress(owner, nonce);
+        address predictedAddress = factory.predictBudgetAddress(_owner, nonce);
 
         // Deploy
-        vm.prank(owner);
-        address actualAddress = factory.deployBudget(owner, authorized, roles, managementFee, nonce);
+        vm.prank(_owner);
+        address actualAddress = factory.deployBudget(authorized, roles, managementFee);
 
         // Verify match
         assertEq(predictedAddress, actualAddress, "Fuzz: Predicted should match actual");
+
+        // Verify nonce incremented
+        assertEq(factory.nonces(_owner), nonce + 1, "Fuzz: Nonce should increment");
     }
 
-    function testFuzz_DeployWithDifferentOwners(address _owner, uint256 nonce) public {
+    function testFuzz_DeployWithDifferentOwners(address _owner) public {
         vm.assume(_owner != address(0));
 
-        // Skip if would cause collision
-        address predicted = factory.predictBudgetAddress(_owner, nonce);
-        if (predicted.code.length > 0) {
-            return;
-        }
-
         vm.prank(_owner);
-        address budget = factory.deployBudget(_owner, authorized, roles, managementFee, nonce);
+        address budget = factory.deployBudget(authorized, roles, managementFee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         assertEq(budgetContract.owner(), _owner, "Fuzz: Owner should match");
     }
 
-    function testFuzz_DeployWithDifferentFees(uint256 _fee, uint256 nonce) public {
+    function testFuzz_DeployWithDifferentFees(uint256 _fee) public {
         _fee = bound(_fee, 0, 10000);
 
-        // Skip if would cause collision
-        address predicted = factory.predictBudgetAddress(owner, nonce);
-        if (predicted.code.length > 0) {
-            return;
-        }
-
         vm.prank(owner);
-        address budget = factory.deployBudget(owner, authorized, roles, _fee, nonce);
+        address budget = factory.deployBudget(authorized, roles, _fee);
         ManagedBudgetWithFeesV2 budgetContract = ManagedBudgetWithFeesV2(payable(budget));
 
         assertEq(budgetContract.managementFee(), _fee, "Fuzz: Fee should match");
@@ -416,6 +391,19 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         address predicted2 = factory.predictBudgetAddress(owner2, nonce);
 
         assertTrue(predicted1 != predicted2, "Different owners should produce different addresses");
+    }
+
+    function testFuzz_MultipleDeploysIncrementNonce(uint8 deployCount) public {
+        vm.assume(deployCount > 0 && deployCount <= 10);
+
+        uint256 initialNonce = factory.nonces(owner);
+
+        for (uint8 i = 0; i < deployCount; i++) {
+            vm.prank(owner);
+            factory.deployBudget(authorized, roles, managementFee);
+        }
+
+        assertEq(factory.nonces(owner), initialNonce + deployCount, "Nonce should increment by deploy count");
     }
 
     ///////////////////////////

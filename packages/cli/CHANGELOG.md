@@ -1,5 +1,23 @@
 # @boostxyz/cli
 
+## 7.0.0
+
+### Major Changes
+
+- a170c2b: **BREAKING** UUPS BoostCore (testnet deployments)
+
+### Minor Changes
+
+- 99181d5: deployment to celo mainnet
+- 2c328ac: deploy modules and upgrades on: base sepolia, base mainnet, optimism, worldchain
+- a6e97a3: add clawback event
+- 3ef7d72: - adds referral fees
+  - deploy new modules and upgrade BoostCore on Ethereum Sepolia
+
+### Patch Changes
+
+- b42ebd1: Include deployments for Base, Optimism, and World Chain
+
 ## 7.0.0-canary.7
 
 ### Minor Changes

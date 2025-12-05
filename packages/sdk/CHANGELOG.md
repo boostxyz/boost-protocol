@@ -1,10 +1,27 @@
 # @boostxyz/sdk
 
-## 8.0.0-canary.8
+## 8.0.0
+
+### Major Changes
+
+- a170c2b: **BREAKING** UUPS BoostCore (testnet deployments)
 
 ### Minor Changes
 
+- 6ff3c1c: add targetContract check in action validation
+- 1e1c0d5: add nested tuple support to variable incentives
+- 99181d5: deployment to celo mainnet
+- 2c328ac: deploy modules and upgrades on: base sepolia, base mainnet, optimism, worldchain
 - 03a52fb: claimant targetContract wildcard
+- a6e97a3: add clawback event
+- 3ef7d72: - adds referral fees
+  - deploy new modules and upgrade BoostCore on Ethereum Sepolia
+
+### Patch Changes
+
+- cb705f0: use actionStep signature to filter decoded logs
+- 883c4d4: fix fieldIndex type for variableCriteriaIncentives and actionClaimant
+- b42ebd1: Include deployments for Base, Optimism, and World Chain
 
 ## 8.0.0-canary.7
 

@@ -577,13 +577,23 @@ export class EventAction extends DeployableTarget<
         throw new ValidationAbiMissingError(signature);
       }
 
+      // zeroAddress acts as a wildcard, allowing matches from any contract address
+      const targetContractIsWildcard = isAddressEqual(
+        claimant.targetContract,
+        zeroAddress,
+      );
+
       if ('logs' in params) {
         const signatureMatchingLogs = params.logs
           .filter((log) => log.topics[0] === signature)
           .map((log) => decodeAndReorderLogArgs(event, log));
 
         for (const log of signatureMatchingLogs) {
-          if (!isAddressEqual(log.address, claimant.targetContract)) continue;
+          if (
+            !targetContractIsWildcard &&
+            !isAddressEqual(log.address, claimant.targetContract)
+          )
+            continue;
           const addressCandidate = this.validateClaimantAgainstArgs(
             claimant,
             log,
@@ -617,7 +627,11 @@ export class EventAction extends DeployableTarget<
       }
 
       for (let log of decodedLogs) {
-        if (!isAddressEqual(log.address, claimant.targetContract)) continue;
+        if (
+          !targetContractIsWildcard &&
+          !isAddressEqual(log.address, claimant.targetContract)
+        )
+          continue;
         let addressCandidate = this.validateClaimantAgainstArgs(claimant, log);
         if (addressCandidate) return addressCandidate;
       }

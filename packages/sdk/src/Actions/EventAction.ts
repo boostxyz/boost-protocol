@@ -566,6 +566,12 @@ export class EventAction extends DeployableTarget<
 
     const signature = claimant.signature;
 
+    // zeroAddress acts as a wildcard, allowing matches from any contract address
+    const targetContractIsWildcard = isAddressEqual(
+      claimant.targetContract,
+      zeroAddress,
+    );
+
     if (claimant.signatureType === SignatureType.EVENT) {
       let event: AbiEvent;
       if (params.abiItem) event = params.abiItem as AbiEvent;
@@ -576,12 +582,6 @@ export class EventAction extends DeployableTarget<
       if (!event) {
         throw new ValidationAbiMissingError(signature);
       }
-
-      // zeroAddress acts as a wildcard, allowing matches from any contract address
-      const targetContractIsWildcard = isAddressEqual(
-        claimant.targetContract,
-        zeroAddress,
-      );
 
       if ('logs' in params) {
         const signatureMatchingLogs = params.logs
@@ -647,7 +647,11 @@ export class EventAction extends DeployableTarget<
       ) {
         return undefined;
       }
-      if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
+      if (
+        !targetContractIsWildcard &&
+        !isAddressEqual(transaction.to!, claimant.targetContract)
+      )
+        return;
       let func: AbiFunction;
       if (params.abiItem) func = params.abiItem as AbiFunction;
       else {

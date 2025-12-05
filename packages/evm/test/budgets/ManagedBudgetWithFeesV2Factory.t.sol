@@ -39,7 +39,7 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         authorized[1] = admin;
 
         roles = new uint256[](2);
-        roles[0] = 0; // MANAGER_ROLE
+        roles[0] = 1 << 0; // MANAGER_ROLE
         roles[1] = 1 << 1; // ADMIN_ROLE
     }
 

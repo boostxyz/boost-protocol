@@ -566,6 +566,12 @@ export class EventAction extends DeployableTarget<
 
     const signature = claimant.signature;
 
+    // zeroAddress acts as a wildcard, allowing matches from any contract address
+    const targetContractIsWildcard = isAddressEqual(
+      claimant.targetContract,
+      zeroAddress,
+    );
+
     if (claimant.signatureType === SignatureType.EVENT) {
       let event: AbiEvent;
       if (params.abiItem) event = params.abiItem as AbiEvent;
@@ -583,7 +589,11 @@ export class EventAction extends DeployableTarget<
           .map((log) => decodeAndReorderLogArgs(event, log));
 
         for (const log of signatureMatchingLogs) {
-          if (!isAddressEqual(log.address, claimant.targetContract)) continue;
+          if (
+            !targetContractIsWildcard &&
+            !isAddressEqual(log.address, claimant.targetContract)
+          )
+            continue;
           const addressCandidate = this.validateClaimantAgainstArgs(
             claimant,
             log,
@@ -617,7 +627,11 @@ export class EventAction extends DeployableTarget<
       }
 
       for (let log of decodedLogs) {
-        if (!isAddressEqual(log.address, claimant.targetContract)) continue;
+        if (
+          !targetContractIsWildcard &&
+          !isAddressEqual(log.address, claimant.targetContract)
+        )
+          continue;
         let addressCandidate = this.validateClaimantAgainstArgs(claimant, log);
         if (addressCandidate) return addressCandidate;
       }
@@ -633,7 +647,11 @@ export class EventAction extends DeployableTarget<
       ) {
         return undefined;
       }
-      if (!isAddressEqual(transaction.to!, claimant.targetContract)) return;
+      if (
+        !targetContractIsWildcard &&
+        !isAddressEqual(transaction.to!, claimant.targetContract)
+      )
+        return;
       let func: AbiFunction;
       if (params.abiItem) func = params.abiItem as AbiFunction;
       else {

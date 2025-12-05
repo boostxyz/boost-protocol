@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.0.0-canary.8
+
+### Minor Changes
+
+- 03a52fb: claimant targetContract wildcard
+
 ## 8.0.0-canary.7
 
 ### Minor Changes

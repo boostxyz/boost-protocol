@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 8.1.0
+
+### Minor Changes
+
+- e1bb268: adds ManagedBudgetWithFeesV2Factory for cross chain budget accounts
+
 ## 8.0.0
 
 ### Major Changes

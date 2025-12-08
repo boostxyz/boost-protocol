@@ -406,6 +406,74 @@ contract ManagedBudgetWithFeesV2FactoryTest is Test {
         assertEq(factory.nonces(owner), initialNonce + deployCount, "Nonce should increment by deploy count");
     }
 
+    //////////////////////////////
+    // setImplementation Tests  //
+    //////////////////////////////
+
+    function test_SetImplementation() public {
+        address oldImplementation = factory.implementation();
+        address newImplementation = makeAddr("newImplementation");
+
+        vm.expectEmit(true, true, true, true);
+        emit ManagedBudgetWithFeesV2Factory.ImplementationUpdated(oldImplementation, newImplementation);
+
+        factory.setImplementation(newImplementation);
+
+        assertEq(factory.implementation(), newImplementation, "Implementation should be updated");
+    }
+
+    function test_SetImplementation_RevertsWhenNotOwner() public {
+        address nonOwner = makeAddr("nonOwner");
+        address newImplementation = makeAddr("newImplementation");
+
+        vm.prank(nonOwner);
+        vm.expectRevert();
+        factory.setImplementation(newImplementation);
+    }
+
+    function test_SetImplementation_RevertsWithZeroAddress() public {
+        vm.expectRevert("Implementation cannot be zero address");
+        factory.setImplementation(address(0));
+    }
+
+    function test_SetImplementation_UpdatesImplementation() public {
+        address oldImplementation = factory.implementation();
+        address newImplementation = makeAddr("newImplementation");
+
+        factory.setImplementation(newImplementation);
+
+        assertEq(factory.implementation(), newImplementation, "Implementation should be updated");
+        assertTrue(oldImplementation != newImplementation, "Old and new implementations should differ");
+    }
+
+    function test_SetImplementation_EmitsEvent() public {
+        address oldImplementation = factory.implementation();
+        address newImplementation = makeAddr("newImplementation");
+
+        vm.expectEmit(true, true, true, true);
+        emit ManagedBudgetWithFeesV2Factory.ImplementationUpdated(oldImplementation, newImplementation);
+
+        factory.setImplementation(newImplementation);
+    }
+
+    function test_SetImplementation_MultipleUpdates() public {
+        address implementation1 = makeAddr("implementation1");
+        address implementation2 = makeAddr("implementation2");
+        address implementation3 = makeAddr("implementation3");
+
+        // First update
+        factory.setImplementation(implementation1);
+        assertEq(factory.implementation(), implementation1, "First update should succeed");
+
+        // Second update
+        factory.setImplementation(implementation2);
+        assertEq(factory.implementation(), implementation2, "Second update should succeed");
+
+        // Third update
+        factory.setImplementation(implementation3);
+        assertEq(factory.implementation(), implementation3, "Third update should succeed");
+    }
+
     ///////////////////////////
     // Test Helper Functions //
     ///////////////////////////

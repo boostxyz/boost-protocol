@@ -54,7 +54,6 @@
         "useLiteralEnumMembers": "warn",
         "noInferrableTypes": "warn",
         "noNamespace": "error",
-        "noNonNullAssertion": "warn",
         "useAsConstAssertion": "warn",
         "useBlockStatements": "off",
         "useImportType": "error"

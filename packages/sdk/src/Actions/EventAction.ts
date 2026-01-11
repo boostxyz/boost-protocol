@@ -1941,6 +1941,7 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     log.topics[0] === TRANSFER_SIGNATURE &&
     log.topics.length === 4
   ) {
+    event = structuredClone(event);
     event.inputs[2]!.indexed = true;
   }
 

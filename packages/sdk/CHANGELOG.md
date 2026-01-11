@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.0.1
+
+### Patch Changes
+
+- 4f48973: fix issue with NFT transfer signatures not using the correct abi
+
 ## 8.0.0
 
 ### Major Changes

@@ -1934,6 +1934,16 @@ export function unpackFieldIndexes(packed: number): number[] {
  * @returns {EventLog} The decoded log with arguments in the original ABI order
  */
 export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
+  // If a transfer event has 4 topics, then it is an NFT transfer
+  // In this case we need to mark the third input as indexed
+  if (
+    event.name === 'Transfer' &&
+    log.topics[0] === TRANSFER_SIGNATURE &&
+    log.topics.length === 4
+  ) {
+    event.inputs[2]!.indexed = true;
+  }
+
   const decodedLog = decodeEventLog({
     abi: [event],
     data: log.data,

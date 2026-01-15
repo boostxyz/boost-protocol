@@ -1960,10 +1960,13 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
   const decodedIndexed: unknown[] = [];
   for (let i = 0; i < indexedInputs.length; i++) {
     const topic = log.topics[i + 1];
-    if (topic) {
-      const [decoded] = decodeAbiParameters([indexedInputs[i]!], topic);
-      decodedIndexed.push(decoded);
+    if (!topic) {
+      throw new DecodedArgsError(
+        `Missing topic at index ${i + 1} for indexed parameter "${indexedInputs[i]!.name ?? i}"`,
+      );
     }
+    const [decoded] = decodeAbiParameters([indexedInputs[i]!], topic);
+    decodedIndexed.push(decoded);
   }
 
   const decodedNonIndexed =

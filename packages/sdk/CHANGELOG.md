@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.0.2
+
+### Patch Changes
+
+- ca46885: fix reordering bug
+
 ## 8.0.1
 
 ### Patch Changes

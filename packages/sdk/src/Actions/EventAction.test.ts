@@ -1514,6 +1514,48 @@ describe('decodeAndReorderLogArgs', () => {
     expect(result.args[2]).toBe(1n);
     expect(result.args[3]).toBe(5284n);
   });
+
+  test('handles TransferReference with interleaved indexed params', () => {
+    // TransferReference(address sender, address indexed recipient, uint256 amount, address token, string indexed referenceId, bool indexed success)
+    const event: AbiEvent = {
+      type: 'event',
+      name: 'TransferReference',
+      inputs: [
+        { type: 'address', indexed: false, name: 'sender' },
+        { type: 'address', indexed: true, name: 'recipient' },
+        { type: 'uint256', indexed: false, name: 'amount' },
+        { type: 'address', indexed: false, name: 'token' },
+        { type: 'bytes32', indexed: true, name: 'referenceId' },
+        { type: 'bool', indexed: true, name: 'success' },
+      ],
+    };
+
+    const log: Log = {
+      address: "0xee9f1a50138ba636cd50926b02b644f96f8748c7",
+      blockHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      blockNumber: 1n,
+      data: "0x0000000000000000000000003ebc5ada4f198a831472ef19e4001c17320ca9950000000000000000000000000000000000000000000000001bc16d674ec800000000000000000000000000002cfc85d8e48f8eab294be644d9e25c3030863003",
+      logIndex: 0,
+      removed: false,
+      topics: [
+        "0xa2b940fe4e5490b0393adc0106a79fc2d4d9fb9623ae3fb2ebf0b8fe30d354d2",
+        "0x000000000000000000000000a108fb7a4c41658d4aa7a62f01afdd072c30d22e",
+        "0xde0cdb1d3929682455dae865d1605e27ba4245172afbd52df50ea7b37c81261f",
+        "0x0000000000000000000000000000000000000000000000000000000000000001"
+      ],
+      transactionHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      transactionIndex: 0,
+    };
+
+    const result = decodeAndReorderLogArgs(event, log);
+
+    expect(result.args[0]).toBe("0x3eBC5aDA4F198a831472eF19e4001c17320ca995");
+    expect(result.args[1]).toBe("0xA108FB7A4C41658D4AA7a62F01aFDd072c30D22E");
+    expect(result.args[2]).toBe(2000000000000000000n);
+    expect(result.args[3]).toBe("0x2cFc85d8E48F8EAB294be644d9E25C3030863003");
+    expect(result.args[4]).toBe("0xde0cdb1d3929682455dae865d1605e27ba4245172afbd52df50ea7b37c81261f");
+    expect(result.args[5]).toBe(true);
+  });
 }); 
 
 describe("criteria field index tuple support", () => {

@@ -20,6 +20,7 @@ import {
   type Hex,
   type Log,
   type Transaction,
+  decodeAbiParameters,
   decodeEventLog,
   decodeFunctionData,
   encodeAbiParameters,
@@ -1926,8 +1927,7 @@ export function unpackFieldIndexes(packed: number): number[] {
 }
 
 /**
- * Decodes an event log and reorders the arguments to match the original ABI order.
- * This is necessary because viem's decodeEventLog reorders indexed parameters to the front.
+ * Decodes an event log and returns arguments in ABI declaration order.
  *
  * @param event - The event ABI definition
  * @param log - The log to decode
@@ -1945,50 +1945,51 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     event.inputs[2]!.indexed = true;
   }
 
-  const decodedLog = decodeEventLog({
-    abi: [event],
-    data: log.data,
-    topics: log.topics,
-  });
+  const indexedInputs: AbiParameter[] = [];
+  const nonIndexedInputs: AbiParameter[] = [];
 
-  const argsArray = Array.isArray(decodedLog.args)
-    ? decodedLog.args
-    : Object.values(decodedLog.args);
-
-  if (!event.inputs.some((input) => input.indexed)) {
-    return {
-      ...log,
-      ...decodedLog,
-    } as EventLog;
-  }
-
-  const indexedIndices: number[] = [];
-  const nonIndexedIndices: number[] = [];
   for (let i = 0; i < event.inputs.length; i++) {
-    if (event.inputs[i]!.indexed) {
-      indexedIndices.push(i);
+    const input = event.inputs[i]!;
+    if (input.indexed) {
+      indexedInputs.push(input);
     } else {
-      nonIndexedIndices.push(i);
+      nonIndexedInputs.push(input);
     }
   }
 
-  const reorderedArgs = Array.from({ length: event.inputs.length });
-  let currentIndex = 0;
-
-  // Place the indexed arguments in their original positions
-  for (let i = 0; i < indexedIndices.length; i++) {
-    reorderedArgs[indexedIndices[i]!] = argsArray[currentIndex++];
+  const decodedIndexed: unknown[] = [];
+  for (let i = 0; i < indexedInputs.length; i++) {
+    const topic = log.topics[i + 1];
+    if (!topic) {
+      throw new DecodedArgsError(
+        `Missing topic at index ${i + 1} for indexed parameter "${indexedInputs[i]!.name ?? i}"`,
+      );
+    }
+    const [decoded] = decodeAbiParameters([indexedInputs[i]!], topic);
+    decodedIndexed.push(decoded);
   }
 
-  // Place the non-indexed arguments in their original positions
-  for (let i = 0; i < nonIndexedIndices.length; i++) {
-    reorderedArgs[nonIndexedIndices[i]!] = argsArray[currentIndex++];
+  const decodedNonIndexed =
+    nonIndexedInputs.length > 0 && log.data && log.data !== '0x'
+      ? decodeAbiParameters(nonIndexedInputs, log.data)
+      : [];
+
+  const args: unknown[] = new Array(event.inputs.length);
+  let indexedIdx = 0;
+  let nonIndexedIdx = 0;
+
+  for (let i = 0; i < event.inputs.length; i++) {
+    if (event.inputs[i]!.indexed) {
+      args[i] = decodedIndexed[indexedIdx++];
+    } else {
+      args[i] = decodedNonIndexed[nonIndexedIdx++];
+    }
   }
 
   return {
     ...log,
-    eventName: decodedLog.eventName,
-    args: reorderedArgs,
+    eventName: event.name,
+    args,
   } as EventLog;
 }
 

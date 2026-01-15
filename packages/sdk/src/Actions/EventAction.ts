@@ -1928,6 +1928,10 @@ export function unpackFieldIndexes(packed: number): number[] {
 
 /**
  * Decodes an event log and returns arguments in ABI declaration order.
+ *
+ * @param event - The event ABI definition
+ * @param log - The log to decode
+ * @returns {EventLog} The decoded log with arguments in the original ABI order
  */
 export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
   // If a transfer event has 4 topics, then it is an NFT transfer

@@ -242,6 +242,73 @@ export interface ActionStep {
 }
 
 /**
+ * An action step that is specifically for event-based validation.
+ * This is a narrowed type of ActionStep where signatureType is guaranteed to be EVENT.
+ *
+ * @export
+ * @typedef {EventActionStep}
+ */
+export type EventActionStep = ActionStep & {
+  signatureType: SignatureType.EVENT;
+};
+
+/**
+ * Type guard to check if an action step is an event-based action step.
+ * Use with .filter() to get properly typed EventActionStep arrays.
+ *
+ * @example
+ * const eventSteps = actionSteps.filter(isEventActionStep); // EventActionStep[]
+ *
+ * @param {ActionStep} step - The action step to check
+ * @returns {step is EventActionStep} True if the step is an event action step
+ */
+export function isEventActionStep(step: ActionStep): step is EventActionStep {
+  return step.signatureType === SignatureType.EVENT;
+}
+
+/**
+ * Represents a group of event-based action steps that share the same signature and target contract.
+ * All steps in a group must be validated against a SINGLE log that satisfies ALL criteria.
+ *
+ * @export
+ * @interface ActionStepGroup
+ * @typedef {ActionStepGroup}
+ */
+export interface ActionStepGroup {
+  /**
+   * The event signature (32-byte hash) shared by all steps in this group.
+   *
+   * @type {Hex}
+   */
+  signature: Hex;
+  /**
+   * The target contract address shared by all steps in this group.
+   * When zeroAddress, matches any contract (wildcard).
+   *
+   * @type {Address}
+   */
+  targetContract: Address;
+  /**
+   * The chain ID for these action steps.
+   *
+   * @type {number}
+   */
+  chainId: number;
+  /**
+   * The action steps that belong to this group.
+   *
+   * @type {EventActionStep[]}
+   */
+  steps: EventActionStep[];
+  /**
+   * Always EVENT for grouped steps.
+   *
+   * @type {SignatureType.EVENT}
+   */
+  signatureType: SignatureType.EVENT;
+}
+
+/**
  * Parameters for validating an action step.
  *
  * @typedef {Object} ValidateActionStepParams
@@ -721,6 +788,9 @@ export class EventAction extends DeployableTarget<
    * Retrieves action steps, and uses them to validate against, and optionally fetch logs that match the step's signature.
    * If logs are provided in the optional `params` argument, then those logs will be used instead of fetched with the configured client.
    *
+   * Event-based action steps are grouped by (signature, targetContract, chainId) and validated together.
+   * A SINGLE log must satisfy ALL criteria within a group to pass validation.
+   *
    * @public
    * @async
    * @param ValidateActionStepParams params
@@ -728,11 +798,24 @@ export class EventAction extends DeployableTarget<
    */
   public async validateActionSteps(params: ValidateActionStepParams) {
     const actionSteps = await this.getActionSteps();
-    for (const actionStep of actionSteps) {
-      if (!(await this.isActionStepValid(actionStep, params))) {
+    const eventSteps = actionSteps.filter(isEventActionStep);
+    const functionSteps = actionSteps.filter(
+      (step) => step.signatureType === SignatureType.FUNC,
+    );
+
+    const eventGroups = groupEventActionSteps(eventSteps);
+    for (const group of eventGroups) {
+      if (!(await this.findLogMatchingGroup(group, params))) {
         return false;
       }
     }
+
+    for (const step of functionSteps) {
+      if (!(await this.isActionStepValid(step, params))) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -870,6 +953,132 @@ export class EventAction extends DeployableTarget<
       }
     }
     return false;
+  }
+
+  /**
+   * Checks if a single log satisfies ALL criteria from ALL action steps in a group.
+   *
+   * @private
+   * @param {EventLog} log - The decoded log to validate
+   * @param {ActionStepGroup} group - The group of action steps to validate against
+   * @param {AbiEvent} eventAbi - The ABI definition of the event
+   * @returns {boolean} True if the log satisfies all criteria in the group
+   */
+  private isLogValidForGroup(
+    log: EventLog,
+    group: ActionStepGroup,
+    eventAbi: AbiEvent,
+  ): boolean {
+    if (
+      group.targetContract !== zeroAddress &&
+      !isAddressEqual(log.address, group.targetContract)
+    ) {
+      return false;
+    }
+
+    if (!Array.isArray(log.args)) {
+      return false;
+    }
+
+    return group.steps.every((step) => {
+      try {
+        const { value, type } = this.parseFieldFromAbi(
+          log.args,
+          step.actionParameter.fieldIndex,
+          eventAbi.inputs || [],
+          step.actionParameter.fieldType,
+        );
+        return this.validateFieldAgainstCriteria(
+          { ...step.actionParameter, fieldType: type },
+          value,
+          { log },
+        );
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  /**
+   * Finds the first log that satisfies ALL criteria in an action step group.
+   * This method is shared by both validation and getLogsForActionSteps.
+   *
+   * @private
+   * @async
+   * @param {ActionStepGroup} group - The group of action steps
+   * @param {ValidateActionStepParams} params - Validation parameters including logs or hash
+   * @returns {Promise<EventLog | undefined>} The matching log, or undefined if none found
+   */
+  private async findLogMatchingGroup(
+    group: ActionStepGroup,
+    params: ValidateActionStepParams,
+  ): Promise<EventLog | undefined> {
+    const signature = group.signature;
+
+    let event: AbiEvent;
+    if (params.abiItem) {
+      event = params.abiItem as AbiEvent;
+    } else {
+      const sigPool = params.knownSignatures as Record<Hex, AbiEvent>;
+      event = sigPool[signature] as AbiEvent;
+    }
+
+    if (!event) {
+      throw new ValidationAbiMissingError(signature);
+    }
+
+    for (const step of group.steps) {
+      if (this.isArraylikeIndexed(step, event)) {
+        throw new UnparseableAbiParamError(
+          step.actionParameter.fieldIndex,
+          event,
+        );
+      }
+    }
+
+    let decodedLogs: EventLogs;
+
+    if ('logs' in params) {
+      decodedLogs = params.logs
+        .filter((log) => log.topics[0] === signature)
+        .map((log) => {
+          if (Array.isArray((log as EventLog).args)) {
+            return log as EventLog;
+          }
+          return decodeAndReorderLogArgs(event, log);
+        });
+    } else {
+      const receipt = await getTransactionReceipt(this._config, {
+        ...params,
+        chainId: group.chainId,
+      });
+
+      if (
+        params.notBeforeBlockNumber &&
+        receipt.blockNumber < params.notBeforeBlockNumber
+      ) {
+        return undefined;
+      }
+
+      if (signature === TRANSFER_SIGNATURE) {
+        const { decodedLogs: transferLogs, event: transferEvent } =
+          await this.decodeTransferLogs(receipt);
+        decodedLogs = transferLogs;
+        event = transferEvent;
+      } else {
+        decodedLogs = receipt.logs
+          .filter((log) => log.topics[0] === signature)
+          .map((log) => decodeAndReorderLogArgs(event, log));
+      }
+    }
+
+    for (const log of decodedLogs) {
+      if (this.isLogValidForGroup(log as EventLog, group, event)) {
+        return log as EventLog;
+      }
+    }
+
+    return undefined;
   }
 
   /**
@@ -1314,26 +1523,30 @@ export class EventAction extends DeployableTarget<
   }
 
   /**
-   * Retrieves logs that match the criteria for event-based action steps.
+   * Retrieves logs that match the grouped criteria for event-based action steps.
    *
    * @public
    * @async
    * @param {ValidateActionStepParams} params - Parameters for fetching and filtering logs.
-   * @returns {Promise<EventLog[]>} - A promise that resolves to an array of matching event logs.
+   * @returns {Promise<EventLog[]>} - A promise that resolves to an array of matching event logs (one per group).
    */
   public async getLogsForActionSteps(
     params: ValidateActionStepParams,
   ): Promise<EventLog[]> {
     const actionSteps = await this.getActionSteps();
-    const actionStepLogs: EventLog[] = [];
 
-    for (const actionStep of actionSteps) {
-      if (actionStep.signatureType === SignatureType.EVENT) {
-        const logs = await this.getLogsForActionStep(actionStep, params);
-        actionStepLogs.push(...logs);
+    const eventSteps = actionSteps.filter(isEventActionStep);
+    const eventGroups = groupEventActionSteps(eventSteps);
+    const matchedLogs: EventLog[] = [];
+
+    for (const group of eventGroups) {
+      const matchedLog = await this.findLogMatchingGroup(group, params);
+      if (matchedLog) {
+        matchedLogs.push(matchedLog);
       }
     }
-    return actionStepLogs;
+
+    return matchedLogs;
   }
 
   /**
@@ -1344,6 +1557,7 @@ export class EventAction extends DeployableTarget<
    * @param {ActionStep} actionStep - The action step to find logs for
    * @param {ValidateActionStepParams} params - Parameters for validation
    * @returns {Promise<EventLog[]>}
+   * @deprecated: use getLogsForActionSteps instead. Remove next major version.
    */
   public async getLogsForActionStep(
     actionStep: ActionStep,
@@ -1410,6 +1624,7 @@ export class EventAction extends DeployableTarget<
    * @param {EventLogs} logs
    * @param {AbiEvent} eventAbi
    * @returns {EventLog[]}
+   * @deprecated: Remove in next major version.
    */
   private filterLogsByActionStepCriteria(
     actionStep: ActionStep,
@@ -1572,6 +1787,44 @@ function _dedupeActionSteps(_steps: ActionStep[]): ActionStep[] {
     signatures[signature] = true;
   }
   return steps;
+}
+
+/**
+ * Groups event-based action steps by their signature, target contract, and chain ID.
+ *
+ * For wildcard (zeroAddress) targetContract steps, they are grouped by signature and chainId only,
+ * acting as wildcards that match any contract.
+ *
+ * NOTE: Wildcard steps (zeroAddress) and specific-contract steps form separate groups.
+ *
+ * @param {EventActionStep[]} eventSteps - Event-based action steps to group (must have signatureType === EVENT)
+ * @returns {ActionStepGroup[]} Array of grouped action steps
+ */
+export function groupEventActionSteps(
+  eventSteps: EventActionStep[],
+): ActionStepGroup[] {
+  const groupMap = new Map<string, ActionStepGroup>();
+
+  for (const step of eventSteps) {
+    const isWildcard = step.targetContract === zeroAddress;
+    const groupKey = isWildcard
+      ? `${step.signature}-${step.chainid}`
+      : `${step.signature}-${step.targetContract.toLowerCase()}-${step.chainid}`;
+    const existing = groupMap.get(groupKey);
+    if (existing) {
+      existing.steps.push(step);
+    } else {
+      groupMap.set(groupKey, {
+        signature: step.signature,
+        targetContract: step.targetContract,
+        chainId: step.chainid,
+        steps: [step],
+        signatureType: SignatureType.EVENT,
+      });
+    }
+  }
+
+  return Array.from(groupMap.values());
 }
 
 type RawActionStep = Overwrite<ActionStep, { chainid: bigint }>;

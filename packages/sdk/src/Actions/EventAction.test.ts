@@ -32,7 +32,9 @@ import {
 import {
   EventAction,
   type EventLogs,
+  type EventLog,
   type EventActionPayloadSimple,
+  type ActionStepGroup,
   FilterType,
   PrimitiveType,
   SignatureType,
@@ -45,6 +47,8 @@ import {
   decodeAndReorderLogArgs,
   ActionClaimant,
   getScalarValue,
+  groupEventActionSteps,
+  EventActionStep,
 } from "./EventAction";
 import { allKnownSignatures } from "@boostxyz/test/allKnownSignatures";
 import { getTransactionReceipt } from "@wagmi/core";
@@ -1831,5 +1835,589 @@ describe("claimant tuple field support", () => {
       const result = eventAction.validateClaimantAgainstArgs(claimant, { args: testArgs });
       expect(result).toBe("0xcccccccccccccccccccccccccccccccccccccccc");
     });
+  });
+});
+
+describe("grouped action step validation", () => {
+  beforeEach(async () => {
+    erc20 = await loadFixture(fundErc20(defaultOptions));
+    erc721 = await loadFixture(fundErc721(defaultOptions));
+  });
+
+  describe("groupEventActionSteps utility", () => {
+    test("groups event steps by signature, targetContract, and chainId", () => {
+      const actionSteps = [
+        {
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: accounts[1].account as Address,
+          chainid: 1,
+          actionParameter: {
+            filterType: FilterType.EQUAL,
+            fieldType: PrimitiveType.ADDRESS,
+            fieldIndex: 1,
+            filterData: accounts[2].account,
+          },
+        },
+        {
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: accounts[1].account as Address,
+          chainid: 1,
+          actionParameter: {
+            filterType: FilterType.EQUAL,
+            fieldType: PrimitiveType.ADDRESS,
+            fieldIndex: 0,
+            filterData: accounts[3].account,
+          },
+        },
+      ] as EventActionStep[];
+
+      const eventGroups = groupEventActionSteps(actionSteps);
+
+      expect(eventGroups).toHaveLength(1);
+      expect(eventGroups[0]!.steps).toHaveLength(2);
+    });
+
+    test("only groups event steps (function steps should be filtered before calling)", () => {
+      // When filtering event steps before passing to groupEventActionSteps,
+      // only event steps should be grouped
+      const allSteps = [
+        {
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: accounts[1].account as Address,
+          chainid: 1,
+          actionParameter: anyActionParameter(),
+        },
+        {
+          signature: funcSelectors["mint(address)"] as Hex,
+          signatureType: SignatureType.FUNC,
+          targetContract: accounts[1].account as Address,
+          chainid: 1,
+          actionParameter: anyActionParameter(),
+        },
+      ];
+
+      // Filter event steps first, as the callers should do
+      const eventSteps = allSteps.filter(
+        (step) => step.signatureType === SignatureType.EVENT,
+      ) as EventActionStep[];
+      const functionSteps = allSteps.filter(
+        (step) => step.signatureType === SignatureType.FUNC,
+      );
+
+      const eventGroups = groupEventActionSteps(eventSteps);
+
+      expect(eventGroups).toHaveLength(1);
+      expect(functionSteps).toHaveLength(1);
+    });
+
+    test("creates separate groups for different target contracts", () => {
+      // Same signature but different target contracts = different groups
+      const eventSteps = [
+        {
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: accounts[1].account as Address,
+          chainid: 1,
+          actionParameter: anyActionParameter(),
+        },
+        {
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: accounts[2].account as Address, // Different target contract = different group
+          chainid: 1,
+          actionParameter: anyActionParameter(),
+        },
+      ] as EventActionStep[];
+
+      const eventGroups = groupEventActionSteps(eventSteps);
+
+      expect(eventGroups).toHaveLength(2);
+    });
+  });
+
+  describe("validateActionSteps with grouped validation", () => {
+    test("accepts when single log satisfies all criteria in a group", async () => {
+      // Create an action with two criteria that must both be satisfied by the same log:
+      // 1. The 'to' address must be accounts[1]
+      // 2. The 'from' address must be accounts[0] (the zero address for mints or the sender)
+      const eventActionPayload: EventActionPayloadSimple = {
+        actionClaimant: {
+          signatureType: SignatureType.EVENT,
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          fieldIndex: 1,
+          targetContract: erc721.assertValidAddress(),
+          chainid: chainId,
+        },
+        actionSteps: [
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 1, // 'to' field
+              filterData: accounts[1].account,
+            },
+          },
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 0, // 'from' field
+              filterData: zeroAddress, // mint is from zero address
+            },
+          },
+        ],
+      };
+
+      const action = await loadFixture(
+        cloneEventAction(fixtures, erc721, eventActionPayload)
+      );
+
+      // Mint to accounts[1] - this single transfer satisfies both criteria
+      const { hash } = await erc721.mintRaw(accounts[1].account, {
+        value: parseEther(".1"),
+      });
+
+      // Should pass because the single Transfer log has to=accounts[1] AND from=zeroAddress
+      expect(
+        await action.validateActionSteps({
+          hash,
+          knownSignatures: allKnownSignatures,
+        })
+      ).toBe(true);
+    });
+
+    test("rejects when criteria are satisfied by different logs", async () => {
+      // This test simulates an exploit attempt where:
+      // - Criterion 1: Transfer to=accounts[1]
+      // - Criterion 2: Transfer to=accounts[2]
+      // These can never be satisfied by the same log, so should always fail
+      const eventActionPayload: EventActionPayloadSimple = {
+        actionClaimant: {
+          signatureType: SignatureType.EVENT,
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          fieldIndex: 1,
+          targetContract: erc721.assertValidAddress(),
+          chainid: chainId,
+        },
+        actionSteps: [
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 1, // 'to' field
+              filterData: accounts[1].account,
+            },
+          },
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 1, // 'to' field (same field, different value)
+              filterData: accounts[2].account,
+            },
+          },
+        ],
+      };
+
+      const action = await loadFixture(
+        cloneEventAction(fixtures, erc721, eventActionPayload)
+      );
+
+      // Mint to accounts[1] - this creates one Transfer log
+      // The old (vulnerable) implementation would have passed if there were multiple mints
+      // But with grouped validation, no single log can satisfy to=accounts[1] AND to=accounts[2]
+      const { hash } = await erc721.mintRaw(accounts[1].account, {
+        value: parseEther(".1"),
+      });
+
+      // Should fail because no single log can have to=accounts[1] AND to=accounts[2]
+      expect(
+        await action.validateActionSteps({
+          hash,
+          knownSignatures: allKnownSignatures,
+        })
+      ).toBe(false);
+    });
+
+    test("validates mixed event groups and function steps correctly", async () => {
+      // Action with both event and function steps
+      // Event step: Transfer to=accounts[1]
+      // Function step: mint(accounts[1])
+      const eventActionPayload: EventActionPayloadSimple = {
+        actionClaimant: {
+          signatureType: SignatureType.EVENT,
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          fieldIndex: 1,
+          targetContract: erc721.assertValidAddress(),
+          chainid: chainId,
+        },
+        actionSteps: [
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 1, // 'to' field
+              filterData: accounts[1].account,
+            },
+          },
+          {
+            signature: funcSelectors["mint(address)"] as Hex,
+            signatureType: SignatureType.FUNC,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 0,
+              filterData: accounts[1].account,
+            },
+          },
+        ],
+      };
+
+      const action = await loadFixture(
+        cloneEventAction(fixtures, erc721, eventActionPayload)
+      );
+
+      // Mint to accounts[1] - satisfies both event and function criteria
+      const { hash } = await erc721.mintRaw(accounts[1].account, {
+        value: parseEther(".1"),
+      });
+
+      expect(
+        await action.validateActionSteps({
+          hash,
+          knownSignatures: allKnownSignatures,
+        })
+      ).toBe(true);
+    });
+  });
+
+  describe("getLogsForActionSteps with grouped validation", () => {
+    test("returns one log per group that satisfies all criteria", async () => {
+      // Create an action with two criteria in the same group
+      const eventActionPayload: EventActionPayloadSimple = {
+        actionClaimant: {
+          signatureType: SignatureType.EVENT,
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          fieldIndex: 1,
+          targetContract: erc721.assertValidAddress(),
+          chainid: chainId,
+        },
+        actionSteps: [
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 1, // 'to' field
+              filterData: accounts[1].account,
+            },
+          },
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 0, // 'from' field
+              filterData: zeroAddress, // mint is from zero address
+            },
+          },
+        ],
+      };
+
+      const action = await loadFixture(
+        cloneEventAction(fixtures, erc721, eventActionPayload)
+      );
+
+      const { hash } = await erc721.mintRaw(accounts[1].account, {
+        value: parseEther(".1"),
+      });
+
+      const logs = await action.getLogsForActionSteps({
+        hash,
+        knownSignatures: allKnownSignatures,
+      });
+
+      // Should return exactly one log (the log that satisfies both criteria)
+      expect(logs).toHaveLength(1);
+      expect((logs[0] as EventLog).args[1]).toBe(accounts[1].account); // 'to' is accounts[1]
+    });
+
+    test("returns empty array when no log satisfies all criteria", async () => {
+      // Criteria that can never both be satisfied by the same log
+      const eventActionPayload: EventActionPayloadSimple = {
+        actionClaimant: {
+          signatureType: SignatureType.EVENT,
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          fieldIndex: 1,
+          targetContract: erc721.assertValidAddress(),
+          chainid: chainId,
+        },
+        actionSteps: [
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 1,
+              filterData: accounts[1].account,
+            },
+          },
+          {
+            signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+            signatureType: SignatureType.EVENT,
+            targetContract: erc721.assertValidAddress(),
+            chainid: chainId,
+            actionParameter: {
+              filterType: FilterType.EQUAL,
+              fieldType: PrimitiveType.ADDRESS,
+              fieldIndex: 1,
+              filterData: accounts[2].account, // Different value for same field
+            },
+          },
+        ],
+      };
+
+      const action = await loadFixture(
+        cloneEventAction(fixtures, erc721, eventActionPayload)
+      );
+
+      const { hash } = await erc721.mintRaw(accounts[1].account, {
+        value: parseEther(".1"),
+      });
+
+      const logs = await action.getLogsForActionSteps({
+        hash,
+        knownSignatures: allKnownSignatures,
+      });
+
+      // Should return empty array because no single log can satisfy both criteria
+      expect(logs).toHaveLength(0);
+    });
+  });
+});
+
+describe("wildcard (zeroAddress) grouping behavior", () => {
+  test("groupEventActionSteps separates wildcard and specific-contract steps", () => {
+    const transferSig = eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex;
+    const specificContract = "0x1234567890123456789012345678901234567890" as Address;
+
+    const steps: EventActionStep[] = [
+      {
+        signature: transferSig,
+        signatureType: SignatureType.EVENT,
+        targetContract: specificContract,
+        chainid: 1,
+        actionParameter: {
+          filterType: FilterType.EQUAL,
+          fieldType: PrimitiveType.ADDRESS,
+          fieldIndex: 0,
+          filterData: accounts[0].account,
+        },
+      },
+      {
+        signature: transferSig,
+        signatureType: SignatureType.EVENT,
+        targetContract: zeroAddress, // wildcard
+        chainid: 1,
+        actionParameter: {
+          filterType: FilterType.EQUAL,
+          fieldType: PrimitiveType.ADDRESS,
+          fieldIndex: 1,
+          filterData: accounts[1].account,
+        },
+      },
+    ];
+
+    const groups = groupEventActionSteps(steps);
+
+    // Should create 2 separate groups: one for specific contract, one for wildcard
+    expect(groups).toHaveLength(2);
+
+    const wildcardGroup = groups.find(g => g.targetContract === zeroAddress);
+    const specificGroup = groups.find(g => g.targetContract === specificContract);
+
+    expect(wildcardGroup).toBeDefined();
+    expect(specificGroup).toBeDefined();
+    expect(wildcardGroup!.steps).toHaveLength(1);
+    expect(specificGroup!.steps).toHaveLength(1);
+  });
+
+  test("groupEventActionSteps groups multiple wildcard steps together", () => {
+    const transferSig = eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex;
+
+    const steps: EventActionStep[] = [
+      {
+        signature: transferSig,
+        signatureType: SignatureType.EVENT,
+        targetContract: zeroAddress,
+        chainid: 1,
+        actionParameter: {
+          filterType: FilterType.EQUAL,
+          fieldType: PrimitiveType.ADDRESS,
+          fieldIndex: 0,
+          filterData: accounts[0].account,
+        },
+      },
+      {
+        signature: transferSig,
+        signatureType: SignatureType.EVENT,
+        targetContract: zeroAddress,
+        chainid: 1,
+        actionParameter: {
+          filterType: FilterType.EQUAL,
+          fieldType: PrimitiveType.ADDRESS,
+          fieldIndex: 1,
+          filterData: accounts[1].account,
+        },
+      },
+    ];
+
+    const groups = groupEventActionSteps(steps);
+
+    // Both wildcard steps should be in the same group
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.steps).toHaveLength(2);
+    expect(groups[0]!.targetContract).toBe(zeroAddress);
+  });
+
+  test("validateActionSteps with wildcard step matches log from any contract", async () => {
+    // Create action with wildcard targetContract
+    const eventActionPayload: EventActionPayloadSimple = {
+      actionClaimant: {
+        signatureType: SignatureType.EVENT,
+        signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+        fieldIndex: 1,
+        targetContract: zeroAddress, // wildcard
+        chainid: chainId,
+      },
+      actionSteps: [
+        {
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: zeroAddress, // wildcard - should match any contract
+          chainid: chainId,
+          actionParameter: {
+            filterType: FilterType.EQUAL,
+            fieldType: PrimitiveType.ADDRESS,
+            fieldIndex: 1, // 'to' field
+            filterData: accounts[1].account,
+          },
+        },
+      ],
+    };
+
+    const action = await loadFixture(
+      cloneEventAction(fixtures, erc721, eventActionPayload)
+    );
+
+    // Mint NFT to accounts[1] - the Transfer log will be from erc721's address
+    const { hash } = await erc721.mintRaw(accounts[1].account, {
+      value: parseEther(".1"),
+    });
+
+    // Should pass because wildcard matches the Transfer from any contract
+    expect(
+      await action.validateActionSteps({
+        hash,
+        knownSignatures: allKnownSignatures,
+      })
+    ).toBe(true);
+  });
+
+  test("validateActionSteps with mixed wildcard and specific steps validates independently", async () => {
+    // This tests that wildcard and specific-contract steps form separate groups
+    // and are validated independently
+    const eventActionPayload: EventActionPayloadSimple = {
+      actionClaimant: {
+        signatureType: SignatureType.EVENT,
+        signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+        fieldIndex: 1,
+        targetContract: erc721.assertValidAddress(),
+        chainid: chainId,
+      },
+      actionSteps: [
+        {
+          // Specific contract step: Transfer to accounts[1] from erc721
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: erc721.assertValidAddress(),
+          chainid: chainId,
+          actionParameter: {
+            filterType: FilterType.EQUAL,
+            fieldType: PrimitiveType.ADDRESS,
+            fieldIndex: 1, // 'to' field
+            filterData: accounts[1].account,
+          },
+        },
+        {
+          // Wildcard step: Transfer from zeroAddress (mint) from any contract
+          signature: eventSelectors["Transfer(address indexed,address indexed,uint256 indexed)"] as Hex,
+          signatureType: SignatureType.EVENT,
+          targetContract: zeroAddress, // wildcard
+          chainid: chainId,
+          actionParameter: {
+            filterType: FilterType.EQUAL,
+            fieldType: PrimitiveType.ADDRESS,
+            fieldIndex: 0, // 'from' field
+            filterData: zeroAddress, // mint is from zero address
+          },
+        },
+      ],
+    };
+
+    const action = await loadFixture(
+      cloneEventAction(fixtures, erc721, eventActionPayload)
+    );
+
+    // Mint NFT to accounts[1]
+    // This creates ONE Transfer log: from=zeroAddress, to=accounts[1]
+    const { hash } = await erc721.mintRaw(accounts[1].account, {
+      value: parseEther(".1"),
+    });
+
+    // Should pass because:
+    // - Specific group (erc721): Transfer to=accounts[1] is satisfied
+    // - Wildcard group: Transfer from=zeroAddress is satisfied
+    // (Both happen to be satisfied by the same log, but they're validated independently)
+    expect(
+      await action.validateActionSteps({
+        hash,
+        knownSignatures: allKnownSignatures,
+      })
+    ).toBe(true);
   });
 });

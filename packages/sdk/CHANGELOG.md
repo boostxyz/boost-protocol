@@ -4,6 +4,12 @@
 
 ### Minor Changes
 
+- 3af0bfc: validates actionsteps for the same signature/targetcontract as groups
+
+## 8.1.0-canary.0
+
+### Minor Changes
+
 - 1062a0d: validates actionsteps for the same signature/targetcontract as groups
 
 ## 8.0.2

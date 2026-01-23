@@ -20,7 +20,6 @@ import {
   type Hex,
   type Log,
   type Transaction,
-  decodeAbiParameters,
   decodeEventLog,
   decodeFunctionData,
   encodeAbiParameters,
@@ -2198,50 +2197,22 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
     event.inputs[2]!.indexed = true;
   }
 
-  const indexedInputs: AbiParameter[] = [];
-  const nonIndexedInputs: AbiParameter[] = [];
+  const namedEvent = structuredClone(event);
+  namedEvent.inputs.forEach((input, i) => {
+    input.name = input.name || `__arg${i}`;
+  });
 
-  for (let i = 0; i < event.inputs.length; i++) {
-    const input = event.inputs[i]!;
-    if (input.indexed) {
-      indexedInputs.push(input);
-    } else {
-      nonIndexedInputs.push(input);
-    }
-  }
+  const decodedLog = decodeEventLog({
+    abi: [namedEvent],
+    data: log.data,
+    topics: log.topics,
+  }) as { eventName: string; args: Record<string, unknown> };
 
-  const decodedIndexed: unknown[] = [];
-  for (let i = 0; i < indexedInputs.length; i++) {
-    const topic = log.topics[i + 1];
-    if (!topic) {
-      throw new DecodedArgsError(
-        `Missing topic at index ${i + 1} for indexed parameter "${indexedInputs[i]!.name ?? i}"`,
-      );
-    }
-    const [decoded] = decodeAbiParameters([indexedInputs[i]!], topic);
-    decodedIndexed.push(decoded);
-  }
-
-  const decodedNonIndexed =
-    nonIndexedInputs.length > 0 && log.data && log.data !== '0x'
-      ? decodeAbiParameters(nonIndexedInputs, log.data)
-      : [];
-
-  const args: unknown[] = new Array(event.inputs.length);
-  let indexedIdx = 0;
-  let nonIndexedIdx = 0;
-
-  for (let i = 0; i < event.inputs.length; i++) {
-    if (event.inputs[i]!.indexed) {
-      args[i] = decodedIndexed[indexedIdx++];
-    } else {
-      args[i] = decodedNonIndexed[nonIndexedIdx++];
-    }
-  }
+  const args = namedEvent.inputs.map((input) => decodedLog.args[input.name!]);
 
   return {
     ...log,
-    eventName: event.name,
+    eventName: decodedLog.eventName,
     args,
   } as EventLog;
 }

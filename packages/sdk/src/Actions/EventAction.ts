@@ -2198,8 +2198,9 @@ export function decodeAndReorderLogArgs(event: AbiEvent, log: Log) {
   }
 
   const namedEvent = structuredClone(event);
+
   namedEvent.inputs.forEach((input, i) => {
-    input.name = input.name || `__arg${i}`;
+    input.name = `arg${i}`;
   });
 
   const decodedLog = decodeEventLog({

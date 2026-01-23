@@ -1529,7 +1529,7 @@ describe('decodeAndReorderLogArgs', () => {
         { type: 'address', indexed: true, name: 'recipient' },
         { type: 'uint256', indexed: false, name: 'amount' },
         { type: 'address', indexed: false, name: 'token' },
-        { type: 'bytes32', indexed: true, name: 'referenceId' },
+        { type: 'string', indexed: true, name: 'referenceId' },
         { type: 'bool', indexed: true, name: 'success' },
       ],
     };

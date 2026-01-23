@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.1.0-canary.1
+
+### Patch Changes
+
+- 39f722d: fix log reorder bug for viem versions > 2.30.6
+
 ## 8.1.0-canary.0
 
 ### Minor Changes

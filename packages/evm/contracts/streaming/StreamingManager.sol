@@ -253,6 +253,20 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignImplementationUpdated(oldImplementation, campaignImpl_);
     }
 
+    /// @notice Claim rewards from a campaign using a merkle proof
+    /// @param campaignId The campaign ID to claim from
+    /// @param user The user to claim rewards for
+    /// @param cumulativeAmount The cumulative amount the user is entitled to
+    /// @param proof The merkle proof validating the claim
+    function claim(uint256 campaignId, address user, uint256 cumulativeAmount, bytes32[] calldata proof) external {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        uint256 amount = StreamingCampaign(campaign).processClaim(user, cumulativeAmount, proof);
+
+        emit Claimed(campaignId, user, amount, cumulativeAmount);
+    }
+
     /// @notice Authorize an upgrade to a new implementation
     /// @param newImplementation The address of the new implementation
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

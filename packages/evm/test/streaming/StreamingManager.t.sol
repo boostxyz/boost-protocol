@@ -356,6 +356,24 @@ contract StreamingManagerTest is Test {
         );
     }
 
+    function test_CampaignInitialize_RevertNotStreamingManager() public {
+        // Manually clone the campaign implementation
+        address clone = LibClone.clone(address(campaignImpl));
+
+        // Try to initialize from a non-manager address
+        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
+        StreamingCampaign(clone).initialize(
+            address(manager),
+            address(budget),
+            CREATOR,
+            keccak256("test"),
+            address(rewardToken),
+            10 ether,
+            uint64(block.timestamp + 1 hours),
+            uint64(block.timestamp + 30 days)
+        );
+    }
+
     function test_CampaignInitialize_MerkleRootIsZero() public {
         // Create a campaign
         uint64 startTime = uint64(block.timestamp + 1 hours);

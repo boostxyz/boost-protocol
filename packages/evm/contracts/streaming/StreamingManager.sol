@@ -61,6 +61,12 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when the campaign implementation is updated
     event CampaignImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
 
+    /// @notice Emitted when the operator is updated
+    event OperatorUpdated(address indexed oldOperator, address indexed newOperator);
+
+    /// @notice Emitted when a campaign's merkle root is updated
+    event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot);
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
 

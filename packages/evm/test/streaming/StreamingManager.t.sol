@@ -1283,4 +1283,20 @@ contract StreamingManagerTest is Test {
             })
         );
     }
+
+    /// @notice Helper to create a campaign and return its ID and contract
+    function _createCampaignWithRoot() internal returns (uint256 campaignId, StreamingCampaign campaign) {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        campaignId = manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        campaign = StreamingCampaign(manager.getCampaign(campaignId));
+    }
+
+    /// @notice Helper to create a double-hashed merkle leaf
+    function _makeLeaf(address user, address token, uint256 cumulativeAmount) internal pure returns (bytes32) {
+        return keccak256(bytes.concat(keccak256(abi.encode(user, token, cumulativeAmount))));
+    }
 }

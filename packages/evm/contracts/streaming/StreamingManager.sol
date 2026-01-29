@@ -190,4 +190,17 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         protocolFeeReceiver = receiver_;
         emit ProtocolFeeReceiverUpdated(oldReceiver, receiver_);
     }
+
+    /// @notice Set the campaign implementation address
+    /// @param campaignImpl_ New campaign implementation for cloning
+    function setCampaignImplementation(address campaignImpl_) external onlyOwner {
+        if (campaignImpl_ == address(0)) revert InvalidImplementation();
+        address oldImplementation = campaignImplementation;
+        campaignImplementation = campaignImpl_;
+        emit CampaignImplementationUpdated(oldImplementation, campaignImpl_);
+    }
+
+    /// @notice Authorize an upgrade to a new implementation
+    /// @param newImplementation The address of the new implementation
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

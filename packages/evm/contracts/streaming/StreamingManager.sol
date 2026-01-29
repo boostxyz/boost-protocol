@@ -53,7 +53,10 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     event ProtocolFeeUpdated(uint64 oldFee, uint64 newFee);
 
     /// @notice Emitted when the protocol fee receiver is updated
-    event ProtocolFeeReceiverUpdated(address oldReceiver, address newReceiver);
+    event ProtocolFeeReceiverUpdated(address indexed oldReceiver, address indexed newReceiver);
+
+    /// @notice Emitted when the campaign implementation is updated
+    event CampaignImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -82,16 +85,25 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when budget disburse fails
     error DisburseFailed();
 
-    /// @notice Deploy a new StreamingManager
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initialize the StreamingManager
+    /// @param owner_ The owner of the contract
     /// @param campaignImpl_ The StreamingCampaign implementation for cloning
     /// @param protocolFee_ Initial protocol fee in basis points
     /// @param protocolFeeReceiver_ Address to receive protocol fees
-    constructor(address campaignImpl_, uint64 protocolFee_, address protocolFeeReceiver_) {
+    function initialize(address owner_, address campaignImpl_, uint64 protocolFee_, address protocolFeeReceiver_)
+        external
+        initializer
+    {
         if (campaignImpl_ == address(0)) revert InvalidImplementation();
         if (protocolFeeReceiver_ == address(0)) revert ZeroFeeReceiver();
         if (protocolFee_ > 10000) revert ProtocolFeeTooHigh();
 
-        _initializeOwner(msg.sender);
+        _initializeOwner(owner_);
         campaignImplementation = campaignImpl_;
         protocolFee = protocolFee_;
         protocolFeeReceiver = protocolFeeReceiver_;

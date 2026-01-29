@@ -218,7 +218,30 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit ProtocolFeeReceiverUpdated(oldReceiver, receiver_);
     }
 
-    /// @notice Set the campaign implementation address
+    /// @notice Set the operator address (engine hot wallet for merkle root publishing)
+    /// @param operator_ New operator address (can be zero to disable)
+    function setOperator(address operator_) external onlyOwner {
+        address oldOperator = operator;
+        operator = operator_;
+        emit OperatorUpdated(oldOperator, operator_);
+    }
+
+    /// @notice Update the merkle root for a campaign
+    /// @param campaignId The campaign ID
+    /// @param root The new merkle root
+    function updateRoot(uint256 campaignId, bytes32 root) external {
+        if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
+
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        bytes32 oldRoot = StreamingCampaign(campaign).merkleRoot();
+        StreamingCampaign(campaign).setMerkleRoot(root);
+
+        emit RootUpdated(campaignId, oldRoot, root);
+    }
+
+    /// @notice Set the campaign implementation address (for upgrades)
     /// @param campaignImpl_ New campaign implementation for cloning
     function setCampaignImplementation(address campaignImpl_) external onlyOwner {
         if (campaignImpl_ == address(0)) revert InvalidImplementation();

@@ -15,6 +15,7 @@ import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
 contract StreamingManagerTest is Test {
     MockERC20 rewardToken;
     ManagedBudget budget;
+    StreamingManager managerImpl;
     StreamingManager manager;
     StreamingCampaign campaignImpl;
 
@@ -29,8 +30,11 @@ contract StreamingManagerTest is Test {
         // Deploy StreamingCampaign implementation
         campaignImpl = new StreamingCampaign();
 
-        // Deploy StreamingManager
-        manager = new StreamingManager(address(campaignImpl), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
+        // Deploy StreamingManager implementation and proxy
+        managerImpl = new StreamingManager();
+        address proxy = LibClone.deployERC1967(address(managerImpl));
+        manager = StreamingManager(proxy);
+        manager.initialize(address(this), address(campaignImpl), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
 
         // Deploy and initialize ManagedBudget
         budget = ManagedBudget(payable(LibClone.clone(address(new ManagedBudget()))));
@@ -117,7 +121,10 @@ contract StreamingManagerTest is Test {
 
     function test_CreateCampaign_ZeroFee() public {
         // Deploy manager with 0% fee
-        StreamingManager zeroFeeManager = new StreamingManager(address(campaignImpl), 0, PROTOCOL_FEE_RECEIVER);
+        StreamingManager zeroFeeImpl = new StreamingManager();
+        address zeroFeeProxy = LibClone.deployERC1967(address(zeroFeeImpl));
+        StreamingManager zeroFeeManager = StreamingManager(zeroFeeProxy);
+        zeroFeeManager.initialize(address(this), address(campaignImpl), 0, PROTOCOL_FEE_RECEIVER);
 
         // Authorize manager on budget
         address[] memory accounts = new address[](1);
@@ -192,7 +199,10 @@ contract StreamingManagerTest is Test {
 
     function test_CreateCampaign_MaxFee() public {
         // Deploy manager with 100% fee
-        StreamingManager maxFeeManager = new StreamingManager(address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
+        StreamingManager maxFeeImpl = new StreamingManager();
+        address maxFeeProxy = LibClone.deployERC1967(address(maxFeeImpl));
+        StreamingManager maxFeeManager = StreamingManager(maxFeeProxy);
+        maxFeeManager.initialize(address(this), address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
 
         // Authorize manager on budget
         address[] memory accounts = new address[](1);

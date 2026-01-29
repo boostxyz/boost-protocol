@@ -31,7 +31,10 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Address that receives protocol fees
     address public protocolFeeReceiver;
 
-    /// @notice Allocated padding space for future variables
+    /// @notice Address authorized to publish merkle roots
+    address public operator;
+
+    /// @notice Allocated padding for storage packing
     uint32 private __padding;
 
     /// @notice Allocated gap space for future variables
@@ -57,6 +60,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when the campaign implementation is updated
     event CampaignImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
+
+    /// @notice Emitted when the operator is updated
+    event OperatorUpdated(address indexed oldOperator, address indexed newOperator);
+
+    /// @notice Emitted when a campaign's merkle root is updated
+    event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot);
+
+    /// @notice Emitted when a user claims rewards from a campaign
+    event Claimed(uint256 indexed campaignId, address indexed user, uint256 amount, uint256 cumulativeAmount);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -84,6 +96,12 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Error when budget disburse fails
     error DisburseFailed();
+
+    /// @notice Error when caller is not owner or operator
+    error NotAuthorized();
+
+    /// @notice Error when campaign does not exist
+    error InvalidCampaign();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -203,13 +221,49 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit ProtocolFeeReceiverUpdated(oldReceiver, receiver_);
     }
 
-    /// @notice Set the campaign implementation address
+    /// @notice Set the operator address (engine hot wallet for merkle root publishing)
+    /// @param operator_ New operator address (can be zero to disable)
+    function setOperator(address operator_) external onlyOwner {
+        address oldOperator = operator;
+        operator = operator_;
+        emit OperatorUpdated(oldOperator, operator_);
+    }
+
+    /// @notice Update the merkle root for a campaign
+    /// @param campaignId The campaign ID
+    /// @param root The new merkle root
+    function updateRoot(uint256 campaignId, bytes32 root) external {
+        if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
+
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root);
+
+        emit RootUpdated(campaignId, oldRoot, root);
+    }
+
+    /// @notice Set the campaign implementation address (for upgrades)
     /// @param campaignImpl_ New campaign implementation for cloning
     function setCampaignImplementation(address campaignImpl_) external onlyOwner {
         if (campaignImpl_ == address(0)) revert InvalidImplementation();
         address oldImplementation = campaignImplementation;
         campaignImplementation = campaignImpl_;
         emit CampaignImplementationUpdated(oldImplementation, campaignImpl_);
+    }
+
+    /// @notice Claim rewards from a campaign using a merkle proof
+    /// @param campaignId The campaign ID to claim from
+    /// @param user The user to claim rewards for
+    /// @param cumulativeAmount The cumulative amount the user is entitled to
+    /// @param proof The merkle proof validating the claim
+    function claim(uint256 campaignId, address user, uint256 cumulativeAmount, bytes32[] calldata proof) external {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        uint256 amount = StreamingCampaign(campaign).processClaim(user, cumulativeAmount, proof);
+
+        emit Claimed(campaignId, user, amount, cumulativeAmount);
     }
 
     /// @notice Authorize an upgrade to a new implementation

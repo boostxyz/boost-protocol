@@ -430,40 +430,63 @@ contract StreamingManagerTest is Test {
     }
 
     ////////////////////////////////
-    // Constructor tests
+    // Initialize tests
     ////////////////////////////////
 
-    function test_Constructor_SetsProtocolFee() public view {
+    function test_Initialize_SetsProtocolFee() public view {
         assertEq(manager.protocolFee(), PROTOCOL_FEE, "Protocol fee should be set");
     }
 
-    function test_Constructor_SetsProtocolFeeReceiver() public view {
+    function test_Initialize_SetsProtocolFeeReceiver() public view {
         assertEq(manager.protocolFeeReceiver(), PROTOCOL_FEE_RECEIVER, "Fee receiver should be set");
     }
 
-    function test_Constructor_SetsOwner() public view {
+    function test_Initialize_SetsOwner() public view {
         assertEq(manager.owner(), address(this), "Owner should be deployer");
     }
 
-    function test_Constructor_RevertZeroFeeReceiver() public {
+    function test_Initialize_SetsCampaignImplementation() public view {
+        assertEq(manager.campaignImplementation(), address(campaignImpl), "Campaign implementation should be set");
+    }
+
+    function test_Initialize_RevertZeroFeeReceiver() public {
+        StreamingManager impl = new StreamingManager();
+        address proxy = LibClone.deployERC1967(address(impl));
         vm.expectRevert(StreamingManager.ZeroFeeReceiver.selector);
-        new StreamingManager(address(campaignImpl), PROTOCOL_FEE, address(0));
+        StreamingManager(proxy).initialize(address(this), address(campaignImpl), PROTOCOL_FEE, address(0));
     }
 
-    function test_Constructor_RevertInvalidImplementation() public {
+    function test_Initialize_RevertInvalidImplementation() public {
+        StreamingManager impl = new StreamingManager();
+        address proxy = LibClone.deployERC1967(address(impl));
         vm.expectRevert(StreamingManager.InvalidImplementation.selector);
-        new StreamingManager(address(0), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
+        StreamingManager(proxy).initialize(address(this), address(0), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
     }
 
-    function test_Constructor_RevertProtocolFeeTooHigh() public {
+    function test_Initialize_RevertProtocolFeeTooHigh() public {
+        StreamingManager impl = new StreamingManager();
+        address proxy = LibClone.deployERC1967(address(impl));
         vm.expectRevert(StreamingManager.ProtocolFeeTooHigh.selector);
-        new StreamingManager(address(campaignImpl), 10001, PROTOCOL_FEE_RECEIVER); // >100%
+        StreamingManager(proxy).initialize(address(this), address(campaignImpl), 10001, PROTOCOL_FEE_RECEIVER);
     }
 
-    function test_Constructor_MaxProtocolFee() public {
+    function test_Initialize_MaxProtocolFee() public {
         // 100% fee (10000 bps) should be allowed
-        StreamingManager maxFeeManager = new StreamingManager(address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
+        StreamingManager impl = new StreamingManager();
+        address proxy = LibClone.deployERC1967(address(impl));
+        StreamingManager maxFeeManager = StreamingManager(proxy);
+        maxFeeManager.initialize(address(this), address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
         assertEq(maxFeeManager.protocolFee(), 10000, "100% fee should be valid");
+    }
+
+    function test_Initialize_RevertDoubleInit() public {
+        vm.expectRevert(); // Initializable: InvalidInitialization
+        manager.initialize(address(this), address(campaignImpl), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
+    }
+
+    function test_Initialize_RevertImplementationDirectly() public {
+        vm.expectRevert(); // Initializable: InvalidInitialization
+        managerImpl.initialize(address(this), address(campaignImpl), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
     }
 
     ////////////////////////////////
@@ -519,6 +542,104 @@ contract StreamingManagerTest is Test {
     function test_SetProtocolFeeReceiver_RevertZeroAddress() public {
         vm.expectRevert(StreamingManager.ZeroFeeReceiver.selector);
         manager.setProtocolFeeReceiver(address(0));
+    }
+
+    ////////////////////////////////
+    // setCampaignImplementation tests
+    ////////////////////////////////
+
+    function test_SetCampaignImplementation_Success() public {
+        StreamingCampaign newImpl = new StreamingCampaign();
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.CampaignImplementationUpdated(address(campaignImpl), address(newImpl));
+        manager.setCampaignImplementation(address(newImpl));
+
+        assertEq(manager.campaignImplementation(), address(newImpl), "Implementation should be updated");
+    }
+
+    function test_SetCampaignImplementation_RevertNotOwner() public {
+        StreamingCampaign newImpl = new StreamingCampaign();
+
+        vm.prank(CREATOR);
+        vm.expectRevert(); // Ownable.Unauthorized
+        manager.setCampaignImplementation(address(newImpl));
+    }
+
+    function test_SetCampaignImplementation_RevertZeroAddress() public {
+        vm.expectRevert(StreamingManager.InvalidImplementation.selector);
+        manager.setCampaignImplementation(address(0));
+    }
+
+    function test_SetCampaignImplementation_NewCampaignsUseNewImpl() public {
+        // Create a new campaign implementation
+        StreamingCampaign newImpl = new StreamingCampaign();
+        manager.setCampaignImplementation(address(newImpl));
+
+        // Create a campaign - should use the new implementation
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 5 ether, startTime, endTime);
+
+        address campaignAddr = manager.getCampaign(campaignId);
+        assertTrue(campaignAddr != address(0), "Campaign should be created");
+    }
+
+    ////////////////////////////////
+    // UUPS Upgrade tests
+    ////////////////////////////////
+
+    function test_UpgradeToAndCall_Success() public {
+        // Deploy a new implementation
+        StreamingManager newImpl = new StreamingManager();
+
+        // Upgrade to new implementation
+        manager.upgradeToAndCall(address(newImpl), "");
+
+        // Verify state is preserved
+        assertEq(manager.protocolFee(), PROTOCOL_FEE, "Protocol fee should be preserved");
+        assertEq(manager.protocolFeeReceiver(), PROTOCOL_FEE_RECEIVER, "Fee receiver should be preserved");
+        assertEq(manager.campaignImplementation(), address(campaignImpl), "Campaign impl should be preserved");
+        assertEq(manager.owner(), address(this), "Owner should be preserved");
+    }
+
+    function test_UpgradeToAndCall_RevertNotOwner() public {
+        StreamingManager newImpl = new StreamingManager();
+
+        vm.prank(CREATOR);
+        vm.expectRevert(); // Ownable.Unauthorized
+        manager.upgradeToAndCall(address(newImpl), "");
+    }
+
+    function test_UpgradeToAndCall_PreservesState() public {
+        // Create a campaign before upgrade
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 5 ether, startTime, endTime);
+
+        address campaignAddr = manager.getCampaign(campaignId);
+        uint256 campaignCountBefore = manager.campaignCount();
+
+        // Deploy and upgrade to new implementation
+        StreamingManager newImpl = new StreamingManager();
+        manager.upgradeToAndCall(address(newImpl), "");
+
+        // Verify state is preserved
+        assertEq(manager.campaignCount(), campaignCountBefore, "Campaign count should be preserved");
+        assertEq(manager.getCampaign(campaignId), campaignAddr, "Campaign mapping should be preserved");
+    }
+
+    function test_ProxiableUUID() public view {
+        // Verify the proxiable UUID matches the ERC1967 implementation slot
+        // Note: proxiableUUID() has notDelegated modifier, so call on implementation not proxy
+        bytes32 expectedSlot = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+        assertEq(managerImpl.proxiableUUID(), expectedSlot, "Proxiable UUID should match ERC1967 slot");
     }
 
     ////////////////////////////////

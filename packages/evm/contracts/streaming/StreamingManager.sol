@@ -31,7 +31,10 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Address that receives protocol fees
     address public protocolFeeReceiver;
 
-    /// @notice Allocated padding space for future variables
+    /// @notice Address authorized to publish merkle roots
+    address public operator;
+
+    /// @notice Allocated padding for storage packing
     uint32 private __padding;
 
     /// @notice Allocated gap space for future variables

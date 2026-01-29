@@ -38,7 +38,7 @@ contract StreamingCampaign is Initializable {
     mapping(address => uint256) public claimed;
 
     /// @notice Emitted when the campaign is initialized
-    event Initialized(
+    event CampaignInitialized(
         address indexed streamingManager,
         address indexed budget,
         address indexed creator,
@@ -85,7 +85,7 @@ contract StreamingCampaign is Initializable {
         startTime = startTime_;
         endTime = endTime_;
 
-        emit Initialized(
+        emit CampaignInitialized(
             streamingManager_,
             budget_,
             creator_,

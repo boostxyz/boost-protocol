@@ -316,25 +316,25 @@ contract StreamingManagerTest is Test {
         assertEq(campaign.merkleRoot(), bytes32(0), "Merkle root should be zero after initialization");
     }
 
-    function test_CampaignInitialize_EmitsInitializedEvent() public {
+    function test_CampaignInitialize_EmitsCampaignInitializedEvent() public {
         uint256 totalAmount = 10 ether;
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
         bytes32 configHash = keccak256("test-config");
-        // We expect the Initialized event from StreamingCampaign
+        // We expect the CampaignInitialized event from StreamingCampaign
         // Since we can't predict the campaign address, we check the event is emitted
         vm.prank(CREATOR);
         vm.recordLogs();
         manager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
 
-        // Check that Initialized event was emitted
+        // Check that CampaignInitialized event was emitted
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        bool foundInitializedEvent = false;
-        bytes32 initializedEventSig = keccak256("Initialized(address,address,address,bytes32,address,uint256,uint64,uint64)");
+        bool foundEvent = false;
+        bytes32 eventSig = keccak256("CampaignInitialized(address,address,address,bytes32,address,uint256,uint64,uint64)");
 
         for (uint256 i = 0; i < logs.length; i++) {
-            if (logs[i].topics[0] == initializedEventSig) {
-                foundInitializedEvent = true;
+            if (logs[i].topics[0] == eventSig) {
+                foundEvent = true;
                 // Verify indexed params
                 assertEq(logs[i].topics[1], bytes32(uint256(uint160(address(manager)))), "Manager should be indexed");
                 assertEq(logs[i].topics[2], bytes32(uint256(uint160(address(budget)))), "Budget should be indexed");
@@ -342,7 +342,7 @@ contract StreamingManagerTest is Test {
                 break;
             }
         }
-        assertTrue(foundInitializedEvent, "Initialized event should be emitted");
+        assertTrue(foundEvent, "CampaignInitialized event should be emitted");
     }
 
     ////////////////////////////////

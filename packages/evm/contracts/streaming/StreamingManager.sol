@@ -181,4 +181,22 @@ contract StreamingManager is Ownable {
     function getCampaign(uint256 campaignId) external view returns (address) {
         return campaigns[campaignId];
     }
+
+    /// @notice Set the protocol fee
+    /// @param fee_ New protocol fee in basis points (max 10000 = 100%)
+    function setProtocolFee(uint64 fee_) external onlyOwner {
+        if (fee_ > 10000) revert ProtocolFeeTooHigh();
+        uint64 oldFee = protocolFee;
+        protocolFee = fee_;
+        emit ProtocolFeeUpdated(oldFee, fee_);
+    }
+
+    /// @notice Set the protocol fee receiver address
+    /// @param receiver_ New address to receive protocol fees
+    function setProtocolFeeReceiver(address receiver_) external onlyOwner {
+        if (receiver_ == address(0)) revert ZeroFeeReceiver();
+        address oldReceiver = protocolFeeReceiver;
+        protocolFeeReceiver = receiver_;
+        emit ProtocolFeeReceiverUpdated(oldReceiver, receiver_);
+    }
 }

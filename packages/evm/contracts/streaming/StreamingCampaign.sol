@@ -76,6 +76,7 @@ contract StreamingCampaign is Initializable {
         uint64 startTime_,
         uint64 endTime_
     ) external initializer {
+        if (msg.sender != streamingManager_) revert OnlyStreamingManager();
         streamingManager = streamingManager_;
         budget = budget_;
         creator = creator_;

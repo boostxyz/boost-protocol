@@ -152,26 +152,10 @@ contract StreamingManager is Ownable {
 
         // Initialize the campaign
         StreamingCampaign(campaign).initialize(
-            address(this),
-            address(budget),
-            msg.sender,
-            configHash,
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime
+            address(this), address(budget), msg.sender, configHash, rewardToken, netAmount, startTime, endTime
         );
 
-        emit CampaignCreated(
-            campaignId,
-            configHash,
-            campaign,
-            msg.sender,
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime
-        );
+        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
     }
 
     /// @notice Get a campaign contract by ID

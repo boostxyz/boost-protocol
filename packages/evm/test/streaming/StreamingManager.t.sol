@@ -64,9 +64,8 @@ contract StreamingManagerTest is Test {
         bytes32 configHash = keccak256("test-config");
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, configHash, address(rewardToken), totalAmount, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
 
         assertEq(campaignId, 1, "Campaign ID should be 1");
 
@@ -96,9 +95,8 @@ contract StreamingManagerTest is Test {
         uint256 feeReceiverBalanceBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, configHash, address(rewardToken), totalAmount, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
 
         address campaignAddr = manager.getCampaign(campaignId);
 
@@ -136,9 +134,8 @@ contract StreamingManagerTest is Test {
         uint256 feeReceiverBalanceBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
 
         vm.prank(CREATOR);
-        uint256 campaignId = zeroFeeManager.createCampaign(
-            budget, configHash, address(rewardToken), totalAmount, startTime, endTime
-        );
+        uint256 campaignId =
+            zeroFeeManager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
 
         address campaignAddr = zeroFeeManager.getCampaign(campaignId);
 
@@ -212,9 +209,8 @@ contract StreamingManagerTest is Test {
         uint256 feeReceiverBalanceBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
 
         vm.prank(CREATOR);
-        uint256 campaignId = maxFeeManager.createCampaign(
-            budget, configHash, address(rewardToken), totalAmount, startTime, endTime
-        );
+        uint256 campaignId =
+            maxFeeManager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
 
         address campaignAddr = maxFeeManager.getCampaign(campaignId);
         StreamingCampaign campaign = StreamingCampaign(campaignAddr);
@@ -246,9 +242,7 @@ contract StreamingManagerTest is Test {
 
         vm.prank(unauthorized);
         vm.expectRevert(StreamingManager.NotAuthorizedOnBudget.selector);
-        manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
     function test_CreateCampaign_RevertStartTimeInPast() public {
@@ -257,9 +251,7 @@ contract StreamingManagerTest is Test {
 
         vm.prank(CREATOR);
         vm.expectRevert(StreamingManager.StartTimeInPast.selector);
-        manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
     function test_CreateCampaign_RevertEndBeforeStart() public {
@@ -268,9 +260,7 @@ contract StreamingManagerTest is Test {
 
         vm.prank(CREATOR);
         vm.expectRevert(StreamingManager.EndTimeBeforeStart.selector);
-        manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
     function test_CreateCampaign_RevertZeroAmount() public {
@@ -300,11 +290,11 @@ contract StreamingManagerTest is Test {
         // - Net rewards = 900 ether -> fails with InsufficientFunds
         vm.prank(CREATOR);
         vm.expectRevert(
-            abi.encodeWithSelector(ABudget.InsufficientFunds.selector, address(rewardToken), uint256(0), uint256(900 ether))
+            abi.encodeWithSelector(
+                ABudget.InsufficientFunds.selector, address(rewardToken), uint256(0), uint256(900 ether)
+            )
         );
-        manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 1000 ether, startTime, endTime
-        );
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 1000 ether, startTime, endTime);
     }
 
     ////////////////////////////////
@@ -317,9 +307,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         address campaignAddr = manager.getCampaign(campaignId);
         StreamingCampaign campaign = StreamingCampaign(campaignAddr);
@@ -327,7 +316,14 @@ contract StreamingManagerTest is Test {
         // Try to initialize again
         vm.expectRevert(); // Initializable: already initialized
         campaign.initialize(
-            address(manager), address(budget), CREATOR, keccak256("test"), address(rewardToken), 9 ether, startTime, endTime
+            address(manager),
+            address(budget),
+            CREATOR,
+            keccak256("test"),
+            address(rewardToken),
+            9 ether,
+            startTime,
+            endTime
         );
     }
 
@@ -352,9 +348,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
 
@@ -376,7 +371,8 @@ contract StreamingManagerTest is Test {
         // Check that CampaignInitialized event was emitted
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bool foundEvent = false;
-        bytes32 eventSig = keccak256("CampaignInitialized(address,address,address,bytes32,address,uint256,uint64,uint64)");
+        bytes32 eventSig =
+            keccak256("CampaignInitialized(address,address,address,bytes32,address,uint256,uint64,uint64)");
 
         for (uint256 i = 0; i < logs.length; i++) {
             if (logs[i].topics[0] == eventSig) {

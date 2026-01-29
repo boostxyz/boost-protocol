@@ -86,14 +86,7 @@ contract StreamingCampaign is Initializable {
         endTime = endTime_;
 
         emit CampaignInitialized(
-            streamingManager_,
-            budget_,
-            creator_,
-            configHash_,
-            rewardToken_,
-            totalRewards_,
-            startTime_,
-            endTime_
+            streamingManager_, budget_, creator_, configHash_, rewardToken_, totalRewards_, startTime_, endTime_
         );
     }
 

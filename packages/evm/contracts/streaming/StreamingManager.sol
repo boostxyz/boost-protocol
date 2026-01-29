@@ -94,6 +94,12 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when budget disburse fails
     error DisburseFailed();
 
+    /// @notice Error when caller is not owner or operator
+    error NotAuthorized();
+
+    /// @notice Error when campaign does not exist
+    error InvalidCampaign();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

@@ -54,8 +54,17 @@ contract StreamingCampaign is Initializable {
     /// @notice Emitted when the merkle root is updated
     event MerkleRootUpdated(bytes32 oldRoot, bytes32 newRoot);
 
+    /// @notice Emitted when a user claims rewards
+    event Claimed(address indexed user, uint256 amount, uint256 cumulativeAmount);
+
     /// @notice Error when caller is not the StreamingManager
     error OnlyStreamingManager();
+
+    /// @notice Error when merkle proof is invalid
+    error InvalidProof();
+
+    /// @notice Error when there is nothing to claim
+    error NothingToClaim();
 
     /// @notice Disable initialization on the implementation contract
     constructor() {

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.24;
 
 import {Initializable} from "@solady/utils/Initializable.sol";
+import {MerkleProofLib} from "@solady/utils/MerkleProofLib.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 /// @title StreamingCampaign
 /// @notice Per-campaign clone that holds reward tokens for streaming incentives

@@ -67,6 +67,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when a campaign's merkle root is updated
     event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot);
 
+    /// @notice Emitted when a user claims rewards from a campaign
+    event Claimed(uint256 indexed campaignId, address indexed user, uint256 amount, uint256 cumulativeAmount);
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
 

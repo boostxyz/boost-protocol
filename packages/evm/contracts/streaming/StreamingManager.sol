@@ -121,6 +121,9 @@ contract StreamingManager is Ownable {
         // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
 
+        campaignId = ++campaignCount;
+        campaigns[campaignId] = campaign;
+
         // Disburse fee to protocol fee receiver (if fee > 0)
         if (feeAmount > 0) {
             bytes memory feeTransfer = abi.encode(
@@ -158,10 +161,6 @@ contract StreamingManager is Ownable {
             startTime,
             endTime
         );
-
-        // Store campaign and increment counter
-        campaignId = ++campaignCount;
-        campaigns[campaignId] = campaign;
 
         emit CampaignCreated(
             campaignId,

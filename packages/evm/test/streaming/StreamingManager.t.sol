@@ -297,6 +297,20 @@ contract StreamingManagerTest is Test {
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 1000 ether, startTime, endTime);
     }
 
+    function test_CreateCampaign_RevertDisburseFailed() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Mock budget.disburse to return false (covers defensive code path)
+        vm.mockCall(address(budget), abi.encodeWithSelector(ABudget.disburse.selector), abi.encode(false));
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.DisburseFailed.selector);
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        vm.clearMockedCalls();
+    }
+
     ////////////////////////////////
     // StreamingCampaign.initialize - Revert cases
     ////////////////////////////////

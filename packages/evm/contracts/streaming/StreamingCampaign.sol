@@ -113,8 +113,9 @@ contract StreamingCampaign is Initializable {
 
     /// @notice Set the merkle root for reward claims
     /// @param root The new merkle root
-    function setMerkleRoot(bytes32 root) external onlyStreamingManager {
-        bytes32 oldRoot = merkleRoot;
+    /// @return oldRoot The previous merkle root
+    function setMerkleRoot(bytes32 root) external onlyStreamingManager returns (bytes32 oldRoot) {
+        oldRoot = merkleRoot;
         merkleRoot = root;
         emit MerkleRootUpdated(oldRoot, root);
     }

@@ -238,8 +238,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
-        bytes32 oldRoot = StreamingCampaign(campaign).merkleRoot();
-        StreamingCampaign(campaign).setMerkleRoot(root);
+        bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root);
 
         emit RootUpdated(campaignId, oldRoot, root);
     }

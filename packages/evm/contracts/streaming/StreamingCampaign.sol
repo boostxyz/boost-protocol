@@ -49,6 +49,9 @@ contract StreamingCampaign is Initializable {
         uint64 endTime
     );
 
+    /// @notice Emitted when the merkle root is updated
+    event MerkleRootUpdated(bytes32 oldRoot, bytes32 newRoot);
+
     /// @notice Error when caller is not the StreamingManager
     error OnlyStreamingManager();
 
@@ -95,5 +98,13 @@ contract StreamingCampaign is Initializable {
     modifier onlyStreamingManager() {
         if (msg.sender != streamingManager) revert OnlyStreamingManager();
         _;
+    }
+
+    /// @notice Set the merkle root for reward claims
+    /// @param root The new merkle root
+    function setMerkleRoot(bytes32 root) external onlyStreamingManager {
+        bytes32 oldRoot = merkleRoot;
+        merkleRoot = root;
+        emit MerkleRootUpdated(oldRoot, root);
     }
 }

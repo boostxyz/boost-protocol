@@ -429,6 +429,61 @@ contract StreamingManagerTest is Test {
     }
 
     ////////////////////////////////
+    // setProtocolFee tests
+    ////////////////////////////////
+
+    function test_SetProtocolFee_Success() public {
+        uint64 newFee = 500; // 5%
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.ProtocolFeeUpdated(PROTOCOL_FEE, newFee);
+        manager.setProtocolFee(newFee);
+
+        assertEq(manager.protocolFee(), newFee, "Protocol fee should be updated");
+    }
+
+    function test_SetProtocolFee_RevertNotOwner() public {
+        vm.prank(CREATOR);
+        vm.expectRevert(); // Ownable.Unauthorized
+        manager.setProtocolFee(500);
+    }
+
+    function test_SetProtocolFee_RevertFeeTooHigh() public {
+        vm.expectRevert(StreamingManager.ProtocolFeeTooHigh.selector);
+        manager.setProtocolFee(10001); // >100%
+    }
+
+    function test_SetProtocolFee_MaxFee() public {
+        manager.setProtocolFee(10000); // 100%
+        assertEq(manager.protocolFee(), 10000, "Max fee should be allowed");
+    }
+
+    ////////////////////////////////
+    // setProtocolFeeReceiver tests
+    ////////////////////////////////
+
+    function test_SetProtocolFeeReceiver_Success() public {
+        address newReceiver = address(0xBEEF);
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.ProtocolFeeReceiverUpdated(PROTOCOL_FEE_RECEIVER, newReceiver);
+        manager.setProtocolFeeReceiver(newReceiver);
+
+        assertEq(manager.protocolFeeReceiver(), newReceiver, "Fee receiver should be updated");
+    }
+
+    function test_SetProtocolFeeReceiver_RevertNotOwner() public {
+        vm.prank(CREATOR);
+        vm.expectRevert(); // Ownable.Unauthorized
+        manager.setProtocolFeeReceiver(address(0xBEEF));
+    }
+
+    function test_SetProtocolFeeReceiver_RevertZeroAddress() public {
+        vm.expectRevert(StreamingManager.ZeroFeeReceiver.selector);
+        manager.setProtocolFeeReceiver(address(0));
+    }
+
+    ////////////////////////////////
     // Helper functions
     ////////////////////////////////
 

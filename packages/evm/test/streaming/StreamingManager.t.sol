@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test, Vm} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
+import {MerkleProofLib} from "@solady/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";

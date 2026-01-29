@@ -193,6 +193,48 @@ contract StreamingManagerTest is Test {
         assertTrue(manager.getCampaign(1) != manager.getCampaign(2), "Campaigns should be different addresses");
     }
 
+    function test_CreateCampaign_MaxFee() public {
+        // Deploy manager with 100% fee
+        StreamingManager maxFeeManager = new StreamingManager(address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
+
+        // Authorize manager on budget
+        address[] memory accounts = new address[](1);
+        accounts[0] = address(maxFeeManager);
+        bool[] memory authorized = new bool[](1);
+        authorized[0] = true;
+        budget.setAuthorized(accounts, authorized);
+
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+        bytes32 configHash = keccak256("test-config");
+
+        uint256 feeReceiverBalanceBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = maxFeeManager.createCampaign(
+            budget, configHash, address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        address campaignAddr = maxFeeManager.getCampaign(campaignId);
+        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+
+        // Fee receiver gets 100% of tokens
+        assertEq(
+            rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER),
+            feeReceiverBalanceBefore + totalAmount,
+            "Fee receiver should get all tokens"
+        );
+
+        // Campaign gets 0 tokens
+        assertEq(rewardToken.balanceOf(campaignAddr), 0, "Campaign should receive no tokens");
+
+        // Campaign still initializes with totalRewards = 0
+        assertEq(campaign.totalRewards(), 0, "totalRewards should be 0");
+        assertEq(campaign.streamingManager(), address(maxFeeManager), "Manager should be set");
+        assertEq(campaign.creator(), CREATOR, "Creator should be set");
+    }
+
     ////////////////////////////////
     // StreamingManager.createCampaign - Revert cases
     ////////////////////////////////

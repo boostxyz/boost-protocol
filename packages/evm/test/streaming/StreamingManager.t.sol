@@ -848,6 +848,428 @@ contract StreamingManagerTest is Test {
     }
 
     ////////////////////////////////
+    // Claim tests
+    ////////////////////////////////
+
+    function test_Claim_Success() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Build merkle tree with single leaf
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf; // Single leaf tree, root = leaf
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        uint256 claimerBalanceBefore = rewardToken.balanceOf(CLAIMER);
+        uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
+
+        // Claim
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        // Verify balances
+        assertEq(rewardToken.balanceOf(CLAIMER), claimerBalanceBefore + claimAmount, "Claimer should receive tokens");
+        assertEq(
+            rewardToken.balanceOf(address(campaign)),
+            campaignBalanceBefore - claimAmount,
+            "Campaign balance should decrease"
+        );
+        assertEq(campaign.claimed(CLAIMER), claimAmount, "Claimed amount should be recorded");
+    }
+
+    function test_Claim_EmitsEvents() public {
+        // Create a campaign
+        (uint256 campaignId,) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Build merkle tree with single leaf
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        // Record logs and claim
+        vm.recordLogs();
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        // Check for StreamingCampaign.Claimed event
+        bytes32 campaignClaimedSig = keccak256("Claimed(address,uint256,uint256)");
+        bool foundCampaignClaimed = false;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == campaignClaimedSig) {
+                foundCampaignClaimed = true;
+                assertEq(logs[i].topics[1], bytes32(uint256(uint160(CLAIMER))), "User should be indexed");
+                (uint256 amount, uint256 cumulativeAmount) = abi.decode(logs[i].data, (uint256, uint256));
+                assertEq(amount, claimAmount, "Amount should match");
+                assertEq(cumulativeAmount, claimAmount, "Cumulative amount should match");
+                break;
+            }
+        }
+        assertTrue(foundCampaignClaimed, "Campaign Claimed event should be emitted");
+
+        // Check for StreamingManager.Claimed event
+        bytes32 managerClaimedSig = keccak256("Claimed(uint256,address,uint256,uint256)");
+        bool foundManagerClaimed = false;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == managerClaimedSig) {
+                foundManagerClaimed = true;
+                assertEq(logs[i].topics[1], bytes32(campaignId), "Campaign ID should be indexed");
+                assertEq(logs[i].topics[2], bytes32(uint256(uint160(CLAIMER))), "User should be indexed");
+                (uint256 amount, uint256 cumulativeAmount) = abi.decode(logs[i].data, (uint256, uint256));
+                assertEq(amount, claimAmount, "Amount should match");
+                assertEq(cumulativeAmount, claimAmount, "Cumulative amount should match");
+                break;
+            }
+        }
+        assertTrue(foundManagerClaimed, "Manager Claimed event should be emitted");
+    }
+
+    function test_Claim_RevertInvalidProof() public {
+        // Create a campaign
+        (uint256 campaignId,) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Build merkle tree with single leaf for a different user
+        bytes32 leaf = _makeLeaf(address(0xDEAD), address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        // Try to claim with wrong user
+        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_Claim_RevertNothingToClaim() public {
+        // Create a campaign
+        (uint256 campaignId,) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Build merkle tree with single leaf
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        // Claim first time
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        // Try to claim again with same cumulative amount
+        vm.expectRevert(StreamingCampaign.NothingToClaim.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_Claim_RevertInvalidCampaign() public {
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Try to claim from non-existent campaign
+        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        manager.claim(999, CLAIMER, 1 ether, proof);
+    }
+
+    function test_Claim_PartialClaims() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // First claim: cumulative = 1 ether
+        uint256 firstCumulative = 1 ether;
+        bytes32 firstLeaf = _makeLeaf(CLAIMER, address(rewardToken), firstCumulative);
+        bytes32 firstRoot = firstLeaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        manager.updateRoot(campaignId, firstRoot);
+        manager.claim(campaignId, CLAIMER, firstCumulative, proof);
+
+        assertEq(campaign.claimed(CLAIMER), firstCumulative, "First claim should be recorded");
+        assertEq(rewardToken.balanceOf(CLAIMER), firstCumulative, "Should have received first amount");
+
+        // Second claim: cumulative = 3 ether (additional 2 ether)
+        uint256 secondCumulative = 3 ether;
+        bytes32 secondLeaf = _makeLeaf(CLAIMER, address(rewardToken), secondCumulative);
+        bytes32 secondRoot = secondLeaf;
+
+        manager.updateRoot(campaignId, secondRoot);
+        manager.claim(campaignId, CLAIMER, secondCumulative, proof);
+
+        assertEq(campaign.claimed(CLAIMER), secondCumulative, "Second claim should be recorded");
+        assertEq(rewardToken.balanceOf(CLAIMER), secondCumulative, "Should have received cumulative amount");
+
+        // Third claim: cumulative = 5 ether (additional 2 ether)
+        uint256 thirdCumulative = 5 ether;
+        bytes32 thirdLeaf = _makeLeaf(CLAIMER, address(rewardToken), thirdCumulative);
+        bytes32 thirdRoot = thirdLeaf;
+
+        manager.updateRoot(campaignId, thirdRoot);
+        manager.claim(campaignId, CLAIMER, thirdCumulative, proof);
+
+        assertEq(campaign.claimed(CLAIMER), thirdCumulative, "Third claim should be recorded");
+        assertEq(rewardToken.balanceOf(CLAIMER), thirdCumulative, "Should have received cumulative amount");
+    }
+
+    function test_Claim_AnyoneCanClaimForUser() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Build merkle tree with single leaf
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        // Random address submits claim for CLAIMER
+        address randomCaller = address(0xBAD);
+        vm.prank(randomCaller);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        // CLAIMER should receive tokens (not the caller)
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "CLAIMER should receive tokens");
+        assertEq(rewardToken.balanceOf(randomCaller), 0, "Caller should not receive tokens");
+        assertEq(campaign.claimed(CLAIMER), claimAmount, "Claimed amount should be recorded for CLAIMER");
+    }
+
+    function test_CampaignProcessClaim_RevertNotStreamingManager() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Build merkle tree with single leaf
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        // Try to call processClaim directly
+        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
+        campaign.processClaim(CLAIMER, claimAmount, proof);
+    }
+
+    function test_Claim_WithMultipleLeafMerkleTree() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // Create two leaves for two users
+        uint256 claimer1Amount = 1 ether;
+        uint256 claimer2Amount = 2 ether;
+
+        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), claimer1Amount);
+        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), claimer2Amount);
+
+        // Build simple 2-leaf merkle tree
+        // Sort leaves for consistent tree structure
+        bytes32 left;
+        bytes32 right;
+        if (uint256(leaf1) < uint256(leaf2)) {
+            left = leaf1;
+            right = leaf2;
+        } else {
+            left = leaf2;
+            right = leaf1;
+        }
+        bytes32 root = keccak256(abi.encodePacked(left, right));
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        // Create proofs - sibling is the proof
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+
+        // Both users claim
+        manager.claim(campaignId, CLAIMER, claimer1Amount, proof1);
+        manager.claim(campaignId, CLAIMER2, claimer2Amount, proof2);
+
+        // Verify
+        assertEq(rewardToken.balanceOf(CLAIMER), claimer1Amount, "CLAIMER should receive correct amount");
+        assertEq(rewardToken.balanceOf(CLAIMER2), claimer2Amount, "CLAIMER2 should receive correct amount");
+        assertEq(campaign.claimed(CLAIMER), claimer1Amount, "CLAIMER claim recorded");
+        assertEq(campaign.claimed(CLAIMER2), claimer2Amount, "CLAIMER2 claim recorded");
+    }
+
+    function test_Claim_RevertWrongAmount() public {
+        // Create a campaign
+        (uint256 campaignId,) = _createCampaignWithRoot();
+        uint256 correctAmount = 1 ether;
+        uint256 wrongAmount = 2 ether;
+
+        // Build merkle tree with correct amount
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), correctAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root);
+
+        // Try to claim with wrong amount
+        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, wrongAmount, proof);
+    }
+
+    function test_Claim_RevertZeroMerkleRoot() public {
+        // Create a campaign (merkle root is zero by default)
+        (uint256 campaignId,) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Don't set merkle root - leave it as bytes32(0)
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Try to claim with zero merkle root
+        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_Claim_RevertOldProofAfterNewClaim() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // First: claim with cumulative amount of 2 ether
+        uint256 firstCumulative = 2 ether;
+        bytes32 firstLeaf = _makeLeaf(CLAIMER, address(rewardToken), firstCumulative);
+        bytes32 firstRoot = firstLeaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        manager.updateRoot(campaignId, firstRoot);
+        manager.claim(campaignId, CLAIMER, firstCumulative, proof);
+
+        assertEq(campaign.claimed(CLAIMER), firstCumulative, "Should have claimed 2 ether");
+
+        // Second: try to use an old proof with lower cumulative (1 ether)
+        // This simulates someone trying to use a stale/old proof
+        uint256 oldCumulative = 1 ether;
+        bytes32 oldLeaf = _makeLeaf(CLAIMER, address(rewardToken), oldCumulative);
+        bytes32 oldRoot = oldLeaf;
+
+        manager.updateRoot(campaignId, oldRoot);
+
+        // Should revert because oldCumulative (1 ether) <= alreadyClaimed (2 ether)
+        vm.expectRevert(StreamingCampaign.NothingToClaim.selector);
+        manager.claim(campaignId, CLAIMER, oldCumulative, proof);
+    }
+
+    function test_Claim_RevertDoubleClaimSameBlock() public {
+        // Create a campaign
+        (uint256 campaignId,) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Build merkle tree
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        manager.updateRoot(campaignId, root);
+
+        // First claim succeeds
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        // Second claim in same block with same proof reverts
+        vm.expectRevert(StreamingCampaign.NothingToClaim.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_Claim_CannotClaimMoreThanAccumulated() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // The merkle tree only has 1 ether for this user
+        uint256 actualAmount = 1 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), actualAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        manager.updateRoot(campaignId, root);
+
+        // Claim the actual amount
+        manager.claim(campaignId, CLAIMER, actualAmount, proof);
+        assertEq(campaign.claimed(CLAIMER), actualAmount, "Should have claimed actual amount");
+        assertEq(rewardToken.balanceOf(CLAIMER), actualAmount, "Should have received actual amount");
+
+        // Try to claim more by providing a higher cumulative amount
+        // This should fail because the proof won't verify
+        uint256 inflatedAmount = 10 ether;
+        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, inflatedAmount, proof);
+
+        // Balance should remain unchanged
+        assertEq(rewardToken.balanceOf(CLAIMER), actualAmount, "Balance should not change");
+    }
+
+    function test_Claim_RevertWhenCampaignBalanceInsufficient() public {
+        // Create a campaign with 9 ether (after 10% fee on 10 ether)
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+        assertEq(campaignBalance, 9 ether, "Campaign should have 9 ether after fee");
+
+        // Create a proof for more than the campaign balance
+        uint256 excessiveAmount = 20 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), excessiveAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        manager.updateRoot(campaignId, root);
+
+        // Claim should revert due to insufficient balance in campaign
+        // SafeTransferLib will revert with TransferFailed
+        vm.expectRevert();
+        manager.claim(campaignId, CLAIMER, excessiveAmount, proof);
+    }
+
+    function test_Claim_CrossCampaignProofReuseFails() public {
+        // Create first campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId1 =
+            manager.createCampaign(budget, keccak256("campaign-1"), address(rewardToken), 10 ether, startTime, endTime);
+
+        vm.prank(CREATOR);
+        uint256 campaignId2 =
+            manager.createCampaign(budget, keccak256("campaign-2"), address(rewardToken), 10 ether, startTime, endTime);
+
+        uint256 claimAmount = 1 ether;
+
+        // Set up valid proof for campaign 1
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        // Only set root on campaign 1
+        manager.updateRoot(campaignId1, root);
+
+        // Claim works on campaign 1
+        manager.claim(campaignId1, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Should receive from campaign 1");
+
+        // Same proof fails on campaign 2 (different merkle root)
+        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        manager.claim(campaignId2, CLAIMER, claimAmount, proof);
+
+        // Even if we set the same root on campaign 2, the user can claim again
+        // (each campaign tracks claims independently)
+        manager.updateRoot(campaignId2, root);
+        manager.claim(campaignId2, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount * 2, "Should receive from both campaigns");
+    }
+
+    ////////////////////////////////
     // Helper functions
     ////////////////////////////////
 

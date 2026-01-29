@@ -295,9 +295,13 @@ contract StreamingManagerTest is Test {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
 
-        // Try to create campaign with more than budget has
+        // Budget has 100 ether. Requesting 1000 ether:
+        // - Fee (10%) = 100 ether -> succeeds, budget now has 0
+        // - Net rewards = 900 ether -> fails with InsufficientFunds
         vm.prank(CREATOR);
-        vm.expectRevert(); // ManagedBudget.InsufficientFunds
+        vm.expectRevert(
+            abi.encodeWithSelector(ABudget.InsufficientFunds.selector, address(rewardToken), uint256(0), uint256(900 ether))
+        );
         manager.createCampaign(
             budget, keccak256("test"), address(rewardToken), 1000 ether, startTime, endTime
         );

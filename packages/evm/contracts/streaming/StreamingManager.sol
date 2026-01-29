@@ -2,20 +2,22 @@
 pragma solidity ^0.8.24;
 
 import {Ownable} from "@solady/auth/Ownable.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
+import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
 
 /// @title StreamingManager
 /// @notice Factory and orchestration contract for streaming incentive campaigns
-/// @dev Deploys StreamingCampaign clones and manages protocol fees
-contract StreamingManager is Ownable {
+/// @dev Deploys StreamingCampaign clones and manages protocol fees. UUPS upgradeable.
+contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;
 
     /// @notice The implementation contract used for cloning campaigns
-    address public immutable campaignImplementation;
+    address public campaignImplementation;
 
     /// @notice Mapping of campaign ID to campaign contract address
     mapping(uint256 => address) public campaigns;
@@ -28,6 +30,12 @@ contract StreamingManager is Ownable {
 
     /// @notice Address that receives protocol fees
     address public protocolFeeReceiver;
+
+    /// @notice Allocated padding space for future variables
+    uint32 private __padding;
+
+    /// @notice Allocated gap space for future variables
+    uint256[50] private __gap;
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(

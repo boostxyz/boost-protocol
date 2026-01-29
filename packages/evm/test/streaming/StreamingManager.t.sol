@@ -1290,7 +1290,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        campaignId = manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         campaign = StreamingCampaign(manager.getCampaign(campaignId));
     }

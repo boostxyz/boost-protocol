@@ -118,4 +118,32 @@ contract StreamingCampaign is Initializable {
         merkleRoot = root;
         emit MerkleRootUpdated(oldRoot, root);
     }
+
+    /// @notice Process a claim for a user
+    /// @param user The user claiming rewards
+    /// @param cumulativeAmount The cumulative amount the user is entitled to
+    /// @param proof The merkle proof validating the claim
+    /// @return amount The amount of tokens transferred
+    function processClaim(address user, uint256 cumulativeAmount, bytes32[] calldata proof)
+        external
+        onlyStreamingManager
+        returns (uint256 amount)
+    {
+        // Verify merkle proof
+        if (merkleRoot == bytes32(0)) revert InvalidProof();
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(user, rewardToken, cumulativeAmount))));
+        if (!MerkleProofLib.verifyCalldata(proof, merkleRoot, leaf)) revert InvalidProof();
+
+        // Calculate claimable amount
+        uint256 alreadyClaimed = claimed[user];
+        if (cumulativeAmount <= alreadyClaimed) revert NothingToClaim();
+        amount = cumulativeAmount - alreadyClaimed;
+
+        claimed[user] = cumulativeAmount;
+
+        // Transfer tokens to user
+        SafeTransferLib.safeTransfer(rewardToken, user, amount);
+
+        emit Claimed(user, amount, cumulativeAmount);
+    }
 }

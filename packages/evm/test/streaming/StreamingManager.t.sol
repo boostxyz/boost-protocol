@@ -22,6 +22,8 @@ contract StreamingManagerTest is Test {
 
     address constant PROTOCOL_FEE_RECEIVER = address(0xFEE);
     address constant CREATOR = address(0xCAFE);
+    address constant CLAIMER = address(0xC1A1);
+    address constant CLAIMER2 = address(0xC1A2);
     uint64 constant PROTOCOL_FEE = 1000; // 10%
 
     function setUp() public {

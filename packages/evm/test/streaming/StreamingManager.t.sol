@@ -589,6 +589,208 @@ contract StreamingManagerTest is Test {
     }
 
     ////////////////////////////////
+    // setOperator tests
+    ////////////////////////////////
+
+    function test_SetOperator_Success() public {
+        address newOperator = address(0x0BE8);
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.OperatorUpdated(address(0), newOperator);
+        manager.setOperator(newOperator);
+
+        assertEq(manager.operator(), newOperator, "Operator should be updated");
+    }
+
+    function test_SetOperator_RevertNotOwner() public {
+        vm.prank(CREATOR);
+        vm.expectRevert(); // Ownable.Unauthorized
+        manager.setOperator(address(0x0BE8));
+    }
+
+    function test_SetOperator_AllowsZeroAddress() public {
+        // First set an operator
+        manager.setOperator(address(0x0BE8));
+        assertEq(manager.operator(), address(0x0BE8), "Operator should be set");
+
+        // Then disable by setting to zero
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.OperatorUpdated(address(0x0BE8), address(0));
+        manager.setOperator(address(0));
+
+        assertEq(manager.operator(), address(0), "Operator should be zero (disabled)");
+    }
+
+    ////////////////////////////////
+    // updateRoot tests
+    ////////////////////////////////
+
+    function test_UpdateRoot_SuccessAsOwner() public {
+        // Create a campaign first
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        bytes32 newRoot = keccak256("merkle-root-1");
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot);
+        manager.updateRoot(campaignId, newRoot);
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated");
+    }
+
+    function test_UpdateRoot_SuccessAsOperator() public {
+        address operatorAddr = address(0x0BE8);
+        manager.setOperator(operatorAddr);
+
+        // Create a campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        bytes32 newRoot = keccak256("merkle-root-1");
+
+        vm.prank(operatorAddr);
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot);
+        manager.updateRoot(campaignId, newRoot);
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated by operator");
+    }
+
+    function test_UpdateRoot_MultipleUpdates() public {
+        // Create a campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        bytes32 root1 = keccak256("merkle-root-1");
+        bytes32 root2 = keccak256("merkle-root-2");
+
+        // First update
+        manager.updateRoot(campaignId, root1);
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.merkleRoot(), root1, "First root should be set");
+
+        // Second update - should emit with old root
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(campaignId, root1, root2);
+        manager.updateRoot(campaignId, root2);
+
+        assertEq(campaign.merkleRoot(), root2, "Second root should be set");
+    }
+
+    function test_UpdateRoot_RevertNotAuthorized() public {
+        // Create a campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // Try to update as random address (not owner, not operator)
+        vm.prank(address(0xBAD));
+        vm.expectRevert(StreamingManager.NotAuthorized.selector);
+        manager.updateRoot(campaignId, keccak256("bad-root"));
+    }
+
+    function test_UpdateRoot_RevertWhenOperatorNotSet() public {
+        // Ensure operator is not set (default is zero)
+        assertEq(manager.operator(), address(0), "Operator should be zero by default");
+
+        // Create a campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // Creator cannot update root (not owner, operator not set)
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.NotAuthorized.selector);
+        manager.updateRoot(campaignId, keccak256("bad-root"));
+
+        // But owner still can
+        manager.updateRoot(campaignId, keccak256("good-root"));
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.merkleRoot(), keccak256("good-root"), "Owner should still be able to update");
+    }
+
+    function test_UpdateRoot_RevertInvalidCampaign() public {
+        // Try to update root for non-existent campaign
+        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        manager.updateRoot(999, keccak256("root"));
+    }
+
+    ////////////////////////////////
+    // StreamingCampaign.setMerkleRoot tests
+    ////////////////////////////////
+
+    function test_CampaignSetMerkleRoot_RevertNotStreamingManager() public {
+        // Create a campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+
+        // Try to call setMerkleRoot directly (not through manager)
+        vm.prank(address(this)); // Even owner of manager can't call directly
+        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
+        campaign.setMerkleRoot(keccak256("bad-root"));
+    }
+
+    function test_CampaignSetMerkleRoot_EmitsMerkleRootUpdated() public {
+        // Create a campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        bytes32 newRoot = keccak256("merkle-root-1");
+
+        // Update root through manager and check campaign emits event
+        vm.recordLogs();
+        manager.updateRoot(campaignId, newRoot);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bool foundCampaignEvent = false;
+        bytes32 eventSig = keccak256("MerkleRootUpdated(bytes32,bytes32)");
+
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == eventSig) {
+                foundCampaignEvent = true;
+                // Decode the event data
+                (bytes32 oldRoot, bytes32 emittedNewRoot) = abi.decode(logs[i].data, (bytes32, bytes32));
+                assertEq(oldRoot, bytes32(0), "Old root should be zero");
+                assertEq(emittedNewRoot, newRoot, "New root should match");
+                break;
+            }
+        }
+        assertTrue(foundCampaignEvent, "MerkleRootUpdated event should be emitted from campaign");
+    }
+
+    ////////////////////////////////
     // UUPS Upgrade tests
     ////////////////////////////////
 

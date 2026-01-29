@@ -41,6 +41,12 @@ contract StreamingManager is Ownable {
         uint64 endTime
     );
 
+    /// @notice Emitted when the protocol fee is updated
+    event ProtocolFeeUpdated(uint64 oldFee, uint64 newFee);
+
+    /// @notice Emitted when the protocol fee receiver is updated
+    event ProtocolFeeReceiverUpdated(address oldReceiver, address newReceiver);
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
 

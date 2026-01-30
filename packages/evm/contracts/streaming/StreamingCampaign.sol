@@ -40,6 +40,12 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Merkle root for reward claims
     bytes32 public merkleRoot;
 
+    /// @notice Total amount committed to users (sum of all cumulative amounts in merkle tree)
+    uint256 public totalCommitted;
+
+    /// @notice Running total of all claimed amounts
+    uint256 public totalClaimed;
+
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
 

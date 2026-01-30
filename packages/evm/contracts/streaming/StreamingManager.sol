@@ -8,6 +8,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
 
 /// @title StreamingManager

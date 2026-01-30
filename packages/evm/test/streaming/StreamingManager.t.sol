@@ -1273,9 +1273,992 @@ contract StreamingManagerTest is Test {
 
         // Even if we set the same root on campaign 2, the user can claim again
         // (each campaign tracks claims independently)
-        manager.updateRoot(campaignId2, root);
+        manager.updateRoot(campaignId2, root, claimAmount);
         manager.claim(campaignId2, CLAIMER, claimAmount, proof);
         assertEq(rewardToken.balanceOf(CLAIMER), claimAmount * 2, "Should receive from both campaigns");
+    }
+
+    ////////////////////////////////
+    // createCampaignDirect tests
+    ////////////////////////////////
+
+    function test_CreateCampaignDirect_Success() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+        bytes32 configHash = keccak256("test-direct-config");
+
+        // Mint tokens to CREATOR and approve manager
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
+
+        assertEq(campaignId, 1, "Campaign ID should be 1");
+
+        address campaignAddr = manager.getCampaign(campaignId);
+        assertTrue(campaignAddr != address(0), "Campaign address should not be zero");
+
+        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        assertEq(campaign.streamingManager(), address(manager), "Manager should be set");
+        assertEq(campaign.budget(), address(0), "Budget should be zero for direct-funded");
+        assertEq(campaign.creator(), CREATOR, "Creator should be set");
+        assertEq(campaign.configHash(), configHash, "Config hash should be set");
+        assertEq(campaign.rewardToken(), address(rewardToken), "Reward token should be set");
+        assertEq(campaign.startTime(), startTime, "Start time should be set");
+        assertEq(campaign.endTime(), endTime, "End time should be set");
+    }
+
+    function test_CreateCampaignDirect_FeeCalculation() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+        bytes32 configHash = keccak256("test-direct-config");
+
+        // Expected: 10% fee = 1 ether, net = 9 ether
+        uint256 expectedFee = (totalAmount * PROTOCOL_FEE) / 10000;
+        uint256 expectedNet = totalAmount - expectedFee;
+
+        // Mint tokens to CREATOR and approve manager
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        uint256 feeReceiverBalanceBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
+
+        address campaignAddr = manager.getCampaign(campaignId);
+
+        // Check fee was sent to fee receiver
+        assertEq(
+            rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER),
+            feeReceiverBalanceBefore + expectedFee,
+            "Fee should be sent to fee receiver"
+        );
+
+        // Check campaign received net amount
+        assertEq(rewardToken.balanceOf(campaignAddr), expectedNet, "Campaign should receive net amount");
+
+        // Check creator balance decreased by total amount
+        assertEq(
+            rewardToken.balanceOf(CREATOR),
+            creatorBalanceBefore - totalAmount,
+            "Creator balance should decrease by total amount"
+        );
+
+        // Check totalRewards in campaign
+        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        assertEq(campaign.totalRewards(), expectedNet, "totalRewards should equal net amount");
+    }
+
+    function test_CreateCampaignDirect_EmitsCampaignCreated() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+        bytes32 configHash = keccak256("test-direct-config");
+        uint256 expectedNet = totalAmount - (totalAmount * PROTOCOL_FEE) / 10000;
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        vm.expectEmit(true, true, true, false);
+        emit StreamingManager.CampaignCreated(
+            1, configHash, address(0), CREATOR, address(rewardToken), expectedNet, startTime, endTime
+        );
+        manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertInsufficientApproval() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Mint tokens but don't approve
+        rewardToken.mint(CREATOR, totalAmount);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(); // SafeTransferLib will revert
+        manager.createCampaignDirect(keccak256("test"), address(rewardToken), totalAmount, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertInsufficientBalance() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Approve but don't have tokens
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(); // SafeTransferLib will revert
+        manager.createCampaignDirect(keccak256("test"), address(rewardToken), totalAmount, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertInvalidRewardToken() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.InvalidRewardToken.selector);
+        manager.createCampaignDirect(keccak256("test"), address(0), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertZeroAmount() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.ZeroAmount.selector);
+        manager.createCampaignDirect(keccak256("test"), address(rewardToken), 0, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertStartTimeInPast() public {
+        uint64 startTime = uint64(block.timestamp - 1);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.StartTimeInPast.selector);
+        manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertEndTimeBeforeStart() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime; // Same as start, not after
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.EndTimeBeforeStart.selector);
+        manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_ZeroFee() public {
+        // Deploy manager with 0% fee
+        StreamingManager zeroFeeImpl = new StreamingManager();
+        address zeroFeeProxy = LibClone.deployERC1967(address(zeroFeeImpl));
+        StreamingManager zeroFeeManager = StreamingManager(zeroFeeProxy);
+        zeroFeeManager.initialize(address(this), address(campaignImpl), 0, PROTOCOL_FEE_RECEIVER);
+
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Mint tokens to CREATOR and approve
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(zeroFeeManager), totalAmount);
+
+        uint256 feeReceiverBalanceBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = zeroFeeManager.createCampaignDirect(
+            keccak256("test-zero-fee"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        address campaignAddr = zeroFeeManager.getCampaign(campaignId);
+
+        // No fee should be taken
+        assertEq(
+            rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER),
+            feeReceiverBalanceBefore,
+            "No fee should be taken with 0% fee"
+        );
+
+        // Campaign should receive full amount
+        assertEq(rewardToken.balanceOf(campaignAddr), totalAmount, "Campaign should receive full amount");
+
+        // Verify campaign state
+        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        assertEq(campaign.totalRewards(), totalAmount, "totalRewards should equal full amount");
+        assertEq(campaign.budget(), address(0), "Budget should be zero for direct-funded");
+    }
+
+    function test_CreateCampaignDirect_MultipleCampaigns() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Mint tokens to CREATOR for both campaigns
+        rewardToken.mint(CREATOR, 10 ether);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), 10 ether);
+
+        vm.startPrank(CREATOR);
+
+        uint256 id1 = manager.createCampaignDirect(
+            keccak256("direct-config-1"), address(rewardToken), 5 ether, startTime, endTime
+        );
+
+        uint256 id2 = manager.createCampaignDirect(
+            keccak256("direct-config-2"), address(rewardToken), 5 ether, startTime, endTime
+        );
+
+        vm.stopPrank();
+
+        assertEq(id1, 1, "First campaign ID should be 1");
+        assertEq(id2, 2, "Second campaign ID should be 2");
+        assertTrue(manager.getCampaign(1) != manager.getCampaign(2), "Campaigns should be different addresses");
+
+        // Both should be direct-funded
+        StreamingCampaign campaign1 = StreamingCampaign(manager.getCampaign(id1));
+        StreamingCampaign campaign2 = StreamingCampaign(manager.getCampaign(id2));
+        assertEq(campaign1.budget(), address(0), "Campaign 1 should be direct-funded");
+        assertEq(campaign2.budget(), address(0), "Campaign 2 should be direct-funded");
+    }
+
+    ////////////////////////////////
+    // withdrawToBudget tests (budget-funded campaigns)
+    ////////////////////////////////
+
+    function test_WithdrawToBudget_Success() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+
+        // Warp past end time
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        // Creator withdraws via manager
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        // Campaign should be empty
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+
+        // Budget should have received funds back
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + campaignBalance,
+            "Budget should receive undistributed funds"
+        );
+    }
+
+    function test_WithdrawToBudget_EmitsEvent() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 undistributed = rewardToken.balanceOf(address(campaign));
+
+        vm.warp(campaign.endTime() + 1);
+
+        vm.prank(CREATOR);
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.WithdrawnToBudget(campaignId, undistributed, address(budget));
+        manager.withdrawToBudget(campaignId);
+    }
+
+    function test_WithdrawToBudget_PartialWithdraw() public {
+        // Create a campaign with root and have some users claim
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        // Set up merkle tree and claim
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        uint256 remaining = rewardToken.balanceOf(address(campaign));
+        assertTrue(remaining > 0, "Should have some remaining balance");
+        assertTrue(remaining < 9 ether, "Balance should be less than initial");
+
+        // Warp past end time
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        // Creator withdraws remaining via manager
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + remaining,
+            "Budget should receive remaining"
+        );
+    }
+
+    function test_WithdrawToBudget_RevertNotCreator() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(StreamingManager.NotCampaignCreator.selector);
+        manager.withdrawToBudget(campaignId);
+    }
+
+    function test_WithdrawToBudget_RevertBeforeEndTime() public {
+        (uint256 campaignId,) = _createCampaignWithRoot();
+
+        // Don't warp past end time
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.CampaignNotEnded.selector);
+        manager.withdrawToBudget(campaignId);
+    }
+
+    function test_WithdrawToBudget_RevertNothingToWithdraw() public {
+        // Create campaign with 100% fee (0 tokens to campaign)
+        StreamingManager maxFeeImpl = new StreamingManager();
+        address maxFeeProxy = LibClone.deployERC1967(address(maxFeeImpl));
+        StreamingManager maxFeeManager = StreamingManager(maxFeeProxy);
+        maxFeeManager.initialize(address(this), address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
+
+        address[] memory accounts = new address[](1);
+        accounts[0] = address(maxFeeManager);
+        bool[] memory authorized = new bool[](1);
+        authorized[0] = true;
+        budget.setAuthorized(accounts, authorized);
+
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = maxFeeManager.createCampaign(
+            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(maxFeeManager.getCampaign(campaignId));
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should have 0 balance");
+
+        vm.warp(endTime + 1);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.ZeroAmount.selector);
+        maxFeeManager.withdrawToBudget(campaignId);
+    }
+
+    function test_WithdrawToBudget_RevertNotBudgetFunded() public {
+        // Create direct-funded campaign
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        vm.warp(endTime + 1);
+
+        // Try to use withdrawToBudget on direct-funded campaign
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.NotBudgetFunded.selector);
+        manager.withdrawToBudget(campaignId);
+    }
+
+    function test_WithdrawUndistributed_BudgetFunded_RevertsUseBudgetClawback() public {
+        // Create a budget-funded campaign
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+
+        // Trying to use withdrawUndistributed on budget-funded should revert
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingCampaign.UseBudgetClawback.selector);
+        campaign.withdrawUndistributed();
+    }
+
+    function test_WithdrawToBudget_UpdatesBudgetAccounting() public {
+        // This test verifies that withdrawToBudget correctly updates the budget's
+        // _distributedFungible accounting, which was the original bug
+
+        // Record initial state
+        uint256 initialDistributed = budget.distributed(address(rewardToken));
+        assertEq(initialDistributed, 0, "Initial distributed should be 0");
+
+        // Create a budget-funded campaign (10 ether total, 9 ether net after 10% fee)
+        // Budget disburses BOTH fee (1 ether) and campaign (9 ether), tracking both in _distributedFungible
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+        assertEq(campaignBalance, 9 ether, "Campaign should have 9 ether");
+
+        // After disburse, distributed should have increased by BOTH fee and campaign amounts
+        uint256 distributedAfterCreate = budget.distributed(address(rewardToken));
+        assertEq(distributedAfterCreate, 10 ether, "Distributed should be 10 ether (1 fee + 9 campaign)");
+
+        // Warp past end time and withdraw
+        vm.warp(campaign.endTime() + 1);
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        // After withdrawal via clawbackFromTarget, distributed should decrease by withdrawn amount
+        // The campaign had 9 ether, so distributed drops from 10 to 1 (the fee is still "distributed")
+        uint256 distributedAfterWithdraw = budget.distributed(address(rewardToken));
+        assertEq(
+            distributedAfterWithdraw,
+            1 ether,
+            "Distributed should be 1 ether (only fee remains distributed)"
+        );
+
+        // Budget balance should be 99 ether (started with 100, sent 10 total, got 9 back from campaign)
+        // The 1 ether fee went to fee receiver, not back to budget
+        uint256 budgetBalance = rewardToken.balanceOf(address(budget));
+        assertEq(budgetBalance, 99 ether, "Budget balance should be 99 ether");
+
+        // available() should equal balance
+        assertEq(budget.available(address(rewardToken)), 99 ether, "Available should match balance");
+    }
+
+    ////////////////////////////////
+    // withdrawUndistributed tests (direct-funded)
+    ////////////////////////////////
+
+    function test_WithdrawUndistributed_DirectFunded_Success() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+        assertTrue(campaignBalance > 0, "Campaign should have balance");
+
+        // Warp past end time
+        vm.warp(endTime + 1);
+
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
+        // Creator withdraws undistributed
+        vm.prank(CREATOR);
+        campaign.withdrawUndistributed();
+
+        // Campaign should be empty
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+
+        // Creator should have received funds directly
+        assertEq(
+            rewardToken.balanceOf(CREATOR),
+            creatorBalanceBefore + campaignBalance,
+            "Creator should receive undistributed funds"
+        );
+    }
+
+    function test_WithdrawUndistributed_DirectFunded_EmitsEvent() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        uint256 undistributed = rewardToken.balanceOf(address(campaign));
+
+        vm.warp(endTime + 1);
+
+        vm.prank(CREATOR);
+        vm.expectEmit(true, true, true, true);
+        emit StreamingCampaign.UndistributedWithdrawn(undistributed, CREATOR);
+        campaign.withdrawUndistributed();
+    }
+
+    function test_WithdrawToBudget_ProtectsUnclaimedFunds() public {
+        // Create a campaign with 9 ether (after 10% fee)
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 totalCommitted = 5 ether;
+
+        // Set merkle root with 5 ether committed but don't claim yet
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 root = leaf;
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // Warp past end time
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        // Creator withdraws via manager - should only get balance minus what's owed to users
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        // Should have withdrawn balance - totalCommitted (5 ether owed)
+        uint256 expectedWithdraw = balance - totalCommitted;
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + expectedWithdraw,
+            "Budget should receive only undistributed"
+        );
+
+        // Campaign should still have 5 ether for claimers
+        assertEq(rewardToken.balanceOf(address(campaign)), totalCommitted, "Campaign should retain owed funds");
+    }
+
+    function test_WithdrawToBudget_EdgeCase_TotalClaimedExceedsTotalCommitted() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // First claim: set committed to 3 ether, claim 3 ether
+        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, leaf1, 3 ether);
+        manager.claim(campaignId, CLAIMER, 3 ether, proof);
+
+        // Now publish a corrected root with lower total (simulates ban or correction)
+        // totalCommitted drops to 1 ether, but user already claimed 3 ether
+        bytes32 leaf2 = _makeLeaf(address(0xDEAD), address(rewardToken), 1 ether);
+        manager.updateRoot(campaignId, leaf2, 1 ether);
+
+        // totalClaimed (3 ether) > totalCommitted (1 ether)
+        assertEq(campaign.totalClaimed(), 3 ether, "Total claimed should be 3 ether");
+        assertEq(campaign.totalCommitted(), 1 ether, "Total committed should be 1 ether");
+
+        // Warp past end time
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        // Should be able to withdraw full balance since nothing more is owed
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + balance,
+            "Budget should receive full balance"
+        );
+    }
+
+    function test_Clawback_ProtectsUnclaimedFunds() public {
+        // Create a campaign
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 totalCommitted = 5 ether;
+
+        // Set merkle root with 5 ether committed
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 root = leaf;
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // Warp past end time
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+        uint256 available = balance - totalCommitted; // Only 4 ether is available (9 - 5)
+
+        // Try to clawback more than available (exceeds what's not owed)
+        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({
+            target: address(budget),
+            data: abi.encode(available + 1 ether) // More than available
+        });
+        bytes memory data = abi.encode(payload);
+
+        vm.prank(address(budget));
+        vm.expectRevert(StreamingCampaign.InsufficientBalance.selector);
+        campaign.clawback(data, 0, 0);
+
+        // Clawback exactly available amount should work
+        payload = AIncentive.ClawbackPayload({
+            target: address(budget),
+            data: abi.encode(available)
+        });
+        data = abi.encode(payload);
+
+        vm.prank(address(budget));
+        campaign.clawback(data, 0, 0);
+
+        // Campaign should still have funds owed to users
+        assertEq(rewardToken.balanceOf(address(campaign)), totalCommitted, "Campaign should retain owed funds");
+    }
+
+    ////////////////////////////////
+    // clawback tests
+    ////////////////////////////////
+
+    function test_Clawback_RevertNotBudget() public {
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+
+        bytes memory data = abi.encode(1 ether);
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(StreamingCampaign.OnlyBudget.selector);
+        campaign.clawback(data, 0, 0);
+    }
+
+    function test_Clawback_RevertBeforeEndTime() public {
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // Don't warp past end time
+        bytes memory data = abi.encode(1 ether);
+
+        vm.prank(address(budget));
+        vm.expectRevert(StreamingCampaign.CampaignNotEnded.selector);
+        campaign.clawback(data, 0, 0);
+    }
+
+    function test_Clawback_Success() public {
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 clawbackAmount = 1 ether;
+
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+        uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
+
+        // Encode ClawbackPayload: target is budget, data is encoded amount
+        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({
+            target: address(budget),
+            data: abi.encode(clawbackAmount)
+        });
+        bytes memory data = abi.encode(payload);
+
+        vm.prank(address(budget));
+        (uint256 returnedAmount, address returnedAsset) = campaign.clawback(data, 0, 0);
+
+        // Verify return values
+        assertEq(returnedAmount, clawbackAmount, "Should return clawback amount");
+        assertEq(returnedAsset, address(rewardToken), "Should return reward token address");
+
+        // Verify funds were transferred to budget
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + clawbackAmount,
+            "Budget should receive clawed back funds"
+        );
+        assertEq(
+            rewardToken.balanceOf(address(campaign)),
+            campaignBalanceBefore - clawbackAmount,
+            "Campaign balance should decrease"
+        );
+    }
+
+    function test_Clawback_RevertInsufficientBalance() public {
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+        uint256 excessiveAmount = campaignBalance + 1 ether;
+
+        // Encode ClawbackPayload with amount exceeding balance
+        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({
+            target: address(budget),
+            data: abi.encode(excessiveAmount)
+        });
+        bytes memory data = abi.encode(payload);
+
+        vm.prank(address(budget));
+        vm.expectRevert(StreamingCampaign.InsufficientBalance.selector);
+        campaign.clawback(data, 0, 0);
+    }
+
+    ////////////////////////////////
+    // cancelCampaign tests
+    ////////////////////////////////
+
+    function test_CancelCampaign_Success() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        uint64 originalEndTime = campaign.endTime();
+
+        // Warp to middle of campaign
+        vm.warp(startTime + 5 days);
+
+        // Owner cancels campaign
+        manager.cancelCampaign(campaignId);
+
+        // End time should now be block.timestamp
+        assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
+        assertTrue(campaign.endTime() < originalEndTime, "End time should be earlier than original");
+    }
+
+    function test_CancelCampaign_EmitsEvent() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        vm.warp(startTime + 5 days);
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.CampaignCancelled(campaignId, endTime, uint64(block.timestamp));
+        manager.cancelCampaign(campaignId);
+    }
+
+    function test_CancelCampaign_RevertNotOwner() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        vm.prank(CREATOR); // Not the owner
+        vm.expectRevert(); // Ownable.Unauthorized
+        manager.cancelCampaign(campaignId);
+    }
+
+    function test_CancelCampaign_RevertInvalidCampaign() public {
+        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        manager.cancelCampaign(999);
+    }
+
+    function test_CancelCampaign_RevertAlreadyEnded() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        // Warp past the end time
+        vm.warp(endTime + 1);
+
+        // Try to cancel an already-ended campaign
+        vm.expectRevert(StreamingCampaign.CampaignAlreadyEnded.selector);
+        manager.cancelCampaign(campaignId);
+    }
+
+    function test_CancelCampaign_ThenWithdraw() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+
+        // Warp to middle of campaign
+        vm.warp(startTime + 5 days);
+
+        // Owner cancels campaign
+        manager.cancelCampaign(campaignId);
+
+        // Warp forward 1 second so block.timestamp > endTime (required for withdraw)
+        vm.warp(block.timestamp + 1);
+
+        // Now creator can withdraw via manager.withdrawToBudget
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + campaignBalance,
+            "Budget should receive funds"
+        );
+    }
+
+    function test_CancelCampaign_UsersCanStillClaim() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        // Set up merkle root with claim
+        uint256 claimAmount = 1 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // Warp to middle of campaign and cancel
+        vm.warp(startTime + 5 days);
+        manager.cancelCampaign(campaignId);
+
+        // User can still claim their accrued rewards
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "User should receive claimed amount");
+    }
+
+    ////////////////////////////////
+    // setEndTime tests (direct on campaign)
+    ////////////////////////////////
+
+    function test_SetEndTime_RevertNotStreamingManager() public {
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
+        campaign.setEndTime(uint64(block.timestamp));
+    }
+
+    function test_SetEndTime_RevertExtendingEndTime() public {
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint64 currentEndTime = campaign.endTime();
+
+        // Try to extend end time (should fail)
+        vm.prank(address(manager));
+        vm.expectRevert(StreamingCampaign.InvalidEndTime.selector);
+        campaign.setEndTime(currentEndTime + 1 days);
+    }
+
+    function test_SetEndTime_EmitsEvent() public {
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint64 originalEndTime = campaign.endTime();
+        uint64 newEndTime = uint64(block.timestamp);
+
+        vm.prank(address(manager));
+        vm.expectEmit(true, true, true, true);
+        emit StreamingCampaign.EndTimeUpdated(originalEndTime, newEndTime);
+        campaign.setEndTime(newEndTime);
+    }
+
+    ////////////////////////////////
+    // Integration tests
+    ////////////////////////////////
+
+    function test_Integration_DirectFundedFullFlow() public {
+        // 1. Create direct-funded campaign
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("integration-test"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.budget(), address(0), "Should be direct-funded");
+
+        // 2. Set merkle root and make claims
+        uint256 claim1Amount = 2 ether;
+        uint256 claim2Amount = 3 ether;
+        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), claim1Amount);
+        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), claim2Amount);
+
+        bytes32 left;
+        bytes32 right;
+        if (uint256(leaf1) < uint256(leaf2)) {
+            left = leaf1;
+            right = leaf2;
+        } else {
+            left = leaf2;
+            right = leaf1;
+        }
+        bytes32 root = keccak256(abi.encodePacked(left, right));
+
+        uint256 claimAmount = claim1Amount + claim2Amount;
+
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+
+        // Warp past start time
+        vm.warp(startTime + 1);
+
+        manager.claim(campaignId, CLAIMER, claim1Amount, proof1);
+        manager.claim(campaignId, CLAIMER2, claim2Amount, proof2);
+
+        assertEq(rewardToken.balanceOf(CLAIMER), claim1Amount, "CLAIMER should have claimed");
+        assertEq(rewardToken.balanceOf(CLAIMER2), claim2Amount, "CLAIMER2 should have claimed");
+
+        // 3. Warp to end and withdraw
+        vm.warp(endTime + 1);
+
+        uint256 remaining = rewardToken.balanceOf(address(campaign));
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
+        vm.prank(CREATOR);
+        campaign.withdrawUndistributed();
+
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(
+            rewardToken.balanceOf(CREATOR),
+            creatorBalanceBefore + remaining,
+            "Creator should receive remaining directly"
+        );
+    }
+
+    function test_Integration_CancelAndWithdraw() public {
+        // 1. Create budget-funded campaign
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("cancel-test"), address(rewardToken), 10 ether, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+
+        // 2. Set up some claims
+        uint256 claimAmount = 2 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // 3. Warp to active period, make a claim
+        vm.warp(startTime + 5 days);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        // 4. Admin cancels campaign
+        manager.cancelCampaign(campaignId);
+
+        // 5. User claims still work after cancellation
+
+        // Warp forward 1 second so block.timestamp > endTime (required for withdraw)
+        vm.warp(block.timestamp + 1);
+
+        // 6. Creator can withdraw remaining funds via manager.withdrawToBudget
+        uint256 remaining = rewardToken.balanceOf(address(campaign));
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + remaining,
+            "Budget should receive remaining"
+        );
     }
 
     ////////////////////////////////

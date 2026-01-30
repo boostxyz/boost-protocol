@@ -183,10 +183,88 @@ contract StreamingCampaign is Initializable, IClaw {
         amount = cumulativeAmount - alreadyClaimed;
 
         claimed[user] = cumulativeAmount;
+        totalClaimed += amount;
 
         // Transfer tokens to user
         SafeTransferLib.safeTransfer(rewardToken, user, amount);
 
         emit Claimed(user, amount, cumulativeAmount);
+    }
+
+    /// @notice Withdraw undistributed funds back to creator (direct-funded campaigns only)
+    /// @dev Only callable by the campaign creator after the campaign has ended
+    /// @dev For budget-funded campaigns, use StreamingManager.withdrawToBudget() instead
+    function withdrawUndistributed() external {
+        if (msg.sender != creator) revert OnlyCreator();
+        if (budget != address(0)) revert UseBudgetClawback();
+        if (block.timestamp <= endTime) revert CampaignNotEnded();
+
+        uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
+
+        // Calculate how much is still owed to users
+        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+
+        // Only withdraw what's not owed to users
+        uint256 withdrawable = balance > stillOwed ? balance - stillOwed : 0;
+        if (withdrawable == 0) revert NothingToWithdraw();
+
+        SafeTransferLib.safeTransfer(rewardToken, creator, withdrawable);
+        emit UndistributedWithdrawn(withdrawable, creator);
+    }
+
+    /// @notice Clawback funds to the budget (called by budget.clawbackFromTarget)
+    /// @param data_ The encoded ClawbackPayload
+    /// @param boostId Unused, for interface compatibility
+    /// @param incentiveId Unused, for interface compatibility
+    /// @return amount The amount clawed back
+    /// @return asset The asset address
+    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        override
+        returns (uint256 amount, address asset)
+    {
+        // Suppress unused variable warnings
+        (boostId, incentiveId);
+
+        if (msg.sender != budget) revert OnlyBudget();
+        if (block.timestamp <= endTime) revert CampaignNotEnded();
+
+        AIncentive.ClawbackPayload memory payload = abi.decode(data_, (AIncentive.ClawbackPayload));
+        amount = abi.decode(payload.data, (uint256));
+        asset = rewardToken;
+
+        uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
+
+        // Calculate how much is still owed to users
+        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+        uint256 available = balance > stillOwed ? balance - stillOwed : 0;
+
+        if (amount > available) revert InsufficientBalance();
+
+        SafeTransferLib.safeTransfer(rewardToken, payload.target, amount);
+    }
+
+    /// @notice Get the amount available to withdraw (not owed to users)
+    /// @return withdrawable The amount that can be withdrawn
+    function getWithdrawable() external view returns (uint256 withdrawable) {
+        uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
+        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+        withdrawable = balance > stillOwed ? balance - stillOwed : 0;
+    }
+
+    /// @notice Set the campaign end time (for emergency cancellation)
+    /// @param newEndTime The new end time (must be <= current endTime)
+    /// @return oldEndTime The previous end time
+    function setEndTime(uint64 newEndTime) external onlyStreamingManager returns (uint64 oldEndTime) {
+        // Cannot cancel a campaign that has already ended
+        if (block.timestamp > endTime) revert CampaignAlreadyEnded();
+
+        // Only allow setting to current time or earlier (no extensions)
+        if (newEndTime > endTime) revert InvalidEndTime();
+
+        oldEndTime = endTime;
+        endTime = newEndTime;
+
+        emit EndTimeUpdated(oldEndTime, newEndTime);
     }
 }

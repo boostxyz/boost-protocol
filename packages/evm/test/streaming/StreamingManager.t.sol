@@ -687,15 +687,15 @@ contract StreamingManagerTest is Test {
         bytes32 root2 = keccak256("merkle-root-2");
 
         // First update
-        manager.updateRoot(campaignId, root1);
+        manager.updateRoot(campaignId, root1, 3 ether);
 
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), root1, "First root should be set");
 
         // Second update - should emit with old root
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, root1, root2);
-        manager.updateRoot(campaignId, root2);
+        emit StreamingManager.RootUpdated(campaignId, root1, root2, 5 ether);
+        manager.updateRoot(campaignId, root2, 5 ether);
 
         assertEq(campaign.merkleRoot(), root2, "Second root should be set");
     }
@@ -712,7 +712,7 @@ contract StreamingManagerTest is Test {
         // Try to update as random address (not owner, not operator)
         vm.prank(address(0xBAD));
         vm.expectRevert(StreamingManager.NotAuthorized.selector);
-        manager.updateRoot(campaignId, keccak256("bad-root"));
+        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
     }
 
     function test_UpdateRoot_RevertWhenOperatorNotSet() public {
@@ -730,10 +730,10 @@ contract StreamingManagerTest is Test {
         // Creator cannot update root (not owner, operator not set)
         vm.prank(CREATOR);
         vm.expectRevert(StreamingManager.NotAuthorized.selector);
-        manager.updateRoot(campaignId, keccak256("bad-root"));
+        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
 
         // But owner still can
-        manager.updateRoot(campaignId, keccak256("good-root"));
+        manager.updateRoot(campaignId, keccak256("good-root"), 1 ether);
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), keccak256("good-root"), "Owner should still be able to update");
     }
@@ -741,7 +741,7 @@ contract StreamingManagerTest is Test {
     function test_UpdateRoot_RevertInvalidCampaign() public {
         // Try to update root for non-existent campaign
         vm.expectRevert(StreamingManager.InvalidCampaign.selector);
-        manager.updateRoot(999, keccak256("root"));
+        manager.updateRoot(999, keccak256("root"), 1 ether);
     }
 
     ////////////////////////////////
@@ -762,7 +762,7 @@ contract StreamingManagerTest is Test {
         // Try to call setMerkleRoot directly (not through manager)
         vm.prank(address(this)); // Even owner of manager can't call directly
         vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
-        campaign.setMerkleRoot(keccak256("bad-root"));
+        campaign.setMerkleRoot(keccak256("bad-root"), 1 ether);
     }
 
     function test_CampaignSetMerkleRoot_EmitsMerkleRootUpdated() public {

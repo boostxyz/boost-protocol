@@ -2021,7 +2021,9 @@ contract StreamingManagerTest is Test {
 
         vm.warp(campaign.endTime() + 1);
 
-        bytes memory data = abi.encode(1 ether);
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(1 ether)});
+        bytes memory data = abi.encode(payload);
 
         vm.prank(address(0xBAD));
         vm.expectRevert(StreamingCampaign.OnlyBudget.selector);
@@ -2032,7 +2034,9 @@ contract StreamingManagerTest is Test {
         (, StreamingCampaign campaign) = _createCampaignWithRoot();
 
         // Don't warp past end time
-        bytes memory data = abi.encode(1 ether);
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(1 ether)});
+        bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
         vm.expectRevert(StreamingCampaign.CampaignNotEnded.selector);

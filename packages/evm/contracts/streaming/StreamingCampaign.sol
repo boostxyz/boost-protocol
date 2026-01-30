@@ -5,10 +5,14 @@ import {Initializable} from "@solady/utils/Initializable.sol";
 import {MerkleProofLib} from "@solady/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
+import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {IClaw} from "contracts/shared/IClaw.sol";
+
 /// @title StreamingCampaign
 /// @notice Per-campaign clone that holds reward tokens for streaming incentives
 /// @dev Deployed as minimal proxy by StreamingManager
-contract StreamingCampaign is Initializable {
+contract StreamingCampaign is Initializable, IClaw {
     /// @notice The StreamingManager contract that deployed this campaign
     address public streamingManager;
 

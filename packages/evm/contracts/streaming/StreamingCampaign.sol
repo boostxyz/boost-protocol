@@ -153,11 +153,13 @@ contract StreamingCampaign is Initializable, IClaw {
 
     /// @notice Set the merkle root for reward claims
     /// @param root The new merkle root
+    /// @param totalCommitted_ Total amount committed to users in the merkle tree
     /// @return oldRoot The previous merkle root
-    function setMerkleRoot(bytes32 root) external onlyStreamingManager returns (bytes32 oldRoot) {
+    function setMerkleRoot(bytes32 root, uint256 totalCommitted_) external onlyStreamingManager returns (bytes32 oldRoot) {
         oldRoot = merkleRoot;
         merkleRoot = root;
-        emit MerkleRootUpdated(oldRoot, root);
+        totalCommitted = totalCommitted_;
+        emit MerkleRootUpdated(oldRoot, root, totalCommitted_);
     }
 
     /// @notice Process a claim for a user

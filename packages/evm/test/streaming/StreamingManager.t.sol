@@ -775,22 +775,25 @@ contract StreamingManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         bytes32 newRoot = keccak256("merkle-root-1");
+        uint256 totalCommitted = 5 ether;
 
         // Update root through manager and check campaign emits event
         vm.recordLogs();
-        manager.updateRoot(campaignId, newRoot);
+        manager.updateRoot(campaignId, newRoot, totalCommitted);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bool foundCampaignEvent = false;
-        bytes32 eventSig = keccak256("MerkleRootUpdated(bytes32,bytes32)");
+        bytes32 eventSig = keccak256("MerkleRootUpdated(bytes32,bytes32,uint256)");
 
         for (uint256 i = 0; i < logs.length; i++) {
             if (logs[i].topics[0] == eventSig) {
                 foundCampaignEvent = true;
                 // Decode the event data
-                (bytes32 oldRoot, bytes32 emittedNewRoot) = abi.decode(logs[i].data, (bytes32, bytes32));
+                (bytes32 oldRoot, bytes32 emittedNewRoot, uint256 emittedTotalCommitted) =
+                    abi.decode(logs[i].data, (bytes32, bytes32, uint256));
                 assertEq(oldRoot, bytes32(0), "Old root should be zero");
                 assertEq(emittedNewRoot, newRoot, "New root should match");
+                assertEq(emittedTotalCommitted, totalCommitted, "Total committed should match");
                 break;
             }
         }

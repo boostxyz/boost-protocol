@@ -212,6 +212,58 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
     }
 
+    /// @notice Create a new streaming campaign with direct token transfer
+    /// @param configHash Hash of the off-chain campaign configuration
+    /// @param rewardToken The ERC20 token for rewards
+    /// @param totalAmount Total reward amount (before protocol fee deduction)
+    /// @param startTime Campaign start timestamp
+    /// @param endTime Campaign end timestamp
+    /// @return campaignId The ID of the created campaign
+    /// @dev Caller must approve this contract to transfer tokens before calling
+    function createCampaignDirect(
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime
+    ) external returns (uint256 campaignId) {
+        // Validate parameters
+        if (rewardToken == address(0)) revert InvalidRewardToken();
+        if (totalAmount == 0) revert ZeroAmount();
+        if (startTime < block.timestamp) revert StartTimeInPast();
+        if (endTime <= startTime) revert EndTimeBeforeStart();
+
+        // Calculate protocol fee
+        uint256 feeAmount = (totalAmount * protocolFee) / 10000;
+        uint256 netAmount = totalAmount - feeAmount;
+
+        // Pull tokens from caller
+        rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
+
+        // Clone the campaign
+        address campaign = LibClone.clone(campaignImplementation);
+
+        campaignId = ++campaignCount;
+        campaigns[campaignId] = campaign;
+
+        // Transfer fee to protocol fee receiver (if fee > 0)
+        if (feeAmount > 0) {
+            rewardToken.safeTransfer(protocolFeeReceiver, feeAmount);
+        }
+
+        // Transfer net rewards to campaign (skip if 0, e.g., 100% fee)
+        if (netAmount > 0) {
+            rewardToken.safeTransfer(campaign, netAmount);
+        }
+
+        // Initialize the campaign with budget = address(0) for direct-funded campaigns
+        StreamingCampaign(campaign).initialize(
+            address(this), address(0), msg.sender, configHash, rewardToken, netAmount, startTime, endTime
+        );
+
+        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
+    }
+
     /// @notice Get a campaign contract by ID
     /// @param campaignId The campaign ID
     /// @return The campaign contract address

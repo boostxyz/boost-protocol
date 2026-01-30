@@ -1294,7 +1294,8 @@ contract StreamingManagerTest is Test {
         rewardToken.approve(address(manager), totalAmount);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
+        uint256 campaignId =
+            manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
 
         assertEq(campaignId, 1, "Campaign ID should be 1");
 
@@ -1330,7 +1331,8 @@ contract StreamingManagerTest is Test {
         uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
+        uint256 campaignId =
+            manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
 
         address campaignAddr = manager.getCampaign(campaignId);
 
@@ -1465,9 +1467,7 @@ contract StreamingManagerTest is Test {
 
         // No fee should be taken
         assertEq(
-            rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER),
-            feeReceiverBalanceBefore,
-            "No fee should be taken with 0% fee"
+            rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), feeReceiverBalanceBefore, "No fee should be taken with 0% fee"
         );
 
         // Campaign should receive full amount
@@ -1579,9 +1579,7 @@ contract StreamingManagerTest is Test {
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
-            rewardToken.balanceOf(address(budget)),
-            budgetBalanceBefore + remaining,
-            "Budget should receive remaining"
+            rewardToken.balanceOf(address(budget)), budgetBalanceBefore + remaining, "Budget should receive remaining"
         );
     }
 
@@ -1621,9 +1619,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = maxFeeManager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            maxFeeManager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         StreamingCampaign campaign = StreamingCampaign(maxFeeManager.getCampaign(campaignId));
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should have 0 balance");
@@ -1696,11 +1693,7 @@ contract StreamingManagerTest is Test {
         // After withdrawal via clawbackFromTarget, distributed should decrease by withdrawn amount
         // The campaign had 9 ether, so distributed drops from 10 to 1 (the fee is still "distributed")
         uint256 distributedAfterWithdraw = budget.distributed(address(rewardToken));
-        assertEq(
-            distributedAfterWithdraw,
-            1 ether,
-            "Distributed should be 1 ether (only fee remains distributed)"
-        );
+        assertEq(distributedAfterWithdraw, 1 ether, "Distributed should be 1 ether (only fee remains distributed)");
 
         // Budget balance should be 99 ether (started with 100, sent 10 total, got 9 back from campaign)
         // The 1 ether fee went to fee receiver, not back to budget
@@ -1840,9 +1833,7 @@ contract StreamingManagerTest is Test {
         manager.withdrawToBudget(campaignId);
 
         assertEq(
-            rewardToken.balanceOf(address(budget)),
-            budgetBalanceBefore + balance,
-            "Budget should receive full balance"
+            rewardToken.balanceOf(address(budget)), budgetBalanceBefore + balance, "Budget should receive full balance"
         );
     }
 
@@ -1874,10 +1865,7 @@ contract StreamingManagerTest is Test {
         campaign.clawback(data, 0, 0);
 
         // Clawback exactly available amount should work
-        payload = AIncentive.ClawbackPayload({
-            target: address(budget),
-            data: abi.encode(available)
-        });
+        payload = AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(available)});
         data = abi.encode(payload);
 
         vm.prank(address(budget));
@@ -1924,10 +1912,8 @@ contract StreamingManagerTest is Test {
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
 
         // Encode ClawbackPayload: target is budget, data is encoded amount
-        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({
-            target: address(budget),
-            data: abi.encode(clawbackAmount)
-        });
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(clawbackAmount)});
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
@@ -1959,10 +1945,8 @@ contract StreamingManagerTest is Test {
         uint256 excessiveAmount = campaignBalance + 1 ether;
 
         // Encode ClawbackPayload with amount exceeding balance
-        AIncentive.ClawbackPayload memory payload = AIncentive.ClawbackPayload({
-            target: address(budget),
-            data: abi.encode(excessiveAmount)
-        });
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(excessiveAmount)});
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
@@ -1979,9 +1963,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
         uint64 originalEndTime = campaign.endTime();
@@ -2002,9 +1985,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         vm.warp(startTime + 5 days);
 
@@ -2018,9 +2000,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         vm.prank(CREATOR); // Not the owner
         vm.expectRevert(); // Ownable.Unauthorized
@@ -2037,9 +2018,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         // Warp past the end time
         vm.warp(endTime + 1);
@@ -2054,9 +2034,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
 
@@ -2078,9 +2057,7 @@ contract StreamingManagerTest is Test {
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
-            rewardToken.balanceOf(address(budget)),
-            budgetBalanceBefore + campaignBalance,
-            "Budget should receive funds"
+            rewardToken.balanceOf(address(budget)), budgetBalanceBefore + campaignBalance, "Budget should receive funds"
         );
     }
 
@@ -2089,9 +2066,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         // Set up merkle root with claim
         uint256 claimAmount = 1 ether;
@@ -2222,9 +2198,8 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaign(
-            budget, keccak256("cancel-test"), address(rewardToken), 10 ether, startTime, endTime
-        );
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("cancel-test"), address(rewardToken), 10 ether, startTime, endTime);
 
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
 
@@ -2255,9 +2230,7 @@ contract StreamingManagerTest is Test {
         manager.withdrawToBudget(campaignId);
 
         assertEq(
-            rewardToken.balanceOf(address(budget)),
-            budgetBalanceBefore + remaining,
-            "Budget should receive remaining"
+            rewardToken.balanceOf(address(budget)), budgetBalanceBefore + remaining, "Budget should receive remaining"
         );
     }
 

@@ -277,6 +277,46 @@ contract StreamingManagerTest is Test {
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
+    function test_CreateCampaign_RevertDurationTooLong() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime + 365 days + 1; // Just over 1 year
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.DurationTooLong.selector);
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaign_MaxDurationExactly365Days() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime + 365 days; // Exactly 1 year - should succeed
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        assertEq(campaignId, 1, "Campaign should be created with exactly 365 day duration");
+    }
+
+    function test_CreateCampaign_RevertDurationTooShort() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime + 1 days - 1; // Just under 1 day
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.DurationTooShort.selector);
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaign_MinDurationExactly1Day() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime + 1 days; // Exactly 1 day - should succeed
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        assertEq(campaignId, 1, "Campaign should be created with exactly 1 day duration");
+    }
+
     function test_CreateCampaign_RevertZeroAmount() public {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
@@ -623,6 +663,77 @@ contract StreamingManagerTest is Test {
         manager.setOperator(address(0));
 
         assertEq(manager.operator(), address(0), "Operator should be zero (disabled)");
+    }
+
+    ////////////////////////////////
+    // setMaxCampaignDuration tests
+    ////////////////////////////////
+
+    function test_SetMaxCampaignDuration_Success() public {
+        uint64 newMax = 180 days;
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.MaxCampaignDurationUpdated(365 days, newMax);
+        manager.setMaxCampaignDuration(newMax);
+
+        assertEq(manager.maxCampaignDuration(), newMax, "Max duration should be updated");
+    }
+
+    function test_SetMaxCampaignDuration_RevertNotOwner() public {
+        vm.prank(CREATOR);
+        vm.expectRevert(abi.encodeWithSignature("Unauthorized()"));
+        manager.setMaxCampaignDuration(180 days);
+    }
+
+    function test_SetMaxCampaignDuration_RevertInvalidRange() public {
+        // Try to set max below current min (1 day)
+        vm.expectRevert(StreamingManager.InvalidDurationRange.selector);
+        manager.setMaxCampaignDuration(12 hours);
+    }
+
+    ////////////////////////////////
+    // setMinCampaignDuration tests
+    ////////////////////////////////
+
+    function test_SetMinCampaignDuration_Success() public {
+        uint64 newMin = 7 days;
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.MinCampaignDurationUpdated(1 days, newMin);
+        manager.setMinCampaignDuration(newMin);
+
+        assertEq(manager.minCampaignDuration(), newMin, "Min duration should be updated");
+    }
+
+    function test_SetMinCampaignDuration_RevertNotOwner() public {
+        vm.prank(CREATOR);
+        vm.expectRevert(abi.encodeWithSignature("Unauthorized()"));
+        manager.setMinCampaignDuration(7 days);
+    }
+
+    function test_SetMinCampaignDuration_RevertInvalidRange() public {
+        // Try to set min above current max (365 days)
+        vm.expectRevert(StreamingManager.InvalidDurationRange.selector);
+        manager.setMinCampaignDuration(400 days);
+    }
+
+    function test_DurationLimits_AffectCampaignCreation() public {
+        // Lower max to 30 days
+        manager.setMaxCampaignDuration(30 days);
+
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime + 31 days; // Over new max
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.DurationTooLong.selector);
+        manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // But 30 days should work
+        endTime = startTime + 30 days;
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        assertEq(campaignId, 1, "Campaign should be created with 30 day duration");
     }
 
     ////////////////////////////////
@@ -1437,6 +1548,32 @@ contract StreamingManagerTest is Test {
 
         vm.prank(CREATOR);
         vm.expectRevert(StreamingManager.EndTimeBeforeStart.selector);
+        manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertDurationTooLong() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime + 365 days + 1; // Just over 1 year
+
+        rewardToken.mint(CREATOR, 10 ether);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), 10 ether);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.DurationTooLong.selector);
+        manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertDurationTooShort() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = startTime + 1 days - 1; // Just under 1 day
+
+        rewardToken.mint(CREATOR, 10 ether);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), 10 ether);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(StreamingManager.DurationTooShort.selector);
         manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 

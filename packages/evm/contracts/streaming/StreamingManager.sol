@@ -35,6 +35,14 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Address authorized to publish merkle roots
     address public operator;
 
+    /// @notice Maximum campaign duration (default 365 days)
+    /// @dev Helps catch mistakes like using milliseconds instead of seconds
+    uint64 public maxCampaignDuration;
+
+    /// @notice Minimum campaign duration (default 1 day)
+    /// @dev Ensures engine has time to compute and publish at least one merkle root
+    uint64 public minCampaignDuration;
+
     /// @notice Allocated padding for storage packing
     uint32 private __padding;
 
@@ -77,6 +85,12 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when undistributed funds are withdrawn to budget
     event WithdrawnToBudget(uint256 indexed campaignId, uint256 amount, address indexed budget);
 
+    /// @notice Emitted when max campaign duration is updated
+    event MaxCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
+    /// @notice Emitted when min campaign duration is updated
+    event MinCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
 
@@ -94,6 +108,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Error when end time is not after start time
     error EndTimeBeforeStart();
+
+    /// @notice Error when campaign duration exceeds maximum (365 days)
+    error DurationTooLong();
+
+    /// @notice Error when campaign duration is less than minimum (1 day)
+    error DurationTooShort();
+
+    /// @notice Error when min duration exceeds max duration
+    error InvalidDurationRange();
 
     /// @notice Error when total amount is zero
     error ZeroAmount();
@@ -141,6 +164,8 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         campaignImplementation = campaignImpl_;
         protocolFee = protocolFee_;
         protocolFeeReceiver = protocolFeeReceiver_;
+        maxCampaignDuration = 365 days;
+        minCampaignDuration = 1 days;
     }
 
     /// @notice Create a new streaming campaign funded by a budget
@@ -167,6 +192,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
         if (endTime <= startTime) revert EndTimeBeforeStart();
+        uint64 duration = endTime - startTime;
+        if (duration > maxCampaignDuration) revert DurationTooLong();
+        if (duration < minCampaignDuration) revert DurationTooShort();
 
         // Calculate protocol fee
         uint256 feeAmount = (totalAmount * protocolFee) / 10000;
@@ -232,6 +260,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
         if (endTime <= startTime) revert EndTimeBeforeStart();
+        uint64 duration = endTime - startTime;
+        if (duration > maxCampaignDuration) revert DurationTooLong();
+        if (duration < minCampaignDuration) revert DurationTooShort();
 
         // Calculate protocol fee
         uint256 feeAmount = (totalAmount * protocolFee) / 10000;
@@ -295,6 +326,24 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         address oldOperator = operator;
         operator = operator_;
         emit OperatorUpdated(oldOperator, operator_);
+    }
+
+    /// @notice Set the maximum campaign duration
+    /// @param duration_ New max duration in seconds
+    function setMaxCampaignDuration(uint64 duration_) external onlyOwner {
+        if (duration_ < minCampaignDuration) revert InvalidDurationRange();
+        uint64 oldDuration = maxCampaignDuration;
+        maxCampaignDuration = duration_;
+        emit MaxCampaignDurationUpdated(oldDuration, duration_);
+    }
+
+    /// @notice Set the minimum campaign duration
+    /// @param duration_ New min duration in seconds
+    function setMinCampaignDuration(uint64 duration_) external onlyOwner {
+        if (duration_ > maxCampaignDuration) revert InvalidDurationRange();
+        uint64 oldDuration = minCampaignDuration;
+        minCampaignDuration = duration_;
+        emit MinCampaignDurationUpdated(oldDuration, duration_);
     }
 
     /// @notice Update the merkle root for a campaign

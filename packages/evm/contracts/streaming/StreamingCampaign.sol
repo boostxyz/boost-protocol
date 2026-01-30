@@ -227,8 +227,7 @@ contract StreamingCampaign is Initializable, IClaw {
         override
         returns (uint256 amount, address asset)
     {
-        // Suppress unused variable warnings
-        (boostId, incentiveId);
+        (boostId, incentiveId); // unused variables
 
         if (msg.sender != budget) revert OnlyBudget();
         if (block.timestamp <= endTime) revert CampaignNotEnded();

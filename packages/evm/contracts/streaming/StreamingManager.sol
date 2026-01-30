@@ -66,13 +66,28 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     event OperatorUpdated(address indexed oldOperator, address indexed newOperator);
 
     /// @notice Emitted when a campaign's merkle root is updated
-    event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot);
+    event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot, uint256 totalCommitted);
 
     /// @notice Emitted when a user claims rewards from a campaign
     event Claimed(uint256 indexed campaignId, address indexed user, uint256 amount, uint256 cumulativeAmount);
 
+    /// @notice Emitted when a campaign is cancelled by protocol admin
+    event CampaignCancelled(uint256 indexed campaignId, uint64 oldEndTime, uint64 newEndTime);
+
+    /// @notice Emitted when undistributed funds are withdrawn to budget
+    event WithdrawnToBudget(uint256 indexed campaignId, uint256 amount, address indexed budget);
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
+
+    /// @notice Error when caller is not the campaign creator
+    error NotCampaignCreator();
+
+    /// @notice Error when campaign is not budget-funded
+    error NotBudgetFunded();
+
+    /// @notice Error when campaign has not ended
+    error CampaignNotEnded();
 
     /// @notice Error when start time is in the past
     error StartTimeInPast();

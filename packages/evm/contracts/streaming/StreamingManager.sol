@@ -8,6 +8,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
 
 /// @title StreamingManager
@@ -33,6 +34,14 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Address authorized to publish merkle roots
     address public operator;
+
+    /// @notice Maximum campaign duration (default 365 days)
+    /// @dev Helps catch mistakes like using milliseconds instead of seconds
+    uint64 public maxCampaignDuration;
+
+    /// @notice Minimum campaign duration (default 1 day)
+    /// @dev Ensures engine has time to compute and publish at least one merkle root
+    uint64 public minCampaignDuration;
 
     /// @notice Allocated padding for storage packing
     uint32 private __padding;
@@ -65,19 +74,49 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     event OperatorUpdated(address indexed oldOperator, address indexed newOperator);
 
     /// @notice Emitted when a campaign's merkle root is updated
-    event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot);
+    event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot, uint256 totalCommitted);
 
     /// @notice Emitted when a user claims rewards from a campaign
     event Claimed(uint256 indexed campaignId, address indexed user, uint256 amount, uint256 cumulativeAmount);
 
+    /// @notice Emitted when a campaign is cancelled by protocol admin
+    event CampaignCancelled(uint256 indexed campaignId, uint64 oldEndTime, uint64 newEndTime);
+
+    /// @notice Emitted when undistributed funds are withdrawn to budget
+    event WithdrawnToBudget(uint256 indexed campaignId, uint256 amount, address indexed budget);
+
+    /// @notice Emitted when max campaign duration is updated
+    event MaxCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
+    /// @notice Emitted when min campaign duration is updated
+    event MinCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
+
+    /// @notice Error when caller is not the campaign creator
+    error NotCampaignCreator();
+
+    /// @notice Error when campaign is not budget-funded
+    error NotBudgetFunded();
+
+    /// @notice Error when campaign has not ended
+    error CampaignNotEnded();
 
     /// @notice Error when start time is in the past
     error StartTimeInPast();
 
     /// @notice Error when end time is not after start time
     error EndTimeBeforeStart();
+
+    /// @notice Error when campaign duration exceeds maximum (365 days)
+    error DurationTooLong();
+
+    /// @notice Error when campaign duration is less than minimum (1 day)
+    error DurationTooShort();
+
+    /// @notice Error when min duration exceeds max duration
+    error InvalidDurationRange();
 
     /// @notice Error when total amount is zero
     error ZeroAmount();
@@ -125,6 +164,8 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         campaignImplementation = campaignImpl_;
         protocolFee = protocolFee_;
         protocolFeeReceiver = protocolFeeReceiver_;
+        maxCampaignDuration = 365 days;
+        minCampaignDuration = 1 days;
     }
 
     /// @notice Create a new streaming campaign funded by a budget
@@ -151,6 +192,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
         if (endTime <= startTime) revert EndTimeBeforeStart();
+        uint64 duration = endTime - startTime;
+        if (duration > maxCampaignDuration) revert DurationTooLong();
+        if (duration < minCampaignDuration) revert DurationTooShort();
 
         // Calculate protocol fee
         uint256 feeAmount = (totalAmount * protocolFee) / 10000;
@@ -196,6 +240,61 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
     }
 
+    /// @notice Create a new streaming campaign with direct token transfer
+    /// @param configHash Hash of the off-chain campaign configuration
+    /// @param rewardToken The ERC20 token for rewards
+    /// @param totalAmount Total reward amount (before protocol fee deduction)
+    /// @param startTime Campaign start timestamp
+    /// @param endTime Campaign end timestamp
+    /// @return campaignId The ID of the created campaign
+    /// @dev Caller must approve this contract to transfer tokens before calling
+    function createCampaignDirect(
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime
+    ) external returns (uint256 campaignId) {
+        // Validate parameters
+        if (rewardToken == address(0)) revert InvalidRewardToken();
+        if (totalAmount == 0) revert ZeroAmount();
+        if (startTime < block.timestamp) revert StartTimeInPast();
+        if (endTime <= startTime) revert EndTimeBeforeStart();
+        uint64 duration = endTime - startTime;
+        if (duration > maxCampaignDuration) revert DurationTooLong();
+        if (duration < minCampaignDuration) revert DurationTooShort();
+
+        // Calculate protocol fee
+        uint256 feeAmount = (totalAmount * protocolFee) / 10000;
+        uint256 netAmount = totalAmount - feeAmount;
+
+        // Pull tokens from caller
+        rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
+
+        // Clone the campaign
+        address campaign = LibClone.clone(campaignImplementation);
+
+        campaignId = ++campaignCount;
+        campaigns[campaignId] = campaign;
+
+        // Transfer fee to protocol fee receiver (if fee > 0)
+        if (feeAmount > 0) {
+            rewardToken.safeTransfer(protocolFeeReceiver, feeAmount);
+        }
+
+        // Transfer net rewards to campaign (skip if 0, e.g., 100% fee)
+        if (netAmount > 0) {
+            rewardToken.safeTransfer(campaign, netAmount);
+        }
+
+        // Initialize the campaign with budget = address(0) for direct-funded campaigns
+        StreamingCampaign(campaign).initialize(
+            address(this), address(0), msg.sender, configHash, rewardToken, netAmount, startTime, endTime
+        );
+
+        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
+    }
+
     /// @notice Get a campaign contract by ID
     /// @param campaignId The campaign ID
     /// @return The campaign contract address
@@ -229,18 +328,37 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit OperatorUpdated(oldOperator, operator_);
     }
 
+    /// @notice Set the maximum campaign duration
+    /// @param duration_ New max duration in seconds
+    function setMaxCampaignDuration(uint64 duration_) external onlyOwner {
+        if (duration_ < minCampaignDuration) revert InvalidDurationRange();
+        uint64 oldDuration = maxCampaignDuration;
+        maxCampaignDuration = duration_;
+        emit MaxCampaignDurationUpdated(oldDuration, duration_);
+    }
+
+    /// @notice Set the minimum campaign duration
+    /// @param duration_ New min duration in seconds
+    function setMinCampaignDuration(uint64 duration_) external onlyOwner {
+        if (duration_ > maxCampaignDuration) revert InvalidDurationRange();
+        uint64 oldDuration = minCampaignDuration;
+        minCampaignDuration = duration_;
+        emit MinCampaignDurationUpdated(oldDuration, duration_);
+    }
+
     /// @notice Update the merkle root for a campaign
     /// @param campaignId The campaign ID
     /// @param root The new merkle root
-    function updateRoot(uint256 campaignId, bytes32 root) external {
+    /// @param totalCommitted Total amount committed to users in the merkle tree
+    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
 
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
-        bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root);
+        bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root, totalCommitted);
 
-        emit RootUpdated(campaignId, oldRoot, root);
+        emit RootUpdated(campaignId, oldRoot, root, totalCommitted);
     }
 
     /// @notice Set the campaign implementation address (for upgrades)
@@ -264,6 +382,45 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 amount = StreamingCampaign(campaign).processClaim(user, cumulativeAmount, proof);
 
         emit Claimed(campaignId, user, amount, cumulativeAmount);
+    }
+
+    /// @notice Cancel a campaign (emergency use - sets endTime to now)
+    /// @param campaignId The campaign ID to cancel
+    /// @dev Only callable by owner
+    function cancelCampaign(uint256 campaignId) external onlyOwner {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        uint64 oldEndTime = StreamingCampaign(campaign).setEndTime(uint64(block.timestamp));
+
+        emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
+    }
+
+    /// @notice Withdraw undistributed funds back to budget (budget-funded campaigns only)
+    /// @param campaignId The campaign ID to withdraw from
+    /// @dev Only callable by the campaign creator after the campaign has ended
+    /// @dev Routes through budget.clawbackFromTarget() to maintain budget accounting
+    function withdrawToBudget(uint256 campaignId) external {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        StreamingCampaign c = StreamingCampaign(campaign);
+
+        if (msg.sender != c.creator()) revert NotCampaignCreator();
+
+        address payable budgetAddr = payable(c.budget());
+        if (budgetAddr == address(0)) revert NotBudgetFunded();
+
+        if (block.timestamp <= c.endTime()) revert CampaignNotEnded();
+
+        uint256 withdrawable = c.getWithdrawable();
+        if (withdrawable == 0) revert ZeroAmount();
+
+        // Route through budget.clawbackFromTarget() to maintain _distributedFungible accounting
+        bytes memory clawbackData = abi.encode(withdrawable);
+        ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
+
+        emit WithdrawnToBudget(campaignId, withdrawable, budgetAddr);
     }
 
     /// @notice Authorize an upgrade to a new implementation

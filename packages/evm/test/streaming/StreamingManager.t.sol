@@ -869,7 +869,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, claimAmount);
 
         uint256 claimerBalanceBefore = rewardToken.balanceOf(CLAIMER);
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
@@ -885,6 +885,7 @@ contract StreamingManagerTest is Test {
             "Campaign balance should decrease"
         );
         assertEq(campaign.claimed(CLAIMER), claimAmount, "Claimed amount should be recorded");
+        assertEq(campaign.totalClaimed(), claimAmount, "Total claimed should be updated");
     }
 
     function test_Claim_EmitsEvents() public {
@@ -898,7 +899,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, claimAmount);
 
         // Record logs and claim
         vm.recordLogs();
@@ -949,7 +950,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, claimAmount);
 
         // Try to claim with wrong user
         vm.expectRevert(StreamingCampaign.InvalidProof.selector);
@@ -967,7 +968,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, claimAmount);
 
         // Claim first time
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
@@ -995,7 +996,7 @@ contract StreamingManagerTest is Test {
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, firstRoot);
+        manager.updateRoot(campaignId, firstRoot, firstCumulative);
         manager.claim(campaignId, CLAIMER, firstCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), firstCumulative, "First claim should be recorded");
@@ -1006,7 +1007,7 @@ contract StreamingManagerTest is Test {
         bytes32 secondLeaf = _makeLeaf(CLAIMER, address(rewardToken), secondCumulative);
         bytes32 secondRoot = secondLeaf;
 
-        manager.updateRoot(campaignId, secondRoot);
+        manager.updateRoot(campaignId, secondRoot, secondCumulative);
         manager.claim(campaignId, CLAIMER, secondCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), secondCumulative, "Second claim should be recorded");
@@ -1017,7 +1018,7 @@ contract StreamingManagerTest is Test {
         bytes32 thirdLeaf = _makeLeaf(CLAIMER, address(rewardToken), thirdCumulative);
         bytes32 thirdRoot = thirdLeaf;
 
-        manager.updateRoot(campaignId, thirdRoot);
+        manager.updateRoot(campaignId, thirdRoot, thirdCumulative);
         manager.claim(campaignId, CLAIMER, thirdCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), thirdCumulative, "Third claim should be recorded");
@@ -1035,7 +1036,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, claimAmount);
 
         // Random address submits claim for CLAIMER
         address randomCaller = address(0xBAD);
@@ -1059,7 +1060,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, claimAmount);
 
         // Try to call processClaim directly
         vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
@@ -1090,8 +1091,9 @@ contract StreamingManagerTest is Test {
         }
         bytes32 root = keccak256(abi.encodePacked(left, right));
 
-        // Set merkle root
-        manager.updateRoot(campaignId, root);
+        uint256 claimAmount = claimer1Amount + claimer2Amount;
+
+        manager.updateRoot(campaignId, root, claimAmount);
 
         // Create proofs - sibling is the proof
         bytes32[] memory proof1 = new bytes32[](1);
@@ -1123,7 +1125,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, correctAmount);
 
         // Try to claim with wrong amount
         vm.expectRevert(StreamingCampaign.InvalidProof.selector);
@@ -1153,7 +1155,7 @@ contract StreamingManagerTest is Test {
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, firstRoot);
+        manager.updateRoot(campaignId, firstRoot, firstCumulative);
         manager.claim(campaignId, CLAIMER, firstCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), firstCumulative, "Should have claimed 2 ether");
@@ -1164,7 +1166,7 @@ contract StreamingManagerTest is Test {
         bytes32 oldLeaf = _makeLeaf(CLAIMER, address(rewardToken), oldCumulative);
         bytes32 oldRoot = oldLeaf;
 
-        manager.updateRoot(campaignId, oldRoot);
+        manager.updateRoot(campaignId, oldRoot, oldCumulative);
 
         // Should revert because oldCumulative (1 ether) <= alreadyClaimed (2 ether)
         vm.expectRevert(StreamingCampaign.NothingToClaim.selector);
@@ -1181,7 +1183,7 @@ contract StreamingManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, claimAmount);
 
         // First claim succeeds
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
@@ -1201,7 +1203,7 @@ contract StreamingManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, actualAmount);
 
         // Claim the actual amount
         manager.claim(campaignId, CLAIMER, actualAmount, proof);
@@ -1230,7 +1232,7 @@ contract StreamingManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root);
+        manager.updateRoot(campaignId, root, excessiveAmount);
 
         // Claim should revert due to insufficient balance in campaign
         // SafeTransferLib will revert with TransferFailed
@@ -1259,7 +1261,7 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Only set root on campaign 1
-        manager.updateRoot(campaignId1, root);
+        manager.updateRoot(campaignId1, root, claimAmount);
 
         // Claim works on campaign 1
         manager.claim(campaignId1, CLAIMER, claimAmount, proof);

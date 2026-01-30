@@ -300,15 +300,16 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Update the merkle root for a campaign
     /// @param campaignId The campaign ID
     /// @param root The new merkle root
-    function updateRoot(uint256 campaignId, bytes32 root) external {
+    /// @param totalCommitted Total amount committed to users in the merkle tree
+    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
 
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
-        bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root);
+        bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root, totalCommitted);
 
-        emit RootUpdated(campaignId, oldRoot, root);
+        emit RootUpdated(campaignId, oldRoot, root, totalCommitted);
     }
 
     /// @notice Set the campaign implementation address (for upgrades)

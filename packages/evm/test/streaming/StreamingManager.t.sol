@@ -639,13 +639,15 @@ contract StreamingManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         bytes32 newRoot = keccak256("merkle-root-1");
+        uint256 totalCommitted = 5 ether;
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot);
-        manager.updateRoot(campaignId, newRoot);
+        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted);
 
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated");
+        assertEq(campaign.totalCommitted(), totalCommitted, "Total committed should be updated");
     }
 
     function test_UpdateRoot_SuccessAsOperator() public {
@@ -661,11 +663,12 @@ contract StreamingManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         bytes32 newRoot = keccak256("merkle-root-1");
+        uint256 totalCommitted = 5 ether;
 
         vm.prank(operatorAddr);
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot);
-        manager.updateRoot(campaignId, newRoot);
+        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted);
 
         StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated by operator");

@@ -62,19 +62,49 @@ contract StreamingCampaign is Initializable, IClaw {
     );
 
     /// @notice Emitted when the merkle root is updated
-    event MerkleRootUpdated(bytes32 oldRoot, bytes32 newRoot);
+    event MerkleRootUpdated(bytes32 oldRoot, bytes32 newRoot, uint256 totalCommitted);
 
     /// @notice Emitted when a user claims rewards
     event Claimed(address indexed user, uint256 amount, uint256 cumulativeAmount);
 
+    /// @notice Emitted when undistributed funds are withdrawn
+    event UndistributedWithdrawn(uint256 amount, address indexed destination);
+
+    /// @notice Emitted when the end time is updated (e.g., campaign cancelled)
+    event EndTimeUpdated(uint64 oldEndTime, uint64 newEndTime);
+
     /// @notice Error when caller is not the StreamingManager
     error OnlyStreamingManager();
+
+    /// @notice Error when caller is not the creator
+    error OnlyCreator();
+
+    /// @notice Error when caller is not the budget
+    error OnlyBudget();
+
+    /// @notice Error when campaign has not ended
+    error CampaignNotEnded();
+
+    /// @notice Error when there is nothing to withdraw
+    error NothingToWithdraw();
+
+    /// @notice Error when clawback amount exceeds available balance
+    error InsufficientBalance();
+
+    /// @notice Error when new end time is after current end time
+    error InvalidEndTime();
+
+    /// @notice Error when campaign has already ended
+    error CampaignAlreadyEnded();
 
     /// @notice Error when merkle proof is invalid
     error InvalidProof();
 
     /// @notice Error when there is nothing to claim
     error NothingToClaim();
+
+    /// @notice Error when trying to use withdrawUndistributed on a budget-funded campaign
+    error UseBudgetClawback();
 
     /// @notice Disable initialization on the implementation contract
     constructor() {

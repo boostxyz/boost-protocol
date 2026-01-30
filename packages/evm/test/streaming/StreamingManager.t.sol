@@ -9,6 +9,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
 import {StreamingManager} from "contracts/streaming/StreamingManager.sol";
 import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";

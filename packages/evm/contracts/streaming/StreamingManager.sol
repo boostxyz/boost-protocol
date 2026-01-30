@@ -335,6 +335,45 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit Claimed(campaignId, user, amount, cumulativeAmount);
     }
 
+    /// @notice Cancel a campaign (emergency use - sets endTime to now)
+    /// @param campaignId The campaign ID to cancel
+    /// @dev Only callable by owner
+    function cancelCampaign(uint256 campaignId) external onlyOwner {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        uint64 oldEndTime = StreamingCampaign(campaign).setEndTime(uint64(block.timestamp));
+
+        emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
+    }
+
+    /// @notice Withdraw undistributed funds back to budget (budget-funded campaigns only)
+    /// @param campaignId The campaign ID to withdraw from
+    /// @dev Only callable by the campaign creator after the campaign has ended
+    /// @dev Routes through budget.clawbackFromTarget() to maintain budget accounting
+    function withdrawToBudget(uint256 campaignId) external {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        StreamingCampaign c = StreamingCampaign(campaign);
+
+        if (msg.sender != c.creator()) revert NotCampaignCreator();
+
+        address payable budgetAddr = payable(c.budget());
+        if (budgetAddr == address(0)) revert NotBudgetFunded();
+
+        if (block.timestamp <= c.endTime()) revert CampaignNotEnded();
+
+        uint256 withdrawable = c.getWithdrawable();
+        if (withdrawable == 0) revert ZeroAmount();
+
+        // Route through budget.clawbackFromTarget() to maintain _distributedFungible accounting
+        bytes memory clawbackData = abi.encode(withdrawable);
+        ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
+
+        emit WithdrawnToBudget(campaignId, withdrawable, budgetAddr);
+    }
+
     /// @notice Authorize an upgrade to a new implementation
     /// @param newImplementation The address of the new implementation
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

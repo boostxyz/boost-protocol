@@ -19,7 +19,9 @@ contract DeployStreaming is ScriptUtils {
 
         // Load configuration from environment
         address owner = vm.envAddress("STREAMING_OWNER");
-        uint64 protocolFee = uint64(vm.envUint("STREAMING_PROTOCOL_FEE")); // basis points (1000 = 10%)
+        uint256 protocolFeeRaw = vm.envUint("STREAMING_PROTOCOL_FEE");
+        require(protocolFeeRaw <= 10000, "Protocol fee exceeds 100% (10000 bps)");
+        uint64 protocolFee = uint64(protocolFeeRaw); // basis points (1000 = 10%)
         address protocolFeeReceiver = vm.envAddress("STREAMING_FEE_RECEIVER");
         address operator = vm.envOr("STREAMING_OPERATOR", address(0));
 

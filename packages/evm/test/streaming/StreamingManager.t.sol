@@ -391,7 +391,8 @@ contract StreamingManagerTest is Test {
             address(rewardToken),
             9 ether,
             startTime,
-            endTime
+            endTime,
+            60 days
         );
     }
 
@@ -406,7 +407,8 @@ contract StreamingManagerTest is Test {
             address(rewardToken),
             10 ether,
             uint64(block.timestamp + 1 hours),
-            uint64(block.timestamp + 30 days)
+            uint64(block.timestamp + 30 days),
+            60 days
         );
     }
 
@@ -424,7 +426,8 @@ contract StreamingManagerTest is Test {
             address(rewardToken),
             10 ether,
             uint64(block.timestamp + 1 hours),
-            uint64(block.timestamp + 30 days)
+            uint64(block.timestamp + 30 days),
+            60 days
         );
     }
 

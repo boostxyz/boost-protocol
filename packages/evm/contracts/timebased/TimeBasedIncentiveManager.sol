@@ -167,6 +167,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when batch update array is empty
     error EmptyBatch();
 
+    /// @notice Error when token transfer amount doesn't match (fee-on-transfer tokens)
+    error FeeOnTransferNotSupported();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -234,6 +237,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Disburse fee to protocol fee receiver (if fee > 0)
         if (feeAmount > 0) {
+            uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
             bytes memory feeTransfer = abi.encode(
                 ABudget.Transfer({
                     assetType: ABudget.AssetType.ERC20,
@@ -243,10 +247,14 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
                 })
             );
             if (!budget.disburse(feeTransfer)) revert DisburseFailed();
+            if (SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver) - feeReceiverBefore != feeAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Disburse net rewards to campaign (skip if 0, e.g., 100% fee)
         if (netAmount > 0) {
+            uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
             bytes memory rewardTransfer = abi.encode(
                 ABudget.Transfer({
                     assetType: ABudget.AssetType.ERC20,
@@ -256,6 +264,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
                 })
             );
             if (!budget.disburse(rewardTransfer)) revert DisburseFailed();
+            if (SafeTransferLib.balanceOf(rewardToken, campaign) - campaignBefore != netAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Initialize the campaign
@@ -281,6 +292,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param startTime Campaign start timestamp
     /// @param endTime Campaign end timestamp
     /// @return campaignId The ID of the created campaign
+    /// @dev Fee-on-transfer and rebasing tokens are not supported
     /// @dev Caller must approve this contract to transfer tokens before calling
     function createCampaignDirect(
         bytes32 configHash,
@@ -302,8 +314,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 feeAmount = (totalAmount * protocolFee) / 10000;
         uint256 netAmount = totalAmount - feeAmount;
 
-        // Pull tokens from caller
+        // Pull tokens from caller and verify full amount received
+        uint256 balanceBefore = SafeTransferLib.balanceOf(rewardToken, address(this));
         rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
+        if (SafeTransferLib.balanceOf(rewardToken, address(this)) - balanceBefore != totalAmount) {
+            revert FeeOnTransferNotSupported();
+        }
 
         // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
@@ -313,12 +329,20 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Transfer fee to protocol fee receiver (if fee > 0)
         if (feeAmount > 0) {
+            uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
             rewardToken.safeTransfer(protocolFeeReceiver, feeAmount);
+            if (SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver) - feeReceiverBefore != feeAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Transfer net rewards to campaign (skip if 0, e.g., 100% fee)
         if (netAmount > 0) {
+            uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
             rewardToken.safeTransfer(campaign, netAmount);
+            if (SafeTransferLib.balanceOf(rewardToken, campaign) - campaignBefore != netAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns

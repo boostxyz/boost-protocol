@@ -356,6 +356,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit MinCampaignDurationUpdated(oldDuration, duration_);
     }
 
+    /// @notice Set the claim expiry duration (time after campaign end that claims remain valid)
+    /// @param duration_ New claim expiry duration in seconds (minimum 1 day)
+    function setClaimExpiryDuration(uint64 duration_) external onlyOwner {
+        if (duration_ < 1 days) revert ClaimExpiryDurationTooShort();
+        uint64 oldDuration = claimExpiryDuration;
+        claimExpiryDuration = duration_;
+        emit ClaimExpiryDurationUpdated(oldDuration, duration_);
+    }
+
     /// @notice Update the merkle root for a campaign
     /// @param campaignId The campaign ID
     /// @param root The new merkle root

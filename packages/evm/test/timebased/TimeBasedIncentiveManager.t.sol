@@ -1030,7 +1030,10 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.updateRootsBatch(updates);
 
         // Spot-check first and last
-        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(ids[0])).merkleRoot(), keccak256(abi.encode("root", uint256(0))));
+        assertEq(
+            TimeBasedIncentiveCampaign(manager.getCampaign(ids[0])).merkleRoot(),
+            keccak256(abi.encode("root", uint256(0)))
+        );
         assertEq(
             TimeBasedIncentiveCampaign(manager.getCampaign(ids[batchSize - 1])).merkleRoot(),
             keccak256(abi.encode("root", batchSize - 1))

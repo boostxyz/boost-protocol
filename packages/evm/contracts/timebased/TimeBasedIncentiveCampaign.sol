@@ -150,7 +150,14 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         claimExpiryDuration = claimExpiryDuration_;
 
         emit CampaignInitialized(
-            timeBasedIncentiveManager_, budget_, creator_, configHash_, rewardToken_, totalRewards_, startTime_, endTime_
+            timeBasedIncentiveManager_,
+            budget_,
+            creator_,
+            configHash_,
+            rewardToken_,
+            totalRewards_,
+            startTime_,
+            endTime_
         );
     }
 

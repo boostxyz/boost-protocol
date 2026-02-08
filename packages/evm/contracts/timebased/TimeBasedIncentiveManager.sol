@@ -237,6 +237,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Disburse fee to protocol fee receiver (if fee > 0)
         if (feeAmount > 0) {
+            uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
             bytes memory feeTransfer = abi.encode(
                 ABudget.Transfer({
                     assetType: ABudget.AssetType.ERC20,
@@ -246,10 +247,14 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
                 })
             );
             if (!budget.disburse(feeTransfer)) revert DisburseFailed();
+            if (SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver) - feeReceiverBefore != feeAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Disburse net rewards to campaign (skip if 0, e.g., 100% fee)
         if (netAmount > 0) {
+            uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
             bytes memory rewardTransfer = abi.encode(
                 ABudget.Transfer({
                     assetType: ABudget.AssetType.ERC20,
@@ -259,6 +264,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
                 })
             );
             if (!budget.disburse(rewardTransfer)) revert DisburseFailed();
+            if (SafeTransferLib.balanceOf(rewardToken, campaign) - campaignBefore != netAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Initialize the campaign
@@ -284,6 +292,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param startTime Campaign start timestamp
     /// @param endTime Campaign end timestamp
     /// @return campaignId The ID of the created campaign
+    /// @dev Fee-on-transfer and rebasing tokens are not supported
     /// @dev Caller must approve this contract to transfer tokens before calling
     function createCampaignDirect(
         bytes32 configHash,

@@ -7,6 +7,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {MerkleProofLib} from "@solady/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
+import {ERC20} from "@solady/tokens/ERC20.sol";
 import {MockERC20} from "contracts/shared/Mocks.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
@@ -2648,6 +2649,85 @@ contract TimeBasedIncentiveManagerTest is Test {
     }
 
     ////////////////////////////////
+    // Fee-on-transfer prevention tests
+    ////////////////////////////////
+
+    function test_CreateCampaignDirect_RevertFeeOnTransferToken() public {
+        // Deploy a fee-on-transfer mock token (fees on both transfer and transferFrom)
+        MockFeeOnTransferERC20 fotToken = new MockFeeOnTransferERC20(100); // 1% transfer fee
+
+        // Mint and approve
+        fotToken.mint(CREATOR, 20 ether);
+        vm.prank(CREATOR);
+        fotToken.approve(address(manager), 20 ether);
+
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Reverts at inbound check (transferFrom takes a fee)
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.FeeOnTransferNotSupported.selector);
+        manager.createCampaignDirect(keccak256("test"), address(fotToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaignDirect_RevertOutboundOnlyFeeToken() public {
+        // Deploy a token that only charges fees on transfer() not transferFrom()
+        MockOutboundFeeERC20 outToken = new MockOutboundFeeERC20(100); // 1% fee on transfer only
+
+        // Mint and approve
+        outToken.mint(CREATOR, 20 ether);
+        vm.prank(CREATOR);
+        outToken.approve(address(manager), 20 ether);
+
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Inbound transferFrom passes (no fee), but outbound transfer to fee receiver catches it
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.FeeOnTransferNotSupported.selector);
+        manager.createCampaignDirect(keccak256("test"), address(outToken), 10 ether, startTime, endTime);
+    }
+
+    function test_CreateCampaign_RevertOutboundFeeOnTransferToken() public {
+        // Use outbound-only fee token: transferFrom() is clean (budget.allocate passes),
+        // but transfer() takes a fee (budget.disburse skims)
+        MockOutboundFeeERC20 outToken = new MockOutboundFeeERC20(100); // 1% fee on transfer only
+
+        // Fund budget — allocate uses transferFrom, no fee applied
+        outToken.mint(address(this), 100 ether);
+        outToken.approve(address(budget), 100 ether);
+        budget.allocate(_makeERC20Allocation(address(outToken), 100 ether));
+
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Budget disburse uses transfer() which takes a fee — delta check catches it
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.FeeOnTransferNotSupported.selector);
+        manager.createCampaign(budget, keccak256("test"), address(outToken), 10 ether, startTime, endTime);
+    }
+
+    ////////////////////////////////
+    // Clawback event emission tests
+    ////////////////////////////////
+
+    function test_Clawback_EmitsUndistributedWithdrawn() public {
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 clawbackAmount = 1 ether;
+
+        vm.warp(campaign.endTime() + 1);
+
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(clawbackAmount)});
+        bytes memory data = abi.encode(payload);
+
+        vm.prank(address(budget));
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveCampaign.UndistributedWithdrawn(clawbackAmount, address(budget));
+        campaign.clawback(data, 0, 0);
+    }
+
+    ////////////////////////////////
     // Helper functions
     ////////////////////////////////
 
@@ -3109,5 +3189,73 @@ contract TimeBasedIncentiveManagerTest is Test {
         }
 
         root = currentLevel[0];
+    }
+}
+
+/// @notice Mock ERC20 that deducts a fee only on transfer() not transferFrom() (outbound-only fee)
+contract MockOutboundFeeERC20 is ERC20 {
+    uint256 public feeBps;
+
+    constructor(uint256 feeBps_) {
+        feeBps = feeBps_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Outbound Fee Token";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "OFEE";
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+
+    // transfer() charges a fee (outbound)
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        uint256 fee = (amount * feeBps) / 10000;
+        _transfer(msg.sender, to, amount - fee);
+        _burn(msg.sender, fee);
+        return true;
+    }
+
+    // transferFrom() does NOT charge a fee (inbound passes cleanly)
+}
+
+/// @notice Mock ERC20 that deducts a fee on every transfer (for testing fee-on-transfer rejection)
+contract MockFeeOnTransferERC20 is ERC20 {
+    uint256 public feeBps; // fee in basis points
+
+    constructor(uint256 feeBps_) {
+        feeBps = feeBps_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Fee Token";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "FEE";
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        uint256 fee = (amount * feeBps) / 10000;
+        // Transfer reduced amount to recipient, burn the fee
+        _transfer(msg.sender, to, amount - fee);
+        _burn(msg.sender, fee);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        _spendAllowance(from, msg.sender, amount);
+        uint256 fee = (amount * feeBps) / 10000;
+        _transfer(from, to, amount - fee);
+        _burn(from, fee);
+        return true;
     }
 }

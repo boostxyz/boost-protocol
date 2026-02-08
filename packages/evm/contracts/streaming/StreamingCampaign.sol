@@ -216,12 +216,10 @@ contract StreamingCampaign is Initializable, IClaw {
         if (block.timestamp <= endTime) revert CampaignNotEnded();
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
-
-        // Calculate how much is still owed to users
-        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+        uint256 owed = _stillOwed();
 
         // Only withdraw what's not owed to users
-        uint256 withdrawable = balance > stillOwed ? balance - stillOwed : 0;
+        uint256 withdrawable = balance > owed ? balance - owed : 0;
         if (withdrawable == 0) revert NothingToWithdraw();
 
         SafeTransferLib.safeTransfer(rewardToken, creator, withdrawable);
@@ -249,10 +247,8 @@ contract StreamingCampaign is Initializable, IClaw {
         asset = rewardToken;
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
-
-        // Calculate how much is still owed to users
-        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
-        uint256 available = balance > stillOwed ? balance - stillOwed : 0;
+        uint256 owed = _stillOwed();
+        uint256 available = balance > owed ? balance - owed : 0;
 
         if (amount > available) revert InsufficientBalance();
 
@@ -262,9 +258,17 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Get the amount available to withdraw (not owed to users)
     /// @return withdrawable The amount that can be withdrawn
     function getWithdrawable() external view returns (uint256 withdrawable) {
+        if (block.timestamp <= endTime) return 0;
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
-        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
-        withdrawable = balance > stillOwed ? balance - stillOwed : 0;
+        uint256 owed = _stillOwed();
+        withdrawable = balance > owed ? balance - owed : 0;
+    }
+
+    /// @notice Calculate how much is still owed to users (respects claim expiry)
+    /// @return The amount still owed, or 0 if the claim window has expired
+    function _stillOwed() internal view returns (uint256) {
+        if (block.timestamp > endTime + claimExpiryDuration) return 0;
+        return totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
     }
 
     /// @notice Set the campaign end time (for emergency cancellation)

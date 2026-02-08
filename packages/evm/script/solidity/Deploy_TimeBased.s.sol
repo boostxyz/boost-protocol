@@ -3,27 +3,27 @@ pragma solidity ^0.8.24;
 
 import "./Util.s.sol";
 
-import {StreamingManager} from "contracts/streaming/StreamingManager.sol";
-import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
+import {TimeBasedIncentiveManager} from "contracts/timebased/TimeBasedIncentiveManager.sol";
+import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
-/// @notice Script to deploy StreamingManager and StreamingCampaign contracts
+/// @notice Script to deploy TimeBasedIncentiveManager and TimeBasedIncentiveCampaign contracts
 /// @dev Deploys:
-///   1. StreamingCampaign implementation (for cloning)
-///   2. StreamingManager as UUPS proxy
-///   3. Initializes StreamingManager with configuration
+///   1. TimeBasedIncentiveCampaign implementation (for cloning)
+///   2. TimeBasedIncentiveManager as UUPS proxy
+///   3. Initializes TimeBasedIncentiveManager with configuration
 ///   4. Sets operator for merkle root publishing
-contract DeployStreaming is ScriptUtils {
+contract DeployTimeBased is ScriptUtils {
     function run() external {
         console.log("deploying address: ", vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY")));
 
         // Load configuration from environment
-        address owner = vm.envAddress("STREAMING_OWNER");
-        uint256 protocolFeeRaw = vm.envUint("STREAMING_PROTOCOL_FEE");
+        address owner = vm.envAddress("TIMEBASED_OWNER");
+        uint256 protocolFeeRaw = vm.envUint("TIMEBASED_PROTOCOL_FEE");
         require(protocolFeeRaw <= 10000, "Protocol fee exceeds 100% (10000 bps)");
         uint64 protocolFee = uint64(protocolFeeRaw); // basis points (1000 = 10%)
-        address protocolFeeReceiver = vm.envAddress("STREAMING_FEE_RECEIVER");
-        address operator = vm.envOr("STREAMING_OPERATOR", address(0));
+        address protocolFeeReceiver = vm.envAddress("TIMEBASED_FEE_RECEIVER");
+        address operator = vm.envOr("TIMEBASED_OPERATOR", address(0));
 
         console.log("Owner: ", owner);
         console.log("Protocol fee: ", protocolFee, " bps");
@@ -33,21 +33,17 @@ contract DeployStreaming is ScriptUtils {
         // Ensure deployments JSON file exists
         _ensureDeploymentsFileExists();
 
-        // Deploy StreamingCampaign implementation
+        // Deploy TimeBasedIncentiveCampaign implementation
         address campaignImpl = _deployCampaignImplementation();
 
-        // Deploy StreamingManager proxy and initialize
-        address managerProxy = _deployManagerProxy(campaignImpl, owner, protocolFee, protocolFeeReceiver);
-
-        // Set operator if provided
-        if (operator != address(0)) {
-            _setOperator(managerProxy, operator);
-        }
+        // Deploy TimeBasedIncentiveManager proxy, initialize, and configure
+        address managerProxy =
+            _deployManagerProxy(campaignImpl, owner, protocolFee, protocolFeeReceiver, operator);
 
         console.log("");
         console.log("=== Deployment Summary ===");
-        console.log("StreamingCampaign Implementation: ", campaignImpl);
-        console.log("StreamingManager Proxy: ", managerProxy);
+        console.log("TimeBasedIncentiveCampaign Implementation: ", campaignImpl);
+        console.log("TimeBasedIncentiveManager Proxy: ", managerProxy);
         if (operator != address(0)) {
             console.log("Operator set to: ", operator);
         }
@@ -64,9 +60,9 @@ contract DeployStreaming is ScriptUtils {
     }
 
     function _deployCampaignImplementation() internal returns (address campaignImpl) {
-        bytes memory initCode = type(StreamingCampaign).creationCode;
+        bytes memory initCode = type(TimeBasedIncentiveCampaign).creationCode;
         campaignImpl = _getCreate2Address(initCode, "");
-        console.log("StreamingCampaign Implementation: ", campaignImpl);
+        console.log("TimeBasedIncentiveCampaign Implementation: ", campaignImpl);
 
         bool isNew = _deploy2(initCode, "");
         if (isNew) {
@@ -74,21 +70,23 @@ contract DeployStreaming is ScriptUtils {
         }
 
         // Write to deploys JSON (merges with existing)
-        vm.writeJson(vm.toString(campaignImpl), _buildJsonDeployPath(), ".StreamingCampaign");
+        vm.writeJson(vm.toString(campaignImpl), _buildJsonDeployPath(), ".TimeBasedIncentiveCampaign");
     }
 
     function _deployManagerProxy(
         address campaignImpl,
         address owner,
         uint64 protocolFee,
-        address protocolFeeReceiver
+        address protocolFeeReceiver,
+        address operator
     ) internal returns (address managerProxy) {
+        address deployer = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
 
-        // Deploy StreamingManager implementation
-        bytes memory implInitCode = type(StreamingManager).creationCode;
+        // Deploy TimeBasedIncentiveManager implementation
+        bytes memory implInitCode = type(TimeBasedIncentiveManager).creationCode;
         address managerImpl = _getCreate2Address(implInitCode, "");
-        console.log("StreamingManager Implementation: ", managerImpl);
+        console.log("TimeBasedIncentiveManager Implementation: ", managerImpl);
 
         bool isNewImpl = _deploy2(implInitCode, "");
         if (isNewImpl) {
@@ -99,7 +97,7 @@ contract DeployStreaming is ScriptUtils {
 
         // Deploy ERC1967 proxy pointing to implementation
         managerProxy = LibClone.predictDeterministicAddressERC1967(managerImpl, salt, CREATE2_FACTORY);
-        console.log("StreamingManager Proxy: ", managerProxy);
+        console.log("TimeBasedIncentiveManager Proxy: ", managerProxy);
 
         // Check if proxy already deployed
         uint256 codeSize;
@@ -113,29 +111,32 @@ contract DeployStreaming is ScriptUtils {
             managerProxy = LibClone.deployDeterministicERC1967(managerImpl, salt);
             console.log("  -> Deployed new proxy");
 
-            // Initialize
+            // Initialize with deployer as temporary owner so we can configure before transferring
             vm.broadcast();
-            StreamingManager(managerProxy).initialize(owner, campaignImpl, protocolFee, protocolFeeReceiver);
-            console.log("  -> Initialized with owner: ", owner);
+            TimeBasedIncentiveManager(managerProxy).initialize(
+                deployer, campaignImpl, protocolFee, protocolFeeReceiver
+            );
+            console.log("  -> Initialized");
+
+            // Set operator while deployer is still owner
+            if (operator != address(0)) {
+                vm.broadcast();
+                TimeBasedIncentiveManager(managerProxy).setOperator(operator);
+                console.log("  -> Operator set to: ", operator);
+            }
+
+            // Transfer ownership to the intended owner
+            if (owner != deployer) {
+                vm.broadcast();
+                TimeBasedIncentiveManager(managerProxy).transferOwnership(owner);
+                console.log("  -> Ownership transferred to: ", owner);
+            }
         } else {
             console.log("  -> Proxy already deployed");
         }
 
         // Write to deploys JSON (merges with existing)
-        vm.writeJson(vm.toString(managerProxy), _buildJsonDeployPath(), ".StreamingManager");
-    }
-
-    function _setOperator(address managerProxy, address operator) internal {
-        StreamingManager manager = StreamingManager(managerProxy);
-
-        // Only set if different from current
-        if (manager.operator() != operator) {
-            vm.broadcast();
-            manager.setOperator(operator);
-            console.log("Operator set to: ", operator);
-        } else {
-            console.log("Operator already set to: ", operator);
-        }
+        vm.writeJson(vm.toString(managerProxy), _buildJsonDeployPath(), ".TimeBasedIncentiveManager");
     }
 
 }

@@ -2801,6 +2801,7 @@ contract StreamingManagerTest is Test {
         returns (bytes32 root, bytes32[] memory proof)
     {
         require(leaves.length > 0, "Empty leaves");
+        require(proofIndex < leaves.length, "Proof index out of range");
 
         // Pad to power of 2
         uint256 n = leaves.length;

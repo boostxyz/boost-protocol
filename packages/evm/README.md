@@ -113,3 +113,31 @@ The items in brackets are variables
 - {deployerAddress}: Address that deployed the contract
 - {claimFee}: Initial `CLAIM_FEE` used during deployment
 - {etherscanApiKey}: Your Etherscan API key
+
+## Deploying Time-Based Incentive Contracts
+
+Deploy TimeBasedIncentiveManager and TimeBasedIncentiveCampaign for time-based incentives.
+
+1. Add env variables:
+
+    ```bash
+    DEPLOYER_PRIVATE_KEY=<deployer-key>
+    BOOST_DEPLOYMENT_SALT=<deterministic-salt>
+    TIMEBASED_OWNER=<owner-address>
+    TIMEBASED_PROTOCOL_FEE=500              # basis points (500 = 5%)
+    TIMEBASED_FEE_RECEIVER=<fee-recipient>
+    TIMEBASED_OPERATOR=<engine-hot-wallet>  # optional
+    ```
+
+2. Deploy:
+
+    ```bash
+    forge script script/solidity/Deploy_TimeBased.s.sol:DeployTimeBased \
+      --rpc-url <RPC_URL> \
+      --private-key $DEPLOYER_PRIVATE_KEY \
+      --broadcast \
+      --verify \
+      --etherscan-api-key <API_KEY>
+    ```
+
+Addresses are saved to `deploys/<chainId>.json`.

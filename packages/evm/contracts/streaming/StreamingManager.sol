@@ -148,6 +148,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when campaign does not exist
     error InvalidCampaign();
 
+    /// @notice Error when claim expiry duration is below the minimum (1 day)
+    error ClaimExpiryDurationTooShort();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

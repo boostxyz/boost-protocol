@@ -46,6 +46,9 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Running total of all claimed amounts
     uint256 public totalClaimed;
 
+    /// @notice Duration after endTime during which claims are still valid
+    uint64 public claimExpiryDuration;
+
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
 
@@ -100,6 +103,9 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Error when merkle proof is invalid
     error InvalidProof();
 
+    /// @notice Error when the claim window has expired
+    error ClaimExpired();
+
     /// @notice Error when there is nothing to claim
     error NothingToClaim();
 
@@ -120,6 +126,7 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @param totalRewards_ Total rewards after protocol fee
     /// @param startTime_ Campaign start timestamp
     /// @param endTime_ Campaign end timestamp
+    /// @param claimExpiryDuration_ Duration after endTime during which claims are valid
     function initialize(
         address streamingManager_,
         address budget_,
@@ -128,7 +135,8 @@ contract StreamingCampaign is Initializable, IClaw {
         address rewardToken_,
         uint256 totalRewards_,
         uint64 startTime_,
-        uint64 endTime_
+        uint64 endTime_,
+        uint64 claimExpiryDuration_
     ) external initializer {
         if (msg.sender != streamingManager_) revert OnlyStreamingManager();
         streamingManager = streamingManager_;
@@ -139,6 +147,7 @@ contract StreamingCampaign is Initializable, IClaw {
         totalRewards = totalRewards_;
         startTime = startTime_;
         endTime = endTime_;
+        claimExpiryDuration = claimExpiryDuration_;
 
         emit CampaignInitialized(
             streamingManager_, budget_, creator_, configHash_, rewardToken_, totalRewards_, startTime_, endTime_
@@ -176,6 +185,9 @@ contract StreamingCampaign is Initializable, IClaw {
         onlyStreamingManager
         returns (uint256 amount)
     {
+        // Check claim window hasn't expired
+        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) revert ClaimExpired();
+
         // Verify merkle proof
         if (merkleRoot == bytes32(0)) revert InvalidProof();
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(user, rewardToken, cumulativeAmount))));
@@ -204,12 +216,10 @@ contract StreamingCampaign is Initializable, IClaw {
         if (block.timestamp <= endTime) revert CampaignNotEnded();
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
-
-        // Calculate how much is still owed to users
-        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+        uint256 owed = _stillOwed();
 
         // Only withdraw what's not owed to users
-        uint256 withdrawable = balance > stillOwed ? balance - stillOwed : 0;
+        uint256 withdrawable = balance > owed ? balance - owed : 0;
         if (withdrawable == 0) revert NothingToWithdraw();
 
         SafeTransferLib.safeTransfer(rewardToken, creator, withdrawable);
@@ -237,10 +247,8 @@ contract StreamingCampaign is Initializable, IClaw {
         asset = rewardToken;
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
-
-        // Calculate how much is still owed to users
-        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
-        uint256 available = balance > stillOwed ? balance - stillOwed : 0;
+        uint256 owed = _stillOwed();
+        uint256 available = balance > owed ? balance - owed : 0;
 
         if (amount > available) revert InsufficientBalance();
 
@@ -250,9 +258,17 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Get the amount available to withdraw (not owed to users)
     /// @return withdrawable The amount that can be withdrawn
     function getWithdrawable() external view returns (uint256 withdrawable) {
+        if (block.timestamp <= endTime) return 0;
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
-        uint256 stillOwed = totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
-        withdrawable = balance > stillOwed ? balance - stillOwed : 0;
+        uint256 owed = _stillOwed();
+        withdrawable = balance > owed ? balance - owed : 0;
+    }
+
+    /// @notice Calculate how much is still owed to users (respects claim expiry)
+    /// @return The amount still owed, or 0 if the claim window has expired
+    function _stillOwed() internal view returns (uint256) {
+        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) return 0;
+        return totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
     }
 
     /// @notice Set the campaign end time (for emergency cancellation)

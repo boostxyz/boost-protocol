@@ -43,6 +43,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @dev Ensures engine has time to compute and publish at least one merkle root
     uint64 public minCampaignDuration;
 
+    /// @notice Duration after campaign endTime during which claims are valid (default 60 days)
+    uint64 public claimExpiryDuration;
+
     /// @notice Allocated padding for storage packing
     uint32 private __padding;
 
@@ -90,6 +93,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when min campaign duration is updated
     event MinCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
+    /// @notice Emitted when claim expiry duration is updated
+    event ClaimExpiryDurationUpdated(uint64 oldDuration, uint64 newDuration);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -142,6 +148,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when campaign does not exist
     error InvalidCampaign();
 
+    /// @notice Error when claim expiry duration is below the minimum (1 day)
+    error ClaimExpiryDurationTooShort();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -166,6 +175,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         protocolFeeReceiver = protocolFeeReceiver_;
         maxCampaignDuration = 365 days;
         minCampaignDuration = 1 days;
+        claimExpiryDuration = 60 days;
     }
 
     /// @notice Create a new streaming campaign funded by a budget
@@ -234,7 +244,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Initialize the campaign
         StreamingCampaign(campaign).initialize(
-            address(this), address(budget), msg.sender, configHash, rewardToken, netAmount, startTime, endTime
+            address(this),
+            address(budget),
+            msg.sender,
+            configHash,
+            rewardToken,
+            netAmount,
+            startTime,
+            endTime,
+            claimExpiryDuration
         );
 
         emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
@@ -289,7 +307,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns
         StreamingCampaign(campaign).initialize(
-            address(this), address(0), msg.sender, configHash, rewardToken, netAmount, startTime, endTime
+            address(this),
+            address(0),
+            msg.sender,
+            configHash,
+            rewardToken,
+            netAmount,
+            startTime,
+            endTime,
+            claimExpiryDuration
         );
 
         emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
@@ -344,6 +370,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 oldDuration = minCampaignDuration;
         minCampaignDuration = duration_;
         emit MinCampaignDurationUpdated(oldDuration, duration_);
+    }
+
+    /// @notice Set the claim expiry duration (time after campaign end that claims remain valid)
+    /// @param duration_ New claim expiry duration in seconds (minimum 1 day)
+    function setClaimExpiryDuration(uint64 duration_) external onlyOwner {
+        if (duration_ < 1 days) revert ClaimExpiryDurationTooShort();
+        uint64 oldDuration = claimExpiryDuration;
+        claimExpiryDuration = duration_;
+        emit ClaimExpiryDurationUpdated(oldDuration, duration_);
     }
 
     /// @notice Update the merkle root for a campaign

@@ -43,6 +43,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     /// @dev Ensures engine has time to compute and publish at least one merkle root
     uint64 public minCampaignDuration;
 
+    /// @notice Duration after campaign endTime during which claims are valid (default 60 days)
+    uint64 public claimExpiryDuration;
+
     /// @notice Allocated padding for storage packing
     uint32 private __padding;
 
@@ -90,6 +93,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when min campaign duration is updated
     event MinCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
+    /// @notice Emitted when claim expiry duration is updated
+    event ClaimExpiryDurationUpdated(uint64 oldDuration, uint64 newDuration);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -166,6 +172,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         protocolFeeReceiver = protocolFeeReceiver_;
         maxCampaignDuration = 365 days;
         minCampaignDuration = 1 days;
+        claimExpiryDuration = 60 days;
     }
 
     /// @notice Create a new streaming campaign funded by a budget

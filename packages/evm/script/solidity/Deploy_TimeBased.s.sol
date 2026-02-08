@@ -80,7 +80,6 @@ contract DeployTimeBased is ScriptUtils {
         address protocolFeeReceiver,
         address operator
     ) internal returns (address managerProxy) {
-        address deployer = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
 
         // Deploy TimeBasedIncentiveManager implementation
@@ -88,55 +87,64 @@ contract DeployTimeBased is ScriptUtils {
         address managerImpl = _getCreate2Address(implInitCode, "");
         console.log("TimeBasedIncentiveManager Implementation: ", managerImpl);
 
-        bool isNewImpl = _deploy2(implInitCode, "");
-        if (isNewImpl) {
+        if (_deploy2(implInitCode, "")) {
             console.log("  -> Deployed new implementation");
         }
 
-        // Implementation address logged but not saved - only the proxy matters
-
-        // Deploy ERC1967 proxy pointing to implementation
+        // Deploy ERC1967 proxy via CREATE2_FACTORY
         managerProxy = LibClone.predictDeterministicAddressERC1967(managerImpl, salt, CREATE2_FACTORY);
         console.log("TimeBasedIncentiveManager Proxy: ", managerProxy);
 
-        // Check if proxy already deployed
         uint256 codeSize;
         assembly {
             codeSize := extcodesize(managerProxy)
         }
 
         if (codeSize == 0) {
-            // Deploy proxy
+            bytes memory payload = abi.encodePacked(salt, LibClone.initCodeERC1967(managerImpl));
             vm.broadcast();
-            managerProxy = LibClone.deployDeterministicERC1967(managerImpl, salt);
+            (bool success,) = CREATE2_FACTORY.call(payload);
+            require(success, "ERC1967 proxy CREATE2 deploy failed");
             console.log("  -> Deployed new proxy");
 
-            // Initialize with deployer as temporary owner so we can configure before transferring
-            vm.broadcast();
-            TimeBasedIncentiveManager(managerProxy).initialize(
-                deployer, campaignImpl, protocolFee, protocolFeeReceiver
-            );
-            console.log("  -> Initialized");
-
-            // Set operator while deployer is still owner
-            if (operator != address(0)) {
-                vm.broadcast();
-                TimeBasedIncentiveManager(managerProxy).setOperator(operator);
-                console.log("  -> Operator set to: ", operator);
-            }
-
-            // Transfer ownership to the intended owner
-            if (owner != deployer) {
-                vm.broadcast();
-                TimeBasedIncentiveManager(managerProxy).transferOwnership(owner);
-                console.log("  -> Ownership transferred to: ", owner);
-            }
+            _configureManager(managerProxy, campaignImpl, owner, protocolFee, protocolFeeReceiver, operator);
         } else {
             console.log("  -> Proxy already deployed");
         }
 
-        // Write to deploys JSON (merges with existing)
         vm.writeJson(vm.toString(managerProxy), _buildJsonDeployPath(), ".TimeBasedIncentiveManager");
+    }
+
+    function _configureManager(
+        address managerProxy,
+        address campaignImpl,
+        address owner,
+        uint64 protocolFee,
+        address protocolFeeReceiver,
+        address operator
+    ) internal {
+        address deployer = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
+
+        // Initialize with deployer as temporary owner so we can configure before transferring
+        vm.broadcast();
+        TimeBasedIncentiveManager(managerProxy).initialize(
+            deployer, campaignImpl, protocolFee, protocolFeeReceiver
+        );
+        console.log("  -> Initialized");
+
+        // Set operator while deployer is still owner
+        if (operator != address(0)) {
+            vm.broadcast();
+            TimeBasedIncentiveManager(managerProxy).setOperator(operator);
+            console.log("  -> Operator set to: ", operator);
+        }
+
+        // Transfer ownership to the intended owner
+        if (owner != deployer) {
+            vm.broadcast();
+            TimeBasedIncentiveManager(managerProxy).transferOwnership(owner);
+            console.log("  -> Ownership transferred to: ", owner);
+        }
     }
 
 }

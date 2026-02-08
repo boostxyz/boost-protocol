@@ -2420,7 +2420,6 @@ contract StreamingManagerTest is Test {
         _runGasTest(10000);
     }
 
-
     function _runGasTest(uint256 numUsers) internal {
         // Create a campaign with enough funds
         uint64 startTime = uint64(block.timestamp + 1 hours);
@@ -2777,7 +2776,9 @@ contract StreamingManagerTest is Test {
         // Claim within 60 days of the NEW endTime (cancel time) should work
         vm.warp(cancelTime + 59 days);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
-        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed within expiry of cancelled campaign");
+        assertEq(
+            rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed within expiry of cancelled campaign"
+        );
     }
 
     /// @notice Build merkle tree without sorting - faster for large trees

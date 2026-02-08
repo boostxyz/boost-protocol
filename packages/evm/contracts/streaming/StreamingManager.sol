@@ -244,7 +244,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Initialize the campaign
         StreamingCampaign(campaign).initialize(
-            address(this), address(budget), msg.sender, configHash, rewardToken, netAmount, startTime, endTime, claimExpiryDuration
+            address(this),
+            address(budget),
+            msg.sender,
+            configHash,
+            rewardToken,
+            netAmount,
+            startTime,
+            endTime,
+            claimExpiryDuration
         );
 
         emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
@@ -299,7 +307,15 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns
         StreamingCampaign(campaign).initialize(
-            address(this), address(0), msg.sender, configHash, rewardToken, netAmount, startTime, endTime, claimExpiryDuration
+            address(this),
+            address(0),
+            msg.sender,
+            configHash,
+            rewardToken,
+            netAmount,
+            startTime,
+            endTime,
+            claimExpiryDuration
         );
 
         emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);

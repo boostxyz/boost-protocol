@@ -167,6 +167,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when batch update array is empty
     error EmptyBatch();
 
+    /// @notice Error when token transfer amount doesn't match (fee-on-transfer tokens)
+    error FeeOnTransferNotSupported();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

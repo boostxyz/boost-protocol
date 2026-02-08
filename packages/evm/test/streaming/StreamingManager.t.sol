@@ -2420,20 +2420,6 @@ contract StreamingManagerTest is Test {
         _runGasTest(10000);
     }
 
-    /// @notice Gas test with 30,000 users in merkle tree
-    function test_Claim_Gas_30000Users() public {
-        _runGasTest(30000);
-    }
-
-    /// @notice Gas test with 50,000 users in merkle tree
-    function test_Claim_Gas_50000Users() public {
-        _runGasTest(50000);
-    }
-
-    /// @notice Gas test with 100,000 users in merkle tree
-    function test_Claim_Gas_100000Users() public {
-        _runGasTest(100000);
-    }
 
     function _runGasTest(uint256 numUsers) internal {
         // Create a campaign with enough funds

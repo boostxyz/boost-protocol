@@ -314,8 +314,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 feeAmount = (totalAmount * protocolFee) / 10000;
         uint256 netAmount = totalAmount - feeAmount;
 
-        // Pull tokens from caller
+        // Pull tokens from caller and verify full amount received
+        uint256 balanceBefore = SafeTransferLib.balanceOf(rewardToken, address(this));
         rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
+        if (SafeTransferLib.balanceOf(rewardToken, address(this)) - balanceBefore != totalAmount) {
+            revert FeeOnTransferNotSupported();
+        }
 
         // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
@@ -325,12 +329,20 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Transfer fee to protocol fee receiver (if fee > 0)
         if (feeAmount > 0) {
+            uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
             rewardToken.safeTransfer(protocolFeeReceiver, feeAmount);
+            if (SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver) - feeReceiverBefore != feeAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Transfer net rewards to campaign (skip if 0, e.g., 100% fee)
         if (netAmount > 0) {
+            uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
             rewardToken.safeTransfer(campaign, netAmount);
+            if (SafeTransferLib.balanceOf(rewardToken, campaign) - campaignBefore != netAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns

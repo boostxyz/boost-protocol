@@ -11,15 +11,15 @@ import {MockERC20} from "contracts/shared/Mocks.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
-import {StreamingManager} from "contracts/streaming/StreamingManager.sol";
-import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
+import {TimeBasedIncentiveManager} from "contracts/timebased/TimeBasedIncentiveManager.sol";
+import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
-contract StreamingManagerTest is Test {
+contract TimeBasedIncentiveManagerTest is Test {
     MockERC20 rewardToken;
     ManagedBudget budget;
-    StreamingManager managerImpl;
-    StreamingManager manager;
-    StreamingCampaign campaignImpl;
+    TimeBasedIncentiveManager managerImpl;
+    TimeBasedIncentiveManager manager;
+    TimeBasedIncentiveCampaign campaignImpl;
 
     address constant PROTOCOL_FEE_RECEIVER = address(0xFEE);
     address constant CREATOR = address(0xCAFE);
@@ -31,13 +31,13 @@ contract StreamingManagerTest is Test {
         // Deploy mock ERC20 reward token
         rewardToken = new MockERC20();
 
-        // Deploy StreamingCampaign implementation
-        campaignImpl = new StreamingCampaign();
+        // Deploy TimeBasedIncentiveCampaign implementation
+        campaignImpl = new TimeBasedIncentiveCampaign();
 
-        // Deploy StreamingManager implementation and proxy
-        managerImpl = new StreamingManager();
+        // Deploy TimeBasedIncentiveManager implementation and proxy
+        managerImpl = new TimeBasedIncentiveManager();
         address proxy = LibClone.deployERC1967(address(managerImpl));
-        manager = StreamingManager(proxy);
+        manager = TimeBasedIncentiveManager(proxy);
         manager.initialize(address(this), address(campaignImpl), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
 
         // Deploy and initialize ManagedBudget
@@ -62,7 +62,7 @@ contract StreamingManagerTest is Test {
     }
 
     ////////////////////////////////
-    // StreamingManager.createCampaign - Success cases
+    // TimeBasedIncentiveManager.createCampaign - Success cases
     ////////////////////////////////
 
     function test_CreateCampaign_Success() public {
@@ -80,8 +80,8 @@ contract StreamingManagerTest is Test {
         address campaignAddr = manager.getCampaign(campaignId);
         assertTrue(campaignAddr != address(0), "Campaign address should not be zero");
 
-        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
-        assertEq(campaign.streamingManager(), address(manager), "Manager should be set");
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
+        assertEq(campaign.timeBasedIncentiveManager(), address(manager), "Manager should be set");
         assertEq(campaign.budget(), address(budget), "Budget should be set");
         assertEq(campaign.creator(), CREATOR, "Creator should be set");
         assertEq(campaign.configHash(), configHash, "Config hash should be set");
@@ -119,15 +119,15 @@ contract StreamingManagerTest is Test {
         assertEq(rewardToken.balanceOf(campaignAddr), expectedNet, "Campaign should receive net amount");
 
         // Check totalRewards in campaign
-        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
         assertEq(campaign.totalRewards(), expectedNet, "totalRewards should equal net amount");
     }
 
     function test_CreateCampaign_ZeroFee() public {
         // Deploy manager with 0% fee
-        StreamingManager zeroFeeImpl = new StreamingManager();
+        TimeBasedIncentiveManager zeroFeeImpl = new TimeBasedIncentiveManager();
         address zeroFeeProxy = LibClone.deployERC1967(address(zeroFeeImpl));
-        StreamingManager zeroFeeManager = StreamingManager(zeroFeeProxy);
+        TimeBasedIncentiveManager zeroFeeManager = TimeBasedIncentiveManager(zeroFeeProxy);
         zeroFeeManager.initialize(address(this), address(campaignImpl), 0, PROTOCOL_FEE_RECEIVER);
 
         // Authorize manager on budget
@@ -169,7 +169,7 @@ contract StreamingManagerTest is Test {
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, false);
         // We can't predict the campaign address, so we use false for non-indexed data check
-        emit StreamingManager.CampaignCreated(
+        emit TimeBasedIncentiveManager.CampaignCreated(
             1, // campaignId
             configHash,
             address(0), // campaign address unknown
@@ -203,9 +203,9 @@ contract StreamingManagerTest is Test {
 
     function test_CreateCampaign_MaxFee() public {
         // Deploy manager with 100% fee
-        StreamingManager maxFeeImpl = new StreamingManager();
+        TimeBasedIncentiveManager maxFeeImpl = new TimeBasedIncentiveManager();
         address maxFeeProxy = LibClone.deployERC1967(address(maxFeeImpl));
-        StreamingManager maxFeeManager = StreamingManager(maxFeeProxy);
+        TimeBasedIncentiveManager maxFeeManager = TimeBasedIncentiveManager(maxFeeProxy);
         maxFeeManager.initialize(address(this), address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
 
         // Authorize manager on budget
@@ -227,7 +227,7 @@ contract StreamingManagerTest is Test {
             maxFeeManager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
 
         address campaignAddr = maxFeeManager.getCampaign(campaignId);
-        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
 
         // Fee receiver gets 100% of tokens
         assertEq(
@@ -241,12 +241,12 @@ contract StreamingManagerTest is Test {
 
         // Campaign still initializes with totalRewards = 0
         assertEq(campaign.totalRewards(), 0, "totalRewards should be 0");
-        assertEq(campaign.streamingManager(), address(maxFeeManager), "Manager should be set");
+        assertEq(campaign.timeBasedIncentiveManager(), address(maxFeeManager), "Manager should be set");
         assertEq(campaign.creator(), CREATOR, "Creator should be set");
     }
 
     ////////////////////////////////
-    // StreamingManager.createCampaign - Revert cases
+    // TimeBasedIncentiveManager.createCampaign - Revert cases
     ////////////////////////////////
 
     function test_CreateCampaign_RevertUnauthorized() public {
@@ -255,7 +255,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(unauthorized);
-        vm.expectRevert(StreamingManager.NotAuthorizedOnBudget.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorizedOnBudget.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -264,7 +264,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.StartTimeInPast.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.StartTimeInPast.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -273,7 +273,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = startTime; // Same as start, not after
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.EndTimeBeforeStart.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.EndTimeBeforeStart.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -282,7 +282,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = startTime + 365 days + 1; // Just over 1 year
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.DurationTooLong.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.DurationTooLong.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -302,7 +302,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = startTime + 1 days - 1; // Just under 1 day
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.DurationTooShort.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.DurationTooShort.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -322,7 +322,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.ZeroAmount.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 0, startTime, endTime);
     }
 
@@ -331,7 +331,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.InvalidRewardToken.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidRewardToken.selector);
         manager.createCampaign(budget, keccak256("test"), address(0), 10 ether, startTime, endTime);
     }
 
@@ -359,14 +359,14 @@ contract StreamingManagerTest is Test {
         vm.mockCall(address(budget), abi.encodeWithSelector(ABudget.disburse.selector), abi.encode(false));
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.DisburseFailed.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.DisburseFailed.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         vm.clearMockedCalls();
     }
 
     ////////////////////////////////
-    // StreamingCampaign.initialize - Revert cases
+    // TimeBasedIncentiveCampaign.initialize - Revert cases
     ////////////////////////////////
 
     function test_CampaignInitialize_RevertDoubleInit() public {
@@ -379,7 +379,7 @@ contract StreamingManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         address campaignAddr = manager.getCampaign(campaignId);
-        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
 
         // Try to initialize again
         vm.expectRevert(); // Initializable: already initialized
@@ -412,13 +412,13 @@ contract StreamingManagerTest is Test {
         );
     }
 
-    function test_CampaignInitialize_RevertNotStreamingManager() public {
+    function test_CampaignInitialize_RevertNotTimeBasedIncentiveManager() public {
         // Manually clone the campaign implementation
         address clone = LibClone.clone(address(campaignImpl));
 
         // Try to initialize from a non-manager address
-        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
-        StreamingCampaign(clone).initialize(
+        vm.expectRevert(TimeBasedIncentiveCampaign.OnlyTimeBasedIncentiveManager.selector);
+        TimeBasedIncentiveCampaign(clone).initialize(
             address(manager),
             address(budget),
             CREATOR,
@@ -440,7 +440,7 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         // Merkle root should be zero (not set yet)
         assertEq(campaign.merkleRoot(), bytes32(0), "Merkle root should be zero after initialization");
@@ -451,7 +451,7 @@ contract StreamingManagerTest is Test {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
         bytes32 configHash = keccak256("test-config");
-        // We expect the CampaignInitialized event from StreamingCampaign
+        // We expect the CampaignInitialized event from TimeBasedIncentiveCampaign
         // Since we can't predict the campaign address, we check the event is emitted
         vm.prank(CREATOR);
         vm.recordLogs();
@@ -497,31 +497,31 @@ contract StreamingManagerTest is Test {
     }
 
     function test_Initialize_RevertZeroFeeReceiver() public {
-        StreamingManager impl = new StreamingManager();
+        TimeBasedIncentiveManager impl = new TimeBasedIncentiveManager();
         address proxy = LibClone.deployERC1967(address(impl));
-        vm.expectRevert(StreamingManager.ZeroFeeReceiver.selector);
-        StreamingManager(proxy).initialize(address(this), address(campaignImpl), PROTOCOL_FEE, address(0));
+        vm.expectRevert(TimeBasedIncentiveManager.ZeroFeeReceiver.selector);
+        TimeBasedIncentiveManager(proxy).initialize(address(this), address(campaignImpl), PROTOCOL_FEE, address(0));
     }
 
     function test_Initialize_RevertInvalidImplementation() public {
-        StreamingManager impl = new StreamingManager();
+        TimeBasedIncentiveManager impl = new TimeBasedIncentiveManager();
         address proxy = LibClone.deployERC1967(address(impl));
-        vm.expectRevert(StreamingManager.InvalidImplementation.selector);
-        StreamingManager(proxy).initialize(address(this), address(0), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidImplementation.selector);
+        TimeBasedIncentiveManager(proxy).initialize(address(this), address(0), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
     }
 
     function test_Initialize_RevertProtocolFeeTooHigh() public {
-        StreamingManager impl = new StreamingManager();
+        TimeBasedIncentiveManager impl = new TimeBasedIncentiveManager();
         address proxy = LibClone.deployERC1967(address(impl));
-        vm.expectRevert(StreamingManager.ProtocolFeeTooHigh.selector);
-        StreamingManager(proxy).initialize(address(this), address(campaignImpl), 10001, PROTOCOL_FEE_RECEIVER);
+        vm.expectRevert(TimeBasedIncentiveManager.ProtocolFeeTooHigh.selector);
+        TimeBasedIncentiveManager(proxy).initialize(address(this), address(campaignImpl), 10001, PROTOCOL_FEE_RECEIVER);
     }
 
     function test_Initialize_MaxProtocolFee() public {
         // 100% fee (10000 bps) should be allowed
-        StreamingManager impl = new StreamingManager();
+        TimeBasedIncentiveManager impl = new TimeBasedIncentiveManager();
         address proxy = LibClone.deployERC1967(address(impl));
-        StreamingManager maxFeeManager = StreamingManager(proxy);
+        TimeBasedIncentiveManager maxFeeManager = TimeBasedIncentiveManager(proxy);
         maxFeeManager.initialize(address(this), address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
         assertEq(maxFeeManager.protocolFee(), 10000, "100% fee should be valid");
     }
@@ -544,7 +544,7 @@ contract StreamingManagerTest is Test {
         uint64 newFee = 500; // 5%
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.ProtocolFeeUpdated(PROTOCOL_FEE, newFee);
+        emit TimeBasedIncentiveManager.ProtocolFeeUpdated(PROTOCOL_FEE, newFee);
         manager.setProtocolFee(newFee);
 
         assertEq(manager.protocolFee(), newFee, "Protocol fee should be updated");
@@ -557,7 +557,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_SetProtocolFee_RevertFeeTooHigh() public {
-        vm.expectRevert(StreamingManager.ProtocolFeeTooHigh.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.ProtocolFeeTooHigh.selector);
         manager.setProtocolFee(10001); // >100%
     }
 
@@ -574,7 +574,7 @@ contract StreamingManagerTest is Test {
         address newReceiver = address(0xBEEF);
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.ProtocolFeeReceiverUpdated(PROTOCOL_FEE_RECEIVER, newReceiver);
+        emit TimeBasedIncentiveManager.ProtocolFeeReceiverUpdated(PROTOCOL_FEE_RECEIVER, newReceiver);
         manager.setProtocolFeeReceiver(newReceiver);
 
         assertEq(manager.protocolFeeReceiver(), newReceiver, "Fee receiver should be updated");
@@ -587,7 +587,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_SetProtocolFeeReceiver_RevertZeroAddress() public {
-        vm.expectRevert(StreamingManager.ZeroFeeReceiver.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.ZeroFeeReceiver.selector);
         manager.setProtocolFeeReceiver(address(0));
     }
 
@@ -596,17 +596,17 @@ contract StreamingManagerTest is Test {
     ////////////////////////////////
 
     function test_SetCampaignImplementation_Success() public {
-        StreamingCampaign newImpl = new StreamingCampaign();
+        TimeBasedIncentiveCampaign newImpl = new TimeBasedIncentiveCampaign();
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.CampaignImplementationUpdated(address(campaignImpl), address(newImpl));
+        emit TimeBasedIncentiveManager.CampaignImplementationUpdated(address(campaignImpl), address(newImpl));
         manager.setCampaignImplementation(address(newImpl));
 
         assertEq(manager.campaignImplementation(), address(newImpl), "Implementation should be updated");
     }
 
     function test_SetCampaignImplementation_RevertNotOwner() public {
-        StreamingCampaign newImpl = new StreamingCampaign();
+        TimeBasedIncentiveCampaign newImpl = new TimeBasedIncentiveCampaign();
 
         vm.prank(CREATOR);
         vm.expectRevert(); // Ownable.Unauthorized
@@ -614,13 +614,13 @@ contract StreamingManagerTest is Test {
     }
 
     function test_SetCampaignImplementation_RevertZeroAddress() public {
-        vm.expectRevert(StreamingManager.InvalidImplementation.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidImplementation.selector);
         manager.setCampaignImplementation(address(0));
     }
 
     function test_SetCampaignImplementation_NewCampaignsUseNewImpl() public {
         // Create a new campaign implementation
-        StreamingCampaign newImpl = new StreamingCampaign();
+        TimeBasedIncentiveCampaign newImpl = new TimeBasedIncentiveCampaign();
         manager.setCampaignImplementation(address(newImpl));
 
         // Create a campaign - should use the new implementation
@@ -643,7 +643,7 @@ contract StreamingManagerTest is Test {
         address newOperator = address(0x0BE8);
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.OperatorUpdated(address(0), newOperator);
+        emit TimeBasedIncentiveManager.OperatorUpdated(address(0), newOperator);
         manager.setOperator(newOperator);
 
         assertEq(manager.operator(), newOperator, "Operator should be updated");
@@ -662,7 +662,7 @@ contract StreamingManagerTest is Test {
 
         // Then disable by setting to zero
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.OperatorUpdated(address(0x0BE8), address(0));
+        emit TimeBasedIncentiveManager.OperatorUpdated(address(0x0BE8), address(0));
         manager.setOperator(address(0));
 
         assertEq(manager.operator(), address(0), "Operator should be zero (disabled)");
@@ -676,7 +676,7 @@ contract StreamingManagerTest is Test {
         uint64 newMax = 180 days;
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.MaxCampaignDurationUpdated(365 days, newMax);
+        emit TimeBasedIncentiveManager.MaxCampaignDurationUpdated(365 days, newMax);
         manager.setMaxCampaignDuration(newMax);
 
         assertEq(manager.maxCampaignDuration(), newMax, "Max duration should be updated");
@@ -690,7 +690,7 @@ contract StreamingManagerTest is Test {
 
     function test_SetMaxCampaignDuration_RevertInvalidRange() public {
         // Try to set max below current min (1 day)
-        vm.expectRevert(StreamingManager.InvalidDurationRange.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidDurationRange.selector);
         manager.setMaxCampaignDuration(12 hours);
     }
 
@@ -702,7 +702,7 @@ contract StreamingManagerTest is Test {
         uint64 newMin = 7 days;
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.MinCampaignDurationUpdated(1 days, newMin);
+        emit TimeBasedIncentiveManager.MinCampaignDurationUpdated(1 days, newMin);
         manager.setMinCampaignDuration(newMin);
 
         assertEq(manager.minCampaignDuration(), newMin, "Min duration should be updated");
@@ -716,7 +716,7 @@ contract StreamingManagerTest is Test {
 
     function test_SetMinCampaignDuration_RevertInvalidRange() public {
         // Try to set min above current max (365 days)
-        vm.expectRevert(StreamingManager.InvalidDurationRange.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidDurationRange.selector);
         manager.setMinCampaignDuration(400 days);
     }
 
@@ -728,7 +728,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = startTime + 31 days; // Over new max
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.DurationTooLong.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.DurationTooLong.selector);
         manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         // But 30 days should work
@@ -756,10 +756,10 @@ contract StreamingManagerTest is Test {
         uint256 totalCommitted = 5 ether;
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
+        emit TimeBasedIncentiveManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
         manager.updateRoot(campaignId, newRoot, totalCommitted);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated");
         assertEq(campaign.totalCommitted(), totalCommitted, "Total committed should be updated");
     }
@@ -781,10 +781,10 @@ contract StreamingManagerTest is Test {
 
         vm.prank(operatorAddr);
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
+        emit TimeBasedIncentiveManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
         manager.updateRoot(campaignId, newRoot, totalCommitted);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated by operator");
     }
 
@@ -803,12 +803,12 @@ contract StreamingManagerTest is Test {
         // First update
         manager.updateRoot(campaignId, root1, 3 ether);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), root1, "First root should be set");
 
         // Second update - should emit with old root
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, root1, root2, 5 ether);
+        emit TimeBasedIncentiveManager.RootUpdated(campaignId, root1, root2, 5 ether);
         manager.updateRoot(campaignId, root2, 5 ether);
 
         assertEq(campaign.merkleRoot(), root2, "Second root should be set");
@@ -825,7 +825,7 @@ contract StreamingManagerTest is Test {
 
         // Try to update as random address (not owner, not operator)
         vm.prank(address(0xBAD));
-        vm.expectRevert(StreamingManager.NotAuthorized.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
         manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
     }
 
@@ -843,18 +843,18 @@ contract StreamingManagerTest is Test {
 
         // Creator cannot update root (not owner, operator not set)
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.NotAuthorized.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
         manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
 
         // But owner still can
         manager.updateRoot(campaignId, keccak256("good-root"), 1 ether);
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), keccak256("good-root"), "Owner should still be able to update");
     }
 
     function test_UpdateRoot_RevertInvalidCampaign() public {
         // Try to update root for non-existent campaign
-        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
         manager.updateRoot(999, keccak256("root"), 1 ether);
     }
 
@@ -877,20 +877,20 @@ contract StreamingManagerTest is Test {
         vm.stopPrank();
 
         // Build batch
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](3);
-        updates[0] = StreamingManager.RootUpdate(id1, keccak256("root1"), 1 ether);
-        updates[1] = StreamingManager.RootUpdate(id2, keccak256("root2"), 2 ether);
-        updates[2] = StreamingManager.RootUpdate(id3, keccak256("root3"), 3 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](3);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether);
+        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 3 ether);
 
         manager.updateRootsBatch(updates);
 
         // Verify all roots set
-        assertEq(StreamingCampaign(manager.getCampaign(id1)).merkleRoot(), keccak256("root1"));
-        assertEq(StreamingCampaign(manager.getCampaign(id1)).totalCommitted(), 1 ether);
-        assertEq(StreamingCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2"));
-        assertEq(StreamingCampaign(manager.getCampaign(id2)).totalCommitted(), 2 ether);
-        assertEq(StreamingCampaign(manager.getCampaign(id3)).merkleRoot(), keccak256("root3"));
-        assertEq(StreamingCampaign(manager.getCampaign(id3)).totalCommitted(), 3 ether);
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id1)).merkleRoot(), keccak256("root1"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id1)).totalCommitted(), 1 ether);
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).totalCommitted(), 2 ether);
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).merkleRoot(), keccak256("root3"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).totalCommitted(), 3 ether);
     }
 
     function test_UpdateRootsBatch_SingleItem() public {
@@ -901,13 +901,13 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](1);
-        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
 
         manager.updateRootsBatch(updates);
 
-        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root1"));
-        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).totalCommitted(), 5 ether);
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root1"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).totalCommitted(), 5 ether);
     }
 
     function test_UpdateRootsBatch_AsOperator() public {
@@ -921,13 +921,13 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](1);
-        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
 
         vm.prank(operatorAddr);
         manager.updateRootsBatch(updates);
 
-        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root1"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root1"));
     }
 
     function test_UpdateRootsBatch_EmitsEvents() public {
@@ -941,14 +941,14 @@ contract StreamingManagerTest is Test {
             manager.createCampaign(budget, keccak256("test2"), address(rewardToken), 3 ether, startTime, endTime);
         vm.stopPrank();
 
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](2);
-        updates[0] = StreamingManager.RootUpdate(id1, keccak256("root1"), 1 ether);
-        updates[1] = StreamingManager.RootUpdate(id2, keccak256("root2"), 2 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether);
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(id1, bytes32(0), keccak256("root1"), 1 ether);
+        emit TimeBasedIncentiveManager.RootUpdated(id1, bytes32(0), keccak256("root1"), 1 ether);
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(id2, bytes32(0), keccak256("root2"), 2 ether);
+        emit TimeBasedIncentiveManager.RootUpdated(id2, bytes32(0), keccak256("root2"), 2 ether);
 
         manager.updateRootsBatch(updates);
     }
@@ -961,28 +961,28 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](1);
-        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
 
         vm.prank(address(0xBAD));
-        vm.expectRevert(StreamingManager.NotAuthorized.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
         manager.updateRootsBatch(updates);
     }
 
     function test_UpdateRootsBatch_RevertEmptyBatch() public {
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](0);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](0);
 
-        vm.expectRevert(StreamingManager.EmptyBatch.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.EmptyBatch.selector);
         manager.updateRootsBatch(updates);
     }
 
     function test_UpdateRootsBatch_RevertBatchTooLarge() public {
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](51);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](51);
         for (uint256 i; i < 51; ++i) {
-            updates[i] = StreamingManager.RootUpdate(i, keccak256(abi.encode(i)), 1 ether);
+            updates[i] = TimeBasedIncentiveManager.RootUpdate(i, keccak256(abi.encode(i)), 1 ether);
         }
 
-        vm.expectRevert(StreamingManager.BatchTooLarge.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.BatchTooLarge.selector);
         manager.updateRootsBatch(updates);
     }
 
@@ -995,15 +995,15 @@ contract StreamingManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         // Second entry has a bad campaignId
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](2);
-        updates[0] = StreamingManager.RootUpdate(validId, keccak256("root1"), 1 ether);
-        updates[1] = StreamingManager.RootUpdate(999, keccak256("root2"), 2 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(validId, keccak256("root1"), 1 ether);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(999, keccak256("root2"), 2 ether);
 
-        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
         manager.updateRootsBatch(updates);
 
         // Verify the first campaign's root was NOT updated (entire tx reverted)
-        assertEq(StreamingCampaign(manager.getCampaign(validId)).merkleRoot(), bytes32(0));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(validId)).merkleRoot(), bytes32(0));
     }
 
     function test_UpdateRootsBatch_ExactMaxBatchSize() public {
@@ -1022,17 +1022,17 @@ contract StreamingManagerTest is Test {
         vm.stopPrank();
 
         // Build batch of exactly 50
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](batchSize);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](batchSize);
         for (uint256 i; i < batchSize; ++i) {
-            updates[i] = StreamingManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
         }
 
         manager.updateRootsBatch(updates);
 
         // Spot-check first and last
-        assertEq(StreamingCampaign(manager.getCampaign(ids[0])).merkleRoot(), keccak256(abi.encode("root", uint256(0))));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(ids[0])).merkleRoot(), keccak256(abi.encode("root", uint256(0))));
         assertEq(
-            StreamingCampaign(manager.getCampaign(ids[batchSize - 1])).merkleRoot(),
+            TimeBasedIncentiveCampaign(manager.getCampaign(ids[batchSize - 1])).merkleRoot(),
             keccak256(abi.encode("root", batchSize - 1))
         );
     }
@@ -1046,21 +1046,21 @@ contract StreamingManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         // Same campaign twice — second update overwrites the first
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](2);
-        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root-a"), 1 ether);
-        updates[1] = StreamingManager.RootUpdate(campaignId, keccak256("root-b"), 2 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-a"), 1 ether);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-b"), 2 ether);
 
         // Events: first emits oldRoot=0→root-a, second emits oldRoot=root-a→root-b
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, bytes32(0), keccak256("root-a"), 1 ether);
+        emit TimeBasedIncentiveManager.RootUpdated(campaignId, bytes32(0), keccak256("root-a"), 1 ether);
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(campaignId, keccak256("root-a"), keccak256("root-b"), 2 ether);
+        emit TimeBasedIncentiveManager.RootUpdated(campaignId, keccak256("root-a"), keccak256("root-b"), 2 ether);
 
         manager.updateRootsBatch(updates);
 
         // Final state is the last update
-        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root-b"));
-        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).totalCommitted(), 2 ether);
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root-b"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).totalCommitted(), 2 ether);
     }
 
     function test_UpdateRootsBatch_SequentialBatches() public {
@@ -1075,25 +1075,25 @@ contract StreamingManagerTest is Test {
         vm.stopPrank();
 
         // First batch
-        StreamingManager.RootUpdate[] memory batch1 = new StreamingManager.RootUpdate[](2);
-        batch1[0] = StreamingManager.RootUpdate(id1, keccak256("root1-a"), 1 ether);
-        batch1[1] = StreamingManager.RootUpdate(id2, keccak256("root2-a"), 2 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory batch1 = new TimeBasedIncentiveManager.RootUpdate[](2);
+        batch1[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-a"), 1 ether);
+        batch1[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-a"), 2 ether);
         manager.updateRootsBatch(batch1);
 
         // Second batch — oldRoot in events should reflect first batch
-        StreamingManager.RootUpdate[] memory batch2 = new StreamingManager.RootUpdate[](2);
-        batch2[0] = StreamingManager.RootUpdate(id1, keccak256("root1-b"), 1.5 ether);
-        batch2[1] = StreamingManager.RootUpdate(id2, keccak256("root2-b"), 2.5 ether);
+        TimeBasedIncentiveManager.RootUpdate[] memory batch2 = new TimeBasedIncentiveManager.RootUpdate[](2);
+        batch2[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-b"), 1.5 ether);
+        batch2[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-b"), 2.5 ether);
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(id1, keccak256("root1-a"), keccak256("root1-b"), 1.5 ether);
+        emit TimeBasedIncentiveManager.RootUpdated(id1, keccak256("root1-a"), keccak256("root1-b"), 1.5 ether);
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.RootUpdated(id2, keccak256("root2-a"), keccak256("root2-b"), 2.5 ether);
+        emit TimeBasedIncentiveManager.RootUpdated(id2, keccak256("root2-a"), keccak256("root2-b"), 2.5 ether);
 
         manager.updateRootsBatch(batch2);
 
-        assertEq(StreamingCampaign(manager.getCampaign(id1)).merkleRoot(), keccak256("root1-b"));
-        assertEq(StreamingCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2-b"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id1)).merkleRoot(), keccak256("root1-b"));
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2-b"));
     }
 
     function test_UpdateRootsBatch_Gas() public {
@@ -1111,9 +1111,9 @@ contract StreamingManagerTest is Test {
         vm.stopPrank();
 
         // Build batch
-        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](20);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](20);
         for (uint256 i; i < 20; ++i) {
-            updates[i] = StreamingManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
         }
 
         uint256 gasBefore = gasleft();
@@ -1125,10 +1125,10 @@ contract StreamingManagerTest is Test {
     }
 
     ////////////////////////////////
-    // StreamingCampaign.setMerkleRoot tests
+    // TimeBasedIncentiveCampaign.setMerkleRoot tests
     ////////////////////////////////
 
-    function test_CampaignSetMerkleRoot_RevertNotStreamingManager() public {
+    function test_CampaignSetMerkleRoot_RevertNotTimeBasedIncentiveManager() public {
         // Create a campaign
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
@@ -1137,11 +1137,11 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         // Try to call setMerkleRoot directly (not through manager)
         vm.prank(address(this)); // Even owner of manager can't call directly
-        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.OnlyTimeBasedIncentiveManager.selector);
         campaign.setMerkleRoot(keccak256("bad-root"), 1 ether);
     }
 
@@ -1186,7 +1186,7 @@ contract StreamingManagerTest is Test {
 
     function test_UpgradeToAndCall_Success() public {
         // Deploy a new implementation
-        StreamingManager newImpl = new StreamingManager();
+        TimeBasedIncentiveManager newImpl = new TimeBasedIncentiveManager();
 
         // Upgrade to new implementation
         manager.upgradeToAndCall(address(newImpl), "");
@@ -1199,7 +1199,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_UpgradeToAndCall_RevertNotOwner() public {
-        StreamingManager newImpl = new StreamingManager();
+        TimeBasedIncentiveManager newImpl = new TimeBasedIncentiveManager();
 
         vm.prank(CREATOR);
         vm.expectRevert(); // Ownable.Unauthorized
@@ -1219,7 +1219,7 @@ contract StreamingManagerTest is Test {
         uint256 campaignCountBefore = manager.campaignCount();
 
         // Deploy and upgrade to new implementation
-        StreamingManager newImpl = new StreamingManager();
+        TimeBasedIncentiveManager newImpl = new TimeBasedIncentiveManager();
         manager.upgradeToAndCall(address(newImpl), "");
 
         // Verify state is preserved
@@ -1240,7 +1240,7 @@ contract StreamingManagerTest is Test {
 
     function test_Claim_Success() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
@@ -1287,7 +1287,7 @@ contract StreamingManagerTest is Test {
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        // Check for StreamingCampaign.Claimed event
+        // Check for TimeBasedIncentiveCampaign.Claimed event
         bytes32 campaignClaimedSig = keccak256("Claimed(address,uint256,uint256)");
         bool foundCampaignClaimed = false;
         for (uint256 i = 0; i < logs.length; i++) {
@@ -1302,7 +1302,7 @@ contract StreamingManagerTest is Test {
         }
         assertTrue(foundCampaignClaimed, "Campaign Claimed event should be emitted");
 
-        // Check for StreamingManager.Claimed event
+        // Check for TimeBasedIncentiveManager.Claimed event
         bytes32 managerClaimedSig = keccak256("Claimed(uint256,address,uint256,uint256)");
         bool foundManagerClaimed = false;
         for (uint256 i = 0; i < logs.length; i++) {
@@ -1333,7 +1333,7 @@ contract StreamingManagerTest is Test {
         manager.updateRoot(campaignId, root, claimAmount);
 
         // Try to claim with wrong user
-        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
     }
 
@@ -1354,7 +1354,7 @@ contract StreamingManagerTest is Test {
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
 
         // Try to claim again with same cumulative amount
-        vm.expectRevert(StreamingCampaign.NothingToClaim.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.NothingToClaim.selector);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
     }
 
@@ -1362,13 +1362,13 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Try to claim from non-existent campaign
-        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
         manager.claim(999, CLAIMER, 1 ether, proof);
     }
 
     function test_Claim_PartialClaims() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // First claim: cumulative = 1 ether
         uint256 firstCumulative = 1 ether;
@@ -1407,7 +1407,7 @@ contract StreamingManagerTest is Test {
 
     function test_Claim_AnyoneCanClaimForUser() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
@@ -1429,9 +1429,9 @@ contract StreamingManagerTest is Test {
         assertEq(campaign.claimed(CLAIMER), claimAmount, "Claimed amount should be recorded for CLAIMER");
     }
 
-    function test_CampaignProcessClaim_RevertNotStreamingManager() public {
+    function test_CampaignProcessClaim_RevertNotTimeBasedIncentiveManager() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
@@ -1443,13 +1443,13 @@ contract StreamingManagerTest is Test {
         manager.updateRoot(campaignId, root, claimAmount);
 
         // Try to call processClaim directly
-        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.OnlyTimeBasedIncentiveManager.selector);
         campaign.processClaim(CLAIMER, claimAmount, proof);
     }
 
     function test_Claim_WithMultipleLeafMerkleTree() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // Create two leaves for two users
         uint256 claimer1Amount = 1 ether;
@@ -1508,7 +1508,7 @@ contract StreamingManagerTest is Test {
         manager.updateRoot(campaignId, root, correctAmount);
 
         // Try to claim with wrong amount
-        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
         manager.claim(campaignId, CLAIMER, wrongAmount, proof);
     }
 
@@ -1521,13 +1521,13 @@ contract StreamingManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Try to claim with zero merkle root
-        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
     }
 
     function test_Claim_RevertOldProofAfterNewClaim() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // First: claim with cumulative amount of 2 ether
         uint256 firstCumulative = 2 ether;
@@ -1549,7 +1549,7 @@ contract StreamingManagerTest is Test {
         manager.updateRoot(campaignId, oldRoot, oldCumulative);
 
         // Should revert because oldCumulative (1 ether) <= alreadyClaimed (2 ether)
-        vm.expectRevert(StreamingCampaign.NothingToClaim.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.NothingToClaim.selector);
         manager.claim(campaignId, CLAIMER, oldCumulative, proof);
     }
 
@@ -1569,13 +1569,13 @@ contract StreamingManagerTest is Test {
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
 
         // Second claim in same block with same proof reverts
-        vm.expectRevert(StreamingCampaign.NothingToClaim.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.NothingToClaim.selector);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
     }
 
     function test_Claim_CannotClaimMoreThanAccumulated() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // The merkle tree only has 1 ether for this user
         uint256 actualAmount = 1 ether;
@@ -1593,7 +1593,7 @@ contract StreamingManagerTest is Test {
         // Try to claim more by providing a higher cumulative amount
         // This should fail because the proof won't verify
         uint256 inflatedAmount = 10 ether;
-        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
         manager.claim(campaignId, CLAIMER, inflatedAmount, proof);
 
         // Balance should remain unchanged
@@ -1602,7 +1602,7 @@ contract StreamingManagerTest is Test {
 
     function test_Claim_RevertWhenCampaignBalanceInsufficient() public {
         // Create a campaign with 9 ether (after 10% fee on 10 ether)
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
         assertEq(campaignBalance, 9 ether, "Campaign should have 9 ether after fee");
 
@@ -1648,7 +1648,7 @@ contract StreamingManagerTest is Test {
         assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Should receive from campaign 1");
 
         // Same proof fails on campaign 2 (different merkle root)
-        vm.expectRevert(StreamingCampaign.InvalidProof.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
         manager.claim(campaignId2, CLAIMER, claimAmount, proof);
 
         // Even if we set the same root on campaign 2, the user can claim again
@@ -1682,8 +1682,8 @@ contract StreamingManagerTest is Test {
         address campaignAddr = manager.getCampaign(campaignId);
         assertTrue(campaignAddr != address(0), "Campaign address should not be zero");
 
-        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
-        assertEq(campaign.streamingManager(), address(manager), "Manager should be set");
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
+        assertEq(campaign.timeBasedIncentiveManager(), address(manager), "Manager should be set");
         assertEq(campaign.budget(), address(0), "Budget should be zero for direct-funded");
         assertEq(campaign.creator(), CREATOR, "Creator should be set");
         assertEq(campaign.configHash(), configHash, "Config hash should be set");
@@ -1734,7 +1734,7 @@ contract StreamingManagerTest is Test {
         );
 
         // Check totalRewards in campaign
-        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
         assertEq(campaign.totalRewards(), expectedNet, "totalRewards should equal net amount");
     }
 
@@ -1751,7 +1751,7 @@ contract StreamingManagerTest is Test {
 
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, false);
-        emit StreamingManager.CampaignCreated(
+        emit TimeBasedIncentiveManager.CampaignCreated(
             1, configHash, address(0), CREATOR, address(rewardToken), expectedNet, startTime, endTime
         );
         manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
@@ -1789,7 +1789,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.InvalidRewardToken.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidRewardToken.selector);
         manager.createCampaignDirect(keccak256("test"), address(0), 10 ether, startTime, endTime);
     }
 
@@ -1798,7 +1798,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.ZeroAmount.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
         manager.createCampaignDirect(keccak256("test"), address(rewardToken), 0, startTime, endTime);
     }
 
@@ -1807,7 +1807,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.StartTimeInPast.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.StartTimeInPast.selector);
         manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -1816,7 +1816,7 @@ contract StreamingManagerTest is Test {
         uint64 endTime = startTime; // Same as start, not after
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.EndTimeBeforeStart.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.EndTimeBeforeStart.selector);
         manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -1829,7 +1829,7 @@ contract StreamingManagerTest is Test {
         rewardToken.approve(address(manager), 10 ether);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.DurationTooLong.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.DurationTooLong.selector);
         manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
@@ -1842,15 +1842,15 @@ contract StreamingManagerTest is Test {
         rewardToken.approve(address(manager), 10 ether);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.DurationTooShort.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.DurationTooShort.selector);
         manager.createCampaignDirect(keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
     }
 
     function test_CreateCampaignDirect_ZeroFee() public {
         // Deploy manager with 0% fee
-        StreamingManager zeroFeeImpl = new StreamingManager();
+        TimeBasedIncentiveManager zeroFeeImpl = new TimeBasedIncentiveManager();
         address zeroFeeProxy = LibClone.deployERC1967(address(zeroFeeImpl));
-        StreamingManager zeroFeeManager = StreamingManager(zeroFeeProxy);
+        TimeBasedIncentiveManager zeroFeeManager = TimeBasedIncentiveManager(zeroFeeProxy);
         zeroFeeManager.initialize(address(this), address(campaignImpl), 0, PROTOCOL_FEE_RECEIVER);
 
         uint256 totalAmount = 10 ether;
@@ -1880,7 +1880,7 @@ contract StreamingManagerTest is Test {
         assertEq(rewardToken.balanceOf(campaignAddr), totalAmount, "Campaign should receive full amount");
 
         // Verify campaign state
-        StreamingCampaign campaign = StreamingCampaign(campaignAddr);
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
         assertEq(campaign.totalRewards(), totalAmount, "totalRewards should equal full amount");
         assertEq(campaign.budget(), address(0), "Budget should be zero for direct-funded");
     }
@@ -1911,8 +1911,8 @@ contract StreamingManagerTest is Test {
         assertTrue(manager.getCampaign(1) != manager.getCampaign(2), "Campaigns should be different addresses");
 
         // Both should be direct-funded
-        StreamingCampaign campaign1 = StreamingCampaign(manager.getCampaign(id1));
-        StreamingCampaign campaign2 = StreamingCampaign(manager.getCampaign(id2));
+        TimeBasedIncentiveCampaign campaign1 = TimeBasedIncentiveCampaign(manager.getCampaign(id1));
+        TimeBasedIncentiveCampaign campaign2 = TimeBasedIncentiveCampaign(manager.getCampaign(id2));
         assertEq(campaign1.budget(), address(0), "Campaign 1 should be direct-funded");
         assertEq(campaign2.budget(), address(0), "Campaign 2 should be direct-funded");
     }
@@ -1923,7 +1923,7 @@ contract StreamingManagerTest is Test {
 
     function test_WithdrawToBudget_Success() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
 
         // Warp past end time
@@ -1947,20 +1947,20 @@ contract StreamingManagerTest is Test {
     }
 
     function test_WithdrawToBudget_EmitsEvent() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 undistributed = rewardToken.balanceOf(address(campaign));
 
         vm.warp(campaign.endTime() + 1);
 
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.WithdrawnToBudget(campaignId, undistributed, address(budget));
+        emit TimeBasedIncentiveManager.WithdrawnToBudget(campaignId, undistributed, address(budget));
         manager.withdrawToBudget(campaignId);
     }
 
     function test_WithdrawToBudget_PartialWithdraw() public {
         // Create a campaign with root and have some users claim
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Set up merkle tree and claim
@@ -1990,12 +1990,12 @@ contract StreamingManagerTest is Test {
     }
 
     function test_WithdrawToBudget_RevertNotCreator() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
 
         vm.prank(address(0xBAD));
-        vm.expectRevert(StreamingManager.NotCampaignCreator.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.NotCampaignCreator.selector);
         manager.withdrawToBudget(campaignId);
     }
 
@@ -2004,15 +2004,15 @@ contract StreamingManagerTest is Test {
 
         // Don't warp past end time
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.CampaignNotEnded.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignNotEnded.selector);
         manager.withdrawToBudget(campaignId);
     }
 
     function test_WithdrawToBudget_RevertNothingToWithdraw() public {
         // Create campaign with 100% fee (0 tokens to campaign)
-        StreamingManager maxFeeImpl = new StreamingManager();
+        TimeBasedIncentiveManager maxFeeImpl = new TimeBasedIncentiveManager();
         address maxFeeProxy = LibClone.deployERC1967(address(maxFeeImpl));
-        StreamingManager maxFeeManager = StreamingManager(maxFeeProxy);
+        TimeBasedIncentiveManager maxFeeManager = TimeBasedIncentiveManager(maxFeeProxy);
         maxFeeManager.initialize(address(this), address(campaignImpl), 10000, PROTOCOL_FEE_RECEIVER);
 
         address[] memory accounts = new address[](1);
@@ -2028,13 +2028,13 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             maxFeeManager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(maxFeeManager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(maxFeeManager.getCampaign(campaignId));
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should have 0 balance");
 
         vm.warp(endTime + 1);
 
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.ZeroAmount.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
         maxFeeManager.withdrawToBudget(campaignId);
     }
 
@@ -2057,19 +2057,19 @@ contract StreamingManagerTest is Test {
 
         // Try to use withdrawToBudget on direct-funded campaign
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingManager.NotBudgetFunded.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.NotBudgetFunded.selector);
         manager.withdrawToBudget(campaignId);
     }
 
     function test_WithdrawUndistributed_BudgetFunded_RevertsUseBudgetClawback() public {
         // Create a budget-funded campaign
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
 
         // Trying to use withdrawUndistributed on budget-funded should revert
         vm.prank(CREATOR);
-        vm.expectRevert(StreamingCampaign.UseBudgetClawback.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.UseBudgetClawback.selector);
         campaign.withdrawUndistributed();
     }
 
@@ -2083,7 +2083,7 @@ contract StreamingManagerTest is Test {
 
         // Create a budget-funded campaign (10 ether total, 9 ether net after 10% fee)
         // Budget disburses BOTH fee (1 ether) and campaign (9 ether), tracking both in _distributedFungible
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
         assertEq(campaignBalance, 9 ether, "Campaign should have 9 ether");
 
@@ -2128,7 +2128,7 @@ contract StreamingManagerTest is Test {
             keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
         );
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
         assertTrue(campaignBalance > 0, "Campaign should have balance");
 
@@ -2166,20 +2166,20 @@ contract StreamingManagerTest is Test {
             keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
         );
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint256 undistributed = rewardToken.balanceOf(address(campaign));
 
         vm.warp(endTime + 1);
 
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, true);
-        emit StreamingCampaign.UndistributedWithdrawn(undistributed, CREATOR);
+        emit TimeBasedIncentiveCampaign.UndistributedWithdrawn(undistributed, CREATOR);
         campaign.withdrawUndistributed();
     }
 
     function test_WithdrawToBudget_ProtectsUnclaimedFunds() public {
         // Create a campaign with 9 ether (after 10% fee)
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
         // Set merkle root with 5 ether committed but don't claim yet
@@ -2211,7 +2211,7 @@ contract StreamingManagerTest is Test {
 
     function test_WithdrawToBudget_EdgeCase_TotalClaimedExceedsTotalCommitted() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // First claim: set committed to 3 ether, claim 3 ether
         bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
@@ -2245,7 +2245,7 @@ contract StreamingManagerTest is Test {
 
     function test_Clawback_ProtectsUnclaimedFunds() public {
         // Create a campaign
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
         // Set merkle root with 5 ether committed
@@ -2267,7 +2267,7 @@ contract StreamingManagerTest is Test {
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
-        vm.expectRevert(StreamingCampaign.InsufficientBalance.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InsufficientBalance.selector);
         campaign.clawback(data, 0, 0);
 
         // Clawback exactly available amount should work
@@ -2286,7 +2286,7 @@ contract StreamingManagerTest is Test {
     ////////////////////////////////
 
     function test_Clawback_RevertNotBudget() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
 
@@ -2295,12 +2295,12 @@ contract StreamingManagerTest is Test {
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(0xBAD));
-        vm.expectRevert(StreamingCampaign.OnlyBudget.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.OnlyBudget.selector);
         campaign.clawback(data, 0, 0);
     }
 
     function test_Clawback_RevertBeforeEndTime() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // Don't warp past end time
         AIncentive.ClawbackPayload memory payload =
@@ -2308,12 +2308,12 @@ contract StreamingManagerTest is Test {
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
-        vm.expectRevert(StreamingCampaign.CampaignNotEnded.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotEnded.selector);
         campaign.clawback(data, 0, 0);
     }
 
     function test_Clawback_Success() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
@@ -2347,7 +2347,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_Clawback_RevertInsufficientBalance() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
 
@@ -2360,7 +2360,7 @@ contract StreamingManagerTest is Test {
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
-        vm.expectRevert(StreamingCampaign.InsufficientBalance.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InsufficientBalance.selector);
         campaign.clawback(data, 0, 0);
     }
 
@@ -2376,7 +2376,7 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint64 originalEndTime = campaign.endTime();
 
         // Warp to middle of campaign
@@ -2401,7 +2401,7 @@ contract StreamingManagerTest is Test {
         vm.warp(startTime + 5 days);
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.CampaignCancelled(campaignId, endTime, uint64(block.timestamp));
+        emit TimeBasedIncentiveManager.CampaignCancelled(campaignId, endTime, uint64(block.timestamp));
         manager.cancelCampaign(campaignId);
     }
 
@@ -2419,7 +2419,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_CancelCampaign_RevertInvalidCampaign() public {
-        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
         manager.cancelCampaign(999);
     }
 
@@ -2435,7 +2435,7 @@ contract StreamingManagerTest is Test {
         vm.warp(endTime + 1);
 
         // Try to cancel an already-ended campaign
-        vm.expectRevert(StreamingCampaign.CampaignAlreadyEnded.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignAlreadyEnded.selector);
         manager.cancelCampaign(campaignId);
     }
 
@@ -2447,7 +2447,7 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         // Warp to middle of campaign
         vm.warp(startTime + 5 days);
@@ -2499,32 +2499,32 @@ contract StreamingManagerTest is Test {
     // setEndTime tests (direct on campaign)
     ////////////////////////////////
 
-    function test_SetEndTime_RevertNotStreamingManager() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+    function test_SetEndTime_RevertNotTimeBasedIncentiveManager() public {
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.prank(address(0xBAD));
-        vm.expectRevert(StreamingCampaign.OnlyStreamingManager.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.OnlyTimeBasedIncentiveManager.selector);
         campaign.setEndTime(uint64(block.timestamp));
     }
 
     function test_SetEndTime_RevertExtendingEndTime() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint64 currentEndTime = campaign.endTime();
 
         // Try to extend end time (should fail)
         vm.prank(address(manager));
-        vm.expectRevert(StreamingCampaign.InvalidEndTime.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidEndTime.selector);
         campaign.setEndTime(currentEndTime + 1 days);
     }
 
     function test_SetEndTime_EmitsEvent() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint64 originalEndTime = campaign.endTime();
         uint64 newEndTime = uint64(block.timestamp);
 
         vm.prank(address(manager));
         vm.expectEmit(true, true, true, true);
-        emit StreamingCampaign.EndTimeUpdated(originalEndTime, newEndTime);
+        emit TimeBasedIncentiveCampaign.EndTimeUpdated(originalEndTime, newEndTime);
         campaign.setEndTime(newEndTime);
     }
 
@@ -2547,7 +2547,7 @@ contract StreamingManagerTest is Test {
             keccak256("integration-test"), address(rewardToken), totalAmount, startTime, endTime
         );
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.budget(), address(0), "Should be direct-funded");
 
         // 2. Set merkle root and make claims
@@ -2611,7 +2611,7 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("cancel-test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         // 2. Set up some claims
         uint256 claimAmount = 2 ether;
@@ -2660,7 +2660,7 @@ contract StreamingManagerTest is Test {
     }
 
     /// @notice Helper to create a campaign and return its ID and contract
-    function _createCampaignWithRoot() internal returns (uint256 campaignId, StreamingCampaign campaign) {
+    function _createCampaignWithRoot() internal returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign) {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
 
@@ -2668,7 +2668,7 @@ contract StreamingManagerTest is Test {
         campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
     /// @notice Helper to create a double-hashed merkle leaf
@@ -2695,7 +2695,7 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("gas-test"), address(rewardToken), 90 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         // Generate leaves and build tree
         bytes32[] memory leaves = new bytes32[](numUsers);
@@ -2745,13 +2745,13 @@ contract StreamingManagerTest is Test {
     ////////////////////////////////
 
     function test_ClaimExpiry_DefaultIs60Days() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         assertEq(campaign.claimExpiryDuration(), 60 days, "Default claim expiry should be 60 days");
         assertEq(manager.claimExpiryDuration(), 60 days, "Manager default claim expiry should be 60 days");
     }
 
     function test_ClaimExpiry_ClaimSucceedsBeforeExpiry() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
@@ -2767,7 +2767,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_ClaimExpiry_ClaimRevertsAfterExpiry() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
@@ -2778,12 +2778,12 @@ contract StreamingManagerTest is Test {
         // Warp to endTime + 61 days (past 60-day expiry window)
         vm.warp(campaign.endTime() + 61 days);
 
-        vm.expectRevert(StreamingCampaign.ClaimExpired.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExpired.selector);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnZeroDuringCampaign() public {
-        (, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // During the campaign (before endTime), getWithdrawable should return 0
         assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 during active campaign");
@@ -2794,7 +2794,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnsCorrectAfterEnd() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
@@ -2810,7 +2810,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_ClaimExpiry_GetWithdrawableFullBalanceAfterExpiry() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
@@ -2838,7 +2838,7 @@ contract StreamingManagerTest is Test {
             keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
         );
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint256 totalCommitted = 5 ether;
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
@@ -2864,7 +2864,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_ClaimExpiry_ClawbackAfterExpiry() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
@@ -2889,7 +2889,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_ClaimExpiry_PartialClaimThenExpiry() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // Two users committed: CLAIMER gets 2 ether, CLAIMER2 gets 3 ether
         uint256 claimer1Amount = 2 ether;
@@ -2934,7 +2934,7 @@ contract StreamingManagerTest is Test {
         uint64 newDuration = 90 days;
 
         vm.expectEmit(true, true, true, true);
-        emit StreamingManager.ClaimExpiryDurationUpdated(60 days, newDuration);
+        emit TimeBasedIncentiveManager.ClaimExpiryDurationUpdated(60 days, newDuration);
         manager.setClaimExpiryDuration(newDuration);
 
         assertEq(manager.claimExpiryDuration(), newDuration, "Claim expiry duration should be updated");
@@ -2952,7 +2952,7 @@ contract StreamingManagerTest is Test {
         manager.setClaimExpiryDuration(customDuration);
 
         // Create campaign - it should use the custom duration
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         assertEq(campaign.claimExpiryDuration(), customDuration, "Campaign should use custom duration");
 
         uint256 claimAmount = 1 ether;
@@ -2968,7 +2968,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_ClaimExpiry_ExactBoundarySucceeds() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
@@ -2985,11 +2985,11 @@ contract StreamingManagerTest is Test {
 
     function test_SetClaimExpiryDuration_RevertBelowMinimum() public {
         // 0 should revert
-        vm.expectRevert(StreamingManager.ClaimExpiryDurationTooShort.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.ClaimExpiryDurationTooShort.selector);
         manager.setClaimExpiryDuration(0);
 
         // Just under 1 day should revert
-        vm.expectRevert(StreamingManager.ClaimExpiryDurationTooShort.selector);
+        vm.expectRevert(TimeBasedIncentiveManager.ClaimExpiryDurationTooShort.selector);
         manager.setClaimExpiryDuration(1 days - 1);
     }
 
@@ -3002,7 +3002,7 @@ contract StreamingManagerTest is Test {
         // Set to minimum allowed (1 day)
         manager.setClaimExpiryDuration(1 days);
 
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         assertEq(campaign.claimExpiryDuration(), 1 days, "Campaign should have 1 day expiry");
 
         uint256 claimAmount = 1 ether;
@@ -3025,7 +3025,7 @@ contract StreamingManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         uint256 claimAmount = 1 ether;
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);

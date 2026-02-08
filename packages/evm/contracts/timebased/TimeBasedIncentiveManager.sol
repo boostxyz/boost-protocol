@@ -9,12 +9,12 @@ import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
-import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
+import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
-/// @title StreamingManager
-/// @notice Factory and orchestration contract for streaming incentive campaigns
-/// @dev Deploys StreamingCampaign clones and manages protocol fees. UUPS upgradeable.
-contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
+/// @title TimeBasedIncentiveManager
+/// @notice Factory and orchestration contract for time-based incentive campaigns
+/// @dev Deploys TimeBasedIncentiveCampaign clones and manages protocol fees. UUPS upgradeable.
+contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;
 
     /// @notice Parameters for a single root update in a batch
@@ -172,9 +172,9 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         _disableInitializers();
     }
 
-    /// @notice Initialize the StreamingManager
+    /// @notice Initialize the TimeBasedIncentiveManager
     /// @param owner_ The owner of the contract
-    /// @param campaignImpl_ The StreamingCampaign implementation for cloning
+    /// @param campaignImpl_ The TimeBasedIncentiveCampaign implementation for cloning
     /// @param protocolFee_ Initial protocol fee in basis points
     /// @param protocolFeeReceiver_ Address to receive protocol fees
     function initialize(address owner_, address campaignImpl_, uint64 protocolFee_, address protocolFeeReceiver_)
@@ -194,7 +194,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         claimExpiryDuration = 60 days;
     }
 
-    /// @notice Create a new streaming campaign funded by a budget
+    /// @notice Create a new time-based incentive campaign funded by a budget
     /// @param budget The budget to fund the campaign from
     /// @param configHash Hash of the off-chain campaign configuration
     /// @param rewardToken The ERC20 token for rewards
@@ -259,7 +259,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         }
 
         // Initialize the campaign
-        StreamingCampaign(campaign).initialize(
+        TimeBasedIncentiveCampaign(campaign).initialize(
             address(this),
             address(budget),
             msg.sender,
@@ -274,7 +274,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
     }
 
-    /// @notice Create a new streaming campaign with direct token transfer
+    /// @notice Create a new time-based incentive campaign with direct token transfer
     /// @param configHash Hash of the off-chain campaign configuration
     /// @param rewardToken The ERC20 token for rewards
     /// @param totalAmount Total reward amount (before protocol fee deduction)
@@ -322,7 +322,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         }
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns
-        StreamingCampaign(campaign).initialize(
+        TimeBasedIncentiveCampaign(campaign).initialize(
             address(this),
             address(0),
             msg.sender,
@@ -407,7 +407,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
-        bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root, totalCommitted);
+        bytes32 oldRoot = TimeBasedIncentiveCampaign(campaign).setMerkleRoot(root, totalCommitted);
 
         emit RootUpdated(campaignId, oldRoot, root, totalCommitted);
     }
@@ -423,7 +423,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
             address campaign = campaigns[updates[i].campaignId];
             if (campaign == address(0)) revert InvalidCampaign();
 
-            bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(updates[i].root, updates[i].totalCommitted);
+            bytes32 oldRoot = TimeBasedIncentiveCampaign(campaign).setMerkleRoot(updates[i].root, updates[i].totalCommitted);
 
             emit RootUpdated(updates[i].campaignId, oldRoot, updates[i].root, updates[i].totalCommitted);
         }
@@ -447,7 +447,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
-        uint256 amount = StreamingCampaign(campaign).processClaim(user, cumulativeAmount, proof);
+        uint256 amount = TimeBasedIncentiveCampaign(campaign).processClaim(user, cumulativeAmount, proof);
 
         emit Claimed(campaignId, user, amount, cumulativeAmount);
     }
@@ -459,7 +459,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
-        uint64 oldEndTime = StreamingCampaign(campaign).setEndTime(uint64(block.timestamp));
+        uint64 oldEndTime = TimeBasedIncentiveCampaign(campaign).setEndTime(uint64(block.timestamp));
 
         emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
     }
@@ -472,7 +472,7 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
-        StreamingCampaign c = StreamingCampaign(campaign);
+        TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
 
         if (msg.sender != c.creator()) revert NotCampaignCreator();
 

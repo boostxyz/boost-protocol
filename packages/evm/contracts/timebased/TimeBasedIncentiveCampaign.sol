@@ -260,6 +260,8 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         if (amount > available) revert InsufficientBalance();
 
         SafeTransferLib.safeTransfer(rewardToken, payload.target, amount);
+
+        emit UndistributedWithdrawn(amount, payload.target);
     }
 
     /// @notice Get the amount available to withdraw (not owed to users)

@@ -17,6 +17,16 @@ import {StreamingCampaign} from "contracts/streaming/StreamingCampaign.sol";
 contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;
 
+    /// @notice Parameters for a single root update in a batch
+    struct RootUpdate {
+        uint256 campaignId;
+        bytes32 root;
+        uint256 totalCommitted;
+    }
+
+    /// @notice Maximum number of root updates in a single batch
+    uint256 public constant MAX_BATCH_SIZE = 50;
+
     /// @notice The implementation contract used for cloning campaigns
     address public campaignImplementation;
 
@@ -150,6 +160,12 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Error when claim expiry duration is below the minimum (1 day)
     error ClaimExpiryDurationTooShort();
+
+    /// @notice Error when batch update array exceeds MAX_BATCH_SIZE
+    error BatchTooLarge();
+
+    /// @notice Error when batch update array is empty
+    error EmptyBatch();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -394,6 +410,23 @@ contract StreamingManager is Initializable, UUPSUpgradeable, Ownable {
         bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(root, totalCommitted);
 
         emit RootUpdated(campaignId, oldRoot, root, totalCommitted);
+    }
+
+    /// @notice Update merkle roots for multiple campaigns in a single transaction
+    /// @param updates Array of RootUpdate structs containing campaignId, root, and totalCommitted
+    function updateRootsBatch(RootUpdate[] calldata updates) external {
+        if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
+        if (updates.length == 0) revert EmptyBatch();
+        if (updates.length > MAX_BATCH_SIZE) revert BatchTooLarge();
+
+        for (uint256 i; i < updates.length; ++i) {
+            address campaign = campaigns[updates[i].campaignId];
+            if (campaign == address(0)) revert InvalidCampaign();
+
+            bytes32 oldRoot = StreamingCampaign(campaign).setMerkleRoot(updates[i].root, updates[i].totalCommitted);
+
+            emit RootUpdated(updates[i].campaignId, oldRoot, updates[i].root, updates[i].totalCommitted);
+        }
     }
 
     /// @notice Set the campaign implementation address (for upgrades)

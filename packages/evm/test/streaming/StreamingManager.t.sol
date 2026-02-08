@@ -859,6 +859,272 @@ contract StreamingManagerTest is Test {
     }
 
     ////////////////////////////////
+    // updateRootsBatch tests
+    ////////////////////////////////
+
+    function test_UpdateRootsBatch_Success() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Create 3 campaigns
+        vm.startPrank(CREATOR);
+        uint256 id1 =
+            manager.createCampaign(budget, keccak256("test1"), address(rewardToken), 3 ether, startTime, endTime);
+        uint256 id2 =
+            manager.createCampaign(budget, keccak256("test2"), address(rewardToken), 3 ether, startTime, endTime);
+        uint256 id3 =
+            manager.createCampaign(budget, keccak256("test3"), address(rewardToken), 3 ether, startTime, endTime);
+        vm.stopPrank();
+
+        // Build batch
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](3);
+        updates[0] = StreamingManager.RootUpdate(id1, keccak256("root1"), 1 ether);
+        updates[1] = StreamingManager.RootUpdate(id2, keccak256("root2"), 2 ether);
+        updates[2] = StreamingManager.RootUpdate(id3, keccak256("root3"), 3 ether);
+
+        manager.updateRootsBatch(updates);
+
+        // Verify all roots set
+        assertEq(StreamingCampaign(manager.getCampaign(id1)).merkleRoot(), keccak256("root1"));
+        assertEq(StreamingCampaign(manager.getCampaign(id1)).totalCommitted(), 1 ether);
+        assertEq(StreamingCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2"));
+        assertEq(StreamingCampaign(manager.getCampaign(id2)).totalCommitted(), 2 ether);
+        assertEq(StreamingCampaign(manager.getCampaign(id3)).merkleRoot(), keccak256("root3"));
+        assertEq(StreamingCampaign(manager.getCampaign(id3)).totalCommitted(), 3 ether);
+    }
+
+    function test_UpdateRootsBatch_SingleItem() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](1);
+        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+
+        manager.updateRootsBatch(updates);
+
+        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root1"));
+        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).totalCommitted(), 5 ether);
+    }
+
+    function test_UpdateRootsBatch_AsOperator() public {
+        address operatorAddr = address(0x0BE8);
+        manager.setOperator(operatorAddr);
+
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](1);
+        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+
+        vm.prank(operatorAddr);
+        manager.updateRootsBatch(updates);
+
+        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root1"));
+    }
+
+    function test_UpdateRootsBatch_EmitsEvents() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.startPrank(CREATOR);
+        uint256 id1 =
+            manager.createCampaign(budget, keccak256("test1"), address(rewardToken), 3 ether, startTime, endTime);
+        uint256 id2 =
+            manager.createCampaign(budget, keccak256("test2"), address(rewardToken), 3 ether, startTime, endTime);
+        vm.stopPrank();
+
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](2);
+        updates[0] = StreamingManager.RootUpdate(id1, keccak256("root1"), 1 ether);
+        updates[1] = StreamingManager.RootUpdate(id2, keccak256("root2"), 2 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(id1, bytes32(0), keccak256("root1"), 1 ether);
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(id2, bytes32(0), keccak256("root2"), 2 ether);
+
+        manager.updateRootsBatch(updates);
+    }
+
+    function test_UpdateRootsBatch_RevertNotAuthorized() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](1);
+        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(StreamingManager.NotAuthorized.selector);
+        manager.updateRootsBatch(updates);
+    }
+
+    function test_UpdateRootsBatch_RevertEmptyBatch() public {
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](0);
+
+        vm.expectRevert(StreamingManager.EmptyBatch.selector);
+        manager.updateRootsBatch(updates);
+    }
+
+    function test_UpdateRootsBatch_RevertBatchTooLarge() public {
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](51);
+        for (uint256 i; i < 51; ++i) {
+            updates[i] = StreamingManager.RootUpdate(i, keccak256(abi.encode(i)), 1 ether);
+        }
+
+        vm.expectRevert(StreamingManager.BatchTooLarge.selector);
+        manager.updateRootsBatch(updates);
+    }
+
+    function test_UpdateRootsBatch_RevertInvalidCampaign() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 validId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // Second entry has a bad campaignId
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](2);
+        updates[0] = StreamingManager.RootUpdate(validId, keccak256("root1"), 1 ether);
+        updates[1] = StreamingManager.RootUpdate(999, keccak256("root2"), 2 ether);
+
+        vm.expectRevert(StreamingManager.InvalidCampaign.selector);
+        manager.updateRootsBatch(updates);
+
+        // Verify the first campaign's root was NOT updated (entire tx reverted)
+        assertEq(StreamingCampaign(manager.getCampaign(validId)).merkleRoot(), bytes32(0));
+    }
+
+    function test_UpdateRootsBatch_ExactMaxBatchSize() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Create exactly MAX_BATCH_SIZE (50) campaigns
+        uint256 batchSize = manager.MAX_BATCH_SIZE();
+        uint256[] memory ids = new uint256[](batchSize);
+        vm.startPrank(CREATOR);
+        for (uint256 i; i < batchSize; ++i) {
+            ids[i] = manager.createCampaign(
+                budget, keccak256(abi.encode("max", i)), address(rewardToken), 1 ether, startTime, endTime
+            );
+        }
+        vm.stopPrank();
+
+        // Build batch of exactly 50
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](batchSize);
+        for (uint256 i; i < batchSize; ++i) {
+            updates[i] = StreamingManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+        }
+
+        manager.updateRootsBatch(updates);
+
+        // Spot-check first and last
+        assertEq(StreamingCampaign(manager.getCampaign(ids[0])).merkleRoot(), keccak256(abi.encode("root", uint256(0))));
+        assertEq(
+            StreamingCampaign(manager.getCampaign(ids[batchSize - 1])).merkleRoot(),
+            keccak256(abi.encode("root", batchSize - 1))
+        );
+    }
+
+    function test_UpdateRootsBatch_DuplicateCampaignId() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // Same campaign twice — second update overwrites the first
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](2);
+        updates[0] = StreamingManager.RootUpdate(campaignId, keccak256("root-a"), 1 ether);
+        updates[1] = StreamingManager.RootUpdate(campaignId, keccak256("root-b"), 2 ether);
+
+        // Events: first emits oldRoot=0→root-a, second emits oldRoot=root-a→root-b
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(campaignId, bytes32(0), keccak256("root-a"), 1 ether);
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(campaignId, keccak256("root-a"), keccak256("root-b"), 2 ether);
+
+        manager.updateRootsBatch(updates);
+
+        // Final state is the last update
+        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).merkleRoot(), keccak256("root-b"));
+        assertEq(StreamingCampaign(manager.getCampaign(campaignId)).totalCommitted(), 2 ether);
+    }
+
+    function test_UpdateRootsBatch_SequentialBatches() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.startPrank(CREATOR);
+        uint256 id1 =
+            manager.createCampaign(budget, keccak256("test1"), address(rewardToken), 3 ether, startTime, endTime);
+        uint256 id2 =
+            manager.createCampaign(budget, keccak256("test2"), address(rewardToken), 3 ether, startTime, endTime);
+        vm.stopPrank();
+
+        // First batch
+        StreamingManager.RootUpdate[] memory batch1 = new StreamingManager.RootUpdate[](2);
+        batch1[0] = StreamingManager.RootUpdate(id1, keccak256("root1-a"), 1 ether);
+        batch1[1] = StreamingManager.RootUpdate(id2, keccak256("root2-a"), 2 ether);
+        manager.updateRootsBatch(batch1);
+
+        // Second batch — oldRoot in events should reflect first batch
+        StreamingManager.RootUpdate[] memory batch2 = new StreamingManager.RootUpdate[](2);
+        batch2[0] = StreamingManager.RootUpdate(id1, keccak256("root1-b"), 1.5 ether);
+        batch2[1] = StreamingManager.RootUpdate(id2, keccak256("root2-b"), 2.5 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(id1, keccak256("root1-a"), keccak256("root1-b"), 1.5 ether);
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.RootUpdated(id2, keccak256("root2-a"), keccak256("root2-b"), 2.5 ether);
+
+        manager.updateRootsBatch(batch2);
+
+        assertEq(StreamingCampaign(manager.getCampaign(id1)).merkleRoot(), keccak256("root1-b"));
+        assertEq(StreamingCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2-b"));
+    }
+
+    function test_UpdateRootsBatch_Gas() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        // Create 20 campaigns
+        uint256[] memory ids = new uint256[](20);
+        vm.startPrank(CREATOR);
+        for (uint256 i; i < 20; ++i) {
+            ids[i] = manager.createCampaign(
+                budget, keccak256(abi.encode("gas", i)), address(rewardToken), 1 ether, startTime, endTime
+            );
+        }
+        vm.stopPrank();
+
+        // Build batch
+        StreamingManager.RootUpdate[] memory updates = new StreamingManager.RootUpdate[](20);
+        for (uint256 i; i < 20; ++i) {
+            updates[i] = StreamingManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+        }
+
+        uint256 gasBefore = gasleft();
+        manager.updateRootsBatch(updates);
+        uint256 gasUsed = gasBefore - gasleft();
+
+        // Log gas for benchmarking (visible with -vvv)
+        emit log_named_uint("Gas used for 20-campaign batch updateRootsBatch", gasUsed);
+    }
+
+    ////////////////////////////////
     // StreamingCampaign.setMerkleRoot tests
     ////////////////////////////////
 

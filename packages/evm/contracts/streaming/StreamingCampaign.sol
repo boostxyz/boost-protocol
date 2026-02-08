@@ -46,6 +46,9 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Running total of all claimed amounts
     uint256 public totalClaimed;
 
+    /// @notice Duration after endTime during which claims are still valid
+    uint64 public claimExpiryDuration;
+
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
 
@@ -99,6 +102,9 @@ contract StreamingCampaign is Initializable, IClaw {
 
     /// @notice Error when merkle proof is invalid
     error InvalidProof();
+
+    /// @notice Error when the claim window has expired
+    error ClaimExpired();
 
     /// @notice Error when there is nothing to claim
     error NothingToClaim();

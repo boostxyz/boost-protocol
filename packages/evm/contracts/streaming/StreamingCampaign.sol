@@ -126,6 +126,7 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @param totalRewards_ Total rewards after protocol fee
     /// @param startTime_ Campaign start timestamp
     /// @param endTime_ Campaign end timestamp
+    /// @param claimExpiryDuration_ Duration after endTime during which claims are valid
     function initialize(
         address streamingManager_,
         address budget_,
@@ -134,7 +135,8 @@ contract StreamingCampaign is Initializable, IClaw {
         address rewardToken_,
         uint256 totalRewards_,
         uint64 startTime_,
-        uint64 endTime_
+        uint64 endTime_,
+        uint64 claimExpiryDuration_
     ) external initializer {
         if (msg.sender != streamingManager_) revert OnlyStreamingManager();
         streamingManager = streamingManager_;
@@ -145,6 +147,7 @@ contract StreamingCampaign is Initializable, IClaw {
         totalRewards = totalRewards_;
         startTime = startTime_;
         endTime = endTime_;
+        claimExpiryDuration = claimExpiryDuration_;
 
         emit CampaignInitialized(
             streamingManager_, budget_, creator_, configHash_, rewardToken_, totalRewards_, startTime_, endTime_

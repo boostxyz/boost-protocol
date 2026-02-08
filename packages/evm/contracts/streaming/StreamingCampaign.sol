@@ -186,7 +186,7 @@ contract StreamingCampaign is Initializable, IClaw {
         returns (uint256 amount)
     {
         // Check claim window hasn't expired
-        if (block.timestamp > endTime + claimExpiryDuration) revert ClaimExpired();
+        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) revert ClaimExpired();
 
         // Verify merkle proof
         if (merkleRoot == bytes32(0)) revert InvalidProof();
@@ -267,7 +267,7 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Calculate how much is still owed to users (respects claim expiry)
     /// @return The amount still owed, or 0 if the claim window has expired
     function _stillOwed() internal view returns (uint256) {
-        if (block.timestamp > endTime + claimExpiryDuration) return 0;
+        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) return 0;
         return totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
     }
 

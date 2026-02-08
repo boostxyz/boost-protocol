@@ -2409,4 +2409,448 @@ contract StreamingManagerTest is Test {
     function _makeLeaf(address user, address token, uint256 cumulativeAmount) internal pure returns (bytes32) {
         return keccak256(bytes.concat(keccak256(abi.encode(user, token, cumulativeAmount))));
     }
+
+    /// @notice Gas test with 100 users in merkle tree
+    function test_Claim_Gas_100Users() public {
+        _runGasTest(100);
+    }
+
+    /// @notice Gas test with 10,000 users in merkle tree
+    function test_Claim_Gas_10000Users() public {
+        _runGasTest(10000);
+    }
+
+    /// @notice Gas test with 30,000 users in merkle tree
+    function test_Claim_Gas_30000Users() public {
+        _runGasTest(30000);
+    }
+
+    /// @notice Gas test with 50,000 users in merkle tree
+    function test_Claim_Gas_50000Users() public {
+        _runGasTest(50000);
+    }
+
+    /// @notice Gas test with 100,000 users in merkle tree
+    function test_Claim_Gas_100000Users() public {
+        _runGasTest(100000);
+    }
+
+    function _runGasTest(uint256 numUsers) internal {
+        // Create a campaign with enough funds
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("gas-test"), address(rewardToken), 90 ether, startTime, endTime);
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+
+        // Generate leaves and build tree
+        bytes32[] memory leaves = new bytes32[](numUsers);
+        uint256 totalCommitted = 0;
+        uint256 amountPerUser = 0.0001 ether;
+
+        for (uint256 i = 0; i < numUsers; i++) {
+            address user = address(uint160(0x10000 + i));
+            leaves[i] = _makeLeaf(user, address(rewardToken), amountPerUser);
+            totalCommitted += amountPerUser;
+        }
+
+        // Build merkle tree and get root + proof for user at index 0
+        (bytes32 root, bytes32[] memory proof) = _buildMerkleTreeAndProofFast(leaves, 0);
+
+        // Set merkle root
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // The user we're claiming for
+        address testUser = address(uint160(0x10000));
+
+        // Measure gas for first claim (cold storage)
+        uint256 gasBefore = gasleft();
+        manager.claim(campaignId, testUser, amountPerUser, proof);
+        uint256 gasUsed = gasBefore - gasleft();
+
+        emit log_named_uint("Num users", numUsers);
+        emit log_named_uint("Proof length", proof.length);
+        emit log_named_uint("Gas used (first claim)", gasUsed);
+
+        // Verify claim worked
+        assertEq(campaign.claimed(testUser), amountPerUser, "Claim should be recorded");
+
+        // Now test second user claim to show warm storage effect on totalClaimed
+        address testUser2 = address(uint160(0x10001));
+        (, bytes32[] memory proof2) = _buildMerkleTreeAndProofFast(leaves, 1);
+
+        gasBefore = gasleft();
+        manager.claim(campaignId, testUser2, amountPerUser, proof2);
+        gasUsed = gasBefore - gasleft();
+
+        emit log_named_uint("Gas used (second user, first claim)", gasUsed);
+    }
+
+    ////////////////////////////////
+    // Claim Expiry tests
+    ////////////////////////////////
+
+    function test_ClaimExpiry_DefaultIs60Days() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        assertEq(campaign.claimExpiryDuration(), 60 days, "Default claim expiry should be 60 days");
+        assertEq(manager.claimExpiryDuration(), 60 days, "Manager default claim expiry should be 60 days");
+    }
+
+    function test_ClaimExpiry_ClaimSucceedsBeforeExpiry() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // Warp to endTime + 59 days (still within 60-day expiry window)
+        vm.warp(campaign.endTime() + 59 days);
+
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed before expiry");
+    }
+
+    function test_ClaimExpiry_ClaimRevertsAfterExpiry() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // Warp to endTime + 61 days (past 60-day expiry window)
+        vm.warp(campaign.endTime() + 61 days);
+
+        vm.expectRevert(StreamingCampaign.ClaimExpired.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_ClaimExpiry_GetWithdrawableReturnZeroDuringCampaign() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // During the campaign (before endTime), getWithdrawable should return 0
+        assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 during active campaign");
+
+        // Even right at endTime it should return 0
+        vm.warp(campaign.endTime());
+        assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 at endTime");
+    }
+
+    function test_ClaimExpiry_GetWithdrawableReturnsCorrectAfterEnd() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 totalCommitted = 5 ether;
+
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 root = leaf;
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // Warp past endTime but before expiry
+        vm.warp(campaign.endTime() + 1);
+
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+        uint256 expectedWithdrawable = balance - totalCommitted; // 9 ether - 5 ether = 4 ether
+        assertEq(campaign.getWithdrawable(), expectedWithdrawable, "Should subtract stillOwed before expiry");
+    }
+
+    function test_ClaimExpiry_GetWithdrawableFullBalanceAfterExpiry() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 totalCommitted = 5 ether;
+
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 root = leaf;
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // Warp past claim expiry
+        vm.warp(campaign.endTime() + 61 days);
+
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+        assertEq(campaign.getWithdrawable(), balance, "Full balance should be withdrawable after expiry");
+    }
+
+    function test_ClaimExpiry_WithdrawAfterExpiry() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+        uint256 totalCommitted = 5 ether;
+
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 root = leaf;
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // Warp past claim expiry
+        vm.warp(endTime + 61 days);
+
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
+        // Creator can withdraw full balance since claim window expired
+        vm.prank(CREATOR);
+        campaign.withdrawUndistributed();
+
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(
+            rewardToken.balanceOf(CREATOR),
+            creatorBalanceBefore + balance,
+            "Creator should receive full balance after expiry"
+        );
+    }
+
+    function test_ClaimExpiry_ClawbackAfterExpiry() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 totalCommitted = 5 ether;
+
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 root = leaf;
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // Warp past claim expiry
+        vm.warp(campaign.endTime() + 61 days);
+
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+
+        // Budget can clawback full balance after expiry
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(balance)});
+        bytes memory data = abi.encode(payload);
+
+        vm.prank(address(budget));
+        (uint256 amount,) = campaign.clawback(data, 0, 0);
+
+        assertEq(amount, balance, "Should clawback full balance");
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+    }
+
+    function test_ClaimExpiry_PartialClaimThenExpiry() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+
+        // Two users committed: CLAIMER gets 2 ether, CLAIMER2 gets 3 ether
+        uint256 claimer1Amount = 2 ether;
+        uint256 claimer2Amount = 3 ether;
+
+        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), claimer1Amount);
+        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), claimer2Amount);
+
+        bytes32 left;
+        bytes32 right;
+        if (uint256(leaf1) < uint256(leaf2)) {
+            left = leaf1;
+            right = leaf2;
+        } else {
+            left = leaf2;
+            right = leaf1;
+        }
+        bytes32 root = keccak256(abi.encodePacked(left, right));
+        uint256 totalCommitted = claimer1Amount + claimer2Amount;
+        manager.updateRoot(campaignId, root, totalCommitted);
+
+        // CLAIMER claims before expiry
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+        manager.claim(campaignId, CLAIMER, claimer1Amount, proof1);
+
+        // Warp past claim expiry - CLAIMER2 never claims
+        vm.warp(campaign.endTime() + 61 days);
+
+        // After expiry, stillOwed = 0, so full remaining balance is withdrawable
+        uint256 balance = rewardToken.balanceOf(address(campaign));
+        assertEq(campaign.getWithdrawable(), balance, "Full remaining balance should be withdrawable after expiry");
+
+        // Creator can withdraw via budget
+        vm.prank(CREATOR);
+        manager.withdrawToBudget(campaignId);
+
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty after withdraw");
+    }
+
+    function test_SetClaimExpiryDuration_Success() public {
+        uint64 newDuration = 90 days;
+
+        vm.expectEmit(true, true, true, true);
+        emit StreamingManager.ClaimExpiryDurationUpdated(60 days, newDuration);
+        manager.setClaimExpiryDuration(newDuration);
+
+        assertEq(manager.claimExpiryDuration(), newDuration, "Claim expiry duration should be updated");
+    }
+
+    function test_SetClaimExpiryDuration_RevertNotOwner() public {
+        vm.prank(CREATOR);
+        vm.expectRevert(abi.encodeWithSignature("Unauthorized()"));
+        manager.setClaimExpiryDuration(90 days);
+    }
+
+    function test_ClaimExpiry_CustomDuration() public {
+        // Set custom duration before creating campaign
+        uint64 customDuration = 30 days;
+        manager.setClaimExpiryDuration(customDuration);
+
+        // Create campaign - it should use the custom duration
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        assertEq(campaign.claimExpiryDuration(), customDuration, "Campaign should use custom duration");
+
+        uint256 claimAmount = 1 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // Claim at endTime + 29 days should work
+        vm.warp(campaign.endTime() + 29 days);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed within custom window");
+    }
+
+    function test_ClaimExpiry_ExactBoundarySucceeds() public {
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // Warp to exactly endTime + claimExpiryDuration (check is >, not >=)
+        vm.warp(campaign.endTime() + campaign.claimExpiryDuration());
+
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim at exact boundary should succeed");
+    }
+
+    function test_SetClaimExpiryDuration_RevertBelowMinimum() public {
+        // 0 should revert
+        vm.expectRevert(StreamingManager.ClaimExpiryDurationTooShort.selector);
+        manager.setClaimExpiryDuration(0);
+
+        // Just under 1 day should revert
+        vm.expectRevert(StreamingManager.ClaimExpiryDurationTooShort.selector);
+        manager.setClaimExpiryDuration(1 days - 1);
+    }
+
+    function test_SetClaimExpiryDuration_ExactlyOneDaySucceeds() public {
+        manager.setClaimExpiryDuration(1 days);
+        assertEq(manager.claimExpiryDuration(), 1 days, "1 day should be accepted");
+    }
+
+    function test_ClaimExpiry_MinDurationOneDayWorks() public {
+        // Set to minimum allowed (1 day)
+        manager.setClaimExpiryDuration(1 days);
+
+        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        assertEq(campaign.claimExpiryDuration(), 1 days, "Campaign should have 1 day expiry");
+
+        uint256 claimAmount = 1 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // Claim at endTime + 1 day should still work (boundary is >)
+        vm.warp(campaign.endTime() + 1 days);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim at exact 1-day boundary should succeed");
+    }
+
+    function test_ClaimExpiry_CancelledCampaignExpiryUsesNewEndTime() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        StreamingCampaign campaign = StreamingCampaign(manager.getCampaign(campaignId));
+
+        uint256 claimAmount = 1 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, root, claimAmount);
+
+        // Warp to middle of campaign and cancel
+        vm.warp(startTime + 5 days);
+        uint64 cancelTime = uint64(block.timestamp);
+        manager.cancelCampaign(campaignId);
+        assertEq(campaign.endTime(), cancelTime, "endTime should be set to cancel time");
+
+        // Claim within 60 days of the NEW endTime (cancel time) should work
+        vm.warp(cancelTime + 59 days);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed within expiry of cancelled campaign");
+    }
+
+    /// @notice Build merkle tree without sorting - faster for large trees
+    function _buildMerkleTreeAndProofFast(bytes32[] memory leaves, uint256 proofIndex)
+        internal
+        pure
+        returns (bytes32 root, bytes32[] memory proof)
+    {
+        require(leaves.length > 0, "Empty leaves");
+
+        // Pad to power of 2
+        uint256 n = leaves.length;
+        uint256 nextPow2 = 1;
+        while (nextPow2 < n) {
+            nextPow2 *= 2;
+        }
+
+        // Create padded leaf array
+        bytes32[] memory currentLevel = new bytes32[](nextPow2);
+        for (uint256 i = 0; i < n; i++) {
+            currentLevel[i] = leaves[i];
+        }
+        // Duplicate last leaf for padding (avoids issues with zero hashes)
+        for (uint256 i = n; i < nextPow2; i++) {
+            currentLevel[i] = leaves[n - 1];
+        }
+
+        // Calculate proof length
+        uint256 proofLength = 0;
+        uint256 temp = nextPow2;
+        while (temp > 1) {
+            proofLength++;
+            temp /= 2;
+        }
+        proof = new bytes32[](proofLength);
+        uint256 proofIdx = 0;
+        uint256 currentIndex = proofIndex;
+
+        // Build tree layer by layer, collecting proof elements
+        while (currentLevel.length > 1) {
+            // Get sibling for proof
+            uint256 siblingIndex = currentIndex % 2 == 0 ? currentIndex + 1 : currentIndex - 1;
+            proof[proofIdx++] = currentLevel[siblingIndex];
+
+            // Build next level
+            bytes32[] memory nextLevel = new bytes32[](currentLevel.length / 2);
+            for (uint256 i = 0; i < nextLevel.length; i++) {
+                bytes32 left = currentLevel[2 * i];
+                bytes32 right = currentLevel[2 * i + 1];
+                // Sort pair before hashing (standard for sorted merkle trees)
+                if (uint256(left) > uint256(right)) {
+                    (left, right) = (right, left);
+                }
+                nextLevel[i] = keccak256(abi.encodePacked(left, right));
+            }
+            currentLevel = nextLevel;
+            currentIndex = currentIndex / 2;
+        }
+
+        root = currentLevel[0];
+    }
 }

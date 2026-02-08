@@ -185,6 +185,9 @@ contract StreamingCampaign is Initializable, IClaw {
         onlyStreamingManager
         returns (uint256 amount)
     {
+        // Check claim window hasn't expired
+        if (block.timestamp > endTime + claimExpiryDuration) revert ClaimExpired();
+
         // Verify merkle proof
         if (merkleRoot == bytes32(0)) revert InvalidProof();
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(user, rewardToken, cumulativeAmount))));

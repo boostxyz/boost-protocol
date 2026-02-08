@@ -2494,7 +2494,7 @@ contract StreamingManagerTest is Test {
     ////////////////////////////////
 
     function test_ClaimExpiry_DefaultIs60Days() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
         assertEq(campaign.claimExpiryDuration(), 60 days, "Default claim expiry should be 60 days");
         assertEq(manager.claimExpiryDuration(), 60 days, "Manager default claim expiry should be 60 days");
     }
@@ -2532,7 +2532,7 @@ contract StreamingManagerTest is Test {
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnZeroDuringCampaign() public {
-        (uint256 campaignId, StreamingCampaign campaign) = _createCampaignWithRoot();
+        (, StreamingCampaign campaign) = _createCampaignWithRoot();
 
         // During the campaign (before endTime), getWithdrawable should return 0
         assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 during active campaign");

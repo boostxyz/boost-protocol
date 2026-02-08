@@ -9,12 +9,12 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {IClaw} from "contracts/shared/IClaw.sol";
 
-/// @title StreamingCampaign
-/// @notice Per-campaign clone that holds reward tokens for streaming incentives
-/// @dev Deployed as minimal proxy by StreamingManager
-contract StreamingCampaign is Initializable, IClaw {
-    /// @notice The StreamingManager contract that deployed this campaign
-    address public streamingManager;
+/// @title TimeBasedIncentiveCampaign
+/// @notice Per-campaign clone that holds reward tokens for time-based incentives
+/// @dev Deployed as minimal proxy by TimeBasedIncentiveManager
+contract TimeBasedIncentiveCampaign is Initializable, IClaw {
+    /// @notice The TimeBasedIncentiveManager contract that deployed this campaign
+    address public timeBasedIncentiveManager;
 
     /// @notice The budget that funded this campaign (address(0) if direct-funded)
     address public budget;
@@ -54,7 +54,7 @@ contract StreamingCampaign is Initializable, IClaw {
 
     /// @notice Emitted when the campaign is initialized
     event CampaignInitialized(
-        address indexed streamingManager,
+        address indexed timeBasedIncentiveManager,
         address indexed budget,
         address indexed creator,
         bytes32 configHash,
@@ -76,8 +76,8 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Emitted when the end time is updated (e.g., campaign cancelled)
     event EndTimeUpdated(uint64 oldEndTime, uint64 newEndTime);
 
-    /// @notice Error when caller is not the StreamingManager
-    error OnlyStreamingManager();
+    /// @notice Error when caller is not the TimeBasedIncentiveManager
+    error OnlyTimeBasedIncentiveManager();
 
     /// @notice Error when caller is not the creator
     error OnlyCreator();
@@ -117,8 +117,8 @@ contract StreamingCampaign is Initializable, IClaw {
         _disableInitializers();
     }
 
-    /// @notice Initialize the campaign (called by StreamingManager after cloning)
-    /// @param streamingManager_ The StreamingManager contract
+    /// @notice Initialize the campaign (called by TimeBasedIncentiveManager after cloning)
+    /// @param timeBasedIncentiveManager_ The TimeBasedIncentiveManager contract
     /// @param budget_ The budget that funded this campaign
     /// @param creator_ The address that created the campaign
     /// @param configHash_ Hash of the off-chain configuration
@@ -128,7 +128,7 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @param endTime_ Campaign end timestamp
     /// @param claimExpiryDuration_ Duration after endTime during which claims are valid
     function initialize(
-        address streamingManager_,
+        address timeBasedIncentiveManager_,
         address budget_,
         address creator_,
         bytes32 configHash_,
@@ -138,8 +138,8 @@ contract StreamingCampaign is Initializable, IClaw {
         uint64 endTime_,
         uint64 claimExpiryDuration_
     ) external initializer {
-        if (msg.sender != streamingManager_) revert OnlyStreamingManager();
-        streamingManager = streamingManager_;
+        if (msg.sender != timeBasedIncentiveManager_) revert OnlyTimeBasedIncentiveManager();
+        timeBasedIncentiveManager = timeBasedIncentiveManager_;
         budget = budget_;
         creator = creator_;
         configHash = configHash_;
@@ -150,13 +150,20 @@ contract StreamingCampaign is Initializable, IClaw {
         claimExpiryDuration = claimExpiryDuration_;
 
         emit CampaignInitialized(
-            streamingManager_, budget_, creator_, configHash_, rewardToken_, totalRewards_, startTime_, endTime_
+            timeBasedIncentiveManager_,
+            budget_,
+            creator_,
+            configHash_,
+            rewardToken_,
+            totalRewards_,
+            startTime_,
+            endTime_
         );
     }
 
-    /// @notice Modifier to restrict access to the StreamingManager
-    modifier onlyStreamingManager() {
-        if (msg.sender != streamingManager) revert OnlyStreamingManager();
+    /// @notice Modifier to restrict access to the TimeBasedIncentiveManager
+    modifier onlyTimeBasedIncentiveManager() {
+        if (msg.sender != timeBasedIncentiveManager) revert OnlyTimeBasedIncentiveManager();
         _;
     }
 
@@ -166,7 +173,7 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @return oldRoot The previous merkle root
     function setMerkleRoot(bytes32 root, uint256 totalCommitted_)
         external
-        onlyStreamingManager
+        onlyTimeBasedIncentiveManager
         returns (bytes32 oldRoot)
     {
         oldRoot = merkleRoot;
@@ -182,7 +189,7 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @return amount The amount of tokens transferred
     function processClaim(address user, uint256 cumulativeAmount, bytes32[] calldata proof)
         external
-        onlyStreamingManager
+        onlyTimeBasedIncentiveManager
         returns (uint256 amount)
     {
         // Check claim window hasn't expired
@@ -209,7 +216,7 @@ contract StreamingCampaign is Initializable, IClaw {
 
     /// @notice Withdraw undistributed funds back to creator (direct-funded campaigns only)
     /// @dev Only callable by the campaign creator after the campaign has ended
-    /// @dev For budget-funded campaigns, use StreamingManager.withdrawToBudget() instead
+    /// @dev For budget-funded campaigns, use TimeBasedIncentiveManager.withdrawToBudget() instead
     function withdrawUndistributed() external {
         if (msg.sender != creator) revert OnlyCreator();
         if (budget != address(0)) revert UseBudgetClawback();
@@ -274,7 +281,7 @@ contract StreamingCampaign is Initializable, IClaw {
     /// @notice Set the campaign end time (for emergency cancellation)
     /// @param newEndTime The new end time (must be <= current endTime)
     /// @return oldEndTime The previous end time
-    function setEndTime(uint64 newEndTime) external onlyStreamingManager returns (uint64 oldEndTime) {
+    function setEndTime(uint64 newEndTime) external onlyTimeBasedIncentiveManager returns (uint64 oldEndTime) {
         // Cannot cancel a campaign that has already ended
         if (block.timestamp > endTime) revert CampaignAlreadyEnded();
 

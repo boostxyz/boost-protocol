@@ -44,9 +44,7 @@ contract DeployTimeBased is ScriptUtils {
         console.log("=== Deployment Summary ===");
         console.log("TimeBasedIncentiveCampaign Implementation: ", campaignImpl);
         console.log("TimeBasedIncentiveManager Proxy: ", managerProxy);
-        if (operator != address(0)) {
-            console.log("Operator set to: ", operator);
-        }
+        console.log("Operator: ", operator);
     }
 
     function _ensureDeploymentsFileExists() internal {
@@ -110,6 +108,21 @@ contract DeployTimeBased is ScriptUtils {
             _configureManager(managerProxy, campaignImpl, owner, protocolFee, protocolFeeReceiver, operator);
         } else {
             console.log("  -> Proxy already deployed");
+
+            // Sanity check: on-chain owner matches expected
+            address currentOwner = TimeBasedIncentiveManager(managerProxy).owner();
+            require(currentOwner == owner, "Existing manager owner != TIMEBASED_OWNER");
+
+            // Reconcile operator on reruns if deployer is still owner
+            if (operator != address(0)) {
+                address currentOperator = TimeBasedIncentiveManager(managerProxy).operator();
+                if (currentOperator != operator) {
+                    require(currentOwner == vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY")), "Cannot update operator: deployer is not owner");
+                    vm.broadcast();
+                    TimeBasedIncentiveManager(managerProxy).setOperator(operator);
+                    console.log("  -> Updated operator to: ", operator);
+                }
+            }
         }
 
         vm.writeJson(vm.toString(managerProxy), _buildJsonDeployPath(), ".TimeBasedIncentiveManager");

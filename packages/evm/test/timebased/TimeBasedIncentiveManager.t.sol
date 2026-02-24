@@ -2662,10 +2662,11 @@ contract TimeBasedIncentiveManagerTest is Test {
     ////////////////////////////////
 
     function test_Clawback_EmitsUndistributedWithdrawn() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         AIncentive.ClawbackPayload memory payload =
             AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(clawbackAmount)});

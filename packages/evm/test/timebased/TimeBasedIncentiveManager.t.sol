@@ -2043,13 +2043,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should have 0 balance");
 
         vm.warp(endTime + 1);
+        maxFeeManager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
-        maxFeeManager.withdrawToBudget(campaignId);
+        maxFeeManager.withdraw(campaignId);
     }
 
-    function test_WithdrawToBudget_RevertNotBudgetFunded() public {
+    function test_Withdraw_DirectFundedSuccess() public {
         // Create direct-funded campaign
         uint256 totalAmount = 10 ether;
         uint64 startTime = uint64(block.timestamp + 1 hours);

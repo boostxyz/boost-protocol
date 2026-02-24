@@ -2946,7 +2946,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         }
         bytes32 root = keccak256(abi.encodePacked(left, right));
         uint256 totalCommitted = claimer1Amount + claimer2Amount;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
         // CLAIMER claims before expiry
         bytes32[] memory proof1 = new bytes32[](1);
@@ -2956,13 +2956,16 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp past claim expiry - CLAIMER2 never claims
         vm.warp(campaign.endTime() + 61 days);
 
+        // Finalize campaign
+        manager.updateRoot(campaignId, root, totalCommitted, true);
+
         // After expiry, stillOwed = 0, so full remaining balance is withdrawable
         uint256 balance = rewardToken.balanceOf(address(campaign));
-        assertEq(campaign.getWithdrawable(), balance, "Full remaining balance should be withdrawable after expiry");
+        assertEq(manager.getWithdrawable(campaignId), balance, "Full remaining balance should be withdrawable after expiry");
 
         // Creator can withdraw via budget
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty after withdraw");
     }

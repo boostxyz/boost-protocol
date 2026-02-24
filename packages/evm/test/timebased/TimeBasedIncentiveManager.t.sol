@@ -2247,21 +2247,22 @@ contract TimeBasedIncentiveManagerTest is Test {
     function test_Clawback_RevertBeforeEndTime() public {
         (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
-        // Don't warp past end time
+        // Don't warp past end time — campaign is not finalized (can't finalize before endTime)
         AIncentive.ClawbackPayload memory payload =
             AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(1 ether)});
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
-        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotEnded.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotFinalized.selector);
         campaign.clawback(data, 0, 0);
     }
 
     function test_Clawback_Success() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
@@ -2292,9 +2293,10 @@ contract TimeBasedIncentiveManagerTest is Test {
     }
 
     function test_Clawback_RevertInsufficientBalance() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
         uint256 excessiveAmount = campaignBalance + 1 ether;

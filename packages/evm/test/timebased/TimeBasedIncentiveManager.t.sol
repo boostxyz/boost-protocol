@@ -2405,12 +2405,15 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp forward 1 second so block.timestamp > endTime (required for withdraw)
         vm.warp(block.timestamp + 1);
 
+        // Operator publishes final root to finalize
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
         // Now creator can withdraw via manager.withdrawToBudget
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(

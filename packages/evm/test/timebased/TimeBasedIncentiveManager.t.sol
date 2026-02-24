@@ -1933,11 +1933,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp past end time
         vm.warp(campaign.endTime() + 1);
 
+        // Finalize campaign
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Creator withdraws via manager
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         // Campaign should be empty
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
@@ -1955,11 +1958,12 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 undistributed = rewardToken.balanceOf(address(campaign));
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, true);
-        emit TimeBasedIncentiveManager.WithdrawnToBudget(campaignId, undistributed, address(budget));
-        manager.withdrawToBudget(campaignId);
+        emit TimeBasedIncentiveManager.Withdrawn(campaignId, undistributed, address(budget));
+        manager.withdraw(campaignId);
     }
 
     function test_WithdrawToBudget_PartialWithdraw() public {
@@ -1971,7 +1975,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
 
         uint256 remaining = rewardToken.balanceOf(address(campaign));
@@ -1981,11 +1985,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp past end time
         vm.warp(campaign.endTime() + 1);
 
+        // Finalize with final root
+        manager.updateRoot(campaignId, root, claimAmount, true);
+
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Creator withdraws remaining via manager
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(

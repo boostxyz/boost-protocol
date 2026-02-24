@@ -174,6 +174,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when token transfer amount doesn't match (fee-on-transfer tokens)
     error FeeOnTransferNotSupported();
 
+    /// @notice Error when campaign has not been finalized
+    error CampaignNotFinalized();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

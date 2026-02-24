@@ -250,6 +250,7 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         (boostId, incentiveId); // unused variables
 
         if (msg.sender != budget) revert OnlyBudget();
+        if (!finalized) revert CampaignNotFinalized();
         if (block.timestamp <= endTime) revert CampaignNotEnded();
 
         AIncentive.ClawbackPayload memory payload = abi.decode(data_, (AIncentive.ClawbackPayload));

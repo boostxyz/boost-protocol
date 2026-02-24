@@ -269,9 +269,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     }
 
     /// @notice Get the amount available to withdraw (not owed to users)
-    /// @return withdrawable The amount that can be withdrawn
+    /// @return withdrawable The amount that can be withdrawn (0 if not finalized or not ended)
     function getWithdrawable() external view returns (uint256 withdrawable) {
-        if (block.timestamp <= endTime) return 0;
+        if (!finalized || block.timestamp <= endTime) return 0;
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
         withdrawable = balance > owed ? balance - owed : 0;

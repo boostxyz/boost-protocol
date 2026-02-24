@@ -2877,17 +2877,18 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
-        // Warp past claim expiry
+        // Warp past claim expiry and finalize
         vm.warp(endTime + 61 days);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
 
         // Creator can withdraw full balance since claim window expired
         vm.prank(CREATOR);
-        campaign.withdrawUndistributed();
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
@@ -2901,9 +2902,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
+        // Warp past end time, then set final root
+        vm.warp(campaign.endTime() + 1);
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         // Warp past claim expiry
         vm.warp(campaign.endTime() + 61 days);

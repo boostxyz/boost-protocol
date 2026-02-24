@@ -178,7 +178,8 @@ contract TimeBasedIncentiveManagerTest is Test {
             address(rewardToken),
             expectedNet,
             startTime,
-            endTime
+            endTime,
+            60 days
         );
         manager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
     }
@@ -1758,7 +1759,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, false);
         emit TimeBasedIncentiveManager.CampaignCreated(
-            1, configHash, address(0), CREATOR, address(rewardToken), expectedNet, startTime, endTime
+            1, configHash, address(0), CREATOR, address(rewardToken), expectedNet, startTime, endTime, 60 days
         );
         manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
     }

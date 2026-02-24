@@ -72,7 +72,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         address rewardToken,
         uint256 totalRewards,
         uint64 startTime,
-        uint64 endTime
+        uint64 endTime,
+        uint64 claimExpiryDuration
     );
 
     /// @notice Emitted when the protocol fee is updated
@@ -289,7 +290,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             claimExpiryDuration
         );
 
-        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
+        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime, claimExpiryDuration);
     }
 
     /// @notice Create a new time-based incentive campaign with direct token transfer
@@ -365,7 +366,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             claimExpiryDuration
         );
 
-        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
+        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime, claimExpiryDuration);
     }
 
     /// @notice Get a campaign contract by ID

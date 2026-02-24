@@ -2102,10 +2102,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 distributedAfterCreate = budget.distributed(address(rewardToken));
         assertEq(distributedAfterCreate, 10 ether, "Distributed should be 10 ether (1 fee + 9 campaign)");
 
-        // Warp past end time and withdraw
+        // Warp past end time, finalize, and withdraw
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         // After withdrawal via clawbackFromTarget, distributed should decrease by withdrawn amount
         // The campaign had 9 ether, so distributed drops from 10 to 1 (the fee is still "distributed")

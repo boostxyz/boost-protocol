@@ -82,9 +82,6 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when caller is not the TimeBasedIncentiveManager
     error OnlyTimeBasedIncentiveManager();
 
-    /// @notice Error when caller is not the creator
-    error OnlyCreator();
-
     /// @notice Error when caller is not the budget
     error OnlyBudget();
 

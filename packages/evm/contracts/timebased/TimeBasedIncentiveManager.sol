@@ -429,10 +429,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     }
 
     /// @notice Update the merkle root for a campaign
+    /// @dev Roots can still be updated after finalization for emergency corrections
     /// @param campaignId The campaign ID
     /// @param root The new merkle root
     /// @param totalCommitted Total amount committed to users in the merkle tree
-    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted) external {
+    /// @param finalize If true, marks the campaign as finalized (unlocks withdrawal)
+    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted, bool finalize) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
 
         address campaign = campaigns[campaignId];

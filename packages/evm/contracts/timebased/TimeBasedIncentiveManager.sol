@@ -108,6 +108,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when claim expiry duration is updated
     event ClaimExpiryDurationUpdated(uint64 oldDuration, uint64 newDuration);
 
+    /// @notice Emitted when a campaign is finalized
+    event CampaignFinalized(uint256 indexed campaignId);
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
 

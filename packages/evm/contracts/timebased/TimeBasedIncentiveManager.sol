@@ -465,6 +465,11 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
                 TimeBasedIncentiveCampaign(campaign).setMerkleRoot(updates[i].root, updates[i].totalCommitted);
 
             emit RootUpdated(updates[i].campaignId, oldRoot, updates[i].root, updates[i].totalCommitted);
+
+            if (updates[i].finalize && !TimeBasedIncentiveCampaign(campaign).finalized()) {
+                TimeBasedIncentiveCampaign(campaign).setFinalized();
+                emit CampaignFinalized(updates[i].campaignId);
+            }
         }
     }
 

@@ -22,6 +22,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 campaignId;
         bytes32 root;
         uint256 totalCommitted;
+        bool finalize;
     }
 
     /// @notice Maximum number of root updates in a single batch

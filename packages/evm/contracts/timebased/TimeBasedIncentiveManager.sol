@@ -96,8 +96,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when a campaign is cancelled by protocol admin
     event CampaignCancelled(uint256 indexed campaignId, uint64 oldEndTime, uint64 newEndTime);
 
-    /// @notice Emitted when undistributed funds are withdrawn to budget
-    event WithdrawnToBudget(uint256 indexed campaignId, uint256 amount, address indexed budget);
+    /// @notice Emitted when undistributed funds are withdrawn
+    event Withdrawn(uint256 indexed campaignId, uint256 amount, address indexed destination);
 
     /// @notice Emitted when max campaign duration is updated
     event MaxCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);

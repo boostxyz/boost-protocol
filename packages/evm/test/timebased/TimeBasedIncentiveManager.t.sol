@@ -2000,14 +2000,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         );
     }
 
-    function test_WithdrawToBudget_RevertNotCreator() public {
+    function test_Withdraw_RevertNotAuthorized() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
 
         vm.prank(address(0xBAD));
-        vm.expectRevert(TimeBasedIncentiveManager.NotCampaignCreator.selector);
-        manager.withdrawToBudget(campaignId);
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
+        manager.withdraw(campaignId);
     }
 
     function test_WithdrawToBudget_RevertBeforeEndTime() public {
@@ -2016,7 +2016,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Don't warp past end time
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.CampaignNotEnded.selector);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
     }
 
     function test_WithdrawToBudget_RevertNothingToWithdraw() public {

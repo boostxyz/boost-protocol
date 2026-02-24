@@ -2999,7 +2999,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Claim at endTime + 29 days should work
         vm.warp(campaign.endTime() + 29 days);
@@ -3014,7 +3014,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to exactly endTime + claimExpiryDuration (check is >, not >=)
         vm.warp(campaign.endTime() + campaign.claimExpiryDuration());
@@ -3049,7 +3049,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Claim at endTime + 1 day should still work (boundary is >)
         vm.warp(campaign.endTime() + 1 days);
@@ -3071,7 +3071,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to middle of campaign and cancel
         vm.warp(startTime + 5 days);

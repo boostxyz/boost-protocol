@@ -758,7 +758,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
-        manager.updateRoot(campaignId, newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted, false);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated");
@@ -783,7 +783,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(operatorAddr);
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
-        manager.updateRoot(campaignId, newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted, false);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated by operator");
@@ -802,7 +802,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root2 = keccak256("merkle-root-2");
 
         // First update
-        manager.updateRoot(campaignId, root1, 3 ether);
+        manager.updateRoot(campaignId, root1, 3 ether, false);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), root1, "First root should be set");
@@ -810,7 +810,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Second update - should emit with old root
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(campaignId, root1, root2, 5 ether);
-        manager.updateRoot(campaignId, root2, 5 ether);
+        manager.updateRoot(campaignId, root2, 5 ether, false);
 
         assertEq(campaign.merkleRoot(), root2, "Second root should be set");
     }
@@ -827,7 +827,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Try to update as random address (not owner, not operator)
         vm.prank(address(0xBAD));
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
-        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
+        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether, false);
     }
 
     function test_UpdateRoot_RevertWhenOperatorNotSet() public {
@@ -845,10 +845,10 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Creator cannot update root (not owner, operator not set)
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
-        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
+        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether, false);
 
         // But owner still can
-        manager.updateRoot(campaignId, keccak256("good-root"), 1 ether);
+        manager.updateRoot(campaignId, keccak256("good-root"), 1 ether, false);
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), keccak256("good-root"), "Owner should still be able to update");
     }
@@ -856,7 +856,7 @@ contract TimeBasedIncentiveManagerTest is Test {
     function test_UpdateRoot_RevertInvalidCampaign() public {
         // Try to update root for non-existent campaign
         vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
-        manager.updateRoot(999, keccak256("root"), 1 ether);
+        manager.updateRoot(999, keccak256("root"), 1 ether, false);
     }
 
     ////////////////////////////////
@@ -879,9 +879,9 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](3);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether);
-        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 3 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether, false);
+        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 3 ether, false);
 
         manager.updateRootsBatch(updates);
 
@@ -903,7 +903,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
 
         manager.updateRootsBatch(updates);
 
@@ -923,7 +923,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
 
         vm.prank(operatorAddr);
         manager.updateRootsBatch(updates);
@@ -943,8 +943,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.stopPrank();
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether, false);
 
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(id1, bytes32(0), keccak256("root1"), 1 ether);
@@ -963,7 +963,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
 
         vm.prank(address(0xBAD));
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
@@ -980,7 +980,7 @@ contract TimeBasedIncentiveManagerTest is Test {
     function test_UpdateRootsBatch_RevertBatchTooLarge() public {
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](51);
         for (uint256 i; i < 51; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(i, keccak256(abi.encode(i)), 1 ether);
+            updates[i] = TimeBasedIncentiveManager.RootUpdate(i, keccak256(abi.encode(i)), 1 ether, false);
         }
 
         vm.expectRevert(TimeBasedIncentiveManager.BatchTooLarge.selector);
@@ -997,8 +997,8 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Second entry has a bad campaignId
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(validId, keccak256("root1"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(999, keccak256("root2"), 2 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(validId, keccak256("root1"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(999, keccak256("root2"), 2 ether, false);
 
         vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
         manager.updateRootsBatch(updates);
@@ -1025,7 +1025,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Build batch of exactly 50
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](batchSize);
         for (uint256 i; i < batchSize; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
         }
 
         manager.updateRootsBatch(updates);
@@ -1051,8 +1051,8 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Same campaign twice — second update overwrites the first
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-a"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-b"), 2 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-a"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-b"), 2 ether, false);
 
         // Events: first emits oldRoot=0→root-a, second emits oldRoot=root-a→root-b
         vm.expectEmit(true, true, true, true);
@@ -1080,14 +1080,14 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // First batch
         TimeBasedIncentiveManager.RootUpdate[] memory batch1 = new TimeBasedIncentiveManager.RootUpdate[](2);
-        batch1[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-a"), 1 ether);
-        batch1[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-a"), 2 ether);
+        batch1[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-a"), 1 ether, false);
+        batch1[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-a"), 2 ether, false);
         manager.updateRootsBatch(batch1);
 
         // Second batch — oldRoot in events should reflect first batch
         TimeBasedIncentiveManager.RootUpdate[] memory batch2 = new TimeBasedIncentiveManager.RootUpdate[](2);
-        batch2[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-b"), 1.5 ether);
-        batch2[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-b"), 2.5 ether);
+        batch2[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-b"), 1.5 ether, false);
+        batch2[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-b"), 2.5 ether, false);
 
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(id1, keccak256("root1-a"), keccak256("root1-b"), 1.5 ether);
@@ -1117,7 +1117,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](20);
         for (uint256 i; i < 20; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
         }
 
         uint256 gasBefore = gasleft();
@@ -1163,7 +1163,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Update root through manager and check campaign emits event
         vm.recordLogs();
-        manager.updateRoot(campaignId, newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted, false);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bool foundCampaignEvent = false;
@@ -1253,7 +1253,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         uint256 claimerBalanceBefore = rewardToken.balanceOf(CLAIMER);
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
@@ -1283,7 +1283,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Record logs and claim
         vm.recordLogs();
@@ -1334,7 +1334,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Try to claim with wrong user
         vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
@@ -1352,7 +1352,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Claim first time
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
@@ -1380,7 +1380,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, firstRoot, firstCumulative);
+        manager.updateRoot(campaignId, firstRoot, firstCumulative, false);
         manager.claim(campaignId, CLAIMER, firstCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), firstCumulative, "First claim should be recorded");
@@ -1391,7 +1391,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 secondLeaf = _makeLeaf(CLAIMER, address(rewardToken), secondCumulative);
         bytes32 secondRoot = secondLeaf;
 
-        manager.updateRoot(campaignId, secondRoot, secondCumulative);
+        manager.updateRoot(campaignId, secondRoot, secondCumulative, false);
         manager.claim(campaignId, CLAIMER, secondCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), secondCumulative, "Second claim should be recorded");
@@ -1402,7 +1402,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 thirdLeaf = _makeLeaf(CLAIMER, address(rewardToken), thirdCumulative);
         bytes32 thirdRoot = thirdLeaf;
 
-        manager.updateRoot(campaignId, thirdRoot, thirdCumulative);
+        manager.updateRoot(campaignId, thirdRoot, thirdCumulative, false);
         manager.claim(campaignId, CLAIMER, thirdCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), thirdCumulative, "Third claim should be recorded");
@@ -1420,7 +1420,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Random address submits claim for CLAIMER
         address randomCaller = address(0xBAD);
@@ -1444,7 +1444,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Try to call processClaim directly
         vm.expectRevert(TimeBasedIncentiveCampaign.OnlyTimeBasedIncentiveManager.selector);
@@ -1477,7 +1477,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         uint256 claimAmount = claimer1Amount + claimer2Amount;
 
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Create proofs - sibling is the proof
         bytes32[] memory proof1 = new bytes32[](1);
@@ -1509,7 +1509,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, correctAmount);
+        manager.updateRoot(campaignId, root, correctAmount, false);
 
         // Try to claim with wrong amount
         vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
@@ -1539,7 +1539,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, firstRoot, firstCumulative);
+        manager.updateRoot(campaignId, firstRoot, firstCumulative, false);
         manager.claim(campaignId, CLAIMER, firstCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), firstCumulative, "Should have claimed 2 ether");
@@ -1550,7 +1550,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 oldLeaf = _makeLeaf(CLAIMER, address(rewardToken), oldCumulative);
         bytes32 oldRoot = oldLeaf;
 
-        manager.updateRoot(campaignId, oldRoot, oldCumulative);
+        manager.updateRoot(campaignId, oldRoot, oldCumulative, false);
 
         // Should revert because oldCumulative (1 ether) <= alreadyClaimed (2 ether)
         vm.expectRevert(TimeBasedIncentiveCampaign.NothingToClaim.selector);
@@ -1567,7 +1567,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // First claim succeeds
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
@@ -1587,7 +1587,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, actualAmount);
+        manager.updateRoot(campaignId, root, actualAmount, false);
 
         // Claim the actual amount
         manager.claim(campaignId, CLAIMER, actualAmount, proof);
@@ -1616,7 +1616,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, excessiveAmount);
+        manager.updateRoot(campaignId, root, excessiveAmount, false);
 
         // Claim should revert due to insufficient balance in campaign
         // SafeTransferLib will revert with TransferFailed
@@ -1645,7 +1645,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Only set root on campaign 1
-        manager.updateRoot(campaignId1, root, claimAmount);
+        manager.updateRoot(campaignId1, root, claimAmount, false);
 
         // Claim works on campaign 1
         manager.claim(campaignId1, CLAIMER, claimAmount, proof);
@@ -1657,7 +1657,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Even if we set the same root on campaign 2, the user can claim again
         // (each campaign tracks claims independently)
-        manager.updateRoot(campaignId2, root, claimAmount);
+        manager.updateRoot(campaignId2, root, claimAmount, false);
         manager.claim(campaignId2, CLAIMER, claimAmount, proof);
         assertEq(rewardToken.balanceOf(CLAIMER), claimAmount * 2, "Should receive from both campaigns");
     }

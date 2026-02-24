@@ -2065,24 +2065,23 @@ contract TimeBasedIncentiveManagerTest is Test {
             keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
         );
 
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+
         vm.warp(endTime + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
-        // Try to use withdrawToBudget on direct-funded campaign
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
         vm.prank(CREATOR);
-        vm.expectRevert(TimeBasedIncentiveManager.NotBudgetFunded.selector);
-        manager.withdrawToBudget(campaignId);
-    }
+        manager.withdraw(campaignId);
 
-    function test_WithdrawUndistributed_BudgetFunded_RevertsUseBudgetClawback() public {
-        // Create a budget-funded campaign
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-
-        vm.warp(campaign.endTime() + 1);
-
-        // Trying to use withdrawUndistributed on budget-funded should revert
-        vm.prank(CREATOR);
-        vm.expectRevert(TimeBasedIncentiveCampaign.UseBudgetClawback.selector);
-        campaign.withdrawUndistributed();
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(
+            rewardToken.balanceOf(CREATOR),
+            creatorBalanceBefore + campaignBalance,
+            "Creator should receive funds"
+        );
     }
 
     function test_WithdrawToBudget_UpdatesBudgetAccounting() public {

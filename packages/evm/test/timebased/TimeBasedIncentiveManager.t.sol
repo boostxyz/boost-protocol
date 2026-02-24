@@ -2352,7 +2352,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.cancelCampaign(campaignId);
     }
 
-    function test_CancelCampaign_RevertNotOwner() public {
+    function test_CancelCampaign_RevertNotAuthorized() public {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
 
@@ -2360,8 +2360,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        vm.prank(CREATOR); // Not the owner
-        vm.expectRevert(); // Ownable.Unauthorized
+        vm.prank(address(0xBAD)); // Not owner, not budget-authorized
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
         manager.cancelCampaign(campaignId);
     }
 

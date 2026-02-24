@@ -109,8 +109,8 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when there is nothing to claim
     error NothingToClaim();
 
-    /// @notice Error when trying to use withdrawUndistributed on a budget-funded campaign
-    error UseBudgetClawback();
+    /// @notice Error when campaign has not been finalized
+    error CampaignNotFinalized();
 
     /// @notice Disable initialization on the implementation contract
     constructor() {

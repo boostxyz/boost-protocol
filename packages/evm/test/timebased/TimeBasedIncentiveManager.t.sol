@@ -2746,7 +2746,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         (bytes32 root, bytes32[] memory proof) = _buildMerkleTreeAndProofFast(leaves, 0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
         // The user we're claiming for
         address testUser = address(uint160(0x10000));
@@ -2791,7 +2791,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to endTime + 59 days (still within 60-day expiry window)
         vm.warp(campaign.endTime() + 59 days);
@@ -2807,7 +2807,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to endTime + 61 days (past 60-day expiry window)
         vm.warp(campaign.endTime() + 61 days);

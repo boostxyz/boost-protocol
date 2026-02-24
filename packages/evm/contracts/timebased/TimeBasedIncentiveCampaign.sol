@@ -49,6 +49,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Duration after endTime during which claims are still valid
     uint64 public claimExpiryDuration;
 
+    /// @notice Whether the final reward state has been published (unlocks withdrawals)
+    bool public finalized;
+
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
 

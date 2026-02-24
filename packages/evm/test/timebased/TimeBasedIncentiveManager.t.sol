@@ -2130,17 +2130,18 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Set merkle root with 5 ether committed but don't claim yet
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
-        // Warp past end time
+        // Warp past end time and finalize
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Creator withdraws via manager - should only get balance minus what's owed to users
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         // Should have withdrawn balance - totalCommitted (5 ether owed)
         uint256 expectedWithdraw = balance - totalCommitted;
@@ -2161,27 +2162,28 @@ contract TimeBasedIncentiveManagerTest is Test {
         // First claim: set committed to 3 ether, claim 3 ether
         bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, leaf1, 3 ether);
+        manager.updateRoot(campaignId, leaf1, 3 ether, false);
         manager.claim(campaignId, CLAIMER, 3 ether, proof);
 
         // Now publish a corrected root with lower total (simulates ban or correction)
         // totalCommitted drops to 1 ether, but user already claimed 3 ether
         bytes32 leaf2 = _makeLeaf(address(0xDEAD), address(rewardToken), 1 ether);
-        manager.updateRoot(campaignId, leaf2, 1 ether);
+        manager.updateRoot(campaignId, leaf2, 1 ether, false);
 
         // totalClaimed (3 ether) > totalCommitted (1 ether)
         assertEq(campaign.totalClaimed(), 3 ether, "Total claimed should be 3 ether");
         assertEq(campaign.totalCommitted(), 1 ether, "Total committed should be 1 ether");
 
-        // Warp past end time
+        // Warp past end time and finalize
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, leaf2, 1 ether, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Should be able to withdraw full balance since nothing more is owed
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(
             rewardToken.balanceOf(address(budget)), budgetBalanceBefore + balance, "Budget should receive full balance"
@@ -2193,13 +2195,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
-        // Set merkle root with 5 ether committed
+        // Warp past end time, then set merkle root with 5 ether committed and finalize
+        vm.warp(campaign.endTime() + 1);
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
-
-        // Warp past end time
-        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 available = balance - totalCommitted; // Only 4 ether is available (9 - 5)

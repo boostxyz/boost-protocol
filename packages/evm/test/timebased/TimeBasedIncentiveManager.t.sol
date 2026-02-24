@@ -1025,7 +1025,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Build batch of exactly 50
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](batchSize);
         for (uint256 i; i < batchSize; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
+            updates[i] =
+                TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
         }
 
         manager.updateRootsBatch(updates);
@@ -1117,7 +1118,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](20);
         for (uint256 i; i < 20; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
+            updates[i] =
+                TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
         }
 
         uint256 gasBefore = gasleft();
@@ -2077,11 +2079,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
-        assertEq(
-            rewardToken.balanceOf(CREATOR),
-            creatorBalanceBefore + campaignBalance,
-            "Creator should receive funds"
-        );
+        assertEq(rewardToken.balanceOf(CREATOR), creatorBalanceBefore + campaignBalance, "Creator should receive funds");
     }
 
     function test_WithdrawToBudget_UpdatesBudgetAccounting() public {
@@ -2840,7 +2838,9 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 expectedWithdrawable = balance - totalCommitted; // 9 ether - 5 ether = 4 ether
-        assertEq(manager.getWithdrawable(campaignId), expectedWithdrawable, "Should subtract stillOwed after finalization");
+        assertEq(
+            manager.getWithdrawable(campaignId), expectedWithdrawable, "Should subtract stillOwed after finalization"
+        );
     }
 
     function test_ClaimExpiry_GetWithdrawableFullBalanceAfterExpiry() public {
@@ -2961,7 +2961,9 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // After expiry, stillOwed = 0, so full remaining balance is withdrawable
         uint256 balance = rewardToken.balanceOf(address(campaign));
-        assertEq(manager.getWithdrawable(campaignId), balance, "Full remaining balance should be withdrawable after expiry");
+        assertEq(
+            manager.getWithdrawable(campaignId), balance, "Full remaining balance should be withdrawable after expiry"
+        );
 
         // Creator can withdraw via budget
         vm.prank(CREATOR);
@@ -3327,7 +3329,9 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.updateRootsBatch(updates);
 
         assertTrue(TimeBasedIncentiveCampaign(manager.getCampaign(id1)).finalized(), "Campaign 1 should be finalized");
-        assertFalse(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).finalized(), "Campaign 2 should not be finalized");
+        assertFalse(
+            TimeBasedIncentiveCampaign(manager.getCampaign(id2)).finalized(), "Campaign 2 should not be finalized"
+        );
     }
 
     function test_Finalization_WithdrawToBudgetBlockedWithoutFinalize() public {
@@ -3360,7 +3364,9 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.cancelCampaign(campaignId);
 
         // Cancel does NOT finalize
-        assertFalse(TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).finalized(), "Cancel should not finalize");
+        assertFalse(
+            TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).finalized(), "Cancel should not finalize"
+        );
 
         // Withdrawal still blocked
         vm.warp(block.timestamp + 1);

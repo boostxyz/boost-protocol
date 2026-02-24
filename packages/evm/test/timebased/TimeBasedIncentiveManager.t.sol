@@ -3257,6 +3257,16 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertTrue(campaign.finalized(), "Should be finalized after updateRoot with finalize=true");
     }
 
+    function test_Finalization_RevertBeforeEndTime() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        // Campaign hasn't ended yet — finalize should revert
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotEnded.selector);
+        manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
+
+        assertFalse(campaign.finalized(), "Should not be finalized");
+    }
+
     function test_Finalization_EmitsCampaignFinalizedEvent() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 

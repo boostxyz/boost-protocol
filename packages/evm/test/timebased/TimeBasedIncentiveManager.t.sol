@@ -2817,14 +2817,10 @@ contract TimeBasedIncentiveManagerTest is Test {
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnZeroDuringCampaign() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId,) = _createCampaignWithRoot();
 
         // During the campaign (before endTime), getWithdrawable should return 0
-        assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 during active campaign");
-
-        // Even right at endTime it should return 0
-        vm.warp(campaign.endTime());
-        assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 at endTime");
+        assertEq(manager.getWithdrawable(campaignId), 0, "getWithdrawable should return 0 during active campaign");
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnsCorrectAfterEnd() public {
@@ -2833,14 +2829,18 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
-        // Warp past endTime but before expiry
+        // Warp past endTime but before expiry — not finalized, should return 0
         vm.warp(campaign.endTime() + 1);
+        assertEq(manager.getWithdrawable(campaignId), 0, "Should return 0 when not finalized");
+
+        // Finalize
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 expectedWithdrawable = balance - totalCommitted; // 9 ether - 5 ether = 4 ether
-        assertEq(campaign.getWithdrawable(), expectedWithdrawable, "Should subtract stillOwed before expiry");
+        assertEq(manager.getWithdrawable(campaignId), expectedWithdrawable, "Should subtract stillOwed after finalization");
     }
 
     function test_ClaimExpiry_GetWithdrawableFullBalanceAfterExpiry() public {
@@ -2849,13 +2849,13 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
 
-        // Warp past claim expiry
+        // Warp past claim expiry and finalize
         vm.warp(campaign.endTime() + 61 days);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
-        assertEq(campaign.getWithdrawable(), balance, "Full balance should be withdrawable after expiry");
+        assertEq(manager.getWithdrawable(campaignId), balance, "Full balance should be withdrawable after expiry");
     }
 
     function test_ClaimExpiry_WithdrawAfterExpiry() public {

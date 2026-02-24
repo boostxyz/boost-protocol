@@ -2434,7 +2434,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to middle of campaign and cancel
         vm.warp(startTime + 5 days);
@@ -2519,7 +2519,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         uint256 claimAmount = claim1Amount + claim2Amount;
 
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         bytes32[] memory proof1 = new bytes32[](1);
         proof1[0] = leaf2;
@@ -2535,14 +2535,15 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(CLAIMER), claim1Amount, "CLAIMER should have claimed");
         assertEq(rewardToken.balanceOf(CLAIMER2), claim2Amount, "CLAIMER2 should have claimed");
 
-        // 3. Warp to end and withdraw
+        // 3. Warp to end, finalize, and withdraw
         vm.warp(endTime + 1);
+        manager.updateRoot(campaignId, root, claimAmount, true);
 
         uint256 remaining = rewardToken.balanceOf(address(campaign));
         uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
 
         vm.prank(CREATOR);
-        campaign.withdrawUndistributed();
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
@@ -2568,7 +2569,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // 3. Warp to active period, make a claim
         vm.warp(startTime + 5 days);
@@ -2582,12 +2583,15 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp forward 1 second so block.timestamp > endTime (required for withdraw)
         vm.warp(block.timestamp + 1);
 
+        // 5b. Operator publishes final root to finalize
+        manager.updateRoot(campaignId, root, claimAmount, true);
+
         // 6. Creator can withdraw remaining funds via manager.withdrawToBudget
         uint256 remaining = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(
             rewardToken.balanceOf(address(budget)), budgetBalanceBefore + remaining, "Budget should receive remaining"

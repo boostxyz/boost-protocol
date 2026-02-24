@@ -3147,6 +3147,224 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         root = currentLevel[0];
     }
+
+    ////////////////////////////////
+    // Cancellation ACL tests
+    ////////////////////////////////
+
+    function test_CancelCampaign_ByBudgetAuthorizedUser() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        vm.warp(startTime + 5 days);
+
+        // CREATOR is authorized on the budget, should be able to cancel
+        vm.prank(CREATOR);
+        manager.cancelCampaign(campaignId);
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
+    }
+
+    function test_CancelCampaign_ByBudgetOwner() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // Authorize a new address on the budget (not the Manager owner)
+        address budgetAdmin = address(0xB0B);
+        address[] memory accounts = new address[](1);
+        accounts[0] = budgetAdmin;
+        bool[] memory authorized = new bool[](1);
+        authorized[0] = true;
+        budget.setAuthorized(accounts, authorized);
+
+        vm.warp(startTime + 5 days);
+
+        // budgetAdmin is authorized on the budget but NOT the manager owner
+        vm.prank(budgetAdmin);
+        manager.cancelCampaign(campaignId);
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
+    }
+
+    function test_CancelCampaign_DirectFundedByCreator() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        vm.warp(startTime + 5 days);
+
+        // Creator can cancel their own direct-funded campaign
+        vm.prank(CREATOR);
+        manager.cancelCampaign(campaignId);
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
+    }
+
+    function test_CancelCampaign_DirectFundedRevertNotCreator() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        vm.warp(startTime + 5 days);
+
+        // Random address can't cancel a direct-funded campaign
+        vm.prank(address(0xBAD));
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
+        manager.cancelCampaign(campaignId);
+    }
+
+    ////////////////////////////////
+    // Finalization tests
+    ////////////////////////////////
+
+    function test_Finalization_UpdateRootWithFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        assertFalse(campaign.finalized(), "Should not be finalized initially");
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
+
+        assertTrue(campaign.finalized(), "Should be finalized after updateRoot with finalize=true");
+    }
+
+    function test_Finalization_EmitsCampaignFinalizedEvent() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        vm.expectEmit(true, true, true, true);
+        emit TimeBasedIncentiveManager.CampaignFinalized(campaignId);
+        manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
+    }
+
+    function test_Finalization_NoDoubleEmit() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
+
+        // Second finalize=true should not emit again
+        vm.recordLogs();
+        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, true);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        // Should only have RootUpdated, not CampaignFinalized
+        for (uint256 i; i < logs.length; ++i) {
+            assertTrue(
+                logs[i].topics[0] != TimeBasedIncentiveManager.CampaignFinalized.selector,
+                "Should not emit CampaignFinalized twice"
+            );
+        }
+    }
+
+    function test_Finalization_CanUpdateRootAfterFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
+        assertTrue(campaign.finalized());
+
+        // Operator can still update root after finalization
+        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, false);
+        assertEq(campaign.merkleRoot(), keccak256("root2"), "Root should be updated");
+        assertEq(campaign.totalCommitted(), 2 ether, "Total committed should be updated");
+        assertTrue(campaign.finalized(), "Should still be finalized");
+    }
+
+    function test_Finalization_BatchFinalize() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.startPrank(CREATOR);
+        uint256 id1 = manager.createCampaign(budget, keccak256("c1"), address(rewardToken), 5 ether, startTime, endTime);
+        uint256 id2 = manager.createCampaign(budget, keccak256("c2"), address(rewardToken), 5 ether, startTime, endTime);
+        vm.stopPrank();
+
+        vm.warp(endTime + 1);
+
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("r1"), 1 ether, true);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("r2"), 2 ether, false);
+        manager.updateRootsBatch(updates);
+
+        assertTrue(TimeBasedIncentiveCampaign(manager.getCampaign(id1)).finalized(), "Campaign 1 should be finalized");
+        assertFalse(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).finalized(), "Campaign 2 should not be finalized");
+    }
+
+    function test_Finalization_WithdrawToBudgetBlockedWithoutFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+
+        // Withdrawal blocked without finalization
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignNotFinalized.selector);
+        manager.withdraw(campaignId);
+
+        // Finalize
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
+        // Now withdrawal works
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+    }
+
+    function test_Finalization_CancelDoesNotFinalize() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        vm.warp(startTime + 5 days);
+        manager.cancelCampaign(campaignId);
+
+        // Cancel does NOT finalize
+        assertFalse(TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).finalized(), "Cancel should not finalize");
+
+        // Withdrawal still blocked
+        vm.warp(block.timestamp + 1);
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignNotFinalized.selector);
+        manager.withdraw(campaignId);
+
+        // Operator publishes final root
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
+        // Now withdrawal works
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+    }
 }
 
 /// @notice Mock ERC20 that deducts a fee only on transfer() not transferFrom() (outbound-only fee)

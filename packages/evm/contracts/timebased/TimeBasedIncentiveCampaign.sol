@@ -167,6 +167,12 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         _;
     }
 
+    /// @notice Mark the campaign as finalized (called by Manager after publishing final root)
+    function setFinalized() external onlyTimeBasedIncentiveManager {
+        if (block.timestamp < endTime) revert CampaignNotEnded();
+        finalized = true;
+    }
+
     /// @notice Set the merkle root for reward claims
     /// @param root The new merkle root
     /// @param totalCommitted_ Total amount committed to users in the merkle tree

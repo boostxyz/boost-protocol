@@ -498,41 +498,70 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Cancel a campaign (emergency use - sets endTime to now)
     /// @param campaignId The campaign ID to cancel
-    /// @dev Only callable by owner
-    function cancelCampaign(uint256 campaignId) external onlyOwner {
-        address campaign = campaigns[campaignId];
-        if (campaign == address(0)) revert InvalidCampaign();
-
-        uint64 oldEndTime = TimeBasedIncentiveCampaign(campaign).setEndTime(uint64(block.timestamp));
-
-        emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
-    }
-
-    /// @notice Withdraw undistributed funds back to budget (budget-funded campaigns only)
-    /// @param campaignId The campaign ID to withdraw from
-    /// @dev Only callable by the campaign creator after the campaign has ended
-    /// @dev Routes through budget.clawbackFromTarget() to maintain budget accounting
-    function withdrawToBudget(uint256 campaignId) external {
+    /// @dev Callable by owner, budget-authorized users (budget-funded), or creator (direct-funded)
+    function cancelCampaign(uint256 campaignId) external {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
         TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
-
-        if (msg.sender != c.creator()) revert NotCampaignCreator();
-
         address payable budgetAddr = payable(c.budget());
-        if (budgetAddr == address(0)) revert NotBudgetFunded();
 
+        if (msg.sender != owner()) {
+            if (budgetAddr != address(0)) {
+                if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
+            } else {
+                if (msg.sender != c.creator()) revert NotAuthorized();
+            }
+        }
+
+        uint64 oldEndTime = c.setEndTime(uint64(block.timestamp));
+
+        emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
+    }
+
+    /// @notice Withdraw undistributed funds from a campaign
+    /// @param campaignId The campaign ID to withdraw from
+    /// @dev Budget-funded: callable by anyone authorized on the budget
+    /// @dev Direct-funded: callable by the campaign creator
+    function withdraw(uint256 campaignId) external {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
+        address payable budgetAddr = payable(c.budget());
+
+        if (budgetAddr != address(0)) {
+            if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
+        } else {
+            if (msg.sender != c.creator()) revert NotAuthorized();
+        }
         if (block.timestamp <= c.endTime()) revert CampaignNotEnded();
+        if (!c.finalized()) revert CampaignNotFinalized();
 
-        uint256 withdrawable = c.getWithdrawable();
-        if (withdrawable == 0) revert ZeroAmount();
+        if (budgetAddr != address(0)) {
+            // Budget-funded: route through budget clawback for accounting
+            uint256 withdrawable = c.getWithdrawable();
+            if (withdrawable == 0) revert ZeroAmount();
 
-        // Route through budget.clawbackFromTarget() to maintain _distributedFungible accounting
-        bytes memory clawbackData = abi.encode(withdrawable);
-        ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
+            bytes memory clawbackData = abi.encode(withdrawable);
+            (uint256 clawbackAmount,) = ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
 
-        emit WithdrawnToBudget(campaignId, withdrawable, budgetAddr);
+            emit Withdrawn(campaignId, clawbackAmount, budgetAddr);
+        } else {
+            // Direct-funded: transfer to creator
+            uint256 amount = c.withdrawTo(c.creator());
+
+            emit Withdrawn(campaignId, amount, c.creator());
+        }
+    }
+
+    /// @notice Get the withdrawable amount for a campaign
+    /// @param campaignId The campaign ID
+    /// @return The amount that can be withdrawn (0 if not finalized or campaign hasn't ended)
+    function getWithdrawable(uint256 campaignId) external view returns (uint256) {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+        return TimeBasedIncentiveCampaign(campaign).getWithdrawable();
     }
 
     /// @notice Authorize an upgrade to a new implementation

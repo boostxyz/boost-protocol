@@ -220,23 +220,20 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         emit Claimed(user, amount, cumulativeAmount);
     }
 
-    /// @notice Withdraw undistributed funds back to creator (direct-funded campaigns only)
-    /// @dev Only callable by the campaign creator after the campaign has ended
-    /// @dev For budget-funded campaigns, use TimeBasedIncentiveManager.withdrawToBudget() instead
-    function withdrawUndistributed() external {
-        if (msg.sender != creator) revert OnlyCreator();
-        if (budget != address(0)) revert UseBudgetClawback();
+    /// @notice Transfer undistributed funds to a destination (called by Manager)
+    /// @param to The address to send funds to
+    /// @return amount The amount transferred
+    function withdrawTo(address to) external onlyTimeBasedIncentiveManager returns (uint256 amount) {
+        if (!finalized) revert CampaignNotFinalized();
         if (block.timestamp <= endTime) revert CampaignNotEnded();
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
+        amount = balance > owed ? balance - owed : 0;
+        if (amount == 0) revert NothingToWithdraw();
 
-        // Only withdraw what's not owed to users
-        uint256 withdrawable = balance > owed ? balance - owed : 0;
-        if (withdrawable == 0) revert NothingToWithdraw();
-
-        SafeTransferLib.safeTransfer(rewardToken, creator, withdrawable);
-        emit UndistributedWithdrawn(withdrawable, creator);
+        SafeTransferLib.safeTransfer(rewardToken, to, amount);
+        emit UndistributedWithdrawn(amount, to);
     }
 
     /// @notice Clawback funds to the budget (called by budget.clawbackFromTarget)

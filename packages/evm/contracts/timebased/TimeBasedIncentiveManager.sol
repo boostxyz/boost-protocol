@@ -65,12 +65,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(
-        uint256 indexed campaignId,
-        bytes32 indexed configHash,
+        uint256 campaignId,
+        bytes32 configHash,
         address campaign,
         address indexed creator,
-        address budget,
-        address rewardToken,
+        address indexed budget,
+        address indexed rewardToken,
         uint256 totalRewards,
         uint64 startTime,
         uint64 endTime,

@@ -14,6 +14,7 @@ import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentive
 /// @title TimeBasedIncentiveManager
 /// @notice Factory and orchestration contract for time-based incentive campaigns
 /// @dev Deploys TimeBasedIncentiveCampaign clones and manages protocol fees. UUPS upgradeable.
+/// @custom:oz-upgrades-from contracts/archive/TimeBasedIncentiveManagerV1.sol:TimeBasedIncentiveManagerV1
 contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;
 

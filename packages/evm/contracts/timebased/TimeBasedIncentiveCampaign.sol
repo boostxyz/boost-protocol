@@ -168,7 +168,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     }
 
     /// @notice Mark the campaign as finalized (called by Manager after publishing final root)
+    /// @dev Idempotent — no-op if already finalized
     function setFinalized() external onlyTimeBasedIncentiveManager {
+        if (finalized) return;
         if (block.timestamp < endTime) revert CampaignNotEnded();
         finalized = true;
     }

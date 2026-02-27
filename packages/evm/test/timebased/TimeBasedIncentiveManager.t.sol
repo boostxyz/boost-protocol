@@ -3183,7 +3183,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
     }
 
-    function test_CancelCampaign_ByBudgetOwner() public {
+    function test_CancelCampaign_ByBudgetAuthorized() public {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
 

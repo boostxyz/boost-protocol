@@ -11,11 +11,10 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
-/// @title TimeBasedIncentiveManager
-/// @notice Factory and orchestration contract for time-based incentive campaigns
-/// @dev Deploys TimeBasedIncentiveCampaign clones and manages protocol fees. UUPS upgradeable.
-/// @custom:oz-upgrades-from contracts/archive/TimeBasedIncentiveManagerV1.sol:TimeBasedIncentiveManagerV1
-contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
+/// @title TimeBasedIncentiveManager V1
+/// @notice Factory and orchestration contract for time-based incentive campaigns (Version 1)
+/// @dev Archived for upgrade safety validation. See TimeBasedIncentiveManager.sol for current version.
+contract TimeBasedIncentiveManagerV1 is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;
 
     /// @notice Parameters for a single root update in a batch
@@ -23,7 +22,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 campaignId;
         bytes32 root;
         uint256 totalCommitted;
-        bool finalize;
     }
 
     /// @notice Maximum number of root updates in a single batch
@@ -48,11 +46,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     address public operator;
 
     /// @notice Maximum campaign duration (default 365 days)
-    /// @dev Helps catch mistakes like using milliseconds instead of seconds
     uint64 public maxCampaignDuration;
 
     /// @notice Minimum campaign duration (default 1 day)
-    /// @dev Ensures engine has time to compute and publish at least one merkle root
     uint64 public minCampaignDuration;
 
     /// @notice Duration after campaign endTime during which claims are valid (default 60 days)
@@ -64,132 +60,56 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Allocated gap space for future variables
     uint256[50] private __gap;
 
-    /// @notice Emitted when a new campaign is created
     event CampaignCreated(
-        uint256 campaignId,
-        bytes32 configHash,
+        uint256 indexed campaignId,
+        bytes32 indexed configHash,
         address campaign,
         address indexed creator,
-        address indexed budget,
-        address indexed rewardToken,
+        address rewardToken,
         uint256 totalRewards,
         uint64 startTime,
-        uint64 endTime,
-        uint64 claimExpiryDuration
+        uint64 endTime
     );
 
-    /// @notice Emitted when the protocol fee is updated
     event ProtocolFeeUpdated(uint64 oldFee, uint64 newFee);
-
-    /// @notice Emitted when the protocol fee receiver is updated
     event ProtocolFeeReceiverUpdated(address indexed oldReceiver, address indexed newReceiver);
-
-    /// @notice Emitted when the campaign implementation is updated
     event CampaignImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
-
-    /// @notice Emitted when the operator is updated
     event OperatorUpdated(address indexed oldOperator, address indexed newOperator);
-
-    /// @notice Emitted when a campaign's merkle root is updated
     event RootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot, uint256 totalCommitted);
-
-    /// @notice Emitted when a user claims rewards from a campaign
     event Claimed(uint256 indexed campaignId, address indexed user, uint256 amount, uint256 cumulativeAmount);
-
-    /// @notice Emitted when a campaign is cancelled by protocol admin
     event CampaignCancelled(uint256 indexed campaignId, uint64 oldEndTime, uint64 newEndTime);
-
-    /// @notice Emitted when undistributed funds are withdrawn
-    event Withdrawn(uint256 indexed campaignId, uint256 amount, address indexed destination);
-
-    /// @notice Emitted when max campaign duration is updated
+    event WithdrawnToBudget(uint256 indexed campaignId, uint256 amount, address indexed budget);
     event MaxCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
-
-    /// @notice Emitted when min campaign duration is updated
     event MinCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
-
-    /// @notice Emitted when claim expiry duration is updated
     event ClaimExpiryDurationUpdated(uint64 oldDuration, uint64 newDuration);
 
-    /// @notice Emitted when a campaign is finalized
-    event CampaignFinalized(uint256 indexed campaignId);
-
-    /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
-
-    /// @notice Error when caller is not the campaign creator
     error NotCampaignCreator();
-
-    /// @notice Error when campaign is not budget-funded
     error NotBudgetFunded();
-
-    /// @notice Error when campaign has not ended
     error CampaignNotEnded();
-
-    /// @notice Error when start time is in the past
     error StartTimeInPast();
-
-    /// @notice Error when end time is not after start time
     error EndTimeBeforeStart();
-
-    /// @notice Error when campaign duration exceeds maximum (365 days)
     error DurationTooLong();
-
-    /// @notice Error when campaign duration is less than minimum (1 day)
     error DurationTooShort();
-
-    /// @notice Error when min duration exceeds max duration
     error InvalidDurationRange();
-
-    /// @notice Error when total amount is zero
     error ZeroAmount();
-
-    /// @notice Error when fee receiver is zero address
     error ZeroFeeReceiver();
-
-    /// @notice Error when reward token is zero address
     error InvalidRewardToken();
-
-    /// @notice Error when protocol fee exceeds 100%
     error ProtocolFeeTooHigh();
-
-    /// @notice Error when campaign implementation is zero address
     error InvalidImplementation();
-
-    /// @notice Error when budget disburse fails
     error DisburseFailed();
-
-    /// @notice Error when caller is not owner or operator
     error NotAuthorized();
-
-    /// @notice Error when campaign does not exist
     error InvalidCampaign();
-
-    /// @notice Error when claim expiry duration is below the minimum (1 day)
     error ClaimExpiryDurationTooShort();
-
-    /// @notice Error when batch update array exceeds MAX_BATCH_SIZE
     error BatchTooLarge();
-
-    /// @notice Error when batch update array is empty
     error EmptyBatch();
-
-    /// @notice Error when token transfer amount doesn't match (fee-on-transfer tokens)
     error FeeOnTransferNotSupported();
-
-    /// @notice Error when campaign has not been finalized
-    error CampaignNotFinalized();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    /// @notice Initialize the TimeBasedIncentiveManager
-    /// @param owner_ The owner of the contract
-    /// @param campaignImpl_ The TimeBasedIncentiveCampaign implementation for cloning
-    /// @param protocolFee_ Initial protocol fee in basis points
-    /// @param protocolFeeReceiver_ Address to receive protocol fees
     function initialize(address owner_, address campaignImpl_, uint64 protocolFee_, address protocolFeeReceiver_)
         external
         initializer
@@ -207,14 +127,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         claimExpiryDuration = 60 days;
     }
 
-    /// @notice Create a new time-based incentive campaign funded by a budget
-    /// @param budget The budget to fund the campaign from
-    /// @param configHash Hash of the off-chain campaign configuration
-    /// @param rewardToken The ERC20 token for rewards
-    /// @param totalAmount Total reward amount (before protocol fee deduction)
-    /// @param startTime Campaign start timestamp
-    /// @param endTime Campaign end timestamp
-    /// @return campaignId The ID of the created campaign
     function createCampaign(
         ABudget budget,
         bytes32 configHash,
@@ -223,10 +135,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 startTime,
         uint64 endTime
     ) external returns (uint256 campaignId) {
-        // Validate caller is authorized on budget
         if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
-
-        // Validate parameters
         if (rewardToken == address(0)) revert InvalidRewardToken();
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
@@ -235,17 +144,13 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (duration > maxCampaignDuration) revert DurationTooLong();
         if (duration < minCampaignDuration) revert DurationTooShort();
 
-        // Calculate protocol fee
         uint256 feeAmount = (totalAmount * protocolFee) / 10000;
         uint256 netAmount = totalAmount - feeAmount;
 
-        // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
-
         campaignId = ++campaignCount;
         campaigns[campaignId] = campaign;
 
-        // Disburse fee to protocol fee receiver (if fee > 0)
         if (feeAmount > 0) {
             uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
             bytes memory feeTransfer = abi.encode(
@@ -262,7 +167,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             }
         }
 
-        // Disburse net rewards to campaign (skip if 0, e.g., 100% fee)
         if (netAmount > 0) {
             uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
             bytes memory rewardTransfer = abi.encode(
@@ -279,7 +183,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             }
         }
 
-        // Initialize the campaign
         TimeBasedIncentiveCampaign(campaign).initialize(
             address(this),
             address(budget),
@@ -292,29 +195,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             claimExpiryDuration
         );
 
-        emit CampaignCreated(
-            campaignId,
-            configHash,
-            campaign,
-            msg.sender,
-            address(budget),
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime,
-            claimExpiryDuration
-        );
+        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
     }
 
-    /// @notice Create a new time-based incentive campaign with direct token transfer
-    /// @param configHash Hash of the off-chain campaign configuration
-    /// @param rewardToken The ERC20 token for rewards
-    /// @param totalAmount Total reward amount (before protocol fee deduction)
-    /// @param startTime Campaign start timestamp
-    /// @param endTime Campaign end timestamp
-    /// @return campaignId The ID of the created campaign
-    /// @dev Fee-on-transfer and rebasing tokens are not supported
-    /// @dev Caller must approve this contract to transfer tokens before calling
     function createCampaignDirect(
         bytes32 configHash,
         address rewardToken,
@@ -322,7 +205,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 startTime,
         uint64 endTime
     ) external returns (uint256 campaignId) {
-        // Validate parameters
         if (rewardToken == address(0)) revert InvalidRewardToken();
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
@@ -331,24 +213,19 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (duration > maxCampaignDuration) revert DurationTooLong();
         if (duration < minCampaignDuration) revert DurationTooShort();
 
-        // Calculate protocol fee
         uint256 feeAmount = (totalAmount * protocolFee) / 10000;
         uint256 netAmount = totalAmount - feeAmount;
 
-        // Pull tokens from caller and verify full amount received
         uint256 balanceBefore = SafeTransferLib.balanceOf(rewardToken, address(this));
         rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
         if (SafeTransferLib.balanceOf(rewardToken, address(this)) - balanceBefore != totalAmount) {
             revert FeeOnTransferNotSupported();
         }
 
-        // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
-
         campaignId = ++campaignCount;
         campaigns[campaignId] = campaign;
 
-        // Transfer fee to protocol fee receiver (if fee > 0)
         if (feeAmount > 0) {
             uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
             rewardToken.safeTransfer(protocolFeeReceiver, feeAmount);
@@ -357,7 +234,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             }
         }
 
-        // Transfer net rewards to campaign (skip if 0, e.g., 100% fee)
         if (netAmount > 0) {
             uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
             rewardToken.safeTransfer(campaign, netAmount);
@@ -366,7 +242,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             }
         }
 
-        // Initialize the campaign with budget = address(0) for direct-funded campaigns
         TimeBasedIncentiveCampaign(campaign).initialize(
             address(this),
             address(0),
@@ -379,29 +254,13 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             claimExpiryDuration
         );
 
-        emit CampaignCreated(
-            campaignId,
-            configHash,
-            campaign,
-            msg.sender,
-            address(0),
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime,
-            claimExpiryDuration
-        );
+        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
     }
 
-    /// @notice Get a campaign contract by ID
-    /// @param campaignId The campaign ID
-    /// @return The campaign contract address
     function getCampaign(uint256 campaignId) external view returns (address) {
         return campaigns[campaignId];
     }
 
-    /// @notice Set the protocol fee
-    /// @param fee_ New protocol fee in basis points (max 10000 = 100%)
     function setProtocolFee(uint64 fee_) external onlyOwner {
         if (fee_ > 10000) revert ProtocolFeeTooHigh();
         uint64 oldFee = protocolFee;
@@ -409,8 +268,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit ProtocolFeeUpdated(oldFee, fee_);
     }
 
-    /// @notice Set the protocol fee receiver address
-    /// @param receiver_ New address to receive protocol fees
     function setProtocolFeeReceiver(address receiver_) external onlyOwner {
         if (receiver_ == address(0)) revert ZeroFeeReceiver();
         address oldReceiver = protocolFeeReceiver;
@@ -418,16 +275,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit ProtocolFeeReceiverUpdated(oldReceiver, receiver_);
     }
 
-    /// @notice Set the operator address (engine hot wallet for merkle root publishing)
-    /// @param operator_ New operator address (can be zero to disable)
     function setOperator(address operator_) external onlyOwner {
         address oldOperator = operator;
         operator = operator_;
         emit OperatorUpdated(oldOperator, operator_);
     }
 
-    /// @notice Set the maximum campaign duration
-    /// @param duration_ New max duration in seconds
     function setMaxCampaignDuration(uint64 duration_) external onlyOwner {
         if (duration_ < minCampaignDuration) revert InvalidDurationRange();
         uint64 oldDuration = maxCampaignDuration;
@@ -435,8 +288,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit MaxCampaignDurationUpdated(oldDuration, duration_);
     }
 
-    /// @notice Set the minimum campaign duration
-    /// @param duration_ New min duration in seconds
     function setMinCampaignDuration(uint64 duration_) external onlyOwner {
         if (duration_ > maxCampaignDuration) revert InvalidDurationRange();
         uint64 oldDuration = minCampaignDuration;
@@ -444,8 +295,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit MinCampaignDurationUpdated(oldDuration, duration_);
     }
 
-    /// @notice Set the claim expiry duration (time after campaign end that claims remain valid)
-    /// @param duration_ New claim expiry duration in seconds (minimum 1 day)
     function setClaimExpiryDuration(uint64 duration_) external onlyOwner {
         if (duration_ < 1 days) revert ClaimExpiryDurationTooShort();
         uint64 oldDuration = claimExpiryDuration;
@@ -453,32 +302,14 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit ClaimExpiryDurationUpdated(oldDuration, duration_);
     }
 
-    /// @notice Update the merkle root for a campaign
-    /// @dev Roots can still be updated after finalization for emergency corrections
-    /// @param campaignId The campaign ID
-    /// @param root The new merkle root
-    /// @param totalCommitted Total amount committed to users in the merkle tree
-    /// @param finalize If true, marks the campaign as finalized (unlocks withdrawal)
-    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted, bool finalize) external {
+    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
-
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
-
         bytes32 oldRoot = TimeBasedIncentiveCampaign(campaign).setMerkleRoot(root, totalCommitted);
-
         emit RootUpdated(campaignId, oldRoot, root, totalCommitted);
-
-        if (finalize && !TimeBasedIncentiveCampaign(campaign).finalized()) {
-            TimeBasedIncentiveCampaign(campaign).setFinalized();
-            emit CampaignFinalized(campaignId);
-        }
     }
 
-    /// @notice Update merkle roots for multiple campaigns in a single transaction
-    /// @param updates Array of RootUpdate structs containing campaignId, root, and totalCommitted
-    /// @dev If any entry has finalize=true but the campaign hasn't ended, the entire batch reverts.
-    ///      Ensure finalize=false for campaigns where block.timestamp < endTime.
     function updateRootsBatch(RootUpdate[] calldata updates) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
         if (updates.length == 0) revert EmptyBatch();
@@ -487,21 +318,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         for (uint256 i; i < updates.length; ++i) {
             address campaign = campaigns[updates[i].campaignId];
             if (campaign == address(0)) revert InvalidCampaign();
-
             bytes32 oldRoot =
                 TimeBasedIncentiveCampaign(campaign).setMerkleRoot(updates[i].root, updates[i].totalCommitted);
-
             emit RootUpdated(updates[i].campaignId, oldRoot, updates[i].root, updates[i].totalCommitted);
-
-            if (updates[i].finalize && !TimeBasedIncentiveCampaign(campaign).finalized()) {
-                TimeBasedIncentiveCampaign(campaign).setFinalized();
-                emit CampaignFinalized(updates[i].campaignId);
-            }
         }
     }
 
-    /// @notice Set the campaign implementation address (for upgrades)
-    /// @param campaignImpl_ New campaign implementation for cloning
     function setCampaignImplementation(address campaignImpl_) external onlyOwner {
         if (campaignImpl_ == address(0)) revert InvalidImplementation();
         address oldImplementation = campaignImplementation;
@@ -509,95 +331,43 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignImplementationUpdated(oldImplementation, campaignImpl_);
     }
 
-    /// @notice Claim rewards from a campaign using a merkle proof
-    /// @param campaignId The campaign ID to claim from
-    /// @param user The user to claim rewards for
-    /// @param cumulativeAmount The cumulative amount the user is entitled to
-    /// @param proof The merkle proof validating the claim
     function claim(uint256 campaignId, address user, uint256 cumulativeAmount, bytes32[] calldata proof) external {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
-
         uint256 amount = TimeBasedIncentiveCampaign(campaign).processClaim(user, cumulativeAmount, proof);
-
         emit Claimed(campaignId, user, amount, cumulativeAmount);
     }
 
-    /// @notice Cancel a campaign (emergency use - sets endTime to now)
-    /// @param campaignId The campaign ID to cancel
-    /// @dev Callable by owner, budget-authorized users (budget-funded), or creator (direct-funded)
-    function cancelCampaign(uint256 campaignId) external {
+    function cancelCampaign(uint256 campaignId) external onlyOwner {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
-
-        TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
-        address payable budgetAddr = payable(c.budget());
-
-        if (msg.sender != owner()) {
-            if (budgetAddr != address(0)) {
-                if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
-            } else {
-                if (msg.sender != c.creator()) revert NotAuthorized();
-            }
-        }
-
-        uint64 oldEndTime = c.setEndTime(uint64(block.timestamp));
-
+        uint64 oldEndTime = TimeBasedIncentiveCampaign(campaign).setEndTime(uint64(block.timestamp));
         emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
     }
 
-    /// @notice Withdraw undistributed funds from a campaign
-    /// @param campaignId The campaign ID to withdraw from
-    /// @dev Budget-funded: callable by anyone authorized on the budget
-    /// @dev Direct-funded: callable by the campaign creator
-    function withdraw(uint256 campaignId) external {
+    function withdrawToBudget(uint256 campaignId) external {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
         TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
+        if (msg.sender != c.creator()) revert NotCampaignCreator();
+
         address payable budgetAddr = payable(c.budget());
-
-        if (budgetAddr != address(0)) {
-            if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
-        } else {
-            if (msg.sender != c.creator()) revert NotAuthorized();
-        }
+        if (budgetAddr == address(0)) revert NotBudgetFunded();
         if (block.timestamp <= c.endTime()) revert CampaignNotEnded();
-        if (!c.finalized()) revert CampaignNotFinalized();
 
-        if (budgetAddr != address(0)) {
-            // Budget-funded: route through budget clawback for accounting
-            uint256 withdrawable = c.getWithdrawable();
-            if (withdrawable == 0) revert ZeroAmount();
+        uint256 withdrawable = c.getWithdrawable();
+        if (withdrawable == 0) revert ZeroAmount();
 
-            bytes memory clawbackData = abi.encode(withdrawable);
-            (uint256 clawbackAmount,) = ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
+        bytes memory clawbackData = abi.encode(withdrawable);
+        ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
 
-            emit Withdrawn(campaignId, clawbackAmount, budgetAddr);
-        } else {
-            // Direct-funded: transfer to creator
-            uint256 amount = c.withdrawTo(c.creator());
-
-            emit Withdrawn(campaignId, amount, c.creator());
-        }
+        emit WithdrawnToBudget(campaignId, withdrawable, budgetAddr);
     }
 
-    /// @notice Get the withdrawable amount for a campaign
-    /// @param campaignId The campaign ID
-    /// @return The amount that can be withdrawn (0 if not finalized or campaign hasn't ended)
-    function getWithdrawable(uint256 campaignId) external view returns (uint256) {
-        address campaign = campaigns[campaignId];
-        if (campaign == address(0)) revert InvalidCampaign();
-        return TimeBasedIncentiveCampaign(campaign).getWithdrawable();
-    }
-
-    /// @notice Authorize an upgrade to a new implementation
-    /// @param newImplementation The address of the new implementation
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    /// @notice Get the version of the contract
-    /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "2.0.0";
+        return "1.0.0";
     }
 }

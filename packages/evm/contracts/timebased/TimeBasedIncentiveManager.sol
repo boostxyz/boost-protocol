@@ -22,6 +22,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 campaignId;
         bytes32 root;
         uint256 totalCommitted;
+        bool finalize;
     }
 
     /// @notice Maximum number of root updates in a single batch
@@ -64,14 +65,16 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(
-        uint256 indexed campaignId,
-        bytes32 indexed configHash,
+        uint256 campaignId,
+        bytes32 configHash,
         address campaign,
         address indexed creator,
-        address rewardToken,
+        address indexed budget,
+        address indexed rewardToken,
         uint256 totalRewards,
         uint64 startTime,
-        uint64 endTime
+        uint64 endTime,
+        uint64 claimExpiryDuration
     );
 
     /// @notice Emitted when the protocol fee is updated
@@ -95,8 +98,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when a campaign is cancelled by protocol admin
     event CampaignCancelled(uint256 indexed campaignId, uint64 oldEndTime, uint64 newEndTime);
 
-    /// @notice Emitted when undistributed funds are withdrawn to budget
-    event WithdrawnToBudget(uint256 indexed campaignId, uint256 amount, address indexed budget);
+    /// @notice Emitted when undistributed funds are withdrawn
+    event Withdrawn(uint256 indexed campaignId, uint256 amount, address indexed destination);
 
     /// @notice Emitted when max campaign duration is updated
     event MaxCampaignDurationUpdated(uint64 oldDuration, uint64 newDuration);
@@ -106,6 +109,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when claim expiry duration is updated
     event ClaimExpiryDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
+    /// @notice Emitted when a campaign is finalized
+    event CampaignFinalized(uint256 indexed campaignId);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -169,6 +175,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Error when token transfer amount doesn't match (fee-on-transfer tokens)
     error FeeOnTransferNotSupported();
+
+    /// @notice Error when campaign has not been finalized
+    error CampaignNotFinalized();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -282,7 +291,18 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             claimExpiryDuration
         );
 
-        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
+        emit CampaignCreated(
+            campaignId,
+            configHash,
+            campaign,
+            msg.sender,
+            address(budget),
+            rewardToken,
+            netAmount,
+            startTime,
+            endTime,
+            claimExpiryDuration
+        );
     }
 
     /// @notice Create a new time-based incentive campaign with direct token transfer
@@ -358,7 +378,18 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             claimExpiryDuration
         );
 
-        emit CampaignCreated(campaignId, configHash, campaign, msg.sender, rewardToken, netAmount, startTime, endTime);
+        emit CampaignCreated(
+            campaignId,
+            configHash,
+            campaign,
+            msg.sender,
+            address(0),
+            rewardToken,
+            netAmount,
+            startTime,
+            endTime,
+            claimExpiryDuration
+        );
     }
 
     /// @notice Get a campaign contract by ID
@@ -422,10 +453,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     }
 
     /// @notice Update the merkle root for a campaign
+    /// @dev Roots can still be updated after finalization for emergency corrections
     /// @param campaignId The campaign ID
     /// @param root The new merkle root
     /// @param totalCommitted Total amount committed to users in the merkle tree
-    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted) external {
+    /// @param finalize If true, marks the campaign as finalized (unlocks withdrawal)
+    function updateRoot(uint256 campaignId, bytes32 root, uint256 totalCommitted, bool finalize) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
 
         address campaign = campaigns[campaignId];
@@ -434,10 +467,17 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         bytes32 oldRoot = TimeBasedIncentiveCampaign(campaign).setMerkleRoot(root, totalCommitted);
 
         emit RootUpdated(campaignId, oldRoot, root, totalCommitted);
+
+        if (finalize && !TimeBasedIncentiveCampaign(campaign).finalized()) {
+            TimeBasedIncentiveCampaign(campaign).setFinalized();
+            emit CampaignFinalized(campaignId);
+        }
     }
 
     /// @notice Update merkle roots for multiple campaigns in a single transaction
     /// @param updates Array of RootUpdate structs containing campaignId, root, and totalCommitted
+    /// @dev If any entry has finalize=true but the campaign hasn't ended, the entire batch reverts.
+    ///      Ensure finalize=false for campaigns where block.timestamp < endTime.
     function updateRootsBatch(RootUpdate[] calldata updates) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
         if (updates.length == 0) revert EmptyBatch();
@@ -451,6 +491,11 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
                 TimeBasedIncentiveCampaign(campaign).setMerkleRoot(updates[i].root, updates[i].totalCommitted);
 
             emit RootUpdated(updates[i].campaignId, oldRoot, updates[i].root, updates[i].totalCommitted);
+
+            if (updates[i].finalize && !TimeBasedIncentiveCampaign(campaign).finalized()) {
+                TimeBasedIncentiveCampaign(campaign).setFinalized();
+                emit CampaignFinalized(updates[i].campaignId);
+            }
         }
     }
 
@@ -479,41 +524,70 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Cancel a campaign (emergency use - sets endTime to now)
     /// @param campaignId The campaign ID to cancel
-    /// @dev Only callable by owner
-    function cancelCampaign(uint256 campaignId) external onlyOwner {
-        address campaign = campaigns[campaignId];
-        if (campaign == address(0)) revert InvalidCampaign();
-
-        uint64 oldEndTime = TimeBasedIncentiveCampaign(campaign).setEndTime(uint64(block.timestamp));
-
-        emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
-    }
-
-    /// @notice Withdraw undistributed funds back to budget (budget-funded campaigns only)
-    /// @param campaignId The campaign ID to withdraw from
-    /// @dev Only callable by the campaign creator after the campaign has ended
-    /// @dev Routes through budget.clawbackFromTarget() to maintain budget accounting
-    function withdrawToBudget(uint256 campaignId) external {
+    /// @dev Callable by owner, budget-authorized users (budget-funded), or creator (direct-funded)
+    function cancelCampaign(uint256 campaignId) external {
         address campaign = campaigns[campaignId];
         if (campaign == address(0)) revert InvalidCampaign();
 
         TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
-
-        if (msg.sender != c.creator()) revert NotCampaignCreator();
-
         address payable budgetAddr = payable(c.budget());
-        if (budgetAddr == address(0)) revert NotBudgetFunded();
 
+        if (msg.sender != owner()) {
+            if (budgetAddr != address(0)) {
+                if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
+            } else {
+                if (msg.sender != c.creator()) revert NotAuthorized();
+            }
+        }
+
+        uint64 oldEndTime = c.setEndTime(uint64(block.timestamp));
+
+        emit CampaignCancelled(campaignId, oldEndTime, uint64(block.timestamp));
+    }
+
+    /// @notice Withdraw undistributed funds from a campaign
+    /// @param campaignId The campaign ID to withdraw from
+    /// @dev Budget-funded: callable by anyone authorized on the budget
+    /// @dev Direct-funded: callable by the campaign creator
+    function withdraw(uint256 campaignId) external {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+
+        TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
+        address payable budgetAddr = payable(c.budget());
+
+        if (budgetAddr != address(0)) {
+            if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
+        } else {
+            if (msg.sender != c.creator()) revert NotAuthorized();
+        }
         if (block.timestamp <= c.endTime()) revert CampaignNotEnded();
+        if (!c.finalized()) revert CampaignNotFinalized();
 
-        uint256 withdrawable = c.getWithdrawable();
-        if (withdrawable == 0) revert ZeroAmount();
+        if (budgetAddr != address(0)) {
+            // Budget-funded: route through budget clawback for accounting
+            uint256 withdrawable = c.getWithdrawable();
+            if (withdrawable == 0) revert ZeroAmount();
 
-        // Route through budget.clawbackFromTarget() to maintain _distributedFungible accounting
-        bytes memory clawbackData = abi.encode(withdrawable);
-        ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
+            bytes memory clawbackData = abi.encode(withdrawable);
+            (uint256 clawbackAmount,) = ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
 
-        emit WithdrawnToBudget(campaignId, withdrawable, budgetAddr);
+            emit Withdrawn(campaignId, clawbackAmount, budgetAddr);
+        } else {
+            // Direct-funded: transfer to creator
+            uint256 amount = c.withdrawTo(c.creator());
+
+            emit Withdrawn(campaignId, amount, c.creator());
+        }
+    }
+
+    /// @notice Get the withdrawable amount for a campaign
+    /// @param campaignId The campaign ID
+    /// @return The amount that can be withdrawn (0 if not finalized or campaign hasn't ended)
+    function getWithdrawable(uint256 campaignId) external view returns (uint256) {
+        address campaign = campaigns[campaignId];
+        if (campaign == address(0)) revert InvalidCampaign();
+        return TimeBasedIncentiveCampaign(campaign).getWithdrawable();
     }
 
     /// @notice Authorize an upgrade to a new implementation

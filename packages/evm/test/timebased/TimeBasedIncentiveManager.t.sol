@@ -175,10 +175,12 @@ contract TimeBasedIncentiveManagerTest is Test {
             configHash,
             address(0), // campaign address unknown
             CREATOR,
+            address(budget),
             address(rewardToken),
             expectedNet,
             startTime,
-            endTime
+            endTime,
+            60 days
         );
         manager.createCampaign(budget, configHash, address(rewardToken), totalAmount, startTime, endTime);
     }
@@ -758,7 +760,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
-        manager.updateRoot(campaignId, newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted, false);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated");
@@ -783,7 +785,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(operatorAddr);
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(campaignId, bytes32(0), newRoot, totalCommitted);
-        manager.updateRoot(campaignId, newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted, false);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), newRoot, "Merkle root should be updated by operator");
@@ -802,7 +804,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root2 = keccak256("merkle-root-2");
 
         // First update
-        manager.updateRoot(campaignId, root1, 3 ether);
+        manager.updateRoot(campaignId, root1, 3 ether, false);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), root1, "First root should be set");
@@ -810,7 +812,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Second update - should emit with old root
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(campaignId, root1, root2, 5 ether);
-        manager.updateRoot(campaignId, root2, 5 ether);
+        manager.updateRoot(campaignId, root2, 5 ether, false);
 
         assertEq(campaign.merkleRoot(), root2, "Second root should be set");
     }
@@ -827,7 +829,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Try to update as random address (not owner, not operator)
         vm.prank(address(0xBAD));
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
-        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
+        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether, false);
     }
 
     function test_UpdateRoot_RevertWhenOperatorNotSet() public {
@@ -845,10 +847,10 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Creator cannot update root (not owner, operator not set)
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
-        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether);
+        manager.updateRoot(campaignId, keccak256("bad-root"), 1 ether, false);
 
         // But owner still can
-        manager.updateRoot(campaignId, keccak256("good-root"), 1 ether);
+        manager.updateRoot(campaignId, keccak256("good-root"), 1 ether, false);
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.merkleRoot(), keccak256("good-root"), "Owner should still be able to update");
     }
@@ -856,7 +858,7 @@ contract TimeBasedIncentiveManagerTest is Test {
     function test_UpdateRoot_RevertInvalidCampaign() public {
         // Try to update root for non-existent campaign
         vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
-        manager.updateRoot(999, keccak256("root"), 1 ether);
+        manager.updateRoot(999, keccak256("root"), 1 ether, false);
     }
 
     ////////////////////////////////
@@ -879,9 +881,9 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](3);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether);
-        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 3 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether, false);
+        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 3 ether, false);
 
         manager.updateRootsBatch(updates);
 
@@ -903,7 +905,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
 
         manager.updateRootsBatch(updates);
 
@@ -923,7 +925,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
 
         vm.prank(operatorAddr);
         manager.updateRootsBatch(updates);
@@ -943,8 +945,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.stopPrank();
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether, false);
 
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(id1, bytes32(0), keccak256("root1"), 1 ether);
@@ -963,7 +965,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
 
         vm.prank(address(0xBAD));
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
@@ -980,7 +982,7 @@ contract TimeBasedIncentiveManagerTest is Test {
     function test_UpdateRootsBatch_RevertBatchTooLarge() public {
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](51);
         for (uint256 i; i < 51; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(i, keccak256(abi.encode(i)), 1 ether);
+            updates[i] = TimeBasedIncentiveManager.RootUpdate(i, keccak256(abi.encode(i)), 1 ether, false);
         }
 
         vm.expectRevert(TimeBasedIncentiveManager.BatchTooLarge.selector);
@@ -997,8 +999,8 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Second entry has a bad campaignId
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(validId, keccak256("root1"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(999, keccak256("root2"), 2 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(validId, keccak256("root1"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(999, keccak256("root2"), 2 ether, false);
 
         vm.expectRevert(TimeBasedIncentiveManager.InvalidCampaign.selector);
         manager.updateRootsBatch(updates);
@@ -1025,7 +1027,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Build batch of exactly 50
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](batchSize);
         for (uint256 i; i < batchSize; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+            updates[i] =
+                TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
         }
 
         manager.updateRootsBatch(updates);
@@ -1051,8 +1054,8 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Same campaign twice — second update overwrites the first
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
-        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-a"), 1 ether);
-        updates[1] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-b"), 2 ether);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-a"), 1 ether, false);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root-b"), 2 ether, false);
 
         // Events: first emits oldRoot=0→root-a, second emits oldRoot=root-a→root-b
         vm.expectEmit(true, true, true, true);
@@ -1080,14 +1083,14 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // First batch
         TimeBasedIncentiveManager.RootUpdate[] memory batch1 = new TimeBasedIncentiveManager.RootUpdate[](2);
-        batch1[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-a"), 1 ether);
-        batch1[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-a"), 2 ether);
+        batch1[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-a"), 1 ether, false);
+        batch1[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-a"), 2 ether, false);
         manager.updateRootsBatch(batch1);
 
         // Second batch — oldRoot in events should reflect first batch
         TimeBasedIncentiveManager.RootUpdate[] memory batch2 = new TimeBasedIncentiveManager.RootUpdate[](2);
-        batch2[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-b"), 1.5 ether);
-        batch2[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-b"), 2.5 ether);
+        batch2[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1-b"), 1.5 ether, false);
+        batch2[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2-b"), 2.5 ether, false);
 
         vm.expectEmit(true, true, true, true);
         emit TimeBasedIncentiveManager.RootUpdated(id1, keccak256("root1-a"), keccak256("root1-b"), 1.5 ether);
@@ -1117,7 +1120,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](20);
         for (uint256 i; i < 20; ++i) {
-            updates[i] = TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether);
+            updates[i] =
+                TimeBasedIncentiveManager.RootUpdate(ids[i], keccak256(abi.encode("root", i)), 0.5 ether, false);
         }
 
         uint256 gasBefore = gasleft();
@@ -1163,7 +1167,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Update root through manager and check campaign emits event
         vm.recordLogs();
-        manager.updateRoot(campaignId, newRoot, totalCommitted);
+        manager.updateRoot(campaignId, newRoot, totalCommitted, false);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bool foundCampaignEvent = false;
@@ -1253,7 +1257,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         uint256 claimerBalanceBefore = rewardToken.balanceOf(CLAIMER);
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
@@ -1283,7 +1287,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Record logs and claim
         vm.recordLogs();
@@ -1334,7 +1338,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Try to claim with wrong user
         vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
@@ -1352,7 +1356,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Claim first time
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
@@ -1380,7 +1384,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, firstRoot, firstCumulative);
+        manager.updateRoot(campaignId, firstRoot, firstCumulative, false);
         manager.claim(campaignId, CLAIMER, firstCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), firstCumulative, "First claim should be recorded");
@@ -1391,7 +1395,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 secondLeaf = _makeLeaf(CLAIMER, address(rewardToken), secondCumulative);
         bytes32 secondRoot = secondLeaf;
 
-        manager.updateRoot(campaignId, secondRoot, secondCumulative);
+        manager.updateRoot(campaignId, secondRoot, secondCumulative, false);
         manager.claim(campaignId, CLAIMER, secondCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), secondCumulative, "Second claim should be recorded");
@@ -1402,7 +1406,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 thirdLeaf = _makeLeaf(CLAIMER, address(rewardToken), thirdCumulative);
         bytes32 thirdRoot = thirdLeaf;
 
-        manager.updateRoot(campaignId, thirdRoot, thirdCumulative);
+        manager.updateRoot(campaignId, thirdRoot, thirdCumulative, false);
         manager.claim(campaignId, CLAIMER, thirdCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), thirdCumulative, "Third claim should be recorded");
@@ -1420,7 +1424,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Random address submits claim for CLAIMER
         address randomCaller = address(0xBAD);
@@ -1444,7 +1448,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Try to call processClaim directly
         vm.expectRevert(TimeBasedIncentiveCampaign.OnlyTimeBasedIncentiveManager.selector);
@@ -1477,7 +1481,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         uint256 claimAmount = claimer1Amount + claimer2Amount;
 
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Create proofs - sibling is the proof
         bytes32[] memory proof1 = new bytes32[](1);
@@ -1509,7 +1513,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, correctAmount);
+        manager.updateRoot(campaignId, root, correctAmount, false);
 
         // Try to claim with wrong amount
         vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
@@ -1539,7 +1543,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, firstRoot, firstCumulative);
+        manager.updateRoot(campaignId, firstRoot, firstCumulative, false);
         manager.claim(campaignId, CLAIMER, firstCumulative, proof);
 
         assertEq(campaign.claimed(CLAIMER), firstCumulative, "Should have claimed 2 ether");
@@ -1550,7 +1554,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 oldLeaf = _makeLeaf(CLAIMER, address(rewardToken), oldCumulative);
         bytes32 oldRoot = oldLeaf;
 
-        manager.updateRoot(campaignId, oldRoot, oldCumulative);
+        manager.updateRoot(campaignId, oldRoot, oldCumulative, false);
 
         // Should revert because oldCumulative (1 ether) <= alreadyClaimed (2 ether)
         vm.expectRevert(TimeBasedIncentiveCampaign.NothingToClaim.selector);
@@ -1567,7 +1571,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // First claim succeeds
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
@@ -1587,7 +1591,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, actualAmount);
+        manager.updateRoot(campaignId, root, actualAmount, false);
 
         // Claim the actual amount
         manager.claim(campaignId, CLAIMER, actualAmount, proof);
@@ -1616,7 +1620,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, excessiveAmount);
+        manager.updateRoot(campaignId, root, excessiveAmount, false);
 
         // Claim should revert due to insufficient balance in campaign
         // SafeTransferLib will revert with TransferFailed
@@ -1645,7 +1649,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
 
         // Only set root on campaign 1
-        manager.updateRoot(campaignId1, root, claimAmount);
+        manager.updateRoot(campaignId1, root, claimAmount, false);
 
         // Claim works on campaign 1
         manager.claim(campaignId1, CLAIMER, claimAmount, proof);
@@ -1657,7 +1661,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Even if we set the same root on campaign 2, the user can claim again
         // (each campaign tracks claims independently)
-        manager.updateRoot(campaignId2, root, claimAmount);
+        manager.updateRoot(campaignId2, root, claimAmount, false);
         manager.claim(campaignId2, CLAIMER, claimAmount, proof);
         assertEq(rewardToken.balanceOf(CLAIMER), claimAmount * 2, "Should receive from both campaigns");
     }
@@ -1756,7 +1760,16 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, false);
         emit TimeBasedIncentiveManager.CampaignCreated(
-            1, configHash, address(0), CREATOR, address(rewardToken), expectedNet, startTime, endTime
+            1,
+            configHash,
+            address(0),
+            CREATOR,
+            address(0),
+            address(rewardToken),
+            expectedNet,
+            startTime,
+            endTime,
+            60 days
         );
         manager.createCampaignDirect(configHash, address(rewardToken), totalAmount, startTime, endTime);
     }
@@ -1933,11 +1946,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp past end time
         vm.warp(campaign.endTime() + 1);
 
+        // Finalize campaign
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Creator withdraws via manager
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         // Campaign should be empty
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
@@ -1955,11 +1971,12 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 undistributed = rewardToken.balanceOf(address(campaign));
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         vm.prank(CREATOR);
         vm.expectEmit(true, true, true, true);
-        emit TimeBasedIncentiveManager.WithdrawnToBudget(campaignId, undistributed, address(budget));
-        manager.withdrawToBudget(campaignId);
+        emit TimeBasedIncentiveManager.Withdrawn(campaignId, undistributed, address(budget));
+        manager.withdraw(campaignId);
     }
 
     function test_WithdrawToBudget_PartialWithdraw() public {
@@ -1971,7 +1988,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
 
         uint256 remaining = rewardToken.balanceOf(address(campaign));
@@ -1981,11 +1998,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp past end time
         vm.warp(campaign.endTime() + 1);
 
+        // Finalize with final root
+        manager.updateRoot(campaignId, root, claimAmount, true);
+
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Creator withdraws remaining via manager
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
@@ -1993,14 +2013,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         );
     }
 
-    function test_WithdrawToBudget_RevertNotCreator() public {
+    function test_Withdraw_RevertNotAuthorized() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
 
         vm.prank(address(0xBAD));
-        vm.expectRevert(TimeBasedIncentiveManager.NotCampaignCreator.selector);
-        manager.withdrawToBudget(campaignId);
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
+        manager.withdraw(campaignId);
     }
 
     function test_WithdrawToBudget_RevertBeforeEndTime() public {
@@ -2009,7 +2029,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Don't warp past end time
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.CampaignNotEnded.selector);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
     }
 
     function test_WithdrawToBudget_RevertNothingToWithdraw() public {
@@ -2036,13 +2056,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should have 0 balance");
 
         vm.warp(endTime + 1);
+        maxFeeManager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
-        maxFeeManager.withdrawToBudget(campaignId);
+        maxFeeManager.withdraw(campaignId);
     }
 
-    function test_WithdrawToBudget_RevertNotBudgetFunded() public {
+    function test_Withdraw_DirectFundedSuccess() public {
         // Create direct-funded campaign
         uint256 totalAmount = 10 ether;
         uint64 startTime = uint64(block.timestamp + 1 hours);
@@ -2057,24 +2078,19 @@ contract TimeBasedIncentiveManagerTest is Test {
             keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
         );
 
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+
         vm.warp(endTime + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
-        // Try to use withdrawToBudget on direct-funded campaign
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
         vm.prank(CREATOR);
-        vm.expectRevert(TimeBasedIncentiveManager.NotBudgetFunded.selector);
-        manager.withdrawToBudget(campaignId);
-    }
+        manager.withdraw(campaignId);
 
-    function test_WithdrawUndistributed_BudgetFunded_RevertsUseBudgetClawback() public {
-        // Create a budget-funded campaign
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-
-        vm.warp(campaign.endTime() + 1);
-
-        // Trying to use withdrawUndistributed on budget-funded should revert
-        vm.prank(CREATOR);
-        vm.expectRevert(TimeBasedIncentiveCampaign.UseBudgetClawback.selector);
-        campaign.withdrawUndistributed();
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(rewardToken.balanceOf(CREATOR), creatorBalanceBefore + campaignBalance, "Creator should receive funds");
     }
 
     function test_WithdrawToBudget_UpdatesBudgetAccounting() public {
@@ -2095,10 +2111,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 distributedAfterCreate = budget.distributed(address(rewardToken));
         assertEq(distributedAfterCreate, 10 ether, "Distributed should be 10 ether (1 fee + 9 campaign)");
 
-        // Warp past end time and withdraw
+        // Warp past end time, finalize, and withdraw
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         // After withdrawal via clawbackFromTarget, distributed should decrease by withdrawn amount
         // The campaign had 9 ether, so distributed drops from 10 to 1 (the fee is still "distributed")
@@ -2114,73 +2131,6 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(budget.available(address(rewardToken)), 99 ether, "Available should match balance");
     }
 
-    ////////////////////////////////
-    // withdrawUndistributed tests (direct-funded)
-    ////////////////////////////////
-
-    function test_WithdrawUndistributed_DirectFunded_Success() public {
-        uint256 totalAmount = 10 ether;
-        uint64 startTime = uint64(block.timestamp + 1 hours);
-        uint64 endTime = uint64(block.timestamp + 30 days);
-
-        rewardToken.mint(CREATOR, totalAmount);
-        vm.prank(CREATOR);
-        rewardToken.approve(address(manager), totalAmount);
-
-        vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaignDirect(
-            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
-        );
-
-        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
-        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
-        assertTrue(campaignBalance > 0, "Campaign should have balance");
-
-        // Warp past end time
-        vm.warp(endTime + 1);
-
-        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
-
-        // Creator withdraws undistributed
-        vm.prank(CREATOR);
-        campaign.withdrawUndistributed();
-
-        // Campaign should be empty
-        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
-
-        // Creator should have received funds directly
-        assertEq(
-            rewardToken.balanceOf(CREATOR),
-            creatorBalanceBefore + campaignBalance,
-            "Creator should receive undistributed funds"
-        );
-    }
-
-    function test_WithdrawUndistributed_DirectFunded_EmitsEvent() public {
-        uint256 totalAmount = 10 ether;
-        uint64 startTime = uint64(block.timestamp + 1 hours);
-        uint64 endTime = uint64(block.timestamp + 30 days);
-
-        rewardToken.mint(CREATOR, totalAmount);
-        vm.prank(CREATOR);
-        rewardToken.approve(address(manager), totalAmount);
-
-        vm.prank(CREATOR);
-        uint256 campaignId = manager.createCampaignDirect(
-            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
-        );
-
-        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
-        uint256 undistributed = rewardToken.balanceOf(address(campaign));
-
-        vm.warp(endTime + 1);
-
-        vm.prank(CREATOR);
-        vm.expectEmit(true, true, true, true);
-        emit TimeBasedIncentiveCampaign.UndistributedWithdrawn(undistributed, CREATOR);
-        campaign.withdrawUndistributed();
-    }
-
     function test_WithdrawToBudget_ProtectsUnclaimedFunds() public {
         // Create a campaign with 9 ether (after 10% fee)
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
@@ -2189,17 +2139,18 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Set merkle root with 5 ether committed but don't claim yet
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
-        // Warp past end time
+        // Warp past end time and finalize
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Creator withdraws via manager - should only get balance minus what's owed to users
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         // Should have withdrawn balance - totalCommitted (5 ether owed)
         uint256 expectedWithdraw = balance - totalCommitted;
@@ -2220,27 +2171,28 @@ contract TimeBasedIncentiveManagerTest is Test {
         // First claim: set committed to 3 ether, claim 3 ether
         bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, leaf1, 3 ether);
+        manager.updateRoot(campaignId, leaf1, 3 ether, false);
         manager.claim(campaignId, CLAIMER, 3 ether, proof);
 
         // Now publish a corrected root with lower total (simulates ban or correction)
         // totalCommitted drops to 1 ether, but user already claimed 3 ether
         bytes32 leaf2 = _makeLeaf(address(0xDEAD), address(rewardToken), 1 ether);
-        manager.updateRoot(campaignId, leaf2, 1 ether);
+        manager.updateRoot(campaignId, leaf2, 1 ether, false);
 
         // totalClaimed (3 ether) > totalCommitted (1 ether)
         assertEq(campaign.totalClaimed(), 3 ether, "Total claimed should be 3 ether");
         assertEq(campaign.totalCommitted(), 1 ether, "Total committed should be 1 ether");
 
-        // Warp past end time
+        // Warp past end time and finalize
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, leaf2, 1 ether, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         // Should be able to withdraw full balance since nothing more is owed
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(
             rewardToken.balanceOf(address(budget)), budgetBalanceBefore + balance, "Budget should receive full balance"
@@ -2252,13 +2204,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
-        // Set merkle root with 5 ether committed
+        // Warp past end time, then set merkle root with 5 ether committed and finalize
+        vm.warp(campaign.endTime() + 1);
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
-
-        // Warp past end time
-        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 available = balance - totalCommitted; // Only 4 ether is available (9 - 5)
@@ -2306,21 +2256,22 @@ contract TimeBasedIncentiveManagerTest is Test {
     function test_Clawback_RevertBeforeEndTime() public {
         (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
-        // Don't warp past end time
+        // Don't warp past end time — campaign is not finalized (can't finalize before endTime)
         AIncentive.ClawbackPayload memory payload =
             AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(1 ether)});
         bytes memory data = abi.encode(payload);
 
         vm.prank(address(budget));
-        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotEnded.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotFinalized.selector);
         campaign.clawback(data, 0, 0);
     }
 
     function test_Clawback_Success() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
@@ -2351,9 +2302,10 @@ contract TimeBasedIncentiveManagerTest is Test {
     }
 
     function test_Clawback_RevertInsufficientBalance() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
         uint256 excessiveAmount = campaignBalance + 1 ether;
@@ -2409,7 +2361,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.cancelCampaign(campaignId);
     }
 
-    function test_CancelCampaign_RevertNotOwner() public {
+    function test_CancelCampaign_RevertNotAuthorized() public {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
 
@@ -2417,8 +2369,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
-        vm.prank(CREATOR); // Not the owner
-        vm.expectRevert(); // Ownable.Unauthorized
+        vm.prank(address(0xBAD)); // Not owner, not budget-authorized
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
         manager.cancelCampaign(campaignId);
     }
 
@@ -2462,12 +2414,15 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp forward 1 second so block.timestamp > endTime (required for withdraw)
         vm.warp(block.timestamp + 1);
 
+        // Operator publishes final root to finalize
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
         // Now creator can withdraw via manager.withdrawToBudget
         uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
@@ -2488,7 +2443,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to middle of campaign and cancel
         vm.warp(startTime + 5 days);
@@ -2573,7 +2528,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         uint256 claimAmount = claim1Amount + claim2Amount;
 
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         bytes32[] memory proof1 = new bytes32[](1);
         proof1[0] = leaf2;
@@ -2589,14 +2544,15 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(CLAIMER), claim1Amount, "CLAIMER should have claimed");
         assertEq(rewardToken.balanceOf(CLAIMER2), claim2Amount, "CLAIMER2 should have claimed");
 
-        // 3. Warp to end and withdraw
+        // 3. Warp to end, finalize, and withdraw
         vm.warp(endTime + 1);
+        manager.updateRoot(campaignId, root, claimAmount, true);
 
         uint256 remaining = rewardToken.balanceOf(address(campaign));
         uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
 
         vm.prank(CREATOR);
-        campaign.withdrawUndistributed();
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
@@ -2622,7 +2578,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // 3. Warp to active period, make a claim
         vm.warp(startTime + 5 days);
@@ -2636,12 +2592,15 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp forward 1 second so block.timestamp > endTime (required for withdraw)
         vm.warp(block.timestamp + 1);
 
+        // 5b. Operator publishes final root to finalize
+        manager.updateRoot(campaignId, root, claimAmount, true);
+
         // 6. Creator can withdraw remaining funds via manager.withdrawToBudget
         uint256 remaining = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(
             rewardToken.balanceOf(address(budget)), budgetBalanceBefore + remaining, "Budget should receive remaining"
@@ -2712,10 +2671,11 @@ contract TimeBasedIncentiveManagerTest is Test {
     ////////////////////////////////
 
     function test_Clawback_EmitsUndistributedWithdrawn() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         AIncentive.ClawbackPayload memory payload =
             AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(clawbackAmount)});
@@ -2795,7 +2755,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         (bytes32 root, bytes32[] memory proof) = _buildMerkleTreeAndProofFast(leaves, 0);
 
         // Set merkle root
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
         // The user we're claiming for
         address testUser = address(uint160(0x10000));
@@ -2840,7 +2800,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to endTime + 59 days (still within 60-day expiry window)
         vm.warp(campaign.endTime() + 59 days);
@@ -2856,7 +2816,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to endTime + 61 days (past 60-day expiry window)
         vm.warp(campaign.endTime() + 61 days);
@@ -2866,14 +2826,10 @@ contract TimeBasedIncentiveManagerTest is Test {
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnZeroDuringCampaign() public {
-        (, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        (uint256 campaignId,) = _createCampaignWithRoot();
 
         // During the campaign (before endTime), getWithdrawable should return 0
-        assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 during active campaign");
-
-        // Even right at endTime it should return 0
-        vm.warp(campaign.endTime());
-        assertEq(campaign.getWithdrawable(), 0, "getWithdrawable should return 0 at endTime");
+        assertEq(manager.getWithdrawable(campaignId), 0, "getWithdrawable should return 0 during active campaign");
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnsCorrectAfterEnd() public {
@@ -2882,14 +2838,20 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
-        // Warp past endTime but before expiry
+        // Warp past endTime but before expiry — not finalized, should return 0
         vm.warp(campaign.endTime() + 1);
+        assertEq(manager.getWithdrawable(campaignId), 0, "Should return 0 when not finalized");
+
+        // Finalize
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 expectedWithdrawable = balance - totalCommitted; // 9 ether - 5 ether = 4 ether
-        assertEq(campaign.getWithdrawable(), expectedWithdrawable, "Should subtract stillOwed before expiry");
+        assertEq(
+            manager.getWithdrawable(campaignId), expectedWithdrawable, "Should subtract stillOwed after finalization"
+        );
     }
 
     function test_ClaimExpiry_GetWithdrawableFullBalanceAfterExpiry() public {
@@ -2898,13 +2860,13 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
 
-        // Warp past claim expiry
+        // Warp past claim expiry and finalize
         vm.warp(campaign.endTime() + 61 days);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
-        assertEq(campaign.getWithdrawable(), balance, "Full balance should be withdrawable after expiry");
+        assertEq(manager.getWithdrawable(campaignId), balance, "Full balance should be withdrawable after expiry");
     }
 
     function test_ClaimExpiry_WithdrawAfterExpiry() public {
@@ -2926,17 +2888,18 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
-        // Warp past claim expiry
+        // Warp past claim expiry and finalize
         vm.warp(endTime + 61 days);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
 
         // Creator can withdraw full balance since claim window expired
         vm.prank(CREATOR);
-        campaign.withdrawUndistributed();
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
         assertEq(
@@ -2950,9 +2913,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
+        // Warp past end time, then set final root
+        vm.warp(campaign.endTime() + 1);
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, true);
 
         // Warp past claim expiry
         vm.warp(campaign.endTime() + 61 days);
@@ -2992,7 +2957,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         }
         bytes32 root = keccak256(abi.encodePacked(left, right));
         uint256 totalCommitted = claimer1Amount + claimer2Amount;
-        manager.updateRoot(campaignId, root, totalCommitted);
+        manager.updateRoot(campaignId, root, totalCommitted, false);
 
         // CLAIMER claims before expiry
         bytes32[] memory proof1 = new bytes32[](1);
@@ -3002,13 +2967,18 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Warp past claim expiry - CLAIMER2 never claims
         vm.warp(campaign.endTime() + 61 days);
 
+        // Finalize campaign
+        manager.updateRoot(campaignId, root, totalCommitted, true);
+
         // After expiry, stillOwed = 0, so full remaining balance is withdrawable
         uint256 balance = rewardToken.balanceOf(address(campaign));
-        assertEq(campaign.getWithdrawable(), balance, "Full remaining balance should be withdrawable after expiry");
+        assertEq(
+            manager.getWithdrawable(campaignId), balance, "Full remaining balance should be withdrawable after expiry"
+        );
 
         // Creator can withdraw via budget
         vm.prank(CREATOR);
-        manager.withdrawToBudget(campaignId);
+        manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty after withdraw");
     }
@@ -3042,7 +3012,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Claim at endTime + 29 days should work
         vm.warp(campaign.endTime() + 29 days);
@@ -3057,7 +3027,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to exactly endTime + claimExpiryDuration (check is >, not >=)
         vm.warp(campaign.endTime() + campaign.claimExpiryDuration());
@@ -3092,7 +3062,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Claim at endTime + 1 day should still work (boundary is >)
         vm.warp(campaign.endTime() + 1 days);
@@ -3114,7 +3084,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
-        manager.updateRoot(campaignId, root, claimAmount);
+        manager.updateRoot(campaignId, root, claimAmount, false);
 
         // Warp to middle of campaign and cancel
         vm.warp(startTime + 5 days);
@@ -3189,6 +3159,238 @@ contract TimeBasedIncentiveManagerTest is Test {
         }
 
         root = currentLevel[0];
+    }
+
+    ////////////////////////////////
+    // Cancellation ACL tests
+    ////////////////////////////////
+
+    function test_CancelCampaign_ByBudgetAuthorizedUser() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        vm.warp(startTime + 5 days);
+
+        // CREATOR is authorized on the budget, should be able to cancel
+        vm.prank(CREATOR);
+        manager.cancelCampaign(campaignId);
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
+    }
+
+    function test_CancelCampaign_ByBudgetAuthorized() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // Authorize a new address on the budget (not the Manager owner)
+        address budgetAdmin = address(0xB0B);
+        address[] memory accounts = new address[](1);
+        accounts[0] = budgetAdmin;
+        bool[] memory authorized = new bool[](1);
+        authorized[0] = true;
+        budget.setAuthorized(accounts, authorized);
+
+        vm.warp(startTime + 5 days);
+
+        // budgetAdmin is authorized on the budget but NOT the manager owner
+        vm.prank(budgetAdmin);
+        manager.cancelCampaign(campaignId);
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
+    }
+
+    function test_CancelCampaign_DirectFundedByCreator() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        vm.warp(startTime + 5 days);
+
+        // Creator can cancel their own direct-funded campaign
+        vm.prank(CREATOR);
+        manager.cancelCampaign(campaignId);
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        assertEq(campaign.endTime(), uint64(block.timestamp), "End time should be current timestamp");
+    }
+
+    function test_CancelCampaign_DirectFundedRevertNotCreator() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        vm.warp(startTime + 5 days);
+
+        // Random address can't cancel a direct-funded campaign
+        vm.prank(address(0xBAD));
+        vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
+        manager.cancelCampaign(campaignId);
+    }
+
+    ////////////////////////////////
+    // Finalization tests
+    ////////////////////////////////
+
+    function test_Finalization_UpdateRootWithFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        assertFalse(campaign.finalized(), "Should not be finalized initially");
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
+
+        assertTrue(campaign.finalized(), "Should be finalized after updateRoot with finalize=true");
+    }
+
+    function test_Finalization_RevertBeforeEndTime() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        // Campaign hasn't ended yet — finalize should revert
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotEnded.selector);
+        manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
+
+        assertFalse(campaign.finalized(), "Should not be finalized");
+    }
+
+    function test_Finalization_EmitsCampaignFinalizedEvent() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        vm.expectEmit(true, true, true, true);
+        emit TimeBasedIncentiveManager.CampaignFinalized(campaignId);
+        manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
+    }
+
+    function test_Finalization_NoDoubleEmit() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
+
+        // Second finalize=true should not emit again
+        vm.recordLogs();
+        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, true);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        // Should only have RootUpdated, not CampaignFinalized
+        for (uint256 i; i < logs.length; ++i) {
+            assertTrue(
+                logs[i].topics[0] != TimeBasedIncentiveManager.CampaignFinalized.selector,
+                "Should not emit CampaignFinalized twice"
+            );
+        }
+    }
+
+    function test_Finalization_CanUpdateRootAfterFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
+        assertTrue(campaign.finalized());
+
+        // Operator can still update root after finalization
+        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, false);
+        assertEq(campaign.merkleRoot(), keccak256("root2"), "Root should be updated");
+        assertEq(campaign.totalCommitted(), 2 ether, "Total committed should be updated");
+        assertTrue(campaign.finalized(), "Should still be finalized");
+    }
+
+    function test_Finalization_BatchFinalize() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.startPrank(CREATOR);
+        uint256 id1 = manager.createCampaign(budget, keccak256("c1"), address(rewardToken), 5 ether, startTime, endTime);
+        uint256 id2 = manager.createCampaign(budget, keccak256("c2"), address(rewardToken), 5 ether, startTime, endTime);
+        vm.stopPrank();
+
+        vm.warp(endTime + 1);
+
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("r1"), 1 ether, true);
+        updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("r2"), 2 ether, false);
+        manager.updateRootsBatch(updates);
+
+        assertTrue(TimeBasedIncentiveCampaign(manager.getCampaign(id1)).finalized(), "Campaign 1 should be finalized");
+        assertFalse(
+            TimeBasedIncentiveCampaign(manager.getCampaign(id2)).finalized(), "Campaign 2 should not be finalized"
+        );
+    }
+
+    function test_Finalization_WithdrawToBudgetBlockedWithoutFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+
+        // Withdrawal blocked without finalization
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignNotFinalized.selector);
+        manager.withdraw(campaignId);
+
+        // Finalize
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
+        // Now withdrawal works
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+    }
+
+    function test_Finalization_CancelDoesNotFinalize() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+
+        vm.warp(startTime + 5 days);
+        manager.cancelCampaign(campaignId);
+
+        // Cancel does NOT finalize
+        assertFalse(
+            TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).finalized(), "Cancel should not finalize"
+        );
+
+        // Withdrawal still blocked
+        vm.warp(block.timestamp + 1);
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignNotFinalized.selector);
+        manager.withdraw(campaignId);
+
+        // Operator publishes final root
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
+        // Now withdrawal works
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
     }
 }
 

@@ -49,6 +49,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Duration after endTime during which claims are still valid
     uint64 public claimExpiryDuration;
 
+    /// @notice Whether the final reward state has been published (unlocks withdrawals)
+    bool public finalized;
+
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
 
@@ -79,9 +82,6 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when caller is not the TimeBasedIncentiveManager
     error OnlyTimeBasedIncentiveManager();
 
-    /// @notice Error when caller is not the creator
-    error OnlyCreator();
-
     /// @notice Error when caller is not the budget
     error OnlyBudget();
 
@@ -109,8 +109,8 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when there is nothing to claim
     error NothingToClaim();
 
-    /// @notice Error when trying to use withdrawUndistributed on a budget-funded campaign
-    error UseBudgetClawback();
+    /// @notice Error when campaign has not been finalized
+    error CampaignNotFinalized();
 
     /// @notice Disable initialization on the implementation contract
     constructor() {
@@ -167,6 +167,14 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         _;
     }
 
+    /// @notice Mark the campaign as finalized (called by Manager after publishing final root)
+    /// @dev Idempotent — no-op if already finalized
+    function setFinalized() external onlyTimeBasedIncentiveManager {
+        if (finalized) return;
+        if (block.timestamp < endTime) revert CampaignNotEnded();
+        finalized = true;
+    }
+
     /// @notice Set the merkle root for reward claims
     /// @param root The new merkle root
     /// @param totalCommitted_ Total amount committed to users in the merkle tree
@@ -214,23 +222,20 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         emit Claimed(user, amount, cumulativeAmount);
     }
 
-    /// @notice Withdraw undistributed funds back to creator (direct-funded campaigns only)
-    /// @dev Only callable by the campaign creator after the campaign has ended
-    /// @dev For budget-funded campaigns, use TimeBasedIncentiveManager.withdrawToBudget() instead
-    function withdrawUndistributed() external {
-        if (msg.sender != creator) revert OnlyCreator();
-        if (budget != address(0)) revert UseBudgetClawback();
+    /// @notice Transfer undistributed funds to a destination (called by Manager)
+    /// @param to The address to send funds to
+    /// @return amount The amount transferred
+    function withdrawTo(address to) external onlyTimeBasedIncentiveManager returns (uint256 amount) {
+        if (!finalized) revert CampaignNotFinalized();
         if (block.timestamp <= endTime) revert CampaignNotEnded();
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
+        amount = balance > owed ? balance - owed : 0;
+        if (amount == 0) revert NothingToWithdraw();
 
-        // Only withdraw what's not owed to users
-        uint256 withdrawable = balance > owed ? balance - owed : 0;
-        if (withdrawable == 0) revert NothingToWithdraw();
-
-        SafeTransferLib.safeTransfer(rewardToken, creator, withdrawable);
-        emit UndistributedWithdrawn(withdrawable, creator);
+        SafeTransferLib.safeTransfer(rewardToken, to, amount);
+        emit UndistributedWithdrawn(amount, to);
     }
 
     /// @notice Clawback funds to the budget (called by budget.clawbackFromTarget)
@@ -247,6 +252,7 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         (boostId, incentiveId); // unused variables
 
         if (msg.sender != budget) revert OnlyBudget();
+        if (!finalized) revert CampaignNotFinalized();
         if (block.timestamp <= endTime) revert CampaignNotEnded();
 
         AIncentive.ClawbackPayload memory payload = abi.decode(data_, (AIncentive.ClawbackPayload));
@@ -265,9 +271,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     }
 
     /// @notice Get the amount available to withdraw (not owed to users)
-    /// @return withdrawable The amount that can be withdrawn
+    /// @return withdrawable The amount that can be withdrawn (0 if not finalized or not ended)
     function getWithdrawable() external view returns (uint256 withdrawable) {
-        if (block.timestamp <= endTime) return 0;
+        if (!finalized || block.timestamp <= endTime) return 0;
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
         withdrawable = balance > owed ? balance - owed : 0;

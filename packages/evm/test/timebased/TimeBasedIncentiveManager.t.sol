@@ -3392,6 +3392,209 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         manager.withdraw(campaignId);
     }
+
+    ////////////////////////////////
+    // Budget-exhausted early finalization (totalCommitted >= totalRewards)
+    ////////////////////////////////
+
+    function test_EarlyFinalization_WhenBudgetFullyCommitted() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards(); // 9 ether after 10% fee
+
+        // Set totalCommitted = totalRewards (budget fully committed) — still before endTime
+        manager.updateRoot(campaignId, keccak256("root"), netRewards, false);
+
+        // Finalize should succeed even though endTime hasn't passed
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+        assertTrue(campaign.finalized(), "Should be finalized when totalCommitted >= totalRewards");
+    }
+
+    function test_EarlyFinalization_StillRevertsWhenBudgetNotFullyCommitted() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards();
+
+        // Set totalCommitted < totalRewards — finalize should still revert before endTime
+        manager.updateRoot(campaignId, keccak256("root"), netRewards - 1, false);
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotEnded.selector);
+        manager.updateRoot(campaignId, keccak256("final"), netRewards - 1, true);
+
+        assertFalse(campaign.finalized(), "Should not be finalized");
+    }
+
+    function test_EarlyFinalization_WithdrawBeforeEndTime() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards(); // 9 ether
+
+        // Mint extra tokens to create excess beyond what's owed
+        rewardToken.mint(address(campaign), 3 ether);
+        // balance = 12 ether, totalRewards = 9 ether
+
+        // Commit full budget and finalize before endTime
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+        assertTrue(campaign.finalized());
+
+        // stillOwed = 9e - 0 = 9e, balance = 12e, withdrawable = 3e
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + 3 ether,
+            "Budget should receive excess funds before endTime"
+        );
+    }
+
+    function test_EarlyFinalization_ClawbackBeforeEndTime() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards(); // 9 ether
+
+        // Mint extra tokens to create excess beyond what's owed
+        rewardToken.mint(address(campaign), 3 ether);
+        // balance = 12 ether, totalRewards = 9 ether
+
+        // Commit full budget and finalize before endTime
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+        assertTrue(campaign.finalized(), "Should be finalized");
+
+        // stillOwed = 9e, balance = 12e, available = 3e
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(3 ether)});
+        bytes memory data = abi.encode(payload);
+
+        vm.prank(address(budget));
+        campaign.clawback(data, 0, 0);
+
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + 3 ether,
+            "Budget should receive clawed back funds before endTime"
+        );
+    }
+
+    function test_EarlyFinalization_GetWithdrawableBeforeEndTime() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards(); // 9 ether
+
+        // Before finalization, getWithdrawable = 0
+        assertEq(manager.getWithdrawable(campaignId), 0, "Should be 0 before finalization");
+
+        // Mint extra tokens to create excess
+        rewardToken.mint(address(campaign), 3 ether);
+        // balance = 12 ether
+
+        // Finalize with full budget committed
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+
+        // getWithdrawable should work before endTime when totalCommitted >= totalRewards
+        // balance = 12e, owed = 9e - 0 = 9e, withdrawable = 3e
+        assertEq(manager.getWithdrawable(campaignId), 3 ether, "Should return correct withdrawable before endTime");
+    }
+
+    function test_EarlyFinalization_GetWithdrawableStillZeroWhenNotExhausted() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards();
+
+        // Finalize after endTime (normal flow) with partial commitment
+        manager.updateRoot(campaignId, keccak256("root"), netRewards / 2, false);
+
+        // Before endTime, totalCommitted < totalRewards → getWithdrawable should be 0
+        assertEq(manager.getWithdrawable(campaignId), 0, "Should be 0 when not exhausted and before endTime");
+    }
+
+    function test_EarlyFinalization_ExactlyEqualCommitted() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards();
+
+        // totalCommitted == totalRewards exactly
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+
+        assertTrue(campaign.finalized(), "Should finalize when totalCommitted == totalRewards exactly");
+    }
+
+    function test_EarlyFinalization_ExceedsCommitted() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards();
+
+        // totalCommitted > totalRewards (edge case — dust rounding up)
+        manager.updateRoot(campaignId, keccak256("final"), netRewards + 1, true);
+
+        assertTrue(campaign.finalized(), "Should finalize when totalCommitted > totalRewards");
+    }
+
+    function test_EarlyFinalization_UsersCanStillClaim() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 netRewards = campaign.totalRewards();
+
+        // Set up merkle tree with two users
+        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
+        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), 2 ether);
+        bytes32 root = leaf1 < leaf2
+            ? keccak256(abi.encodePacked(leaf1, leaf2))
+            : keccak256(abi.encodePacked(leaf2, leaf1));
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+
+        // Commit full budget and finalize before endTime
+        manager.updateRoot(campaignId, root, netRewards, true);
+        assertTrue(campaign.finalized());
+
+        // Users can claim after early finalization
+        manager.claim(campaignId, CLAIMER, 3 ether, proof1);
+        assertEq(rewardToken.balanceOf(CLAIMER), 3 ether, "CLAIMER should receive 3 ether");
+
+        manager.claim(campaignId, CLAIMER2, 2 ether, proof2);
+        assertEq(rewardToken.balanceOf(CLAIMER2), 2 ether, "CLAIMER2 should receive 2 ether");
+
+        // Unclaimed funds (9e - 5e = 4e) are still protected
+        assertEq(campaign.totalClaimed(), 5 ether);
+        // stillOwed = totalCommitted(9e) - totalClaimed(5e) = 4e
+        // balance = 9e - 5e = 4e, withdrawable = 0
+        assertEq(campaign.getWithdrawable(), 0, "Unclaimed funds should still be protected");
+    }
+
+    function test_EarlyFinalization_DirectFunded() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        uint256 netRewards = campaign.totalRewards();
+
+        // Mint extra tokens to create withdrawable excess
+        rewardToken.mint(address(campaign), 2 ether);
+
+        // Commit full budget and finalize before endTime
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+        assertTrue(campaign.finalized(), "Direct-funded campaign should finalize early");
+
+        // Creator withdraws excess before endTime
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(
+            rewardToken.balanceOf(CREATOR),
+            creatorBalanceBefore + 2 ether,
+            "Creator should receive excess funds"
+        );
+    }
 }
 
 /// @notice Mock ERC20 that deducts a fee only on transfer() not transferFrom() (outbound-only fee)

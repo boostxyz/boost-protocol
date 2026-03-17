@@ -171,7 +171,7 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @dev Idempotent — no-op if already finalized
     function setFinalized() external onlyTimeBasedIncentiveManager {
         if (finalized) return;
-        if (block.timestamp < endTime) revert CampaignNotEnded();
+        if (block.timestamp < endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
         finalized = true;
     }
 
@@ -227,7 +227,7 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @return amount The amount transferred
     function withdrawTo(address to) external onlyTimeBasedIncentiveManager returns (uint256 amount) {
         if (!finalized) revert CampaignNotFinalized();
-        if (block.timestamp <= endTime) revert CampaignNotEnded();
+        if (block.timestamp <= endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
@@ -253,7 +253,7 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
 
         if (msg.sender != budget) revert OnlyBudget();
         if (!finalized) revert CampaignNotFinalized();
-        if (block.timestamp <= endTime) revert CampaignNotEnded();
+        if (block.timestamp <= endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
 
         AIncentive.ClawbackPayload memory payload = abi.decode(data_, (AIncentive.ClawbackPayload));
         amount = abi.decode(payload.data, (uint256));
@@ -273,7 +273,7 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Get the amount available to withdraw (not owed to users)
     /// @return withdrawable The amount that can be withdrawn (0 if not finalized or not ended)
     function getWithdrawable() external view returns (uint256 withdrawable) {
-        if (!finalized || block.timestamp <= endTime) return 0;
+        if (!finalized || (block.timestamp <= endTime && totalCommitted < totalRewards)) return 0;
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
         withdrawable = balance > owed ? balance - owed : 0;

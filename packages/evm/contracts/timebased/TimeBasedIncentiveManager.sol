@@ -562,7 +562,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         } else {
             if (msg.sender != c.creator()) revert NotAuthorized();
         }
-        if (block.timestamp <= c.endTime()) revert CampaignNotEnded();
+        if (block.timestamp <= c.endTime() && c.totalCommitted() < c.totalRewards()) revert CampaignNotEnded();
         if (!c.finalized()) revert CampaignNotFinalized();
 
         if (budgetAddr != address(0)) {

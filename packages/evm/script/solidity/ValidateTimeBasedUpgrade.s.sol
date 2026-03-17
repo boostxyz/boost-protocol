@@ -7,7 +7,7 @@ import {Options} from "openzeppelin-foundry-upgrades/Options.sol";
 
 /**
  * @title ValidateTimeBasedUpgrade
- * @notice Validate TimeBasedIncentiveManager upgrade safety against the V1 archive
+ * @notice Validate TimeBasedIncentiveManager upgrade safety against the V2 archive
  * @dev Run: forge script script/solidity/ValidateTimeBasedUpgrade.s.sol
  *
  * Only validates the Manager (UUPS proxy). The Campaign is a plain contract
@@ -25,10 +25,10 @@ contract ValidateTimeBasedUpgrade is Script {
         // These are false positives - Solady's patterns are secure but different from OZ
         opts.unsafeAllow = "constructor,state-variable-immutable";
 
-        // Validate V2 against V1 storage layout
-        opts.referenceContract = "TimeBasedIncentiveManagerV1.sol:TimeBasedIncentiveManagerV1";
+        // Validate V2.1 against V2 storage layout
+        opts.referenceContract = "TimeBasedIncentiveManagerV2.sol:TimeBasedIncentiveManagerV2";
 
-        console.log("Validating TimeBasedIncentiveManager upgrade from V1...");
+        console.log("Validating TimeBasedIncentiveManager upgrade from V2...");
         Upgrades.validateUpgrade("TimeBasedIncentiveManager.sol:TimeBasedIncentiveManager", opts);
         console.log("[OK] TimeBasedIncentiveManager upgrade is safe!\n");
 

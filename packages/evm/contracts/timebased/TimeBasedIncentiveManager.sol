@@ -478,7 +478,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Update merkle roots for multiple campaigns in a single transaction
     /// @param updates Array of RootUpdate structs containing campaignId, root, and totalCommitted
     /// @dev If any entry has finalize=true but the campaign hasn't ended, the entire batch reverts.
-    ///      Ensure finalize=false for campaigns where block.timestamp < endTime.
+    ///      Ensure finalize=false for campaigns that have not yet reached an end condition.
     function updateRootsBatch(RootUpdate[] calldata updates) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
         if (updates.length == 0) revert EmptyBatch();

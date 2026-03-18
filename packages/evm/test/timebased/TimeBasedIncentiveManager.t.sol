@@ -3533,9 +3533,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         // Set up merkle tree with two users
         bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
         bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), 2 ether);
-        bytes32 root = leaf1 < leaf2
-            ? keccak256(abi.encodePacked(leaf1, leaf2))
-            : keccak256(abi.encodePacked(leaf2, leaf1));
+        bytes32 root =
+            leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
         bytes32[] memory proof1 = new bytes32[](1);
         proof1[0] = leaf2;
         bytes32[] memory proof2 = new bytes32[](1);
@@ -3589,11 +3588,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         manager.withdraw(campaignId);
 
-        assertEq(
-            rewardToken.balanceOf(CREATOR),
-            creatorBalanceBefore + 2 ether,
-            "Creator should receive excess funds"
-        );
+        assertEq(rewardToken.balanceOf(CREATOR), creatorBalanceBefore + 2 ether, "Creator should receive excess funds");
     }
 }
 

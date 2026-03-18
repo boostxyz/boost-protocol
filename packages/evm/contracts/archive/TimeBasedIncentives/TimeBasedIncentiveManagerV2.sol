@@ -11,11 +11,11 @@ import {ABudget} from "contracts/budgets/ABudget.sol";
 import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
-/// @title TimeBasedIncentiveManager
-/// @notice Factory and orchestration contract for time-based incentive campaigns
-/// @dev Deploys TimeBasedIncentiveCampaign clones and manages protocol fees. UUPS upgradeable.
-/// @custom:oz-upgrades-from contracts/archive/TimeBasedIncentives/TimeBasedIncentiveManagerV2.sol:TimeBasedIncentiveManagerV2
-contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
+/// @title TimeBasedIncentiveManager V2
+/// @notice Factory and orchestration contract for time-based incentive campaigns (Version 2)
+/// @dev Archived for upgrade safety validation. See TimeBasedIncentiveManager.sol for current version.
+/// @custom:oz-upgrades-from contracts/archive/TimeBasedIncentives/TimeBasedIncentiveManagerV1.sol:TimeBasedIncentiveManagerV1
+contract TimeBasedIncentiveManagerV2 is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;
 
     /// @notice Parameters for a single root update in a batch
@@ -478,7 +478,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Update merkle roots for multiple campaigns in a single transaction
     /// @param updates Array of RootUpdate structs containing campaignId, root, and totalCommitted
     /// @dev If any entry has finalize=true but the campaign hasn't ended, the entire batch reverts.
-    ///      Ensure finalize=false for campaigns that have not yet reached an end condition.
+    ///      Ensure finalize=false for campaigns where block.timestamp < endTime.
     function updateRootsBatch(RootUpdate[] calldata updates) external {
         if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
         if (updates.length == 0) revert EmptyBatch();
@@ -562,7 +562,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         } else {
             if (msg.sender != c.creator()) revert NotAuthorized();
         }
-        if (block.timestamp <= c.endTime() && c.totalCommitted() < c.totalRewards()) revert CampaignNotEnded();
+        if (block.timestamp <= c.endTime()) revert CampaignNotEnded();
         if (!c.finalized()) revert CampaignNotFinalized();
 
         if (budgetAddr != address(0)) {
@@ -598,6 +598,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "2.1.0";
+        return "2.0.0";
     }
 }

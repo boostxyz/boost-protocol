@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.1.0-canary.2
+
+### Patch Changes
+
+- 0462aa7: update default validator
+
 ## 8.1.0-canary.1
 
 ### Patch Changes

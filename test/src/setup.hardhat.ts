@@ -29,8 +29,11 @@ function createHardhatProcess(): Promise<ChildProcessWithoutNullStreams> {
     });
 
     hardhatProcess.stderr.on('data', (data) => {
-      console.error('stderr', data.toString());
-      reject(data);
+      const msg = data.toString();
+      console.error('stderr', msg);
+      if (!msg.includes('npm warn')) {
+        reject(data);
+      }
     });
 
     hardhatProcess.on('close', () => {

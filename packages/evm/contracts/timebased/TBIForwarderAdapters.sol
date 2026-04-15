@@ -27,12 +27,12 @@ interface ICErc20 {
     function underlying() external view returns (address);
 }
 
-/// @title BoostForwarderAdapters
-/// @notice Protocol-specific deposit adapters for the BoostForwarder.
+/// @title TBIForwarderAdapters
+/// @notice Protocol-specific deposit adapters for the TBIForwarder.
 /// Each adapter is a typed function that constrains the interaction to a single known code path.
 /// msg.sender is hardcoded as the receiver in every adapter — this is the security invariant.
-/// @dev New adapters are added here and picked up by BoostForwarder via inheritance on upgrade.
-abstract contract BoostForwarderAdapters {
+/// @dev New adapters are added here and picked up by TBIForwarder via inheritance on upgrade.
+abstract contract TBIForwarderAdapters {
     using SafeTransferLib for address;
 
     /// @notice Emitted on every routed deposit

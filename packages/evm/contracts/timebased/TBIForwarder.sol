@@ -5,14 +5,14 @@ import {Ownable} from "@solady/auth/Ownable.sol";
 import {Initializable} from "@solady/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
-import {BoostForwarderAdapters} from "contracts/timebased/BoostForwarderAdapters.sol";
+import {TBIForwarderAdapters} from "contracts/timebased/TBIForwarderAdapters.sol";
 
-/// @title BoostForwarder
+/// @title TBIForwarder
 /// @notice Stateless deposit router that forwards user funds into DeFi pools.
 /// Emits a Deposit event the backend indexer uses as an opt-in signal for reward eligibility.
-/// @dev UUPS upgradeable. New protocol adapters are added in BoostForwarderAdapters and
+/// @dev UUPS upgradeable. New protocol adapters are added in TBIForwarderAdapters and
 /// picked up by upgrading the implementation.
-contract BoostForwarder is Initializable, UUPSUpgradeable, Ownable, BoostForwarderAdapters {
+contract TBIForwarder is Initializable, UUPSUpgradeable, Ownable, TBIForwarderAdapters {
     /// @notice Allocated gap space for future storage variables
     uint256[50] private __gap;
 
@@ -21,7 +21,7 @@ contract BoostForwarder is Initializable, UUPSUpgradeable, Ownable, BoostForward
         _disableInitializers();
     }
 
-    /// @notice Initialize the BoostForwarder
+    /// @notice Initialize the TBIForwarder
     /// @param owner_ The owner of the contract
     function initialize(address owner_) external initializer {
         _initializeOwner(owner_);

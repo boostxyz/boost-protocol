@@ -7,15 +7,15 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {ERC20} from "@solady/tokens/ERC20.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
-import {BoostForwarder} from "contracts/timebased/BoostForwarder.sol";
+import {TBIForwarder} from "contracts/timebased/TBIForwarder.sol";
 import {
-    BoostForwarderAdapters,
+    TBIForwarderAdapters,
     IERC4626,
     IAaveV3Pool,
     IComet,
     IStakedToken,
     ICErc20
-} from "contracts/timebased/BoostForwarderAdapters.sol";
+} from "contracts/timebased/TBIForwarderAdapters.sol";
 
 /// @notice Minimal ERC-4626 mock that accepts deposits and mints 1:1 shares
 contract MockERC4626 is ERC20 {
@@ -178,8 +178,8 @@ contract MockCErc20Failing is ERC20 {
     }
 }
 
-contract BoostForwarderTest is Test {
-    BoostForwarder forwarder;
+contract TBIForwarderTest is Test {
+    TBIForwarder forwarder;
     MockERC20 token;
     MockERC4626 vault;
     MockAaveV3Pool aavePool;
@@ -200,9 +200,9 @@ contract BoostForwarderTest is Test {
         cToken = new MockCErc20(address(token));
 
         // Deploy forwarder via UUPS proxy
-        BoostForwarder impl = new BoostForwarder();
+        TBIForwarder impl = new TBIForwarder();
         address proxy = LibClone.deployERC1967(address(impl));
-        forwarder = BoostForwarder(proxy);
+        forwarder = TBIForwarder(proxy);
         forwarder.initialize(address(this));
 
         // Fund user
@@ -217,7 +217,7 @@ contract BoostForwarderTest is Test {
         uint256 amount = 10 ether;
 
         vm.expectEmit(true, true, true, true);
-        emit BoostForwarderAdapters.Deposit(USER, address(vault), address(token), amount);
+        emit TBIForwarderAdapters.Deposit(USER, address(vault), address(token), amount);
 
         vm.prank(USER);
         forwarder.depositERC4626(IERC4626(address(vault)), amount);
@@ -252,7 +252,7 @@ contract BoostForwarderTest is Test {
         uint256 amount = 5 ether;
 
         vm.expectEmit(true, true, true, true);
-        emit BoostForwarderAdapters.Deposit(USER, address(aavePool), address(token), amount);
+        emit TBIForwarderAdapters.Deposit(USER, address(aavePool), address(token), amount);
 
         vm.prank(USER);
         forwarder.depositAaveV3(IAaveV3Pool(address(aavePool)), address(token), amount);
@@ -271,7 +271,7 @@ contract BoostForwarderTest is Test {
         uint256 amount = 8 ether;
 
         vm.expectEmit(true, true, true, true);
-        emit BoostForwarderAdapters.Deposit(USER, address(comet), address(token), amount);
+        emit TBIForwarderAdapters.Deposit(USER, address(comet), address(token), amount);
 
         vm.prank(USER);
         forwarder.depositCompoundV3(IComet(address(comet)), address(token), amount);
@@ -290,7 +290,7 @@ contract BoostForwarderTest is Test {
         uint256 amount = 3 ether;
 
         vm.expectEmit(true, true, true, true);
-        emit BoostForwarderAdapters.Deposit(USER, address(stakedToken), address(token), amount);
+        emit TBIForwarderAdapters.Deposit(USER, address(stakedToken), address(token), amount);
 
         vm.prank(USER);
         forwarder.stakeAaveToken(IStakedToken(address(stakedToken)), address(token), amount);
@@ -309,7 +309,7 @@ contract BoostForwarderTest is Test {
         uint256 amount = 6 ether;
 
         vm.expectEmit(true, true, true, true);
-        emit BoostForwarderAdapters.Deposit(USER, address(cToken), address(token), amount);
+        emit TBIForwarderAdapters.Deposit(USER, address(cToken), address(token), amount);
 
         vm.prank(USER);
         forwarder.depositCompoundV2(ICErc20(address(cToken)), amount);
@@ -327,14 +327,14 @@ contract BoostForwarderTest is Test {
         MockCErc20Failing failingCToken = new MockCErc20Failing(address(token));
 
         vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(BoostForwarderAdapters.MintFailed.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(TBIForwarderAdapters.MintFailed.selector, 1));
         forwarder.depositCompoundV2(ICErc20(address(failingCToken)), 1 ether);
     }
 
     // --- Upgrade ---
 
     function test_Upgrade_Success() public {
-        BoostForwarder newImpl = new BoostForwarder();
+        TBIForwarder newImpl = new TBIForwarder();
         forwarder.upgradeToAndCall(address(newImpl), "");
 
         // Forwarder still works after upgrade — deposit succeeds
@@ -343,7 +343,7 @@ contract BoostForwarderTest is Test {
     }
 
     function test_Upgrade_RevertNotOwner() public {
-        BoostForwarder newImpl = new BoostForwarder();
+        TBIForwarder newImpl = new TBIForwarder();
 
         vm.prank(ATTACKER);
         vm.expectRevert(abi.encodeWithSignature("Unauthorized()"));

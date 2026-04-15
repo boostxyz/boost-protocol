@@ -3,17 +3,17 @@ pragma solidity ^0.8.24;
 
 import "./Util.s.sol";
 
-import {BoostForwarder} from "contracts/timebased/BoostForwarder.sol";
+import {TBIForwarder} from "contracts/timebased/TBIForwarder.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
-/// @notice Script to deploy BoostForwarder as a UUPS proxy
+/// @notice Script to deploy TBIForwarder as a UUPS proxy
 /// @dev Deploys:
-///   1. BoostForwarder implementation via CREATE2
+///   1. TBIForwarder implementation via CREATE2
 ///   2. ERC1967 proxy via CREATE2
 ///   3. Initializes with deployer as temporary owner
 ///   4. Approves initial targets
 ///   5. Transfers ownership to final owner
-contract DeployBoostForwarder is ScriptUtils {
+contract DeployTBIForwarder is ScriptUtils {
     function run() external {
         console.log("deploying address: ", vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY")));
 
@@ -24,12 +24,12 @@ contract DeployBoostForwarder is ScriptUtils {
         // Ensure deployments JSON file exists
         _ensureDeploymentsFileExists();
 
-        // Deploy BoostForwarder proxy
+        // Deploy TBIForwarder proxy
         address forwarderProxy = _deployForwarderProxy(owner);
 
         console.log("");
         console.log("=== Deployment Summary ===");
-        console.log("BoostForwarder Proxy: ", forwarderProxy);
+        console.log("TBIForwarder Proxy: ", forwarderProxy);
     }
 
     function _ensureDeploymentsFileExists() internal {
@@ -48,10 +48,10 @@ contract DeployBoostForwarder is ScriptUtils {
     function _deployForwarderProxy(address owner) internal returns (address forwarderProxy) {
         bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
 
-        // Deploy BoostForwarder implementation
-        bytes memory implInitCode = type(BoostForwarder).creationCode;
+        // Deploy TBIForwarder implementation
+        bytes memory implInitCode = type(TBIForwarder).creationCode;
         address forwarderImpl = _getCreate2Address(implInitCode, "");
-        console.log("BoostForwarder Implementation: ", forwarderImpl);
+        console.log("TBIForwarder Implementation: ", forwarderImpl);
 
         if (_deploy2(implInitCode, "")) {
             console.log("  -> Deployed new implementation");
@@ -59,7 +59,7 @@ contract DeployBoostForwarder is ScriptUtils {
 
         // Deploy ERC1967 proxy via CREATE2_FACTORY
         forwarderProxy = LibClone.predictDeterministicAddressERC1967(forwarderImpl, salt, CREATE2_FACTORY);
-        console.log("BoostForwarder Proxy: ", forwarderProxy);
+        console.log("TBIForwarder Proxy: ", forwarderProxy);
 
         uint256 codeSize;
         assembly {
@@ -78,11 +78,11 @@ contract DeployBoostForwarder is ScriptUtils {
             console.log("  -> Proxy already deployed");
 
             // Sanity check: on-chain owner matches expected
-            address currentOwner = BoostForwarder(forwarderProxy).owner();
+            address currentOwner = TBIForwarder(forwarderProxy).owner();
             require(currentOwner == owner, "Existing forwarder owner != FORWARDER_OWNER");
         }
 
-        vm.writeJson(vm.toString(forwarderProxy), _buildJsonDeployPath(), ".BoostForwarder");
+        vm.writeJson(vm.toString(forwarderProxy), _buildJsonDeployPath(), ".TBIForwarder");
     }
 
     function _configureForwarder(address forwarderProxy, address owner) internal {
@@ -90,13 +90,13 @@ contract DeployBoostForwarder is ScriptUtils {
 
         // Initialize with deployer as temporary owner so we can configure before transferring
         vm.broadcast();
-        BoostForwarder(forwarderProxy).initialize(deployer);
+        TBIForwarder(forwarderProxy).initialize(deployer);
         console.log("  -> Initialized");
 
         // Transfer ownership to the intended owner
         if (owner != deployer) {
             vm.broadcast();
-            BoostForwarder(forwarderProxy).transferOwnership(owner);
+            TBIForwarder(forwarderProxy).transferOwnership(owner);
             console.log("  -> Ownership transferred to: ", owner);
         }
     }

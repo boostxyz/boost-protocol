@@ -3,21 +3,21 @@ pragma solidity ^0.8.24;
 
 import "./Util.s.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
-import {BoostForwarder} from "contracts/timebased/BoostForwarder.sol";
+import {TBIForwarder} from "contracts/timebased/TBIForwarder.sol";
 
-/// @title Upgrade_BoostForwarder
-/// @notice Deploy a new BoostForwarder implementation and upgrade the proxy
+/// @title Upgrade_TBIForwarder
+/// @notice Deploy a new TBIForwarder implementation and upgrade the proxy
 /// @dev Environment variables:
 ///   DEPLOYER_PRIVATE_KEY    — owner private key
 ///   BOOST_DEPLOYMENT_SALT   — CREATE2 salt (same as initial deploy)
-///   FORWARDER_PROXY         — BoostForwarder proxy address
-contract Upgrade_BoostForwarder is ScriptUtils {
+///   FORWARDER_PROXY         — TBIForwarder proxy address
+contract Upgrade_TBIForwarder is ScriptUtils {
     function run() public {
         address FORWARDER_PROXY = vm.envAddress("FORWARDER_PROXY");
-        BoostForwarder forwarder = BoostForwarder(FORWARDER_PROXY);
+        TBIForwarder forwarder = TBIForwarder(FORWARDER_PROXY);
 
         console.log("========================================");
-        console.log("Starting BoostForwarder Upgrade");
+        console.log("Starting TBIForwarder Upgrade");
         console.log("========================================");
         console.log("Upgrader address: ", msg.sender);
         console.log("Forwarder Proxy:  ", FORWARDER_PROXY);
@@ -32,7 +32,7 @@ contract Upgrade_BoostForwarder is ScriptUtils {
 
         // ---- Deploy new implementation ----
         console.log("\n--- Deploy New Implementation ---");
-        bytes memory initCode = type(BoostForwarder).creationCode;
+        bytes memory initCode = type(TBIForwarder).creationCode;
         address newImpl = _getCreate2Address(initCode, "");
         console.log("New Impl:         ", newImpl);
 

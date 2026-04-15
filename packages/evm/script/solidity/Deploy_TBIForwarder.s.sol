@@ -11,8 +11,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 ///   1. TBIForwarder implementation via CREATE2
 ///   2. ERC1967 proxy via CREATE2
 ///   3. Initializes with deployer as temporary owner
-///   4. Approves initial targets
-///   5. Transfers ownership to final owner
+///   4. Transfers ownership to final owner
 contract DeployTBIForwarder is ScriptUtils {
     function run() external {
         console.log("deploying address: ", vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY")));

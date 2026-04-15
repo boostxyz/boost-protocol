@@ -47,6 +47,7 @@ contract Upgrade_TBIForwarder is ScriptUtils {
         } else {
             vm.broadcast();
             forwarder.upgradeToAndCall(newImpl, "");
+            console.log("  -> Upgraded to new implementation");
         }
 
         // ---- Verify ----

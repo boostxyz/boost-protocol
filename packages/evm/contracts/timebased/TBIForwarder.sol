@@ -24,6 +24,7 @@ contract TBIForwarder is Initializable, UUPSUpgradeable, Ownable, TBIForwarderAd
     /// @notice Initialize the TBIForwarder
     /// @param owner_ The owner of the contract
     function initialize(address owner_) external initializer {
+        require(owner_ != address(0), "Zero address owner");
         _initializeOwner(owner_);
     }
 

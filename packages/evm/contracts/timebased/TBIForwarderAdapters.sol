@@ -94,7 +94,8 @@ abstract contract TBIForwarderAdapters {
     }
 
     /// @notice Deposit into a Compound v2 / Moonwell cToken on behalf of msg.sender
-    /// @dev cToken.mint() sends cTokens to the caller (forwarder), so we transfer them to msg.sender after
+    /// @dev cToken.mint() sends cTokens to the caller (forwarder), so we transfer them to msg.sender after.
+    /// Only supports cTokens that implement underlying() (ERC-20 markets). cETH is not supported.
     /// @param cToken The cToken contract
     /// @param amount The amount of underlying to deposit
     function depositCompoundV2(ICErc20 cToken, uint256 amount) external {

@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 8.2.0
+
+### Minor Changes
+
+- f502c95: Add new chains Arbitrum, Ethereum and HyperEVM
+
 ## 8.1.0
 
 ### Minor Changes

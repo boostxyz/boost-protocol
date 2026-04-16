@@ -1,5 +1,17 @@
 # @boostxyz/sdk
 
+## 8.1.0
+
+### Minor Changes
+
+- f502c95: Add new chains Arbitrum, Ethereum and HyperEVM
+- 3af0bfc: validates actionsteps for the same signature/targetcontract as groups
+
+### Patch Changes
+
+- 39f722d: fix log reorder bug for viem versions > 2.30.6
+- 0462aa7: update default validator
+
 ## 8.1.0-canary.2
 
 ### Patch Changes

@@ -188,6 +188,8 @@ contract TBIForwarderTest is Test {
     MockCErc20 cToken;
 
     address constant USER = address(0xCAFE);
+    address constant RECEIVER = address(0xB0B);
+    address constant LIFI_EXECUTOR = address(0xF1F1);
     address constant ATTACKER = address(0xDEAD);
 
     function setUp() public {
@@ -206,8 +208,12 @@ contract TBIForwarderTest is Test {
         forwarder.initialize(address(this));
 
         // Fund user
-        token.mint(USER, 100 ether);
-        vm.prank(USER);
+        _fundAndApprove(USER, 100 ether);
+    }
+
+    function _fundAndApprove(address account, uint256 amount) internal {
+        token.mint(account, amount);
+        vm.prank(account);
         token.approve(address(forwarder), type(uint256).max);
     }
 
@@ -220,7 +226,7 @@ contract TBIForwarderTest is Test {
         emit TBIForwarderAdapters.Deposit(USER, address(vault), address(token), amount);
 
         vm.prank(USER);
-        forwarder.depositERC4626(IERC4626(address(vault)), amount);
+        forwarder.depositERC4626(IERC4626(address(vault)), amount, USER);
 
         // User received vault shares
         assertEq(vault.balanceOf(USER), amount);
@@ -230,10 +236,41 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(USER), 90 ether);
     }
 
+    function test_DepositERC4626_WithReceiver_Success() public {
+        uint256 amount = 10 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(vault), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.depositERC4626(IERC4626(address(vault)), amount, RECEIVER);
+
+        // Receiver received vault shares, while caller only paid underlying
+        assertEq(vault.balanceOf(RECEIVER), amount);
+        assertEq(vault.balanceOf(LIFI_EXECUTOR), 0);
+        // Forwarder holds nothing
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        // Li.Fi caller's token balance decreased
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 90 ether);
+    }
+
+    function test_DepositERC4626_WithReceiver_RevertZeroReceiver() public {
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.prank(LIFI_EXECUTOR);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositERC4626(IERC4626(address(vault)), 1 ether, address(0));
+
+        // Reverts before funds move
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
     function test_DepositERC4626_RevertInsufficientBalance() public {
         vm.prank(USER);
         vm.expectRevert(); // SafeTransferLib reverts on insufficient balance
-        forwarder.depositERC4626(IERC4626(address(vault)), 200 ether);
+        forwarder.depositERC4626(IERC4626(address(vault)), 200 ether, USER);
     }
 
     function test_DepositERC4626_RevertNoApproval() public {
@@ -243,7 +280,7 @@ contract TBIForwarderTest is Test {
 
         vm.prank(noApprovalUser);
         vm.expectRevert(); // SafeTransferLib reverts on insufficient allowance
-        forwarder.depositERC4626(IERC4626(address(vault)), 1 ether);
+        forwarder.depositERC4626(IERC4626(address(vault)), 1 ether, noApprovalUser);
     }
 
     // --- Aave V3 ---
@@ -255,7 +292,7 @@ contract TBIForwarderTest is Test {
         emit TBIForwarderAdapters.Deposit(USER, address(aavePool), address(token), amount);
 
         vm.prank(USER);
-        forwarder.depositAaveV3(IAaveV3Pool(address(aavePool)), address(token), amount);
+        forwarder.depositAaveV3(IAaveV3Pool(address(aavePool)), address(token), amount, USER);
 
         // User received aTokens
         assertEq(aavePool.aToken().balanceOf(USER), amount);
@@ -263,6 +300,25 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(address(forwarder)), 0);
         // User's token balance decreased
         assertEq(token.balanceOf(USER), 95 ether);
+    }
+
+    function test_DepositAaveV3_WithReceiver_Success() public {
+        uint256 amount = 5 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(aavePool), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.depositAaveV3(IAaveV3Pool(address(aavePool)), address(token), amount, RECEIVER);
+
+        // Receiver received aTokens, while caller only paid underlying
+        assertEq(aavePool.aToken().balanceOf(RECEIVER), amount);
+        assertEq(aavePool.aToken().balanceOf(LIFI_EXECUTOR), 0);
+        // Forwarder holds nothing
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        // Li.Fi caller's token balance decreased
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 95 ether);
     }
 
     // --- Compound V3 ---
@@ -274,7 +330,7 @@ contract TBIForwarderTest is Test {
         emit TBIForwarderAdapters.Deposit(USER, address(comet), address(token), amount);
 
         vm.prank(USER);
-        forwarder.depositCompoundV3(IComet(address(comet)), address(token), amount);
+        forwarder.depositCompoundV3(IComet(address(comet)), address(token), amount, USER);
 
         // User received receipt tokens
         assertEq(comet.receipt().balanceOf(USER), amount);
@@ -282,6 +338,25 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(address(forwarder)), 0);
         // User's token balance decreased
         assertEq(token.balanceOf(USER), 92 ether);
+    }
+
+    function test_DepositCompoundV3_WithReceiver_Success() public {
+        uint256 amount = 8 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(comet), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.depositCompoundV3(IComet(address(comet)), address(token), amount, RECEIVER);
+
+        // Receiver received receipt tokens, while caller only paid underlying
+        assertEq(comet.receipt().balanceOf(RECEIVER), amount);
+        assertEq(comet.receipt().balanceOf(LIFI_EXECUTOR), 0);
+        // Forwarder holds nothing
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        // Li.Fi caller's token balance decreased
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 92 ether);
     }
 
     // --- Aave Staked Token ---
@@ -293,7 +368,7 @@ contract TBIForwarderTest is Test {
         emit TBIForwarderAdapters.Deposit(USER, address(stakedToken), address(token), amount);
 
         vm.prank(USER);
-        forwarder.stakeAaveToken(IStakedToken(address(stakedToken)), address(token), amount);
+        forwarder.stakeAaveToken(IStakedToken(address(stakedToken)), address(token), amount, USER);
 
         // User received staked tokens
         assertEq(stakedToken.balanceOf(USER), amount);
@@ -301,6 +376,25 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(address(forwarder)), 0);
         // User's token balance decreased
         assertEq(token.balanceOf(USER), 97 ether);
+    }
+
+    function test_StakeAaveToken_WithReceiver_Success() public {
+        uint256 amount = 3 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(stakedToken), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.stakeAaveToken(IStakedToken(address(stakedToken)), address(token), amount, RECEIVER);
+
+        // Receiver received staked tokens, while caller only paid underlying
+        assertEq(stakedToken.balanceOf(RECEIVER), amount);
+        assertEq(stakedToken.balanceOf(LIFI_EXECUTOR), 0);
+        // Forwarder holds nothing
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        // Li.Fi caller's token balance decreased
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 97 ether);
     }
 
     // --- Compound V2 ---
@@ -312,7 +406,7 @@ contract TBIForwarderTest is Test {
         emit TBIForwarderAdapters.Deposit(USER, address(cToken), address(token), amount);
 
         vm.prank(USER);
-        forwarder.depositCompoundV2(ICErc20(address(cToken)), amount);
+        forwarder.depositCompoundV2(ICErc20(address(cToken)), amount, USER);
 
         // User received cTokens (1:1 in mock)
         assertEq(cToken.balanceOf(USER), amount);
@@ -323,12 +417,32 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(USER), 94 ether);
     }
 
+    function test_DepositCompoundV2_WithReceiver_Success() public {
+        uint256 amount = 6 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(cToken), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.depositCompoundV2(ICErc20(address(cToken)), amount, RECEIVER);
+
+        // Receiver received cTokens, while caller only paid underlying
+        assertEq(cToken.balanceOf(RECEIVER), amount);
+        assertEq(cToken.balanceOf(LIFI_EXECUTOR), 0);
+        // Forwarder holds no cTokens or underlying
+        assertEq(cToken.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        // Li.Fi caller's token balance decreased
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 94 ether);
+    }
+
     function test_DepositCompoundV2_RevertMintFailed() public {
         MockCErc20Failing failingCToken = new MockCErc20Failing(address(token));
 
         vm.prank(USER);
         vm.expectRevert(abi.encodeWithSelector(TBIForwarderAdapters.MintFailed.selector, 1));
-        forwarder.depositCompoundV2(ICErc20(address(failingCToken)), 1 ether);
+        forwarder.depositCompoundV2(ICErc20(address(failingCToken)), 1 ether, USER);
     }
 
     // --- Upgrade ---
@@ -339,7 +453,7 @@ contract TBIForwarderTest is Test {
 
         // Forwarder still works after upgrade — deposit succeeds
         vm.prank(USER);
-        forwarder.depositERC4626(IERC4626(address(vault)), 1 ether);
+        forwarder.depositERC4626(IERC4626(address(vault)), 1 ether, USER);
     }
 
     function test_Upgrade_RevertNotOwner() public {

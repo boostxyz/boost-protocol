@@ -14,7 +14,7 @@ import {TBIForwarder} from "contracts/timebased/TBIForwarder.sol";
 contract Upgrade_TBIForwarder is ScriptUtils {
     function run() public {
         address FORWARDER_PROXY = vm.envAddress("FORWARDER_PROXY");
-        TBIForwarder forwarder = TBIForwarder(FORWARDER_PROXY);
+        TBIForwarder forwarder = TBIForwarder(payable(FORWARDER_PROXY));
 
         console.log("========================================");
         console.log("Starting TBIForwarder Upgrade");

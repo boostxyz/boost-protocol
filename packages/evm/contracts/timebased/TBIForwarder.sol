@@ -28,6 +28,26 @@ contract TBIForwarder is Initializable, UUPSUpgradeable, Ownable, TBIForwarderAd
         _initializeOwner(owner_);
     }
 
+    /// @notice Accept native ETH so the zap adapter can receive swap output from a whitelisted
+    /// aggregator router. Plain `Deposit`/V4 paths never leave ETH here.
+    receive() external payable {}
+
+    // --- Zap router whitelist ---
+
+    /// @notice Allow or disallow `router` as a `depositUniswapV4LPWithSwap` swap target. The
+    /// whitelist is the trust boundary for the zap's arbitrary external call, so only the owner
+    /// (expected to be a multisig) may change it.
+    /// @param router The aggregator router address (e.g. the KyberSwap MetaAggregationRouter)
+    /// @param allowed Whether the router may be used as a zap swap target
+    function setSwapRouterAllowed(address router, bool allowed) external onlyOwner {
+        _setSwapRouterAllowed(router, allowed);
+    }
+
+    /// @notice Whether `router` is currently permitted as a zap swap target.
+    function isSwapRouterAllowed(address router) external view returns (bool) {
+        return _isSwapRouterAllowed(router);
+    }
+
     // --- Upgrades ---
 
     /// @notice Authorize an upgrade to a new implementation

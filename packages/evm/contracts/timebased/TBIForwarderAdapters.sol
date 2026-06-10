@@ -28,6 +28,21 @@ interface ICErc20 {
     function underlying() external view returns (address);
 }
 
+/// @notice Mellow Flexible Vaults v2 per-asset deposit queue (used by Lido Earn). `asset()` is the
+/// accepted token — an ERC-20 or the EIP-7528 native-ETH sentinel — and `vault()` resolves the core
+/// vault. `deposit` mints share tokens to msg.sender; there is no receiver argument.
+interface ISyncDepositQueue {
+    function asset() external view returns (address);
+    function vault() external view returns (address);
+    function deposit(uint224 assets, address referral, bytes32[] calldata merkleProof) external payable;
+}
+
+/// @notice Minimal view onto a Mellow vault's ShareModule, used to resolve the share token a
+/// `SyncDepositQueue` mints (the contract the reward indexer tracks).
+interface IMellowShareModule {
+    function shareManager() external view returns (address);
+}
+
 /// @notice Currency identifier used by Uniswap V4. Mirrors `type Currency is address;` in v4-core
 /// so callers can pass `address` values directly. Native ETH is signaled by `address(0)`, valid only
 /// as currency0 and funded via `msg.value` (see `depositUniswapV4LP`).
@@ -143,6 +158,9 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// the swap-free path.
     error EmptySwap();
 
+    /// @notice Thrown when a Lido Earn deposit amount exceeds the SyncDepositQueue's uint224 range.
+    error AmountExceedsUint224();
+
     /// @notice Canonical Permit2 address (same on every chain)
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
@@ -151,6 +169,9 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     uint8 internal constant ACTION_MINT_POSITION = 0x02;
     uint8 internal constant ACTION_SETTLE_PAIR = 0x0d;
     uint8 internal constant ACTION_SWEEP = 0x14;
+
+    /// @notice Native-ETH sentinel used by Mellow's TransferLibrary (EIP-7528) as a queue `asset()`.
+    address internal constant MELLOW_NATIVE_ASSET = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     /// @notice Deposit into an ERC-4626 vault on behalf of receiver
     /// @param vault The ERC-4626 vault to deposit into
@@ -233,6 +254,42 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         asset.safeApprove(address(cToken), 0);
 
         emit Deposit(receiver, address(cToken), asset, amount);
+    }
+
+    /// @notice Deposit into a Lido Earn (Mellow v2) vault via its per-asset SyncDepositQueue,
+    /// crediting the vault share token to `receiver`.
+    /// @dev The SyncDepositQueue mints shares to msg.sender (this forwarder) and exposes no receiver
+    /// argument, so the minted shares are measured by balance delta and forwarded to `receiver`
+    /// (mirrors `depositCompoundV2`). The accepted asset is `queue.asset()`: an ERC-20 (e.g. WETH,
+    /// wstETH) pulled from msg.sender, or native ETH — signaled by Mellow's EIP-7528 sentinel —
+    /// funded via msg.value. The share token is resolved from the queue's vault so callers cannot
+    /// misdirect it. Emits `Deposit` with the share token as `target`, the contract the indexer tracks.
+    /// @param queue The per-asset Mellow SyncDepositQueue
+    /// @param amount The amount of `queue.asset()` to deposit
+    /// @param receiver The account receiving Lido Earn share tokens
+    function depositLidoEarn(ISyncDepositQueue queue, uint256 amount, address receiver) external payable nonReentrant {
+        _requireReceiver(receiver);
+        if (amount > type(uint224).max) revert AmountExceedsUint224();
+
+        address asset = queue.asset();
+        address shareToken = IMellowShareModule(queue.vault()).shareManager();
+        uint256 sharesBefore = IERC20Minimal(shareToken).balanceOf(address(this));
+
+        if (asset == MELLOW_NATIVE_ASSET) {
+            if (msg.value != amount) revert IncorrectNativeValue();
+            queue.deposit{value: amount}(uint224(amount), address(0), new bytes32[](0));
+        } else {
+            if (msg.value != 0) revert IncorrectNativeValue();
+            asset.safeTransferFrom(msg.sender, address(this), amount);
+            asset.safeApproveWithRetry(address(queue), amount);
+            queue.deposit(uint224(amount), address(0), new bytes32[](0));
+            asset.safeApprove(address(queue), 0);
+        }
+
+        uint256 sharesReceived = IERC20Minimal(shareToken).balanceOf(address(this)) - sharesBefore;
+        shareToken.safeTransfer(receiver, sharesReceived);
+
+        emit Deposit(receiver, shareToken, asset, amount);
     }
 
     /// @notice Mint a Uniswap V4 LP position on behalf of receiver.

@@ -15,6 +15,7 @@ import {
     IComet,
     IStakedToken,
     ICErc20,
+    ISyncDepositQueue,
     IUniswapV4PositionManager,
     PoolKey,
     Currency,
@@ -359,6 +360,67 @@ contract MockReentrantRouter {
     }
 }
 
+/// @notice Minimal Mellow share token (e.g. Lido earnETH). In Mellow v2 the vault's ShareManager
+/// and the ERC-20 share token are the same contract; `mint` is what the queue calls on deposit.
+contract MockMellowShareToken is ERC20 {
+    function name() public pure override returns (string memory) {
+        return "Mock Lido Earn ETH";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "mEarnETH";
+    }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+}
+
+/// @notice Minimal Mellow vault exposing the ShareManager (the share token) the queue mints.
+contract MockMellowVault {
+    address public shareManager;
+
+    constructor(address shareManager_) {
+        shareManager = shareManager_;
+    }
+}
+
+/// @notice Minimal Mellow SyncDepositQueue. Mirrors the real queue: it pulls the ERC-20 asset from
+/// the caller (the forwarder) — or accepts native ETH via msg.value — and mints share tokens to the
+/// *caller*, never a receiver. A nonzero `feeBps` mints a fee slice to `feeRecipient` (not the
+/// caller), so the net shares the forwarder receives differ from `assets` and a naive 1:1 rate.
+contract MockSyncDepositQueue {
+    address constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    address public asset;
+    address public vault;
+    uint256 public immutable rateBps;
+    uint256 public immutable feeBps;
+    address public immutable feeRecipient;
+    MockMellowShareToken public immutable share;
+
+    constructor(address asset_, uint256 rateBps_, uint256 feeBps_, address feeRecipient_) {
+        share = new MockMellowShareToken();
+        vault = address(new MockMellowVault(address(share)));
+        asset = asset_;
+        rateBps = rateBps_;
+        feeBps = feeBps_;
+        feeRecipient = feeRecipient_;
+    }
+
+    function deposit(uint224 assets, address, bytes32[] calldata) external payable {
+        if (asset == NATIVE) {
+            require(msg.value == assets, "bad msg.value");
+        } else {
+            ERC20(asset).transferFrom(msg.sender, address(this), assets);
+        }
+        uint256 totalShares = uint256(assets) * rateBps / 10_000;
+        uint256 feeShares = totalShares * feeBps / 10_000;
+        if (feeShares > 0) share.mint(feeRecipient, feeShares);
+        share.mint(msg.sender, totalShares - feeShares);
+    }
+}
+
 contract TBIForwarderTest is Test {
     TBIForwarder forwarder;
     MockERC20 token;
@@ -376,6 +438,8 @@ contract TBIForwarderTest is Test {
     address constant LIFI_EXECUTOR = address(0xF1F1);
     address constant ATTACKER = address(0xDEAD);
     address constant PERMIT2_ADDR = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+    address constant FEE_RECIPIENT = address(0xFEE);
+    address constant MELLOW_NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     function setUp() public {
         // Deploy mock token and protocols
@@ -639,6 +703,111 @@ contract TBIForwarderTest is Test {
         vm.prank(USER);
         vm.expectRevert(abi.encodeWithSelector(TBIForwarderAdapters.MintFailed.selector, 1));
         forwarder.depositCompoundV2(ICErc20(address(failingCToken)), 1 ether, USER);
+    }
+
+    // --- Lido Earn (Mellow v2 SyncDepositQueue) ---
+
+    function test_DepositLidoEarn_ERC20_Success() public {
+        uint256 amount = 8 ether;
+        MockSyncDepositQueue queue = new MockSyncDepositQueue(address(token), 10_000, 0, FEE_RECIPIENT);
+        MockMellowShareToken share = queue.share();
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(USER, address(share), address(token), amount);
+
+        vm.prank(USER);
+        forwarder.depositLidoEarn(ISyncDepositQueue(address(queue)), amount, USER);
+
+        // User received share tokens (1:1 in mock); forwarder retains nothing.
+        assertEq(share.balanceOf(USER), amount);
+        assertEq(share.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(USER), 92 ether);
+    }
+
+    function test_DepositLidoEarn_WithReceiver_Success() public {
+        uint256 amount = 8 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+        MockSyncDepositQueue queue = new MockSyncDepositQueue(address(token), 10_000, 0, FEE_RECIPIENT);
+        MockMellowShareToken share = queue.share();
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(share), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.depositLidoEarn(ISyncDepositQueue(address(queue)), amount, RECEIVER);
+
+        // Receiver received the shares; the caller only paid the underlying.
+        assertEq(share.balanceOf(RECEIVER), amount);
+        assertEq(share.balanceOf(LIFI_EXECUTOR), 0);
+        assertEq(share.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 92 ether);
+    }
+
+    function test_DepositLidoEarn_ForwardsNetSharesAfterFee() public {
+        // Share rate 1.5x with a 10% deposit fee: the queue mints fee shares to the fee recipient and
+        // the remainder to the forwarder. The forwarder must forward exactly what it received —
+        // proving it measures the share balance delta, not `amount`.
+        uint256 amount = 10 ether;
+        MockSyncDepositQueue queue = new MockSyncDepositQueue(address(token), 15_000, 1_000, FEE_RECIPIENT);
+        MockMellowShareToken share = queue.share();
+
+        uint256 totalShares = amount * 15_000 / 10_000; // 15 ether
+        uint256 feeShares = totalShares * 1_000 / 10_000; // 1.5 ether
+        uint256 netShares = totalShares - feeShares; // 13.5 ether
+
+        vm.prank(USER);
+        forwarder.depositLidoEarn(ISyncDepositQueue(address(queue)), amount, RECEIVER);
+
+        assertEq(share.balanceOf(RECEIVER), netShares);
+        assertEq(share.balanceOf(FEE_RECIPIENT), feeShares);
+        assertEq(share.balanceOf(address(forwarder)), 0);
+    }
+
+    function test_DepositLidoEarn_Native_Success() public {
+        uint256 amount = 5 ether;
+        MockSyncDepositQueue queue = new MockSyncDepositQueue(MELLOW_NATIVE, 10_000, 0, FEE_RECIPIENT);
+        MockMellowShareToken share = queue.share();
+        vm.deal(address(this), amount);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(share), MELLOW_NATIVE, amount);
+
+        forwarder.depositLidoEarn{value: amount}(ISyncDepositQueue(address(queue)), amount, RECEIVER);
+
+        // Shares credited to the receiver; ETH forwarded through to the queue, none stuck.
+        assertEq(share.balanceOf(RECEIVER), amount);
+        assertEq(share.balanceOf(address(forwarder)), 0);
+        assertEq(address(forwarder).balance, 0);
+        assertEq(address(queue).balance, amount);
+    }
+
+    function test_DepositLidoEarn_Native_RevertValueMismatch() public {
+        uint256 amount = 5 ether;
+        MockSyncDepositQueue queue = new MockSyncDepositQueue(MELLOW_NATIVE, 10_000, 0, FEE_RECIPIENT);
+        vm.deal(address(this), amount);
+
+        vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
+        forwarder.depositLidoEarn{value: amount - 1}(ISyncDepositQueue(address(queue)), amount, RECEIVER);
+    }
+
+    function test_DepositLidoEarn_ERC20_RevertWithValue() public {
+        uint256 amount = 5 ether;
+        MockSyncDepositQueue queue = new MockSyncDepositQueue(address(token), 10_000, 0, FEE_RECIPIENT);
+        vm.deal(address(this), 1);
+
+        // Stray ETH on an ERC-20 deposit is rejected.
+        vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
+        forwarder.depositLidoEarn{value: 1}(ISyncDepositQueue(address(queue)), amount, USER);
+    }
+
+    function test_DepositLidoEarn_RevertZeroReceiver() public {
+        MockSyncDepositQueue queue = new MockSyncDepositQueue(address(token), 10_000, 0, FEE_RECIPIENT);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositLidoEarn(ISyncDepositQueue(address(queue)), 1 ether, address(0));
     }
 
     // --- Upgrade ---

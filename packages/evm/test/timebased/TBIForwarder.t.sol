@@ -20,7 +20,8 @@ import {
     PoolKey,
     Currency,
     V4MintParams,
-    V4ZapParams
+    V4ZapParams,
+    IMidasDepositVault
 } from "contracts/timebased/TBIForwarderAdapters.sol";
 
 /// @notice Minimal ERC-4626 mock that accepts deposits and mints 1:1 shares
@@ -421,6 +422,72 @@ contract MockSyncDepositQueue {
     }
 }
 
+/// @notice Minimal Midas mToken — the minted share token, a separate contract from the vault
+contract MockMToken is ERC20 {
+    address public minter;
+
+    constructor() {
+        minter = msg.sender;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Mock mToken";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "mTKN";
+    }
+
+    function mint(address to, uint256 amount) external {
+        require(msg.sender == minter, "not minter");
+        _mint(to, amount);
+    }
+}
+
+/// @notice Minimal Midas DepositVault mock. Mirrors the real vault's two key quirks:
+///   1. `amountToken` is a base-18 figure used to mint the mToken, but the native tokenIn pulled
+///      from msg.sender is a *different* (rate-converted) amount — modeled here as `nativePull`.
+///   2. The vault and the minted share token are distinct addresses.
+contract MockMidasVault {
+    address public immutable tokenIn;
+    MockMToken public immutable mToken;
+
+    // Native tokenIn amount the vault actually pulls (configurable; distinct from base-18 amountToken).
+    uint256 public nativePull;
+
+    // Records the last call so tests can assert pass-through of the deposit args.
+    uint256 public lastAmountToken;
+    uint256 public lastMinReceiveAmount;
+    bytes32 public lastReferrerId;
+    address public lastRecipient;
+
+    constructor(address tokenIn_) {
+        tokenIn = tokenIn_;
+        mToken = new MockMToken();
+    }
+
+    function setNativePull(uint256 nativePull_) external {
+        nativePull = nativePull_;
+    }
+
+    function depositInstant(
+        address tokenIn_,
+        uint256 amountToken,
+        uint256 minReceiveAmount,
+        bytes32 referrerId,
+        address recipient
+    ) external {
+        require(tokenIn_ == tokenIn, "wrong tokenIn");
+        // Pulls the native amount (NOT amountToken), as the real vault does after rate conversion.
+        ERC20(tokenIn_).transferFrom(msg.sender, address(this), nativePull);
+        lastAmountToken = amountToken;
+        lastMinReceiveAmount = minReceiveAmount;
+        lastReferrerId = referrerId;
+        lastRecipient = recipient;
+        mToken.mint(recipient, amountToken); // mints in base-18 terms
+    }
+}
+
 contract TBIForwarderTest is Test {
     TBIForwarder forwarder;
     MockERC20 token;
@@ -430,6 +497,7 @@ contract TBIForwarderTest is Test {
     MockComet comet;
     MockStakedToken stakedToken;
     MockCErc20 cToken;
+    MockMidasVault midasVault;
     MockV4PositionManager v4PositionManager;
     MockKyberRouter kyberRouter;
 
@@ -450,6 +518,7 @@ contract TBIForwarderTest is Test {
         comet = new MockComet(address(token));
         stakedToken = new MockStakedToken(address(token));
         cToken = new MockCErc20(address(token));
+        midasVault = new MockMidasVault(address(token));
 
         // Etch MockPermit2 at the canonical Permit2 address so the forwarder's hardcoded
         // constant resolves to the mock.
@@ -703,6 +772,77 @@ contract TBIForwarderTest is Test {
         vm.prank(USER);
         vm.expectRevert(abi.encodeWithSelector(TBIForwarderAdapters.MintFailed.selector, 1));
         forwarder.depositCompoundV2(ICErc20(address(failingCToken)), 1 ether, USER);
+    }
+
+    // --- Midas ---
+
+    function test_DepositMidas_Success() public {
+        uint256 amount = 10 ether; // native upper bound pulled from the caller
+        uint256 amountToken = 1 ether; // base-18 figure forwarded to the vault
+        uint256 vaultPull = 6 ether; // native the vault actually consumes (< amount)
+        uint256 minReceive = 5 ether;
+        bytes32 referrerId = keccak256("boost");
+
+        midasVault.setNativePull(vaultPull);
+        MockMToken mToken = midasVault.mToken();
+
+        // Emitted amount is the NET tokenIn consumed (gross pull minus refund); target == mToken; user == receiver
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(mToken), address(token), vaultPull);
+
+        vm.prank(USER);
+        forwarder.depositMidas(
+            address(midasVault), address(token), address(mToken), amount, amountToken, minReceive, referrerId, RECEIVER
+        );
+
+        // mToken minted straight to the receiver in base-18 terms
+        assertEq(mToken.balanceOf(RECEIVER), amountToken);
+        // tokenIn pulled from the caller; the 4-ether overage was refunded to the receiver
+        assertEq(token.balanceOf(USER), 90 ether);
+        assertEq(token.balanceOf(RECEIVER), amount - vaultPull);
+        // Forwarder holds no leftover tokenIn or mToken
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(mToken.balanceOf(address(forwarder)), 0);
+        // Approval reset to 0
+        assertEq(token.allowance(address(forwarder), address(midasVault)), 0);
+        // base-18 amount, slippage floor and referrer id passed straight through
+        assertEq(midasVault.lastAmountToken(), amountToken);
+        assertEq(midasVault.lastMinReceiveAmount(), minReceive);
+        assertEq(midasVault.lastReferrerId(), referrerId);
+        assertEq(midasVault.lastRecipient(), RECEIVER);
+    }
+
+    function test_DepositMidas_RevertZeroReceiver() public {
+        midasVault.setNativePull(1 ether);
+        MockMToken mToken = midasVault.mToken();
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositMidas(
+            address(midasVault), address(token), address(mToken), 1 ether, 1 ether, 0, bytes32(0), address(0)
+        );
+    }
+
+    function test_DepositMidas_RevertInsufficientBalance() public {
+        midasVault.setNativePull(1 ether);
+        MockMToken mToken = midasVault.mToken();
+        vm.prank(USER);
+        vm.expectRevert(); // SafeTransferLib reverts on insufficient balance
+        forwarder.depositMidas(
+            address(midasVault), address(token), address(mToken), 200 ether, 1 ether, 0, bytes32(0), RECEIVER
+        );
+    }
+
+    function test_DepositMidas_RevertNoApproval() public {
+        address noApprovalUser = address(0xBEEF);
+        token.mint(noApprovalUser, 10 ether);
+        midasVault.setNativePull(1 ether);
+        MockMToken mToken = midasVault.mToken();
+
+        vm.prank(noApprovalUser);
+        vm.expectRevert(); // SafeTransferLib reverts on insufficient allowance
+        forwarder.depositMidas(
+            address(midasVault), address(token), address(mToken), 1 ether, 1 ether, 0, bytes32(0), RECEIVER
+        );
     }
 
     // --- Lido Earn (Mellow v2 SyncDepositQueue) ---
@@ -1086,11 +1226,8 @@ contract TBIForwarderTest is Test {
 
         vm.prank(USER);
         vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
-        forwarder.depositUniswapV4LP{
-            value: 9 ether
-        }( // != amount0Max (10 ether)
-            IUniswapV4PositionManager(address(v4PositionManager)),
-            params
+        forwarder.depositUniswapV4LP{value: 9 ether}( // != amount0Max (10 ether)
+            IUniswapV4PositionManager(address(v4PositionManager)), params
         );
     }
 
@@ -1100,9 +1237,9 @@ contract TBIForwarderTest is Test {
 
         vm.prank(USER);
         vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
-        forwarder.depositUniswapV4LP{
-            value: 1
-        }(IUniswapV4PositionManager(address(v4PositionManager)), _v4Params(1 ether, 2 ether, USER));
+        forwarder.depositUniswapV4LP{value: 1}(
+            IUniswapV4PositionManager(address(v4PositionManager)), _v4Params(1 ether, 2 ether, USER)
+        );
     }
 
     function test_DepositUniswapV4LP_RevertDeadlinePassed() public {
@@ -1224,9 +1361,9 @@ contract TBIForwarderTest is Test {
         );
 
         vm.prank(USER);
-        forwarder.depositUniswapV4LPWithSwap{
-            value: amount0Max + swapAmountIn
-        }(IUniswapV4PositionManager(address(v4PositionManager)), z);
+        forwarder.depositUniswapV4LPWithSwap{value: amount0Max + swapAmountIn}(
+            IUniswapV4PositionManager(address(v4PositionManager)), z
+        );
 
         assertEq(address(v4PositionManager).balance, amount0Max);
         assertEq(token1.balanceOf(address(v4PositionManager)), amount1Max);

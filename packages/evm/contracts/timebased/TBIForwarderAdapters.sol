@@ -28,6 +28,19 @@ interface ICErc20 {
     function underlying() external view returns (address);
 }
 
+/// @notice Shared deposit surface across the Midas mToken family. Every Midas product exposes this
+/// 5-arg recipient overload of `depositInstant`. `amountToken` is denominated in base-18; the vault
+/// pulls a rate-converted amount in the input token's native decimals from msg.sender.
+interface IMidasDepositVault {
+    function depositInstant(
+        address tokenIn,
+        uint256 amountToken,
+        uint256 minReceiveAmount,
+        bytes32 referrerId,
+        address recipient
+    ) external;
+}
+
 /// @notice Mellow Flexible Vaults v2 per-asset deposit queue (used by Lido Earn). `asset()` is the
 /// accepted token — an ERC-20 or the EIP-7528 native-ETH sentinel — and `vault()` resolves the core
 /// vault. `deposit` mints share tokens to msg.sender; there is no receiver argument.
@@ -256,6 +269,50 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         emit Deposit(receiver, address(cToken), asset, amount);
     }
 
+    /// @notice Deposit into a Midas DepositVault, minting the vault's mToken to `receiver`.
+    /// @dev Generic across the Midas mToken family — every product shares the 5-arg `depositInstant`
+    /// recipient overload, so this one adapter covers all vaults. All protocol-specific values are
+    /// parameters; nothing is hardcoded.
+    /// @dev Midas denominates `depositInstant`'s amount in base-18 (`amountToken`) but pulls a
+    /// rate-converted amount in the token's *native* decimals from msg.sender — two different scales.
+    /// So the adapter takes both: it pulls/approves `amount` (native) and forwards `amountToken`
+    /// (base-18) untouched. The vault consumes only what its oracle math requires; any unspent
+    /// `tokenIn` is refunded to `receiver` (mirrors the V4 refund pattern), making `amount` an upper
+    /// bound the caller is willing to spend. The mToken — not the vault — is emitted as `target`
+    /// (the indexer keys on the minted share token), and is a separate parameter because the vault
+    /// and share token are distinct contracts. The emitted `amount` is the net `tokenIn` consumed.
+    /// @param vault The Midas DepositVault — the `depositInstant` target
+    /// @param tokenIn The input token the vault accepts
+    /// @param mToken The minted share token — emitted as the Deposit `target`
+    /// @param amount The amount of `tokenIn` (native decimals) to pull and approve — an upper bound
+    /// @param amountToken The base-18 deposit amount passed straight through to `depositInstant`
+    /// @param minReceiveAmount Slippage floor for minted shares — passed straight through from the caller
+    /// @param referrerId Midas referrer id — passed straight through from the caller
+    /// @param receiver The account receiving the minted mToken
+    function depositMidas(
+        address vault,
+        address tokenIn,
+        address mToken,
+        uint256 amount,
+        uint256 amountToken,
+        uint256 minReceiveAmount,
+        bytes32 referrerId,
+        address receiver
+    ) external nonReentrant {
+        _requireReceiver(receiver);
+        uint256 balanceBefore = IERC20Minimal(tokenIn).balanceOf(address(this));
+
+        tokenIn.safeTransferFrom(msg.sender, address(this), amount);
+        tokenIn.safeApproveWithRetry(vault, amount);
+        IMidasDepositVault(vault).depositInstant(tokenIn, amountToken, minReceiveAmount, referrerId, receiver);
+        tokenIn.safeApprove(vault, 0);
+
+        // Refund whatever the vault did not consume so the stateless forwarder holds nothing.
+        uint256 consumed = _refundUnspent(tokenIn, receiver, balanceBefore, amount);
+
+        emit Deposit(receiver, mToken, tokenIn, consumed);
+    }
+
     /// @notice Deposit into a Lido Earn (Mellow v2) vault via its per-asset SyncDepositQueue,
     /// crediting the vault share token to `receiver`.
     /// @dev The SyncDepositQueue mints shares to msg.sender (this forwarder) and exposes no receiver
@@ -458,9 +515,9 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         uint256 preMint0 = token0Native ? 0 : IERC20Minimal(token0).balanceOf(address(this));
         uint256 preMint1 = IERC20Minimal(token1).balanceOf(address(this));
 
-        positionManager.modifyLiquidities{
-            value: nativeValue
-        }(_encodeV4MintUnlockData(z.mint, token0Native), z.mint.deadline);
+        positionManager.modifyLiquidities{value: nativeValue}(
+            _encodeV4MintUnlockData(z.mint, token0Native), z.mint.deadline
+        );
 
         uint256 consumed0;
         if (token0Native) {

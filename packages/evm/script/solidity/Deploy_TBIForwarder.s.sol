@@ -77,7 +77,7 @@ contract DeployTBIForwarder is ScriptUtils {
             console.log("  -> Proxy already deployed");
 
             // Sanity check: on-chain owner matches expected
-            address currentOwner = TBIForwarder(forwarderProxy).owner();
+            address currentOwner = TBIForwarder(payable(forwarderProxy)).owner();
             require(currentOwner == owner, "Existing forwarder owner != FORWARDER_OWNER");
         }
 
@@ -89,13 +89,13 @@ contract DeployTBIForwarder is ScriptUtils {
 
         // Initialize with deployer as temporary owner so we can configure before transferring
         vm.broadcast();
-        TBIForwarder(forwarderProxy).initialize(deployer);
+        TBIForwarder(payable(forwarderProxy)).initialize(deployer);
         console.log("  -> Initialized");
 
         // Transfer ownership to the intended owner
         if (owner != deployer) {
             vm.broadcast();
-            TBIForwarder(forwarderProxy).transferOwnership(owner);
+            TBIForwarder(payable(forwarderProxy)).transferOwnership(owner);
             console.log("  -> Ownership transferred to: ", owner);
         }
     }

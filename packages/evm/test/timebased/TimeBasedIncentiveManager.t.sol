@@ -3544,14 +3544,17 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertTrue(campaign.finalized(), "Should finalize when totalCommitted == totalRewards exactly");
     }
 
-    function test_EarlyFinalization_ExceedsCommitted() public {
+    function test_EarlyFinalization_AtExactBudget() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 netRewards = campaign.totalRewards();
 
-        // totalCommitted > totalRewards (edge case — dust rounding up)
+        // Committing past totalRewards is impossible (even dust rounding must stay within budget)
+        vm.expectRevert(TimeBasedIncentiveCampaign.CommitmentExceedsBudget.selector);
         manager.updateRoot(campaignId, keccak256("final"), netRewards + 1, true);
 
-        assertTrue(campaign.finalized(), "Should finalize when totalCommitted > totalRewards");
+        // Exhausting the budget exactly still allows early finalization
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+        assertTrue(campaign.finalized(), "Should finalize when totalCommitted == totalRewards");
     }
 
     function test_EarlyFinalization_UsersCanStillClaim() public {

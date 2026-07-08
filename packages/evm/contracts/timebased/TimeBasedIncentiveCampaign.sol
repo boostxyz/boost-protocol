@@ -191,11 +191,17 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @param root The new merkle root
     /// @param totalCommitted_ Total amount committed to users in the merkle tree
     /// @return oldRoot The previous merkle root
+    /// @dev Enforces: committed amount never exceeds totalRewards, never decreases across
+    ///      updates, and the root is immutable once the campaign is finalized
     function setMerkleRoot(bytes32 root, uint256 totalCommitted_)
         external
         onlyTimeBasedIncentiveManager
         returns (bytes32 oldRoot)
     {
+        if (finalized) revert CampaignAlreadyFinalized();
+        if (totalCommitted_ > totalRewards) revert CommitmentExceedsBudget();
+        if (totalCommitted_ < totalCommitted) revert CommitmentDecreased();
+
         oldRoot = merkleRoot;
         merkleRoot = root;
         totalCommitted = totalCommitted_;

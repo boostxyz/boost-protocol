@@ -1610,24 +1610,56 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(CLAIMER), actualAmount, "Balance should not change");
     }
 
-    function test_Claim_RevertWhenCampaignBalanceInsufficient() public {
+    function test_UpdateRoot_RevertCommitmentExceedsBudget() public {
         // Create a campaign with 9 ether (after 10% fee on 10 ether)
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
-        assertEq(campaignBalance, 9 ether, "Campaign should have 9 ether after fee");
+        uint256 netRewards = campaign.totalRewards();
+        assertEq(netRewards, 9 ether, "Campaign should have 9 ether after fee");
 
-        // Create a proof for more than the campaign balance
-        uint256 excessiveAmount = 20 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), excessiveAmount);
-        bytes32 root = leaf;
+        // A root committing more than totalRewards can no longer be published at all
+        vm.expectRevert(TimeBasedIncentiveCampaign.CommitmentExceedsBudget.selector);
+        manager.updateRoot(campaignId, keccak256("excessive"), netRewards + 1, false);
+
+        // Committing exactly totalRewards is fine
+        manager.updateRoot(campaignId, keccak256("exact"), netRewards, false);
+        assertEq(campaign.totalCommitted(), netRewards);
+    }
+
+    function test_Claim_RevertClaimExceedsCommitment() public {
+        // A tree whose leaves exceed the declared totalCommitted cannot pay out past it
+        (uint256 campaignId,) = _createCampaignWithRoot();
+
+        uint256 leafAmount = 2 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), leafAmount);
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, excessiveAmount, false);
+        // Declared commitment understates the leaf
+        manager.updateRoot(campaignId, leaf, 1 ether, false);
 
-        // Claim should revert due to insufficient balance in campaign
-        // SafeTransferLib will revert with TransferFailed
-        vm.expectRevert();
-        manager.claim(campaignId, CLAIMER, excessiveAmount, proof);
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExceedsCommitment.selector);
+        manager.claim(campaignId, CLAIMER, leafAmount, proof);
+    }
+
+    function test_Claim_RevertClaimExceedsCommitment_MultiUser() public {
+        // Two leaves summing past the declared total: first claim fits, second hits the ceiling
+        (uint256 campaignId,) = _createCampaignWithRoot();
+
+        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
+        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), 2 ether);
+        bytes32 root =
+            leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+
+        // Leaves sum to 5 ether but only 4 is declared
+        manager.updateRoot(campaignId, root, 4 ether, false);
+
+        manager.claim(campaignId, CLAIMER, 3 ether, proof1);
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExceedsCommitment.selector);
+        manager.claim(campaignId, CLAIMER2, 2 ether, proof2);
     }
 
     function test_Claim_CrossCampaignProofReuseFails() public {

@@ -1551,11 +1551,12 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Second: try to use an old proof with lower cumulative (1 ether)
         // This simulates someone trying to use a stale/old proof
+        // (totalCommitted stays at 2 ether — it can never decrease)
         uint256 oldCumulative = 1 ether;
         bytes32 oldLeaf = _makeLeaf(CLAIMER, address(rewardToken), oldCumulative);
         bytes32 oldRoot = oldLeaf;
 
-        manager.updateRoot(campaignId, oldRoot, oldCumulative, false);
+        manager.updateRoot(campaignId, oldRoot, firstCumulative, false);
 
         // Should revert because oldCumulative (1 ether) <= alreadyClaimed (2 ether)
         vm.expectRevert(TimeBasedIncentiveCampaign.NothingToClaim.selector);

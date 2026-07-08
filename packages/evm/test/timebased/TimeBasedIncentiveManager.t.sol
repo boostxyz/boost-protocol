@@ -881,9 +881,10 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](3);
+        // 3 ether gross funding => 2.7 ether net after 10% fee; commitments must stay within net
         updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether, false);
         updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether, false);
-        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 3 ether, false);
+        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 2.5 ether, false);
 
         manager.updateRootsBatch(updates);
 
@@ -893,7 +894,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2"));
         assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).totalCommitted(), 2 ether);
         assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).merkleRoot(), keccak256("root3"));
-        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).totalCommitted(), 3 ether);
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).totalCommitted(), 2.5 ether);
     }
 
     function test_UpdateRootsBatch_SingleItem() public {

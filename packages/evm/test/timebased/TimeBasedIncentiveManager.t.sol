@@ -3323,37 +3323,31 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
     }
 
-    function test_Finalization_NoDoubleEmit() public {
-        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-
-        vm.warp(campaign.endTime() + 1);
-        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
-
-        // Second finalize=true should not emit again
-        vm.recordLogs();
-        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, true);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-
-        // Should only have RootUpdated, not CampaignFinalized
-        for (uint256 i; i < logs.length; ++i) {
-            assertTrue(
-                logs[i].topics[0] != TimeBasedIncentiveManager.CampaignFinalized.selector,
-                "Should not emit CampaignFinalized twice"
-            );
-        }
-    }
-
-    function test_Finalization_CanUpdateRootAfterFinalize() public {
+    function test_Finalization_SecondFinalizeReverts() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
         assertTrue(campaign.finalized());
 
-        // Operator can still update root after finalization
+        // Any further updateRoot (finalize or not) reverts — no double finalize, no double emit
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignAlreadyFinalized.selector);
+        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, true);
+    }
+
+    function test_Finalization_RevertUpdateRootAfterFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
+        assertTrue(campaign.finalized());
+
+        // The root is immutable after finalization
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignAlreadyFinalized.selector);
         manager.updateRoot(campaignId, keccak256("root2"), 2 ether, false);
-        assertEq(campaign.merkleRoot(), keccak256("root2"), "Root should be updated");
-        assertEq(campaign.totalCommitted(), 2 ether, "Total committed should be updated");
+
+        assertEq(campaign.merkleRoot(), keccak256("root1"), "Root should be unchanged");
+        assertEq(campaign.totalCommitted(), 1 ether, "Total committed should be unchanged");
         assertTrue(campaign.finalized(), "Should still be finalized");
     }
 

@@ -454,7 +454,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     }
 
     /// @notice Update the merkle root for a campaign
-    /// @dev Roots can still be updated after finalization for emergency corrections
+    /// @dev Roots are immutable once the campaign is finalized
     /// @param campaignId The campaign ID
     /// @param root The new merkle root
     /// @param totalCommitted Total amount committed to users in the merkle tree

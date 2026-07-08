@@ -112,6 +112,18 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when campaign has not been finalized
     error CampaignNotFinalized();
 
+    /// @notice Error when a root commits more than the campaign's total rewards
+    error CommitmentExceedsBudget();
+
+    /// @notice Error when a root decreases the committed amount
+    error CommitmentDecreased();
+
+    /// @notice Error when updating the root after finalization
+    error CampaignAlreadyFinalized();
+
+    /// @notice Error when cumulative claims would exceed the committed amount
+    error ClaimExceedsCommitment();
+
     /// @notice Disable initialization on the implementation contract
     constructor() {
         _disableInitializers();

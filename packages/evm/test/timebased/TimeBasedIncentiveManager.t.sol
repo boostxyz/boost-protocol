@@ -2198,7 +2198,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(address(campaign)), totalCommitted, "Campaign should retain owed funds");
     }
 
-    function test_WithdrawToBudget_EdgeCase_TotalClaimedExceedsTotalCommitted() public {
+    function test_UpdateRoot_RevertCommitmentDecreased() public {
         // Create a campaign
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
@@ -2208,23 +2208,23 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.updateRoot(campaignId, leaf1, 3 ether, false);
         manager.claim(campaignId, CLAIMER, 3 ether, proof);
 
-        // Now publish a corrected root with lower total (simulates ban or correction)
-        // totalCommitted drops to 1 ether, but user already claimed 3 ether
+        // A "correction" root that lowers totalCommitted can no longer be published,
+        // so totalClaimed > totalCommitted is unreachable by construction
         bytes32 leaf2 = _makeLeaf(address(0xDEAD), address(rewardToken), 1 ether);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CommitmentDecreased.selector);
         manager.updateRoot(campaignId, leaf2, 1 ether, false);
 
-        // totalClaimed (3 ether) > totalCommitted (1 ether)
-        assertEq(campaign.totalClaimed(), 3 ether, "Total claimed should be 3 ether");
-        assertEq(campaign.totalCommitted(), 1 ether, "Total committed should be 1 ether");
+        // Re-publishing at the SAME committed amount is allowed (equal, not decreasing)
+        manager.updateRoot(campaignId, leaf2, 3 ether, false);
+        assertEq(campaign.totalCommitted(), 3 ether, "Total committed unchanged");
 
-        // Warp past end time and finalize
+        // Finalize and withdraw the remainder: balance 6 (9 - 3 claimed), nothing still owed
         vm.warp(campaign.endTime() + 1);
-        manager.updateRoot(campaignId, leaf2, 1 ether, true);
+        manager.updateRoot(campaignId, leaf2, 3 ether, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
-        // Should be able to withdraw full balance since nothing more is owed
         vm.prank(CREATOR);
         manager.withdraw(campaignId);
 

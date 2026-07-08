@@ -231,6 +231,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         if (cumulativeAmount <= alreadyClaimed) revert NothingToClaim();
         amount = cumulativeAmount - alreadyClaimed;
 
+        // The declared commitment is a hard ceiling on outflow
+        if (totalClaimed + amount > totalCommitted) revert ClaimExceedsCommitment();
+
         claimed[user] = cumulativeAmount;
         totalClaimed += amount;
 

@@ -65,7 +65,7 @@ contract DeployTBITimelock is ScriptUtils {
 
         if (vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
             _ensureDeploymentsFileExists();
-            string memory key = minDelay == MANAGER_DELAY ? ".TBITimelock48h" : ".TBITimelock24h";
+            string memory key = minDelay == MANAGER_DELAY ? ".TBIManagerTimelock" : ".TBIForwarderTimelock";
             vm.writeJson(vm.toString(timelock), _buildJsonDeployPath(), key);
         }
 

@@ -881,9 +881,10 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](3);
+        // 3 ether gross funding => 2.7 ether net after 10% fee; commitments must stay within net
         updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether, false);
         updates[1] = TimeBasedIncentiveManager.RootUpdate(id2, keccak256("root2"), 2 ether, false);
-        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 3 ether, false);
+        updates[2] = TimeBasedIncentiveManager.RootUpdate(id3, keccak256("root3"), 2.5 ether, false);
 
         manager.updateRootsBatch(updates);
 
@@ -893,7 +894,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).merkleRoot(), keccak256("root2"));
         assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id2)).totalCommitted(), 2 ether);
         assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).merkleRoot(), keccak256("root3"));
-        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).totalCommitted(), 3 ether);
+        assertEq(TimeBasedIncentiveCampaign(manager.getCampaign(id3)).totalCommitted(), 2.5 ether);
     }
 
     function test_UpdateRootsBatch_SingleItem() public {
@@ -1550,11 +1551,12 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Second: try to use an old proof with lower cumulative (1 ether)
         // This simulates someone trying to use a stale/old proof
+        // (totalCommitted stays at 2 ether — it can never decrease)
         uint256 oldCumulative = 1 ether;
         bytes32 oldLeaf = _makeLeaf(CLAIMER, address(rewardToken), oldCumulative);
         bytes32 oldRoot = oldLeaf;
 
-        manager.updateRoot(campaignId, oldRoot, oldCumulative, false);
+        manager.updateRoot(campaignId, oldRoot, firstCumulative, false);
 
         // Should revert because oldCumulative (1 ether) <= alreadyClaimed (2 ether)
         vm.expectRevert(TimeBasedIncentiveCampaign.NothingToClaim.selector);
@@ -1608,24 +1610,56 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(CLAIMER), actualAmount, "Balance should not change");
     }
 
-    function test_Claim_RevertWhenCampaignBalanceInsufficient() public {
+    function test_UpdateRoot_RevertCommitmentExceedsBudget() public {
         // Create a campaign with 9 ether (after 10% fee on 10 ether)
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
-        assertEq(campaignBalance, 9 ether, "Campaign should have 9 ether after fee");
+        uint256 netRewards = campaign.totalRewards();
+        assertEq(netRewards, 9 ether, "Campaign should have 9 ether after fee");
 
-        // Create a proof for more than the campaign balance
-        uint256 excessiveAmount = 20 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), excessiveAmount);
-        bytes32 root = leaf;
+        // A root committing more than totalRewards can no longer be published at all
+        vm.expectRevert(TimeBasedIncentiveCampaign.CommitmentExceedsBudget.selector);
+        manager.updateRoot(campaignId, keccak256("excessive"), netRewards + 1, false);
+
+        // Committing exactly totalRewards is fine
+        manager.updateRoot(campaignId, keccak256("exact"), netRewards, false);
+        assertEq(campaign.totalCommitted(), netRewards);
+    }
+
+    function test_Claim_RevertClaimExceedsCommitment() public {
+        // A tree whose leaves exceed the declared totalCommitted cannot pay out past it
+        (uint256 campaignId,) = _createCampaignWithRoot();
+
+        uint256 leafAmount = 2 ether;
+        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), leafAmount);
         bytes32[] memory proof = new bytes32[](0);
 
-        manager.updateRoot(campaignId, root, excessiveAmount, false);
+        // Declared commitment understates the leaf
+        manager.updateRoot(campaignId, leaf, 1 ether, false);
 
-        // Claim should revert due to insufficient balance in campaign
-        // SafeTransferLib will revert with TransferFailed
-        vm.expectRevert();
-        manager.claim(campaignId, CLAIMER, excessiveAmount, proof);
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExceedsCommitment.selector);
+        manager.claim(campaignId, CLAIMER, leafAmount, proof);
+    }
+
+    function test_Claim_RevertClaimExceedsCommitment_MultiUser() public {
+        // Two leaves summing past the declared total: first claim fits, second hits the ceiling
+        (uint256 campaignId,) = _createCampaignWithRoot();
+
+        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
+        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), 2 ether);
+        bytes32 root =
+            leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+
+        // Leaves sum to 5 ether but only 4 is declared
+        manager.updateRoot(campaignId, root, 4 ether, false);
+
+        manager.claim(campaignId, CLAIMER, 3 ether, proof1);
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExceedsCommitment.selector);
+        manager.claim(campaignId, CLAIMER2, 2 ether, proof2);
     }
 
     function test_Claim_CrossCampaignProofReuseFails() public {
@@ -2164,7 +2198,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(address(campaign)), totalCommitted, "Campaign should retain owed funds");
     }
 
-    function test_WithdrawToBudget_EdgeCase_TotalClaimedExceedsTotalCommitted() public {
+    function test_UpdateRoot_RevertCommitmentDecreased() public {
         // Create a campaign
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
@@ -2174,23 +2208,23 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.updateRoot(campaignId, leaf1, 3 ether, false);
         manager.claim(campaignId, CLAIMER, 3 ether, proof);
 
-        // Now publish a corrected root with lower total (simulates ban or correction)
-        // totalCommitted drops to 1 ether, but user already claimed 3 ether
+        // A "correction" root that lowers totalCommitted can no longer be published,
+        // so totalClaimed > totalCommitted is unreachable by construction
         bytes32 leaf2 = _makeLeaf(address(0xDEAD), address(rewardToken), 1 ether);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CommitmentDecreased.selector);
         manager.updateRoot(campaignId, leaf2, 1 ether, false);
 
-        // totalClaimed (3 ether) > totalCommitted (1 ether)
-        assertEq(campaign.totalClaimed(), 3 ether, "Total claimed should be 3 ether");
-        assertEq(campaign.totalCommitted(), 1 ether, "Total committed should be 1 ether");
+        // Re-publishing at the SAME committed amount is allowed (equal, not decreasing)
+        manager.updateRoot(campaignId, leaf2, 3 ether, false);
+        assertEq(campaign.totalCommitted(), 3 ether, "Total committed unchanged");
 
-        // Warp past end time and finalize
+        // Finalize and withdraw the remainder: balance 6 (9 - 3 claimed), nothing still owed
         vm.warp(campaign.endTime() + 1);
-        manager.updateRoot(campaignId, leaf2, 1 ether, true);
+        manager.updateRoot(campaignId, leaf2, 3 ether, true);
 
         uint256 balance = rewardToken.balanceOf(address(campaign));
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
 
-        // Should be able to withdraw full balance since nothing more is owed
         vm.prank(CREATOR);
         manager.withdraw(campaignId);
 
@@ -3289,37 +3323,31 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.updateRoot(campaignId, keccak256("root"), 1 ether, true);
     }
 
-    function test_Finalization_NoDoubleEmit() public {
-        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-
-        vm.warp(campaign.endTime() + 1);
-        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
-
-        // Second finalize=true should not emit again
-        vm.recordLogs();
-        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, true);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-
-        // Should only have RootUpdated, not CampaignFinalized
-        for (uint256 i; i < logs.length; ++i) {
-            assertTrue(
-                logs[i].topics[0] != TimeBasedIncentiveManager.CampaignFinalized.selector,
-                "Should not emit CampaignFinalized twice"
-            );
-        }
-    }
-
-    function test_Finalization_CanUpdateRootAfterFinalize() public {
+    function test_Finalization_SecondFinalizeReverts() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
         assertTrue(campaign.finalized());
 
-        // Operator can still update root after finalization
+        // Any further updateRoot (finalize or not) reverts — no double finalize, no double emit
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignAlreadyFinalized.selector);
+        manager.updateRoot(campaignId, keccak256("root2"), 2 ether, true);
+    }
+
+    function test_Finalization_RevertUpdateRootAfterFinalize() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("root1"), 1 ether, true);
+        assertTrue(campaign.finalized());
+
+        // The root is immutable after finalization
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignAlreadyFinalized.selector);
         manager.updateRoot(campaignId, keccak256("root2"), 2 ether, false);
-        assertEq(campaign.merkleRoot(), keccak256("root2"), "Root should be updated");
-        assertEq(campaign.totalCommitted(), 2 ether, "Total committed should be updated");
+
+        assertEq(campaign.merkleRoot(), keccak256("root1"), "Root should be unchanged");
+        assertEq(campaign.totalCommitted(), 1 ether, "Total committed should be unchanged");
         assertTrue(campaign.finalized(), "Should still be finalized");
     }
 
@@ -3516,14 +3544,17 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertTrue(campaign.finalized(), "Should finalize when totalCommitted == totalRewards exactly");
     }
 
-    function test_EarlyFinalization_ExceedsCommitted() public {
+    function test_EarlyFinalization_AtExactBudget() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 netRewards = campaign.totalRewards();
 
-        // totalCommitted > totalRewards (edge case — dust rounding up)
+        // Committing past totalRewards is impossible (even dust rounding must stay within budget)
+        vm.expectRevert(TimeBasedIncentiveCampaign.CommitmentExceedsBudget.selector);
         manager.updateRoot(campaignId, keccak256("final"), netRewards + 1, true);
 
-        assertTrue(campaign.finalized(), "Should finalize when totalCommitted > totalRewards");
+        // Exhausting the budget exactly still allows early finalization
+        manager.updateRoot(campaignId, keccak256("final"), netRewards, true);
+        assertTrue(campaign.finalized(), "Should finalize when totalCommitted == totalRewards");
     }
 
     function test_EarlyFinalization_UsersCanStillClaim() public {

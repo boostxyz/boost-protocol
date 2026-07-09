@@ -112,6 +112,18 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when campaign has not been finalized
     error CampaignNotFinalized();
 
+    /// @notice Error when a root commits more than the campaign's total rewards
+    error CommitmentExceedsBudget();
+
+    /// @notice Error when a root decreases the committed amount
+    error CommitmentDecreased();
+
+    /// @notice Error when updating the root after finalization
+    error CampaignAlreadyFinalized();
+
+    /// @notice Error when cumulative claims would exceed the committed amount
+    error ClaimExceedsCommitment();
+
     /// @notice Disable initialization on the implementation contract
     constructor() {
         _disableInitializers();
@@ -179,11 +191,17 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @param root The new merkle root
     /// @param totalCommitted_ Total amount committed to users in the merkle tree
     /// @return oldRoot The previous merkle root
+    /// @dev Enforces: committed amount never exceeds totalRewards, never decreases across
+    ///      updates, and the root is immutable once the campaign is finalized
     function setMerkleRoot(bytes32 root, uint256 totalCommitted_)
         external
         onlyTimeBasedIncentiveManager
         returns (bytes32 oldRoot)
     {
+        if (finalized) revert CampaignAlreadyFinalized();
+        if (totalCommitted_ > totalRewards) revert CommitmentExceedsBudget();
+        if (totalCommitted_ < totalCommitted) revert CommitmentDecreased();
+
         oldRoot = merkleRoot;
         merkleRoot = root;
         totalCommitted = totalCommitted_;
@@ -212,6 +230,12 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         uint256 alreadyClaimed = claimed[user];
         if (cumulativeAmount <= alreadyClaimed) revert NothingToClaim();
         amount = cumulativeAmount - alreadyClaimed;
+
+        // The declared commitment is a hard ceiling on any single entitlement and on
+        // total outflow. The first check bounds both addends of the second to
+        // totalCommitted, so the addition cannot overflow.
+        if (cumulativeAmount > totalCommitted) revert ClaimExceedsCommitment();
+        if (totalClaimed + amount > totalCommitted) revert ClaimExceedsCommitment();
 
         claimed[user] = cumulativeAmount;
         totalClaimed += amount;

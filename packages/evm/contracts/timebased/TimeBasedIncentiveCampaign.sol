@@ -226,7 +226,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
 
         // Verify merkle proof
         if (merkleRoot == bytes32(0)) revert InvalidProof();
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(user, rewardToken, cumulativeAmount))));
+        bytes32 leaf = keccak256(
+            bytes.concat(keccak256(abi.encode(block.chainid, address(this), user, rewardToken, cumulativeAmount)))
+        );
         if (!MerkleProofLib.verifyCalldata(proof, merkleRoot, leaf)) revert InvalidProof();
 
         // Calculate claimable amount

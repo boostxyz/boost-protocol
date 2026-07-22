@@ -13,6 +13,9 @@ import {IClaw} from "contracts/shared/IClaw.sol";
 /// @notice Per-campaign clone that holds reward tokens for time-based incentives
 /// @dev Deployed as minimal proxy by TimeBasedIncentiveManager
 contract TimeBasedIncentiveCampaign is Initializable, IClaw {
+    /// @notice Version of the merkle leaf encoding this campaign verifies
+    uint256 public constant LEAF_VERSION = 2;
+
     /// @notice The TimeBasedIncentiveManager contract that deployed this campaign
     address public timeBasedIncentiveManager;
 

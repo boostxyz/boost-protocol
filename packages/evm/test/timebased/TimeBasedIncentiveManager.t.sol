@@ -421,17 +421,18 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Try to initialize from a non-manager address
         vm.expectRevert(TimeBasedIncentiveCampaign.OnlyTimeBasedIncentiveManager.selector);
-        TimeBasedIncentiveCampaign(clone).initialize(
-            address(manager),
-            address(budget),
-            CREATOR,
-            keccak256("test"),
-            address(rewardToken),
-            10 ether,
-            uint64(block.timestamp + 1 hours),
-            uint64(block.timestamp + 30 days),
-            60 days
-        );
+        TimeBasedIncentiveCampaign(clone)
+            .initialize(
+                address(manager),
+                address(budget),
+                CREATOR,
+                keccak256("test"),
+                address(rewardToken),
+                10 ether,
+                uint64(block.timestamp + 1 hours),
+                uint64(block.timestamp + 30 days),
+                60 days
+            );
     }
 
     function test_CampaignInitialize_MerkleRootIsZero() public {

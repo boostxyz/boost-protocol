@@ -1694,11 +1694,133 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
         manager.claim(campaignId2, CLAIMER, claimAmount, proof);
 
-        // Even if we set the same root on campaign 2, the user can claim again
-        // (each campaign tracks claims independently)
+        // Even if the identical root is published to campaign 2 (operator error),
+        // the claim still fails: campaign 2 derives the leaf with its own address,
+        // so a tree built for campaign 1 can never validate there
         manager.updateRoot(campaignId2, root, claimAmount, false);
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
         manager.claim(campaignId2, CLAIMER, claimAmount, proof);
-        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount * 2, "Should receive from both campaigns");
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Cross-campaign replay must not pay out");
+
+        // A correctly domain-separated root for campaign 2 lets the same user claim
+        // the same entitlement there — claimed accounting is per-campaign
+        bytes32 leaf2 = _makeLeaf(manager.getCampaign(campaignId2), CLAIMER, address(rewardToken), claimAmount);
+        manager.updateRoot(campaignId2, leaf2, claimAmount, false);
+        manager.claim(campaignId2, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount * 2, "Should receive from both campaigns independently");
+    }
+
+    function test_Claim_CrossChainProofReuseFails() public {
+        // A root built for this campaign on another chain (same campaign address,
+        // different chainid in the leaf) must not validate here
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        bytes32 foreignLeaf =
+            _makeLeafForChain(block.chainid + 1, address(campaign), CLAIMER, address(rewardToken), claimAmount);
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, foreignLeaf, claimAmount, false);
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        // The same entitlement encoded with the local chainid validates
+        manager.updateRoot(
+            campaignId, _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount), claimAmount, false
+        );
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Local-chain leaf should validate");
+    }
+
+    function test_LeafVersion() public view {
+        TimeBasedIncentiveCampaign impl = TimeBasedIncentiveCampaign(manager.campaignImplementation());
+        assertEq(impl.LEAF_VERSION(), 2, "Campaign base should report leaf encoding v2");
+    }
+
+    /// @notice Pins the exact v2 leaf encoding (field order and types) to an
+    ///         independently computed vector, so a symmetric mistake in both the
+    ///         contract and the test helper cannot go unnoticed
+    function test_MakeLeaf_KnownAnswerVector() public pure {
+        // cast abi-encode "f(uint256,address,address,address,uint256)" \
+        //   8453 0x...0Aa 0x...0Bb 0x...0Cc 1000000000000000000 | cast keccak | cast keccak
+        bytes32 expected = 0x1dfb0a939fb0ca7b2ba398e7752d706d3e55b0b454550cbd6b64f5019a120501;
+        assertEq(
+            _makeLeafForChain(8453, address(0xAa), address(0xBb), address(0xCc), 1 ether),
+            expected,
+            "v2 leaf encoding must match the published vector"
+        );
+    }
+
+    function test_Claim_MultiLeafTree_CrossCampaignReplayFails() public {
+        // Domain separation must hold through a real proof walk, not just the
+        // degenerate single-leaf case where root == leaf
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId1 =
+            manager.createCampaign(budget, keccak256("multi-1"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.prank(CREATOR);
+        uint256 campaignId2 =
+            manager.createCampaign(budget, keccak256("multi-2"), address(rewardToken), 10 ether, startTime, endTime);
+        address campaign1 = manager.getCampaign(campaignId1);
+
+        // 4-leaf tree built for campaign 1
+        bytes32[] memory leaves = new bytes32[](4);
+        leaves[0] = _makeLeaf(campaign1, CLAIMER, address(rewardToken), 1 ether);
+        leaves[1] = _makeLeaf(campaign1, CLAIMER2, address(rewardToken), 1 ether);
+        leaves[2] = _makeLeaf(campaign1, address(0x1111), address(rewardToken), 1 ether);
+        leaves[3] = _makeLeaf(campaign1, address(0x2222), address(rewardToken), 1 ether);
+        (bytes32 root, bytes32[] memory proof) = _buildMerkleTreeAndProofFast(leaves, 0);
+        assertEq(proof.length, 2, "4-leaf tree should produce 2-element proofs");
+
+        manager.updateRoot(campaignId1, root, 4 ether, false);
+        manager.updateRoot(campaignId2, root, 4 ether, false);
+
+        // Valid multi-leaf claim on campaign 1
+        manager.claim(campaignId1, CLAIMER, 1 ether, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), 1 ether, "Multi-leaf claim should succeed on origin campaign");
+
+        // Identical root on campaign 2 still rejects the proof: leaves commit to campaign 1
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
+        manager.claim(campaignId2, CLAIMER, 1 ether, proof);
+    }
+
+    function test_Claim_MultiLeafTree_ProofManipulationFails() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+
+        bytes32[] memory leaves = new bytes32[](4);
+        leaves[0] = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 1 ether);
+        leaves[1] = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), 1 ether);
+        leaves[2] = _makeLeaf(address(campaign), address(0x1111), address(rewardToken), 1 ether);
+        leaves[3] = _makeLeaf(address(campaign), address(0x2222), address(rewardToken), 1 ether);
+        (bytes32 root, bytes32[] memory proof) = _buildMerkleTreeAndProofFast(leaves, 0);
+        manager.updateRoot(campaignId, root, 4 ether, false);
+
+        // Truncated proof (walks only partway up the tree) must fail
+        bytes32[] memory truncated = new bytes32[](1);
+        truncated[0] = proof[0];
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, 1 ether, truncated);
+
+        // Tampered sibling must fail
+        bytes32[] memory tampered = new bytes32[](2);
+        tampered[0] = proof[0] ^ bytes32(uint256(1));
+        tampered[1] = proof[1];
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, 1 ether, tampered);
+
+        // Over-long proof must fail
+        bytes32[] memory overlong = new bytes32[](3);
+        overlong[0] = proof[0];
+        overlong[1] = proof[1];
+        overlong[2] = proof[1];
+        vm.expectRevert(TimeBasedIncentiveCampaign.InvalidProof.selector);
+        manager.claim(campaignId, CLAIMER, 1 ether, overlong);
+
+        // The untampered proof still works
+        manager.claim(campaignId, CLAIMER, 1 ether, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), 1 ether, "Valid proof should still claim");
     }
 
     ////////////////////////////////
@@ -2750,9 +2872,22 @@ contract TimeBasedIncentiveManagerTest is Test {
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
-    /// @notice Helper to create a double-hashed merkle leaf
-    function _makeLeaf(address user, address token, uint256 cumulativeAmount) internal pure returns (bytes32) {
-        return keccak256(bytes.concat(keccak256(abi.encode(user, token, cumulativeAmount))));
+    /// @notice Helper to create a double-hashed, domain-separated (v2) merkle leaf
+    function _makeLeaf(address campaign, address user, address token, uint256 cumulativeAmount)
+        internal
+        view
+        returns (bytes32)
+    {
+        return _makeLeafForChain(block.chainid, campaign, user, token, cumulativeAmount);
+    }
+
+    /// @notice Leaf helper with explicit chainid, for cross-chain domain-separation tests
+    function _makeLeafForChain(uint256 chainid, address campaign, address user, address token, uint256 cumulativeAmount)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(bytes.concat(keccak256(abi.encode(chainid, campaign, user, token, cumulativeAmount))));
     }
 
     /// @notice Gas test with 100 users in merkle tree

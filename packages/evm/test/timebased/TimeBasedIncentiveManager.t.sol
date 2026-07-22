@@ -1737,6 +1737,167 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(impl.LEAF_VERSION(), 2, "Campaign base should report leaf encoding v2");
     }
 
+    ////////////////////////////////
+    // startTime gate tests
+    ////////////////////////////////
+
+    function test_UpdateRoot_RevertBeforeStartTime() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("pre-start"), address(rewardToken), 10 ether, startTime, endTime);
+
+        // Publishing a root before the campaign starts is blocked
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotStarted.selector);
+        manager.updateRoot(campaignId, keccak256("early-root"), 1 ether, false);
+
+        // Still blocked one second before startTime
+        vm.warp(startTime - 1);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotStarted.selector);
+        manager.updateRoot(campaignId, keccak256("early-root"), 1 ether, false);
+
+        // At startTime exactly, publishing works
+        vm.warp(startTime);
+        manager.updateRoot(campaignId, keccak256("on-time-root"), 1 ether, false);
+        assertEq(
+            TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).merkleRoot(),
+            keccak256("on-time-root"),
+            "Root should be publishable from startTime"
+        );
+    }
+
+    function test_UpdateRootsBatch_RevertBeforeStartTime() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("pre-start"), address(rewardToken), 10 ether, startTime, endTime);
+
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("early-root"), 1 ether, false);
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotStarted.selector);
+        manager.updateRootsBatch(updates);
+
+        // The same batch succeeds once the campaign has started
+        vm.warp(startTime);
+        manager.updateRootsBatch(updates);
+        assertEq(
+            TimeBasedIncentiveCampaign(manager.getCampaign(campaignId)).merkleRoot(),
+            keccak256("early-root"),
+            "Batch should succeed from startTime"
+        );
+    }
+
+    function test_CancelBeforeStart_CommittedRootRemainsClaimable() public {
+        // A campaign cancelled pre-start can receive a committed root through the
+        // endTime escape (e.g. a compensation root); those entitlements must be
+        // claimable during [endTime, endTime + expiry] even though startTime never arrived
+        uint64 startTime = uint64(block.timestamp + 90 days);
+        uint64 endTime = uint64(block.timestamp + 120 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("comp"), address(rewardToken), 10 ether, startTime, endTime);
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+
+        vm.warp(block.timestamp + 1 hours);
+        vm.prank(CREATOR);
+        manager.cancelCampaign(campaignId);
+        uint64 cancelTime = campaign.endTime();
+
+        // Publish a finalizing root committing to two users
+        vm.warp(cancelTime + 1);
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 1 ether);
+        bytes32 leaf2 = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), 1 ether);
+        bytes32 root =
+            leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
+        manager.updateRoot(campaignId, root, 2 ether, true);
+        assertTrue(campaign.finalized());
+
+        // Committed funds are protected from withdrawal while claimable
+        assertEq(campaign.getWithdrawable(), 9 ether - 2 ether, "Owed amounts should be reserved");
+
+        // CLAIMER claims well before the original startTime
+        assertLt(block.timestamp, startTime, "Still before original startTime");
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+        manager.claim(campaignId, CLAIMER, 1 ether, proof1);
+        assertEq(rewardToken.balanceOf(CLAIMER), 1 ether, "Pre-start claim on cancelled campaign should pay out");
+
+        // After the claim window expires (still before original startTime), claims are
+        // expired — not gated on start — and the remainder becomes withdrawable
+        vm.warp(cancelTime + campaign.claimExpiryDuration() + 1);
+        assertLt(block.timestamp, startTime, "Expiry elapses before original startTime");
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExpired.selector);
+        manager.claim(campaignId, CLAIMER2, 1 ether, proof2);
+        assertEq(campaign.getWithdrawable(), 8 ether, "Unclaimed committed funds sweep after expiry");
+    }
+
+    function test_Claim_RevertBeforeStartTime() public {
+        // The claim gate holds independently of the root gate: even if a root
+        // exists, claiming before startTime reverts
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint64 startTime = campaign.startTime();
+        uint256 claimAmount = 1 ether;
+
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
+        bytes32[] memory proof = new bytes32[](0);
+        manager.updateRoot(campaignId, leaf, claimAmount, false);
+
+        // Rewind to before startTime (root already published)
+        vm.warp(startTime - 1);
+        vm.expectRevert(TimeBasedIncentiveCampaign.CampaignNotStarted.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+
+        // At startTime exactly, the claim succeeds
+        vm.warp(startTime);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed from startTime");
+    }
+
+    function test_CancelBeforeStart_FinalizeAndWithdrawWithoutWaiting() public {
+        // A campaign cancelled before its startTime must be finalizable and its
+        // funds recoverable immediately — without waiting for the original startTime
+        uint64 startTime = uint64(block.timestamp + 7 days);
+        uint64 endTime = uint64(block.timestamp + 37 days);
+
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("cancelled"), address(rewardToken), 10 ether, startTime, endTime);
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+
+        // Cancel one hour after creation, long before startTime
+        vm.warp(block.timestamp + 1 hours);
+        vm.prank(CREATOR);
+        manager.cancelCampaign(campaignId);
+        assertLt(campaign.endTime(), startTime, "Cancelled endTime should precede original startTime");
+
+        // The root gate's endTime clause opens the finalization path once past
+        // the (cancelled) endTime; publish the empty finalizing root
+        vm.warp(campaign.endTime() + 1);
+        assertLt(block.timestamp, startTime, "Still before the original startTime");
+        manager.updateRoot(campaignId, bytes32(0), 0, true);
+        assertTrue(campaign.finalized(), "Cancelled campaign should be finalizable before original startTime");
+
+        // Withdraw the full balance back to the budget
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be drained");
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + campaignBalance,
+            "Budget should recover all funds before original startTime"
+        );
+    }
+
     /// @notice Pins the exact v2 leaf encoding (field order and types) to an
     ///         independently computed vector, so a symmetric mistake in both the
     ///         contract and the test helper cannot go unnoticed

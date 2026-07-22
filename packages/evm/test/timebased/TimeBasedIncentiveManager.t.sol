@@ -380,6 +380,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         address campaignAddr = manager.getCampaign(campaignId);
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(campaignAddr);
@@ -443,6 +444,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
@@ -755,6 +757,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         bytes32 newRoot = keccak256("merkle-root-1");
         uint256 totalCommitted = 5 ether;
@@ -779,6 +782,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         bytes32 newRoot = keccak256("merkle-root-1");
         uint256 totalCommitted = 5 ether;
@@ -800,6 +804,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         bytes32 root1 = keccak256("merkle-root-1");
         bytes32 root2 = keccak256("merkle-root-2");
@@ -826,6 +831,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         // Try to update as random address (not owner, not operator)
         vm.prank(address(0xBAD));
@@ -844,6 +850,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         // Creator cannot update root (not owner, operator not set)
         vm.prank(CREATOR);
@@ -879,6 +886,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 id3 =
             manager.createCampaign(budget, keccak256("test3"), address(rewardToken), 3 ether, startTime, endTime);
         vm.stopPrank();
+        vm.warp(startTime);
 
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](3);
@@ -905,6 +913,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
         updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
@@ -925,6 +934,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
         updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
@@ -945,6 +955,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 id2 =
             manager.createCampaign(budget, keccak256("test2"), address(rewardToken), 3 ether, startTime, endTime);
         vm.stopPrank();
+        vm.warp(startTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
         updates[0] = TimeBasedIncentiveManager.RootUpdate(id1, keccak256("root1"), 1 ether, false);
@@ -965,6 +976,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
         updates[0] = TimeBasedIncentiveManager.RootUpdate(campaignId, keccak256("root1"), 5 ether, false);
@@ -998,6 +1010,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 validId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         // Second entry has a bad campaignId
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
@@ -1025,6 +1038,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             );
         }
         vm.stopPrank();
+        vm.warp(startTime);
 
         // Build batch of exactly 50
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](batchSize);
@@ -1053,6 +1067,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         // Same campaign twice — second update overwrites the first
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](2);
@@ -1082,6 +1097,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 id2 =
             manager.createCampaign(budget, keccak256("test2"), address(rewardToken), 3 ether, startTime, endTime);
         vm.stopPrank();
+        vm.warp(startTime);
 
         // First batch
         TimeBasedIncentiveManager.RootUpdate[] memory batch1 = new TimeBasedIncentiveManager.RootUpdate[](2);
@@ -1118,6 +1134,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             );
         }
         vm.stopPrank();
+        vm.warp(startTime);
 
         // Build batch
         TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](20);
@@ -1146,6 +1163,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
@@ -1163,6 +1181,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         bytes32 newRoot = keccak256("merkle-root-1");
         uint256 totalCommitted = 5 ether;
@@ -1675,6 +1694,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId2 =
             manager.createCampaign(budget, keccak256("campaign-2"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         uint256 claimAmount = 1 ether;
 
@@ -1924,6 +1944,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId2 =
             manager.createCampaign(budget, keccak256("multi-2"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
         address campaign1 = manager.getCampaign(campaignId1);
 
         // 4-leaf tree built for campaign 1
@@ -2649,6 +2670,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint64 originalEndTime = campaign.endTime();
@@ -2686,6 +2708,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         vm.prank(address(0xBAD)); // Not owner, not budget-authorized
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorized.selector);
@@ -2704,6 +2727,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         // Warp past the end time
         vm.warp(endTime + 1);
@@ -2755,6 +2779,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         // Set up merkle root with claim
         uint256 claimAmount = 1 ether;
@@ -2823,6 +2848,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 campaignId = manager.createCampaignDirect(
             keccak256("integration-test"), address(rewardToken), totalAmount, startTime, endTime
         );
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         assertEq(campaign.budget(), address(0), "Should be direct-funded");
@@ -2889,6 +2915,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 campaignId = manager.createCampaign(
             budget, keccak256("cancel-test"), address(rewardToken), 10 ether, startTime, endTime
         );
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
@@ -3022,6 +3049,7 @@ contract TimeBasedIncentiveManagerTest is Test {
     }
 
     /// @notice Helper to create a campaign and return its ID and contract
+    /// @dev Warps to startTime so tests can publish roots and claim immediately
     function _createCampaignWithRoot() internal returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign) {
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
@@ -3031,6 +3059,7 @@ contract TimeBasedIncentiveManagerTest is Test {
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
 
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        vm.warp(startTime);
     }
 
     /// @notice Helper to create a double-hashed, domain-separated (v2) merkle leaf
@@ -3069,6 +3098,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("gas-test"), address(rewardToken), 90 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
@@ -3214,6 +3244,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 campaignId = manager.createCampaignDirect(
             keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
         );
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint256 totalCommitted = 5 ether;
@@ -3409,6 +3440,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
@@ -3522,6 +3554,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         vm.prank(CREATOR);
         uint256 campaignId =
             manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
+        vm.warp(startTime);
 
         // Authorize a new address on the budget (not the Manager owner)
         address budgetAdmin = address(0xB0B);
@@ -3900,6 +3933,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 campaignId = manager.createCampaignDirect(
             keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
         );
+        vm.warp(startTime);
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint256 netRewards = campaign.totalRewards();

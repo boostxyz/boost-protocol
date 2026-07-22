@@ -1254,7 +1254,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf; // Single leaf tree, root = leaf
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1280,11 +1280,11 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Claim_EmitsEvents() public {
         // Create a campaign
-        (uint256 campaignId,) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1331,11 +1331,11 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Claim_RevertInvalidProof() public {
         // Create a campaign
-        (uint256 campaignId,) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf for a different user
-        bytes32 leaf = _makeLeaf(address(0xDEAD), address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), address(0xDEAD), address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1349,11 +1349,11 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Claim_RevertNothingToClaim() public {
         // Create a campaign
-        (uint256 campaignId,) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1382,7 +1382,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // First claim: cumulative = 1 ether
         uint256 firstCumulative = 1 ether;
-        bytes32 firstLeaf = _makeLeaf(CLAIMER, address(rewardToken), firstCumulative);
+        bytes32 firstLeaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), firstCumulative);
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1394,7 +1394,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Second claim: cumulative = 3 ether (additional 2 ether)
         uint256 secondCumulative = 3 ether;
-        bytes32 secondLeaf = _makeLeaf(CLAIMER, address(rewardToken), secondCumulative);
+        bytes32 secondLeaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), secondCumulative);
         bytes32 secondRoot = secondLeaf;
 
         manager.updateRoot(campaignId, secondRoot, secondCumulative, false);
@@ -1405,7 +1405,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Third claim: cumulative = 5 ether (additional 2 ether)
         uint256 thirdCumulative = 5 ether;
-        bytes32 thirdLeaf = _makeLeaf(CLAIMER, address(rewardToken), thirdCumulative);
+        bytes32 thirdLeaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), thirdCumulative);
         bytes32 thirdRoot = thirdLeaf;
 
         manager.updateRoot(campaignId, thirdRoot, thirdCumulative, false);
@@ -1421,7 +1421,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1445,7 +1445,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree with single leaf
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1465,8 +1465,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 claimer1Amount = 1 ether;
         uint256 claimer2Amount = 2 ether;
 
-        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), claimer1Amount);
-        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), claimer2Amount);
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimer1Amount);
+        bytes32 leaf2 = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), claimer2Amount);
 
         // Build simple 2-leaf merkle tree
         // Sort leaves for consistent tree structure
@@ -1505,12 +1505,12 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Claim_RevertWrongAmount() public {
         // Create a campaign
-        (uint256 campaignId,) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 correctAmount = 1 ether;
         uint256 wrongAmount = 2 ether;
 
         // Build merkle tree with correct amount
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), correctAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), correctAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1541,7 +1541,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // First: claim with cumulative amount of 2 ether
         uint256 firstCumulative = 2 ether;
-        bytes32 firstLeaf = _makeLeaf(CLAIMER, address(rewardToken), firstCumulative);
+        bytes32 firstLeaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), firstCumulative);
         bytes32 firstRoot = firstLeaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1554,7 +1554,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         // This simulates someone trying to use a stale/old proof
         // (totalCommitted stays at 2 ether — it can never decrease)
         uint256 oldCumulative = 1 ether;
-        bytes32 oldLeaf = _makeLeaf(CLAIMER, address(rewardToken), oldCumulative);
+        bytes32 oldLeaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), oldCumulative);
         bytes32 oldRoot = oldLeaf;
 
         manager.updateRoot(campaignId, oldRoot, firstCumulative, false);
@@ -1566,11 +1566,11 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Claim_RevertDoubleClaimSameBlock() public {
         // Create a campaign
-        (uint256 campaignId,) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
         // Build merkle tree
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1590,7 +1590,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // The merkle tree only has 1 ether for this user
         uint256 actualAmount = 1 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), actualAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), actualAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -1628,10 +1628,10 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Claim_RevertClaimExceedsCommitment() public {
         // A tree whose leaves exceed the declared totalCommitted cannot pay out past it
-        (uint256 campaignId,) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         uint256 leafAmount = 2 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), leafAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), leafAmount);
         bytes32[] memory proof = new bytes32[](0);
 
         // Declared commitment understates the leaf
@@ -1643,10 +1643,10 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Claim_RevertClaimExceedsCommitment_MultiUser() public {
         // Two leaves summing past the declared total: first claim fits, second hits the ceiling
-        (uint256 campaignId,) = _createCampaignWithRoot();
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
-        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
-        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), 2 ether);
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 3 ether);
+        bytes32 leaf2 = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), 2 ether);
         bytes32 root =
             leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
         bytes32[] memory proof1 = new bytes32[](1);
@@ -1678,8 +1678,8 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         uint256 claimAmount = 1 ether;
 
-        // Set up valid proof for campaign 1
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        // Set up valid proof for campaign 1 — the leaf commits to campaign 1's address
+        bytes32 leaf = _makeLeaf(manager.getCampaign(campaignId1), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
 
@@ -2020,7 +2020,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 claimAmount = 1 ether;
 
         // Set up merkle tree and claim
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -2172,7 +2172,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 totalCommitted = 5 ether;
 
         // Set merkle root with 5 ether committed but don't claim yet
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
         manager.updateRoot(campaignId, root, totalCommitted, false);
 
@@ -2204,14 +2204,14 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
 
         // First claim: set committed to 3 ether, claim 3 ether
-        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 3 ether);
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, leaf1, 3 ether, false);
         manager.claim(campaignId, CLAIMER, 3 ether, proof);
 
         // A "correction" root that lowers totalCommitted can no longer be published,
         // so totalClaimed > totalCommitted is unreachable by construction
-        bytes32 leaf2 = _makeLeaf(address(0xDEAD), address(rewardToken), 1 ether);
+        bytes32 leaf2 = _makeLeaf(address(campaign), address(0xDEAD), address(rewardToken), 1 ether);
         vm.expectRevert(TimeBasedIncentiveCampaign.CommitmentDecreased.selector);
         manager.updateRoot(campaignId, leaf2, 1 ether, false);
 
@@ -2241,7 +2241,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Warp past end time, then set merkle root with 5 ether committed and finalize
         vm.warp(campaign.endTime() + 1);
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
         manager.updateRoot(campaignId, root, totalCommitted, true);
 
@@ -2475,7 +2475,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Set up merkle root with claim
         uint256 claimAmount = 1 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(manager.getCampaign(campaignId), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -2547,8 +2547,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         // 2. Set merkle root and make claims
         uint256 claim1Amount = 2 ether;
         uint256 claim2Amount = 3 ether;
-        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), claim1Amount);
-        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), claim2Amount);
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claim1Amount);
+        bytes32 leaf2 = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), claim2Amount);
 
         bytes32 left;
         bytes32 right;
@@ -2603,14 +2603,15 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
 
         vm.prank(CREATOR);
-        uint256 campaignId =
-            manager.createCampaign(budget, keccak256("cancel-test"), address(rewardToken), 10 ether, startTime, endTime);
+        uint256 campaignId = manager.createCampaign(
+            budget, keccak256("cancel-test"), address(rewardToken), 10 ether, startTime, endTime
+        );
 
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         // 2. Set up some claims
         uint256 claimAmount = 2 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -2782,7 +2783,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         for (uint256 i = 0; i < numUsers; i++) {
             address user = address(uint160(0x10000 + i));
-            leaves[i] = _makeLeaf(user, address(rewardToken), amountPerUser);
+            leaves[i] = _makeLeaf(address(campaign), user, address(rewardToken), amountPerUser);
             totalCommitted += amountPerUser;
         }
 
@@ -2832,7 +2833,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -2848,7 +2849,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -2871,7 +2872,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
         manager.updateRoot(campaignId, root, totalCommitted, false);
 
@@ -2893,7 +2894,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 totalCommitted = 5 ether;
 
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
 
         // Warp past claim expiry and finalize
@@ -2921,7 +2922,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
         uint256 totalCommitted = 5 ether;
 
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
         manager.updateRoot(campaignId, root, totalCommitted, false);
 
@@ -2950,7 +2951,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         // Warp past end time, then set final root
         vm.warp(campaign.endTime() + 1);
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), totalCommitted);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
         bytes32 root = leaf;
         manager.updateRoot(campaignId, root, totalCommitted, true);
 
@@ -2978,8 +2979,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 claimer1Amount = 2 ether;
         uint256 claimer2Amount = 3 ether;
 
-        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), claimer1Amount);
-        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), claimer2Amount);
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimer1Amount);
+        bytes32 leaf2 = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), claimer2Amount);
 
         bytes32 left;
         bytes32 right;
@@ -3044,7 +3045,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(campaign.claimExpiryDuration(), customDuration, "Campaign should use custom duration");
 
         uint256 claimAmount = 1 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -3059,7 +3060,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -3094,7 +3095,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(campaign.claimExpiryDuration(), 1 days, "Campaign should have 1 day expiry");
 
         uint256 claimAmount = 1 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -3116,7 +3117,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
 
         uint256 claimAmount = 1 ether;
-        bytes32 leaf = _makeLeaf(CLAIMER, address(rewardToken), claimAmount);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
         bytes32 root = leaf;
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
@@ -3563,8 +3564,8 @@ contract TimeBasedIncentiveManagerTest is Test {
         uint256 netRewards = campaign.totalRewards();
 
         // Set up merkle tree with two users
-        bytes32 leaf1 = _makeLeaf(CLAIMER, address(rewardToken), 3 ether);
-        bytes32 leaf2 = _makeLeaf(CLAIMER2, address(rewardToken), 2 ether);
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 3 ether);
+        bytes32 leaf2 = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), 2 ether);
         bytes32 root =
             leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
         bytes32[] memory proof1 = new bytes32[](1);

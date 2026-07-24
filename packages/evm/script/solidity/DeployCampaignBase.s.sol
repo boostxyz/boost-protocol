@@ -38,10 +38,5 @@ contract DeployCampaignBase is ScriptUtils {
         }
 
         require(predicted.code.length > 0, "Deploy failed - no code at predicted address");
-        require(
-            TimeBasedIncentiveCampaign(predicted).LEAF_VERSION() == 2,
-            "Deployed base does not report LEAF_VERSION 2"
-        );
-        console.log("[OK] LEAF_VERSION() == 2");
     }
 }

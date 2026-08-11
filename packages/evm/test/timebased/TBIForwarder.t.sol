@@ -223,16 +223,44 @@ contract MockPermit2 {
     }
 }
 
+/// @notice Minimal V4 PoolManager mock: serves `extsload` reads from a mapping keyed by raw slot.
+/// `setSlot0SqrtPrice` mirrors the StateLibrary layout the adapter reads (pool state root at
+/// `keccak256(poolId . uint256(6))`, `sqrtPriceX96` in the low 160 bits) and deliberately packs
+/// garbage into the upper bits (where tick/fees live) to prove the adapter truncates correctly.
+contract MockV4PoolManager {
+    mapping(bytes32 => bytes32) internal slots;
+
+    function setSlot0SqrtPrice(bytes32 poolId, uint160 sqrtPriceX96) external {
+        bytes32 stateSlot = keccak256(abi.encodePacked(poolId, bytes32(uint256(6))));
+        slots[stateSlot] = bytes32((uint256(0xDEADBEEF) << 160) | uint256(sqrtPriceX96));
+    }
+
+    function extsload(bytes32 slot) external view returns (bytes32) {
+        return slots[slot];
+    }
+}
+
 /// @notice Minimal V4 PositionManager mock. Decodes the unlockData, asserts the actions match
 /// MINT_POSITION + SETTLE_PAIR (+ SWEEP for native pools), and pulls each ERC20 currency via
 /// Permit2 transferFrom. A native currency0 is settled from `msg.value` and its unspent remainder
 /// is returned to the SWEEP recipient. The "spent" amounts are configurable so tests can exercise
 /// the refund path; they default to `amountMax` (no leftover) until `setSpend` is called.
+/// Also exposes the NFT surface `depositKyberZapV4` verifies against: `nextTokenId`/`ownerOf`/
+/// `getPoolAndPositionInfo`/`getPositionLiquidity`, fed by `mintPosition` (what a zap router calls),
+/// plus a `poolManager()` serving slot0 reads via `MockV4PoolManager`.
 contract MockV4PositionManager {
     MockPermit2 public immutable permit2;
+    MockV4PoolManager public immutable v4PoolManager;
     uint128 public spend0;
     uint128 public spend1;
     bool public spendConfigured;
+
+    // NFT surface backing the Kyber zap verification
+    uint256 public nextTokenId = 1;
+    mapping(uint256 => address) public ownerOf;
+    mapping(uint256 => uint128) public getPositionLiquidity;
+    mapping(uint256 => PoolKey) internal positionPoolKeys;
+    mapping(uint256 => uint256) internal positionInfos;
 
     // Captured for assertions
     address public lastOwner;
@@ -243,6 +271,29 @@ contract MockV4PositionManager {
 
     constructor(address permit2_) {
         permit2 = MockPermit2(permit2_);
+        v4PoolManager = new MockV4PoolManager();
+    }
+
+    function poolManager() external view returns (address) {
+        return address(v4PoolManager);
+    }
+
+    /// @notice Mints a position NFT the way the canonical PM does: assigns `nextTokenId`, then
+    /// increments. Ticks are packed into the v4-periphery PositionInfo layout the adapter decodes
+    /// (bits 8-31 tickLower, bits 32-55 tickUpper).
+    function mintPosition(address owner, PoolKey memory poolKey, int24 tickLower, int24 tickUpper, uint128 liquidity)
+        external
+        returns (uint256 tokenId)
+    {
+        tokenId = nextTokenId++;
+        ownerOf[tokenId] = owner;
+        positionPoolKeys[tokenId] = poolKey;
+        positionInfos[tokenId] = (uint256(uint24(tickUpper)) << 32) | (uint256(uint24(tickLower)) << 8);
+        getPositionLiquidity[tokenId] = liquidity;
+    }
+
+    function getPoolAndPositionInfo(uint256 tokenId) external view returns (PoolKey memory, uint256) {
+        return (positionPoolKeys[tokenId], positionInfos[tokenId]);
     }
 
     function setSpend(uint128 spend0_, uint128 spend1_) external {
@@ -334,6 +385,52 @@ contract MockKyberRouter {
             require(ok, "router: native out failed");
         } else {
             ERC20(tokenOut).transfer(recipient, amountOut);
+        }
+    }
+}
+
+/// @notice Minimal Kyber ZaaS zap-router mock for `depositKyberZapV4`. `zap` consumes the input
+/// (ERC20 pulled via transferFrom for exactly `pullAmount`, or native via msg.value), mints
+/// `mintCount` positions on the mock PositionManager, then optionally refunds input back to the
+/// caller (the forwarder). Real ZaaS pulls the full approval and refunds leftovers to the recipient;
+/// under-pulling and caller-refunds here are the adversarial cases the approval reset and defensive
+/// dust sweep exist for.
+contract MockKyberZapRouter {
+    MockV4PositionManager public immutable positionManager;
+
+    struct ZapPlan {
+        address tokenIn; // address(0) = native
+        uint256 pullAmount; // input the router consumes from the caller
+        uint256 refundAmount; // input sent back to the caller after the mint (dust)
+        uint256 mintCount; // positions minted (0 = spoof, 2 = over-mint)
+        address owner; // NFT owner for minted positions
+        PoolKey poolKey;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
+    }
+
+    constructor(address positionManager_) {
+        positionManager = MockV4PositionManager(positionManager_);
+    }
+
+    function zap(ZapPlan calldata plan) external payable {
+        if (plan.tokenIn == address(0)) {
+            require(msg.value >= plan.pullAmount, "zap: bad native value");
+        } else {
+            require(msg.value == 0, "zap: unexpected native value");
+            ERC20(plan.tokenIn).transferFrom(msg.sender, address(this), plan.pullAmount);
+        }
+        for (uint256 i = 0; i < plan.mintCount; i++) {
+            positionManager.mintPosition(plan.owner, plan.poolKey, plan.tickLower, plan.tickUpper, plan.liquidity);
+        }
+        if (plan.refundAmount > 0) {
+            if (plan.tokenIn == address(0)) {
+                (bool ok,) = msg.sender.call{value: plan.refundAmount}("");
+                require(ok, "zap: native refund failed");
+            } else {
+                ERC20(plan.tokenIn).transfer(msg.sender, plan.refundAmount);
+            }
         }
     }
 }
@@ -500,6 +597,7 @@ contract TBIForwarderTest is Test {
     MockMidasVault midasVault;
     MockV4PositionManager v4PositionManager;
     MockKyberRouter kyberRouter;
+    MockKyberZapRouter kyberZapRouter;
 
     address constant USER = address(0xCAFE);
     address constant RECEIVER = address(0xB0B);
@@ -535,6 +633,10 @@ contract TBIForwarderTest is Test {
         // Zap swap router, whitelisted by the test (which is the owner).
         kyberRouter = new MockKyberRouter();
         forwarder.setSwapRouterAllowed(address(kyberRouter), true);
+
+        // Kyber ZaaS zap router (mints V4 positions directly), also whitelisted.
+        kyberZapRouter = new MockKyberZapRouter(address(v4PositionManager));
+        forwarder.setSwapRouterAllowed(address(kyberZapRouter), true);
 
         // Fund user
         _fundAndApprove(USER, 100 ether);
@@ -1520,5 +1622,302 @@ contract TBIForwarderTest is Test {
         assertTrue(forwarder.isSwapRouterAllowed(address(another)));
         forwarder.setSwapRouterAllowed(address(another), false);
         assertFalse(forwarder.isSwapRouterAllowed(address(another)));
+    }
+
+    // --- Kyber ZaaS zap (any-token → V4 LP via depositKyberZapV4) ---
+
+    /// @dev sqrt price at tick 0 (2^96) — pool trading at price 1.0.
+    uint160 internal constant SQRT_PRICE_TICK_0 = 79228162514264337593543950336;
+    /// @dev sqrt price at tick -1200, below the [-600, 600] test range.
+    uint160 internal constant SQRT_PRICE_TICK_NEG_1200 = 74614497345217746613916878337;
+    /// @dev Amounts V4LiquidityMath must yield for liquidity 1e18 in [-600, 600] at the prices
+    /// above — cross-checked against an independent integer replication of the upstream Uniswap
+    /// libraries, so a transcription error in the vendored math fails these tests.
+    uint256 internal constant IN_RANGE_AMOUNT0 = 29553010879137169;
+    uint256 internal constant IN_RANGE_AMOUNT1 = 29553010879137169;
+    uint256 internal constant BELOW_RANGE_AMOUNT0 = 60005999255049926;
+
+    function _zapPlan(address tokenIn, uint256 pullAmount, address owner)
+        internal
+        view
+        returns (MockKyberZapRouter.ZapPlan memory)
+    {
+        return MockKyberZapRouter.ZapPlan({
+            tokenIn: tokenIn,
+            pullAmount: pullAmount,
+            refundAmount: 0,
+            mintCount: 1,
+            owner: owner,
+            poolKey: _v4PoolKey(),
+            tickLower: -600,
+            tickUpper: 600,
+            liquidity: 1e18
+        });
+    }
+
+    function _depositKyberZap(uint256 value, address tokenIn, uint256 amountIn, MockKyberZapRouter.ZapPlan memory plan)
+        internal
+    {
+        forwarder.depositKyberZapV4{value: value}(
+            IUniswapV4PositionManager(address(v4PositionManager)),
+            address(kyberZapRouter),
+            tokenIn,
+            amountIn,
+            abi.encodeCall(MockKyberZapRouter.zap, (plan)),
+            _v4PoolId(),
+            plan.owner
+        );
+    }
+
+    function test_KyberZapV4_Erc20Input_Success() public {
+        uint256 amountIn = 10 ether;
+        v4PositionManager.v4PoolManager().setSlot0SqrtPrice(_v4PoolId(), SQRT_PRICE_TICK_0);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.UniswapV4LPDeposit(
+            USER, address(v4PositionManager), _v4PoolId(), 1e18, IN_RANGE_AMOUNT0, IN_RANGE_AMOUNT1
+        );
+
+        vm.prank(USER);
+        _depositKyberZap(0, address(token), amountIn, _zapPlan(address(token), amountIn, USER));
+
+        // The position NFT was minted to USER from canonical state.
+        assertEq(v4PositionManager.nextTokenId(), 2);
+        assertEq(v4PositionManager.ownerOf(1), USER);
+        assertEq(v4PositionManager.getPositionLiquidity(1), 1e18);
+        // Router consumed the full input; forwarder holds nothing and its approval is spent.
+        assertEq(token.balanceOf(USER), 100 ether - amountIn);
+        assertEq(token.balanceOf(address(kyberZapRouter)), amountIn);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(kyberZapRouter)), 0);
+    }
+
+    function test_KyberZapV4_NativeInput_Success() public {
+        uint256 amountIn = 5 ether;
+        vm.deal(USER, 100 ether);
+        v4PositionManager.v4PoolManager().setSlot0SqrtPrice(_v4PoolId(), SQRT_PRICE_TICK_0);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.UniswapV4LPDeposit(
+            USER, address(v4PositionManager), _v4PoolId(), 1e18, IN_RANGE_AMOUNT0, IN_RANGE_AMOUNT1
+        );
+
+        vm.prank(USER);
+        _depositKyberZap(amountIn, address(0), amountIn, _zapPlan(address(0), amountIn, USER));
+
+        assertEq(v4PositionManager.ownerOf(1), USER);
+        assertEq(USER.balance, 100 ether - amountIn);
+        assertEq(address(kyberZapRouter).balance, amountIn);
+        assertEq(address(forwarder).balance, 0);
+    }
+
+    function test_KyberZapV4_WithReceiver_Success() public {
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+        v4PositionManager.v4PoolManager().setSlot0SqrtPrice(_v4PoolId(), SQRT_PRICE_TICK_0);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.UniswapV4LPDeposit(
+            RECEIVER, address(v4PositionManager), _v4PoolId(), 1e18, IN_RANGE_AMOUNT0, IN_RANGE_AMOUNT1
+        );
+
+        vm.prank(LIFI_EXECUTOR);
+        _depositKyberZap(0, address(token), 10 ether, _zapPlan(address(token), 10 ether, RECEIVER));
+
+        // RECEIVER owns the position; the executor only paid the input token.
+        assertEq(v4PositionManager.ownerOf(1), RECEIVER);
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 90 ether);
+        assertEq(token.balanceOf(RECEIVER), 0);
+    }
+
+    function test_KyberZapV4_OutOfRange_SingleSidedAmounts() public {
+        // Pool price below the position range → the position is entirely token0.
+        v4PositionManager.v4PoolManager().setSlot0SqrtPrice(_v4PoolId(), SQRT_PRICE_TICK_NEG_1200);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.UniswapV4LPDeposit(
+            USER, address(v4PositionManager), _v4PoolId(), 1e18, BELOW_RANGE_AMOUNT0, 0
+        );
+
+        vm.prank(USER);
+        _depositKyberZap(0, address(token), 10 ether, _zapPlan(address(token), 10 ether, USER));
+    }
+
+    function test_KyberZapV4_SweepsDustAndResetsApproval() public {
+        // Forwarder approves 10 but the router only pulls 6: the 4-token leftover must be swept to
+        // the receiver and the residual allowance reset to zero.
+        uint256 amountIn = 10 ether;
+        v4PositionManager.v4PoolManager().setSlot0SqrtPrice(_v4PoolId(), SQRT_PRICE_TICK_0);
+
+        vm.prank(USER);
+        _depositKyberZap(0, address(token), amountIn, _zapPlan(address(token), 6 ether, RECEIVER));
+
+        assertEq(token.balanceOf(RECEIVER), 4 ether);
+        assertEq(token.balanceOf(address(kyberZapRouter)), 6 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(kyberZapRouter)), 0);
+    }
+
+    function test_KyberZapV4_SweepsNativeDust() public {
+        // Router refunds 1 ETH of the 5 sent back to the forwarder — it must reach the receiver.
+        vm.deal(USER, 100 ether);
+        v4PositionManager.v4PoolManager().setSlot0SqrtPrice(_v4PoolId(), SQRT_PRICE_TICK_0);
+
+        MockKyberZapRouter.ZapPlan memory plan = _zapPlan(address(0), 5 ether, RECEIVER);
+        plan.refundAmount = 1 ether;
+
+        vm.prank(USER);
+        _depositKyberZap(5 ether, address(0), 5 ether, plan);
+
+        assertEq(RECEIVER.balance, 1 ether);
+        assertEq(address(kyberZapRouter).balance, 4 ether);
+        assertEq(address(forwarder).balance, 0);
+    }
+
+    function test_KyberZapV4_RevertPoolIdMismatch() public {
+        // The zap mints into a different pool than the campaign pool the caller committed to.
+        MockKyberZapRouter.ZapPlan memory plan = _zapPlan(address(token), 10 ether, USER);
+        plan.poolKey.fee = 500;
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.PoolIdMismatch.selector);
+        _depositKyberZap(0, address(token), 10 ether, plan);
+    }
+
+    function test_KyberZapV4_RevertOwnerMismatch() public {
+        // The zap mints the position to someone other than the receiver.
+        MockKyberZapRouter.ZapPlan memory plan = _zapPlan(address(token), 10 ether, USER);
+        plan.owner = ATTACKER;
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.PositionOwnerMismatch.selector);
+        forwarder.depositKyberZapV4(
+            IUniswapV4PositionManager(address(v4PositionManager)),
+            address(kyberZapRouter),
+            address(token),
+            10 ether,
+            abi.encodeCall(MockKyberZapRouter.zap, (plan)),
+            _v4PoolId(),
+            USER
+        );
+    }
+
+    function test_KyberZapV4_RevertNoMint() public {
+        MockKyberZapRouter.ZapPlan memory plan = _zapPlan(address(token), 10 ether, USER);
+        plan.mintCount = 0;
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.PositionMintCountMismatch.selector);
+        _depositKyberZap(0, address(token), 10 ether, plan);
+    }
+
+    function test_KyberZapV4_RevertMultipleMint() public {
+        MockKyberZapRouter.ZapPlan memory plan = _zapPlan(address(token), 10 ether, USER);
+        plan.mintCount = 2;
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.PositionMintCountMismatch.selector);
+        _depositKyberZap(0, address(token), 10 ether, plan);
+    }
+
+    function test_KyberZapV4_RevertRouterNotWhitelisted() public {
+        MockKyberZapRouter rogue = new MockKyberZapRouter(address(v4PositionManager));
+
+        vm.prank(USER);
+        vm.expectRevert(abi.encodeWithSelector(TBIForwarderAdapters.SwapRouterNotWhitelisted.selector, address(rogue)));
+        forwarder.depositKyberZapV4(
+            IUniswapV4PositionManager(address(v4PositionManager)),
+            address(rogue),
+            address(token),
+            10 ether,
+            abi.encodeCall(MockKyberZapRouter.zap, (_zapPlan(address(token), 10 ether, USER))),
+            _v4PoolId(),
+            USER
+        );
+    }
+
+    function test_KyberZapV4_RevertZeroReceiver() public {
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositKyberZapV4(
+            IUniswapV4PositionManager(address(v4PositionManager)),
+            address(kyberZapRouter),
+            address(token),
+            10 ether,
+            abi.encodeCall(MockKyberZapRouter.zap, (_zapPlan(address(token), 10 ether, USER))),
+            _v4PoolId(),
+            address(0)
+        );
+    }
+
+    function test_KyberZapV4_RevertEmptySwap() public {
+        // Zero input amount is rejected.
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.EmptySwap.selector);
+        _depositKyberZap(0, address(token), 0, _zapPlan(address(token), 0, USER));
+
+        // Empty zap calldata is rejected.
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.EmptySwap.selector);
+        forwarder.depositKyberZapV4(
+            IUniswapV4PositionManager(address(v4PositionManager)),
+            address(kyberZapRouter),
+            address(token),
+            10 ether,
+            "",
+            _v4PoolId(),
+            USER
+        );
+    }
+
+    function test_KyberZapV4_RevertWrongNativeValue() public {
+        vm.deal(USER, 100 ether);
+
+        // Native input requires msg.value == amountIn.
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
+        _depositKyberZap(4 ether, address(0), 5 ether, _zapPlan(address(0), 5 ether, USER));
+
+        // Stray ETH on an ERC-20 input is rejected.
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
+        _depositKyberZap(1, address(token), 10 ether, _zapPlan(address(token), 10 ether, USER));
+    }
+
+    function test_KyberZapV4_RevertOnReentrancy() public {
+        MockReentrantRouter rogue = new MockReentrantRouter(address(forwarder));
+        forwarder.setSwapRouterAllowed(address(rogue), true);
+
+        vm.prank(USER);
+        vm.expectRevert(abi.encodeWithSignature("Reentrancy()"));
+        forwarder.depositKyberZapV4(
+            IUniswapV4PositionManager(address(v4PositionManager)),
+            address(rogue),
+            address(token),
+            10 ether,
+            abi.encodeCall(
+                MockReentrantRouter.swap, (address(token), 10 ether, address(token1), 0, address(forwarder))
+            ),
+            _v4PoolId(),
+            USER
+        );
+    }
+
+    function test_KyberZapV4_BubblesRouterRevert() public {
+        MockRevertingRouter rogue = new MockRevertingRouter();
+        forwarder.setSwapRouterAllowed(address(rogue), true);
+
+        vm.prank(USER);
+        vm.expectRevert(bytes("router: swap failed"));
+        forwarder.depositKyberZapV4(
+            IUniswapV4PositionManager(address(v4PositionManager)),
+            address(rogue),
+            address(token),
+            10 ether,
+            abi.encodeCall(
+                MockRevertingRouter.swap, (address(token), 10 ether, address(token1), 0, address(forwarder))
+            ),
+            _v4PoolId(),
+            USER
+        );
     }
 }

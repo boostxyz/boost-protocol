@@ -8,7 +8,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
-import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
 /// @title TimeBasedIncentiveManager
@@ -28,6 +28,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Maximum number of root updates in a single batch
     uint256 public constant MAX_BATCH_SIZE = 50;
+
+    /// @notice Maximum referral fee in basis points of the protocol fee (2500 = 25%)
+    uint64 public constant MAX_REFERRAL_FEE_BPS = 2500;
 
     /// @notice The implementation contract used for cloning campaigns
     address public campaignImplementation;
@@ -61,8 +64,20 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Allocated padding for storage packing
     uint32 private __padding;
 
+    /// @notice Referral fee in basis points of the protocol fee, per campaign
+    mapping(uint256 => uint64) public campaignReferralFeeBps;
+
+    /// @notice Mapping of campaign ID to referral distributor clone (address(0) if none)
+    mapping(uint256 => address) public referralDistributors;
+
+    /// @notice The implementation contract used for cloning referral distributors
+    address public referralDistributorImplementation;
+
+    /// @notice Claim window duration passed to new referral distributors (default 60 days)
+    uint64 public referralClaimWindowDuration;
+
     /// @notice Allocated gap space for future variables
-    uint256[50] private __gap;
+    uint256[47] private __gap;
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(
@@ -113,6 +128,28 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when a campaign is finalized
     event CampaignFinalized(uint256 indexed campaignId);
+
+    /// @notice Emitted when a referral distributor is created and funded for a campaign
+    event ReferralDistributorCreated(
+        uint256 indexed campaignId, address indexed distributor, uint64 referralFeeBps, uint256 referralAmount
+    );
+
+    /// @notice Emitted when a campaign's referral root is published or corrected
+    event ReferralRootUpdated(uint256 indexed campaignId, bytes32 oldRoot, bytes32 newRoot, uint256 committedTotal);
+
+    /// @notice Emitted when a referrer claims from a campaign's referral pool
+    event ReferralClaimed(uint256 indexed campaignId, address indexed referrer, uint256 amount);
+
+    /// @notice Emitted when a campaign's remaining referral pool is swept
+    event ReferralPoolSwept(uint256 indexed campaignId, uint256 amount, address indexed destination);
+
+    /// @notice Emitted when the referral distributor implementation is updated
+    event ReferralDistributorImplementationUpdated(
+        address indexed oldImplementation, address indexed newImplementation
+    );
+
+    /// @notice Emitted when the referral claim window duration is updated
+    event ReferralClaimWindowDurationUpdated(uint64 oldDuration, uint64 newDuration);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -180,6 +217,15 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when campaign has not been finalized
     error CampaignNotFinalized();
 
+    /// @notice Error when the referral fee exceeds MAX_REFERRAL_FEE_BPS
+    error ReferralFeeTooHigh();
+
+    /// @notice Error when referral distributor implementation or claim window is not configured
+    error ReferralsNotConfigured();
+
+    /// @notice Error when a campaign has no referral distributor
+    error NoReferralDistributor();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -205,6 +251,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         maxCampaignDuration = 365 days;
         minCampaignDuration = 1 days;
         claimExpiryDuration = 60 days;
+        referralClaimWindowDuration = 60 days;
     }
 
     /// @notice Create a new time-based incentive campaign funded by a budget
@@ -214,6 +261,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param totalAmount Total reward amount (before protocol fee deduction)
     /// @param startTime Campaign start timestamp
     /// @param endTime Campaign end timestamp
+    /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
     /// @return campaignId The ID of the created campaign
     function createCampaign(
         ABudget budget,
@@ -221,7 +269,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         address rewardToken,
         uint256 totalAmount,
         uint64 startTime,
-        uint64 endTime
+        uint64 endTime,
+        uint64 referralFeeBps
     ) external returns (uint256 campaignId) {
         // Validate caller is authorized on budget
         if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
@@ -231,13 +280,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
         if (endTime <= startTime) revert EndTimeBeforeStart();
-        uint64 duration = endTime - startTime;
-        if (duration > maxCampaignDuration) revert DurationTooLong();
-        if (duration < minCampaignDuration) revert DurationTooShort();
-
-        // Calculate protocol fee
-        uint256 feeAmount = (totalAmount * protocolFee) / 10000;
-        uint256 netAmount = totalAmount - feeAmount;
+        if (referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
+        {
+            uint64 duration = endTime - startTime;
+            if (duration > maxCampaignDuration) revert DurationTooLong();
+            if (duration < minCampaignDuration) revert DurationTooShort();
+        }
 
         // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
@@ -245,52 +293,30 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         campaignId = ++campaignCount;
         campaigns[campaignId] = campaign;
 
-        // Disburse fee to protocol fee receiver (if fee > 0)
-        if (feeAmount > 0) {
-            uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
-            bytes memory feeTransfer = abi.encode(
-                ABudget.Transfer({
-                    assetType: ABudget.AssetType.ERC20,
-                    asset: rewardToken,
-                    target: protocolFeeReceiver,
-                    data: abi.encode(ABudget.FungiblePayload({amount: feeAmount}))
-                })
-            );
-            if (!budget.disburse(feeTransfer)) revert DisburseFailed();
-            if (SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver) - feeReceiverBefore != feeAmount) {
-                revert FeeOnTransferNotSupported();
-            }
-        }
-
-        // Disburse net rewards to campaign (skip if 0, e.g., 100% fee)
-        if (netAmount > 0) {
-            uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
-            bytes memory rewardTransfer = abi.encode(
-                ABudget.Transfer({
-                    assetType: ABudget.AssetType.ERC20,
-                    asset: rewardToken,
-                    target: campaign,
-                    data: abi.encode(ABudget.FungiblePayload({amount: netAmount}))
-                })
-            );
-            if (!budget.disburse(rewardTransfer)) revert DisburseFailed();
-            if (SafeTransferLib.balanceOf(rewardToken, campaign) - campaignBefore != netAmount) {
-                revert FeeOnTransferNotSupported();
-            }
-        }
+        // Split the protocol fee and fund the fee receiver, distributor, and campaign
+        (uint256 netAmount, uint256 referralAmount, address distributor) =
+            _splitAndFund(budget, rewardToken, totalAmount, referralFeeBps, campaign, campaignId);
 
         // Initialize the campaign
-        TimeBasedIncentiveCampaign(campaign).initialize(
-            address(this),
-            address(budget),
-            msg.sender,
-            configHash,
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime,
-            claimExpiryDuration
-        );
+        TimeBasedIncentiveCampaign(campaign)
+            .initialize(
+                address(this),
+                address(budget),
+                msg.sender,
+                configHash,
+                rewardToken,
+                netAmount,
+                startTime,
+                endTime,
+                claimExpiryDuration
+            );
+
+        // Initialize the distributor (reads the reward token from the campaign)
+        if (distributor != address(0)) {
+            ReferralDistributor(distributor)
+                .initialize(campaign, campaignId, referralAmount, referralClaimWindowDuration);
+            emit ReferralDistributorCreated(campaignId, distributor, referralFeeBps, referralAmount);
+        }
 
         emit CampaignCreated(
             campaignId,
@@ -312,6 +338,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param totalAmount Total reward amount (before protocol fee deduction)
     /// @param startTime Campaign start timestamp
     /// @param endTime Campaign end timestamp
+    /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
     /// @return campaignId The ID of the created campaign
     /// @dev Fee-on-transfer and rebasing tokens are not supported
     /// @dev Caller must approve this contract to transfer tokens before calling
@@ -320,26 +347,28 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         address rewardToken,
         uint256 totalAmount,
         uint64 startTime,
-        uint64 endTime
+        uint64 endTime,
+        uint64 referralFeeBps
     ) external returns (uint256 campaignId) {
         // Validate parameters
         if (rewardToken == address(0)) revert InvalidRewardToken();
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
         if (endTime <= startTime) revert EndTimeBeforeStart();
-        uint64 duration = endTime - startTime;
-        if (duration > maxCampaignDuration) revert DurationTooLong();
-        if (duration < minCampaignDuration) revert DurationTooShort();
-
-        // Calculate protocol fee
-        uint256 feeAmount = (totalAmount * protocolFee) / 10000;
-        uint256 netAmount = totalAmount - feeAmount;
+        if (referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
+        {
+            uint64 duration = endTime - startTime;
+            if (duration > maxCampaignDuration) revert DurationTooLong();
+            if (duration < minCampaignDuration) revert DurationTooShort();
+        }
 
         // Pull tokens from caller and verify full amount received
-        uint256 balanceBefore = SafeTransferLib.balanceOf(rewardToken, address(this));
-        rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
-        if (SafeTransferLib.balanceOf(rewardToken, address(this)) - balanceBefore != totalAmount) {
-            revert FeeOnTransferNotSupported();
+        {
+            uint256 balanceBefore = SafeTransferLib.balanceOf(rewardToken, address(this));
+            rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
+            if (SafeTransferLib.balanceOf(rewardToken, address(this)) - balanceBefore != totalAmount) {
+                revert FeeOnTransferNotSupported();
+            }
         }
 
         // Clone the campaign
@@ -348,36 +377,30 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         campaignId = ++campaignCount;
         campaigns[campaignId] = campaign;
 
-        // Transfer fee to protocol fee receiver (if fee > 0)
-        if (feeAmount > 0) {
-            uint256 feeReceiverBefore = SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver);
-            rewardToken.safeTransfer(protocolFeeReceiver, feeAmount);
-            if (SafeTransferLib.balanceOf(rewardToken, protocolFeeReceiver) - feeReceiverBefore != feeAmount) {
-                revert FeeOnTransferNotSupported();
-            }
-        }
-
-        // Transfer net rewards to campaign (skip if 0, e.g., 100% fee)
-        if (netAmount > 0) {
-            uint256 campaignBefore = SafeTransferLib.balanceOf(rewardToken, campaign);
-            rewardToken.safeTransfer(campaign, netAmount);
-            if (SafeTransferLib.balanceOf(rewardToken, campaign) - campaignBefore != netAmount) {
-                revert FeeOnTransferNotSupported();
-            }
-        }
+        // Split the protocol fee and fund the fee receiver, distributor, and campaign
+        (uint256 netAmount, uint256 referralAmount, address distributor) =
+            _splitAndFund(ABudget(payable(address(0))), rewardToken, totalAmount, referralFeeBps, campaign, campaignId);
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns
-        TimeBasedIncentiveCampaign(campaign).initialize(
-            address(this),
-            address(0),
-            msg.sender,
-            configHash,
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime,
-            claimExpiryDuration
-        );
+        TimeBasedIncentiveCampaign(campaign)
+            .initialize(
+                address(this),
+                address(0),
+                msg.sender,
+                configHash,
+                rewardToken,
+                netAmount,
+                startTime,
+                endTime,
+                claimExpiryDuration
+            );
+
+        // Initialize the distributor (reads the reward token from the campaign)
+        if (distributor != address(0)) {
+            ReferralDistributor(distributor)
+                .initialize(campaign, campaignId, referralAmount, referralClaimWindowDuration);
+            emit ReferralDistributorCreated(campaignId, distributor, referralFeeBps, referralAmount);
+        }
 
         emit CampaignCreated(
             campaignId,
@@ -393,11 +416,103 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         );
     }
 
+    /// @notice Split the protocol fee and fund the fee receiver, referral distributor, and campaign
+    /// @param budget The budget to disburse from (pass address(0) to transfer from this contract)
+    /// @param rewardToken The ERC20 reward token
+    /// @param totalAmount Total reward amount (before protocol fee deduction)
+    /// @param referralFeeBps Referral fee in basis points of the protocol fee
+    /// @param campaign The campaign clone to fund
+    /// @param campaignId The campaign ID
+    /// @return netAmount Rewards sent to the campaign (total minus fee, unchanged by referrals)
+    /// @return referralAmount Referral slice carved from the protocol fee
+    /// @return distributor The funded distributor clone (address(0) if the slice is 0)
+    function _splitAndFund(
+        ABudget budget,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 referralFeeBps,
+        address campaign,
+        uint256 campaignId
+    ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor) {
+        // The referral slice is carved from the fee, not the total, so the net reward
+        // budget is unchanged
+        uint256 feeAmount = (totalAmount * protocolFee) / 10000;
+        referralAmount = (feeAmount * referralFeeBps) / 10000;
+        uint256 protocolAmount = feeAmount - referralAmount;
+        netAmount = totalAmount - feeAmount;
+
+        // Fee to protocol fee receiver (if fee > 0)
+        if (protocolAmount > 0) {
+            _fund(budget, rewardToken, protocolFeeReceiver, protocolAmount);
+        }
+
+        // Referral slice to a freshly cloned distributor (if slice > 0)
+        if (referralAmount > 0) {
+            distributor = _cloneReferralDistributor(campaignId, referralFeeBps);
+            _fund(budget, rewardToken, distributor, referralAmount);
+        }
+
+        // Net rewards to campaign (skip if 0, e.g., 100% fee)
+        if (netAmount > 0) {
+            _fund(budget, rewardToken, campaign, netAmount);
+        }
+    }
+
+    /// @notice Send tokens to a target and verify the full amount was received
+    /// @param budget The budget to disburse from, or address(0) to transfer from this contract
+    /// @param token The ERC20 token to send
+    /// @param target The recipient
+    /// @param amount The amount to send
+    function _fund(ABudget budget, address token, address target, uint256 amount) internal {
+        uint256 balanceBefore = SafeTransferLib.balanceOf(token, target);
+        if (address(budget) == address(0)) {
+            token.safeTransfer(target, amount);
+        } else {
+            bytes memory transfer = abi.encode(
+                ABudget.Transfer({
+                    assetType: ABudget.AssetType.ERC20,
+                    asset: token,
+                    target: target,
+                    data: abi.encode(ABudget.FungiblePayload({amount: amount}))
+                })
+            );
+            if (!budget.disburse(transfer)) revert DisburseFailed();
+        }
+        if (SafeTransferLib.balanceOf(token, target) - balanceBefore != amount) {
+            revert FeeOnTransferNotSupported();
+        }
+    }
+
+    /// @notice Clone and register a referral distributor for a campaign
+    /// @param campaignId The campaign ID
+    /// @param referralFeeBps Referral fee in basis points of the protocol fee
+    /// @return distributor The cloned (not yet initialized) distributor
+    /// @dev Reverts until the owner configures the distributor implementation and a
+    ///      non-zero claim window, so referrals ship dark on upgraded deployments
+    function _cloneReferralDistributor(uint256 campaignId, uint64 referralFeeBps)
+        internal
+        returns (address distributor)
+    {
+        if (referralDistributorImplementation == address(0) || referralClaimWindowDuration == 0) {
+            revert ReferralsNotConfigured();
+        }
+        distributor = LibClone.clone(referralDistributorImplementation);
+        referralDistributors[campaignId] = distributor;
+        campaignReferralFeeBps[campaignId] = referralFeeBps;
+    }
+
     /// @notice Get a campaign contract by ID
     /// @param campaignId The campaign ID
     /// @return The campaign contract address
     function getCampaign(uint256 campaignId) external view returns (address) {
         return campaigns[campaignId];
+    }
+
+    /// @notice Get the referral distributor for a campaign
+    /// @param campaignId The campaign ID
+    /// @return The distributor address (address(0) if the campaign has no referral fee)
+    function getReferralDistributor(uint256 campaignId) external view returns (address) {
+        return referralDistributors[campaignId];
     }
 
     /// @notice Set the protocol fee
@@ -511,6 +626,24 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignImplementationUpdated(oldImplementation, campaignImpl_);
     }
 
+    /// @notice Set the referral distributor implementation (enables referral campaigns)
+    /// @param distributorImpl_ New referral distributor implementation for cloning
+    function setReferralDistributorImplementation(address distributorImpl_) external onlyOwner {
+        if (distributorImpl_ == address(0)) revert InvalidImplementation();
+        address oldImplementation = referralDistributorImplementation;
+        referralDistributorImplementation = distributorImpl_;
+        emit ReferralDistributorImplementationUpdated(oldImplementation, distributorImpl_);
+    }
+
+    /// @notice Set the referral claim window duration passed to new distributors
+    /// @param duration_ New duration in seconds (minimum 1 day)
+    function setReferralClaimWindowDuration(uint64 duration_) external onlyOwner {
+        if (duration_ < 1 days) revert ClaimExpiryDurationTooShort();
+        uint64 oldDuration = referralClaimWindowDuration;
+        referralClaimWindowDuration = duration_;
+        emit ReferralClaimWindowDurationUpdated(oldDuration, duration_);
+    }
+
     /// @notice Claim rewards from a campaign using a merkle proof
     /// @param campaignId The campaign ID to claim from
     /// @param user The user to claim rewards for
@@ -523,6 +656,48 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 amount = TimeBasedIncentiveCampaign(campaign).processClaim(user, cumulativeAmount, proof);
 
         emit Claimed(campaignId, user, amount, cumulativeAmount);
+    }
+
+    /// @notice Publish or correct the referral merkle root for a campaign
+    /// @param campaignId The campaign ID
+    /// @param root The referral merkle root
+    /// @param committedTotal Total amount committed to referrers in the tree
+    /// @dev The distributor enforces finalization, window, and commitment accounting
+    function setReferralRoot(uint256 campaignId, bytes32 root, uint256 committedTotal) external {
+        if (msg.sender != owner() && msg.sender != operator) revert NotAuthorized();
+
+        address distributor = referralDistributors[campaignId];
+        if (distributor == address(0)) revert NoReferralDistributor();
+
+        bytes32 oldRoot = ReferralDistributor(distributor).setReferralRoot(root, committedTotal);
+
+        emit ReferralRootUpdated(campaignId, oldRoot, root, committedTotal);
+    }
+
+    /// @notice Claim a referral payout from a campaign's distributor
+    /// @param campaignId The campaign ID
+    /// @param referrer The referrer to pay
+    /// @param amount The amount the referrer is entitled to
+    /// @param proof The merkle proof validating the claim
+    function claimReferral(uint256 campaignId, address referrer, uint256 amount, bytes32[] calldata proof) external {
+        address distributor = referralDistributors[campaignId];
+        if (distributor == address(0)) revert NoReferralDistributor();
+
+        ReferralDistributor(distributor).claimReferral(referrer, amount, proof);
+
+        emit ReferralClaimed(campaignId, referrer, amount);
+    }
+
+    /// @notice Sweep a campaign's remaining referral pool to the protocol fee receiver
+    /// @param campaignId The campaign ID
+    /// @dev Permissionless; the distributor enforces the claim window has elapsed
+    function sweepReferralPool(uint256 campaignId) external {
+        address distributor = referralDistributors[campaignId];
+        if (distributor == address(0)) revert NoReferralDistributor();
+
+        uint256 amount = ReferralDistributor(distributor).sweepReferralPool(protocolFeeReceiver);
+
+        emit ReferralPoolSwept(campaignId, amount, protocolFeeReceiver);
     }
 
     /// @notice Cancel a campaign (emergency use - sets endTime to now)
@@ -600,6 +775,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "2.1.0";
+        return "2.2.0";
     }
 }

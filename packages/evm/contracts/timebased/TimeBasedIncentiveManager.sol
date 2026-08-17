@@ -261,6 +261,27 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param totalAmount Total reward amount (before protocol fee deduction)
     /// @param startTime Campaign start timestamp
     /// @param endTime Campaign end timestamp
+    /// @return campaignId The ID of the created campaign
+    /// @dev Legacy overload preserving the pre-referral selector; creates the campaign
+    ///      with no referral fee so existing callers keep working across the upgrade
+    function createCampaign(
+        ABudget budget,
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime
+    ) external returns (uint256 campaignId) {
+        return _createCampaign(budget, configHash, rewardToken, totalAmount, startTime, endTime, 0);
+    }
+
+    /// @notice Create a new time-based incentive campaign funded by a budget
+    /// @param budget The budget to fund the campaign from
+    /// @param configHash Hash of the off-chain campaign configuration
+    /// @param rewardToken The ERC20 token for rewards
+    /// @param totalAmount Total reward amount (before protocol fee deduction)
+    /// @param startTime Campaign start timestamp
+    /// @param endTime Campaign end timestamp
     /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
     /// @return campaignId The ID of the created campaign
     function createCampaign(
@@ -272,6 +293,19 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 endTime,
         uint64 referralFeeBps
     ) external returns (uint256 campaignId) {
+        return _createCampaign(budget, configHash, rewardToken, totalAmount, startTime, endTime, referralFeeBps);
+    }
+
+    /// @notice Create a new campaign funded by a budget (shared by both overloads)
+    function _createCampaign(
+        ABudget budget,
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime,
+        uint64 referralFeeBps
+    ) internal returns (uint256 campaignId) {
         // Validate caller is authorized on budget
         if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
 
@@ -338,6 +372,25 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param totalAmount Total reward amount (before protocol fee deduction)
     /// @param startTime Campaign start timestamp
     /// @param endTime Campaign end timestamp
+    /// @return campaignId The ID of the created campaign
+    /// @dev Legacy overload preserving the pre-referral selector; creates the campaign
+    ///      with no referral fee so existing callers keep working across the upgrade
+    function createCampaignDirect(
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime
+    ) external returns (uint256 campaignId) {
+        return _createCampaignDirect(configHash, rewardToken, totalAmount, startTime, endTime, 0);
+    }
+
+    /// @notice Create a new time-based incentive campaign with direct token transfer
+    /// @param configHash Hash of the off-chain campaign configuration
+    /// @param rewardToken The ERC20 token for rewards
+    /// @param totalAmount Total reward amount (before protocol fee deduction)
+    /// @param startTime Campaign start timestamp
+    /// @param endTime Campaign end timestamp
     /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
     /// @return campaignId The ID of the created campaign
     /// @dev Fee-on-transfer and rebasing tokens are not supported
@@ -350,6 +403,18 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 endTime,
         uint64 referralFeeBps
     ) external returns (uint256 campaignId) {
+        return _createCampaignDirect(configHash, rewardToken, totalAmount, startTime, endTime, referralFeeBps);
+    }
+
+    /// @notice Create a new direct-funded campaign (shared by both overloads)
+    function _createCampaignDirect(
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime,
+        uint64 referralFeeBps
+    ) internal returns (uint256 campaignId) {
         // Validate parameters
         if (rewardToken == address(0)) revert InvalidRewardToken();
         if (totalAmount == 0) revert ZeroAmount();
@@ -585,8 +650,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit RootUpdated(campaignId, oldRoot, root, totalCommitted);
 
         if (finalize && !TimeBasedIncentiveCampaign(campaign).finalized()) {
-            TimeBasedIncentiveCampaign(campaign).setFinalized();
-            emit CampaignFinalized(campaignId);
+            _finalizeCampaign(campaignId, campaign);
         }
     }
 
@@ -611,10 +675,24 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             emit RootUpdated(updates[i].campaignId, oldRoot, updates[i].root, updates[i].totalCommitted);
 
             if (updates[i].finalize && !TimeBasedIncentiveCampaign(campaign).finalized()) {
-                TimeBasedIncentiveCampaign(campaign).setFinalized();
-                emit CampaignFinalized(updates[i].campaignId);
+                _finalizeCampaign(updates[i].campaignId, campaign);
             }
         }
+    }
+
+    /// @notice Finalize a campaign and record the finalization on its referral distributor
+    /// @param campaignId The campaign ID
+    /// @param campaign The campaign contract address
+    /// @dev Recording finalizedAt on the distributor starts its no-root sweep clock
+    function _finalizeCampaign(uint256 campaignId, address campaign) internal {
+        TimeBasedIncentiveCampaign(campaign).setFinalized();
+
+        address distributor = referralDistributors[campaignId];
+        if (distributor != address(0)) {
+            ReferralDistributor(distributor).recordFinalized();
+        }
+
+        emit CampaignFinalized(campaignId);
     }
 
     /// @notice Set the campaign implementation address (for upgrades)

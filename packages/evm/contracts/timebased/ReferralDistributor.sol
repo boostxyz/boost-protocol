@@ -32,6 +32,9 @@ contract ReferralDistributor is Initializable {
     /// @notice Timestamp after which claims are no longer valid (0 until first root publish)
     uint64 public claimWindowEnd;
 
+    /// @notice Timestamp when the campaign's finalization was recorded (0 until recorded)
+    uint64 public finalizedAt;
+
     /// @notice The ERC20 token referrals are paid in (the campaign's reward token)
     address public referralToken;
 
@@ -69,6 +72,9 @@ contract ReferralDistributor is Initializable {
 
     /// @notice Emitted when the referral root is published or corrected
     event ReferralRootUpdated(bytes32 oldRoot, bytes32 newRoot, uint256 committedTotal, uint64 claimWindowEnd);
+
+    /// @notice Emitted when the campaign's finalization is recorded
+    event FinalizationRecorded(uint64 finalizedAt);
 
     /// @notice Emitted when a referrer is paid
     event ReferralClaimed(address indexed referrer, uint256 amount);
@@ -115,6 +121,9 @@ contract ReferralDistributor is Initializable {
     /// @notice Error when the sweep destination is the zero address
     error ZeroSweepDestination();
 
+    /// @notice Error when the claim window duration is zero
+    error InvalidClaimWindow();
+
     /// @notice Disable initialization on the implementation contract
     constructor() {
         _disableInitializers();
@@ -131,6 +140,7 @@ contract ReferralDistributor is Initializable {
     {
         address manager = TimeBasedIncentiveCampaign(campaign_).timeBasedIncentiveManager();
         if (msg.sender != manager) revert OnlyTimeBasedIncentiveManager();
+        if (claimWindowDuration_ == 0) revert InvalidClaimWindow();
 
         timeBasedIncentiveManager = manager;
         campaign = campaign_;
@@ -152,6 +162,19 @@ contract ReferralDistributor is Initializable {
             if (msg.sender != manager.owner() && msg.sender != manager.operator()) revert NotAuthorized();
         }
         _;
+    }
+
+    /// @notice Record the campaign's finalization time, starting the no-root sweep clock
+    /// @dev Permissionless and idempotent — the manager calls this when it finalizes the
+    ///      campaign, and anyone may call it once the campaign reports finalized. Until
+    ///      recorded, a distributor with no published root cannot be swept
+    function recordFinalized() external {
+        if (finalizedAt != 0) return;
+        if (!TimeBasedIncentiveCampaign(campaign).finalized()) revert CampaignNotFinalized();
+
+        finalizedAt = uint64(block.timestamp);
+
+        emit FinalizationRecorded(finalizedAt);
     }
 
     /// @notice Publish the referral merkle root and start the claim window
@@ -214,15 +237,17 @@ contract ReferralDistributor is Initializable {
     /// @return amount The amount swept
     /// @dev If a root was published, sweepable once its claim window ends. If no root
     ///      was ever published (e.g. a cancelled campaign), sweepable once a full
-    ///      claim-window duration has elapsed past the campaign's end time, which
-    ///      sweeps the full pool
+    ///      claim-window duration has elapsed past the recorded finalization time,
+    ///      which sweeps the full pool. Gating the no-root path on finalization means
+    ///      a sweep can never preempt a root the operator could still publish
     function sweepReferralPool(address to) external onlyAuthorized returns (uint256 amount) {
         if (to == address(0)) revert ZeroSweepDestination();
 
         if (claimWindowEnd != 0) {
             if (block.timestamp <= claimWindowEnd) revert SweepNotReady();
         } else {
-            uint256 deadline = uint256(TimeBasedIncentiveCampaign(campaign).endTime()) + uint256(claimWindowDuration);
+            if (finalizedAt == 0) revert CampaignNotFinalized();
+            uint256 deadline = uint256(finalizedAt) + uint256(claimWindowDuration);
             if (block.timestamp <= deadline) revert SweepNotReady();
         }
 

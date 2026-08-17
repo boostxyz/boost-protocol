@@ -233,6 +233,18 @@ contract TimeBasedIncentiveManagerReferralsTest is Test {
         );
     }
 
+    function test_CreateCampaign_LegacySelectorNoReferralFee() public {
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+        vm.prank(CREATOR);
+        uint256 campaignId =
+            manager.createCampaign(budget, keccak256("legacy"), address(rewardToken), 10 ether, startTime, endTime);
+
+        assertEq(manager.getReferralDistributor(campaignId), address(0), "Legacy calls should create no distributor");
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 1 ether, "Full fee should go to the fee receiver");
+        assertEq(rewardToken.balanceOf(manager.getCampaign(campaignId)), 9 ether, "Campaign should get net rewards");
+    }
+
     ////////////////////////////////
     // Fee split - createCampaignDirect
     ////////////////////////////////
@@ -256,6 +268,51 @@ contract TimeBasedIncentiveManagerReferralsTest is Test {
         assertEq(rewardToken.balanceOf(manager.getCampaign(campaignId)), 9 ether, "Campaign should get net rewards");
         assertEq(rewardToken.balanceOf(address(manager)), 0, "Manager should hold nothing after the split");
         assertEq(ReferralDistributor(dist).referralPool(), 0.2 ether, "Distributor pool should equal the slice");
+    }
+
+    function test_CreateCampaignDirect_LegacySelectorNoReferralFee() public {
+        rewardToken.mint(CREATOR, 10 ether);
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        vm.startPrank(CREATOR);
+        rewardToken.approve(address(manager), 10 ether);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("legacy-direct"), address(rewardToken), 10 ether, startTime, endTime
+        );
+        vm.stopPrank();
+
+        assertEq(manager.getReferralDistributor(campaignId), address(0), "Legacy calls should create no distributor");
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 1 ether, "Full fee should go to the fee receiver");
+        assertEq(rewardToken.balanceOf(manager.getCampaign(campaignId)), 9 ether, "Campaign should get net rewards");
+    }
+
+    ////////////////////////////////
+    // Finalization recording
+    ////////////////////////////////
+
+    function test_Finalize_RecordsFinalizationOnDistributor() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign, ReferralDistributor dist) =
+            _createReferralCampaign(REFERRAL_FEE_BPS);
+        assertEq(dist.finalizedAt(), 0, "Finalization should not be recorded yet");
+
+        _finalize(campaignId, campaign);
+
+        assertEq(dist.finalizedAt(), uint64(block.timestamp), "Finalizing should stamp the distributor");
+    }
+
+    function test_FinalizeBatch_RecordsFinalizationOnDistributor() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign, ReferralDistributor dist) =
+            _createReferralCampaign(REFERRAL_FEE_BPS);
+
+        vm.warp(campaign.endTime() + 1);
+        TimeBasedIncentiveManager.RootUpdate[] memory updates = new TimeBasedIncentiveManager.RootUpdate[](1);
+        updates[0] = TimeBasedIncentiveManager.RootUpdate({
+            campaignId: campaignId, root: keccak256("reward-root"), totalCommitted: 0, finalize: true
+        });
+        manager.updateRootsBatch(updates);
+
+        assertEq(dist.finalizedAt(), uint64(block.timestamp), "Batch finalize should stamp the distributor");
     }
 
     ////////////////////////////////
@@ -362,6 +419,34 @@ contract TimeBasedIncentiveManagerReferralsTest is Test {
 
         vm.expectRevert(ReferralDistributor.SweepNotReady.selector);
         manager.sweepReferralPool(campaignId);
+    }
+
+    function test_SweepReferralPool_ViaManager_NoRootWaitsForFinalization() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign, ReferralDistributor dist) =
+            _createReferralCampaign(REFERRAL_FEE_BPS);
+
+        // Before finalization the no-root pool cannot be swept, no matter the time
+        vm.warp(uint256(campaign.endTime()) + 61 days);
+        vm.expectRevert(ReferralDistributor.CampaignNotFinalized.selector);
+        manager.sweepReferralPool(campaignId);
+
+        manager.updateRoot(campaignId, keccak256("reward-root"), 0, true);
+
+        // The sweep clock runs from the recorded finalization, not the end time
+        vm.warp(uint256(dist.finalizedAt()) + 60 days);
+        vm.expectRevert(ReferralDistributor.SweepNotReady.selector);
+        manager.sweepReferralPool(campaignId);
+
+        uint256 receiverBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
+        vm.warp(uint256(dist.finalizedAt()) + 60 days + 1);
+        vm.prank(RANDO);
+        manager.sweepReferralPool(campaignId);
+
+        assertEq(
+            rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER) - receiverBefore,
+            0.2 ether,
+            "Full pool should sweep after the post-finalization window"
+        );
     }
 
     ////////////////////////////////

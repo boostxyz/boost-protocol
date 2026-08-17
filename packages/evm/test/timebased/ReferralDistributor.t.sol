@@ -222,6 +222,15 @@ contract ReferralDistributorTest is Test {
         dist.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
     }
 
+    function test_Initialize_RevertZeroClaimWindow() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaign();
+
+        ReferralDistributor dist = ReferralDistributor(LibClone.clone(address(distributorImpl)));
+        vm.prank(address(manager));
+        vm.expectRevert(ReferralDistributor.InvalidClaimWindow.selector);
+        dist.initialize(address(campaign), campaignId, REFERRAL_POOL, 0);
+    }
+
     function test_Initialize_RevertWhenAlreadyInitialized() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaign();
         ReferralDistributor dist = _deployDistributor(campaignId, address(campaign));
@@ -237,6 +246,34 @@ contract ReferralDistributorTest is Test {
         vm.prank(address(manager));
         vm.expectRevert();
         distributorImpl.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
+    }
+
+    ////////////////////////////////
+    // recordFinalized
+    ////////////////////////////////
+
+    function test_RecordFinalized_RevertWhenNotFinalized() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaign();
+        ReferralDistributor dist = _deployDistributor(campaignId, address(campaign));
+
+        vm.expectRevert(ReferralDistributor.CampaignNotFinalized.selector);
+        dist.recordFinalized();
+    }
+
+    function test_RecordFinalized_PermissionlessAndIdempotent() public {
+        (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
+
+        vm.prank(RANDO);
+        vm.expectEmit(true, true, true, true);
+        emit ReferralDistributor.FinalizationRecorded(uint64(block.timestamp));
+        dist.recordFinalized();
+        uint64 recordedAt = dist.finalizedAt();
+        assertEq(recordedAt, uint64(block.timestamp), "Finalization time should be recorded");
+
+        // A later call is a no-op and does not move the sweep clock
+        vm.warp(block.timestamp + 10 days);
+        dist.recordFinalized();
+        assertEq(dist.finalizedAt(), recordedAt, "Recorded time should not change");
     }
 
     ////////////////////////////////
@@ -345,10 +382,11 @@ contract ReferralDistributorTest is Test {
     }
 
     function test_SetReferralRoot_RevertAfterSweep() public {
-        (, TimeBasedIncentiveCampaign campaign, ReferralDistributor dist) = _createFinalizedWithDistributor();
+        (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
+        dist.recordFinalized();
 
         // No root ever published; sweep after the no-root deadline, then try to publish
-        vm.warp(uint256(campaign.endTime()) + CLAIM_WINDOW + 1);
+        vm.warp(uint256(dist.finalizedAt()) + CLAIM_WINDOW + 1);
         vm.prank(OPERATOR);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
@@ -625,19 +663,41 @@ contract ReferralDistributorTest is Test {
         manager.cancelCampaign(campaignId);
         uint64 cancelTime = campaign.endTime();
 
-        // Not sweepable until a full claim-window duration past the (moved-up) end time
-        vm.warp(uint256(cancelTime) + CLAIM_WINDOW);
+        // Not sweepable until the cancellation is finalized and recorded, no matter
+        // how much time has passed since the (moved-up) end time
+        vm.warp(uint256(cancelTime) + CLAIM_WINDOW + 1);
+        vm.prank(OPERATOR);
+        vm.expectRevert(ReferralDistributor.CampaignNotFinalized.selector);
+        dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
+
+        manager.updateRoot(campaignId, keccak256("reward-root"), 0, true);
+        dist.recordFinalized();
+        uint64 finalizedAt = dist.finalizedAt();
+
+        // Not sweepable until a full claim-window duration past the recorded finalization
+        vm.warp(uint256(finalizedAt) + CLAIM_WINDOW);
         vm.prank(OPERATOR);
         vm.expectRevert(ReferralDistributor.SweepNotReady.selector);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
         uint256 receiverBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
-        vm.warp(uint256(cancelTime) + CLAIM_WINDOW + 1);
+        vm.warp(uint256(finalizedAt) + CLAIM_WINDOW + 1);
         vm.prank(OPERATOR);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
         assertEq(
             rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER) - receiverBefore, REFERRAL_POOL, "Full pool should be swept"
         );
+    }
+
+    function test_Sweep_NoRoot_RevertWhenFinalizationNotRecorded() public {
+        (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
+
+        // Campaign is finalized but never recorded on the distributor, so the
+        // no-root sweep clock has not started
+        vm.warp(block.timestamp + CLAIM_WINDOW + 1);
+        vm.prank(OPERATOR);
+        vm.expectRevert(ReferralDistributor.CampaignNotFinalized.selector);
+        dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
     }
 }

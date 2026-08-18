@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test} from "lib/forge-std/src/Test.sol";
 
+import {Initializable} from "@solady/utils/Initializable.sol";
 import {LibClone} from "@solady/utils/LibClone.sol";
 
 import {MockERC20} from "contracts/shared/Mocks.sol";
@@ -236,7 +237,7 @@ contract ReferralDistributorTest is Test {
         ReferralDistributor dist = _deployDistributor(campaignId, address(campaign));
 
         vm.prank(address(manager));
-        vm.expectRevert();
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
         dist.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
     }
 
@@ -244,7 +245,7 @@ contract ReferralDistributorTest is Test {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaign();
 
         vm.prank(address(manager));
-        vm.expectRevert();
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
         distributorImpl.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
     }
 

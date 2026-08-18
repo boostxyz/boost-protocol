@@ -706,8 +706,11 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Set the referral distributor implementation (enables referral campaigns)
     /// @param distributorImpl_ New referral distributor implementation for cloning
+    /// @dev Requires deployed bytecode (which also rejects the zero address): a clone of a
+    ///      codeless implementation delegatecalls into empty code, so its initialize would
+    ///      silently no-op and referral funding sent to the clone would be unreachable
     function setReferralDistributorImplementation(address distributorImpl_) external onlyOwner {
-        if (distributorImpl_ == address(0)) revert InvalidImplementation();
+        if (distributorImpl_.code.length == 0) revert InvalidImplementation();
         address oldImplementation = referralDistributorImplementation;
         referralDistributorImplementation = distributorImpl_;
         emit ReferralDistributorImplementationUpdated(oldImplementation, distributorImpl_);

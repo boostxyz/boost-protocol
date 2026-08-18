@@ -464,6 +464,11 @@ contract TimeBasedIncentiveManagerReferralsTest is Test {
         vm.expectRevert(TimeBasedIncentiveManager.InvalidImplementation.selector);
         manager.setReferralDistributorImplementation(address(0));
 
+        // A codeless implementation would make clones delegatecall into empty code,
+        // silently no-op initialize, and strand the referral funding sent to the clone
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidImplementation.selector);
+        manager.setReferralDistributorImplementation(RANDO);
+
         vm.prank(RANDO);
         vm.expectRevert(Ownable.Unauthorized.selector);
         manager.setReferralDistributorImplementation(newImpl);

@@ -281,6 +281,46 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         emit Deposit(receiver, address(pool), asset, amount);
     }
 
+    /// @notice Supply into an Aave v4 Spoke on behalf of receiver, routed through the
+    /// governance-registered GiverPositionManager (the Spoke's `supply(onBehalfOf)` only accepts
+    /// the user's approved position managers, so the forwarder cannot supply for a user directly).
+    /// @dev Requires `receiver` to have approved the Giver as a position manager on the Spoke
+    /// (`setUserPositionManager(giver, true)`, bundled by the frontend flow); without it the
+    /// Spoke's revert surfaces unchanged. A mismatched `asset`/`reserveId` pairing reverts inside
+    /// the Giver's pull/supply, so no funds path exists for a wrong asset.
+    ///
+    /// Unlike the other adapters, the contract called (the Giver) is not the contract emitted
+    /// (the Spoke), so the Giver cannot be trusted implicitly: it is authenticated against the
+    /// Spoke's own governance registry (`isPositionManagerActive`) before any funds move. A forged
+    /// `spoke` can vouch for a forged giver, but then the emitted `ledger` is that forged address,
+    /// which the indexer ignores — it only follows canonical Spokes. Emits `LedgerDeposit` (not
+    /// the generic `Deposit`) as the single indexer signal.
+    /// @param giver The Aave v4 GiverPositionManager
+    /// @param spoke The Aave v4 Spoke holding the reserve — emitted as the `ledger`
+    /// @param reserveId The Spoke's reserve id for `asset` — emitted as the `marketKey`
+    /// @param asset The reserve's underlying asset to supply
+    /// @param amount The amount of `asset` to supply
+    /// @param receiver The account credited with the supplied position
+    function depositAaveV4(
+        IGiverPositionManager giver,
+        address spoke,
+        uint256 reserveId,
+        address asset,
+        uint256 amount,
+        address receiver
+    ) external {
+        _requireReceiver(receiver);
+        if (!IAaveV4Spoke(spoke).isPositionManagerActive(address(giver))) {
+            revert GiverNotActivePositionManager(address(giver));
+        }
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+        asset.safeApproveWithRetry(address(giver), amount);
+        giver.supplyOnBehalfOf(spoke, reserveId, amount, receiver);
+        asset.safeApprove(address(giver), 0);
+
+        emit LedgerDeposit(receiver, spoke, reserveId, amount);
+    }
+
     /// @notice Supply into a Compound v3 Comet on behalf of receiver
     /// @param comet The Comet contract
     /// @param asset The underlying asset to supply

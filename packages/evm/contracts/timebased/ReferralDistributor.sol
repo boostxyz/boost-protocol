@@ -6,16 +6,18 @@ import {MerkleProofLib} from "@solady/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
-import {TimeBasedIncentiveManager} from "contracts/timebased/TimeBasedIncentiveManager.sol";
 
 /// @title ReferralDistributor
 /// @notice Per-campaign clone that holds the referral fee pool and pays referrers
 ///         against an operator-published merkle root
 /// @dev Deployed as minimal proxy by TimeBasedIncentiveManager when a campaign is
-///      created with a non-zero referral fee. Referral leaves are domain-separated
-///      from reward leaves: they are 4-field (campaignId, referrer, token, amount)
-///      versus the campaign's 3-field (user, token, cumulativeAmount), so a reward
-///      proof can never verify against a referral root
+///      created with a non-zero referral fee. Root publishes, claims, and sweeps are
+///      only callable by the manager, whose wrappers apply access control and emit the
+///      campaign-scoped events, so every referral action indexes from one address.
+///      Referral leaves are domain-separated from reward leaves: they are 4-field
+///      (campaignId, referrer, token, amount) versus the campaign's 3-field
+///      (user, token, cumulativeAmount), so a reward proof can never verify against
+///      a referral root
 contract ReferralDistributor is Initializable {
     /// @notice The TimeBasedIncentiveManager that deployed this distributor
     address public timeBasedIncentiveManager;
@@ -85,9 +87,6 @@ contract ReferralDistributor is Initializable {
     /// @notice Error when caller is not the TimeBasedIncentiveManager
     error OnlyTimeBasedIncentiveManager();
 
-    /// @notice Error when caller is not the manager's owner or operator
-    error NotAuthorized();
-
     /// @notice Error when the campaign has not been finalized
     error CampaignNotFinalized();
 
@@ -154,13 +153,9 @@ contract ReferralDistributor is Initializable {
         );
     }
 
-    /// @notice Modifier to restrict access to the manager (whose wrappers enforce their
-    ///         own gating) or the manager's owner or operator directly
-    modifier onlyAuthorized() {
-        if (msg.sender != timeBasedIncentiveManager) {
-            TimeBasedIncentiveManager manager = TimeBasedIncentiveManager(timeBasedIncentiveManager);
-            if (msg.sender != manager.owner() && msg.sender != manager.operator()) revert NotAuthorized();
-        }
+    /// @notice Modifier to restrict access to the TimeBasedIncentiveManager
+    modifier onlyTimeBasedIncentiveManager() {
+        if (msg.sender != timeBasedIncentiveManager) revert OnlyTimeBasedIncentiveManager();
         _;
     }
 
@@ -186,7 +181,11 @@ contract ReferralDistributor is Initializable {
     ///      correct errors without restarting it. Every publish enforces
     ///      committedTotal <= referralPool - totalClaimed so a corrected root cannot
     ///      over-commit the pool net of amounts already paid out
-    function setReferralRoot(bytes32 root, uint256 committedTotal_) external onlyAuthorized returns (bytes32 oldRoot) {
+    function setReferralRoot(bytes32 root, uint256 committedTotal_)
+        external
+        onlyTimeBasedIncentiveManager
+        returns (bytes32 oldRoot)
+    {
         if (swept) revert PoolAlreadySwept();
         if (!TimeBasedIncentiveCampaign(campaign).finalized()) revert CampaignNotFinalized();
         if (claimWindowEnd != 0 && block.timestamp > claimWindowEnd) revert ClaimWindowClosed();
@@ -208,10 +207,14 @@ contract ReferralDistributor is Initializable {
     /// @param referrer The referrer to pay
     /// @param amount The amount the referrer is entitled to
     /// @param proof The merkle proof validating the claim
-    /// @dev Permissionless — anyone may claim on a referrer's behalf; tokens always go
-    ///      to the referrer. One-shot per referrer, and the flag is set before the
-    ///      transfer so a reentrant token cannot double-pay
-    function claimReferral(address referrer, uint256 amount, bytes32[] calldata proof) external {
+    /// @dev Only the manager may call this; its permissionless wrapper lets anyone claim
+    ///      on a referrer's behalf, and tokens always go to the referrer. One-shot per
+    ///      referrer, and the flag is set before the transfer so a reentrant token
+    ///      cannot double-pay
+    function claimReferral(address referrer, uint256 amount, bytes32[] calldata proof)
+        external
+        onlyTimeBasedIncentiveManager
+    {
         if (claimWindowEnd == 0 || block.timestamp > claimWindowEnd) revert ClaimWindowClosed();
         if (claimed[referrer]) revert AlreadyClaimed();
         if (amount == 0) revert NothingToClaim();
@@ -240,7 +243,7 @@ contract ReferralDistributor is Initializable {
     ///      claim-window duration has elapsed past the recorded finalization time,
     ///      which sweeps the full pool. Gating the no-root path on finalization means
     ///      a sweep can never preempt a root the operator could still publish
-    function sweepReferralPool(address to) external onlyAuthorized returns (uint256 amount) {
+    function sweepReferralPool(address to) external onlyTimeBasedIncentiveManager returns (uint256 amount) {
         if (to == address(0)) revert ZeroSweepDestination();
 
         if (claimWindowEnd != 0) {

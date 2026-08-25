@@ -86,6 +86,50 @@ contract MockAToken is ERC20 {
     }
 }
 
+/// @notice Minimal Aave v4 Spoke mock. Mirrors the three behaviors the adapter depends on:
+/// governance's registry of active position managers (`isPositionManagerActive`, which the adapter
+/// authenticates the Giver against), the per-user gate on `supply(onBehalfOf)` (the
+/// `onlyPositionManager` check users opt into via `setUserPositionManager`), and a reserve id
+/// mapping to its underlying asset. Supplied balances are tracked 1:1 per user.
+contract MockAaveV4Spoke {
+    error PositionManagerNotApproved();
+
+    mapping(uint256 => address) public reserveAsset;
+    mapping(address => bool) public isPositionManagerActive;
+    mapping(address => mapping(address => bool)) public userPositionManagers;
+    mapping(address => uint256) public suppliedBalance;
+
+    function setReserveAsset(uint256 reserveId, address asset) external {
+        reserveAsset[reserveId] = asset;
+    }
+
+    function setPositionManagerActive(address positionManager, bool active) external {
+        isPositionManagerActive[positionManager] = active;
+    }
+
+    function setUserPositionManager(address positionManager, bool approved) external {
+        userPositionManagers[msg.sender][positionManager] = approved;
+    }
+
+    function supply(uint256 reserveId, uint256 amount, address onBehalfOf) external {
+        if (!userPositionManagers[onBehalfOf][msg.sender]) revert PositionManagerNotApproved();
+        ERC20(reserveAsset[reserveId]).transferFrom(msg.sender, address(this), amount);
+        suppliedBalance[onBehalfOf] += amount;
+    }
+}
+
+/// @notice Minimal Aave v4 GiverPositionManager mock — pulls the reserve's underlying from the
+/// caller (the forwarder, which approved it) and supplies via the Spoke on behalf of the user,
+/// where the Spoke's position-manager gate applies to the Giver as msg.sender.
+contract MockGiverPositionManager {
+    function supplyOnBehalfOf(address spoke, uint256 reserveId, uint256 amount, address onBehalfOf) external {
+        address asset = MockAaveV4Spoke(spoke).reserveAsset(reserveId);
+        ERC20(asset).transferFrom(msg.sender, address(this), amount);
+        ERC20(asset).approve(spoke, amount);
+        MockAaveV4Spoke(spoke).supply(reserveId, amount, onBehalfOf);
+    }
+}
+
 /// @notice Minimal Compound v3 Comet mock that accepts supplyTo calls
 contract MockComet {
     MockCometReceipt public immutable receipt;

@@ -89,13 +89,13 @@ contract TimeBasedIncentiveManagerReferralsTest is Test {
         manager.updateRoot(campaignId, keccak256("reward-root"), 0, true);
     }
 
-    /// @notice Double-hashed 4-field referral leaf
+    /// @notice Double-hashed, chain-bound referral leaf
     function _makeReferralLeaf(uint256 campaignId, address referrer, address token, uint256 amount)
         internal
-        pure
+        view
         returns (bytes32)
     {
-        return keccak256(bytes.concat(keccak256(abi.encode(campaignId, referrer, token, amount))));
+        return keccak256(bytes.concat(keccak256(abi.encode(block.chainid, campaignId, referrer, token, amount))));
     }
 
     /// @notice Sorted-pair hash matching MerkleProofLib's verification

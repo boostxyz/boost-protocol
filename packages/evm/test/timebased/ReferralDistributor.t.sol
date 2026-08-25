@@ -164,13 +164,24 @@ contract ReferralDistributorTest is Test {
         dist = _deployDistributor(campaignId, address(campaign));
     }
 
-    /// @notice Double-hashed 4-field referral leaf
+    /// @notice Double-hashed, chain-bound referral leaf
     function _makeReferralLeaf(uint256 campaignId, address referrer, address token, uint256 amount)
         internal
-        pure
+        view
         returns (bytes32)
     {
-        return keccak256(bytes.concat(keccak256(abi.encode(campaignId, referrer, token, amount))));
+        return _makeReferralLeafForChain(block.chainid, campaignId, referrer, token, amount);
+    }
+
+    /// @notice Referral leaf with explicit chainid, for cross-chain domain-separation tests
+    function _makeReferralLeafForChain(
+        uint256 chainid,
+        uint256 campaignId,
+        address referrer,
+        address token,
+        uint256 amount
+    ) internal pure returns (bytes32) {
+        return keccak256(bytes.concat(keccak256(abi.encode(chainid, campaignId, referrer, token, amount))));
     }
 
     /// @notice Double-hashed, domain-separated reward leaf (the campaign's v2 claim format)
@@ -553,13 +564,39 @@ contract ReferralDistributorTest is Test {
         assertEq(rewardToken.balanceOf(REFERRER), 0.4 ether, "Reward proof should work on the campaign");
 
         // Operator mistakenly publishes the same root on the distributor: the reward
-        // proof still fails because referral leaves include the campaign id
+        // proof still fails because referral leaves carry the campaign id where reward
+        // leaves carry the campaign address
         vm.prank(address(manager));
         dist.setReferralRoot(rewardRoot, REFERRAL_POOL);
 
         vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.InvalidProof.selector);
         dist.claimReferral(REFERRER, 0.4 ether, rewardProof);
+    }
+
+    function test_ClaimReferral_CrossChainProofReuseFails() public {
+        // A root built for this campaign on another chain (same campaign id, different
+        // chainid in the leaf) must not validate here
+        (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
+        bytes32 foreignLeaf =
+            _makeReferralLeafForChain(block.chainid + 1, dist.campaignId(), REFERRER, address(rewardToken), 0.4 ether);
+        bytes32[] memory proof = new bytes32[](0);
+
+        vm.prank(address(manager));
+        dist.setReferralRoot(foreignLeaf, 0.4 ether);
+
+        vm.prank(address(manager));
+        vm.expectRevert(ReferralDistributor.InvalidProof.selector);
+        dist.claimReferral(REFERRER, 0.4 ether, proof);
+
+        // The same entitlement encoded with the local chainid validates
+        bytes32 localLeaf = _makeReferralLeaf(dist.campaignId(), REFERRER, address(rewardToken), 0.4 ether);
+        vm.prank(address(manager));
+        dist.setReferralRoot(localLeaf, 0.4 ether);
+
+        vm.prank(address(manager));
+        dist.claimReferral(REFERRER, 0.4 ether, proof);
+        assertEq(rewardToken.balanceOf(REFERRER), 0.4 ether, "Local-chain leaf should validate");
     }
 
     function test_ClaimReferral_RevertWhenExceedingCommitment() public {

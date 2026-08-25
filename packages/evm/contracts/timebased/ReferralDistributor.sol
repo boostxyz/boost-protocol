@@ -14,10 +14,12 @@ import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentive
 ///      created with a non-zero referral fee. Root publishes, claims, and sweeps are
 ///      only callable by the manager, whose wrappers apply access control and emit the
 ///      campaign-scoped events, so every referral action indexes from one address.
-///      Referral leaves are domain-separated from reward leaves: they are 4-field
-///      (campaignId, referrer, token, amount) versus the campaign's 3-field
-///      (user, token, cumulativeAmount), so a reward proof can never verify against
-///      a referral root
+///      Referral leaves are (chainid, campaignId, referrer, token, amount). The chainid
+///      binds a root to this chain so it cannot be replayed against a deployment on
+///      another chain, and the sequential campaign id in the second slot never matches
+///      the campaign address that the campaign's (chainid, campaign, user, token,
+///      cumulativeAmount) reward leaves carry there, so a reward proof can never verify
+///      against a referral root
 contract ReferralDistributor is Initializable {
     /// @notice The TimeBasedIncentiveManager that deployed this distributor
     address public timeBasedIncentiveManager;
@@ -173,7 +175,7 @@ contract ReferralDistributor is Initializable {
     }
 
     /// @notice Publish the referral merkle root and start the claim window
-    /// @param root The merkle root of (campaignId, referrer, token, amount) leaves
+    /// @param root The merkle root of (chainid, campaignId, referrer, token, amount) leaves
     /// @param committedTotal_ Total amount committed to referrers in the tree
     /// @return oldRoot The previous referral root
     /// @dev Only after the campaign finalizes (not just end time, for reorg safety).
@@ -220,7 +222,8 @@ contract ReferralDistributor is Initializable {
         if (amount == 0) revert NothingToClaim();
 
         if (referralRoot == bytes32(0)) revert InvalidProof();
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(campaignId, referrer, referralToken, amount))));
+        bytes32 leaf =
+            keccak256(bytes.concat(keccak256(abi.encode(block.chainid, campaignId, referrer, referralToken, amount))));
         if (!MerkleProofLib.verifyCalldata(proof, referralRoot, leaf)) revert InvalidProof();
 
         // The publish-time check bounds maxClaimable to referralPool, so claims can

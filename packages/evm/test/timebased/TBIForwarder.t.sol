@@ -804,6 +804,127 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(LIFI_EXECUTOR), 95 ether);
     }
 
+    // --- Aave V4 (Spoke/Ledger via GiverPositionManager) ---
+
+    function _depositAaveV4(address caller, uint256 amount, address receiver) internal {
+        vm.prank(caller);
+        forwarder.depositAaveV4(
+            IGiverPositionManager(address(giver)), address(aaveV4Spoke), RESERVE_ID, address(token), amount, receiver
+        );
+    }
+
+    function test_DepositAaveV4_Success() public {
+        uint256 amount = 5 ether;
+        vm.prank(USER);
+        aaveV4Spoke.setUserPositionManager(address(giver), true);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.LedgerDeposit(USER, address(aaveV4Spoke), RESERVE_ID, amount);
+
+        _depositAaveV4(USER, amount, USER);
+
+        // User's supplied position was credited on the Spoke, which holds the underlying
+        assertEq(aaveV4Spoke.suppliedBalance(USER), amount);
+        assertEq(token.balanceOf(address(aaveV4Spoke)), amount);
+        // Forwarder holds nothing and its Giver approval is reset
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(giver)), 0);
+        // User's token balance decreased
+        assertEq(token.balanceOf(USER), 95 ether);
+    }
+
+    function test_DepositAaveV4_WithReceiver_Success() public {
+        uint256 amount = 5 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+        // The position-manager opt-in belongs to the receiver (the onBehalfOf), not the caller.
+        vm.prank(RECEIVER);
+        aaveV4Spoke.setUserPositionManager(address(giver), true);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.LedgerDeposit(RECEIVER, address(aaveV4Spoke), RESERVE_ID, amount);
+
+        _depositAaveV4(LIFI_EXECUTOR, amount, RECEIVER);
+
+        // Receiver was credited the position, while caller only paid underlying
+        assertEq(aaveV4Spoke.suppliedBalance(RECEIVER), amount);
+        assertEq(aaveV4Spoke.suppliedBalance(LIFI_EXECUTOR), 0);
+        // Forwarder holds nothing
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        // Li.Fi caller's token balance decreased
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 95 ether);
+    }
+
+    function test_DepositAaveV4_EmitsOnlyLedgerDeposit() public {
+        vm.prank(USER);
+        aaveV4Spoke.setUserPositionManager(address(giver), true);
+
+        vm.recordLogs();
+        _depositAaveV4(USER, 1 ether, USER);
+
+        // The forwarder emits exactly one log — LedgerDeposit — and no generic Deposit,
+        // so the Ledger indexer gets a single unambiguous signal per routed supply.
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 forwarderLogs;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].emitter != address(forwarder)) continue;
+            forwarderLogs++;
+            assertEq(
+                logs[i].topics[0],
+                keccak256("LedgerDeposit(address,address,uint256,uint256)"),
+                "unexpected forwarder event"
+            );
+        }
+        assertEq(forwarderLogs, 1, "forwarder must emit exactly one log");
+    }
+
+    function test_DepositAaveV4_RevertZeroReceiver() public {
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositAaveV4(
+            IGiverPositionManager(address(giver)), address(aaveV4Spoke), RESERVE_ID, address(token), 1 ether, address(0)
+        );
+
+        // Reverts before funds move
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
+    function test_DepositAaveV4_RevertGiverNotActive() public {
+        // A caller-supplied giver the Spoke's governance has not registered must be rejected
+        // before any funds move — otherwise a fake giver could pocket the pull and let the
+        // forwarder emit a LedgerDeposit for the real Spoke without any canonical supply.
+        MockGiverPositionManager fakeGiver = new MockGiverPositionManager();
+        vm.prank(USER);
+        aaveV4Spoke.setUserPositionManager(address(fakeGiver), true);
+
+        vm.prank(USER);
+        vm.expectRevert(
+            abi.encodeWithSelector(TBIForwarderAdapters.GiverNotActivePositionManager.selector, address(fakeGiver))
+        );
+        forwarder.depositAaveV4(
+            IGiverPositionManager(address(fakeGiver)), address(aaveV4Spoke), RESERVE_ID, address(token), 1 ether, USER
+        );
+
+        // Reverts before funds move
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
+    function test_DepositAaveV4_RevertWithoutPositionManagerApproval() public {
+        // The user never called setUserPositionManager(giver, true) on the Spoke: the Spoke's
+        // gate must surface unchanged through the Giver and the forwarder (frontend prerequisite,
+        // see BOOST-6713 — the adapter adds no handling of its own).
+        vm.prank(USER);
+        vm.expectRevert(MockAaveV4Spoke.PositionManagerNotApproved.selector);
+        forwarder.depositAaveV4(
+            IGiverPositionManager(address(giver)), address(aaveV4Spoke), RESERVE_ID, address(token), 1 ether, USER
+        );
+
+        // The whole call reverted; no funds moved
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
     // --- Compound V3 ---
 
     function test_DepositCompoundV3_Success() public {

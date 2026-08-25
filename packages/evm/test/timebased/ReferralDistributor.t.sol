@@ -13,17 +13,19 @@ import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 import {TimeBasedIncentiveManager} from "contracts/timebased/TimeBasedIncentiveManager.sol";
 
-/// @notice ERC20 that reenters the distributor during transfer to test flag-before-transfer
+/// @notice ERC20 that reenters the manager's claim path during transfer to test flag-before-transfer
 contract ReentrantERC20 {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    ReferralDistributor public target;
+    TimeBasedIncentiveManager public target;
+    uint256 public reenterCampaignId;
     address public reenterReferrer;
     uint256 public reenterAmount;
     bytes32[] public reenterProof;
     bool public reenterAttempted;
     bool public reenterSucceeded;
+    bytes4 public reenterRevertSelector;
 
     function mint(address to, uint256 amount) external {
         balanceOf[to] += amount;
@@ -41,8 +43,15 @@ contract ReentrantERC20 {
         return true;
     }
 
-    function arm(ReferralDistributor target_, address referrer, uint256 amount, bytes32[] calldata proof) external {
+    function arm(
+        TimeBasedIncentiveManager target_,
+        uint256 campaignId,
+        address referrer,
+        uint256 amount,
+        bytes32[] calldata proof
+    ) external {
         target = target_;
+        reenterCampaignId = campaignId;
         reenterReferrer = referrer;
         reenterAmount = amount;
         reenterProof = proof;
@@ -51,9 +60,13 @@ contract ReentrantERC20 {
     function transfer(address to, uint256 amount) external returns (bool) {
         if (address(target) != address(0) && !reenterAttempted) {
             reenterAttempted = true;
-            try target.claimReferral(reenterReferrer, reenterAmount, reenterProof) {
+            try target.claimReferral(reenterCampaignId, reenterReferrer, reenterAmount, reenterProof) {
                 reenterSucceeded = true;
-            } catch {}
+            } catch (bytes memory reason) {
+                // Only the 4-byte error selector matters; the truncation is intentional
+                // forge-lint: disable-next-line(unsafe-typecast)
+                reenterRevertSelector = bytes4(reason);
+            }
         }
         balanceOf[msg.sender] -= amount;
         balanceOf[to] += amount;
@@ -288,23 +301,28 @@ contract ReferralDistributorTest is Test {
         // Past end time but not finalized — reorg safety requires the finalized flag
         vm.warp(campaign.endTime() + 1);
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.CampaignNotFinalized.selector);
         dist.setReferralRoot(keccak256("referral-root"), REFERRAL_POOL);
     }
 
-    function test_SetReferralRoot_RevertWhenNotAuthorized() public {
+    function test_SetReferralRoot_RevertWhenNotManager() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
 
-        vm.prank(RANDO);
-        vm.expectRevert(ReferralDistributor.NotAuthorized.selector);
+        // The manager's owner (this test) and operator must route through the manager too
+        vm.prank(address(this));
+        vm.expectRevert(ReferralDistributor.OnlyTimeBasedIncentiveManager.selector);
+        dist.setReferralRoot(keccak256("referral-root"), REFERRAL_POOL);
+
+        vm.prank(OPERATOR);
+        vm.expectRevert(ReferralDistributor.OnlyTimeBasedIncentiveManager.selector);
         dist.setReferralRoot(keccak256("referral-root"), REFERRAL_POOL);
     }
 
-    function test_SetReferralRoot_SuccessByOperator() public {
+    function test_SetReferralRoot_Success() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectEmit(true, true, true, true);
         emit ReferralDistributor.ReferralRootUpdated(
             bytes32(0), keccak256("referral-root"), REFERRAL_POOL, uint64(block.timestamp) + CLAIM_WINDOW
@@ -316,17 +334,10 @@ contract ReferralDistributorTest is Test {
         assertEq(dist.claimWindowEnd(), uint64(block.timestamp) + CLAIM_WINDOW, "Window should start now");
     }
 
-    function test_SetReferralRoot_SuccessByOwner() public {
-        (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
-
-        dist.setReferralRoot(keccak256("referral-root"), REFERRAL_POOL);
-        assertEq(dist.referralRoot(), keccak256("referral-root"), "Owner should be able to publish");
-    }
-
     function test_SetReferralRoot_RevertWhenCommitmentExceedsPool() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.CommitmentExceedsPool.selector);
         dist.setReferralRoot(keccak256("referral-root"), REFERRAL_POOL + 1);
     }
@@ -338,12 +349,12 @@ contract ReferralDistributorTest is Test {
     function test_SetReferralRoot_RepublishDoesNotRestartWindow() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("root-1"), REFERRAL_POOL);
         uint64 windowEnd = dist.claimWindowEnd();
 
         vm.warp(block.timestamp + 10 days);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("root-2"), REFERRAL_POOL / 2);
 
         assertEq(dist.referralRoot(), keccak256("root-2"), "Corrected root should be set");
@@ -356,16 +367,17 @@ contract ReferralDistributorTest is Test {
 
         // Root commits 0.6 of the 1.0 pool; REFERRER claims 0.4
         (bytes32 root, bytes32[] memory proof1,) = _twoReferrerTree(dist, 0.4 ether, 0.2 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, 0.6 ether);
+        vm.prank(address(manager));
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
 
         // Corrected root may commit at most pool - claimed = 0.6
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.CommitmentExceedsPool.selector);
         dist.setReferralRoot(keccak256("corrected-root"), 0.6 ether + 1);
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("corrected-root"), 0.6 ether);
         assertEq(dist.committedTotal(), 0.6 ether, "Corrected commitment within net pool should succeed");
     }
@@ -373,11 +385,11 @@ contract ReferralDistributorTest is Test {
     function test_SetReferralRoot_RevertAfterWindow() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("root-1"), REFERRAL_POOL);
 
         vm.warp(uint256(dist.claimWindowEnd()) + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.ClaimWindowClosed.selector);
         dist.setReferralRoot(keccak256("root-2"), REFERRAL_POOL);
     }
@@ -388,10 +400,10 @@ contract ReferralDistributorTest is Test {
 
         // No root ever published; sweep after the no-root deadline, then try to publish
         vm.warp(uint256(dist.finalizedAt()) + CLAIM_WINDOW + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.PoolAlreadySwept.selector);
         dist.setReferralRoot(keccak256("late-root"), 0);
     }
@@ -403,9 +415,10 @@ contract ReferralDistributorTest is Test {
     function test_ClaimReferral_Success() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root, bytes32[] memory proof1, bytes32[] memory proof2) = _twoReferrerTree(dist, 0.4 ether, 0.6 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, REFERRAL_POOL);
 
+        vm.prank(address(manager));
         vm.expectEmit(true, true, true, true);
         emit ReferralDistributor.ReferralClaimed(REFERRER, 0.4 ether);
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
@@ -414,32 +427,41 @@ contract ReferralDistributorTest is Test {
         assertTrue(dist.claimed(REFERRER), "Referrer should be flagged as claimed");
         assertEq(dist.totalClaimed(), 0.4 ether, "Total claimed should be tracked");
 
+        vm.prank(address(manager));
         dist.claimReferral(REFERRER2, 0.6 ether, proof2);
         assertEq(rewardToken.balanceOf(REFERRER2), 0.6 ether, "Second referrer should be paid");
         assertEq(dist.totalClaimed(), REFERRAL_POOL, "Total claimed should sum both claims");
     }
 
-    function test_ClaimReferral_PermissionlessPaysReferrerNotCaller() public {
+    function test_ClaimReferral_RevertWhenNotManager() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root, bytes32[] memory proof1,) = _twoReferrerTree(dist, 0.4 ether, 0.6 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, REFERRAL_POOL);
 
+        // Neither a third party nor the referrer may bypass the manager's claim wrapper
         vm.prank(RANDO);
+        vm.expectRevert(ReferralDistributor.OnlyTimeBasedIncentiveManager.selector);
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
 
-        assertEq(rewardToken.balanceOf(REFERRER), 0.4 ether, "Referrer should receive the tokens");
-        assertEq(rewardToken.balanceOf(RANDO), 0, "Caller should receive nothing");
+        vm.prank(REFERRER);
+        vm.expectRevert(ReferralDistributor.OnlyTimeBasedIncentiveManager.selector);
+        dist.claimReferral(REFERRER, 0.4 ether, proof1);
+
+        assertEq(rewardToken.balanceOf(REFERRER), 0, "Nothing should be paid");
+        assertFalse(dist.claimed(REFERRER), "Claim flag should be untouched");
     }
 
     function test_ClaimReferral_RevertOnDoubleClaim() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root, bytes32[] memory proof1,) = _twoReferrerTree(dist, 0.4 ether, 0.6 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, REFERRAL_POOL);
 
+        vm.prank(address(manager));
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
 
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.AlreadyClaimed.selector);
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
     }
@@ -447,15 +469,17 @@ contract ReferralDistributorTest is Test {
     function test_ClaimReferral_OneShotEvenAfterRepublishIncrease() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root, bytes32[] memory proof1,) = _twoReferrerTree(dist, 0.3 ether, 0.2 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, 0.5 ether);
+        vm.prank(address(manager));
         dist.claimReferral(REFERRER, 0.3 ether, proof1);
 
         // Corrected root raises REFERRER's entitlement, but claims are one-shot
         (bytes32 newRoot, bytes32[] memory newProof1,) = _twoReferrerTree(dist, 0.5 ether, 0.2 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(newRoot, 0.7 ether);
 
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.AlreadyClaimed.selector);
         dist.claimReferral(REFERRER, 0.5 ether, newProof1);
     }
@@ -463,10 +487,11 @@ contract ReferralDistributorTest is Test {
     function test_ClaimReferral_RevertAfterWindow() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root, bytes32[] memory proof1,) = _twoReferrerTree(dist, 0.4 ether, 0.6 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, REFERRAL_POOL);
 
         vm.warp(uint256(dist.claimWindowEnd()) + 1);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.ClaimWindowClosed.selector);
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
     }
@@ -474,6 +499,7 @@ contract ReferralDistributorTest is Test {
     function test_ClaimReferral_RevertBeforeRootPublished() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
 
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.ClaimWindowClosed.selector);
         dist.claimReferral(REFERRER, 0.4 ether, new bytes32[](0));
     }
@@ -481,14 +507,16 @@ contract ReferralDistributorTest is Test {
     function test_ClaimReferral_RevertOnInvalidProof() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root, bytes32[] memory proof1,) = _twoReferrerTree(dist, 0.4 ether, 0.6 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, REFERRAL_POOL);
 
         // Wrong amount for a valid proof
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.InvalidProof.selector);
         dist.claimReferral(REFERRER, 0.5 ether, proof1);
 
         // Wrong referrer for a valid proof
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.InvalidProof.selector);
         dist.claimReferral(RANDO, 0.4 ether, proof1);
     }
@@ -496,9 +524,10 @@ contract ReferralDistributorTest is Test {
     function test_ClaimReferral_RevertZeroAmount() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root,,) = _twoReferrerTree(dist, 0.4 ether, 0.6 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, REFERRAL_POOL);
 
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.NothingToClaim.selector);
         dist.claimReferral(REFERRER, 0, new bytes32[](0));
     }
@@ -525,9 +554,10 @@ contract ReferralDistributorTest is Test {
 
         // Operator mistakenly publishes the same root on the distributor: the reward
         // proof still fails because referral leaves include the campaign id
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(rewardRoot, REFERRAL_POOL);
 
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.InvalidProof.selector);
         dist.claimReferral(REFERRER, 0.4 ether, rewardProof);
     }
@@ -537,48 +567,56 @@ contract ReferralDistributorTest is Test {
 
         // Malformed tree: leaves sum to 0.9 but only 0.5 is committed
         (bytes32 root, bytes32[] memory proof1, bytes32[] memory proof2) = _twoReferrerTree(dist, 0.4 ether, 0.5 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, 0.5 ether);
 
+        vm.prank(address(manager));
         dist.claimReferral(REFERRER2, 0.5 ether, proof2);
 
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.ClaimExceedsCommitment.selector);
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
     }
 
     function test_ClaimReferral_ReentrantTokenCannotDoublePay() public {
-        // Direct-funded campaign whose reward token reenters the distributor on transfer
+        // Direct-funded referral campaign whose reward token reenters the manager's claim
+        // wrapper on transfer, the only path into the distributor
+        manager.setReferralDistributorImplementation(address(distributorImpl));
         ReentrantERC20 evilToken = new ReentrantERC20();
         evilToken.mint(address(this), 10 ether);
         evilToken.approve(address(manager), 10 ether);
 
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
-        uint256 campaignId =
-            manager.createCampaignDirect(keccak256("evil"), address(evilToken), 10 ether, startTime, endTime, 0);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("evil"), address(evilToken), 10 ether, startTime, endTime, manager.MAX_REFERRAL_FEE_BPS()
+        );
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
         _finalize(campaignId, campaign);
 
-        ReferralDistributor dist = ReferralDistributor(LibClone.clone(address(distributorImpl)));
-        vm.prank(address(manager));
-        dist.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
-        evilToken.mint(address(dist), REFERRAL_POOL);
-
-        bytes32 leaf1 = _makeReferralLeaf(campaignId, REFERRER, address(evilToken), 0.4 ether);
-        bytes32 leaf2 = _makeReferralLeaf(campaignId, REFERRER2, address(evilToken), 0.4 ether);
+        // 10 ether * 10% protocol fee * 25% referral = 0.25 ether pool
+        assertEq(dist.referralPool(), 0.25 ether, "Pool should be the referral slice of the fee");
+        bytes32 leaf1 = _makeReferralLeaf(campaignId, REFERRER, address(evilToken), 0.1 ether);
+        bytes32 leaf2 = _makeReferralLeaf(campaignId, REFERRER2, address(evilToken), 0.1 ether);
         bytes32[] memory proof1 = new bytes32[](1);
         proof1[0] = leaf2;
 
         vm.prank(OPERATOR);
-        dist.setReferralRoot(_hashPair(leaf1, leaf2), 0.8 ether);
+        manager.setReferralRoot(campaignId, _hashPair(leaf1, leaf2), 0.2 ether);
 
-        evilToken.arm(dist, REFERRER, 0.4 ether, proof1);
-        dist.claimReferral(REFERRER, 0.4 ether, proof1);
+        evilToken.arm(manager, campaignId, REFERRER, 0.1 ether, proof1);
+        manager.claimReferral(campaignId, REFERRER, 0.1 ether, proof1);
 
         assertTrue(evilToken.reenterAttempted(), "Token should have attempted reentry");
         assertFalse(evilToken.reenterSucceeded(), "Reentrant claim should have reverted");
-        assertEq(evilToken.balanceOf(REFERRER), 0.4 ether, "Referrer should be paid exactly once");
-        assertEq(dist.totalClaimed(), 0.4 ether, "Total claimed should count one payment");
+        assertEq(
+            evilToken.reenterRevertSelector(),
+            ReferralDistributor.AlreadyClaimed.selector,
+            "Reentry should be stopped by the claimed flag, not by access control"
+        );
+        assertEq(evilToken.balanceOf(REFERRER), 0.1 ether, "Referrer should be paid exactly once");
+        assertEq(dist.totalClaimed(), 0.1 ether, "Total claimed should count one payment");
     }
 
     ////////////////////////////////
@@ -587,12 +625,12 @@ contract ReferralDistributorTest is Test {
 
     function test_Sweep_RevertBeforeWindowEnds() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("root"), REFERRAL_POOL);
 
         // Still sweepable-not: exactly at the window boundary claims are valid
         vm.warp(uint256(dist.claimWindowEnd()));
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.SweepNotReady.selector);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
     }
@@ -600,13 +638,14 @@ contract ReferralDistributorTest is Test {
     function test_Sweep_SuccessAfterWindow() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
         (bytes32 root, bytes32[] memory proof1,) = _twoReferrerTree(dist, 0.4 ether, 0.6 ether);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(root, REFERRAL_POOL);
+        vm.prank(address(manager));
         dist.claimReferral(REFERRER, 0.4 ether, proof1);
 
         uint256 receiverBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
         vm.warp(uint256(dist.claimWindowEnd()) + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectEmit(true, true, true, true);
         emit ReferralDistributor.ReferralPoolSwept(0.6 ether, PROTOCOL_FEE_RECEIVER);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
@@ -619,38 +658,39 @@ contract ReferralDistributorTest is Test {
         assertTrue(dist.swept(), "Swept flag should be set");
     }
 
-    function test_Sweep_RevertWhenNotAuthorized() public {
+    function test_Sweep_RevertWhenNotManager() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("root"), REFERRAL_POOL);
 
+        // Even the operator must route through the manager
         vm.warp(uint256(dist.claimWindowEnd()) + 1);
-        vm.prank(RANDO);
-        vm.expectRevert(ReferralDistributor.NotAuthorized.selector);
+        vm.prank(OPERATOR);
+        vm.expectRevert(ReferralDistributor.OnlyTimeBasedIncentiveManager.selector);
         dist.sweepReferralPool(RANDO);
     }
 
     function test_Sweep_RevertZeroDestination() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("root"), REFERRAL_POOL);
 
         vm.warp(uint256(dist.claimWindowEnd()) + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.ZeroSweepDestination.selector);
         dist.sweepReferralPool(address(0));
     }
 
     function test_Sweep_RevertWhenNothingToSweep() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.setReferralRoot(keccak256("root"), REFERRAL_POOL);
 
         vm.warp(uint256(dist.claimWindowEnd()) + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.NothingToSweep.selector);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
     }
@@ -667,7 +707,7 @@ contract ReferralDistributorTest is Test {
         // Not sweepable until the cancellation is finalized and recorded, no matter
         // how much time has passed since the (moved-up) end time
         vm.warp(uint256(cancelTime) + CLAIM_WINDOW + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.CampaignNotFinalized.selector);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
@@ -677,13 +717,13 @@ contract ReferralDistributorTest is Test {
 
         // Not sweepable until a full claim-window duration past the recorded finalization
         vm.warp(uint256(finalizedAt) + CLAIM_WINDOW);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.SweepNotReady.selector);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
         uint256 receiverBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
         vm.warp(uint256(finalizedAt) + CLAIM_WINDOW + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
 
         assertEq(
@@ -697,7 +737,7 @@ contract ReferralDistributorTest is Test {
         // Campaign is finalized but never recorded on the distributor, so the
         // no-root sweep clock has not started
         vm.warp(block.timestamp + CLAIM_WINDOW + 1);
-        vm.prank(OPERATOR);
+        vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.CampaignNotFinalized.selector);
         dist.sweepReferralPool(PROTOCOL_FEE_RECEIVER);
     }

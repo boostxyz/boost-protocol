@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test} from "lib/forge-std/src/Test.sol";
+import {Test, Vm} from "lib/forge-std/src/Test.sol";
 
 import {LibClone} from "@solady/utils/LibClone.sol";
 import {ERC20} from "@solady/tokens/ERC20.sol";
@@ -12,6 +12,7 @@ import {
     TBIForwarderAdapters,
     IERC4626,
     IAaveV3Pool,
+    IGiverPositionManager,
     IComet,
     IStakedToken,
     ICErc20,

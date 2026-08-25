@@ -760,6 +760,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param referrer The referrer to pay
     /// @param amount The amount the referrer is entitled to
     /// @param proof The merkle proof validating the claim
+    /// @dev Permissionless — anyone may claim on a referrer's behalf; tokens always go to
+    ///      the referrer. The distributor only accepts calls from this contract, so this
+    ///      is the sole claim path and every claim emits ReferralClaimed here
     function claimReferral(uint256 campaignId, address referrer, uint256 amount, bytes32[] calldata proof) external {
         address distributor = referralDistributors[campaignId];
         if (distributor == address(0)) revert NoReferralDistributor();

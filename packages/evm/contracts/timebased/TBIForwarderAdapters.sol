@@ -178,6 +178,14 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         uint256 amount1
     );
 
+    /// @notice Emitted once per Aave v4 (Spoke/Ledger) supply routed through this forwarder.
+    /// Distinct from the generic `Deposit` so the off-chain indexer gets one unambiguous log per
+    /// routed supply: `ledger` is the Spoke and `marketKey` its reserve id (in event data, not
+    /// indexed — the indexer filters by `(user, ledger)` and reads the key from data). `amount` is
+    /// in underlying units; shares are deliberately omitted because the same-transaction Spoke
+    /// `Supply` log feeds the backend's share mirror through its normal pipeline.
+    event LedgerDeposit(address indexed user, address indexed ledger, uint256 marketKey, uint256 amount);
+
     /// @notice Thrown when a Compound V2 cToken mint fails
     error MintFailed(uint256 errorCode);
 
@@ -218,6 +226,13 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
 
     /// @notice Thrown when a Lido Earn deposit amount exceeds the SyncDepositQueue's uint224 range.
     error AmountExceedsUint224();
+
+    /// @notice Thrown when an Aave v4 deposit names a Giver the Spoke's governance has not
+    /// registered as an active position manager. The registry check is the trust boundary that
+    /// keeps `LedgerDeposit` honest: the emitted `ledger` (the Spoke) is not the contract being
+    /// called (the Giver), so an unauthenticated Giver could pocket the pulled funds and let the
+    /// forwarder emit an opt-in signal for a supply that never reached the Spoke.
+    error GiverNotActivePositionManager(address giver);
 
     /// @notice Canonical Permit2 address (same on every chain)
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;

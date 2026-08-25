@@ -15,6 +15,20 @@ interface IAaveV3Pool {
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 }
 
+/// @notice Aave v4 GiverPositionManager — the governance-registered position manager that supplies
+/// into a Spoke on behalf of a user. Aave v4's `Spoke.supply(onBehalfOf)` is restricted to the
+/// user's approved position managers (`onlyPositionManager`), so the forwarder cannot supply for a
+/// user directly; the Giver pulls the underlying from msg.sender and routes the supply instead.
+interface IGiverPositionManager {
+    function supplyOnBehalfOf(address spoke, uint256 reserveId, uint256 amount, address onBehalfOf) external;
+}
+
+/// @notice Minimal view onto an Aave v4 Spoke's governance registry of position managers, used to
+/// authenticate a caller-supplied Giver before trusting it with funds and the indexer signal.
+interface IAaveV4Spoke {
+    function isPositionManagerActive(address positionManager) external view returns (bool);
+}
+
 interface IComet {
     function supplyTo(address dst, address asset, uint256 amount) external;
 }

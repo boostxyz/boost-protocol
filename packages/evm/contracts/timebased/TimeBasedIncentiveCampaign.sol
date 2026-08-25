@@ -13,6 +13,9 @@ import {IClaw} from "contracts/shared/IClaw.sol";
 /// @notice Per-campaign clone that holds reward tokens for time-based incentives
 /// @dev Deployed as minimal proxy by TimeBasedIncentiveManager
 contract TimeBasedIncentiveCampaign is Initializable, IClaw {
+    /// @notice Version of the merkle leaf encoding this campaign verifies
+    uint256 public constant LEAF_VERSION = 2;
+
     /// @notice The TimeBasedIncentiveManager contract that deployed this campaign
     address public timeBasedIncentiveManager;
 
@@ -124,6 +127,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when cumulative claims would exceed the committed amount
     error ClaimExceedsCommitment();
 
+    /// @notice Error when claiming or publishing a root before the campaign start time
+    error CampaignNotStarted();
+
     /// @notice Disable initialization on the implementation contract
     constructor() {
         _disableInitializers();
@@ -199,6 +205,11 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         returns (bytes32 oldRoot)
     {
         if (finalized) revert CampaignAlreadyFinalized();
+
+        // endTime can precede startTime after a pre-start cancellation; such campaigns
+        // must accept their finalizing root immediately
+        if (block.timestamp < startTime && block.timestamp < endTime) revert CampaignNotStarted();
+
         if (totalCommitted_ > totalRewards) revert CommitmentExceedsBudget();
         if (totalCommitted_ < totalCommitted) revert CommitmentDecreased();
 
@@ -218,12 +229,16 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         onlyTimeBasedIncentiveManager
         returns (uint256 amount)
     {
-        // Check claim window hasn't expired
+        // Check the campaign has started and the claim window hasn't expired; as in
+        // setMerkleRoot, the endTime clause admits campaigns cancelled before their start
+        if (block.timestamp < startTime && block.timestamp < endTime) revert CampaignNotStarted();
         if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) revert ClaimExpired();
 
         // Verify merkle proof
         if (merkleRoot == bytes32(0)) revert InvalidProof();
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(user, rewardToken, cumulativeAmount))));
+        bytes32 leaf = keccak256(
+            bytes.concat(keccak256(abi.encode(block.chainid, address(this), user, rewardToken, cumulativeAmount)))
+        );
         if (!MerkleProofLib.verifyCalldata(proof, merkleRoot, leaf)) revert InvalidProof();
 
         // Calculate claimable amount

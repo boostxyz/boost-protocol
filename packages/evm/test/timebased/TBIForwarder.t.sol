@@ -636,6 +636,8 @@ contract TBIForwarderTest is Test {
     MockERC20 token1;
     MockERC4626 vault;
     MockAaveV3Pool aavePool;
+    MockAaveV4Spoke aaveV4Spoke;
+    MockGiverPositionManager giver;
     MockComet comet;
     MockStakedToken stakedToken;
     MockCErc20 cToken;
@@ -651,6 +653,7 @@ contract TBIForwarderTest is Test {
     address constant PERMIT2_ADDR = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
     address constant FEE_RECIPIENT = address(0xFEE);
     address constant MELLOW_NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    uint256 constant RESERVE_ID = 7;
 
     function setUp() public {
         // Deploy mock token and protocols
@@ -658,6 +661,10 @@ contract TBIForwarderTest is Test {
         token1 = new MockERC20();
         vault = new MockERC4626(address(token));
         aavePool = new MockAaveV3Pool(address(token));
+        aaveV4Spoke = new MockAaveV4Spoke();
+        aaveV4Spoke.setReserveAsset(RESERVE_ID, address(token));
+        giver = new MockGiverPositionManager();
+        aaveV4Spoke.setPositionManagerActive(address(giver), true);
         comet = new MockComet(address(token));
         stakedToken = new MockStakedToken(address(token));
         cToken = new MockCErc20(address(token));

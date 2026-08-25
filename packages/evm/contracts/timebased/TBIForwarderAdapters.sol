@@ -15,6 +15,20 @@ interface IAaveV3Pool {
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 }
 
+/// @notice Aave v4 GiverPositionManager — the governance-registered position manager that supplies
+/// into a Spoke on behalf of a user. Aave v4's `Spoke.supply(onBehalfOf)` is restricted to the
+/// user's approved position managers (`onlyPositionManager`), so the forwarder cannot supply for a
+/// user directly; the Giver pulls the underlying from msg.sender and routes the supply instead.
+interface IGiverPositionManager {
+    function supplyOnBehalfOf(address spoke, uint256 reserveId, uint256 amount, address onBehalfOf) external;
+}
+
+/// @notice Minimal view onto an Aave v4 Spoke's governance registry of position managers, used to
+/// authenticate a caller-supplied Giver before trusting it with funds and the indexer signal.
+interface IAaveV4Spoke {
+    function isPositionManagerActive(address positionManager) external view returns (bool);
+}
+
 interface IComet {
     function supplyTo(address dst, address asset, uint256 amount) external;
 }
@@ -164,6 +178,14 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         uint256 amount1
     );
 
+    /// @notice Emitted once per Aave v4 (Spoke/Ledger) supply routed through this forwarder.
+    /// Distinct from the generic `Deposit` so the off-chain indexer gets one unambiguous log per
+    /// routed supply: `ledger` is the Spoke and `marketKey` its reserve id (in event data, not
+    /// indexed — the indexer filters by `(user, ledger)` and reads the key from data). `amount` is
+    /// in underlying units; shares are deliberately omitted because the same-transaction Spoke
+    /// `Supply` log feeds the backend's share mirror through its normal pipeline.
+    event LedgerDeposit(address indexed user, address indexed ledger, uint256 marketKey, uint256 amount);
+
     /// @notice Thrown when a Compound V2 cToken mint fails
     error MintFailed(uint256 errorCode);
 
@@ -204,6 +226,13 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
 
     /// @notice Thrown when a Lido Earn deposit amount exceeds the SyncDepositQueue's uint224 range.
     error AmountExceedsUint224();
+
+    /// @notice Thrown when an Aave v4 deposit names a Giver the Spoke's governance has not
+    /// registered as an active position manager. The registry check is the trust boundary that
+    /// keeps `LedgerDeposit` honest: the emitted `ledger` (the Spoke) is not the contract being
+    /// called (the Giver), so an unauthenticated Giver could pocket the pulled funds and let the
+    /// forwarder emit an opt-in signal for a supply that never reached the Spoke.
+    error GiverNotActivePositionManager(address giver);
 
     /// @notice Canonical Permit2 address (same on every chain)
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
@@ -250,6 +279,46 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         asset.safeApprove(address(pool), 0);
 
         emit Deposit(receiver, address(pool), asset, amount);
+    }
+
+    /// @notice Supply into an Aave v4 Spoke on behalf of receiver, routed through the
+    /// governance-registered GiverPositionManager (the Spoke's `supply(onBehalfOf)` only accepts
+    /// the user's approved position managers, so the forwarder cannot supply for a user directly).
+    /// @dev Requires `receiver` to have approved the Giver as a position manager on the Spoke
+    /// (`setUserPositionManager(giver, true)`, bundled by the frontend flow); without it the
+    /// Spoke's revert surfaces unchanged. A mismatched `asset`/`reserveId` pairing reverts inside
+    /// the Giver's pull/supply, so no funds path exists for a wrong asset.
+    ///
+    /// Unlike the other adapters, the contract called (the Giver) is not the contract emitted
+    /// (the Spoke), so the Giver cannot be trusted implicitly: it is authenticated against the
+    /// Spoke's own governance registry (`isPositionManagerActive`) before any funds move. A forged
+    /// `spoke` can vouch for a forged giver, but then the emitted `ledger` is that forged address,
+    /// which the indexer ignores — it only follows canonical Spokes. Emits `LedgerDeposit` (not
+    /// the generic `Deposit`) as the single indexer signal.
+    /// @param giver The Aave v4 GiverPositionManager
+    /// @param spoke The Aave v4 Spoke holding the reserve — emitted as the `ledger`
+    /// @param reserveId The Spoke's reserve id for `asset` — emitted as the `marketKey`
+    /// @param asset The reserve's underlying asset to supply
+    /// @param amount The amount of `asset` to supply
+    /// @param receiver The account credited with the supplied position
+    function depositAaveV4(
+        IGiverPositionManager giver,
+        address spoke,
+        uint256 reserveId,
+        address asset,
+        uint256 amount,
+        address receiver
+    ) external {
+        _requireReceiver(receiver);
+        if (!IAaveV4Spoke(spoke).isPositionManagerActive(address(giver))) {
+            revert GiverNotActivePositionManager(address(giver));
+        }
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+        asset.safeApproveWithRetry(address(giver), amount);
+        giver.supplyOnBehalfOf(spoke, reserveId, amount, receiver);
+        asset.safeApprove(address(giver), 0);
+
+        emit LedgerDeposit(receiver, spoke, reserveId, amount);
     }
 
     /// @notice Supply into a Compound v3 Comet on behalf of receiver

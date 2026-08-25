@@ -20,17 +20,20 @@ import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 ///      Already-satisfied steps are skipped, so the script can be re-run to pick up where
 ///      a previous rollout left off.
 ///
-///      On Base Sepolia the proxy is owned directly by the deployer, so the calls are
-///      broadcast from the CLI-configured sender. On all other chains the proxy is owned
-///      by a TimelockController, so the script instead prints scheduleBatch/executeBatch
+///      On Base Sepolia the proxy is owned by an EOA, so the owner calls are broadcast
+///      from TBI_PROXY_OWNER_PRIVATE_KEY. On all other chains the proxy is owned by a
+///      TimelockController, so the script instead prints scheduleBatch/executeBatch
 ///      calldata the Safe routes through the timelock (schedule -> wait minDelay ->
 ///      execute). Steps 2-3 only exist on the proxy after step 1 executes; a timelock
 ///      batch runs its calls sequentially in one transaction, so a single batch handles
 ///      the ordering.
 ///
 ///      Environment variables:
-///        BOOST_DEPLOYMENT_SALT    — CREATE2 salt (same as initial deploy)
-///        TIMEBASED_MANAGER_PROXY  — Manager proxy address
+///        BOOST_DEPLOYMENT_SALT        — CREATE2 salt (same as initial deploy)
+///        TIMEBASED_MANAGER_PROXY      — Manager proxy address
+///        DEPLOYER_PRIVATE_KEY         — EOA that broadcasts the implementation deploys
+///        TBI_PROXY_OWNER_PRIVATE_KEY  — (Base Sepolia only) proxy owner, broadcasts the
+///                                       upgradeToAndCall + referral config calls
 contract DeployImpl_TBIReferrals is ScriptUtils {
     /// @notice Matches the fresh-deploy default set in TimeBasedIncentiveManager.initialize
     uint64 constant REFERRAL_CLAIM_WINDOW = 60 days;
@@ -39,12 +42,14 @@ contract DeployImpl_TBIReferrals is ScriptUtils {
 
     function run() public {
         address MANAGER_PROXY = vm.envAddress("TIMEBASED_MANAGER_PROXY");
+        uint256 deployerPk = vm.envUint("DEPLOYER_PRIVATE_KEY");
         TimeBasedIncentiveManager manager = TimeBasedIncentiveManager(MANAGER_PROXY);
 
         console.log("========================================");
         console.log("TBI Referrals Rollout");
         console.log("========================================");
         console.log("Manager Proxy:    ", MANAGER_PROXY);
+        console.log("Deployer:         ", vm.addr(deployerPk));
 
         // ---- Snapshot current state ----
         address currentImpl = Upgrades.getImplementationAddress(MANAGER_PROXY);
@@ -56,8 +61,9 @@ contract DeployImpl_TBIReferrals is ScriptUtils {
 
         // ---- Deploy implementations (CREATE2, idempotent) ----
         console.log("\n--- Deploy Implementations ---");
-        address newManagerImpl = _deployImpl(type(TimeBasedIncentiveManager).creationCode, "Manager Impl:     ");
-        address distributorImpl = _deployImpl(type(ReferralDistributor).creationCode, "Distributor Impl: ");
+        address newManagerImpl =
+            _deployImpl(deployerPk, type(TimeBasedIncentiveManager).creationCode, "Manager Impl:     ");
+        address distributorImpl = _deployImpl(deployerPk, type(ReferralDistributor).creationCode, "Distributor Impl: ");
 
         // ---- Record the distributor implementation (broadcast runs only) ----
         if (vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
@@ -66,7 +72,9 @@ contract DeployImpl_TBIReferrals is ScriptUtils {
 
         // ---- Apply the owner calls still needed on the proxy ----
         if (block.chainid == BASE_SEPOLIA_CHAIN_ID) {
-            _upgradeDirect(manager, currentImpl, newManagerImpl, distributorImpl);
+            uint256 ownerPk = vm.envUint("TBI_PROXY_OWNER_PRIVATE_KEY");
+            require(vm.addr(ownerPk) == owner, "TBI_PROXY_OWNER_PRIVATE_KEY does not match the proxy owner");
+            _upgradeDirect(manager, ownerPk, currentImpl, newManagerImpl, distributorImpl);
             return;
         }
 
@@ -80,22 +88,24 @@ contract DeployImpl_TBIReferrals is ScriptUtils {
         _printBatchPayloads(owner, MANAGER_PROXY, payloads);
     }
 
-    /// @dev Base Sepolia only: the proxy owner is the deployer, so the calls broadcast
-    ///      directly from the CLI-configured sender instead of routing through a timelock.
+    /// @dev Base Sepolia only: the proxy owner is an EOA, so the calls broadcast from the
+    ///      owner key instead of routing through a timelock.
     ///      The referral config is re-read after the upgrade so the getters (which revert
     ///      on the pre-upgrade implementation) reflect the simulated upgraded state.
     function _upgradeDirect(
         TimeBasedIncentiveManager manager,
+        uint256 ownerPk,
         address currentImpl,
         address newManagerImpl,
         address distributorImpl
     ) internal {
         console.log("\n--- Direct Upgrade (non-timelock) ---");
+        console.log("Owner sender:     ", vm.addr(ownerPk));
 
         if (newManagerImpl == currentImpl) {
             console.log("Implementation unchanged, skipping upgrade");
         } else {
-            vm.broadcast();
+            vm.broadcast(ownerPk);
             manager.upgradeToAndCall(newManagerImpl, "");
             console.log("Upgraded proxy to:", newManagerImpl);
         }
@@ -104,14 +114,14 @@ contract DeployImpl_TBIReferrals is ScriptUtils {
         if (configuredDist == distributorImpl) {
             console.log("Distributor implementation already configured");
         } else {
-            vm.broadcast();
+            vm.broadcast(ownerPk);
             manager.setReferralDistributorImplementation(distributorImpl);
             console.log("setReferralDistributorImplementation:", distributorImpl);
         }
         if (configuredWindow != 0) {
             console.log("Claim window already configured:", uint256(configuredWindow));
         } else {
-            vm.broadcast();
+            vm.broadcast(ownerPk);
             manager.setReferralClaimWindowDuration(REFERRAL_CLAIM_WINDOW);
             console.log("setReferralClaimWindowDuration:", uint256(REFERRAL_CLAIM_WINDOW));
         }
@@ -124,12 +134,24 @@ contract DeployImpl_TBIReferrals is ScriptUtils {
         console.log("\n[OK] Proxy upgraded and referrals configured");
     }
 
-    function _deployImpl(bytes memory initCode, string memory label) internal returns (address impl) {
+    /// @dev CREATE2 deploy broadcast from the deployer key rather than the CLI-configured
+    ///      sender `_deploy2` uses.
+    function _deployImpl(uint256 deployerPk, bytes memory initCode, string memory label)
+        internal
+        returns (address impl)
+    {
         impl = _getCreate2Address(initCode, "");
         console.log(label, impl);
-        if (_deploy2(initCode, "")) {
-            console.log("  -> Deployed");
+        if (impl.code.length > 0) {
+            console.log("  Already deployed");
+            return impl;
         }
+
+        bytes32 salt = keccak256(bytes(vm.envString("BOOST_DEPLOYMENT_SALT")));
+        vm.broadcast(deployerPk);
+        (bool success,) = CREATE2_FACTORY.call(abi.encodePacked(salt, initCode));
+        require(success, "create2 deploy failed");
+        console.log("  -> Deployed");
     }
 
     /// @dev Builds the batch of owner calls the proxy still needs, in execution order.

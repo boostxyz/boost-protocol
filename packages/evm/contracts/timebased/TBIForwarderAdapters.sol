@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "@solady/utils/ReentrancyGuard.sol";
 
+import {V4LiquidityMath} from "contracts/timebased/V4LiquidityMath.sol";
+
 interface IERC4626 {
     function asset() external view returns (address);
     function deposit(uint256 assets, address receiver) external returns (uint256 shares);
@@ -11,6 +13,20 @@ interface IERC4626 {
 
 interface IAaveV3Pool {
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
+}
+
+/// @notice Aave v4 GiverPositionManager — the governance-registered position manager that supplies
+/// into a Spoke on behalf of a user. Aave v4's `Spoke.supply(onBehalfOf)` is restricted to the
+/// user's approved position managers (`onlyPositionManager`), so the forwarder cannot supply for a
+/// user directly; the Giver pulls the underlying from msg.sender and routes the supply instead.
+interface IGiverPositionManager {
+    function supplyOnBehalfOf(address spoke, uint256 reserveId, uint256 amount, address onBehalfOf) external;
+}
+
+/// @notice Minimal view onto an Aave v4 Spoke's governance registry of position managers, used to
+/// authenticate a caller-supplied Giver before trusting it with funds and the indexer signal.
+interface IAaveV4Spoke {
+    function isPositionManagerActive(address positionManager) external view returns (bool);
 }
 
 interface IComet {
@@ -72,8 +88,24 @@ struct PoolKey {
     address hooks;
 }
 
+/// @notice Minimal PoolManager surface: `extsload` exposes raw storage so pool state (slot0) can
+/// be read without a StateLibrary dependency. See `_verifyKyberZapMint` for the slot derivation.
+interface IUniswapV4PoolManager {
+    function extsload(bytes32 slot) external view returns (bytes32);
+}
+
+/// @notice Hand-rolled v4-periphery PositionManager surface. Beyond `modifyLiquidities` (the mint
+/// entry point), the view functions are the canonical-state reads `depositKyberZapV4` uses to
+/// verify a zap-minted position: the ERC-721 surface (`nextTokenId`, `ownerOf`) plus position
+/// introspection. `getPoolAndPositionInfo`'s second return is v4-periphery's packed `PositionInfo`
+/// (a uint256 user-defined value type upstream): bits 8-31 are `tickLower`, bits 32-55 `tickUpper`.
 interface IUniswapV4PositionManager {
     function modifyLiquidities(bytes calldata unlockData, uint256 deadline) external payable;
+    function nextTokenId() external view returns (uint256);
+    function ownerOf(uint256 tokenId) external view returns (address);
+    function getPositionLiquidity(uint256 tokenId) external view returns (uint128);
+    function getPoolAndPositionInfo(uint256 tokenId) external view returns (PoolKey memory poolKey, uint256 info);
+    function poolManager() external view returns (IUniswapV4PoolManager);
 }
 
 /// @notice Bundle of V4 mint parameters passed to `depositUniswapV4LP`. Grouped into a struct
@@ -135,7 +167,8 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// generic `Deposit` so the off-chain indexer can match a single, unambiguous log per V4 mint and
     /// gate rewards on `(user, positionManager, poolId)`. `poolId == keccak256(abi.encode(poolKey))`
     /// (the canonical V4 PoolId). `amount0`/`amount1` are the amounts actually consumed by the mint
-    /// (committed max minus refund), not the committed max.
+    /// (committed max minus refund), not the committed max; `depositKyberZapV4` instead derives them
+    /// from the minted position's canonical state (price, ticks, liquidity), accurate to ≤1 wei.
     event UniswapV4LPDeposit(
         address indexed user,
         address indexed positionManager,
@@ -144,6 +177,14 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         uint256 amount0,
         uint256 amount1
     );
+
+    /// @notice Emitted once per Aave v4 (Spoke/Ledger) supply routed through this forwarder.
+    /// Distinct from the generic `Deposit` so the off-chain indexer gets one unambiguous log per
+    /// routed supply: `ledger` is the Spoke and `marketKey` its reserve id (in event data, not
+    /// indexed — the indexer filters by `(user, ledger)` and reads the key from data). `amount` is
+    /// in underlying units; shares are deliberately omitted because the same-transaction Spoke
+    /// `Supply` log feeds the backend's share mirror through its normal pipeline.
+    event LedgerDeposit(address indexed user, address indexed ledger, uint256 marketKey, uint256 amount);
 
     /// @notice Thrown when a Compound V2 cToken mint fails
     error MintFailed(uint256 errorCode);
@@ -167,12 +208,31 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// `currency0` or `currency1`; the swap rebalances it into the pair before the mint.
     error SwapInputMismatch();
 
-    /// @notice Thrown when a zap is called with no swap to perform. Use `depositUniswapV4LP` for
-    /// the swap-free path.
+    /// @notice Thrown when a zap is called with no swap to perform (zero input or empty calldata).
+    /// Use `depositUniswapV4LP` for the swap-free path.
     error EmptySwap();
+
+    /// @notice Thrown when a Kyber zap did not mint exactly one new position — the PositionManager's
+    /// `nextTokenId` must advance by exactly 1 across the zap call. New-position zaps only; this
+    /// matches the widget, which always mints rather than increasing existing positions.
+    error PositionMintCountMismatch();
+
+    /// @notice Thrown when the position minted by a Kyber zap is not owned by `receiver`.
+    error PositionOwnerMismatch();
+
+    /// @notice Thrown when the position minted by a Kyber zap belongs to a different pool than the
+    /// campaign pool the caller committed to (`expectedPoolId`).
+    error PoolIdMismatch();
 
     /// @notice Thrown when a Lido Earn deposit amount exceeds the SyncDepositQueue's uint224 range.
     error AmountExceedsUint224();
+
+    /// @notice Thrown when an Aave v4 deposit names a Giver the Spoke's governance has not
+    /// registered as an active position manager. The registry check is the trust boundary that
+    /// keeps `LedgerDeposit` honest: the emitted `ledger` (the Spoke) is not the contract being
+    /// called (the Giver), so an unauthenticated Giver could pocket the pulled funds and let the
+    /// forwarder emit an opt-in signal for a supply that never reached the Spoke.
+    error GiverNotActivePositionManager(address giver);
 
     /// @notice Canonical Permit2 address (same on every chain)
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
@@ -185,6 +245,11 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
 
     /// @notice Native-ETH sentinel used by Mellow's TransferLibrary (EIP-7528) as a queue `asset()`.
     address internal constant MELLOW_NATIVE_ASSET = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    /// @notice Storage index of the pools mapping in the V4 PoolManager (v4-core StateLibrary's
+    /// POOLS_SLOT). `pools[poolId]` lives at `keccak256(abi.encodePacked(poolId, POOLS_SLOT))`,
+    /// whose first slot is slot0 with `sqrtPriceX96` in the low 160 bits.
+    bytes32 internal constant V4_POOLS_SLOT = bytes32(uint256(6));
 
     /// @notice Deposit into an ERC-4626 vault on behalf of receiver
     /// @param vault The ERC-4626 vault to deposit into
@@ -214,6 +279,46 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         asset.safeApprove(address(pool), 0);
 
         emit Deposit(receiver, address(pool), asset, amount);
+    }
+
+    /// @notice Supply into an Aave v4 Spoke on behalf of receiver, routed through the
+    /// governance-registered GiverPositionManager (the Spoke's `supply(onBehalfOf)` only accepts
+    /// the user's approved position managers, so the forwarder cannot supply for a user directly).
+    /// @dev Requires `receiver` to have approved the Giver as a position manager on the Spoke
+    /// (`setUserPositionManager(giver, true)`, bundled by the frontend flow); without it the
+    /// Spoke's revert surfaces unchanged. A mismatched `asset`/`reserveId` pairing reverts inside
+    /// the Giver's pull/supply, so no funds path exists for a wrong asset.
+    ///
+    /// Unlike the other adapters, the contract called (the Giver) is not the contract emitted
+    /// (the Spoke), so the Giver cannot be trusted implicitly: it is authenticated against the
+    /// Spoke's own governance registry (`isPositionManagerActive`) before any funds move. A forged
+    /// `spoke` can vouch for a forged giver, but then the emitted `ledger` is that forged address,
+    /// which the indexer ignores — it only follows canonical Spokes. Emits `LedgerDeposit` (not
+    /// the generic `Deposit`) as the single indexer signal.
+    /// @param giver The Aave v4 GiverPositionManager
+    /// @param spoke The Aave v4 Spoke holding the reserve — emitted as the `ledger`
+    /// @param reserveId The Spoke's reserve id for `asset` — emitted as the `marketKey`
+    /// @param asset The reserve's underlying asset to supply
+    /// @param amount The amount of `asset` to supply
+    /// @param receiver The account credited with the supplied position
+    function depositAaveV4(
+        IGiverPositionManager giver,
+        address spoke,
+        uint256 reserveId,
+        address asset,
+        uint256 amount,
+        address receiver
+    ) external {
+        _requireReceiver(receiver);
+        if (!IAaveV4Spoke(spoke).isPositionManagerActive(address(giver))) {
+            revert GiverNotActivePositionManager(address(giver));
+        }
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+        asset.safeApproveWithRetry(address(giver), amount);
+        giver.supplyOnBehalfOf(spoke, reserveId, amount, receiver);
+        asset.safeApprove(address(giver), 0);
+
+        emit LedgerDeposit(receiver, spoke, reserveId, amount);
     }
 
     /// @notice Supply into a Compound v3 Comet on behalf of receiver
@@ -472,6 +577,104 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         _executeSwap(z.swapRouter, z.swapInputToken, z.swapAmountIn, z.swapCalldata, inputNative);
 
         _zapMintAndSettle(positionManager, z, token0, token1, token0Native, base0, base1);
+    }
+
+    /// @notice Deposit any single token into a Uniswap V4 LP position through Kyber's Zap-as-a-Service:
+    /// the forwarder relays ZaaS build calldata to the whitelisted zap router (which swaps, mints via
+    /// the canonical PositionManager, and refunds leftovers to the recipient), then verifies the mint
+    /// from canonical state and emits a trustworthy `UniswapV4LPDeposit`.
+    /// @dev `zapCalldata` is untrusted — the caller could encode anything the whitelisted router
+    /// accepts — so nothing in it is believed. The anti-spoof mechanism is reading the result out of
+    /// the PositionManager itself: exactly one new position must exist (`nextTokenId` +1), owned by
+    /// `receiver`, in the pool whose `keccak256(abi.encode(poolKey))` equals `expectedPoolId`. Event
+    /// amounts are derived from `(slot0.sqrtPriceX96, tickLower, tickUpper, liquidity)` via the
+    /// standard liquidity formulas, matching settled amounts to ≤1 wei — equal-or-better fidelity
+    /// than the native V4 path above, which reports the committed `amount0Max` for the native side.
+    ///
+    /// The zap router is trusted exactly like the swap routers in `depositUniswapV4LPWithSwap`
+    /// (owner-approved arbitrary-call target), so the same ERC-7201 whitelist gates it. The router
+    /// is scoped-approved for `amountIn` (reset afterward; ZaaS pulls exactly `amountIn`); native
+    /// input (`tokenIn == address(0)`) is funded via `msg.value` instead. ZaaS refunds unconsumed
+    /// input to the recipient itself, so the post-call dust sweep to `receiver` is defensive and
+    /// normally a no-op. New-position zaps only — increasing an existing position reverts.
+    /// @param positionManager The Uniswap V4 PositionManager (chain-specific canonical address)
+    /// @param zapRouter The Kyber zap router from the ZaaS build response — must be whitelisted
+    /// @param tokenIn The input token pulled from msg.sender; address(0) = native ETH via msg.value
+    /// @param amountIn The exact amount of `tokenIn` the zap consumes
+    /// @param zapCalldata ZaaS build output (built with sender = this forwarder, recipient = receiver)
+    /// @param expectedPoolId The canonical V4 PoolId the position must land in (the campaign pool)
+    /// @param receiver The account that must own the minted position NFT
+    function depositKyberZapV4(
+        IUniswapV4PositionManager positionManager,
+        address zapRouter,
+        address tokenIn,
+        uint256 amountIn,
+        bytes calldata zapCalldata,
+        bytes32 expectedPoolId,
+        address receiver
+    ) external payable nonReentrant {
+        _requireReceiver(receiver);
+        if (!_isSwapRouterAllowed(zapRouter)) revert SwapRouterNotWhitelisted(zapRouter);
+        if (amountIn == 0 || zapCalldata.length == 0) revert EmptySwap();
+
+        bool nativeIn = tokenIn == address(0);
+        if (msg.value != (nativeIn ? amountIn : 0)) revert IncorrectNativeValue();
+
+        uint256 tokenIdBefore = positionManager.nextTokenId();
+        // Pre-call snapshots so the dust sweep only ever returns this call's own surplus.
+        uint256 nativeBase = address(this).balance - msg.value;
+        uint256 tokenBase = nativeIn ? 0 : IERC20Minimal(tokenIn).balanceOf(address(this));
+
+        if (!nativeIn) tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+        _executeSwap(zapRouter, tokenIn, amountIn, zapCalldata, nativeIn);
+
+        (uint128 liquidity, uint256 amount0, uint256 amount1) =
+            _verifyKyberZapMint(positionManager, tokenIdBefore, expectedPoolId, receiver);
+        _sweepKyberZapDust(tokenIn, receiver, nativeIn, tokenBase, nativeBase);
+
+        emit UniswapV4LPDeposit(receiver, address(positionManager), expectedPoolId, liquidity, amount0, amount1);
+    }
+
+    /// @dev Verifies the zap minted exactly one new position to `receiver` in the expected pool,
+    /// reading only canonical PositionManager/PoolManager state, and derives the token amounts the
+    /// position holds. The minted tokenId is the pre-call `nextTokenId` (the PositionManager assigns
+    /// `nextTokenId` then increments). `sqrtPriceX96` is the low 160 bits of the pool's slot0, read
+    /// via `extsload` at the StateLibrary slot layout; ticks are unpacked from `PositionInfo`.
+    function _verifyKyberZapMint(
+        IUniswapV4PositionManager positionManager,
+        uint256 tokenId,
+        bytes32 expectedPoolId,
+        address receiver
+    ) internal view returns (uint128 liquidity, uint256 amount0, uint256 amount1) {
+        if (positionManager.nextTokenId() != tokenId + 1) revert PositionMintCountMismatch();
+        if (positionManager.ownerOf(tokenId) != receiver) revert PositionOwnerMismatch();
+
+        (PoolKey memory poolKey, uint256 info) = positionManager.getPoolAndPositionInfo(tokenId);
+        if (keccak256(abi.encode(poolKey)) != expectedPoolId) revert PoolIdMismatch();
+
+        liquidity = positionManager.getPositionLiquidity(tokenId);
+        uint160 sqrtPriceX96 = uint160(
+            uint256(positionManager.poolManager().extsload(keccak256(abi.encodePacked(expectedPoolId, V4_POOLS_SLOT))))
+        );
+        (amount0, amount1) = V4LiquidityMath.getAmountsForLiquidity(
+            sqrtPriceX96,
+            V4LiquidityMath.getSqrtPriceAtTick(int24(uint24(info >> 8))),
+            V4LiquidityMath.getSqrtPriceAtTick(int24(uint24(info >> 32))),
+            liquidity
+        );
+    }
+
+    /// @dev Sweeps any `tokenIn` and native balance above the pre-call snapshots to `receiver`.
+    /// Defensive only: ZaaS refunds leftovers to the recipient itself, so this normally no-ops.
+    function _sweepKyberZapDust(address tokenIn, address receiver, bool nativeIn, uint256 tokenBase, uint256 nativeBase)
+        internal
+    {
+        if (!nativeIn) {
+            uint256 tokenBalance = IERC20Minimal(tokenIn).balanceOf(address(this));
+            if (tokenBalance > tokenBase) tokenIn.safeTransfer(receiver, tokenBalance - tokenBase);
+        }
+        uint256 nativeBalance = address(this).balance;
+        if (nativeBalance > nativeBase) receiver.safeTransferETH(nativeBalance - nativeBase);
     }
 
     /// @dev Approves the whitelisted router for exactly `amountIn` (or forwards native via value),

@@ -3,5 +3,6 @@
   "TBIForwarderTimelock": "0xf206Da863aB3629472F9fd63D7b0E166D94eaa22",
   "TBIManagerTimelock": "0x5FC26a331b788c0797F6A8479dC737bE277F5d87",
   "TimeBasedIncentiveCampaign": "0x7c9d331C83E53bA05b944cacc32C0750a09FdD7a",
-  "TimeBasedIncentiveManager": "0x81d1Bb513197F4e23E9676B4f3aaBC7de89b54D0"
+  "TimeBasedIncentiveManager": "0x81d1Bb513197F4e23E9676B4f3aaBC7de89b54D0",
+  "ReferralDistributor": "0xAf2e1E51EdbBFA326DfF0B543Ce43B3735d3751C"
 }

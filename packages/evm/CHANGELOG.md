@@ -1,5 +1,11 @@
 # @boostxyz/evm
 
+## 8.3.0
+
+### Minor Changes
+
+- 1d8f94e: add support for robinhood chain
+
 ## 8.2.0
 
 ### Minor Changes

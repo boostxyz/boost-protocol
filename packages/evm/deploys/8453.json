@@ -30,5 +30,6 @@
   "TBIManagerTimelock": "0x5FC26a331b788c0797F6A8479dC737bE277F5d87",
   "TimeBasedIncentiveCampaign": "0x7c9d331C83E53bA05b944cacc32C0750a09FdD7a",
   "TimeBasedIncentiveManager": "0x81d1Bb513197F4e23E9676B4f3aaBC7de89b54D0",
-  "TransparentBudget": "0x778182f5df6Ab006F2E54898cfF315160208538F"
+  "TransparentBudget": "0x778182f5df6Ab006F2E54898cfF315160208538F",
+  "ReferralDistributor": "0xAf2e1E51EdbBFA326DfF0B543Ce43B3735d3751C"
 }

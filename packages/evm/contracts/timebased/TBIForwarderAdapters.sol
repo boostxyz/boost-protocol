@@ -250,8 +250,10 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// whitelist is the trust boundary for the otherwise-arbitrary external call in the zap.
     error SwapRouterNotWhitelisted(address router);
 
-    /// @notice Thrown when the zap's swap input token is neither pool currency. The input must be
-    /// `currency0` or `currency1`; the swap rebalances it into the pair before the mint.
+    /// @notice Thrown when a zap's swap input does not fit the pair it targets. For the V4 zap the
+    /// input must be `currency0` or `currency1`. For the Beefy CLM zap the legs must partition the
+    /// input: together they may not exceed `amountIn`, a leg may not swap a pool side into itself,
+    /// and an input that is neither pool side must be swapped in full (no remainder to strand).
     error SwapInputMismatch();
 
     /// @notice Thrown when a zap is called with no swap to perform (zero input or empty calldata).
@@ -279,6 +281,11 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// called (the Giver), so an unauthenticated Giver could pocket the pulled funds and let the
     /// forwarder emit an opt-in signal for a supply that never reached the Spoke.
     error GiverNotActivePositionManager(address giver);
+
+    /// @notice Thrown when a Beefy CLM deposit names a reward pool whose `stakedToken()` is not
+    /// the CLM being deposited into. The reward pool is the emitted `target` (the token the reward
+    /// indexer tracks), so it is bound to the CLM on-chain rather than trusted from calldata.
+    error RewardPoolMismatch();
 
     /// @notice Canonical Permit2 address (same on every chain)
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;

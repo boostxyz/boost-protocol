@@ -22,7 +22,9 @@ import {
     Currency,
     V4MintParams,
     V4ZapParams,
-    IMidasDepositVault
+    IMidasDepositVault,
+    BeefyClmParams,
+    BeefySwapLeg
 } from "contracts/timebased/TBIForwarderAdapters.sol";
 
 /// @notice Minimal ERC-4626 mock that accepts deposits and mints 1:1 shares
@@ -630,6 +632,126 @@ contract MockMidasVault {
     }
 }
 
+/// @notice Minimal Beefy CLM (cowToken) mock for `depositBeefyCLM`. Like the real vault, `deposit`
+/// pulls at most what the strategy needs — here capped by `setSpend` — from msg.sender, values the
+/// pulled amounts 1:1 into shares, mints them to msg.sender, and reverts on `minShares` or when the
+/// pool is not calm (`setCalm`). Anything above the caps stays with the caller, which is what the
+/// forwarder's refund path exists for.
+contract MockBeefyClm is ERC20 {
+    error NotCalm();
+    error TooMuchSlippage();
+    error NoShares();
+
+    address public immutable token0;
+    address public immutable token1;
+    bool public calm = true;
+    uint256 public spend0 = type(uint256).max;
+    uint256 public spend1 = type(uint256).max;
+
+    constructor(address token0_, address token1_) {
+        token0 = token0_;
+        token1 = token1_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Mock Cow Token";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "cowMOCK";
+    }
+
+    function setCalm(bool calm_) external {
+        calm = calm_;
+    }
+
+    function setSpend(uint256 spend0_, uint256 spend1_) external {
+        spend0 = spend0_;
+        spend1 = spend1_;
+    }
+
+    function wants() external view returns (address, address) {
+        return (token0, token1);
+    }
+
+    function isCalm() external view returns (bool) {
+        return calm;
+    }
+
+    function balances() external view returns (uint256, uint256) {
+        return (ERC20(token0).balanceOf(address(this)), ERC20(token1).balanceOf(address(this)));
+    }
+
+    function previewDeposit(uint256 amount0, uint256 amount1)
+        external
+        view
+        returns (uint256 shares, uint256 pulled0, uint256 pulled1, uint256 fee0, uint256 fee1)
+    {
+        pulled0 = amount0 < spend0 ? amount0 : spend0;
+        pulled1 = amount1 < spend1 ? amount1 : spend1;
+        shares = pulled0 + pulled1;
+        return (shares, pulled0, pulled1, fee0, fee1);
+    }
+
+    function deposit(uint256 amount0, uint256 amount1, uint256 minShares) external {
+        if (!calm) revert NotCalm();
+        uint256 pulled0 = amount0 < spend0 ? amount0 : spend0;
+        uint256 pulled1 = amount1 < spend1 ? amount1 : spend1;
+        if (pulled0 > 0) ERC20(token0).transferFrom(msg.sender, address(this), pulled0);
+        if (pulled1 > 0) ERC20(token1).transferFrom(msg.sender, address(this), pulled1);
+        uint256 shares = pulled0 + pulled1;
+        if (shares < minShares) revert TooMuchSlippage();
+        if (shares == 0) revert NoShares();
+        _mint(msg.sender, shares);
+    }
+}
+
+/// @notice Minimal Beefy reward pool (rCow) mock: `stake` mints receipt tokens 1:1 to msg.sender and
+/// pulls the staked cowToken from msg.sender — no `stakeFor`, exactly like the real pool.
+contract MockBeefyRewardPool is ERC20 {
+    address public immutable stakedToken;
+
+    constructor(address stakedToken_) {
+        stakedToken = stakedToken_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Mock Reward Pool";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "rcowMOCK";
+    }
+
+    function stake(uint256 amount) external {
+        _mint(msg.sender, amount);
+        ERC20(stakedToken).transferFrom(msg.sender, address(this), amount);
+    }
+}
+
+/// @notice Router mock that performs the swap and also hands part of the input back to the caller
+/// (the forwarder) — input dust or a native surplus — to exercise the forwarder's leftover refunds.
+contract MockDustRouter {
+    function swap(
+        address tokenIn,
+        uint256 amountIn,
+        address tokenOut,
+        uint256 amountOut,
+        address recipient,
+        uint256 refund
+    ) external payable {
+        if (tokenIn == address(0)) {
+            require(msg.value == amountIn, "router: bad native value");
+            (bool ok,) = msg.sender.call{value: refund}("");
+            require(ok, "router: native refund failed");
+        } else {
+            ERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+            ERC20(tokenIn).transfer(msg.sender, refund);
+        }
+        ERC20(tokenOut).transfer(recipient, amountOut);
+    }
+}
+
 contract TBIForwarderTest is Test {
     TBIForwarder forwarder;
     MockERC20 token;
@@ -645,6 +767,8 @@ contract TBIForwarderTest is Test {
     MockV4PositionManager v4PositionManager;
     MockKyberRouter kyberRouter;
     MockKyberZapRouter kyberZapRouter;
+    MockBeefyClm beefyClm;
+    MockBeefyRewardPool beefyRewardPool;
 
     address constant USER = address(0xCAFE);
     address constant RECEIVER = address(0xB0B);
@@ -689,6 +813,10 @@ contract TBIForwarderTest is Test {
         // Kyber ZaaS zap router (mints V4 positions directly), also whitelisted.
         kyberZapRouter = new MockKyberZapRouter(address(v4PositionManager));
         forwarder.setSwapRouterAllowed(address(kyberZapRouter), true);
+
+        // Beefy CLM over (token, token1) and its reward pool.
+        beefyClm = new MockBeefyClm(address(token), address(token1));
+        beefyRewardPool = new MockBeefyRewardPool(address(beefyClm));
 
         // Fund user
         _fundAndApprove(USER, 100 ether);
@@ -2092,5 +2220,423 @@ contract TBIForwarderTest is Test {
             _v4PoolId(),
             USER
         );
+    }
+
+    // --- Beefy CLM ---
+
+    function _beefyParams(address inputToken, uint256 amountIn, address receiver)
+        internal
+        view
+        returns (BeefyClmParams memory p)
+    {
+        p.clm = address(beefyClm);
+        p.rewardPool = address(beefyRewardPool);
+        p.inputToken = inputToken;
+        p.amountIn = amountIn;
+        p.swapRouter = address(kyberRouter);
+        p.receiver = receiver;
+    }
+
+    /// @dev Leg swapping `amountIn` of `tokenIn` into `amountOut` of `tokenOut` via the mock router.
+    function _beefyLeg(address tokenIn, uint256 amountIn, address tokenOut, uint256 amountOut)
+        internal
+        view
+        returns (BeefySwapLeg memory)
+    {
+        return BeefySwapLeg({
+            amountIn: amountIn, swapCalldata: _swapCalldata(tokenIn, amountIn, tokenOut, amountOut, address(forwarder))
+        });
+    }
+
+    /// @dev The stateless forwarder ends every Beefy zap holding nothing and approving nothing.
+    function _assertBeefyForwarderClean() internal view {
+        assertEq(token.balanceOf(address(forwarder)), 0, "forwarder token0");
+        assertEq(token1.balanceOf(address(forwarder)), 0, "forwarder token1");
+        assertEq(beefyClm.balanceOf(address(forwarder)), 0, "forwarder cow");
+        assertEq(beefyRewardPool.balanceOf(address(forwarder)), 0, "forwarder rCow");
+        assertEq(address(forwarder).balance, 0, "forwarder native");
+        assertEq(token.allowance(address(forwarder), address(kyberRouter)), 0, "router approval token0");
+        assertEq(token1.allowance(address(forwarder), address(kyberRouter)), 0, "router approval token1");
+        assertEq(token.allowance(address(forwarder), address(beefyClm)), 0, "clm approval token0");
+        assertEq(token1.allowance(address(forwarder), address(beefyClm)), 0, "clm approval token1");
+        assertEq(beefyClm.allowance(address(forwarder), address(beefyRewardPool)), 0, "pool approval cow");
+    }
+
+    function test_BeefyClm_Erc20InWants_OneLeg_Success() public {
+        // Deposit token0; swap 4 of 10 into token1 (router returns 8), deposit 6 token0 + 8 token1.
+        token1.mint(address(kyberRouter), 8 ether);
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swap1 = _beefyLeg(address(token), 4 ether, address(token1), 8 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(USER, address(beefyRewardPool), address(token), 10 ether);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        // 14 shares minted to the forwarder, staked 1:1, rCow forwarded to USER.
+        assertEq(beefyRewardPool.balanceOf(USER), 14 ether, "rCow to user");
+        assertEq(beefyClm.balanceOf(address(beefyRewardPool)), 14 ether, "cow staked");
+        assertEq(token.balanceOf(address(beefyClm)), 6 ether, "token0 deposited");
+        assertEq(token1.balanceOf(address(beefyClm)), 8 ether, "token1 deposited");
+        assertEq(token.balanceOf(USER), 90 ether, "user paid amountIn");
+        assertEq(token.balanceOf(address(kyberRouter)), 4 ether, "router consumed swap input");
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_Erc20InWants_NoSwap_SingleSided() public {
+        // Token0 only, no legs: the whole input goes straight into the CLM.
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(USER, address(beefyRewardPool), address(token), 10 ether);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        assertEq(beefyRewardPool.balanceOf(USER), 10 ether);
+        assertEq(token.balanceOf(address(beefyClm)), 10 ether);
+        assertEq(token1.balanceOf(address(beefyClm)), 0);
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_Token1Input_OneLeg_Success() public {
+        // Mirror case: token1 is the input, the leg toward token0 runs, the remainder is token1.
+        token1.mint(USER, 10 ether);
+        vm.prank(USER);
+        token1.approve(address(forwarder), type(uint256).max);
+        token.mint(address(kyberRouter), 3 ether);
+
+        BeefyClmParams memory p = _beefyParams(address(token1), 10 ether, USER);
+        p.swap0 = _beefyLeg(address(token1), 4 ether, address(token), 3 ether);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        assertEq(beefyRewardPool.balanceOf(USER), 9 ether, "3 token0 + 6 token1");
+        assertEq(token.balanceOf(address(beefyClm)), 3 ether);
+        assertEq(token1.balanceOf(address(beefyClm)), 6 ether);
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_NativeInput_TwoLegs_Success() public {
+        // Native ETH is never a pool side: both legs run and together consume the whole msg.value.
+        vm.deal(USER, 100 ether);
+        token.mint(address(kyberRouter), 6 ether);
+        token1.mint(address(kyberRouter), 8 ether);
+
+        BeefyClmParams memory p = _beefyParams(address(0), 10 ether, USER);
+        p.swap0 = _beefyLeg(address(0), 6 ether, address(token), 6 ether);
+        p.swap1 = _beefyLeg(address(0), 4 ether, address(token1), 8 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(USER, address(beefyRewardPool), address(0), 10 ether);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM{value: 10 ether}(p);
+
+        assertEq(beefyRewardPool.balanceOf(USER), 14 ether, "rCow to user");
+        assertEq(token.balanceOf(address(beefyClm)), 6 ether);
+        assertEq(token1.balanceOf(address(beefyClm)), 8 ether);
+        assertEq(USER.balance, 90 ether, "user paid msg.value");
+        assertEq(address(kyberRouter).balance, 10 ether, "router received both legs");
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_Erc20NotInWants_TwoLegs_Success() public {
+        // A third token as input: both legs must partition the full amountIn.
+        MockERC20 stranger = new MockERC20();
+        stranger.mint(USER, 10 ether);
+        vm.prank(USER);
+        stranger.approve(address(forwarder), type(uint256).max);
+        token.mint(address(kyberRouter), 6 ether);
+        token1.mint(address(kyberRouter), 8 ether);
+
+        BeefyClmParams memory p = _beefyParams(address(stranger), 10 ether, RECEIVER);
+        p.swap0 = _beefyLeg(address(stranger), 6 ether, address(token), 6 ether);
+        p.swap1 = _beefyLeg(address(stranger), 4 ether, address(token1), 8 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(beefyRewardPool), address(stranger), 10 ether);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        assertEq(beefyRewardPool.balanceOf(RECEIVER), 14 ether, "rCow to receiver");
+        assertEq(beefyRewardPool.balanceOf(USER), 0, "nothing to the caller");
+        assertEq(stranger.balanceOf(USER), 0, "input fully consumed");
+        assertEq(stranger.balanceOf(address(forwarder)), 0, "no input left in forwarder");
+        assertEq(stranger.allowance(address(forwarder), address(kyberRouter)), 0, "router approval reset");
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_RefundsUnconsumedBothSides() public {
+        // The CLM pulls only what its ratio needs (4 token0, 5 token1); the swap also returns one
+        // token1 above the floor. Everything unconsumed goes to the receiver, not the caller.
+        beefyClm.setSpend(4 ether, 5 ether);
+        token1.mint(address(kyberRouter), 9 ether);
+
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, RECEIVER);
+        p.swap1 = _beefyLeg(address(token), 4 ether, address(token1), 9 ether);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        assertEq(beefyRewardPool.balanceOf(RECEIVER), 9 ether, "shares for 4 + 5");
+        assertEq(token.balanceOf(RECEIVER), 2 ether, "unconsumed token0 (6 - 4)");
+        assertEq(token1.balanceOf(RECEIVER), 4 ether, "unconsumed token1 (9 - 5)");
+        assertEq(token.balanceOf(USER), 90 ether, "caller paid the full amountIn");
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_RefundsInputDust_NotInWants() public {
+        // A router that hands back input dust: for an input that is neither pool side the dust has
+        // no side snapshot to fall under, so the input-token sweep must return it.
+        MockDustRouter dust = new MockDustRouter();
+        forwarder.setSwapRouterAllowed(address(dust), true);
+        MockERC20 stranger = new MockERC20();
+        stranger.mint(USER, 10 ether);
+        vm.prank(USER);
+        stranger.approve(address(forwarder), type(uint256).max);
+        token.mint(address(dust), 6 ether);
+        token1.mint(address(dust), 8 ether);
+
+        BeefyClmParams memory p = _beefyParams(address(stranger), 10 ether, RECEIVER);
+        p.swapRouter = address(dust);
+        p.swap0 = BeefySwapLeg({
+            amountIn: 6 ether,
+            swapCalldata: abi.encodeCall(
+                MockDustRouter.swap, (address(stranger), 6 ether, address(token), 6 ether, address(forwarder), 1 ether)
+            )
+        });
+        p.swap1 = BeefySwapLeg({
+            amountIn: 4 ether,
+            swapCalldata: abi.encodeCall(
+                MockDustRouter.swap, (address(stranger), 4 ether, address(token1), 8 ether, address(forwarder), 0)
+            )
+        });
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        assertEq(beefyRewardPool.balanceOf(RECEIVER), 14 ether);
+        assertEq(stranger.balanceOf(RECEIVER), 1 ether, "input dust refunded to receiver");
+        assertEq(stranger.balanceOf(address(forwarder)), 0, "no input left in forwarder");
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_RefundsNativeSurplus() public {
+        // A router that returns part of the native input: the surplus is refunded to the receiver.
+        MockDustRouter dust = new MockDustRouter();
+        forwarder.setSwapRouterAllowed(address(dust), true);
+        vm.deal(USER, 100 ether);
+        token.mint(address(dust), 6 ether);
+        token1.mint(address(dust), 8 ether);
+
+        BeefyClmParams memory p = _beefyParams(address(0), 10 ether, RECEIVER);
+        p.swapRouter = address(dust);
+        p.swap0 = BeefySwapLeg({
+            amountIn: 6 ether,
+            swapCalldata: abi.encodeCall(
+                MockDustRouter.swap, (address(0), 6 ether, address(token), 6 ether, address(forwarder), 0.5 ether)
+            )
+        });
+        p.swap1 = BeefySwapLeg({
+            amountIn: 4 ether,
+            swapCalldata: abi.encodeCall(
+                MockDustRouter.swap, (address(0), 4 ether, address(token1), 8 ether, address(forwarder), 0)
+            )
+        });
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM{value: 10 ether}(p);
+
+        assertEq(beefyRewardPool.balanceOf(RECEIVER), 14 ether);
+        assertEq(RECEIVER.balance, 0.5 ether, "native surplus refunded to receiver");
+        assertEq(USER.balance, 90 ether);
+        _assertBeefyForwarderClean();
+    }
+
+    function test_BeefyClm_ForwarderPreexistingBalancesUntouched() public {
+        // Balances the forwarder already held are neither deposited nor refunded.
+        token.mint(address(forwarder), 1 ether);
+        token1.mint(address(forwarder), 2 ether);
+        vm.deal(address(forwarder), 3 ether);
+        beefyClm.setSpend(4 ether, 5 ether);
+        token1.mint(address(kyberRouter), 8 ether);
+
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, RECEIVER);
+        p.swap1 = _beefyLeg(address(token), 4 ether, address(token1), 8 ether);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        assertEq(beefyRewardPool.balanceOf(RECEIVER), 9 ether);
+        assertEq(token.balanceOf(RECEIVER), 2 ether, "6 - 4 refunded");
+        assertEq(token1.balanceOf(RECEIVER), 3 ether, "8 - 5 refunded");
+        assertEq(token.balanceOf(address(forwarder)), 1 ether, "pre-existing token0 kept");
+        assertEq(token1.balanceOf(address(forwarder)), 2 ether, "pre-existing token1 kept");
+        assertEq(address(forwarder).balance, 3 ether, "pre-existing native kept");
+    }
+
+    function test_BeefyClm_RevertZeroReceiver() public {
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, address(0));
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_RevertRewardPoolMismatch() public {
+        // A reward pool staking some other token cannot be paired with this CLM.
+        MockBeefyRewardPool other = new MockBeefyRewardPool(address(token));
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.rewardPool = address(other);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.RewardPoolMismatch.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_RevertRouterNotWhitelisted() public {
+        MockKyberRouter rogue = new MockKyberRouter();
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swapRouter = address(rogue);
+        p.swap1 = _beefyLeg(address(token), 4 ether, address(token1), 8 ether);
+
+        vm.prank(USER);
+        vm.expectRevert(abi.encodeWithSelector(TBIForwarderAdapters.SwapRouterNotWhitelisted.selector, address(rogue)));
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_NoSwap_IgnoresRouter() public {
+        // With no active leg the router is never called, so an unlisted router is not an error.
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swapRouter = address(0xBAD);
+
+        vm.prank(USER);
+        forwarder.depositBeefyCLM(p);
+
+        assertEq(beefyRewardPool.balanceOf(USER), 10 ether);
+    }
+
+    function test_BeefyClm_RevertLegsExceedInput() public {
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swap1 = _beefyLeg(address(token), 11 ether, address(token1), 8 ether);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.SwapInputMismatch.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_RevertSelfSwapLeg() public {
+        // The input is token0, so a leg "into token0" is meaningless and rejected.
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swap0 = _beefyLeg(address(token), 4 ether, address(token), 4 ether);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.SwapInputMismatch.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_RevertNotInWantsRemainder() public {
+        // Neither pool side as input: legs must consume exactly amountIn or the rest would strand.
+        MockERC20 stranger = new MockERC20();
+        stranger.mint(USER, 10 ether);
+        vm.prank(USER);
+        stranger.approve(address(forwarder), type(uint256).max);
+
+        BeefyClmParams memory p = _beefyParams(address(stranger), 10 ether, USER);
+        p.swap0 = _beefyLeg(address(stranger), 6 ether, address(token), 6 ether);
+        p.swap1 = _beefyLeg(address(stranger), 3 ether, address(token1), 6 ether);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.SwapInputMismatch.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_RevertNativeWithoutLegs() public {
+        // Native ETH is never a pool side, so with no legs the whole input would strand.
+        vm.deal(USER, 100 ether);
+        BeefyClmParams memory p = _beefyParams(address(0), 10 ether, USER);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.SwapInputMismatch.selector);
+        forwarder.depositBeefyCLM{value: 10 ether}(p);
+    }
+
+    function test_BeefyClm_RevertEmptySwapCalldata() public {
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swap1 = BeefySwapLeg({amountIn: 4 ether, swapCalldata: ""});
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.EmptySwap.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_RevertWrongNativeValue() public {
+        vm.deal(USER, 100 ether);
+        token.mint(address(kyberRouter), 6 ether);
+        token1.mint(address(kyberRouter), 8 ether);
+        BeefyClmParams memory p = _beefyParams(address(0), 10 ether, USER);
+        p.swap0 = _beefyLeg(address(0), 6 ether, address(token), 6 ether);
+        p.swap1 = _beefyLeg(address(0), 4 ether, address(token1), 8 ether);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
+        forwarder.depositBeefyCLM{value: 9 ether}(p);
+    }
+
+    function test_BeefyClm_RevertErc20WithValue() public {
+        vm.deal(USER, 1 ether);
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.IncorrectNativeValue.selector);
+        forwarder.depositBeefyCLM{value: 1 ether}(p);
+    }
+
+    function test_BeefyClm_MinSharesRevertBubbles() public {
+        token1.mint(address(kyberRouter), 8 ether);
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swap1 = _beefyLeg(address(token), 4 ether, address(token1), 8 ether);
+        p.minShares = 15 ether; // only 14 will be minted
+
+        vm.prank(USER);
+        vm.expectRevert(MockBeefyClm.TooMuchSlippage.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_NotCalmRevertBubbles() public {
+        beefyClm.setCalm(false);
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+
+        vm.prank(USER);
+        vm.expectRevert(MockBeefyClm.NotCalm.selector);
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_BubblesSwapRevert() public {
+        MockRevertingRouter rogue = new MockRevertingRouter();
+        forwarder.setSwapRouterAllowed(address(rogue), true);
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swapRouter = address(rogue);
+        p.swap1 = _beefyLeg(address(token), 4 ether, address(token1), 8 ether);
+
+        vm.prank(USER);
+        vm.expectRevert(bytes("router: swap failed"));
+        forwarder.depositBeefyCLM(p);
+    }
+
+    function test_BeefyClm_RevertOnReentrancy() public {
+        MockReentrantRouter rogue = new MockReentrantRouter(address(forwarder));
+        forwarder.setSwapRouterAllowed(address(rogue), true);
+        BeefyClmParams memory p = _beefyParams(address(token), 10 ether, USER);
+        p.swapRouter = address(rogue);
+        p.swap1 = _beefyLeg(address(token), 4 ether, address(token1), 8 ether);
+
+        vm.prank(USER);
+        vm.expectRevert(abi.encodeWithSignature("Reentrancy()"));
+        forwarder.depositBeefyCLM(p);
     }
 }

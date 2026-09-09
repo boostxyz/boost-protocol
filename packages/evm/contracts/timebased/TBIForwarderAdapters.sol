@@ -146,6 +146,52 @@ interface IAllowanceTransfer {
         returns (uint160 amount, uint48 expiration, uint48 nonce);
 }
 
+/// @notice Beefy CLM (CowCentrated Liquidity Manager) vault — the `cowToken`, an ERC-20 over an
+/// actively managed concentrated-liquidity position. `wants()` is the pool's `(token0, token1)`.
+/// `deposit` accepts any ratio: it pulls only what the strategy's current balance ratio requires
+/// (at most `amount0`/`amount1`), prices the pulled amounts into shares, and mints them to
+/// msg.sender — there is no receiver argument. Reverts inside the strategy when the pool is not calm.
+interface IBeefyVaultConcLiq {
+    function wants() external view returns (address token0, address token1);
+    function deposit(uint256 amount0, uint256 amount1, uint256 minShares) external;
+}
+
+/// @notice Beefy reward pool — the `rCow` token that stakes a CLM's cowToken 1:1 and streams
+/// incentives to stakers. `stake` pulls `stakedToken()` from msg.sender and mints an equal amount
+/// of rCow to msg.sender; there is no `stakeFor`, so the forwarder stakes as itself and forwards
+/// the receipt.
+interface IBeefyRewardPool {
+    function stakedToken() external view returns (address);
+    function stake(uint256 amount) external;
+}
+
+/// @notice One aggregator swap leg of a Beefy CLM zap: `amountIn` of the input token is swapped
+/// into one pool side via `swapCalldata` (the aggregator's build output, which must route the
+/// output back to this forwarder). `amountIn == 0` skips the leg.
+struct BeefySwapLeg {
+    uint256 amountIn;
+    bytes swapCalldata;
+}
+
+/// @notice Bundle of zap-then-deposit parameters passed to `depositBeefyCLM`. The user funds a
+/// single `inputToken` (any ERC-20, or native ETH as `address(0)` via `msg.value`); up to two
+/// aggregator legs turn it into the CLM's two pool sides, the forwarder deposits both sides into
+/// the CLM, stakes the minted cowToken into `rewardPool`, and forwards the rCow to `receiver`.
+/// @dev `swap0` targets `wants().token0`, `swap1` targets `wants().token1`. When `inputToken` is
+/// itself a pool side, the leg toward that side must be empty and the un-swapped remainder is
+/// deposited directly; when it is neither side both legs together must consume exactly `amountIn`.
+struct BeefyClmParams {
+    address clm;
+    address rewardPool;
+    address inputToken;
+    uint256 amountIn;
+    address swapRouter;
+    BeefySwapLeg swap0;
+    BeefySwapLeg swap1;
+    uint256 minShares;
+    address receiver;
+}
+
 interface IERC20Minimal {
     function allowance(address owner, address spender) external view returns (uint256);
     function balanceOf(address account) external view returns (uint256);
@@ -204,8 +250,10 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// whitelist is the trust boundary for the otherwise-arbitrary external call in the zap.
     error SwapRouterNotWhitelisted(address router);
 
-    /// @notice Thrown when the zap's swap input token is neither pool currency. The input must be
-    /// `currency0` or `currency1`; the swap rebalances it into the pair before the mint.
+    /// @notice Thrown when a zap's swap input does not fit the pair it targets. For the V4 zap the
+    /// input must be `currency0` or `currency1`. For the Beefy CLM zap the legs must partition the
+    /// input: together they may not exceed `amountIn`, a leg may not swap a pool side into itself,
+    /// and an input that is neither pool side must be swapped in full (no remainder to strand).
     error SwapInputMismatch();
 
     /// @notice Thrown when a zap is called with no swap to perform (zero input or empty calldata).
@@ -233,6 +281,11 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// called (the Giver), so an unauthenticated Giver could pocket the pulled funds and let the
     /// forwarder emit an opt-in signal for a supply that never reached the Spoke.
     error GiverNotActivePositionManager(address giver);
+
+    /// @notice Thrown when a Beefy CLM deposit names a reward pool whose `stakedToken()` is not
+    /// the CLM being deposited into. The reward pool is the emitted `target` (the token the reward
+    /// indexer tracks), so it is bound to the CLM on-chain rather than trusted from calldata.
+    error RewardPoolMismatch();
 
     /// @notice Canonical Permit2 address (same on every chain)
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
@@ -675,6 +728,148 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         }
         uint256 nativeBalance = address(this).balance;
         if (nativeBalance > nativeBase) receiver.safeTransferETH(nativeBalance - nativeBase);
+    }
+
+    /// @notice Zap any single token into a Beefy CLM (CowCentrated Liquidity Manager) vault and
+    /// stake the minted cowToken into its reward pool, crediting the rCow to `receiver` — all in one
+    /// transaction. The user funds `inputToken` (any ERC-20, or native ETH via `msg.value`); the
+    /// forwarder swaps up to two legs of it into the CLM's pool sides through a whitelisted
+    /// aggregator router, deposits both sides, stakes the resulting cowToken, forwards the rCow, and
+    /// refunds whatever the CLM did not consume.
+    /// @dev The swap legs are arbitrary calls into `swapRouter` with caller-supplied calldata; the
+    /// only trust boundary is the owner-managed whitelist (`setSwapRouterAllowed`), exactly as in
+    /// `depositUniswapV4LPWithSwap`. Each leg is scoped-approved for its own `amountIn` (reset
+    /// afterward) and its output must land back in this forwarder, where it is measured by balance
+    /// delta rather than trusted from the quote. `nonReentrant` blocks the router (or the CLM's
+    /// strategy) re-entering while transient balances are held.
+    ///
+    /// The CLM's `deposit` accepts any token ratio but pulls only what the strategy's current
+    /// balance ratio requires, so the split between legs affects capital efficiency, not
+    /// correctness: any unconsumed token0/token1 (and any native surplus a router returns) is
+    /// refunded to `receiver`. Both the CLM (`clm.deposit`) and the reward pool (`stake`) mint to
+    /// msg.sender with no receiver argument, so the forwarder holds the cowToken for the duration of
+    /// the call and forwards the rCow by balance delta (mirrors `depositCompoundV2`). The reward pool
+    /// is the emitted `target` — the token the reward indexer tracks — and is bound to the CLM via
+    /// `stakedToken()` so calldata cannot pair an arbitrary pool with the deposit.
+    ///
+    /// Input-token rules (see `BeefyClmParams`): the legs may never exceed `amountIn`; a pool side
+    /// used as input may not be swapped into itself; an input that is neither side must be fully
+    /// swapped. Each violation reverts `SwapInputMismatch`. Native ETH is never a CLM pool side, so
+    /// native input always runs both legs.
+    /// @param p Bundled zap + deposit parameters
+    function depositBeefyCLM(BeefyClmParams calldata p) external payable nonReentrant {
+        _requireReceiver(p.receiver);
+        (address token0, address token1) = _validateBeefyClm(p);
+
+        bool inputNative = p.inputToken == address(0);
+        if (msg.value != (inputNative ? p.amountIn : 0)) revert IncorrectNativeValue();
+
+        // Snapshot pre-existing balances so refunds and the forwarded receipt only ever reflect
+        // this call's own flows. The input snapshot only matters when the input is neither pool
+        // side (a router returning input dust); when it is a side, its own snapshot covers it.
+        uint256 base0 = IERC20Minimal(token0).balanceOf(address(this));
+        uint256 base1 = IERC20Minimal(token1).balanceOf(address(this));
+        uint256 baseNative = address(this).balance - msg.value;
+        uint256 baseIn = inputNative ? 0 : IERC20Minimal(p.inputToken).balanceOf(address(this));
+
+        if (!inputNative) p.inputToken.safeTransferFrom(msg.sender, address(this), p.amountIn);
+        _beefyRunSwaps(p, inputNative);
+        _beefyDepositAndStake(p, token0, token1, base0, base1);
+        _beefyRefund(p, token0, token1, base0, base1, baseNative, baseIn);
+
+        emit Deposit(p.receiver, p.rewardPool, p.inputToken, p.amountIn);
+    }
+
+    /// @dev Checks the leg partition, router whitelist, and reward-pool binding for a Beefy CLM
+    /// zap, returning the CLM's pool sides. Extracted to keep the entry point within Solidity's
+    /// stack-local limit without via_ir.
+    function _validateBeefyClm(BeefyClmParams calldata p) internal view returns (address token0, address token1) {
+        uint256 swapTotal = p.swap0.amountIn + p.swap1.amountIn;
+        if (swapTotal > p.amountIn) revert SwapInputMismatch();
+        if (swapTotal != 0) {
+            if (!_isSwapRouterAllowed(p.swapRouter)) revert SwapRouterNotWhitelisted(p.swapRouter);
+            if (p.swap0.amountIn != 0 && p.swap0.swapCalldata.length == 0) revert EmptySwap();
+            if (p.swap1.amountIn != 0 && p.swap1.swapCalldata.length == 0) revert EmptySwap();
+        }
+
+        (token0, token1) = IBeefyVaultConcLiq(p.clm).wants();
+        if (p.inputToken == token0) {
+            if (p.swap0.amountIn != 0) revert SwapInputMismatch();
+        } else if (p.inputToken == token1) {
+            if (p.swap1.amountIn != 0) revert SwapInputMismatch();
+        } else if (swapTotal != p.amountIn) {
+            revert SwapInputMismatch();
+        }
+
+        if (IBeefyRewardPool(p.rewardPool).stakedToken() != p.clm) revert RewardPoolMismatch();
+    }
+
+    /// @dev Runs each active swap leg of a Beefy CLM zap through the whitelisted router.
+    function _beefyRunSwaps(BeefyClmParams calldata p, bool inputNative) internal {
+        if (p.swap0.amountIn != 0) {
+            _executeSwap(p.swapRouter, p.inputToken, p.swap0.amountIn, p.swap0.swapCalldata, inputNative);
+        }
+        if (p.swap1.amountIn != 0) {
+            _executeSwap(p.swapRouter, p.inputToken, p.swap1.amountIn, p.swap1.swapCalldata, inputNative);
+        }
+    }
+
+    /// @dev Deposits this call's token0/token1 (balance above the pre-call snapshots) into the CLM,
+    /// stakes the minted cowToken into the reward pool, and forwards the minted rCow to `receiver`.
+    /// Both mints land on this forwarder and are measured by balance delta. Approvals are scoped to
+    /// the measured amounts and reset afterward — the CLM pulls at most what its ratio requires, so
+    /// the token approvals can be left partially unspent.
+    function _beefyDepositAndStake(
+        BeefyClmParams calldata p,
+        address token0,
+        address token1,
+        uint256 base0,
+        uint256 base1
+    ) internal {
+        uint256 amount0 = IERC20Minimal(token0).balanceOf(address(this)) - base0;
+        uint256 amount1 = IERC20Minimal(token1).balanceOf(address(this)) - base1;
+        if (amount0 != 0) token0.safeApproveWithRetry(p.clm, amount0);
+        if (amount1 != 0) token1.safeApproveWithRetry(p.clm, amount1);
+
+        uint256 cowBefore = IERC20Minimal(p.clm).balanceOf(address(this));
+        IBeefyVaultConcLiq(p.clm).deposit(amount0, amount1, p.minShares);
+        if (amount0 != 0) token0.safeApprove(p.clm, 0);
+        if (amount1 != 0) token1.safeApprove(p.clm, 0);
+        uint256 cow = IERC20Minimal(p.clm).balanceOf(address(this)) - cowBefore;
+
+        uint256 rCowBefore = IERC20Minimal(p.rewardPool).balanceOf(address(this));
+        p.clm.safeApproveWithRetry(p.rewardPool, cow);
+        IBeefyRewardPool(p.rewardPool).stake(cow);
+        p.clm.safeApprove(p.rewardPool, 0);
+        uint256 rCow = IERC20Minimal(p.rewardPool).balanceOf(address(this)) - rCowBefore;
+        p.rewardPool.safeTransfer(p.receiver, rCow);
+    }
+
+    /// @dev Refunds everything a Beefy CLM zap left in the forwarder above the pre-call snapshots:
+    /// the pool sides the CLM did not consume, any input dust a router returned, and any native
+    /// surplus. The stateless forwarder must end the call holding nothing of this call's.
+    function _beefyRefund(
+        BeefyClmParams calldata p,
+        address token0,
+        address token1,
+        uint256 base0,
+        uint256 base1,
+        uint256 baseNative,
+        uint256 baseIn
+    ) internal {
+        _refundAbove(token0, p.receiver, base0);
+        _refundAbove(token1, p.receiver, base1);
+        if (p.inputToken != address(0) && p.inputToken != token0 && p.inputToken != token1) {
+            _refundAbove(p.inputToken, p.receiver, baseIn);
+        }
+        uint256 nativeBalance = address(this).balance;
+        if (nativeBalance > baseNative) p.receiver.safeTransferETH(nativeBalance - baseNative);
+    }
+
+    /// @dev Transfers the forwarder's balance of `token` above `base` to `receiver`, if any.
+    function _refundAbove(address token, address receiver, uint256 base) internal {
+        uint256 balance = IERC20Minimal(token).balanceOf(address(this));
+        if (balance > base) token.safeTransfer(receiver, balance - base);
     }
 
     /// @dev Approves the whitelisted router for exactly `amountIn` (or forwards native via value),

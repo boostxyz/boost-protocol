@@ -22,7 +22,9 @@ import {
     Currency,
     V4MintParams,
     V4ZapParams,
-    IMidasDepositVault
+    IMidasDepositVault,
+    BeefyClmParams,
+    BeefySwapLeg
 } from "contracts/timebased/TBIForwarderAdapters.sol";
 
 /// @notice Minimal ERC-4626 mock that accepts deposits and mints 1:1 shares
@@ -765,6 +767,8 @@ contract TBIForwarderTest is Test {
     MockV4PositionManager v4PositionManager;
     MockKyberRouter kyberRouter;
     MockKyberZapRouter kyberZapRouter;
+    MockBeefyClm beefyClm;
+    MockBeefyRewardPool beefyRewardPool;
 
     address constant USER = address(0xCAFE);
     address constant RECEIVER = address(0xB0B);
@@ -809,6 +813,10 @@ contract TBIForwarderTest is Test {
         // Kyber ZaaS zap router (mints V4 positions directly), also whitelisted.
         kyberZapRouter = new MockKyberZapRouter(address(v4PositionManager));
         forwarder.setSwapRouterAllowed(address(kyberZapRouter), true);
+
+        // Beefy CLM over (token, token1) and its reward pool.
+        beefyClm = new MockBeefyClm(address(token), address(token1));
+        beefyRewardPool = new MockBeefyRewardPool(address(beefyClm));
 
         // Fund user
         _fundAndApprove(USER, 100 ether);

@@ -146,6 +146,52 @@ interface IAllowanceTransfer {
         returns (uint160 amount, uint48 expiration, uint48 nonce);
 }
 
+/// @notice Beefy CLM (CowCentrated Liquidity Manager) vault — the `cowToken`, an ERC-20 over an
+/// actively managed concentrated-liquidity position. `wants()` is the pool's `(token0, token1)`.
+/// `deposit` accepts any ratio: it pulls only what the strategy's current balance ratio requires
+/// (at most `amount0`/`amount1`), prices the pulled amounts into shares, and mints them to
+/// msg.sender — there is no receiver argument. Reverts inside the strategy when the pool is not calm.
+interface IBeefyVaultConcLiq {
+    function wants() external view returns (address token0, address token1);
+    function deposit(uint256 amount0, uint256 amount1, uint256 minShares) external;
+}
+
+/// @notice Beefy reward pool — the `rCow` token that stakes a CLM's cowToken 1:1 and streams
+/// incentives to stakers. `stake` pulls `stakedToken()` from msg.sender and mints an equal amount
+/// of rCow to msg.sender; there is no `stakeFor`, so the forwarder stakes as itself and forwards
+/// the receipt.
+interface IBeefyRewardPool {
+    function stakedToken() external view returns (address);
+    function stake(uint256 amount) external;
+}
+
+/// @notice One aggregator swap leg of a Beefy CLM zap: `amountIn` of the input token is swapped
+/// into one pool side via `swapCalldata` (the aggregator's build output, which must route the
+/// output back to this forwarder). `amountIn == 0` skips the leg.
+struct BeefySwapLeg {
+    uint256 amountIn;
+    bytes swapCalldata;
+}
+
+/// @notice Bundle of zap-then-deposit parameters passed to `depositBeefyCLM`. The user funds a
+/// single `inputToken` (any ERC-20, or native ETH as `address(0)` via `msg.value`); up to two
+/// aggregator legs turn it into the CLM's two pool sides, the forwarder deposits both sides into
+/// the CLM, stakes the minted cowToken into `rewardPool`, and forwards the rCow to `receiver`.
+/// @dev `swap0` targets `wants().token0`, `swap1` targets `wants().token1`. When `inputToken` is
+/// itself a pool side, the leg toward that side must be empty and the un-swapped remainder is
+/// deposited directly; when it is neither side both legs together must consume exactly `amountIn`.
+struct BeefyClmParams {
+    address clm;
+    address rewardPool;
+    address inputToken;
+    uint256 amountIn;
+    address swapRouter;
+    BeefySwapLeg swap0;
+    BeefySwapLeg swap1;
+    uint256 minShares;
+    address receiver;
+}
+
 interface IERC20Minimal {
     function allowance(address owner, address spender) external view returns (uint256);
     function balanceOf(address account) external view returns (uint256);

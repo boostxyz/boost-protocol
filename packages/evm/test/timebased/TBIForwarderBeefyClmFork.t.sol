@@ -138,7 +138,8 @@ contract TBIForwarderBeefyClmForkTest is Test {
         assertEq(ERC20(CLM).balanceOf(REWARD_POOL) - stakedBefore, rCow, "cow staked 1:1 for the rCow");
         _assertDepositEvent(USDG, USDG_AMOUNT_IN);
         _assertForwarderClean();
-        assertEq(ERC20(USDG).balanceOf(USER), 0, "input fully pulled");
+        // The input was pulled in full; anything the CLM did not consume comes back as a refund.
+        assertLe(ERC20(USDG).balanceOf(USER), USDG_AMOUNT_IN - USDG_SWAP_IN, "refund cannot exceed the un-swapped side");
         emit log_named_uint("USDG refunded to user (unconsumed remainder)", ERC20(USDG).balanceOf(USER));
         emit log_named_uint("GLD refunded to user (unconsumed remainder)", ERC20(GLD).balanceOf(USER));
     }

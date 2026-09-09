@@ -630,6 +630,126 @@ contract MockMidasVault {
     }
 }
 
+/// @notice Minimal Beefy CLM (cowToken) mock for `depositBeefyCLM`. Like the real vault, `deposit`
+/// pulls at most what the strategy needs — here capped by `setSpend` — from msg.sender, values the
+/// pulled amounts 1:1 into shares, mints them to msg.sender, and reverts on `minShares` or when the
+/// pool is not calm (`setCalm`). Anything above the caps stays with the caller, which is what the
+/// forwarder's refund path exists for.
+contract MockBeefyClm is ERC20 {
+    error NotCalm();
+    error TooMuchSlippage();
+    error NoShares();
+
+    address public immutable token0;
+    address public immutable token1;
+    bool public calm = true;
+    uint256 public spend0 = type(uint256).max;
+    uint256 public spend1 = type(uint256).max;
+
+    constructor(address token0_, address token1_) {
+        token0 = token0_;
+        token1 = token1_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Mock Cow Token";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "cowMOCK";
+    }
+
+    function setCalm(bool calm_) external {
+        calm = calm_;
+    }
+
+    function setSpend(uint256 spend0_, uint256 spend1_) external {
+        spend0 = spend0_;
+        spend1 = spend1_;
+    }
+
+    function wants() external view returns (address, address) {
+        return (token0, token1);
+    }
+
+    function isCalm() external view returns (bool) {
+        return calm;
+    }
+
+    function balances() external view returns (uint256, uint256) {
+        return (ERC20(token0).balanceOf(address(this)), ERC20(token1).balanceOf(address(this)));
+    }
+
+    function previewDeposit(uint256 amount0, uint256 amount1)
+        external
+        view
+        returns (uint256 shares, uint256 pulled0, uint256 pulled1, uint256 fee0, uint256 fee1)
+    {
+        pulled0 = amount0 < spend0 ? amount0 : spend0;
+        pulled1 = amount1 < spend1 ? amount1 : spend1;
+        shares = pulled0 + pulled1;
+        return (shares, pulled0, pulled1, fee0, fee1);
+    }
+
+    function deposit(uint256 amount0, uint256 amount1, uint256 minShares) external {
+        if (!calm) revert NotCalm();
+        uint256 pulled0 = amount0 < spend0 ? amount0 : spend0;
+        uint256 pulled1 = amount1 < spend1 ? amount1 : spend1;
+        if (pulled0 > 0) ERC20(token0).transferFrom(msg.sender, address(this), pulled0);
+        if (pulled1 > 0) ERC20(token1).transferFrom(msg.sender, address(this), pulled1);
+        uint256 shares = pulled0 + pulled1;
+        if (shares < minShares) revert TooMuchSlippage();
+        if (shares == 0) revert NoShares();
+        _mint(msg.sender, shares);
+    }
+}
+
+/// @notice Minimal Beefy reward pool (rCow) mock: `stake` mints receipt tokens 1:1 to msg.sender and
+/// pulls the staked cowToken from msg.sender — no `stakeFor`, exactly like the real pool.
+contract MockBeefyRewardPool is ERC20 {
+    address public immutable stakedToken;
+
+    constructor(address stakedToken_) {
+        stakedToken = stakedToken_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Mock Reward Pool";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "rcowMOCK";
+    }
+
+    function stake(uint256 amount) external {
+        _mint(msg.sender, amount);
+        ERC20(stakedToken).transferFrom(msg.sender, address(this), amount);
+    }
+}
+
+/// @notice Router mock that performs the swap and also hands part of the input back to the caller
+/// (the forwarder) — input dust or a native surplus — to exercise the forwarder's leftover refunds.
+contract MockDustRouter {
+    function swap(
+        address tokenIn,
+        uint256 amountIn,
+        address tokenOut,
+        uint256 amountOut,
+        address recipient,
+        uint256 refund
+    ) external payable {
+        if (tokenIn == address(0)) {
+            require(msg.value == amountIn, "router: bad native value");
+            (bool ok,) = msg.sender.call{value: refund}("");
+            require(ok, "router: native refund failed");
+        } else {
+            ERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+            ERC20(tokenIn).transfer(msg.sender, refund);
+        }
+        ERC20(tokenOut).transfer(recipient, amountOut);
+    }
+}
+
 contract TBIForwarderTest is Test {
     TBIForwarder forwarder;
     MockERC20 token;

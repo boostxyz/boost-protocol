@@ -44,13 +44,33 @@ contract TBIProtocolFeeModuleTest is Test {
             ITBIProtocolFeeModule.FeeContext({creator: creator, budget: budget, rewardToken: TOKEN, totalAmount: 1e18});
     }
 
+    /// @dev Flat rate: min == max
     function _setFee(address account, uint64 feeBps) internal {
         vm.prank(OWNER);
-        module.setFee(account, feeBps);
+        module.setFee(account, feeBps, feeBps);
     }
 
-    function _override(address account) internal view returns (bool set, uint64 feeBps) {
-        (set, feeBps) = module.feeOverrides(account);
+    function _setRange(address account, uint64 minFeeBps, uint64 maxFeeBps) internal {
+        vm.prank(OWNER);
+        module.setFee(account, minFeeBps, maxFeeBps);
+    }
+
+    function _override(address account) internal view returns (bool set, uint64 minFeeBps, uint64 maxFeeBps) {
+        (set, minFeeBps, maxFeeBps) = module.feeOverrides(account);
+    }
+
+    function _quote(address creator, address budget) internal view returns (uint64 minFeeBps, uint64 maxFeeBps) {
+        return module.quoteProtocolFeeRange(_ctx(creator, budget));
+    }
+
+    function _assertRange(address creator, address budget, uint64 expectedMin, uint64 expectedMax) internal view {
+        (uint64 minFeeBps, uint64 maxFeeBps) = _quote(creator, budget);
+        assertEq(minFeeBps, expectedMin, "min");
+        assertEq(maxFeeBps, expectedMax, "max");
+    }
+
+    function _assignments(uint256 n) internal pure returns (TBIProtocolFeeModule.FeeAssignment[] memory a) {
+        a = new TBIProtocolFeeModule.FeeAssignment[](n);
     }
 
     ////////////////////////////////
@@ -75,17 +95,15 @@ contract TBIProtocolFeeModuleTest is Test {
     function test_Auth_RevertUnauthorized() public {
         vm.prank(RANDO);
         vm.expectRevert(Ownable.Unauthorized.selector);
-        module.setFee(CREATOR, 500);
+        module.setFee(CREATOR, 500, 500);
 
         vm.prank(RANDO);
         vm.expectRevert(Ownable.Unauthorized.selector);
         module.clearFee(CREATOR);
 
-        address[] memory accounts = new address[](1);
-        uint64[] memory fees = new uint64[](1);
         vm.prank(RANDO);
         vm.expectRevert(Ownable.Unauthorized.selector);
-        module.setFees(accounts, fees);
+        module.setFees(_assignments(1));
 
         vm.prank(RANDO);
         vm.expectRevert(Ownable.Unauthorized.selector);
@@ -94,8 +112,8 @@ contract TBIProtocolFeeModuleTest is Test {
 
     function test_Auth_ManagerOwnerCanSetFees() public {
         vm.prank(MANAGER_OWNER);
-        module.setFee(CREATOR, 500);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, address(0))), 500);
+        module.setFee(CREATOR, 100, 500);
+        _assertRange(CREATOR, address(0), 100, 500);
     }
 
     function test_Auth_ManagerOwnerCanRecoverOwnership() public {
@@ -105,10 +123,10 @@ contract TBIProtocolFeeModuleTest is Test {
 
         vm.prank(OWNER);
         vm.expectRevert(Ownable.Unauthorized.selector);
-        module.setFee(CREATOR, 500);
+        module.setFee(CREATOR, 500, 500);
 
         vm.prank(RANDO);
-        module.setFee(CREATOR, 500);
+        module.setFee(CREATOR, 500, 500);
     }
 
     function test_Auth_FollowsManagerOwnershipTransfer() public {
@@ -116,71 +134,97 @@ contract TBIProtocolFeeModuleTest is Test {
 
         vm.prank(MANAGER_OWNER);
         vm.expectRevert(Ownable.Unauthorized.selector);
-        module.setFee(CREATOR, 500);
+        module.setFee(CREATOR, 500, 500);
 
         vm.prank(RANDO);
-        module.setFee(CREATOR, 500);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, address(0))), 500);
+        module.setFee(CREATOR, 500, 500);
+        _assertRange(CREATOR, address(0), 500, 500);
     }
 
     ////////////////////////////////
     // setFee / clearFee
     ////////////////////////////////
 
-    function test_SetFee_Success() public {
+    function test_SetFee_FlatRate() public {
         vm.expectEmit(true, false, false, true);
-        emit TBIProtocolFeeModule.FeeOverrideSet(CREATOR, 500);
+        emit TBIProtocolFeeModule.FeeOverrideSet(CREATOR, 500, 500);
         _setFee(CREATOR, 500);
 
-        (bool set, uint64 feeBps) = _override(CREATOR);
+        (bool set, uint64 minFeeBps, uint64 maxFeeBps) = _override(CREATOR);
         assertTrue(set);
-        assertEq(feeBps, 500);
+        assertEq(minFeeBps, 500);
+        assertEq(maxFeeBps, 500);
+    }
+
+    function test_SetFee_Range() public {
+        vm.expectEmit(true, false, false, true);
+        emit TBIProtocolFeeModule.FeeOverrideSet(CREATOR, 100, 1000);
+        _setRange(CREATOR, 100, 1000);
+
+        (bool set, uint64 minFeeBps, uint64 maxFeeBps) = _override(CREATOR);
+        assertTrue(set);
+        assertEq(minFeeBps, 100);
+        assertEq(maxFeeBps, 1000);
     }
 
     function test_SetFee_Update() public {
-        _setFee(CREATOR, 500);
-        _setFee(CREATOR, 250);
-        (, uint64 feeBps) = _override(CREATOR);
-        assertEq(feeBps, 250);
+        _setRange(CREATOR, 100, 1000);
+        _setRange(CREATOR, 250, 500);
+        (, uint64 minFeeBps, uint64 maxFeeBps) = _override(CREATOR);
+        assertEq(minFeeBps, 250);
+        assertEq(maxFeeBps, 500);
     }
 
     function test_SetFee_ZeroIsAnOverride() public {
         _setFee(CREATOR, 0);
-        (bool set, uint64 feeBps) = _override(CREATOR);
+        (bool set, uint64 minFeeBps, uint64 maxFeeBps) = _override(CREATOR);
         assertTrue(set);
-        assertEq(feeBps, 0);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, address(0))), 0);
+        assertEq(minFeeBps, 0);
+        assertEq(maxFeeBps, 0);
+        _assertRange(CREATOR, address(0), 0, 0);
     }
 
-    function test_SetFee_MaxFee() public {
-        _setFee(CREATOR, 10_000);
-        (, uint64 feeBps) = _override(CREATOR);
-        assertEq(feeBps, 10_000);
+    function test_SetFee_FullRange() public {
+        _setRange(CREATOR, 0, 10_000);
+        _assertRange(CREATOR, address(0), 0, 10_000);
     }
 
-    function test_SetFee_RevertFeeTooHigh() public {
+    function test_SetFee_RevertMaxTooHigh() public {
         vm.prank(OWNER);
         vm.expectRevert(TBIProtocolFeeModule.FeeTooHigh.selector);
-        module.setFee(CREATOR, 10_001);
+        module.setFee(CREATOR, 0, 10_001);
+    }
+
+    function test_SetFee_RevertMinAboveMax() public {
+        vm.prank(OWNER);
+        vm.expectRevert(TBIProtocolFeeModule.InvalidFeeRange.selector);
+        module.setFee(CREATOR, 501, 500);
+    }
+
+    function test_SetFee_RevertMinTooHighEvenWithMaxAtCap() public {
+        vm.prank(OWNER);
+        vm.expectRevert(TBIProtocolFeeModule.FeeTooHigh.selector);
+        module.setFee(CREATOR, 10_001, 10_001);
     }
 
     function test_ClearFee_Success() public {
-        _setFee(CREATOR, 500);
+        _setRange(CREATOR, 100, 500);
         vm.prank(OWNER);
         vm.expectEmit(true, false, false, false);
         emit TBIProtocolFeeModule.FeeOverrideCleared(CREATOR);
         module.clearFee(CREATOR);
 
-        (bool set, uint64 feeBps) = _override(CREATOR);
+        (bool set, uint64 minFeeBps, uint64 maxFeeBps) = _override(CREATOR);
         assertFalse(set);
-        assertEq(feeBps, 0);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, address(0))), STANDARD);
+        assertEq(minFeeBps, 0);
+        assertEq(maxFeeBps, 0);
+        _assertRange(CREATOR, address(0), STANDARD, STANDARD);
     }
 
     function test_ClearFee_NoOverrideIsNoop() public {
         vm.prank(OWNER);
         module.clearFee(CREATOR);
-        (bool set,) = _override(CREATOR);
+        (bool set,,) = _override(CREATOR);
         assertFalse(set);
     }
 
@@ -189,58 +233,38 @@ contract TBIProtocolFeeModuleTest is Test {
     ////////////////////////////////
 
     function test_SetFees_Batch() public {
-        address[] memory accounts = new address[](2);
-        accounts[0] = CREATOR;
-        accounts[1] = BUDGET;
-        uint64[] memory fees = new uint64[](2);
-        fees[0] = 500;
-        fees[1] = 250;
+        TBIProtocolFeeModule.FeeAssignment[] memory a = _assignments(2);
+        a[0] = TBIProtocolFeeModule.FeeAssignment({account: CREATOR, minFeeBps: 100, maxFeeBps: 1000});
+        a[1] = TBIProtocolFeeModule.FeeAssignment({account: BUDGET, minFeeBps: 250, maxFeeBps: 250});
 
         vm.prank(OWNER);
-        module.setFees(accounts, fees);
-        (, uint64 creatorFee) = _override(CREATOR);
-        (, uint64 budgetFee) = _override(BUDGET);
-        assertEq(creatorFee, 500);
-        assertEq(budgetFee, 250);
-    }
-
-    function test_SetFees_RevertLengthMismatch() public {
-        address[] memory accounts = new address[](2);
-        uint64[] memory fees = new uint64[](1);
-        vm.prank(OWNER);
-        vm.expectRevert(TBIProtocolFeeModule.InvalidBatch.selector);
-        module.setFees(accounts, fees);
+        module.setFees(a);
+        _assertRange(CREATOR, address(0), 100, 1000);
+        _assertRange(RANDO, BUDGET, 250, 250);
     }
 
     function test_SetFees_RevertEmpty() public {
-        address[] memory accounts = new address[](0);
-        uint64[] memory fees = new uint64[](0);
         vm.prank(OWNER);
         vm.expectRevert(TBIProtocolFeeModule.InvalidBatch.selector);
-        module.setFees(accounts, fees);
+        module.setFees(_assignments(0));
     }
 
     function test_SetFees_RevertTooLarge() public {
-        uint256 n = module.MAX_BATCH_SIZE() + 1;
-        address[] memory accounts = new address[](n);
-        uint64[] memory fees = new uint64[](n);
+        TBIProtocolFeeModule.FeeAssignment[] memory a = _assignments(module.MAX_BATCH_SIZE() + 1);
         vm.prank(OWNER);
         vm.expectRevert(TBIProtocolFeeModule.BatchTooLarge.selector);
-        module.setFees(accounts, fees);
+        module.setFees(a);
     }
 
-    function test_SetFees_AtomicOnFeeTooHigh() public {
-        address[] memory accounts = new address[](2);
-        accounts[0] = CREATOR;
-        accounts[1] = BUDGET;
-        uint64[] memory fees = new uint64[](2);
-        fees[0] = 500;
-        fees[1] = 10_001;
+    function test_SetFees_AtomicOnInvalidEntry() public {
+        TBIProtocolFeeModule.FeeAssignment[] memory a = _assignments(2);
+        a[0] = TBIProtocolFeeModule.FeeAssignment({account: CREATOR, minFeeBps: 100, maxFeeBps: 1000});
+        a[1] = TBIProtocolFeeModule.FeeAssignment({account: BUDGET, minFeeBps: 600, maxFeeBps: 500});
 
         vm.prank(OWNER);
-        vm.expectRevert(TBIProtocolFeeModule.FeeTooHigh.selector);
-        module.setFees(accounts, fees);
-        (bool set,) = _override(CREATOR);
+        vm.expectRevert(TBIProtocolFeeModule.InvalidFeeRange.selector);
+        module.setFees(a);
+        (bool set,,) = _override(CREATOR);
         assertFalse(set, "batch must not partially apply");
     }
 
@@ -249,31 +273,31 @@ contract TBIProtocolFeeModuleTest is Test {
     ////////////////////////////////
 
     function test_Quote_NoOverride_ReturnsStandard() public view {
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, BUDGET)), STANDARD);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, address(0))), STANDARD);
+        _assertRange(CREATOR, BUDGET, STANDARD, STANDARD);
+        _assertRange(CREATOR, address(0), STANDARD, STANDARD);
     }
 
     function test_Quote_CreatorOverride() public {
-        _setFee(CREATOR, 500);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, address(0))), 500);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, BUDGET)), 500);
+        _setRange(CREATOR, 100, 500);
+        _assertRange(CREATOR, address(0), 100, 500);
+        _assertRange(CREATOR, BUDGET, 100, 500);
     }
 
     function test_Quote_BudgetOverride() public {
-        _setFee(BUDGET, 500);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, BUDGET)), 500);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, address(0))), STANDARD, "direct-funded ignores budget override");
+        _setRange(BUDGET, 100, 500);
+        _assertRange(CREATOR, BUDGET, 100, 500);
+        _assertRange(CREATOR, address(0), STANDARD, STANDARD);
     }
 
     function test_Quote_CreatorBeatsBudget() public {
-        _setFee(CREATOR, 500);
+        _setRange(CREATOR, 100, 500);
         _setFee(BUDGET, 250);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, BUDGET)), 500);
+        _assertRange(CREATOR, BUDGET, 100, 500);
     }
 
     function test_Quote_CreatorZeroBeatsBudget() public {
         _setFee(CREATOR, 0);
         _setFee(BUDGET, 250);
-        assertEq(module.quoteProtocolFee(_ctx(CREATOR, BUDGET)), 0);
+        _assertRange(CREATOR, BUDGET, 0, 0);
     }
 }

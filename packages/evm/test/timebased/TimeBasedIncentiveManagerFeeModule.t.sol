@@ -17,33 +17,35 @@ import {TimeBasedIncentiveManager} from "contracts/timebased/TimeBasedIncentiveM
 
 /// @dev Module that always reverts when quoting
 contract RevertingFeeModule {
-    function quoteProtocolFee(ITBIProtocolFeeModule.FeeContext calldata) external pure returns (uint64) {
+    function quoteProtocolFeeRange(ITBIProtocolFeeModule.FeeContext calldata) external pure returns (uint64, uint64) {
         revert("boom");
     }
 }
 
-/// @dev Module that returns a value wider than uint64
-contract WideReturnFeeModule {
-    uint256 immutable fee;
+/// @dev Module that returns arbitrary uint256 bounds (wider than uint64, or min > max)
+contract RawRangeFeeModule {
+    uint256 immutable minFee;
+    uint256 immutable maxFee;
 
-    constructor(uint256 fee_) {
-        fee = fee_;
+    constructor(uint256 minFee_, uint256 maxFee_) {
+        minFee = minFee_;
+        maxFee = maxFee_;
     }
 
-    function quoteProtocolFee(ITBIProtocolFeeModule.FeeContext calldata) external view returns (uint256) {
-        return fee;
+    function quoteProtocolFeeRange(ITBIProtocolFeeModule.FeeContext calldata) external view returns (uint256, uint256) {
+        return (minFee, maxFee);
     }
 }
 
 /// @dev Module that returns nothing
 contract NoReturnFeeModule {
-    function quoteProtocolFee(ITBIProtocolFeeModule.FeeContext calldata) external pure {}
+    function quoteProtocolFeeRange(ITBIProtocolFeeModule.FeeContext calldata) external pure {}
 }
 
-/// @dev Module that returns two words
-contract LongReturnFeeModule {
-    function quoteProtocolFee(ITBIProtocolFeeModule.FeeContext calldata) external pure returns (uint64, uint64) {
-        return (100, 100);
+/// @dev Module that returns a single word instead of a range
+contract ShortReturnFeeModule {
+    function quoteProtocolFeeRange(ITBIProtocolFeeModule.FeeContext calldata) external pure returns (uint64) {
+        return 100;
     }
 }
 
@@ -62,6 +64,7 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
     address constant SAFE = address(0x5AFE);
     uint64 constant PROTOCOL_FEE = 1000; // 10%
     uint64 constant DISCOUNT_FEE = 500; // 5%
+    uint64 constant MIN_FEE = 100; // 1%, bottom of the internal range
     uint64 constant REFERRAL_FEE_BPS = 2000; // 20% of the protocol fee
     uint256 constant TOTAL = 10 ether;
 
@@ -137,13 +140,69 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
-    function _setFee(address account, uint64 feeBps) internal {
-        vm.prank(SAFE);
-        module.setFee(account, feeBps);
+    function _createWithFee(uint64 referralFeeBps, uint64 protocolFeeBps)
+        internal
+        returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign)
+    {
+        (uint64 startTime, uint64 endTime) = _times();
+        vm.prank(CREATOR);
+        campaignId = manager.createCampaignWithProtocolFee(
+            budget,
+            keccak256("fee-module-with-fee"),
+            address(rewardToken),
+            TOTAL,
+            startTime,
+            endTime,
+            referralFeeBps,
+            protocolFeeBps
+        );
+        campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
-    function _quote(address budget_) internal view returns (uint64) {
-        return manager.quoteProtocolFee(CREATOR, budget_, address(rewardToken), TOTAL);
+    function _createDirectWithFee(uint64 referralFeeBps, uint64 protocolFeeBps)
+        internal
+        returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign)
+    {
+        (uint64 startTime, uint64 endTime) = _times();
+        vm.prank(CREATOR);
+        campaignId = manager.createCampaignDirectWithProtocolFee(
+            keccak256("fee-module-direct-with-fee"),
+            address(rewardToken),
+            TOTAL,
+            startTime,
+            endTime,
+            referralFeeBps,
+            protocolFeeBps
+        );
+        campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+    }
+
+    /// @dev Flat rate: min == max
+    function _setFee(address account, uint64 feeBps) internal {
+        vm.prank(SAFE);
+        module.setFee(account, feeBps, feeBps);
+    }
+
+    function _setRange(address account, uint64 minFeeBps, uint64 maxFeeBps) internal {
+        vm.prank(SAFE);
+        module.setFee(account, minFeeBps, maxFeeBps);
+    }
+
+    /// @dev Default fee: top of the quoted range
+    function _quote(address budget_) internal view returns (uint64 maxFeeBps) {
+        (, maxFeeBps) = manager.quoteProtocolFeeRange(CREATOR, budget_, address(rewardToken), TOTAL);
+    }
+
+    function _quoteRange(address budget_) internal view returns (uint64 minFeeBps, uint64 maxFeeBps) {
+        return manager.quoteProtocolFeeRange(CREATOR, budget_, address(rewardToken), TOTAL);
+    }
+
+    function _expectOutOfRange(uint64 requested, uint64 minFeeBps, uint64 maxFeeBps) internal {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TimeBasedIncentiveManager.ProtocolFeeOutOfRange.selector, requested, minFeeBps, maxFeeBps
+            )
+        );
     }
 
     ////////////////////////////////
@@ -343,7 +402,8 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
     }
 
     function test_Create_WideReturnAboveUint64_CappedAtStandard() public {
-        manager.setProtocolFeeModule(address(new WideReturnFeeModule(uint256(type(uint64).max) + 1)));
+        uint256 wide = uint256(type(uint64).max) + 1;
+        manager.setProtocolFeeModule(address(new RawRangeFeeModule(wide, wide)));
 
         vm.expectEmit(true, false, false, true);
         emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, PROTOCOL_FEE, 1 ether);
@@ -380,8 +440,8 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
         assertEq(rewardToken.balanceOf(address(campaign)), 9 ether);
     }
 
-    function test_Create_ModuleReturnsTwoWords_FallsBack() public {
-        address bad = address(new LongReturnFeeModule());
+    function test_Create_ModuleReturnsOneWord_FallsBack() public {
+        address bad = address(new ShortReturnFeeModule());
         manager.setProtocolFeeModule(bad);
 
         vm.expectEmit(true, true, true, false);
@@ -411,12 +471,250 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
     }
 
     ////////////////////////////////
-    // quoteProtocolFee
+    // Creation: creator picks a fee inside the allowed range
+    ////////////////////////////////
+
+    function test_CreateWithFee_NoModule_StandardOnly() public {
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, PROTOCOL_FEE, 1 ether);
+        (, TimeBasedIncentiveCampaign campaign) = _createWithFee(0, PROTOCOL_FEE);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9 ether);
+    }
+
+    function test_CreateWithFee_NoModule_RevertBelowStandard() public {
+        _expectOutOfRange(DISCOUNT_FEE, PROTOCOL_FEE, PROTOCOL_FEE);
+        _createWithFee(0, DISCOUNT_FEE);
+    }
+
+    function test_CreateWithFee_NoModule_RevertAboveStandard() public {
+        _expectOutOfRange(2000, PROTOCOL_FEE, PROTOCOL_FEE);
+        _createWithFee(0, 2000);
+    }
+
+    function test_CreateWithFee_BottomOfRange() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, MIN_FEE, 0.1 ether);
+        (, TimeBasedIncentiveCampaign campaign) = _createWithFee(0, MIN_FEE);
+
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.1 ether);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9.9 ether);
+        assertEq(campaign.totalRewards(), 9.9 ether);
+    }
+
+    function test_CreateWithFee_InsideRange() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, DISCOUNT_FEE, 0.5 ether);
+        (, TimeBasedIncentiveCampaign campaign) = _createWithFee(0, DISCOUNT_FEE);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9.5 ether);
+    }
+
+    function test_CreateWithFee_TopOfRange() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, PROTOCOL_FEE, 1 ether);
+        _createWithFee(0, PROTOCOL_FEE);
+    }
+
+    function test_CreateWithFee_RevertBelowRange() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        _expectOutOfRange(MIN_FEE - 1, MIN_FEE, PROTOCOL_FEE);
+        _createWithFee(0, MIN_FEE - 1);
+    }
+
+    function test_CreateWithFee_RevertAboveRange_CannotOverpay() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, DISCOUNT_FEE);
+
+        _expectOutOfRange(PROTOCOL_FEE, MIN_FEE, DISCOUNT_FEE);
+        _createWithFee(0, PROTOCOL_FEE);
+    }
+
+    function test_CreateWithFee_FlatRate_OnlyThatFee() public {
+        manager.setProtocolFeeModule(address(module));
+        _setFee(CREATOR, DISCOUNT_FEE);
+
+        _expectOutOfRange(MIN_FEE, DISCOUNT_FEE, DISCOUNT_FEE);
+        _createWithFee(0, MIN_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, DISCOUNT_FEE, 0.5 ether);
+        _createWithFee(0, DISCOUNT_FEE);
+    }
+
+    function test_CreateWithFee_ZeroAllowed_NoReferrals() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, 0, PROTOCOL_FEE);
+
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createWithFee(REFERRAL_FEE_BPS, 0);
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0);
+        assertEq(rewardToken.balanceOf(address(campaign)), TOTAL);
+        assertEq(manager.getReferralDistributor(campaignId), address(0));
+    }
+
+    function test_CreateWithFee_ReferralCarvedFromChosenFee() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        // 1% of 10 ether = 0.1 ether fee; 20% of that = 0.02 ether referral slice
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createWithFee(REFERRAL_FEE_BPS, MIN_FEE);
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.08 ether);
+        assertEq(rewardToken.balanceOf(manager.getReferralDistributor(campaignId)), 0.02 ether);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9.9 ether);
+    }
+
+    function test_CreateWithFee_StandardLowered_RangeCapped() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, DISCOUNT_FEE, PROTOCOL_FEE);
+        manager.setProtocolFee(200);
+
+        // Both bounds cap at the new standard: 2% is the only allowed fee
+        _expectOutOfRange(DISCOUNT_FEE, 200, 200);
+        _createWithFee(0, DISCOUNT_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, 200, 0.2 ether);
+        _createWithFee(0, 200);
+    }
+
+    function test_CreateWithFee_ModuleReverts_OnlyStandardAllowed() public {
+        address bad = address(new RevertingFeeModule());
+        manager.setProtocolFeeModule(bad);
+
+        _expectOutOfRange(MIN_FEE, PROTOCOL_FEE, PROTOCOL_FEE);
+        _createWithFee(0, MIN_FEE);
+
+        vm.expectEmit(true, true, true, false);
+        emit TimeBasedIncentiveManager.ProtocolFeeModuleFallback(bad, CREATOR, address(budget));
+        (, TimeBasedIncentiveCampaign campaign) = _createWithFee(0, PROTOCOL_FEE);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9 ether);
+    }
+
+    function test_CreateWithFee_ModuleMinAboveMax_MinClampedToMax() public {
+        manager.setProtocolFeeModule(address(new RawRangeFeeModule(DISCOUNT_FEE, MIN_FEE)));
+
+        (uint64 minFee, uint64 maxFee) = _quoteRange(address(budget));
+        assertEq(minFee, MIN_FEE);
+        assertEq(maxFee, MIN_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, MIN_FEE, 0.1 ether);
+        _createWithFee(0, MIN_FEE);
+    }
+
+    function test_CreateWithFee_BudgetRangeApplies() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(address(budget), MIN_FEE, PROTOCOL_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, MIN_FEE, 0.1 ether);
+        _createWithFee(0, MIN_FEE);
+    }
+
+    function test_CreateDirectWithFee_BottomOfRange() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, MIN_FEE, 0.1 ether);
+        (, TimeBasedIncentiveCampaign campaign) = _createDirectWithFee(0, MIN_FEE);
+
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.1 ether);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9.9 ether);
+        assertEq(rewardToken.balanceOf(CREATOR), 90 ether);
+    }
+
+    function test_CreateDirectWithFee_RevertBelowRange_NoTokensMoved() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        _expectOutOfRange(MIN_FEE - 1, MIN_FEE, PROTOCOL_FEE);
+        _createDirectWithFee(0, MIN_FEE - 1);
+        assertEq(rewardToken.balanceOf(CREATOR), 100 ether);
+        assertEq(manager.campaignCount(), 0);
+    }
+
+    function test_CreateDirectWithFee_BudgetRangeDoesNotApply() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(address(budget), MIN_FEE, PROTOCOL_FEE);
+
+        _expectOutOfRange(MIN_FEE, PROTOCOL_FEE, PROTOCOL_FEE);
+        _createDirectWithFee(0, MIN_FEE);
+    }
+
+    ////////////////////////////////
+    // Creation: plain entry points apply the top of the range
+    ////////////////////////////////
+
+    function test_Create_Range_DefaultIsTopOfRange() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, PROTOCOL_FEE, 1 ether);
+        _create(0);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(2, PROTOCOL_FEE, 1 ether);
+        _createDirect(0);
+    }
+
+    function test_Create_Range_TopBelowStandard_AppliesTop() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, DISCOUNT_FEE);
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, DISCOUNT_FEE, 0.5 ether);
+        _create(0);
+    }
+
+    ////////////////////////////////
+    // quoteProtocolFeeRange
     ////////////////////////////////
 
     function test_Quote_NoModule_ReturnsStandard() public view {
-        assertEq(_quote(address(budget)), PROTOCOL_FEE);
+        (uint64 minFee, uint64 maxFee) = _quoteRange(address(budget));
+        assertEq(minFee, PROTOCOL_FEE);
+        assertEq(maxFee, PROTOCOL_FEE);
         assertEq(_quote(address(0)), PROTOCOL_FEE);
+    }
+
+    function test_Quote_Range() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+        (uint64 minFee, uint64 maxFee) = _quoteRange(address(budget));
+        assertEq(minFee, MIN_FEE);
+        assertEq(maxFee, PROTOCOL_FEE);
+    }
+
+    function test_Quote_Range_CappedAtStandard() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, 2000, 5000);
+        (uint64 minFee, uint64 maxFee) = _quoteRange(address(budget));
+        assertEq(minFee, PROTOCOL_FEE);
+        assertEq(maxFee, PROTOCOL_FEE);
+    }
+
+    function test_Quote_Range_MatchesApplied() public {
+        manager.setProtocolFeeModule(address(module));
+        _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
+        (uint64 minFee, uint64 maxFee) = _quoteRange(address(budget));
+
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(1, minFee, (TOTAL * minFee) / 10000);
+        _createWithFee(0, minFee);
+        vm.expectEmit(true, false, false, true);
+        emit TimeBasedIncentiveManager.ProtocolFeeApplied(2, maxFee, (TOTAL * maxFee) / 10000);
+        _create(0);
     }
 
     function test_Quote_MatchesApplied_Discount() public {

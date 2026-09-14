@@ -8,6 +8,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ITBIProtocolFeeModule} from "contracts/timebased/ITBIProtocolFeeModule.sol";
 import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
@@ -76,8 +77,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Claim window duration passed to new referral distributors (default 60 days)
     uint64 public referralClaimWindowDuration;
 
+    /// @notice Optional fee policy consulted at campaign creation (address(0) = standard fee only)
+    /// @dev The module can only lower the fee: the applied fee is min(moduleFee, protocolFee)
+    address public protocolFeeModule;
+
     /// @notice Allocated gap space for future variables
-    uint256[47] private __gap;
+    uint256[46] private __gap;
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(
@@ -150,6 +155,15 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when the referral claim window duration is updated
     event ReferralClaimWindowDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
+    /// @notice Emitted when the protocol fee module is updated
+    event ProtocolFeeModuleUpdated(address indexed oldModule, address indexed newModule);
+
+    /// @notice Emitted with the protocol fee actually charged to a campaign at creation
+    event ProtocolFeeApplied(uint256 indexed campaignId, uint64 feeBps, uint256 feeAmount);
+
+    /// @notice Emitted when the fee module fails to quote and the standard fee is applied instead
+    event ProtocolFeeModuleFallback(address indexed module, address indexed creator, address indexed budget);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -225,6 +239,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Error when a campaign has no referral distributor
     error NoReferralDistributor();
+
+    /// @notice Error when the protocol fee module address has no code
+    error InvalidProtocolFeeModule();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -499,12 +516,19 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         address campaign,
         uint256 campaignId
     ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor) {
+        uint64 feeBps = _resolveProtocolFee(
+            ITBIProtocolFeeModule.FeeContext({
+                creator: msg.sender, budget: address(budget), rewardToken: rewardToken, totalAmount: totalAmount
+            })
+        );
+
         // The referral slice is carved from the fee, not the total, so the net reward
         // budget is unchanged
-        uint256 feeAmount = (totalAmount * protocolFee) / 10000;
+        uint256 feeAmount = (totalAmount * feeBps) / 10000;
         referralAmount = (feeAmount * referralFeeBps) / 10000;
         uint256 protocolAmount = feeAmount - referralAmount;
         netAmount = totalAmount - feeAmount;
+        emit ProtocolFeeApplied(campaignId, feeBps, feeAmount);
 
         // Fee to protocol fee receiver (if fee > 0)
         if (protocolAmount > 0) {
@@ -521,6 +545,31 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (netAmount > 0) {
             _fund(budget, rewardToken, campaign, netAmount);
         }
+    }
+
+    /// @notice Resolve the protocol fee for a campaign, consulting the fee module if set
+    /// @param ctx The campaign's fee context
+    /// @return The fee in basis points to apply; never above the standard protocol fee
+    /// @dev The module is reached via a low-level staticcall so that a reverting module,
+    ///      an EOA, or malformed return data all fall back to the standard fee (with an
+    ///      event) instead of blocking campaign creation. Failing open to the higher fee
+    ///      is safe for the protocol, and unsetting a broken module is behind the owner's
+    ///      timelock. Return values above the standard fee are capped, so the module can
+    ///      only ever discount.
+    function _resolveProtocolFee(ITBIProtocolFeeModule.FeeContext memory ctx) internal returns (uint64) {
+        address module = protocolFeeModule;
+        if (module == address(0)) return protocolFee;
+
+        (bool ok, bytes memory ret) = module.staticcall(abi.encodeCall(ITBIProtocolFeeModule.quoteProtocolFee, (ctx)));
+        if (!ok || ret.length != 32) {
+            emit ProtocolFeeModuleFallback(module, ctx.creator, ctx.budget);
+            return protocolFee;
+        }
+
+        uint256 moduleFee = abi.decode(ret, (uint256));
+        if (moduleFee >= protocolFee) return protocolFee;
+        // forge-lint: disable-next-line(unsafe-typecast)
+        return uint64(moduleFee); // guarded: moduleFee < protocolFee, a uint64
     }
 
     /// @notice Send tokens to a target and verify the full amount was received
@@ -596,6 +645,40 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         address oldReceiver = protocolFeeReceiver;
         protocolFeeReceiver = receiver_;
         emit ProtocolFeeReceiverUpdated(oldReceiver, receiver_);
+    }
+
+    /// @notice Set the protocol fee module
+    /// @param module_ New fee module (address(0) disables discounts; standard fee applies)
+    function setProtocolFeeModule(address module_) external onlyOwner {
+        if (module_ != address(0) && module_.code.length == 0) revert InvalidProtocolFeeModule();
+        address oldModule = protocolFeeModule;
+        protocolFeeModule = module_;
+        emit ProtocolFeeModuleUpdated(oldModule, module_);
+    }
+
+    /// @notice Quote the protocol fee a campaign would be charged at creation
+    /// @param creator The account that will call createCampaign
+    /// @param budget The funding budget, or address(0) for a direct-funded campaign
+    /// @param rewardToken The ERC20 reward token
+    /// @param totalAmount Gross reward amount, before the protocol fee is deducted
+    /// @return Protocol fee in basis points; matches what createCampaign applies for the same state
+    /// @dev Unlike creation, this does not fall back on module failure: a broken module
+    ///      makes quoting revert loudly so off-chain callers notice
+    function quoteProtocolFee(address creator, address budget, address rewardToken, uint256 totalAmount)
+        external
+        view
+        returns (uint64)
+    {
+        address module = protocolFeeModule;
+        if (module == address(0)) return protocolFee;
+
+        uint64 moduleFee = ITBIProtocolFeeModule(module)
+            .quoteProtocolFee(
+                ITBIProtocolFeeModule.FeeContext({
+                    creator: creator, budget: budget, rewardToken: rewardToken, totalAmount: totalAmount
+                })
+            );
+        return moduleFee < protocolFee ? moduleFee : protocolFee;
     }
 
     /// @notice Set the operator address (engine hot wallet for merkle root publishing)
@@ -859,6 +942,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "2.2.0";
+        return "2.3.0";
     }
 }

@@ -491,6 +491,6 @@ contract TimeBasedIncentiveManagerReferralsTest is Test {
     }
 
     function test_Version() public view {
-        assertEq(manager.version(), "2.2.0", "Version should be bumped");
+        assertEq(manager.version(), "2.3.0", "Version should be bumped");
     }
 }

@@ -86,7 +86,6 @@ contract TBIForwarderMorphoBlueForkTest is Test {
         IMorphoBlueViews morpho = IMorphoBlueViews(MORPHO);
         (uint256 sharesBefore,,) = morpho.position(MARKET_ID, USER);
         (uint128 totalSupplyAssetsBefore,,,,,) = morpho.market(MARKET_ID);
-        assertEq(sharesBefore, 0, "fresh user");
 
         vm.recordLogs();
         vm.prank(USER);
@@ -96,7 +95,7 @@ contract TBIForwarderMorphoBlueForkTest is Test {
         // assets grew by at least the deposit (more if interest accrued in the same call).
         (uint256 sharesAfter,,) = morpho.position(MARKET_ID, USER);
         (uint128 totalSupplyAssetsAfter,,,,,) = morpho.market(MARKET_ID);
-        assertGt(sharesAfter, 0, "supply shares credited");
+        assertGt(sharesAfter, sharesBefore, "supply shares credited");
         assertGe(totalSupplyAssetsAfter, totalSupplyAssetsBefore + amount, "market supply grew");
         assertEq(ERC20(USDG).balanceOf(USER), 0, "input fully consumed");
 

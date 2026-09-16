@@ -133,6 +133,35 @@ contract MockGiverPositionManager {
     }
 }
 
+/// @notice Minimal Morpho Blue singleton mock. Mirrors the surface the adapter depends on:
+/// `supply` pulls the market's loan token from msg.sender and credits book-entry supply shares
+/// (1:1 with assets) to `onBehalf` under the market's id — `keccak256(abi.encode(params))`, as
+/// Morpho's `MarketParamsLib.id` — with no user-side authorization. Like the real singleton it
+/// requires exactly one of `assets`/`shares` to be zero. Non-empty callback `data` is rejected:
+/// the real singleton would call back the caller's `onMorphoSupply`, which the forwarder does not
+/// implement, so the adapter must always pass empty data.
+contract MockMorpho {
+    error InconsistentInput();
+    error UnexpectedCallbackData();
+
+    mapping(bytes32 => mapping(address => uint256)) public supplyShares;
+
+    function supply(
+        MorphoMarketParams calldata marketParams,
+        uint256 assets,
+        uint256 shares,
+        address onBehalf,
+        bytes calldata data
+    ) external returns (uint256, uint256) {
+        if ((assets == 0) == (shares == 0)) revert InconsistentInput();
+        if (data.length != 0) revert UnexpectedCallbackData();
+        bytes32 id = keccak256(abi.encode(marketParams));
+        ERC20(marketParams.loanToken).transferFrom(msg.sender, address(this), assets);
+        supplyShares[id][onBehalf] += assets;
+        return (assets, assets);
+    }
+}
+
 /// @notice Minimal Compound v3 Comet mock that accepts supplyTo calls
 contract MockComet {
     MockCometReceipt public immutable receipt;

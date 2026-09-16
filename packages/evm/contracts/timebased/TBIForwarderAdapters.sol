@@ -29,6 +29,32 @@ interface IAaveV4Spoke {
     function isPositionManagerActive(address positionManager) external view returns (bool);
 }
 
+/// @notice Morpho Blue market parameters. Mirrors `MarketParams` in morpho-org/morpho-blue
+/// `IMorpho.sol` (five 32-byte words); the market's canonical `Id` is
+/// `keccak256(abi.encode(params))` (`MarketParamsLib.id`), which `depositMorphoBlue` emits as the
+/// `LedgerDeposit` `marketKey`.
+struct MorphoMarketParams {
+    address loanToken;
+    address collateralToken;
+    address oracle;
+    address irm;
+    uint256 lltv;
+}
+
+/// @notice Minimal Morpho Blue singleton surface. `supply` pulls `assets` of the market's loan
+/// token from msg.sender and credits the book-entry supply position to `onBehalf` — any address,
+/// with no user-side authorization — calling back the caller's `onMorphoSupply` only when `data`
+/// is non-empty. Exactly one of `assets`/`shares` must be zero.
+interface IMorpho {
+    function supply(
+        MorphoMarketParams memory marketParams,
+        uint256 assets,
+        uint256 shares,
+        address onBehalf,
+        bytes memory data
+    ) external returns (uint256 assetsSupplied, uint256 sharesSupplied);
+}
+
 interface IComet {
     function supplyTo(address dst, address asset, uint256 amount) external;
 }

@@ -790,6 +790,7 @@ contract TBIForwarderTest is Test {
     MockAaveV3Pool aavePool;
     MockAaveV4Spoke aaveV4Spoke;
     MockGiverPositionManager giver;
+    MockMorpho morpho;
     MockComet comet;
     MockStakedToken stakedToken;
     MockCErc20 cToken;
@@ -819,6 +820,7 @@ contract TBIForwarderTest is Test {
         aaveV4Spoke.setReserveAsset(RESERVE_ID, address(token));
         giver = new MockGiverPositionManager();
         aaveV4Spoke.setPositionManagerActive(address(giver), true);
+        morpho = new MockMorpho();
         comet = new MockComet(address(token));
         stakedToken = new MockStakedToken(address(token));
         cToken = new MockCErc20(address(token));

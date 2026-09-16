@@ -29,6 +29,32 @@ interface IAaveV4Spoke {
     function isPositionManagerActive(address positionManager) external view returns (bool);
 }
 
+/// @notice Morpho Blue market parameters. Mirrors `MarketParams` in morpho-org/morpho-blue
+/// `IMorpho.sol` (five 32-byte words); the market's canonical `Id` is
+/// `keccak256(abi.encode(params))` (`MarketParamsLib.id`), which `depositMorphoBlue` emits as the
+/// `LedgerDeposit` `marketKey`.
+struct MorphoMarketParams {
+    address loanToken;
+    address collateralToken;
+    address oracle;
+    address irm;
+    uint256 lltv;
+}
+
+/// @notice Minimal Morpho Blue singleton surface. `supply` pulls `assets` of the market's loan
+/// token from msg.sender and credits the book-entry supply position to `onBehalf` — any address,
+/// with no user-side authorization — calling back the caller's `onMorphoSupply` only when `data`
+/// is non-empty. Exactly one of `assets`/`shares` must be zero.
+interface IMorpho {
+    function supply(
+        MorphoMarketParams memory marketParams,
+        uint256 assets,
+        uint256 shares,
+        address onBehalf,
+        bytes memory data
+    ) external returns (uint256 assetsSupplied, uint256 sharesSupplied);
+}
+
 interface IComet {
     function supplyTo(address dst, address asset, uint256 amount) external;
 }
@@ -372,6 +398,38 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         asset.safeApprove(address(giver), 0);
 
         emit LedgerDeposit(receiver, spoke, reserveId, amount);
+    }
+
+    /// @notice Supply into a Morpho Blue market on behalf of receiver. The position is book-entry
+    /// on the Morpho singleton (`position(id, receiver).supplyShares`); there is no receipt token.
+    /// @dev Morpho's `supply` credits any `onBehalf` with no user-side pre-authorization (unlike
+    /// Aave v4's position-manager gate), so the singleton is called directly and is itself the
+    /// emitted `ledger`. The callback `data` is always empty and deliberately not exposed: a
+    /// non-empty payload would have Morpho call back into this forwarder's `onMorphoSupply`, which
+    /// it does not implement. The pulled token is the market's own `loanToken`, and a
+    /// `marketParams` that does not describe a created market reverts inside `supply`, so no funds
+    /// path exists for a mismatched asset or market. Emits `LedgerDeposit` (not the generic
+    /// `Deposit`) as the single indexer signal, with `marketKey` set to the market's canonical
+    /// `Id` — `keccak256(abi.encode(marketParams))`, per Morpho's `MarketParamsLib.id` — widened
+    /// to uint256.
+    /// @param morpho The Morpho Blue singleton — emitted as the `ledger`
+    /// @param marketParams The market to supply into; its id is emitted as the `marketKey`
+    /// @param assets The amount of `marketParams.loanToken` to supply
+    /// @param receiver The account credited with the supply position
+    function depositMorphoBlue(
+        address morpho,
+        MorphoMarketParams calldata marketParams,
+        uint256 assets,
+        address receiver
+    ) external nonReentrant {
+        _requireReceiver(receiver);
+        address loanToken = marketParams.loanToken;
+        loanToken.safeTransferFrom(msg.sender, address(this), assets);
+        loanToken.safeApproveWithRetry(morpho, assets);
+        IMorpho(morpho).supply(marketParams, assets, 0, receiver, "");
+        loanToken.safeApprove(morpho, 0);
+
+        emit LedgerDeposit(receiver, morpho, uint256(keccak256(abi.encode(marketParams))), assets);
     }
 
     /// @notice Supply into a Compound v3 Comet on behalf of receiver

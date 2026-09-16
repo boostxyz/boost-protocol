@@ -24,7 +24,8 @@ import {
     V4ZapParams,
     IMidasDepositVault,
     BeefyClmParams,
-    BeefySwapLeg
+    BeefySwapLeg,
+    MorphoMarketParams
 } from "contracts/timebased/TBIForwarderAdapters.sol";
 
 /// @notice Minimal ERC-4626 mock that accepts deposits and mints 1:1 shares
@@ -129,6 +130,35 @@ contract MockGiverPositionManager {
         ERC20(asset).transferFrom(msg.sender, address(this), amount);
         ERC20(asset).approve(spoke, amount);
         MockAaveV4Spoke(spoke).supply(reserveId, amount, onBehalfOf);
+    }
+}
+
+/// @notice Minimal Morpho Blue singleton mock. Mirrors the surface the adapter depends on:
+/// `supply` pulls the market's loan token from msg.sender and credits book-entry supply shares
+/// (1:1 with assets) to `onBehalf` under the market's id — `keccak256(abi.encode(params))`, as
+/// Morpho's `MarketParamsLib.id` — with no user-side authorization. Like the real singleton it
+/// requires exactly one of `assets`/`shares` to be zero. Non-empty callback `data` is rejected:
+/// the real singleton would call back the caller's `onMorphoSupply`, which the forwarder does not
+/// implement, so the adapter must always pass empty data.
+contract MockMorpho {
+    error InconsistentInput();
+    error UnexpectedCallbackData();
+
+    mapping(bytes32 => mapping(address => uint256)) public supplyShares;
+
+    function supply(
+        MorphoMarketParams calldata marketParams,
+        uint256 assets,
+        uint256 shares,
+        address onBehalf,
+        bytes calldata data
+    ) external returns (uint256, uint256) {
+        if ((assets == 0) == (shares == 0)) revert InconsistentInput();
+        if (data.length != 0) revert UnexpectedCallbackData();
+        bytes32 id = keccak256(abi.encode(marketParams));
+        ERC20(marketParams.loanToken).transferFrom(msg.sender, address(this), assets);
+        supplyShares[id][onBehalf] += assets;
+        return (assets, assets);
     }
 }
 
@@ -760,6 +790,7 @@ contract TBIForwarderTest is Test {
     MockAaveV3Pool aavePool;
     MockAaveV4Spoke aaveV4Spoke;
     MockGiverPositionManager giver;
+    MockMorpho morpho;
     MockComet comet;
     MockStakedToken stakedToken;
     MockCErc20 cToken;
@@ -789,6 +820,7 @@ contract TBIForwarderTest is Test {
         aaveV4Spoke.setReserveAsset(RESERVE_ID, address(token));
         giver = new MockGiverPositionManager();
         aaveV4Spoke.setPositionManagerActive(address(giver), true);
+        morpho = new MockMorpho();
         comet = new MockComet(address(token));
         stakedToken = new MockStakedToken(address(token));
         cToken = new MockCErc20(address(token));
@@ -1051,6 +1083,132 @@ contract TBIForwarderTest is Test {
         // The whole call reverted; no funds moved
         assertEq(token.balanceOf(USER), 100 ether);
         assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
+    // --- Morpho Blue (singleton/Ledger) ---
+
+    /// @dev Market params for the mock: the loan token is the test token; the remaining fields are
+    /// arbitrary but fixed so the market id is deterministic.
+    function _morphoParams() internal view returns (MorphoMarketParams memory) {
+        return MorphoMarketParams({
+            loanToken: address(token),
+            collateralToken: address(token1),
+            oracle: address(0x0AC1E),
+            irm: address(0x1A3),
+            lltv: 0.915e18
+        });
+    }
+
+    /// @dev The market's canonical Morpho `Id` (MarketParamsLib.id) — what the adapter must emit.
+    function _morphoId() internal view returns (bytes32) {
+        return keccak256(abi.encode(_morphoParams()));
+    }
+
+    function _depositMorphoBlue(address caller, uint256 assets, address receiver) internal {
+        vm.prank(caller);
+        forwarder.depositMorphoBlue(address(morpho), _morphoParams(), assets, receiver);
+    }
+
+    function test_DepositMorphoBlue_Success() public {
+        uint256 amount = 5 ether;
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.LedgerDeposit(USER, address(morpho), uint256(_morphoId()), amount);
+
+        _depositMorphoBlue(USER, amount, USER);
+
+        // User's supply shares were credited on the singleton, which holds the loan token
+        assertEq(morpho.supplyShares(_morphoId(), USER), amount);
+        assertEq(token.balanceOf(address(morpho)), amount);
+        // Forwarder holds nothing and its singleton approval is reset
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(morpho)), 0);
+        // User's token balance decreased
+        assertEq(token.balanceOf(USER), 95 ether);
+    }
+
+    function test_DepositMorphoBlue_WithReceiver_Success() public {
+        uint256 amount = 5 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        // No receiver-side opt-in exists on Morpho: `supply` credits any `onBehalf` directly.
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.LedgerDeposit(RECEIVER, address(morpho), uint256(_morphoId()), amount);
+
+        _depositMorphoBlue(LIFI_EXECUTOR, amount, RECEIVER);
+
+        // Receiver was credited the position, while caller only paid the loan token
+        assertEq(morpho.supplyShares(_morphoId(), RECEIVER), amount);
+        assertEq(morpho.supplyShares(_morphoId(), LIFI_EXECUTOR), 0);
+        // Forwarder holds nothing and its singleton approval is reset
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(morpho)), 0);
+        // Li.Fi caller's token balance decreased
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 95 ether);
+    }
+
+    function test_DepositMorphoBlue_EmitsOnlyLedgerDeposit() public {
+        uint256 amount = 1 ether;
+
+        vm.recordLogs();
+        _depositMorphoBlue(USER, amount, USER);
+
+        // The forwarder emits exactly one log — LedgerDeposit — and no generic Deposit, so the
+        // Ledger indexer gets a single unambiguous signal per routed supply. Its `marketKey` is
+        // Morpho's canonical market Id (keccak256(abi.encode(params))) widened to uint256.
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 forwarderLogs;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].emitter != address(forwarder)) continue;
+            forwarderLogs++;
+            assertEq(
+                logs[i].topics[0],
+                keccak256("LedgerDeposit(address,address,uint256,uint256)"),
+                "unexpected forwarder event"
+            );
+            assertEq(address(uint160(uint256(logs[i].topics[1]))), USER, "event user");
+            assertEq(address(uint160(uint256(logs[i].topics[2]))), address(morpho), "event ledger");
+            (uint256 marketKey, uint256 eventAmount) = abi.decode(logs[i].data, (uint256, uint256));
+            assertEq(marketKey, uint256(keccak256(abi.encode(_morphoParams()))), "event marketKey");
+            assertEq(eventAmount, amount, "event amount");
+        }
+        assertEq(forwarderLogs, 1, "forwarder must emit exactly one log");
+    }
+
+    function test_DepositMorphoBlue_RevertZeroReceiver() public {
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositMorphoBlue(address(morpho), _morphoParams(), 1 ether, address(0));
+
+        // Reverts before funds move
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
+    function test_DepositMorphoBlue_RevertInsufficientBalance() public {
+        vm.prank(USER);
+        vm.expectRevert(); // SafeTransferLib reverts on insufficient balance
+        forwarder.depositMorphoBlue(address(morpho), _morphoParams(), 200 ether, USER);
+
+        // The whole call reverted; no funds moved
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(morpho.supplyShares(_morphoId(), USER), 0);
+    }
+
+    function test_DepositMorphoBlue_RevertNoApproval() public {
+        address noApprovalUser = address(0xBEEF);
+        token.mint(noApprovalUser, 10 ether);
+        // User has tokens but hasn't approved forwarder
+
+        vm.prank(noApprovalUser);
+        vm.expectRevert(); // SafeTransferLib reverts on insufficient allowance
+        forwarder.depositMorphoBlue(address(morpho), _morphoParams(), 1 ether, noApprovalUser);
+
+        // The whole call reverted; no funds moved
+        assertEq(token.balanceOf(noApprovalUser), 10 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(morpho.supplyShares(_morphoId(), noApprovalUser), 0);
     }
 
     // --- Compound V3 ---

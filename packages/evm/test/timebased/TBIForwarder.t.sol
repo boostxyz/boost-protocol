@@ -56,6 +56,64 @@ contract MockERC4626 is ERC20 {
     }
 }
 
+/// @notice Minimal ERC-7540 (Lagoon) async vault mock. Mirrors the surface the adapter depends on:
+/// `requestDeposit` enforces Lagoon's `onlyOperator(owner)` (msg.sender must be `owner` here — the
+/// mock has no operator approvals), pulls `assets` from `owner` into a separate pending silo, and
+/// records the request for `controller`. `setBlockRequests` reproduces Lagoon's
+/// `OnlyOneRequestAllowed()` revert. `deposit` is the ERC-7540 claim path and must never be hit by
+/// a request-style deposit, so it reverts.
+contract MockERC7540Vault {
+    error OnlyOneRequestAllowed();
+    error NotOperator();
+    error ClaimPathUsed();
+
+    address public immutable underlying;
+    address public immutable pendingSilo;
+    bool public blockRequests;
+
+    uint256 public lastAssets;
+    address public lastController;
+    address public lastOwner;
+    address public lastReferral;
+    uint256 public lastValue;
+    uint256 public requestCount;
+    mapping(address => uint256) public pendingDepositRequest;
+
+    constructor(address underlying_, address pendingSilo_) {
+        underlying = underlying_;
+        pendingSilo = pendingSilo_;
+    }
+
+    function asset() external view returns (address) {
+        return underlying;
+    }
+
+    function setBlockRequests(bool blocked) external {
+        blockRequests = blocked;
+    }
+
+    function requestDeposit(uint256 assets, address controller, address owner, address referral)
+        external
+        payable
+        returns (uint256 requestId)
+    {
+        if (msg.sender != owner) revert NotOperator();
+        if (blockRequests) revert OnlyOneRequestAllowed();
+        ERC20(underlying).transferFrom(owner, pendingSilo, assets);
+        pendingDepositRequest[controller] += assets;
+        lastAssets = assets;
+        lastController = controller;
+        lastOwner = owner;
+        lastReferral = referral;
+        lastValue = msg.value;
+        requestId = ++requestCount;
+    }
+
+    function deposit(uint256, address) external pure returns (uint256) {
+        revert ClaimPathUsed();
+    }
+}
+
 /// @notice Minimal Aave v3 pool mock that accepts supply calls and mints aTokens 1:1
 contract MockAaveV3Pool {
     MockAToken public immutable aToken;

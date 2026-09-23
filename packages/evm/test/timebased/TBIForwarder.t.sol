@@ -11,6 +11,7 @@ import {TBIForwarder} from "contracts/timebased/TBIForwarder.sol";
 import {
     TBIForwarderAdapters,
     IERC4626,
+    IERC7540,
     IAaveV3Pool,
     IGiverPositionManager,
     IComet,

@@ -343,6 +343,10 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// whose first slot is slot0 with `sqrtPriceX96` in the low 160 bits.
     bytes32 internal constant V4_POOLS_SLOT = bytes32(uint256(6));
 
+    /// @notice Referral address passed to ERC-7540 (Lagoon) `requestDeposit` — the Boost multisig.
+    /// Lagoon only emits it in its `Referral` event for attribution; no funds are sent to it.
+    address internal constant BOOST_REFERRAL = 0xA0fd474fB1697cB9EDc27dD79e0d5E9B74D26a87;
+
     /// @notice Deposit into an ERC-4626 vault on behalf of receiver
     /// @param vault The ERC-4626 vault to deposit into
     /// @param assets The amount of underlying assets to deposit

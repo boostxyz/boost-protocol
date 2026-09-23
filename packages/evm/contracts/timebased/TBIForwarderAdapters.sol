@@ -362,6 +362,30 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         emit Deposit(receiver, address(vault), asset, assets);
     }
 
+    /// @notice Request a deposit into an ERC-7540 (asynchronous) vault such as Lagoon, with
+    /// `receiver` as the request's controller.
+    /// @dev Deliberately separate from `depositERC4626`: on an ERC-7540 vault `deposit(assets,
+    /// receiver)` claims an already-settled request rather than depositing. The forwarder pulls
+    /// `assets` and calls Lagoon's 4-arg `requestDeposit` with itself as `owner` (satisfying
+    /// Lagoon's `onlyOperator(owner)` since msg.sender == owner), so the vault pulls the assets from
+    /// the forwarder into its pending silo; `receiver` is the controller who claims the shares once
+    /// the curator settles the epoch. Nothing is minted in this call, so the event amount is the
+    /// requested `assets`. Lagoon reverts `OnlyOneRequestAllowed()` if the controller still has an
+    /// unsettled request from an older epoch; the revert surfaces unchanged.
+    /// @param vault The ERC-7540 vault to request a deposit into
+    /// @param assets The amount of underlying assets to request
+    /// @param receiver The controller of the request, who later claims the vault shares
+    function depositERC7540(IERC7540 vault, uint256 assets, address receiver) external nonReentrant {
+        _requireReceiver(receiver);
+        address asset = vault.asset();
+        asset.safeTransferFrom(msg.sender, address(this), assets);
+        asset.safeApproveWithRetry(address(vault), assets);
+        vault.requestDeposit(assets, receiver, address(this), BOOST_REFERRAL);
+        asset.safeApprove(address(vault), 0);
+
+        emit Deposit(receiver, address(vault), asset, assets);
+    }
+
     /// @notice Supply into an Aave v3 pool on behalf of receiver
     /// @param pool The Aave v3 pool contract
     /// @param asset The underlying asset to supply

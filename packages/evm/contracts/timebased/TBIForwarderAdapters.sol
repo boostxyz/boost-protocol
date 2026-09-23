@@ -11,6 +11,19 @@ interface IERC4626 {
     function deposit(uint256 assets, address receiver) external returns (uint256 shares);
 }
 
+/// @notice Minimal ERC-7540 (asynchronous ERC-4626) deposit surface, as implemented by Lagoon
+/// vaults. `requestDeposit` pulls `assets` from `owner` into the vault's pending silo and queues a
+/// request for `controller`, who later claims the settled shares; `referral` is only emitted in
+/// Lagoon's `Referral` event. Lagoon's `requestDeposit` is payable (native wrap path), but the
+/// forwarder never sends value.
+interface IERC7540 {
+    function asset() external view returns (address);
+    function requestDeposit(uint256 assets, address controller, address owner, address referral)
+        external
+        payable
+        returns (uint256 requestId);
+}
+
 interface IAaveV3Pool {
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 }

@@ -8,6 +8,7 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
+import {ITBIProtocolFeeModule} from "contracts/timebased/ITBIProtocolFeeModule.sol";
 import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
@@ -31,6 +32,17 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Maximum referral fee in basis points of the protocol fee (2500 = 25%)
     uint64 public constant MAX_REFERRAL_FEE_BPS = 2500;
+
+    /// @dev Sentinel for "no protocol fee requested": apply the top of the allowed range
+    uint256 private constant NO_FEE_REQUEST = type(uint256).max;
+
+    /// @dev Fee choices for a new campaign, grouped so the creation paths stay within stack limits
+    /// @param referralFeeBps Referral fee in basis points of the protocol fee
+    /// @param requestedFeeBps The creator's protocol fee, or NO_FEE_REQUEST for the default
+    struct FeeParams {
+        uint64 referralFeeBps;
+        uint256 requestedFeeBps;
+    }
 
     /// @notice The implementation contract used for cloning campaigns
     address public campaignImplementation;
@@ -76,8 +88,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Claim window duration passed to new referral distributors (default 60 days)
     uint64 public referralClaimWindowDuration;
 
+    /// @notice Optional fee policy consulted at campaign creation (address(0) = standard fee only)
+    /// @dev The module can only lower the fee: the applied fee is min(moduleFee, protocolFee)
+    address public protocolFeeModule;
+
     /// @notice Allocated gap space for future variables
-    uint256[47] private __gap;
+    uint256[46] private __gap;
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(
@@ -150,6 +166,15 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Emitted when the referral claim window duration is updated
     event ReferralClaimWindowDurationUpdated(uint64 oldDuration, uint64 newDuration);
+
+    /// @notice Emitted when the protocol fee module is updated
+    event ProtocolFeeModuleUpdated(address indexed oldModule, address indexed newModule);
+
+    /// @notice Emitted with the protocol fee actually charged to a campaign at creation
+    event ProtocolFeeApplied(uint256 indexed campaignId, uint64 feeBps, uint256 feeAmount);
+
+    /// @notice Emitted when the fee module fails to quote and the standard fee is applied instead
+    event ProtocolFeeModuleFallback(address indexed module, address indexed creator, address indexed budget);
 
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
@@ -226,6 +251,12 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Error when a campaign has no referral distributor
     error NoReferralDistributor();
 
+    /// @notice Error when the protocol fee module address has no code
+    error InvalidProtocolFeeModule();
+
+    /// @notice Error when a requested protocol fee is outside the range allowed for the creator
+    error ProtocolFeeOutOfRange(uint64 requestedFeeBps, uint64 minFeeBps, uint64 maxFeeBps);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -272,7 +303,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 startTime,
         uint64 endTime
     ) external returns (uint256 campaignId) {
-        return _createCampaign(budget, configHash, rewardToken, totalAmount, startTime, endTime, 0);
+        return _createCampaign(
+            budget, configHash, rewardToken, totalAmount, startTime, endTime, FeeParams(0, NO_FEE_REQUEST)
+        );
     }
 
     /// @notice Create a new time-based incentive campaign funded by a budget
@@ -293,10 +326,38 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 endTime,
         uint64 referralFeeBps
     ) external returns (uint256 campaignId) {
-        return _createCampaign(budget, configHash, rewardToken, totalAmount, startTime, endTime, referralFeeBps);
+        return _createCampaign(
+            budget, configHash, rewardToken, totalAmount, startTime, endTime, FeeParams(referralFeeBps, NO_FEE_REQUEST)
+        );
     }
 
-    /// @notice Create a new campaign funded by a budget (shared by both overloads)
+    /// @notice Create a budget-funded campaign at a protocol fee chosen by the creator
+    /// @param budget The budget to fund the campaign from
+    /// @param configHash Hash of the off-chain campaign configuration
+    /// @param rewardToken The ERC20 token for rewards
+    /// @param totalAmount Total reward amount (before protocol fee deduction)
+    /// @param startTime Campaign start timestamp
+    /// @param endTime Campaign end timestamp
+    /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
+    /// @param protocolFeeBps Protocol fee in basis points; must lie within the range
+    ///        quoteProtocolFeeRange reports for the caller and budget
+    /// @return campaignId The ID of the created campaign
+    function createCampaignWithProtocolFee(
+        ABudget budget,
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime,
+        uint64 referralFeeBps,
+        uint64 protocolFeeBps
+    ) external returns (uint256 campaignId) {
+        return _createCampaign(
+            budget, configHash, rewardToken, totalAmount, startTime, endTime, FeeParams(referralFeeBps, protocolFeeBps)
+        );
+    }
+
+    /// @notice Create a new campaign funded by a budget (shared by all entry points)
     function _createCampaign(
         ABudget budget,
         bytes32 configHash,
@@ -304,7 +365,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 totalAmount,
         uint64 startTime,
         uint64 endTime,
-        uint64 referralFeeBps
+        FeeParams memory fees
     ) internal returns (uint256 campaignId) {
         // Validate caller is authorized on budget
         if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
@@ -314,7 +375,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
         if (endTime <= startTime) revert EndTimeBeforeStart();
-        if (referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
+        if (fees.referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
         {
             uint64 duration = endTime - startTime;
             if (duration > maxCampaignDuration) revert DurationTooLong();
@@ -329,7 +390,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Split the protocol fee and fund the fee receiver, distributor, and campaign
         (uint256 netAmount, uint256 referralAmount, address distributor) =
-            _splitAndFund(budget, rewardToken, totalAmount, referralFeeBps, campaign, campaignId);
+            _splitAndFund(budget, rewardToken, totalAmount, fees, campaign, campaignId);
 
         // Initialize the campaign
         TimeBasedIncentiveCampaign(campaign)
@@ -349,7 +410,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (distributor != address(0)) {
             ReferralDistributor(distributor)
                 .initialize(campaign, campaignId, referralAmount, referralClaimWindowDuration);
-            emit ReferralDistributorCreated(campaignId, distributor, referralFeeBps, referralAmount);
+            emit ReferralDistributorCreated(campaignId, distributor, fees.referralFeeBps, referralAmount);
         }
 
         emit CampaignCreated(
@@ -382,7 +443,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 startTime,
         uint64 endTime
     ) external returns (uint256 campaignId) {
-        return _createCampaignDirect(configHash, rewardToken, totalAmount, startTime, endTime, 0);
+        return _createCampaignDirect(
+            configHash, rewardToken, totalAmount, startTime, endTime, FeeParams(0, NO_FEE_REQUEST)
+        );
     }
 
     /// @notice Create a new time-based incentive campaign with direct token transfer
@@ -403,24 +466,52 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 endTime,
         uint64 referralFeeBps
     ) external returns (uint256 campaignId) {
-        return _createCampaignDirect(configHash, rewardToken, totalAmount, startTime, endTime, referralFeeBps);
+        return _createCampaignDirect(
+            configHash, rewardToken, totalAmount, startTime, endTime, FeeParams(referralFeeBps, NO_FEE_REQUEST)
+        );
     }
 
-    /// @notice Create a new direct-funded campaign (shared by both overloads)
+    /// @notice Create a direct-funded campaign at a protocol fee chosen by the creator
+    /// @param configHash Hash of the off-chain campaign configuration
+    /// @param rewardToken The ERC20 token for rewards
+    /// @param totalAmount Total reward amount (before protocol fee deduction)
+    /// @param startTime Campaign start timestamp
+    /// @param endTime Campaign end timestamp
+    /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
+    /// @param protocolFeeBps Protocol fee in basis points; must lie within the range
+    ///        quoteProtocolFeeRange reports for the caller with no budget
+    /// @return campaignId The ID of the created campaign
+    /// @dev Fee-on-transfer and rebasing tokens are not supported
+    /// @dev Caller must approve this contract to transfer tokens before calling
+    function createCampaignDirectWithProtocolFee(
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalAmount,
+        uint64 startTime,
+        uint64 endTime,
+        uint64 referralFeeBps,
+        uint64 protocolFeeBps
+    ) external returns (uint256 campaignId) {
+        return _createCampaignDirect(
+            configHash, rewardToken, totalAmount, startTime, endTime, FeeParams(referralFeeBps, protocolFeeBps)
+        );
+    }
+
+    /// @notice Create a new direct-funded campaign (shared by all entry points)
     function _createCampaignDirect(
         bytes32 configHash,
         address rewardToken,
         uint256 totalAmount,
         uint64 startTime,
         uint64 endTime,
-        uint64 referralFeeBps
+        FeeParams memory fees
     ) internal returns (uint256 campaignId) {
         // Validate parameters
         if (rewardToken == address(0)) revert InvalidRewardToken();
         if (totalAmount == 0) revert ZeroAmount();
         if (startTime < block.timestamp) revert StartTimeInPast();
         if (endTime <= startTime) revert EndTimeBeforeStart();
-        if (referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
+        if (fees.referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
         {
             uint64 duration = endTime - startTime;
             if (duration > maxCampaignDuration) revert DurationTooLong();
@@ -444,7 +535,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Split the protocol fee and fund the fee receiver, distributor, and campaign
         (uint256 netAmount, uint256 referralAmount, address distributor) =
-            _splitAndFund(ABudget(payable(address(0))), rewardToken, totalAmount, referralFeeBps, campaign, campaignId);
+            _splitAndFund(ABudget(payable(address(0))), rewardToken, totalAmount, fees, campaign, campaignId);
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns
         TimeBasedIncentiveCampaign(campaign)
@@ -464,7 +555,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (distributor != address(0)) {
             ReferralDistributor(distributor)
                 .initialize(campaign, campaignId, referralAmount, referralClaimWindowDuration);
-            emit ReferralDistributorCreated(campaignId, distributor, referralFeeBps, referralAmount);
+            emit ReferralDistributorCreated(campaignId, distributor, fees.referralFeeBps, referralAmount);
         }
 
         emit CampaignCreated(
@@ -485,7 +576,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param budget The budget to disburse from (pass address(0) to transfer from this contract)
     /// @param rewardToken The ERC20 reward token
     /// @param totalAmount Total reward amount (before protocol fee deduction)
-    /// @param referralFeeBps Referral fee in basis points of the protocol fee
+    /// @param fees Referral fee and the creator's protocol fee request
     /// @param campaign The campaign clone to fund
     /// @param campaignId The campaign ID
     /// @return netAmount Rewards sent to the campaign (total minus fee, unchanged by referrals)
@@ -495,16 +586,24 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         ABudget budget,
         address rewardToken,
         uint256 totalAmount,
-        uint64 referralFeeBps,
+        FeeParams memory fees,
         address campaign,
         uint256 campaignId
     ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor) {
+        uint64 feeBps = _selectProtocolFee(
+            ITBIProtocolFeeModule.FeeContext({
+                creator: msg.sender, budget: address(budget), rewardToken: rewardToken, totalAmount: totalAmount
+            }),
+            fees.requestedFeeBps
+        );
+
         // The referral slice is carved from the fee, not the total, so the net reward
         // budget is unchanged
-        uint256 feeAmount = (totalAmount * protocolFee) / 10000;
-        referralAmount = (feeAmount * referralFeeBps) / 10000;
+        uint256 feeAmount = (totalAmount * feeBps) / 10000;
+        referralAmount = (feeAmount * fees.referralFeeBps) / 10000;
         uint256 protocolAmount = feeAmount - referralAmount;
         netAmount = totalAmount - feeAmount;
+        emit ProtocolFeeApplied(campaignId, feeBps, feeAmount);
 
         // Fee to protocol fee receiver (if fee > 0)
         if (protocolAmount > 0) {
@@ -513,7 +612,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
         // Referral slice to a freshly cloned distributor (if slice > 0)
         if (referralAmount > 0) {
-            distributor = _cloneReferralDistributor(campaignId, referralFeeBps);
+            distributor = _cloneReferralDistributor(campaignId, fees.referralFeeBps);
             _fund(budget, rewardToken, distributor, referralAmount);
         }
 
@@ -521,6 +620,73 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (netAmount > 0) {
             _fund(budget, rewardToken, campaign, netAmount);
         }
+    }
+
+    /// @notice Pick the protocol fee for a campaign from the range the module allows
+    /// @param ctx The campaign's fee context
+    /// @param requestedFeeBps The creator's protocol fee, or NO_FEE_REQUEST for the default
+    /// @return The fee in basis points to apply
+    /// @dev Without a request the top of the range applies. With one, the request must lie
+    ///      inside the range or creation reverts: a creator asking for a fee they are not
+    ///      allowed finds out rather than being charged something else. The check lives
+    ///      here, not in the module, because a reverting module falls back to the standard
+    ///      fee and would otherwise swallow the rejection.
+    function _selectProtocolFee(ITBIProtocolFeeModule.FeeContext memory ctx, uint256 requestedFeeBps)
+        internal
+        returns (uint64)
+    {
+        (uint64 minFeeBps, uint64 maxFeeBps) = _resolveProtocolFeeRange(ctx);
+        if (requestedFeeBps == NO_FEE_REQUEST) return maxFeeBps;
+        if (requestedFeeBps < minFeeBps || requestedFeeBps > maxFeeBps) {
+            // forge-lint: disable-next-line(unsafe-typecast)
+            revert ProtocolFeeOutOfRange(uint64(requestedFeeBps), minFeeBps, maxFeeBps);
+        }
+        // forge-lint: disable-next-line(unsafe-typecast)
+        return uint64(requestedFeeBps); // guarded: requestedFeeBps <= maxFeeBps, a uint64
+    }
+
+    /// @notice Resolve the range of protocol fees for a campaign, consulting the fee module if set
+    /// @param ctx The campaign's fee context
+    /// @return minFeeBps Lowest fee the creator may pick; never above maxFeeBps
+    /// @return maxFeeBps Fee applied by default; never above the standard protocol fee
+    /// @dev The module is reached via a low-level staticcall so that a reverting module,
+    ///      an EOA, or malformed return data all fall back to the standard fee (with an
+    ///      event) instead of blocking campaign creation. Failing open to the higher fee
+    ///      is safe for the protocol, and unsetting a broken module is behind the owner's
+    ///      timelock. Both bounds are capped at the standard fee, so the module can only
+    ///      ever discount.
+    function _resolveProtocolFeeRange(ITBIProtocolFeeModule.FeeContext memory ctx)
+        internal
+        returns (uint64 minFeeBps, uint64 maxFeeBps)
+    {
+        address module = protocolFeeModule;
+        if (module == address(0)) return (protocolFee, protocolFee);
+
+        (bool ok, bytes memory ret) =
+            module.staticcall(abi.encodeCall(ITBIProtocolFeeModule.quoteProtocolFeeRange, (ctx)));
+        if (!ok || ret.length != 64) {
+            emit ProtocolFeeModuleFallback(module, ctx.creator, ctx.budget);
+            return (protocolFee, protocolFee);
+        }
+
+        (uint256 moduleMin, uint256 moduleMax) = abi.decode(ret, (uint256, uint256));
+        return _capFeeRange(moduleMin, moduleMax);
+    }
+
+    /// @notice Cap a module-reported fee range at the standard protocol fee
+    /// @param moduleMin The module's lower bound
+    /// @param moduleMax The module's upper bound
+    /// @return minFeeBps The lower bound, capped so that minFeeBps <= maxFeeBps
+    /// @return maxFeeBps The upper bound, capped at the standard protocol fee
+    function _capFeeRange(uint256 moduleMin, uint256 moduleMax)
+        internal
+        view
+        returns (uint64 minFeeBps, uint64 maxFeeBps)
+    {
+        // forge-lint: disable-start(unsafe-typecast)
+        maxFeeBps = moduleMax >= protocolFee ? protocolFee : uint64(moduleMax);
+        minFeeBps = moduleMin >= maxFeeBps ? maxFeeBps : uint64(moduleMin);
+        // forge-lint: disable-end(unsafe-typecast)
     }
 
     /// @notice Send tokens to a target and verify the full amount was received
@@ -596,6 +762,41 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         address oldReceiver = protocolFeeReceiver;
         protocolFeeReceiver = receiver_;
         emit ProtocolFeeReceiverUpdated(oldReceiver, receiver_);
+    }
+
+    /// @notice Set the protocol fee module
+    /// @param module_ New fee module (address(0) disables discounts; standard fee applies)
+    function setProtocolFeeModule(address module_) external onlyOwner {
+        if (module_ != address(0) && module_.code.length == 0) revert InvalidProtocolFeeModule();
+        address oldModule = protocolFeeModule;
+        protocolFeeModule = module_;
+        emit ProtocolFeeModuleUpdated(oldModule, module_);
+    }
+
+    /// @notice Quote the range of protocol fees a campaign may be charged at creation
+    /// @param creator The account that will create the campaign
+    /// @param budget The funding budget, or address(0) for a direct-funded campaign
+    /// @param rewardToken The ERC20 reward token
+    /// @param totalAmount Gross reward amount, before the protocol fee is deducted
+    /// @return minFeeBps Lowest fee the creator may pass to the WithProtocolFee entry points
+    /// @return maxFeeBps Fee applied by createCampaign / createCampaignDirect for the same state
+    /// @dev Unlike creation, this does not fall back on module failure: a broken module
+    ///      makes quoting revert loudly so off-chain callers notice
+    function quoteProtocolFeeRange(address creator, address budget, address rewardToken, uint256 totalAmount)
+        external
+        view
+        returns (uint64 minFeeBps, uint64 maxFeeBps)
+    {
+        address module = protocolFeeModule;
+        if (module == address(0)) return (protocolFee, protocolFee);
+
+        (uint64 moduleMin, uint64 moduleMax) = ITBIProtocolFeeModule(module)
+            .quoteProtocolFeeRange(
+                ITBIProtocolFeeModule.FeeContext({
+                    creator: creator, budget: budget, rewardToken: rewardToken, totalAmount: totalAmount
+                })
+            );
+        return _capFeeRange(moduleMin, moduleMax);
     }
 
     /// @notice Set the operator address (engine hot wallet for merkle root publishing)
@@ -859,6 +1060,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "2.2.0";
+        return "2.3.0";
     }
 }

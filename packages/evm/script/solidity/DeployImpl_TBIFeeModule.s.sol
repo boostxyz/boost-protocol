@@ -29,13 +29,14 @@ import {TBIProtocolFeeModule} from "contracts/timebased/TBIProtocolFeeModule.sol
 ///      calldata the Safe routes through the timelock (schedule -> wait minDelay ->
 ///      execute). Step 2 only exists on the proxy after step 1 executes; a timelock batch
 ///      runs its calls sequentially in one transaction, so a single batch handles the
-///      ordering.
+///      ordering. Once the delay passes, `--sig "execute()"` broadcasts executeBatch from
+///      DEPLOYER_PRIVATE_KEY (the timelock's execution is open to any caller).
 ///
 ///      Environment variables:
 ///        BOOST_DEPLOYMENT_SALT        — CREATE2 salt (same as initial deploy)
 ///        TIMEBASED_MANAGER_PROXY      — Manager proxy address
 ///        TBI_FEE_MODULE_OWNER         — module owner (team Safe)
-///        DEPLOYER_PRIVATE_KEY         — EOA that broadcasts the deploys
+///        DEPLOYER_PRIVATE_KEY         — EOA that broadcasts the deploys and executeBatch
 ///        TBI_PROXY_OWNER_PRIVATE_KEY  — (Base Sepolia only) proxy owner, broadcasts the
 ///                                       upgradeToAndCall + setProtocolFeeModule calls
 contract DeployImpl_TBIFeeModule is ScriptUtils {
@@ -98,6 +99,60 @@ contract DeployImpl_TBIFeeModule is ScriptUtils {
 
         require(owner.code.length > 0, "proxy owner has no code - not a timelock?");
         _printBatchPayloads(owner, MANAGER_PROXY, payloads);
+    }
+
+    /// @notice Execute the queued timelock batch once its delay has passed.
+    /// @dev Never deploys. Both contracts must already sit at their CREATE2 addresses: a
+    ///      different address means the build drifted from the rollout run, so the payloads
+    ///      would no longer hash to the queued operation.
+    function execute() public {
+        address managerProxy = vm.envAddress("TIMEBASED_MANAGER_PROXY");
+        address moduleOwner = vm.envAddress("TBI_FEE_MODULE_OWNER");
+        uint256 executorPk = vm.envUint("DEPLOYER_PRIVATE_KEY");
+
+        console.log("========================================");
+        console.log("TBI Dynamic Protocol Fee - Execute Batch");
+        console.log("========================================");
+        console.log("Manager Proxy:    ", managerProxy);
+        console.log("Executor:         ", vm.addr(executorPk));
+
+        address newManagerImpl = _getCreate2Address(type(TimeBasedIncentiveManager).creationCode, "");
+        address module =
+            _getCreate2Address(type(TBIProtocolFeeModule).creationCode, abi.encode(managerProxy, moduleOwner));
+        console.log("Manager Impl:     ", newManagerImpl);
+        console.log("Fee Module:       ", module);
+        require(newManagerImpl.code.length > 0, "Manager impl not at expected address - build drifted since rollout");
+        require(module.code.length > 0, "Fee module not at expected address - build drifted since rollout");
+
+        address currentImpl = Upgrades.getImplementationAddress(managerProxy);
+        bytes[] memory payloads = _stagePayloads(managerProxy, currentImpl, newManagerImpl, module);
+        if (payloads.length == 0) {
+            console.log("\nProxy already upgraded and configured. Nothing to execute.");
+            return;
+        }
+
+        address owner = TimeBasedIncentiveManager(managerProxy).owner();
+        require(owner.code.length > 0, "proxy owner has no code - not a timelock?");
+        TimelockController tl = TimelockController(payable(owner));
+        (address[] memory targets, uint256[] memory values, bytes32 salt) = _batchParams(managerProxy, payloads);
+        bytes32 opId = tl.hashOperationBatch(targets, values, payloads, bytes32(0), salt);
+
+        console.log("Timelock:         ", owner);
+        console.log("operation id:     ", vm.toString(opId));
+        if (!tl.isOperationReady(opId)) {
+            if (tl.isOperationPending(opId)) {
+                console.log("Batch queued but not ready. executable at (unix):", tl.getTimestamp(opId));
+                revert("batch not ready yet");
+            }
+            revert("batch not scheduled - run run() for the scheduleBatch calldata");
+        }
+
+        vm.broadcast(executorPk);
+        tl.executeBatch(targets, values, payloads, bytes32(0), salt);
+
+        require(Upgrades.getImplementationAddress(managerProxy) == newManagerImpl, "implementation mismatch");
+        require(_currentModule(managerProxy) == module, "fee module not configured");
+        console.log("\n[OK] Batch executed: proxy upgraded and fee module configured");
     }
 
     /// @dev Base Sepolia only: the proxy owner is an EOA, so the calls broadcast from the
@@ -185,20 +240,29 @@ contract DeployImpl_TBIFeeModule is ScriptUtils {
         } catch {}
     }
 
+    /// @dev Every call targets the proxy with no value. The salt is derived from the payloads,
+    ///      so schedule and execute rebuild the same operation id.
+    function _batchParams(address proxy, bytes[] memory payloads)
+        internal
+        pure
+        returns (address[] memory targets, uint256[] memory values, bytes32 salt)
+    {
+        targets = new address[](payloads.length);
+        values = new uint256[](payloads.length);
+        for (uint256 i; i < payloads.length; i++) {
+            targets[i] = proxy;
+        }
+        salt = keccak256(abi.encode("tbi-fee-module-rollout", proxy, payloads));
+    }
+
     /// @dev Prints paste-ready timelock batch payloads. An already executed op reports done;
     ///      an in-flight one prints only its remaining execute step.
     function _printBatchPayloads(address owner, address proxy, bytes[] memory payloads) internal view {
         TimelockController tl = TimelockController(payable(owner));
         uint256 minDelay = tl.getMinDelay();
 
-        address[] memory targets = new address[](payloads.length);
-        uint256[] memory values = new uint256[](payloads.length);
-        for (uint256 i; i < payloads.length; i++) {
-            targets[i] = proxy;
-        }
-
+        (address[] memory targets, uint256[] memory values, bytes32 salt) = _batchParams(proxy, payloads);
         bytes32 predecessor = bytes32(0);
-        bytes32 salt = keccak256(abi.encode("tbi-fee-module-rollout", proxy, payloads));
         bytes32 opId = tl.hashOperationBatch(targets, values, payloads, predecessor, salt);
 
         console.log("\n--- Timelock Batch (route via Safe -> timelock) ---");

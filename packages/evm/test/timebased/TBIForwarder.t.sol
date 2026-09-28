@@ -11,6 +11,7 @@ import {TBIForwarder} from "contracts/timebased/TBIForwarder.sol";
 import {
     TBIForwarderAdapters,
     IERC4626,
+    IERC7540,
     IAaveV3Pool,
     IGiverPositionManager,
     IComet,
@@ -52,6 +53,64 @@ contract MockERC4626 is ERC20 {
         ERC20(underlying).transferFrom(msg.sender, address(this), assets);
         shares = assets; // 1:1 for simplicity
         _mint(receiver, shares);
+    }
+}
+
+/// @notice Minimal ERC-7540 (Lagoon) async vault mock. Mirrors the surface the adapter depends on:
+/// `requestDeposit` enforces Lagoon's `onlyOperator(owner)` (msg.sender must be `owner` here — the
+/// mock has no operator approvals), pulls `assets` from `owner` into a separate pending silo, and
+/// records the request for `controller`. `setBlockRequests` reproduces Lagoon's
+/// `OnlyOneRequestAllowed()` revert. `deposit` is the ERC-7540 claim path and must never be hit by
+/// a request-style deposit, so it reverts.
+contract MockERC7540Vault {
+    error OnlyOneRequestAllowed();
+    error NotOperator();
+    error ClaimPathUsed();
+
+    address public immutable underlying;
+    address public immutable pendingSilo;
+    bool public blockRequests;
+
+    uint256 public lastAssets;
+    address public lastController;
+    address public lastOwner;
+    address public lastReferral;
+    uint256 public lastValue;
+    uint256 public requestCount;
+    mapping(address => uint256) public pendingDepositRequest;
+
+    constructor(address underlying_, address pendingSilo_) {
+        underlying = underlying_;
+        pendingSilo = pendingSilo_;
+    }
+
+    function asset() external view returns (address) {
+        return underlying;
+    }
+
+    function setBlockRequests(bool blocked) external {
+        blockRequests = blocked;
+    }
+
+    function requestDeposit(uint256 assets, address controller, address owner, address referral)
+        external
+        payable
+        returns (uint256 requestId)
+    {
+        if (msg.sender != owner) revert NotOperator();
+        if (blockRequests) revert OnlyOneRequestAllowed();
+        ERC20(underlying).transferFrom(owner, pendingSilo, assets);
+        pendingDepositRequest[controller] += assets;
+        lastAssets = assets;
+        lastController = controller;
+        lastOwner = owner;
+        lastReferral = referral;
+        lastValue = msg.value;
+        requestId = ++requestCount;
+    }
+
+    function deposit(uint256, address) external pure returns (uint256) {
+        revert ClaimPathUsed();
     }
 }
 
@@ -924,6 +983,95 @@ contract TBIForwarderTest is Test {
         vm.prank(noApprovalUser);
         vm.expectRevert(); // SafeTransferLib reverts on insufficient allowance
         forwarder.depositERC4626(IERC4626(address(vault)), 1 ether, noApprovalUser);
+    }
+
+    // --- ERC7540 (Lagoon async vault) ---
+
+    /// @dev Boost multisig — the fixed `referral` the adapter passes to `requestDeposit`.
+    address constant BOOST_REFERRAL = 0xA0fd474fB1697cB9EDc27dD79e0d5E9B74D26a87;
+    address constant PENDING_SILO = address(0x5110);
+
+    function test_DepositERC7540_Success() public {
+        uint256 amount = 10 ether;
+        MockERC7540Vault vault7540 = new MockERC7540Vault(address(token), PENDING_SILO);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(USER, address(vault7540), address(token), amount);
+
+        vm.prank(USER);
+        forwarder.depositERC7540(IERC7540(address(vault7540)), amount, USER);
+
+        // The request is queued for the user as controller, with the forwarder as owner (the
+        // account the vault pulls from) and the Boost multisig as referral; no ETH is forwarded.
+        assertEq(vault7540.requestCount(), 1);
+        assertEq(vault7540.lastAssets(), amount);
+        assertEq(vault7540.lastController(), USER);
+        assertEq(vault7540.lastOwner(), address(forwarder));
+        assertEq(vault7540.lastReferral(), BOOST_REFERRAL);
+        assertEq(vault7540.lastValue(), 0);
+        assertEq(vault7540.pendingDepositRequest(USER), amount);
+        // Assets landed in the pending silo; the forwarder holds nothing and its approval is reset
+        assertEq(token.balanceOf(PENDING_SILO), amount);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(vault7540)), 0);
+        assertEq(token.balanceOf(USER), 90 ether);
+    }
+
+    function test_DepositERC7540_WithReceiver_Success() public {
+        uint256 amount = 10 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+        MockERC7540Vault vault7540 = new MockERC7540Vault(address(token), PENDING_SILO);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(vault7540), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.depositERC7540(IERC7540(address(vault7540)), amount, RECEIVER);
+
+        // The receiver controls the request; the caller only paid the underlying.
+        assertEq(vault7540.lastController(), RECEIVER);
+        assertEq(vault7540.lastOwner(), address(forwarder));
+        assertEq(vault7540.lastReferral(), BOOST_REFERRAL);
+        assertEq(vault7540.pendingDepositRequest(RECEIVER), amount);
+        assertEq(vault7540.pendingDepositRequest(LIFI_EXECUTOR), 0);
+        assertEq(token.balanceOf(PENDING_SILO), amount);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(vault7540)), 0);
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 90 ether);
+    }
+
+    function test_DepositERC7540_RevertZeroReceiver() public {
+        MockERC7540Vault vault7540 = new MockERC7540Vault(address(token), PENDING_SILO);
+
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.depositERC7540(IERC7540(address(vault7540)), 1 ether, address(0));
+
+        // Reverts before funds move
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
+    function test_DepositERC7540_BubblesVaultRevert() public {
+        MockERC7540Vault vault7540 = new MockERC7540Vault(address(token), PENDING_SILO);
+        vault7540.setBlockRequests(true);
+
+        // Lagoon's one-pending-request guard surfaces unchanged and the whole call unwinds.
+        vm.prank(USER);
+        vm.expectRevert(MockERC7540Vault.OnlyOneRequestAllowed.selector);
+        forwarder.depositERC7540(IERC7540(address(vault7540)), 1 ether, USER);
+
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(PENDING_SILO), 0);
+    }
+
+    function test_DepositERC7540_RevertInsufficientBalance() public {
+        MockERC7540Vault vault7540 = new MockERC7540Vault(address(token), PENDING_SILO);
+
+        vm.prank(USER);
+        vm.expectRevert(); // SafeTransferLib reverts on insufficient balance
+        forwarder.depositERC7540(IERC7540(address(vault7540)), 200 ether, USER);
     }
 
     // --- Aave V3 ---

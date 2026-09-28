@@ -11,6 +11,19 @@ interface IERC4626 {
     function deposit(uint256 assets, address receiver) external returns (uint256 shares);
 }
 
+/// @notice Minimal ERC-7540 (asynchronous ERC-4626) deposit surface, as implemented by Lagoon
+/// vaults. `requestDeposit` pulls `assets` from `owner` into the vault's pending silo and queues a
+/// request for `controller`, who later claims the settled shares; `referral` is only emitted in
+/// Lagoon's `Referral` event. Lagoon's `requestDeposit` is payable (native wrap path), but the
+/// forwarder never sends value.
+interface IERC7540 {
+    function asset() external view returns (address);
+    function requestDeposit(uint256 assets, address controller, address owner, address referral)
+        external
+        payable
+        returns (uint256 requestId);
+}
+
 interface IAaveV3Pool {
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 }
@@ -330,6 +343,10 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
     /// whose first slot is slot0 with `sqrtPriceX96` in the low 160 bits.
     bytes32 internal constant V4_POOLS_SLOT = bytes32(uint256(6));
 
+    /// @notice Referral address passed to ERC-7540 (Lagoon) `requestDeposit` — the Boost multisig.
+    /// Lagoon only emits it in its `Referral` event for attribution; no funds are sent to it.
+    address internal constant BOOST_REFERRAL = 0xA0fd474fB1697cB9EDc27dD79e0d5E9B74D26a87;
+
     /// @notice Deposit into an ERC-4626 vault on behalf of receiver
     /// @param vault The ERC-4626 vault to deposit into
     /// @param assets The amount of underlying assets to deposit
@@ -340,6 +357,30 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         asset.safeTransferFrom(msg.sender, address(this), assets);
         asset.safeApproveWithRetry(address(vault), assets);
         vault.deposit(assets, receiver);
+        asset.safeApprove(address(vault), 0);
+
+        emit Deposit(receiver, address(vault), asset, assets);
+    }
+
+    /// @notice Request a deposit into an ERC-7540 (asynchronous) vault such as Lagoon, with
+    /// `receiver` as the request's controller.
+    /// @dev Deliberately separate from `depositERC4626`: on an ERC-7540 vault `deposit(assets,
+    /// receiver)` claims an already-settled request rather than depositing. The forwarder pulls
+    /// `assets` and calls Lagoon's 4-arg `requestDeposit` with itself as `owner` (satisfying
+    /// Lagoon's `onlyOperator(owner)` since msg.sender == owner), so the vault pulls the assets from
+    /// the forwarder into its pending silo; `receiver` is the controller who claims the shares once
+    /// the curator settles the epoch. Nothing is minted in this call, so the event amount is the
+    /// requested `assets`. Lagoon reverts `OnlyOneRequestAllowed()` if the controller still has an
+    /// unsettled request from an older epoch; the revert surfaces unchanged.
+    /// @param vault The ERC-7540 vault to request a deposit into
+    /// @param assets The amount of underlying assets to request
+    /// @param receiver The controller of the request, who later claims the vault shares
+    function depositERC7540(IERC7540 vault, uint256 assets, address receiver) external nonReentrant {
+        _requireReceiver(receiver);
+        address asset = vault.asset();
+        asset.safeTransferFrom(msg.sender, address(this), assets);
+        asset.safeApproveWithRetry(address(vault), assets);
+        vault.requestDeposit(assets, receiver, address(this), BOOST_REFERRAL);
         asset.safeApprove(address(vault), 0);
 
         emit Deposit(receiver, address(vault), asset, assets);

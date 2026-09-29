@@ -415,7 +415,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         campaigns[campaignId] = campaign;
 
         // Split the protocol fee and fund the fee receiver, distributor, and campaign
-        (uint256 netAmount, uint256 referralAmount, address distributor) =
+        (uint256 netAmount, uint256 referralAmount, address distributor,) =
             _splitAndFund(budget, rewardToken, totalAmount, fees, campaign, campaignId);
 
         // Initialize the campaign
@@ -551,7 +551,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         campaigns[campaignId] = campaign;
 
         // Split the protocol fee and fund the fee receiver, distributor, and campaign
-        (uint256 netAmount, uint256 referralAmount, address distributor) =
+        (uint256 netAmount, uint256 referralAmount, address distributor,) =
             _splitAndFund(ABudget(payable(address(0))), rewardToken, totalAmount, fees, campaign, campaignId);
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns
@@ -599,6 +599,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @return netAmount Rewards sent to the campaign (total minus fee, unchanged by referrals)
     /// @return referralAmount Referral slice carved from the protocol fee
     /// @return distributor The funded distributor clone (address(0) if the slice is 0)
+    /// @return feeBps The protocol fee in basis points that was applied
     function _splitAndFund(
         ABudget budget,
         address rewardToken,
@@ -606,8 +607,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         FeeParams memory fees,
         address campaign,
         uint256 campaignId
-    ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor) {
-        uint64 feeBps = _selectProtocolFee(
+    ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor, uint64 feeBps) {
+        feeBps = _selectProtocolFee(
             ITBIProtocolFeeModule.FeeContext({
                 creator: msg.sender, budget: address(budget), rewardToken: rewardToken, totalAmount: totalAmount
             }),
@@ -810,8 +811,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         (uint64 moduleMin, uint64 moduleMax) = ITBIProtocolFeeModule(module)
             .quoteProtocolFeeRange(
                 ITBIProtocolFeeModule.FeeContext({
-                    creator: creator, budget: budget, rewardToken: rewardToken, totalAmount: totalAmount
-                })
+                creator: creator, budget: budget, rewardToken: rewardToken, totalAmount: totalAmount
+            })
             );
         return _capFeeRange(moduleMin, moduleMax);
     }

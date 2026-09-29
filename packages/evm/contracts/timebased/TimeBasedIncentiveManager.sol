@@ -190,6 +190,27 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when the fee module fails to quote and the standard fee is applied instead
     event ProtocolFeeModuleFallback(address indexed module, address indexed creator, address indexed budget);
 
+    /// @notice Emitted when the open-ended campaign implementation is updated
+    event OpenEndedCampaignImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
+
+    /// @notice Emitted when an open-ended campaign is topped up
+    /// @param campaignId The campaign ID
+    /// @param funder The budget-authorized caller that funded the top-up
+    /// @param totalAmount Gross top-up drawn from the campaign's budget
+    /// @param netAmount Rewards added to the campaign (total minus fee)
+    /// @param feeAmount Protocol fee at the campaign's snapshotted rate, including the referral slice
+    /// @param referralAmount Slice of the fee added to the referral pool (0 if the campaign has no distributor)
+    /// @param newTotalRewards The campaign's total rewards after the top-up
+    event RewardsAdded(
+        uint256 indexed campaignId,
+        address indexed funder,
+        uint256 totalAmount,
+        uint256 netAmount,
+        uint256 feeAmount,
+        uint256 referralAmount,
+        uint256 newTotalRewards
+    );
+
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
 

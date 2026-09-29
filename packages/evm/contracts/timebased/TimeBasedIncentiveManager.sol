@@ -406,16 +406,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
 
         // Validate parameters
-        if (rewardToken == address(0)) revert InvalidRewardToken();
-        if (totalAmount == 0) revert ZeroAmount();
-        if (startTime < block.timestamp) revert StartTimeInPast();
-        if (endTime <= startTime) revert EndTimeBeforeStart();
-        if (fees.referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
-        {
-            uint64 duration = endTime - startTime;
-            if (duration > maxCampaignDuration) revert DurationTooLong();
-            if (duration < minCampaignDuration) revert DurationTooShort();
-        }
+        _validateCampaignParams(rewardToken, totalAmount, startTime, endTime, fees.referralFeeBps);
 
         // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
@@ -542,16 +533,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         FeeParams memory fees
     ) internal returns (uint256 campaignId) {
         // Validate parameters
-        if (rewardToken == address(0)) revert InvalidRewardToken();
-        if (totalAmount == 0) revert ZeroAmount();
-        if (startTime < block.timestamp) revert StartTimeInPast();
-        if (endTime <= startTime) revert EndTimeBeforeStart();
-        if (fees.referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
-        {
-            uint64 duration = endTime - startTime;
-            if (duration > maxCampaignDuration) revert DurationTooLong();
-            if (duration < minCampaignDuration) revert DurationTooShort();
-        }
+        _validateCampaignParams(rewardToken, totalAmount, startTime, endTime, fees.referralFeeBps);
 
         // Pull tokens from caller and verify full amount received
         {

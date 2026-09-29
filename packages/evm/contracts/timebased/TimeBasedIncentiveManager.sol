@@ -1363,6 +1363,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "2.3.0";
+        return "2.4.0";
     }
 }

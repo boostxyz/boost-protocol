@@ -7,7 +7,9 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
-/// @title ReferralDistributor
+/// @title ReferralDistributor (pre-addToPool template)
+/// @notice Snapshot of ReferralDistributor as deployed alongside manager 2.3.0 (boost-protocol 9b08111d),
+///         renamed so tests can retain a legacy template across the manager upgrade. Test fixture only.
 /// @notice Per-campaign clone that holds the referral fee pool and pays referrers
 ///         against an operator-published merkle root
 /// @dev Deployed as minimal proxy by TimeBasedIncentiveManager when a campaign is
@@ -20,7 +22,7 @@ import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentive
 ///      the campaign address that the campaign's (chainid, campaign, user, token,
 ///      cumulativeAmount) reward leaves carry there, so a reward proof can never verify
 ///      against a referral root
-contract ReferralDistributor is Initializable {
+contract ReferralDistributorV2_3 is Initializable {
     /// @notice The TimeBasedIncentiveManager that deployed this distributor
     address public timeBasedIncentiveManager;
 
@@ -86,9 +88,6 @@ contract ReferralDistributor is Initializable {
     /// @notice Emitted when the remaining pool is swept
     event ReferralPoolSwept(uint256 amount, address indexed destination);
 
-    /// @notice Emitted when the manager adds a top-up's referral slice to the pool
-    event ReferralPoolIncreased(uint256 amount, uint256 newReferralPool);
-
     /// @notice Error when caller is not the TimeBasedIncentiveManager
     error OnlyTimeBasedIncentiveManager();
 
@@ -127,9 +126,6 @@ contract ReferralDistributor is Initializable {
 
     /// @notice Error when the claim window duration is zero
     error InvalidClaimWindow();
-
-    /// @notice Error when adding to the pool after the campaign has been finalized
-    error CampaignAlreadyFinalized();
 
     /// @notice Disable initialization on the implementation contract
     constructor() {
@@ -178,29 +174,6 @@ contract ReferralDistributor is Initializable {
         finalizedAt = uint64(block.timestamp);
 
         emit FinalizationRecorded(finalizedAt);
-    }
-
-    /// @notice Capability marker: this distributor accepts top-ups via addToPool
-    /// @return Always true
-    /// @dev Pure, so the manager can probe the implementation itself (whose initializers are
-    ///      disabled). Templates deployed before addToPool existed lack the selector
-    function supportsTopUps() external pure returns (bool) {
-        return true;
-    }
-
-    /// @notice Add a top-up's referral slice to the pool
-    /// @param amount The slice, already transferred to this contract by the manager
-    /// @dev Only before the campaign finalizes: the referral root is computed against the
-    ///      pool once finalization is recorded, so the pool must be settled by then. Swept
-    ///      implies finalized, so the swept check only makes the rejection explicit
-    function addToPool(uint256 amount) external onlyTimeBasedIncentiveManager {
-        if (swept) revert PoolAlreadySwept();
-        if (TimeBasedIncentiveCampaign(campaign).finalized()) revert CampaignAlreadyFinalized();
-
-        uint256 newReferralPool = referralPool + amount;
-        referralPool = newReferralPool;
-
-        emit ReferralPoolIncreased(amount, newReferralPool);
     }
 
     /// @notice Publish the referral merkle root and start the claim window

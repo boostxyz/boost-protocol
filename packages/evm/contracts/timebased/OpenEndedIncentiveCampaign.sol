@@ -1,0 +1,392 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.24;
+
+import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
+import {Initializable} from "@solady/utils/Initializable.sol";
+import {MerkleProofLib} from "@solady/utils/MerkleProofLib.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
+
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
+import {IClaw} from "contracts/shared/IClaw.sol";
+
+/// @title OpenEndedIncentiveCampaign
+/// @notice Per-campaign clone that holds reward tokens for an open-ended time-based incentive:
+///         rewards flow at a fixed emission rate until the funded budget is exhausted, and
+///         the budget can be topped up while the campaign runs
+/// @dev Deployed as minimal proxy by TimeBasedIncentiveManager. Keeps the exact external
+///      surface of TimeBasedIncentiveCampaign (storage names, getters, events, errors, leaf
+///      encoding), so the manager's root, claim, cancel, finalize, and withdraw paths work
+///      unchanged. `endTime` is the campaign's maximum end; cancellation shrinks it through
+///      setEndTime exactly as for a fixed-end campaign. Exhaustion needs no extra state: once
+///      a root commits the full `totalRewards`, finalization and withdrawal are allowed before
+///      `endTime`, the same rule a fixed-end campaign applies
+contract OpenEndedIncentiveCampaign is Initializable, IClaw {
+    /// @notice Version of the merkle leaf encoding this campaign verifies
+    uint256 public constant LEAF_VERSION = 2;
+
+    /// @notice Scale applied to `emissionRate`
+    uint256 public constant EMISSION_PRECISION = 1e12;
+
+    /// @notice A top-up (and the initial funding) must cover at least this long at `emissionRate`
+    uint64 public constant MIN_TOP_UP_DURATION = 1 days;
+
+    /// @notice The TimeBasedIncentiveManager contract that deployed this campaign
+    address public timeBasedIncentiveManager;
+
+    /// @notice The budget that funded this campaign (address(0) if direct-funded)
+    address public budget;
+
+    /// @notice The address that created the campaign
+    address public creator;
+
+    /// @notice Hash of the off-chain campaign configuration
+    bytes32 public configHash;
+
+    /// @notice The ERC20 token used for rewards
+    address public rewardToken;
+
+    /// @notice Total rewards deposited (after protocol fee), including every top-up
+    uint256 public totalRewards;
+
+    /// @notice Campaign start timestamp
+    uint64 public startTime;
+
+    /// @notice Maximum campaign end timestamp (never extended; cancellation shrinks it)
+    uint64 public endTime;
+
+    /// @notice Merkle root for reward claims
+    bytes32 public merkleRoot;
+
+    /// @notice Total amount committed to users (sum of all cumulative amounts in merkle tree)
+    uint256 public totalCommitted;
+
+    /// @notice Running total of all claimed amounts
+    uint256 public totalClaimed;
+
+    /// @notice Duration after endTime during which claims are still valid
+    uint64 public claimExpiryDuration;
+
+    /// @notice Whether the final reward state has been published (unlocks withdrawals)
+    bool public finalized;
+
+    /// @notice Cumulative amount claimed per user
+    mapping(address => uint256) public claimed;
+
+    /// @notice Flow rate in reward-token base units per second, scaled by EMISSION_PRECISION
+    /// @dev Set once at initialization and never changed. The manager rejects a zero rate
+    uint256 public emissionRate;
+
+    /// @notice Emitted when the campaign is initialized
+    event CampaignInitialized(
+        address indexed timeBasedIncentiveManager,
+        address indexed budget,
+        address indexed creator,
+        bytes32 configHash,
+        address rewardToken,
+        uint256 totalRewards,
+        uint64 startTime,
+        uint64 endTime
+    );
+
+    /// @notice Emitted when the merkle root is updated
+    event MerkleRootUpdated(bytes32 oldRoot, bytes32 newRoot, uint256 totalCommitted);
+
+    /// @notice Emitted when a user claims rewards
+    event Claimed(address indexed user, uint256 amount, uint256 cumulativeAmount);
+
+    /// @notice Emitted when undistributed funds are withdrawn
+    event UndistributedWithdrawn(uint256 amount, address indexed destination);
+
+    /// @notice Emitted when the end time is updated (e.g., campaign cancelled)
+    event EndTimeUpdated(uint64 oldEndTime, uint64 newEndTime);
+
+    /// @notice Emitted when the manager adds a top-up to the campaign
+    event RewardsAdded(uint256 amount, uint256 newTotalRewards);
+
+    /// @notice Error when caller is not the TimeBasedIncentiveManager
+    error OnlyTimeBasedIncentiveManager();
+
+    /// @notice Error when caller is not the budget
+    error OnlyBudget();
+
+    /// @notice Error when campaign has not ended
+    error CampaignNotEnded();
+
+    /// @notice Error when there is nothing to withdraw
+    error NothingToWithdraw();
+
+    /// @notice Error when clawback amount exceeds available balance
+    error InsufficientBalance();
+
+    /// @notice Error when new end time is after current end time
+    error InvalidEndTime();
+
+    /// @notice Error when campaign has already ended
+    error CampaignAlreadyEnded();
+
+    /// @notice Error when merkle proof is invalid
+    error InvalidProof();
+
+    /// @notice Error when the claim window has expired
+    error ClaimExpired();
+
+    /// @notice Error when there is nothing to claim
+    error NothingToClaim();
+
+    /// @notice Error when campaign has not been finalized
+    error CampaignNotFinalized();
+
+    /// @notice Error when a root commits more than the campaign's total rewards
+    error CommitmentExceedsBudget();
+
+    /// @notice Error when a root decreases the committed amount
+    error CommitmentDecreased();
+
+    /// @notice Error when updating the root after finalization
+    error CampaignAlreadyFinalized();
+
+    /// @notice Error when cumulative claims would exceed the committed amount
+    error ClaimExceedsCommitment();
+
+    /// @notice Error when claiming or publishing a root before the campaign start time
+    error CampaignNotStarted();
+
+    /// @notice Error when a top-up covers less than MIN_TOP_UP_DURATION of emission
+    error TopUpTooSmall();
+
+    /// @notice Disable initialization on the implementation contract
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initialize the campaign (called by TimeBasedIncentiveManager after cloning)
+    /// @param timeBasedIncentiveManager_ The TimeBasedIncentiveManager contract
+    /// @param budget_ The budget that funded this campaign
+    /// @param creator_ The address that created the campaign
+    /// @param configHash_ Hash of the off-chain configuration
+    /// @param rewardToken_ The ERC20 reward token address
+    /// @param totalRewards_ Initial rewards after protocol fee
+    /// @param startTime_ Campaign start timestamp
+    /// @param endTime_ Maximum campaign end timestamp
+    /// @param claimExpiryDuration_ Duration after endTime during which claims are valid
+    /// @param emissionRate_ Flow rate in base units per second, scaled by EMISSION_PRECISION
+    function initialize(
+        address timeBasedIncentiveManager_,
+        address budget_,
+        address creator_,
+        bytes32 configHash_,
+        address rewardToken_,
+        uint256 totalRewards_,
+        uint64 startTime_,
+        uint64 endTime_,
+        uint64 claimExpiryDuration_,
+        uint256 emissionRate_
+    ) external initializer {
+        if (msg.sender != timeBasedIncentiveManager_) revert OnlyTimeBasedIncentiveManager();
+        timeBasedIncentiveManager = timeBasedIncentiveManager_;
+        budget = budget_;
+        creator = creator_;
+        configHash = configHash_;
+        rewardToken = rewardToken_;
+        totalRewards = totalRewards_;
+        startTime = startTime_;
+        endTime = endTime_;
+        claimExpiryDuration = claimExpiryDuration_;
+        emissionRate = emissionRate_;
+
+        emit CampaignInitialized(
+            timeBasedIncentiveManager_,
+            budget_,
+            creator_,
+            configHash_,
+            rewardToken_,
+            totalRewards_,
+            startTime_,
+            endTime_
+        );
+    }
+
+    /// @notice Modifier to restrict access to the TimeBasedIncentiveManager
+    modifier onlyTimeBasedIncentiveManager() {
+        if (msg.sender != timeBasedIncentiveManager) revert OnlyTimeBasedIncentiveManager();
+        _;
+    }
+
+    /// @notice Smallest top-up the campaign accepts: MIN_TOP_UP_DURATION of emission, rounded up
+    /// @return The minimum net top-up in reward-token base units
+    function minTopUp() public view returns (uint256) {
+        return FixedPointMathLib.mulDivUp(emissionRate, MIN_TOP_UP_DURATION, EMISSION_PRECISION);
+    }
+
+    /// @notice Add net rewards to the campaign (called by Manager after funding it)
+    /// @param amount The net top-up, already transferred to this contract and balance-checked
+    /// @return newTotalRewards The campaign's total rewards after the top-up
+    /// @dev Only while the campaign is live: a finalized campaign's rewards are settled, and
+    ///      a campaign past its (possibly cancelled) end can no longer emit them
+    function addRewards(uint256 amount) external onlyTimeBasedIncentiveManager returns (uint256 newTotalRewards) {
+        if (finalized) revert CampaignAlreadyFinalized();
+        if (block.timestamp >= endTime) revert CampaignAlreadyEnded();
+        if (amount < minTopUp()) revert TopUpTooSmall();
+
+        newTotalRewards = totalRewards + amount;
+        totalRewards = newTotalRewards;
+
+        emit RewardsAdded(amount, newTotalRewards);
+    }
+
+    /// @notice Mark the campaign as finalized (called by Manager after publishing final root)
+    /// @dev Idempotent — no-op if already finalized
+    function setFinalized() external onlyTimeBasedIncentiveManager {
+        if (finalized) return;
+        if (block.timestamp < endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
+        finalized = true;
+    }
+
+    /// @notice Set the merkle root for reward claims
+    /// @param root The new merkle root
+    /// @param totalCommitted_ Total amount committed to users in the merkle tree
+    /// @return oldRoot The previous merkle root
+    /// @dev Enforces: committed amount never exceeds totalRewards, never decreases across
+    ///      updates, and the root is immutable once the campaign is finalized
+    function setMerkleRoot(bytes32 root, uint256 totalCommitted_)
+        external
+        onlyTimeBasedIncentiveManager
+        returns (bytes32 oldRoot)
+    {
+        if (finalized) revert CampaignAlreadyFinalized();
+
+        // endTime can precede startTime after a pre-start cancellation; such campaigns
+        // must accept their finalizing root immediately
+        if (block.timestamp < startTime && block.timestamp < endTime) revert CampaignNotStarted();
+
+        if (totalCommitted_ > totalRewards) revert CommitmentExceedsBudget();
+        if (totalCommitted_ < totalCommitted) revert CommitmentDecreased();
+
+        oldRoot = merkleRoot;
+        merkleRoot = root;
+        totalCommitted = totalCommitted_;
+        emit MerkleRootUpdated(oldRoot, root, totalCommitted_);
+    }
+
+    /// @notice Process a claim for a user
+    /// @param user The user claiming rewards
+    /// @param cumulativeAmount The cumulative amount the user is entitled to
+    /// @param proof The merkle proof validating the claim
+    /// @return amount The amount of tokens transferred
+    function processClaim(address user, uint256 cumulativeAmount, bytes32[] calldata proof)
+        external
+        onlyTimeBasedIncentiveManager
+        returns (uint256 amount)
+    {
+        // Check the campaign has started and the claim window hasn't expired; as in
+        // setMerkleRoot, the endTime clause admits campaigns cancelled before their start
+        if (block.timestamp < startTime && block.timestamp < endTime) revert CampaignNotStarted();
+        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) revert ClaimExpired();
+
+        // Verify merkle proof
+        if (merkleRoot == bytes32(0)) revert InvalidProof();
+        bytes32 leaf = keccak256(
+            bytes.concat(keccak256(abi.encode(block.chainid, address(this), user, rewardToken, cumulativeAmount)))
+        );
+        if (!MerkleProofLib.verifyCalldata(proof, merkleRoot, leaf)) revert InvalidProof();
+
+        // Calculate claimable amount
+        uint256 alreadyClaimed = claimed[user];
+        if (cumulativeAmount <= alreadyClaimed) revert NothingToClaim();
+        amount = cumulativeAmount - alreadyClaimed;
+
+        // The declared commitment is a hard ceiling on any single entitlement and on
+        // total outflow. The first check bounds both addends of the second to
+        // totalCommitted, so the addition cannot overflow.
+        if (cumulativeAmount > totalCommitted) revert ClaimExceedsCommitment();
+        if (totalClaimed + amount > totalCommitted) revert ClaimExceedsCommitment();
+
+        claimed[user] = cumulativeAmount;
+        totalClaimed += amount;
+
+        // Transfer tokens to user
+        SafeTransferLib.safeTransfer(rewardToken, user, amount);
+
+        emit Claimed(user, amount, cumulativeAmount);
+    }
+
+    /// @notice Transfer undistributed funds to a destination (called by Manager)
+    /// @param to The address to send funds to
+    /// @return amount The amount transferred
+    function withdrawTo(address to) external onlyTimeBasedIncentiveManager returns (uint256 amount) {
+        if (!finalized) revert CampaignNotFinalized();
+        if (block.timestamp <= endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
+
+        uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
+        uint256 owed = _stillOwed();
+        amount = balance > owed ? balance - owed : 0;
+        if (amount == 0) revert NothingToWithdraw();
+
+        SafeTransferLib.safeTransfer(rewardToken, to, amount);
+        emit UndistributedWithdrawn(amount, to);
+    }
+
+    /// @notice Clawback funds to the budget (called by budget.clawbackFromTarget)
+    /// @param data_ The encoded ClawbackPayload
+    /// @param boostId Unused, for interface compatibility
+    /// @param incentiveId Unused, for interface compatibility
+    /// @return amount The amount clawed back
+    /// @return asset The asset address
+    function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId)
+        external
+        override
+        returns (uint256 amount, address asset)
+    {
+        (boostId, incentiveId); // unused variables
+
+        if (msg.sender != budget) revert OnlyBudget();
+        if (!finalized) revert CampaignNotFinalized();
+        if (block.timestamp <= endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
+
+        AIncentive.ClawbackPayload memory payload = abi.decode(data_, (AIncentive.ClawbackPayload));
+        amount = abi.decode(payload.data, (uint256));
+        asset = rewardToken;
+
+        uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
+        uint256 owed = _stillOwed();
+        uint256 available = balance > owed ? balance - owed : 0;
+
+        if (amount > available) revert InsufficientBalance();
+
+        SafeTransferLib.safeTransfer(rewardToken, payload.target, amount);
+
+        emit UndistributedWithdrawn(amount, payload.target);
+    }
+
+    /// @notice Get the amount available to withdraw (not owed to users)
+    /// @return withdrawable The amount that can be withdrawn (0 if not finalized or not ended)
+    function getWithdrawable() external view returns (uint256 withdrawable) {
+        if (!finalized || (block.timestamp <= endTime && totalCommitted < totalRewards)) return 0;
+        uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
+        uint256 owed = _stillOwed();
+        withdrawable = balance > owed ? balance - owed : 0;
+    }
+
+    /// @notice Calculate how much is still owed to users (respects claim expiry)
+    /// @return The amount still owed, or 0 if the claim window has expired
+    function _stillOwed() internal view returns (uint256) {
+        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) return 0;
+        return totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+    }
+
+    /// @notice Set the campaign end time (for emergency cancellation)
+    /// @param newEndTime The new end time (must be <= current endTime)
+    /// @return oldEndTime The previous end time
+    function setEndTime(uint64 newEndTime) external onlyTimeBasedIncentiveManager returns (uint64 oldEndTime) {
+        // Cannot cancel a campaign that has already ended
+        if (block.timestamp > endTime) revert CampaignAlreadyEnded();
+
+        // Only allow setting to current time or earlier (no extensions)
+        if (newEndTime > endTime) revert InvalidEndTime();
+
+        oldEndTime = endTime;
+        endTime = newEndTime;
+
+        emit EndTimeUpdated(oldEndTime, newEndTime);
+    }
+}

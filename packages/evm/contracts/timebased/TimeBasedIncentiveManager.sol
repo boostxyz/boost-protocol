@@ -9,12 +9,14 @@ import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ITBIProtocolFeeModule} from "contracts/timebased/ITBIProtocolFeeModule.sol";
+import {OpenEndedIncentiveCampaign} from "contracts/timebased/OpenEndedIncentiveCampaign.sol";
 import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
 /// @title TimeBasedIncentiveManager
 /// @notice Factory and orchestration contract for time-based incentive campaigns
-/// @dev Deploys TimeBasedIncentiveCampaign clones and manages protocol fees. UUPS upgradeable.
+/// @dev Deploys TimeBasedIncentiveCampaign and OpenEndedIncentiveCampaign clones and manages
+///      protocol fees. UUPS upgradeable.
 /// @custom:oz-upgrades-from contracts/archive/TimeBasedIncentives/TimeBasedIncentiveManagerV2.sol:TimeBasedIncentiveManagerV2
 contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;

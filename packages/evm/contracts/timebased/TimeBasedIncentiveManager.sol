@@ -94,8 +94,20 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @dev The module can only lower the fee: the applied fee is min(moduleFee, protocolFee)
     address public protocolFeeModule;
 
+    /// @notice The implementation contract used for cloning open-ended campaigns
+    address public openEndedCampaignImplementation;
+
+    /// @notice Whether a campaign was created as open-ended (accepts top-ups via addRewards)
+    mapping(uint256 => bool) public isOpenEnded;
+
+    /// @notice Protocol fee in basis points applied at creation, snapshotted for an open-ended
+    ///         campaign's top-ups (unset for fixed-end campaigns)
+    /// @dev The referral share of top-ups reuses campaignReferralFeeBps, which open-ended
+    ///      creation always writes, whether or not a distributor is cloned
+    mapping(uint256 => uint64) public campaignProtocolFeeBps;
+
     /// @notice Allocated gap space for future variables
-    uint256[46] private __gap;
+    uint256[43] private __gap;
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(

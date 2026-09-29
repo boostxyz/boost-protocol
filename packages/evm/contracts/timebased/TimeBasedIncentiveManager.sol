@@ -1197,6 +1197,17 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignImplementationUpdated(oldImplementation, campaignImpl_);
     }
 
+    /// @notice Set the open-ended campaign implementation (enables open-ended campaigns)
+    /// @param impl New open-ended campaign implementation for cloning
+    /// @dev Requires deployed bytecode (which also rejects the zero address), for the same
+    ///      reason as setReferralDistributorImplementation
+    function setOpenEndedCampaignImplementation(address impl) external onlyOwner {
+        if (impl.code.length == 0) revert InvalidImplementation();
+        address oldImplementation = openEndedCampaignImplementation;
+        openEndedCampaignImplementation = impl;
+        emit OpenEndedCampaignImplementationUpdated(oldImplementation, impl);
+    }
+
     /// @notice Set the referral distributor implementation (enables referral campaigns)
     /// @param distributorImpl_ New referral distributor implementation for cloning
     /// @dev Requires deployed bytecode (which also rejects the zero address): a clone of a

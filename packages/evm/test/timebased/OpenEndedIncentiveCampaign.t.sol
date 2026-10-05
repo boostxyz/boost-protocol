@@ -673,6 +673,11 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         campaign.addRewards(DAY_OF_EMISSION - 1);
 
         vm.prank(address(manager));
+        vm.expectRevert(OpenEndedIncentiveCampaign.TopUpNotFunded.selector);
+        campaign.addRewards(DAY_OF_EMISSION);
+
+        rewardToken.mint(address(campaign), DAY_OF_EMISSION);
+        vm.prank(address(manager));
         assertEq(campaign.addRewards(DAY_OF_EMISSION), 9 ether + DAY_OF_EMISSION);
     }
 

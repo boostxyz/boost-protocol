@@ -154,6 +154,9 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when a top-up covers less than MIN_TOP_UP_DURATION of emission
     error TopUpTooSmall();
 
+    /// @notice Error when a top-up would leave the campaign holding less than it owes
+    error TopUpNotFunded();
+
     /// @notice Disable initialization on the implementation contract
     constructor() {
         _disableInitializers();
@@ -229,6 +232,10 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
         if (amount < minTopUp()) revert TopUpTooSmall();
 
         newTotalRewards = totalRewards + amount;
+        // A re-entrant budget can make the Manager's balance-delta check count one deposit twice
+        if (SafeTransferLib.balanceOf(rewardToken, address(this)) < newTotalRewards - totalClaimed) {
+            revert TopUpNotFunded();
+        }
         totalRewards = newTotalRewards;
 
         emit RewardsAdded(amount, newTotalRewards);

@@ -1258,3 +1258,46 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         assertEq(rewardToken.balanceOf(address(dist)), 0);
     }
 }
+
+contract OpenEndedReentrantTopUpTest is OpenEndedFixture {
+    function setUp() public {
+        rewardToken = new MockERC20();
+        campaignImpl = new TimeBasedIncentiveCampaign();
+        openEndedImpl = new OpenEndedIncentiveCampaign();
+        distributorImpl = new ReferralDistributor();
+
+        address proxy = LibClone.deployERC1967(address(new TimeBasedIncentiveManager()));
+        manager = TimeBasedIncentiveManager(proxy);
+        manager.initialize(address(this), address(campaignImpl), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
+        manager.setOperator(OPERATOR);
+        manager.setReferralDistributorImplementation(address(distributorImpl));
+        manager.setOpenEndedCampaignImplementation(address(openEndedImpl));
+    }
+
+    function test_AddRewards_RevertReentrantBudgetDoubleCount() public {
+        ReentrantTopUpBudget evil = new ReentrantTopUpBudget(manager, address(rewardToken));
+        rewardToken.mint(address(evil), 100 ether);
+        budget = ManagedBudget(payable(address(evil)));
+        (uint256 id, OpenEndedIncentiveCampaign campaign) = _create(0);
+
+        evil.arm(address(campaign), id, 2 ether);
+        vm.expectRevert(OpenEndedIncentiveCampaign.TopUpNotFunded.selector);
+        vm.prank(CREATOR);
+        manager.addRewards(id, 2 ether);
+
+        assertEq(campaign.totalRewards(), 9 ether);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9 ether);
+    }
+
+    function test_AddRewards_SameBudgetWithoutReentrySucceeds() public {
+        ReentrantTopUpBudget evil = new ReentrantTopUpBudget(manager, address(rewardToken));
+        rewardToken.mint(address(evil), 100 ether);
+        budget = ManagedBudget(payable(address(evil)));
+        (uint256 id, OpenEndedIncentiveCampaign campaign) = _create(0);
+
+        _topUp(id, 2 ether);
+
+        assertEq(campaign.totalRewards(), 10.8 ether);
+        assertEq(rewardToken.balanceOf(address(campaign)), 10.8 ether);
+    }
+}

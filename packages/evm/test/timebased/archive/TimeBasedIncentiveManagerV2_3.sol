@@ -9,16 +9,14 @@ import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ITBIProtocolFeeModule} from "contracts/timebased/ITBIProtocolFeeModule.sol";
-import {OpenEndedIncentiveCampaign} from "contracts/timebased/OpenEndedIncentiveCampaign.sol";
 import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
-/// @title TimeBasedIncentiveManager
-/// @notice Factory and orchestration contract for time-based incentive campaigns
-/// @dev Deploys TimeBasedIncentiveCampaign and OpenEndedIncentiveCampaign clones and manages
-///      protocol fees. UUPS upgradeable.
-/// @custom:oz-upgrades-from contracts/archive/TimeBasedIncentives/TimeBasedIncentiveManagerV2.sol:TimeBasedIncentiveManagerV2
-contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
+/// @title TimeBasedIncentiveManager 2.3.0
+/// @notice Snapshot of TimeBasedIncentiveManager at version 2.3.0 (boost-protocol 9b08111d), renamed
+///         (and forge-fmt'd) so tests can deploy it behind a proxy and upgrade to the current version
+/// @dev Test fixture only; lives under test/ so it is not part of the published artifacts
+contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownable {
     using SafeTransferLib for address;
 
     /// @notice Parameters for a single root update in a batch
@@ -94,20 +92,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @dev The module can only lower the fee: the applied fee is min(moduleFee, protocolFee)
     address public protocolFeeModule;
 
-    /// @notice The implementation contract used for cloning open-ended campaigns
-    address public openEndedCampaignImplementation;
-
-    /// @notice Whether a campaign was created as open-ended (accepts top-ups via addRewards)
-    mapping(uint256 => bool) public isOpenEnded;
-
-    /// @notice Protocol fee in basis points applied at creation, snapshotted for an open-ended
-    ///         campaign's top-ups (unset for fixed-end campaigns)
-    /// @dev The referral share of top-ups reuses campaignReferralFeeBps, which open-ended
-    ///      creation always writes, whether or not a distributor is cloned
-    mapping(uint256 => uint64) public campaignProtocolFeeBps;
-
     /// @notice Allocated gap space for future variables
-    uint256[43] private __gap;
+    uint256[46] private __gap;
 
     /// @notice Emitted when a new campaign is created
     event CampaignCreated(
@@ -190,27 +176,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Emitted when the fee module fails to quote and the standard fee is applied instead
     event ProtocolFeeModuleFallback(address indexed module, address indexed creator, address indexed budget);
 
-    /// @notice Emitted when the open-ended campaign implementation is updated
-    event OpenEndedCampaignImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
-
-    /// @notice Emitted when an open-ended campaign is topped up
-    /// @param campaignId The campaign ID
-    /// @param funder The budget-authorized caller that funded the top-up
-    /// @param totalAmount Gross top-up drawn from the campaign's budget
-    /// @param netAmount Rewards added to the campaign (total minus fee)
-    /// @param feeAmount Protocol fee at the campaign's snapshotted rate, including the referral slice
-    /// @param referralAmount Slice of the fee added to the referral pool (0 if the campaign has no distributor)
-    /// @param newTotalRewards The campaign's total rewards after the top-up
-    event RewardsAdded(
-        uint256 indexed campaignId,
-        address indexed funder,
-        uint256 totalAmount,
-        uint256 netAmount,
-        uint256 feeAmount,
-        uint256 referralAmount,
-        uint256 newTotalRewards
-    );
-
     /// @notice Error when caller is not authorized on the budget
     error NotAuthorizedOnBudget();
 
@@ -291,19 +256,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
 
     /// @notice Error when a requested protocol fee is outside the range allowed for the creator
     error ProtocolFeeOutOfRange(uint64 requestedFeeBps, uint64 minFeeBps, uint64 maxFeeBps);
-
-    /// @notice Error when topping up a campaign that is not open-ended
-    error NotOpenEnded();
-
-    /// @notice Error when creating an open-ended campaign with a zero emission rate
-    error ZeroEmissionRate();
-
-    /// @notice Error when an open-ended campaign's net funding covers less than a day of emission
-    error InitialFundingTooSmall();
-
-    /// @notice Error when an open-ended campaign would get a referral distributor that cannot
-    ///         accept top-ups (a template deployed before ReferralDistributor.addToPool)
-    error ReferralDistributorNotTopUpCompatible();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -419,7 +371,16 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
 
         // Validate parameters
-        _validateCampaignParams(rewardToken, totalAmount, startTime, endTime, fees.referralFeeBps);
+        if (rewardToken == address(0)) revert InvalidRewardToken();
+        if (totalAmount == 0) revert ZeroAmount();
+        if (startTime < block.timestamp) revert StartTimeInPast();
+        if (endTime <= startTime) revert EndTimeBeforeStart();
+        if (fees.referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
+        {
+            uint64 duration = endTime - startTime;
+            if (duration > maxCampaignDuration) revert DurationTooLong();
+            if (duration < minCampaignDuration) revert DurationTooShort();
+        }
 
         // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
@@ -428,7 +389,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         campaigns[campaignId] = campaign;
 
         // Split the protocol fee and fund the fee receiver, distributor, and campaign
-        (uint256 netAmount, uint256 referralAmount, address distributor,) =
+        (uint256 netAmount, uint256 referralAmount, address distributor) =
             _splitAndFund(budget, rewardToken, totalAmount, fees, campaign, campaignId);
 
         // Initialize the campaign
@@ -546,7 +507,16 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         FeeParams memory fees
     ) internal returns (uint256 campaignId) {
         // Validate parameters
-        _validateCampaignParams(rewardToken, totalAmount, startTime, endTime, fees.referralFeeBps);
+        if (rewardToken == address(0)) revert InvalidRewardToken();
+        if (totalAmount == 0) revert ZeroAmount();
+        if (startTime < block.timestamp) revert StartTimeInPast();
+        if (endTime <= startTime) revert EndTimeBeforeStart();
+        if (fees.referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
+        {
+            uint64 duration = endTime - startTime;
+            if (duration > maxCampaignDuration) revert DurationTooLong();
+            if (duration < minCampaignDuration) revert DurationTooShort();
+        }
 
         // Pull tokens from caller and verify full amount received
         {
@@ -564,7 +534,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         campaigns[campaignId] = campaign;
 
         // Split the protocol fee and fund the fee receiver, distributor, and campaign
-        (uint256 netAmount, uint256 referralAmount, address distributor,) =
+        (uint256 netAmount, uint256 referralAmount, address distributor) =
             _splitAndFund(ABudget(payable(address(0))), rewardToken, totalAmount, fees, campaign, campaignId);
 
         // Initialize the campaign with budget = address(0) for direct-funded campaigns
@@ -602,267 +572,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         );
     }
 
-    /// @notice Create an open-ended campaign funded by a budget
-    /// @param budget The budget to fund the campaign from
-    /// @param configHash Hash of the off-chain campaign configuration
-    /// @param rewardToken The ERC20 token for rewards
-    /// @param totalAmount Initial reward amount (before protocol fee deduction)
-    /// @param startTime Campaign start timestamp
-    /// @param endTime Maximum campaign end timestamp; the campaign ends earlier if its
-    ///        rewards are exhausted or it is cancelled
-    /// @param emissionRate Flow rate in reward-token base units per second, scaled by 1e12
-    /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
-    /// @return campaignId The ID of the created campaign
-    function createOpenEndedCampaign(
-        ABudget budget,
-        bytes32 configHash,
-        address rewardToken,
-        uint256 totalAmount,
-        uint64 startTime,
-        uint64 endTime,
-        uint256 emissionRate,
-        uint64 referralFeeBps
-    ) external returns (uint256 campaignId) {
-        return _createOpenEndedCampaign(
-            budget,
-            configHash,
-            rewardToken,
-            totalAmount,
-            startTime,
-            endTime,
-            emissionRate,
-            FeeParams(referralFeeBps, NO_FEE_REQUEST)
-        );
-    }
-
-    /// @notice Create a budget-funded open-ended campaign at a protocol fee chosen by the creator
-    /// @param budget The budget to fund the campaign from
-    /// @param configHash Hash of the off-chain campaign configuration
-    /// @param rewardToken The ERC20 token for rewards
-    /// @param totalAmount Initial reward amount (before protocol fee deduction)
-    /// @param startTime Campaign start timestamp
-    /// @param endTime Maximum campaign end timestamp
-    /// @param emissionRate Flow rate in reward-token base units per second, scaled by 1e12
-    /// @param referralFeeBps Referral fee in basis points of the protocol fee (max 2500)
-    /// @param protocolFeeBps Protocol fee in basis points; must lie within the range
-    ///        quoteProtocolFeeRange reports for the caller and budget
-    /// @return campaignId The ID of the created campaign
-    function createOpenEndedCampaignWithProtocolFee(
-        ABudget budget,
-        bytes32 configHash,
-        address rewardToken,
-        uint256 totalAmount,
-        uint64 startTime,
-        uint64 endTime,
-        uint256 emissionRate,
-        uint64 referralFeeBps,
-        uint64 protocolFeeBps
-    ) external returns (uint256 campaignId) {
-        return _createOpenEndedCampaign(
-            budget,
-            configHash,
-            rewardToken,
-            totalAmount,
-            startTime,
-            endTime,
-            emissionRate,
-            FeeParams(referralFeeBps, protocolFeeBps)
-        );
-    }
-
-    /// @notice Create a new open-ended campaign funded by a budget (shared by both entry points)
-    /// @dev Validates like _createCampaign, plus a non-zero emission rate and initial net
-    ///      funding of at least a day of emission. The applied protocol fee and the referral
-    ///      fee are recorded so every top-up is charged at the creation-time rates
-    function _createOpenEndedCampaign(
-        ABudget budget,
-        bytes32 configHash,
-        address rewardToken,
-        uint256 totalAmount,
-        uint64 startTime,
-        uint64 endTime,
-        uint256 emissionRate,
-        FeeParams memory fees
-    ) internal returns (uint256 campaignId) {
-        // Validate caller is authorized on budget
-        if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
-
-        // Validate parameters
-        _validateCampaignParams(rewardToken, totalAmount, startTime, endTime, fees.referralFeeBps);
-        if (emissionRate == 0) revert ZeroEmissionRate();
-
-        // Clone the campaign. The implementation is unset until the owner configures it,
-        // so open-ended campaigns ship dark
-        address campaign;
-        {
-            address implementation = openEndedCampaignImplementation;
-            if (implementation == address(0)) revert InvalidImplementation();
-            campaign = LibClone.clone(implementation);
-        }
-
-        campaignId = ++campaignCount;
-        campaigns[campaignId] = campaign;
-        isOpenEnded[campaignId] = true;
-        campaignReferralFeeBps[campaignId] = fees.referralFeeBps;
-
-        // Scoped to keep the CampaignCreated emit within stack limits
-        uint256 netAmount;
-        {
-            // Split the protocol fee and fund the fee receiver, distributor, and campaign
-            (uint256 net, uint256 referralAmount, address distributor) =
-                _splitAndFundSnapshot(budget, rewardToken, totalAmount, fees, campaign, campaignId);
-            netAmount = net;
-
-            // Initialize the campaign
-            _initializeOpenEndedCampaign(
-                campaign, address(budget), configHash, rewardToken, netAmount, startTime, endTime, emissionRate
-            );
-
-            // Initialize the distributor (reads the reward token from the campaign)
-            if (distributor != address(0)) {
-                ReferralDistributor(distributor)
-                    .initialize(campaign, campaignId, referralAmount, referralClaimWindowDuration);
-                emit ReferralDistributorCreated(campaignId, distributor, fees.referralFeeBps, referralAmount);
-            }
-        }
-
-        emit CampaignCreated(
-            campaignId,
-            configHash,
-            campaign,
-            msg.sender,
-            address(budget),
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime,
-            claimExpiryDuration
-        );
-    }
-
-    /// @notice _splitAndFund for an open-ended campaign, snapshotting the applied protocol fee
-    /// @dev Split out of _createOpenEndedCampaign to stay within stack limits. A cloned
-    ///      distributor is immutable and every referral-bearing top-up calls its addToPool,
-    ///      so creation refuses a template that cannot accept top-ups rather than leave the
-    ///      campaign unable to be topped up. Only an actual clone is checked: without one,
-    ///      top-up referral slices go to the protocol and no distributor is ever called
-    function _splitAndFundSnapshot(
-        ABudget budget,
-        address rewardToken,
-        uint256 totalAmount,
-        FeeParams memory fees,
-        address campaign,
-        uint256 campaignId
-    ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor) {
-        uint64 feeBps;
-        (netAmount, referralAmount, distributor, feeBps) =
-            _splitAndFund(budget, rewardToken, totalAmount, fees, campaign, campaignId);
-        campaignProtocolFeeBps[campaignId] = feeBps;
-        if (distributor != address(0)) _requireTopUpCompatibleDistributor();
-    }
-
-    /// @notice Revert unless the referral distributor template accepts top-ups
-    /// @dev Probes the implementation the distributor was just cloned from. A low-level
-    ///      staticcall turns a missing selector (older templates) or a malformed or false
-    ///      answer into ReferralDistributorNotTopUpCompatible instead of an opaque revert
-    function _requireTopUpCompatibleDistributor() internal view {
-        (bool ok, bytes memory ret) =
-            referralDistributorImplementation.staticcall(abi.encodeCall(ReferralDistributor.supportsTopUps, ()));
-        if (!ok || ret.length != 32 || uint256(bytes32(ret)) != 1) revert ReferralDistributorNotTopUpCompatible();
-    }
-
-    /// @notice Initialize an open-ended campaign clone and check its initial funding
-    /// @dev Split out of _createOpenEndedCampaign to stay within stack limits. The minimum
-    ///      is read from the initialized campaign so the rule lives in one place
-    function _initializeOpenEndedCampaign(
-        address campaign,
-        address budget,
-        bytes32 configHash,
-        address rewardToken,
-        uint256 netAmount,
-        uint64 startTime,
-        uint64 endTime,
-        uint256 emissionRate
-    ) internal {
-        OpenEndedIncentiveCampaign(campaign)
-            .initialize(
-                address(this),
-                budget,
-                msg.sender,
-                configHash,
-                rewardToken,
-                netAmount,
-                startTime,
-                endTime,
-                claimExpiryDuration,
-                emissionRate
-            );
-        if (netAmount < OpenEndedIncentiveCampaign(campaign).minTopUp()) revert InitialFundingTooSmall();
-    }
-
-    /// @notice Top up an open-ended campaign from its own budget
-    /// @param campaignId The campaign ID
-    /// @param totalAmount Gross top-up (before protocol fee deduction)
-    /// @dev The fee is charged at the rate snapshotted at creation, not the current fee or
-    ///      fee module. The referral slice goes to the campaign's distributor when it has
-    ///      one and otherwise stays with the protocol. Every leg is funded and balance-checked
-    ///      before the campaign records the top-up, which reverts once the campaign is
-    ///      finalized or past its end, or when the net top-up is below its minimum
-    function addRewards(uint256 campaignId, uint256 totalAmount) external {
-        if (!isOpenEnded[campaignId]) revert NotOpenEnded();
-
-        OpenEndedIncentiveCampaign c = OpenEndedIncentiveCampaign(campaigns[campaignId]);
-        ABudget budget = ABudget(payable(c.budget()));
-        if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
-
-        address rewardToken = c.rewardToken();
-        address distributor = referralDistributors[campaignId];
-
-        uint256 feeAmount = (totalAmount * campaignProtocolFeeBps[campaignId]) / 10000;
-        uint256 referralAmount =
-            distributor == address(0) ? 0 : (feeAmount * campaignReferralFeeBps[campaignId]) / 10000;
-        uint256 protocolAmount = feeAmount - referralAmount;
-        uint256 netAmount = totalAmount - feeAmount;
-
-        if (protocolAmount > 0) {
-            _fund(budget, rewardToken, protocolFeeReceiver, protocolAmount);
-        }
-        if (referralAmount > 0) {
-            _fund(budget, rewardToken, distributor, referralAmount);
-            ReferralDistributor(distributor).addToPool(referralAmount);
-        }
-        if (netAmount > 0) {
-            _fund(budget, rewardToken, address(c), netAmount);
-        }
-
-        uint256 newTotalRewards = c.addRewards(netAmount);
-
-        emit RewardsAdded(campaignId, msg.sender, totalAmount, netAmount, feeAmount, referralAmount, newTotalRewards);
-    }
-
-    /// @notice Validate the parameters shared by every campaign creation path
-    /// @param rewardToken The ERC20 token for rewards
-    /// @param totalAmount Total reward amount (before protocol fee deduction)
-    /// @param startTime Campaign start timestamp
-    /// @param endTime Campaign end timestamp
-    /// @param referralFeeBps Referral fee in basis points of the protocol fee
-    function _validateCampaignParams(
-        address rewardToken,
-        uint256 totalAmount,
-        uint64 startTime,
-        uint64 endTime,
-        uint64 referralFeeBps
-    ) internal view {
-        if (rewardToken == address(0)) revert InvalidRewardToken();
-        if (totalAmount == 0) revert ZeroAmount();
-        if (startTime < block.timestamp) revert StartTimeInPast();
-        if (endTime <= startTime) revert EndTimeBeforeStart();
-        if (referralFeeBps > MAX_REFERRAL_FEE_BPS) revert ReferralFeeTooHigh();
-        uint64 duration = endTime - startTime;
-        if (duration > maxCampaignDuration) revert DurationTooLong();
-        if (duration < minCampaignDuration) revert DurationTooShort();
-    }
-
     /// @notice Split the protocol fee and fund the fee receiver, referral distributor, and campaign
     /// @param budget The budget to disburse from (pass address(0) to transfer from this contract)
     /// @param rewardToken The ERC20 reward token
@@ -873,7 +582,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @return netAmount Rewards sent to the campaign (total minus fee, unchanged by referrals)
     /// @return referralAmount Referral slice carved from the protocol fee
     /// @return distributor The funded distributor clone (address(0) if the slice is 0)
-    /// @return feeBps The protocol fee in basis points that was applied
     function _splitAndFund(
         ABudget budget,
         address rewardToken,
@@ -881,8 +589,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         FeeParams memory fees,
         address campaign,
         uint256 campaignId
-    ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor, uint64 feeBps) {
-        feeBps = _selectProtocolFee(
+    ) internal returns (uint256 netAmount, uint256 referralAmount, address distributor) {
+        uint64 feeBps = _selectProtocolFee(
             ITBIProtocolFeeModule.FeeContext({
                 creator: msg.sender, budget: address(budget), rewardToken: rewardToken, totalAmount: totalAmount
             }),
@@ -1197,17 +905,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         emit CampaignImplementationUpdated(oldImplementation, campaignImpl_);
     }
 
-    /// @notice Set the open-ended campaign implementation (enables open-ended campaigns)
-    /// @param impl New open-ended campaign implementation for cloning
-    /// @dev Requires deployed bytecode (which also rejects the zero address), for the same
-    ///      reason as setReferralDistributorImplementation
-    function setOpenEndedCampaignImplementation(address impl) external onlyOwner {
-        if (impl.code.length == 0) revert InvalidImplementation();
-        address oldImplementation = openEndedCampaignImplementation;
-        openEndedCampaignImplementation = impl;
-        emit OpenEndedCampaignImplementationUpdated(oldImplementation, impl);
-    }
-
     /// @notice Set the referral distributor implementation (enables referral campaigns)
     /// @param distributorImpl_ New referral distributor implementation for cloning
     /// @dev Requires deployed bytecode (which also rejects the zero address): a clone of a
@@ -1363,6 +1060,6 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @notice Get the version of the contract
     /// @return The version string
     function version() public pure virtual returns (string memory) {
-        return "2.4.0";
+        return "2.3.0";
     }
 }

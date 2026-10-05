@@ -139,7 +139,7 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
         // ---- Apply the owner calls still needed on the proxy ----
         if (block.chainid == BASE_SEPOLIA_CHAIN_ID) {
             _upgradeDirect(manager, currentImpl, d);
-            _verify(managerProxy, before, d);
+            _verify(managerProxy, before, d, _isVersion(currentVersion, "2.3.0"));
             return d;
         }
 
@@ -177,7 +177,8 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
         require(d.managerImpl.code.length > 0, "Manager impl not at expected address - build drifted");
 
         address currentImpl = Upgrades.getImplementationAddress(managerProxy);
-        _requireSupportedVersion(TimeBasedIncentiveManager(managerProxy).version());
+        string memory currentVersion = TimeBasedIncentiveManager(managerProxy).version();
+        _requireSupportedVersion(currentVersion);
         bytes[] memory payloads = _stagePayloads(managerProxy, currentImpl, d);
         if (payloads.length == 0) {
             console.log("\nProxy already upgraded and configured. Nothing to execute.");
@@ -204,7 +205,7 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
         vm.broadcast(executorPk);
         tl.executeBatch(targets, values, payloads, bytes32(0), salt);
 
-        _verify(managerProxy, before, d);
+        _verify(managerProxy, before, d, _isVersion(currentVersion, "2.3.0"));
     }
 
     /// @notice The CREATE2 addresses the rollout deploys to for the current salt and build
@@ -270,7 +271,10 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
 
     /// @dev Checks the upgraded proxy: new version and templates wired, and every
     ///      pre-existing setting and campaign exactly as before
-    function _verify(address managerProxy, ManagerSnapshot memory before, Deployment memory d) internal view {
+    function _verify(address managerProxy, ManagerSnapshot memory before, Deployment memory d, bool fromV2_3)
+        internal
+        view
+    {
         TimeBasedIncentiveManager manager = TimeBasedIncentiveManager(managerProxy);
 
         require(Upgrades.getImplementationAddress(managerProxy) == d.managerImpl, "implementation mismatch");
@@ -300,7 +304,8 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
         require(
             OpenEndedIncentiveCampaign(d.openEndedImpl).EMISSION_PRECISION() == 1e12, "open-ended template mismatch"
         );
-        if (before.campaignCount > 0) {
+        // Only meaningful on the upgrade itself: a re-run at 2.4.0 can see real open-ended campaigns.
+        if (fromV2_3 && before.campaignCount > 0) {
             require(!manager.isOpenEnded(1), "campaign 1 reads as open-ended");
             require(!manager.isOpenEnded(before.campaignCount), "latest campaign reads as open-ended");
         }
@@ -347,6 +352,10 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
     }
 
     /// @dev The rollout is validated as an upgrade from 2.3.0; 2.4.0 means a re-run
+    function _isVersion(string memory v, string memory expected) internal pure returns (bool) {
+        return keccak256(bytes(v)) == keccak256(bytes(expected));
+    }
+
     function _requireSupportedVersion(string memory v) internal pure {
         bytes32 h = keccak256(bytes(v));
         require(h == keccak256("2.3.0") || h == keccak256("2.4.0"), "unexpected Manager version (need 2.3.0)");

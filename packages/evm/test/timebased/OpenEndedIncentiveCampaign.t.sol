@@ -32,6 +32,42 @@ contract NonBoolTopUpMarker {
     }
 }
 
+/// @dev Budget that re-enters addRewards instead of paying the campaign leg, so the outer
+///      balance-delta check sees the nested deposit and the net amount would be counted twice
+contract ReentrantTopUpBudget {
+    TimeBasedIncentiveManager immutable manager;
+    address immutable token;
+    address public armedTarget;
+    uint256 armedCampaignId;
+    uint256 armedAmount;
+
+    constructor(TimeBasedIncentiveManager manager_, address token_) {
+        manager = manager_;
+        token = token_;
+    }
+
+    function arm(address target, uint256 campaignId, uint256 amount) external {
+        armedTarget = target;
+        armedCampaignId = campaignId;
+        armedAmount = amount;
+    }
+
+    function isAuthorized(address) external pure returns (bool) {
+        return true;
+    }
+
+    function disburse(bytes calldata data_) external returns (bool) {
+        ABudget.Transfer memory t = abi.decode(data_, (ABudget.Transfer));
+        if (t.target == armedTarget) {
+            armedTarget = address(0);
+            manager.addRewards(armedCampaignId, armedAmount);
+            return true;
+        }
+        MockERC20(token).transfer(t.target, abi.decode(t.data, (ABudget.FungiblePayload)).amount);
+        return true;
+    }
+}
+
 /// @notice Shared fixture: a manager proxy with open-ended campaigns, referrals, and a funded budget
 abstract contract OpenEndedFixture is Test {
     MockERC20 rewardToken;
@@ -637,6 +673,11 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         campaign.addRewards(DAY_OF_EMISSION - 1);
 
         vm.prank(address(manager));
+        vm.expectRevert(OpenEndedIncentiveCampaign.TopUpNotFunded.selector);
+        campaign.addRewards(DAY_OF_EMISSION);
+
+        rewardToken.mint(address(campaign), DAY_OF_EMISSION);
+        vm.prank(address(manager));
         assertEq(campaign.addRewards(DAY_OF_EMISSION), 9 ether + DAY_OF_EMISSION);
     }
 
@@ -1215,5 +1256,48 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         manager.claimReferral(openId, REFERRER, 0.2 ether, new bytes32[](0));
         assertEq(rewardToken.balanceOf(REFERRER), 0.2 ether);
         assertEq(rewardToken.balanceOf(address(dist)), 0);
+    }
+}
+
+contract OpenEndedReentrantTopUpTest is OpenEndedFixture {
+    function setUp() public {
+        rewardToken = new MockERC20();
+        campaignImpl = new TimeBasedIncentiveCampaign();
+        openEndedImpl = new OpenEndedIncentiveCampaign();
+        distributorImpl = new ReferralDistributor();
+
+        address proxy = LibClone.deployERC1967(address(new TimeBasedIncentiveManager()));
+        manager = TimeBasedIncentiveManager(proxy);
+        manager.initialize(address(this), address(campaignImpl), PROTOCOL_FEE, PROTOCOL_FEE_RECEIVER);
+        manager.setOperator(OPERATOR);
+        manager.setReferralDistributorImplementation(address(distributorImpl));
+        manager.setOpenEndedCampaignImplementation(address(openEndedImpl));
+    }
+
+    function test_AddRewards_RevertReentrantBudgetDoubleCount() public {
+        ReentrantTopUpBudget evil = new ReentrantTopUpBudget(manager, address(rewardToken));
+        rewardToken.mint(address(evil), 100 ether);
+        budget = ManagedBudget(payable(address(evil)));
+        (uint256 id, OpenEndedIncentiveCampaign campaign) = _create(0);
+
+        evil.arm(address(campaign), id, 2 ether);
+        vm.expectRevert(OpenEndedIncentiveCampaign.TopUpNotFunded.selector);
+        vm.prank(CREATOR);
+        manager.addRewards(id, 2 ether);
+
+        assertEq(campaign.totalRewards(), 9 ether);
+        assertEq(rewardToken.balanceOf(address(campaign)), 9 ether);
+    }
+
+    function test_AddRewards_SameBudgetWithoutReentrySucceeds() public {
+        ReentrantTopUpBudget evil = new ReentrantTopUpBudget(manager, address(rewardToken));
+        rewardToken.mint(address(evil), 100 ether);
+        budget = ManagedBudget(payable(address(evil)));
+        (uint256 id, OpenEndedIncentiveCampaign campaign) = _create(0);
+
+        _topUp(id, 2 ether);
+
+        assertEq(campaign.totalRewards(), 10.8 ether);
+        assertEq(rewardToken.balanceOf(address(campaign)), 10.8 ether);
     }
 }

@@ -32,6 +32,42 @@ contract NonBoolTopUpMarker {
     }
 }
 
+/// @dev Budget that re-enters addRewards instead of paying the campaign leg, so the outer
+///      balance-delta check sees the nested deposit and the net amount would be counted twice
+contract ReentrantTopUpBudget {
+    TimeBasedIncentiveManager immutable manager;
+    address immutable token;
+    address public armedTarget;
+    uint256 armedCampaignId;
+    uint256 armedAmount;
+
+    constructor(TimeBasedIncentiveManager manager_, address token_) {
+        manager = manager_;
+        token = token_;
+    }
+
+    function arm(address target, uint256 campaignId, uint256 amount) external {
+        armedTarget = target;
+        armedCampaignId = campaignId;
+        armedAmount = amount;
+    }
+
+    function isAuthorized(address) external pure returns (bool) {
+        return true;
+    }
+
+    function disburse(bytes calldata data_) external returns (bool) {
+        ABudget.Transfer memory t = abi.decode(data_, (ABudget.Transfer));
+        if (t.target == armedTarget) {
+            armedTarget = address(0);
+            manager.addRewards(armedCampaignId, armedAmount);
+            return true;
+        }
+        MockERC20(token).transfer(t.target, abi.decode(t.data, (ABudget.FungiblePayload)).amount);
+        return true;
+    }
+}
+
 /// @notice Shared fixture: a manager proxy with open-ended campaigns, referrals, and a funded budget
 abstract contract OpenEndedFixture is Test {
     MockERC20 rewardToken;

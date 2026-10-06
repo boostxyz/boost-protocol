@@ -26,6 +26,9 @@ remappings=[
   '@boost/contracts/=contracts/'
 ]
 
+[etherscan]
+robinhood = { key = "${ETHERSCAN_API_KEY}", chain = 4663, url = "https://api.etherscan.io/v2/api?chainid=4663" }
+
 [doc]
 title = "Boost Protocol Docs"
 repository = "https://github.com/boostxyz/boost-protocol"

@@ -900,6 +900,7 @@ contract TBIForwarderTest is Test {
     MockMorpho morpho;
     MockComet comet;
     MockStakedToken stakedToken;
+    MockStakedStrat stakedStrat;
     MockCErc20 cToken;
     MockMidasVault midasVault;
     MockV4PositionManager v4PositionManager;
@@ -930,6 +931,7 @@ contract TBIForwarderTest is Test {
         morpho = new MockMorpho();
         comet = new MockComet(address(token));
         stakedToken = new MockStakedToken(address(token));
+        stakedStrat = new MockStakedStrat(address(token));
         cToken = new MockCErc20(address(token));
         midasVault = new MockMidasVault(address(token));
 

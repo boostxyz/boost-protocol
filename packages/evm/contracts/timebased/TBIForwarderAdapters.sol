@@ -513,6 +513,29 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         emit Deposit(receiver, address(stakedToken), asset, amount);
     }
 
+    /// @notice Stake into an ETH Strategy StakedStrat (e.g. sEARN) on behalf of receiver
+    /// @dev `stake` has no receiver argument and the receipt is non-transferable, so the forwarder
+    /// stakes as itself and moves the stake with `migrateStake`. It migrates `0` ("all"), never the
+    /// exact `amount`: anyone can migrate stake into the forwarder, and a partial migrate over that
+    /// stray stake can round StakedStrat's debt update below zero and revert while
+    /// rewardsPerShare < 1e18. A full migrate cannot underflow. Stray stake has no other way out of
+    /// the forwarder, so sweeping it to the depositor takes nothing from anyone. The forwarder
+    /// earns nothing — `migrateStake` pays rewards to the recipient, never the sender.
+    /// @param stakedStrat The StakedStrat contract — emitted as the Deposit `target`
+    /// @param amount The amount of `stratToken()` to stake
+    /// @param receiver The account receiving the stake
+    function stakeStakedStrat(IStakedStrat stakedStrat, uint256 amount, address receiver) external nonReentrant {
+        _requireReceiver(receiver);
+        address asset = stakedStrat.stratToken();
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+        asset.safeApproveWithRetry(address(stakedStrat), amount);
+        stakedStrat.stake(amount);
+        asset.safeApprove(address(stakedStrat), 0);
+        stakedStrat.migrateStake(receiver, 0);
+
+        emit Deposit(receiver, address(stakedStrat), asset, amount);
+    }
+
     /// @notice Deposit into a Compound v2 / Moonwell cToken on behalf of receiver
     /// @dev cToken.mint() sends cTokens to the caller (forwarder), so we transfer them to receiver after.
     /// Only supports cTokens that implement underlying() (ERC-20 markets). cETH is not supported.

@@ -76,6 +76,16 @@ interface IStakedToken {
     function stake(address onBehalfOf, uint256 amount) external;
 }
 
+/// @notice ETH Strategy StakedStrat (e.g. sEARN) — a non-transferable receipt minted 1:1 for the
+/// staked `stratToken()`. `stake` credits msg.sender only and `transfer` reverts, so the only way
+/// to move a stake is `migrateStake`, which emits a standard `Transfer` and pays the recipient's
+/// pending rewards to them.
+interface IStakedStrat {
+    function stratToken() external view returns (address);
+    function stake(uint256 amount) external;
+    function migrateStake(address to, uint256 amount) external;
+}
+
 interface ICErc20 {
     function mint(uint256 mintAmount) external returns (uint256);
     function balanceOf(address owner) external view returns (uint256);

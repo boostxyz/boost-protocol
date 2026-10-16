@@ -1485,6 +1485,73 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(LIFI_EXECUTOR), 97 ether);
     }
 
+    // --- ETH Strategy StakedStrat ---
+
+    function test_StakeStakedStrat_Success() public {
+        uint256 amount = 4 ether;
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(USER, address(stakedStrat), address(token), amount);
+
+        vm.prank(USER);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), amount, USER);
+
+        // User holds the stake; the forwarder holds neither stake nor underlying
+        assertEq(stakedStrat.balanceOf(USER), amount);
+        assertEq(stakedStrat.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(stakedStrat)), 0);
+        assertEq(token.balanceOf(USER), 96 ether);
+    }
+
+    function test_StakeStakedStrat_WithReceiver_Success() public {
+        uint256 amount = 4 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(stakedStrat), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), amount, RECEIVER);
+
+        // Receiver holds the stake, while caller only paid underlying
+        assertEq(stakedStrat.balanceOf(RECEIVER), amount);
+        assertEq(stakedStrat.balanceOf(LIFI_EXECUTOR), 0);
+        assertEq(stakedStrat.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 96 ether);
+    }
+
+    function test_StakeStakedStrat_RevertZeroReceiver() public {
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), 1 ether, address(0));
+
+        // Reverts before funds move
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
+    function test_StakeStakedStrat_SweepsStrayStake() public {
+        // Anyone can migrate stake into the forwarder without its consent.
+        uint256 stray = 5 ether;
+        _fundAndApprove(ATTACKER, stray);
+        vm.startPrank(ATTACKER);
+        token.approve(address(stakedStrat), stray);
+        stakedStrat.stake(stray);
+        stakedStrat.migrateStake(address(forwarder), stray);
+        vm.stopPrank();
+
+        uint256 amount = 2 ether;
+        vm.prank(USER);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), amount, USER);
+
+        // The forwarder migrates its whole stake, so the stray stake goes to the depositor rather
+        // than staying behind where a partial migrate could revert
+        assertEq(stakedStrat.balanceOf(USER), amount + stray);
+        assertEq(stakedStrat.balanceOf(address(forwarder)), 0);
+    }
+
     // --- Compound V2 ---
 
     function test_DepositCompoundV2_Success() public {

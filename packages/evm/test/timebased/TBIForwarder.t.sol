@@ -16,6 +16,7 @@ import {
     IGiverPositionManager,
     IComet,
     IStakedToken,
+    IStakedStrat,
     ICErc20,
     ISyncDepositQueue,
     IUniswapV4PositionManager,

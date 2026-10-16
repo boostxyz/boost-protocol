@@ -819,6 +819,53 @@ contract MockBeefyRewardPool is ERC20 {
     }
 }
 
+/// @notice Minimal ETH Strategy StakedStrat (sEARN) mock: `stake` credits msg.sender only, the
+/// receipt is non-transferable, and `migrateStake` is the one way to move a stake — with the real
+/// contract's argument guards and its `amount == 0` "migrate everything" shorthand.
+contract MockStakedStrat is ERC20 {
+    address public immutable stratToken;
+
+    error TransferDisabled();
+
+    constructor(address stratToken_) {
+        stratToken = stratToken_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Mock Staked Strat";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "msSTRAT";
+    }
+
+    function transfer(address, uint256) public pure override returns (bool) {
+        revert TransferDisabled();
+    }
+
+    function transferFrom(address, address, uint256) public pure override returns (bool) {
+        revert TransferDisabled();
+    }
+
+    function approve(address, uint256) public pure override returns (bool) {
+        revert TransferDisabled();
+    }
+
+    function stake(uint256 amount) external {
+        ERC20(stratToken).transferFrom(msg.sender, address(this), amount);
+        _mint(msg.sender, amount);
+    }
+
+    function migrateStake(address to, uint256 amount) external {
+        require(to != address(0) && to != msg.sender && to != address(this), "bad recipient");
+        uint256 staked = balanceOf(msg.sender);
+        require(staked != 0, "no stake");
+        uint256 amountToMigrate = amount == 0 ? staked : amount;
+        require(amountToMigrate <= staked, "insufficient stake");
+        _transfer(msg.sender, to, amountToMigrate);
+    }
+}
+
 /// @notice Router mock that performs the swap and also hands part of the input back to the caller
 /// (the forwarder) — input dust or a native surplus — to exercise the forwarder's leftover refunds.
 contract MockDustRouter {

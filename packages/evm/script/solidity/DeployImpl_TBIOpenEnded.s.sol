@@ -10,8 +10,14 @@ import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TimeBasedIncentiveManager} from "contracts/timebased/TimeBasedIncentiveManager.sol";
 
 /// @title DeployImpl_TBIOpenEnded
-/// @notice Deploy the open-ended campaign rollout (Manager 2.4.0) and activate open-ended
-///         campaigns on the Manager proxy.
+/// @notice HISTORICAL. The open-ended campaign rollout (Manager 2.4.0), executed on every
+///         network in #562. It can no longer run: it accepts only 2.3.0 proxies, the build
+///         now produces the 2.5.0 implementation, and its pre-upgrade snapshot calls the
+///         pool-indexed `getReferralDistributor(uint256,uint256)` that 2.3.0 lacks. Kept as
+///         the record of that rollout; the current entry point is
+///         DeployImpl_TBIReferralPools.s.sol.
+/// @dev Original description follows. Deployed the open-ended campaign rollout and activated
+///      open-ended campaigns on the Manager proxy.
 /// @dev Deploys, CREATE2 and idempotent:
 ///        - OpenEndedIncentiveCampaign   (clone template for open-ended campaigns)
 ///        - ReferralDistributor          (new template with addToPool / supportsTopUps)
@@ -314,7 +320,9 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
         console.log("Campaigns checked:", before.campaignCount);
     }
 
-    /// @dev Reads every setting the upgrade must preserve. All getters exist on 2.3.0
+    /// @dev Reads every setting the upgrade must preserve. Historical: the pool-indexed
+    ///      `getReferralDistributor(uint256,uint256)` below does not exist on 2.3.0, which is
+    ///      one reason this script no longer runs (see the contract notice)
     function _snapshot(address managerProxy) internal view returns (ManagerSnapshot memory s) {
         TimeBasedIncentiveManager manager = TimeBasedIncentiveManager(managerProxy);
         s.owner = manager.owner();

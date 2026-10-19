@@ -134,7 +134,7 @@ contract DeployImpl_TBIReferralPools is ScriptUtils {
         // ---- Apply the owner calls still needed on the proxy ----
         if (block.chainid == BASE_SEPOLIA_CHAIN_ID) {
             _upgradeDirect(manager, currentImpl, d);
-            _verify(managerProxy, before, d);
+            _verify(managerProxy, before, d, _isV2_4(currentVersion));
             return d;
         }
 
@@ -198,7 +198,7 @@ contract DeployImpl_TBIReferralPools is ScriptUtils {
         vm.broadcast(executorPk);
         tl.executeBatch(targets, values, payloads, bytes32(0), salt);
 
-        _verify(managerProxy, before, d);
+        _verify(managerProxy, before, d, _isV2_4(currentVersion));
     }
 
     /// @notice The CREATE2 addresses the rollout deploys to for the current salt and build
@@ -254,7 +254,10 @@ contract DeployImpl_TBIReferralPools is ScriptUtils {
 
     /// @dev Checks the upgraded proxy: new version and template wired, and every
     ///      pre-existing setting, campaign and pool-0 distributor exactly as before
-    function _verify(address managerProxy, ManagerSnapshot memory before, Deployment memory d) internal view {
+    function _verify(address managerProxy, ManagerSnapshot memory before, Deployment memory d, bool fromV2_4)
+        internal
+        view
+    {
         TimeBasedIncentiveManager manager = TimeBasedIncentiveManager(managerProxy);
 
         require(Upgrades.getImplementationAddress(managerProxy) == d.managerImpl, "implementation mismatch");
@@ -281,9 +284,13 @@ contract DeployImpl_TBIReferralPools is ScriptUtils {
         require(distributorImpl == d.distributorImpl, "distributor implementation not configured");
         require(ReferralDistributor(distributorImpl).LEAF_VERSION() == 2, "distributor template is not pool-indexed");
         require(ReferralDistributor(distributorImpl).supportsTopUps(), "distributor template cannot take top-ups");
-        for (uint256 i; i < before.campaignCount; i++) {
-            uint256 expected = before.referralDistributors[i] == address(0) ? 0 : 1;
-            require(manager.referralPoolCount(i + 1) == expected, "pool count changed");
+        // Only meaningful on the upgrade itself: a re-run at 2.5.0 can see campaigns that gained
+        // pools through ReferralPoolParams[] or addReferralPool since.
+        if (fromV2_4) {
+            for (uint256 i; i < before.campaignCount; i++) {
+                uint256 expected = before.referralDistributors[i] == address(0) ? 0 : 1;
+                require(manager.referralPoolCount(i + 1) == expected, "pool count changed");
+            }
         }
 
         console.log("\n[OK] Proxy at 2.5.0, state preserved, referral pools enabled");
@@ -341,8 +348,11 @@ contract DeployImpl_TBIReferralPools is ScriptUtils {
 
     /// @dev The rollout is an upgrade from 2.4.0; 2.5.0 means a re-run
     function _requireSupportedVersion(string memory v) internal pure {
-        bytes32 h = keccak256(bytes(v));
-        require(h == keccak256("2.4.0") || h == keccak256("2.5.0"), "unexpected Manager version (need 2.4.0)");
+        require(_isV2_4(v) || keccak256(bytes(v)) == keccak256("2.5.0"), "unexpected Manager version (need 2.4.0)");
+    }
+
+    function _isV2_4(string memory v) internal pure returns (bool) {
+        return keccak256(bytes(v)) == keccak256("2.4.0");
     }
 
     function _create2Address(bytes memory initCode) internal view returns (address) {

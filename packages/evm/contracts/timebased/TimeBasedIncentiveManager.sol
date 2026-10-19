@@ -46,6 +46,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @dev Sentinel for "no protocol fee requested": apply the top of the allowed range
     uint256 private constant NO_FEE_REQUEST = type(uint256).max;
 
+    /// @dev Budget placeholder for direct-funded campaigns: rewards and pools are pulled from the caller
+    ABudget private constant NO_BUDGET = ABudget(payable(address(0)));
+
     /// @notice The implementation contract used for cloning campaigns
     address public campaignImplementation;
 
@@ -442,7 +445,8 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         _createReferralPools(campaignId, referralPools);
     }
 
-    /// @notice Create a new campaign funded by a budget (shared by all entry points)
+    /// @notice Create a new fixed-end campaign (shared by all fixed-end entry points)
+    /// @param budget The budget to fund from, or NO_BUDGET to pull the rewards from the caller
     /// @param requestedFeeBps The creator's protocol fee, or NO_FEE_REQUEST for the default
     function _createCampaign(
         ABudget budget,
@@ -454,10 +458,13 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint256 requestedFeeBps
     ) internal returns (uint256 campaignId) {
         // Validate caller is authorized on budget
-        if (!budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
+        if (address(budget) != address(0) && !budget.isAuthorized(msg.sender)) revert NotAuthorizedOnBudget();
 
         // Validate parameters
         _validateCampaignParams(rewardToken, totalAmount, startTime, endTime);
+
+        // Direct funding: pull tokens from caller and verify full amount received
+        if (address(budget) == address(0)) _pullFromCaller(rewardToken, address(this), totalAmount);
 
         // Clone the campaign
         address campaign = LibClone.clone(campaignImplementation);
@@ -468,7 +475,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         // Split the protocol fee and fund the fee receiver and campaign
         (uint256 netAmount,) = _splitAndFund(budget, rewardToken, totalAmount, requestedFeeBps, campaign, campaignId);
 
-        // Initialize the campaign
+        // Initialize the campaign (budget = address(0) for direct-funded campaigns)
         TimeBasedIncentiveCampaign(campaign)
             .initialize(
                 address(this),
@@ -482,18 +489,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
                 claimExpiryDuration
             );
 
-        emit CampaignCreated(
-            campaignId,
-            configHash,
-            campaign,
-            msg.sender,
-            address(budget),
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime,
-            claimExpiryDuration
-        );
+        _announceCampaign(campaignId, configHash, campaign, address(budget), rewardToken, netAmount, startTime, endTime);
     }
 
     /// @notice Create a new time-based incentive campaign with direct token transfer
@@ -512,7 +508,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 startTime,
         uint64 endTime
     ) external returns (uint256 campaignId) {
-        return _createCampaignDirect(configHash, rewardToken, totalAmount, startTime, endTime, NO_FEE_REQUEST);
+        return _createCampaign(NO_BUDGET, configHash, rewardToken, totalAmount, startTime, endTime, NO_FEE_REQUEST);
     }
 
     /// @notice Create a new time-based incentive campaign with direct token transfer, with referral pools
@@ -534,7 +530,9 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         uint64 endTime,
         ReferralPoolParams[] calldata referralPools
     ) external returns (uint256 campaignId) {
-        campaignId = _createCampaignDirect(configHash, rewardToken, totalAmount, startTime, endTime, NO_FEE_REQUEST);
+        campaignId = _createCampaign(
+            NO_BUDGET, configHash, rewardToken, totalAmount, startTime, endTime, NO_FEE_REQUEST
+        );
         _createReferralPools(campaignId, referralPools);
     }
 
@@ -560,68 +558,10 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         ReferralPoolParams[] calldata referralPools,
         uint64 protocolFeeBps
     ) external returns (uint256 campaignId) {
-        campaignId = _createCampaignDirect(configHash, rewardToken, totalAmount, startTime, endTime, protocolFeeBps);
-        _createReferralPools(campaignId, referralPools);
-    }
-
-    /// @notice Create a new direct-funded campaign (shared by all entry points)
-    /// @param requestedFeeBps The creator's protocol fee, or NO_FEE_REQUEST for the default
-    function _createCampaignDirect(
-        bytes32 configHash,
-        address rewardToken,
-        uint256 totalAmount,
-        uint64 startTime,
-        uint64 endTime,
-        uint256 requestedFeeBps
-    ) internal returns (uint256 campaignId) {
-        // Validate parameters
-        _validateCampaignParams(rewardToken, totalAmount, startTime, endTime);
-
-        // Pull tokens from caller and verify full amount received
-        {
-            uint256 balanceBefore = SafeTransferLib.balanceOf(rewardToken, address(this));
-            rewardToken.safeTransferFrom(msg.sender, address(this), totalAmount);
-            if (SafeTransferLib.balanceOf(rewardToken, address(this)) - balanceBefore != totalAmount) {
-                revert FeeOnTransferNotSupported();
-            }
-        }
-
-        // Clone the campaign
-        address campaign = LibClone.clone(campaignImplementation);
-
-        campaignId = ++campaignCount;
-        campaigns[campaignId] = campaign;
-
-        // Split the protocol fee and fund the fee receiver and campaign
-        (uint256 netAmount,) =
-            _splitAndFund(ABudget(payable(address(0))), rewardToken, totalAmount, requestedFeeBps, campaign, campaignId);
-
-        // Initialize the campaign with budget = address(0) for direct-funded campaigns
-        TimeBasedIncentiveCampaign(campaign)
-            .initialize(
-                address(this),
-                address(0),
-                msg.sender,
-                configHash,
-                rewardToken,
-                netAmount,
-                startTime,
-                endTime,
-                claimExpiryDuration
-            );
-
-        emit CampaignCreated(
-            campaignId,
-            configHash,
-            campaign,
-            msg.sender,
-            address(0),
-            rewardToken,
-            netAmount,
-            startTime,
-            endTime,
-            claimExpiryDuration
+        campaignId = _createCampaign(
+            NO_BUDGET, configHash, rewardToken, totalAmount, startTime, endTime, protocolFeeBps
         );
+        _createReferralPools(campaignId, referralPools);
     }
 
     /// @notice Create an open-ended campaign funded by a budget
@@ -732,12 +672,27 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
             );
         }
 
+        _announceCampaign(campaignId, configHash, campaign, address(budget), rewardToken, netAmount, startTime, endTime);
+    }
+
+    /// @notice Emit CampaignCreated for a newly initialized campaign
+    /// @dev Shared by every creation path so the event encoding exists once in the bytecode
+    function _announceCampaign(
+        uint256 campaignId,
+        bytes32 configHash,
+        address campaign,
+        address budget,
+        address rewardToken,
+        uint256 netAmount,
+        uint64 startTime,
+        uint64 endTime
+    ) internal {
         emit CampaignCreated(
             campaignId,
             configHash,
             campaign,
             msg.sender,
-            address(budget),
+            budget,
             rewardToken,
             netAmount,
             startTime,
@@ -852,13 +807,21 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (campaign == address(0)) revert InvalidCampaign();
 
         TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
+        budget = _requireCampaignController(c);
+        if (c.finalized() || block.timestamp >= c.endTime()) revert CampaignEnded();
+    }
+
+    /// @notice Revert unless the caller controls a campaign's funds
+    /// @param c The campaign
+    /// @return budget The campaign's budget (address(0) for a direct-funded campaign)
+    /// @dev Budget-funded: anyone authorized on the budget. Direct-funded: the creator
+    function _requireCampaignController(TimeBasedIncentiveCampaign c) internal view returns (ABudget budget) {
         budget = ABudget(payable(c.budget()));
         if (address(budget) != address(0)) {
             if (!budget.isAuthorized(msg.sender)) revert NotAuthorized();
         } else if (msg.sender != c.creator()) {
             revert NotAuthorized();
         }
-        if (c.finalized() || block.timestamp >= c.endTime()) revert CampaignEnded();
     }
 
     /// @notice Create the referral pools requested at campaign creation
@@ -917,11 +880,19 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     function _fundReferralPool(ABudget budget, address token, address distributor, uint256 amount) internal {
         if (address(budget) != address(0)) {
             _fund(budget, token, distributor, amount);
-            return;
+        } else {
+            _pullFromCaller(token, distributor, amount);
         }
-        uint256 balanceBefore = SafeTransferLib.balanceOf(token, distributor);
-        token.safeTransferFrom(msg.sender, distributor, amount);
-        if (SafeTransferLib.balanceOf(token, distributor) - balanceBefore != amount) {
+    }
+
+    /// @notice Pull tokens from the caller to a target and verify the full amount arrived
+    /// @param token The ERC20 token to pull
+    /// @param target The recipient
+    /// @param amount The amount to pull
+    function _pullFromCaller(address token, address target, uint256 amount) internal {
+        uint256 balanceBefore = SafeTransferLib.balanceOf(token, target);
+        token.safeTransferFrom(msg.sender, target, amount);
+        if (SafeTransferLib.balanceOf(token, target) - balanceBefore != amount) {
             revert FeeOnTransferNotSupported();
         }
     }
@@ -1147,9 +1118,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
     /// @param campaignId The campaign ID
     /// @return The pool count
     function referralPoolCount(uint256 campaignId) external view returns (uint256) {
-        uint256 count = campaignReferralPools[campaignId].length;
-        if (count != 0) return count;
-        return __legacyReferralDistributors[campaignId] == address(0) ? 0 : 1;
+        return getReferralDistributors(campaignId).length;
     }
 
     /// @notice Set the protocol fee
@@ -1413,15 +1382,7 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (campaign == address(0)) revert InvalidCampaign();
 
         TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
-        address payable budgetAddr = payable(c.budget());
-
-        if (msg.sender != owner()) {
-            if (budgetAddr != address(0)) {
-                if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
-            } else {
-                if (msg.sender != c.creator()) revert NotAuthorized();
-            }
-        }
+        if (msg.sender != owner()) _requireCampaignController(c);
 
         uint64 oldEndTime = c.setEndTime(uint64(block.timestamp));
 
@@ -1437,25 +1398,19 @@ contract TimeBasedIncentiveManager is Initializable, UUPSUpgradeable, Ownable {
         if (campaign == address(0)) revert InvalidCampaign();
 
         TimeBasedIncentiveCampaign c = TimeBasedIncentiveCampaign(campaign);
-        address payable budgetAddr = payable(c.budget());
-
-        if (budgetAddr != address(0)) {
-            if (!ABudget(budgetAddr).isAuthorized(msg.sender)) revert NotAuthorized();
-        } else {
-            if (msg.sender != c.creator()) revert NotAuthorized();
-        }
+        ABudget budget = _requireCampaignController(c);
         if (block.timestamp <= c.endTime() && c.totalCommitted() < c.totalRewards()) revert CampaignNotEnded();
         if (!c.finalized()) revert CampaignNotFinalized();
 
-        if (budgetAddr != address(0)) {
+        if (address(budget) != address(0)) {
             // Budget-funded: route through budget clawback for accounting
             uint256 withdrawable = c.getWithdrawable();
             if (withdrawable == 0) revert ZeroAmount();
 
             bytes memory clawbackData = abi.encode(withdrawable);
-            (uint256 clawbackAmount,) = ABudget(budgetAddr).clawbackFromTarget(campaign, clawbackData, 0, 0);
+            (uint256 clawbackAmount,) = budget.clawbackFromTarget(campaign, clawbackData, 0, 0);
 
-            emit Withdrawn(campaignId, clawbackAmount, budgetAddr);
+            emit Withdrawn(campaignId, clawbackAmount, address(budget));
         } else {
             // Direct-funded: transfer to creator
             uint256 amount = c.withdrawTo(c.creator());

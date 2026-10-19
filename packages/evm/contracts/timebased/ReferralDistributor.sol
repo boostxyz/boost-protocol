@@ -8,19 +8,26 @@ import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
 /// @title ReferralDistributor
-/// @notice Per-campaign clone that holds the referral fee pool and pays referrers
+/// @notice Per-pool clone that holds one of a campaign's referral pools and pays referrers
 ///         against an operator-published merkle root
-/// @dev Deployed as minimal proxy by TimeBasedIncentiveManager when a campaign is
-///      created with a non-zero referral fee. Root publishes, claims, and sweeps are
-///      only callable by the manager, whose wrappers apply access control and emit the
-///      campaign-scoped events, so every referral action indexes from one address.
-///      Referral leaves are (chainid, campaignId, referrer, token, amount). The chainid
-///      binds a root to this chain so it cannot be replayed against a deployment on
-///      another chain, and the sequential campaign id in the second slot never matches
-///      the campaign address that the campaign's (chainid, campaign, user, token,
+/// @dev Deployed as minimal proxy by TimeBasedIncentiveManager for every referral pool a
+///      campaign is given, at creation or later. A campaign may have several pools, each in
+///      its own token, which need not be the campaign's reward token. Root publishes,
+///      claims, and sweeps are only callable by the manager, whose wrappers apply access
+///      control and emit the campaign-scoped events, so every referral action indexes from
+///      one address. Referral leaves are (chainid, campaignId, poolIndex, referrer, token,
+///      amount). The chainid binds a root to this chain so it cannot be replayed against a
+///      deployment on another chain; the pool index separates two pools of one campaign,
+///      even in the same token; and the sequential campaign id in the second slot never
+///      matches the campaign address that the campaign's (chainid, campaign, user, token,
 ///      cumulativeAmount) reward leaves carry there, so a reward proof can never verify
 ///      against a referral root
 contract ReferralDistributor is Initializable {
+    /// @notice Version of the merkle leaf encoding this distributor verifies
+    /// @dev 1 (no marker): (chainid, campaignId, referrer, token, amount), one pool per campaign.
+    ///      2: (chainid, campaignId, poolIndex, referrer, token, amount)
+    uint256 public constant LEAF_VERSION = 2;
+
     /// @notice The TimeBasedIncentiveManager that deployed this distributor
     address public timeBasedIncentiveManager;
 
@@ -39,13 +46,16 @@ contract ReferralDistributor is Initializable {
     /// @notice Timestamp when the campaign's finalization was recorded (0 until recorded)
     uint64 public finalizedAt;
 
-    /// @notice The ERC20 token referrals are paid in (the campaign's reward token)
+    /// @notice The ERC20 token referrals are paid in
     address public referralToken;
 
     /// @notice The campaign ID in the manager (included in every leaf)
     uint256 public campaignId;
 
-    /// @notice Total referral fees funded to this distributor
+    /// @notice This pool's index among the campaign's referral pools (included in every leaf)
+    uint256 public poolIndex;
+
+    /// @notice Total referral rewards funded to this distributor
     uint256 public referralPool;
 
     /// @notice Merkle root for referral claims
@@ -69,6 +79,7 @@ contract ReferralDistributor is Initializable {
         address indexed timeBasedIncentiveManager,
         address indexed campaign,
         uint256 indexed campaignId,
+        uint256 poolIndex,
         address referralToken,
         uint256 referralPool,
         uint64 claimWindowDuration
@@ -86,7 +97,7 @@ contract ReferralDistributor is Initializable {
     /// @notice Emitted when the remaining pool is swept
     event ReferralPoolSwept(uint256 amount, address indexed destination);
 
-    /// @notice Emitted when the manager adds a top-up's referral slice to the pool
+    /// @notice Emitted when the manager adds a top-up's referral amount to the pool
     event ReferralPoolIncreased(uint256 amount, uint256 newReferralPool);
 
     /// @notice Error when caller is not the TimeBasedIncentiveManager
@@ -128,6 +139,9 @@ contract ReferralDistributor is Initializable {
     /// @notice Error when the claim window duration is zero
     error InvalidClaimWindow();
 
+    /// @notice Error when the referral token is the zero address
+    error InvalidReferralToken();
+
     /// @notice Error when adding to the pool after the campaign has been finalized
     error CampaignAlreadyFinalized();
 
@@ -139,25 +153,33 @@ contract ReferralDistributor is Initializable {
     /// @notice Initialize the distributor (called by TimeBasedIncentiveManager after cloning)
     /// @param campaign_ The campaign this distributor pays referrals for (must be initialized)
     /// @param campaignId_ The campaign's ID in the manager
-    /// @param referralPool_ Total referral fees funded to this distributor
+    /// @param poolIndex_ This pool's index among the campaign's referral pools
+    /// @param referralToken_ The ERC20 token referrals are paid in
+    /// @param referralPool_ Total referral rewards funded to this distributor
     /// @param claimWindowDuration_ Duration of the claim window once the root is published
-    function initialize(address campaign_, uint256 campaignId_, uint256 referralPool_, uint64 claimWindowDuration_)
-        external
-        initializer
-    {
+    function initialize(
+        address campaign_,
+        uint256 campaignId_,
+        uint256 poolIndex_,
+        address referralToken_,
+        uint256 referralPool_,
+        uint64 claimWindowDuration_
+    ) external initializer {
         address manager = TimeBasedIncentiveCampaign(campaign_).timeBasedIncentiveManager();
         if (msg.sender != manager) revert OnlyTimeBasedIncentiveManager();
+        if (referralToken_ == address(0)) revert InvalidReferralToken();
         if (claimWindowDuration_ == 0) revert InvalidClaimWindow();
 
         timeBasedIncentiveManager = manager;
         campaign = campaign_;
         campaignId = campaignId_;
-        referralToken = TimeBasedIncentiveCampaign(campaign_).rewardToken();
+        poolIndex = poolIndex_;
+        referralToken = referralToken_;
         referralPool = referralPool_;
         claimWindowDuration = claimWindowDuration_;
 
         emit ReferralDistributorInitialized(
-            manager, campaign_, campaignId_, referralToken, referralPool_, claimWindowDuration_
+            manager, campaign_, campaignId_, poolIndex_, referralToken_, referralPool_, claimWindowDuration_
         );
     }
 
@@ -182,14 +204,14 @@ contract ReferralDistributor is Initializable {
 
     /// @notice Capability marker: this distributor accepts top-ups via addToPool
     /// @return Always true
-    /// @dev Pure, so the manager can probe the implementation itself (whose initializers are
-    ///      disabled). Templates deployed before addToPool existed lack the selector
+    /// @dev Pure, so the manager can probe a clone or the template itself (whose initializers
+    ///      are disabled). Templates deployed before addToPool existed lack the selector
     function supportsTopUps() external pure returns (bool) {
         return true;
     }
 
-    /// @notice Add a top-up's referral slice to the pool
-    /// @param amount The slice, already transferred to this contract by the manager
+    /// @notice Add a top-up's referral amount to the pool
+    /// @param amount The amount, already transferred to this contract by the manager
     /// @dev Only before the campaign finalizes: the referral root is computed against the
     ///      pool once finalization is recorded, so the pool must be settled by then. Swept
     ///      implies finalized, so the swept check only makes the rejection explicit
@@ -204,7 +226,7 @@ contract ReferralDistributor is Initializable {
     }
 
     /// @notice Publish the referral merkle root and start the claim window
-    /// @param root The merkle root of (chainid, campaignId, referrer, token, amount) leaves
+    /// @param root The merkle root of (chainid, campaignId, poolIndex, referrer, token, amount) leaves
     /// @param committedTotal_ Total amount committed to referrers in the tree
     /// @return oldRoot The previous referral root
     /// @dev Only after the campaign finalizes (not just end time, for reorg safety).
@@ -251,8 +273,9 @@ contract ReferralDistributor is Initializable {
         if (amount == 0) revert NothingToClaim();
 
         if (referralRoot == bytes32(0)) revert InvalidProof();
-        bytes32 leaf =
-            keccak256(bytes.concat(keccak256(abi.encode(block.chainid, campaignId, referrer, referralToken, amount))));
+        bytes32 leaf = keccak256(
+            bytes.concat(keccak256(abi.encode(block.chainid, campaignId, poolIndex, referrer, referralToken, amount)))
+        );
         if (!MerkleProofLib.verifyCalldata(proof, referralRoot, leaf)) revert InvalidProof();
 
         // The publish-time check bounds maxClaimable to referralPool, so claims can

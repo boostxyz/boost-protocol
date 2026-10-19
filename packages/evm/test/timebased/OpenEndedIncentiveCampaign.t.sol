@@ -71,6 +71,7 @@ contract ReentrantTopUpBudget {
 /// @notice Shared fixture: a manager proxy with open-ended campaigns, referrals, and a funded budget
 abstract contract OpenEndedFixture is Test {
     MockERC20 rewardToken;
+    MockERC20 bonusToken;
     ManagedBudget budget;
     TimeBasedIncentiveManager manager;
     TimeBasedIncentiveCampaign campaignImpl;
@@ -86,7 +87,7 @@ abstract contract OpenEndedFixture is Test {
     address constant RANDO = address(0xD00D);
     address constant SAFE = address(0x5AFE);
     uint64 constant PROTOCOL_FEE = 1000; // 10%
-    uint64 constant REFERRAL_FEE_BPS = 2000; // 20% of the protocol fee
+    uint256 constant REFERRAL_AMOUNT = 0.2 ether;
     uint256 constant TOTAL = 10 ether;
     bytes32 constant CONFIG_HASH = keccak256("open-ended");
 
@@ -106,18 +107,43 @@ abstract contract OpenEndedFixture is Test {
             abi.encode(ManagedBudget.InitPayload({owner: address(this), authorized: authorized, roles: roles}))
         );
 
-        rewardToken.mint(address(this), 1000 ether);
-        rewardToken.approve(address(b), 1000 ether);
+        if (address(bonusToken) == address(0)) bonusToken = new MockERC20();
+        _allocate(b, rewardToken, 1000 ether);
+        _allocate(b, bonusToken, 1000 ether);
+    }
+
+    function _allocate(ManagedBudget b, MockERC20 token, uint256 amount) internal {
+        token.mint(address(this), amount);
+        token.approve(address(b), amount);
         b.allocate(
             abi.encode(
                 ABudget.Transfer({
                     assetType: ABudget.AssetType.ERC20,
-                    asset: address(rewardToken),
+                    asset: address(token),
                     target: address(this),
-                    data: abi.encode(ABudget.FungiblePayload({amount: 1000 ether}))
+                    data: abi.encode(ABudget.FungiblePayload({amount: amount}))
                 })
             )
         );
+    }
+
+    function _noPools() internal pure returns (TimeBasedIncentiveManager.ReferralPoolParams[] memory pools) {
+        pools = new TimeBasedIncentiveManager.ReferralPoolParams[](0);
+    }
+
+    /// @dev A single reward-token referral pool, or none for 0
+    function _pools(uint256 referralAmount)
+        internal
+        view
+        returns (TimeBasedIncentiveManager.ReferralPoolParams[] memory pools)
+    {
+        if (referralAmount == 0) return pools;
+        pools = new TimeBasedIncentiveManager.ReferralPoolParams[](1);
+        pools[0] = TimeBasedIncentiveManager.ReferralPoolParams({token: address(rewardToken), amount: referralAmount});
+    }
+
+    function _dist(uint256 campaignId, uint256 poolIndex) internal view returns (ReferralDistributor) {
+        return ReferralDistributor(manager.getReferralDistributor(campaignId, poolIndex));
     }
 
     function _times() internal view returns (uint64 startTime, uint64 endTime) {
@@ -125,32 +151,39 @@ abstract contract OpenEndedFixture is Test {
         endTime = uint64(block.timestamp + 30 days);
     }
 
-    function _create(uint256 totalAmount, uint256 rate, uint64 referralFeeBps)
+    function _create(uint256 totalAmount, uint256 rate, uint256 referralAmount)
         internal
         returns (uint256 campaignId, OpenEndedIncentiveCampaign campaign)
     {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         campaignId = manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), totalAmount, startTime, endTime, rate, referralFeeBps
+            budget, CONFIG_HASH, address(rewardToken), totalAmount, startTime, endTime, rate, _pools(referralAmount)
         );
         campaign = OpenEndedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
-    function _create(uint64 referralFeeBps) internal returns (uint256 campaignId, OpenEndedIncentiveCampaign campaign) {
-        return _create(TOTAL, RATE, referralFeeBps);
+    function _create(uint256 referralAmount)
+        internal
+        returns (uint256 campaignId, OpenEndedIncentiveCampaign campaign)
+    {
+        return _create(TOTAL, RATE, referralAmount);
     }
 
     function _createFixed() internal returns (uint256 campaignId) {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
-        campaignId =
-            manager.createCampaign(budget, keccak256("fixed"), address(rewardToken), TOTAL, startTime, endTime, 0);
+        campaignId = manager.createCampaign(budget, keccak256("fixed"), address(rewardToken), TOTAL, startTime, endTime);
     }
 
     function _topUp(uint256 campaignId, uint256 totalAmount) internal {
         vm.prank(CREATOR);
         manager.addRewards(campaignId, totalAmount);
+    }
+
+    function _fundPool(uint256 campaignId, uint256 poolIndex, uint256 amount) internal {
+        vm.prank(CREATOR);
+        manager.fundReferralPool(campaignId, poolIndex, amount);
     }
 
     /// @notice Double-hashed, domain-separated (v2) merkle leaf, identical to the fixed-end campaign's
@@ -266,8 +299,7 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         assertEq(manager.campaignCount(), 1);
         assertTrue(manager.isOpenEnded(campaignId));
         assertEq(manager.campaignProtocolFeeBps(campaignId), PROTOCOL_FEE, "Applied fee should be snapshotted");
-        assertEq(manager.campaignReferralFeeBps(campaignId), 0);
-        assertEq(manager.getReferralDistributor(campaignId), address(0));
+        assertEq(manager.getReferralDistributor(campaignId, 0), address(0));
 
         assertEq(campaign.timeBasedIncentiveManager(), address(manager));
         assertEq(campaign.budget(), address(budget));
@@ -289,19 +321,32 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     }
 
     function test_Create_WithReferral() public {
-        vm.expectEmit(true, false, false, true, address(manager));
-        emit TimeBasedIncentiveManager.ReferralDistributorCreated(1, address(0), REFERRAL_FEE_BPS, 0.2 ether);
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
+        vm.expectEmit(true, true, false, true, address(manager));
+        emit TimeBasedIncentiveManager.ReferralPoolCreated(1, 0, address(0), address(rewardToken), REFERRAL_AMOUNT);
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
 
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+        ReferralDistributor dist = _dist(campaignId, 0);
         assertTrue(address(dist) != address(0));
         assertEq(dist.campaign(), address(campaign));
+        assertEq(dist.poolIndex(), 0);
         assertEq(dist.referralToken(), address(rewardToken));
-        assertEq(dist.referralPool(), 0.2 ether);
-        assertEq(rewardToken.balanceOf(address(dist)), 0.2 ether);
-        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.8 ether);
-        assertEq(campaign.totalRewards(), 9 ether, "Referral fee must not change net rewards");
-        assertEq(manager.campaignReferralFeeBps(campaignId), REFERRAL_FEE_BPS);
+        assertEq(dist.referralPool(), REFERRAL_AMOUNT);
+        assertEq(rewardToken.balanceOf(address(dist)), REFERRAL_AMOUNT);
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 1 ether, "Full fee to the protocol");
+        assertEq(campaign.totalRewards(), 9 ether, "The pool is funded on top of the total");
+    }
+
+    function test_Create_InitialFundingBoundary_IgnoresReferralPools() public {
+        // 0.96 ether gross at the 10% fee nets exactly a day of emission, whatever the pools
+        (, OpenEndedIncentiveCampaign campaign) = _create(0.96 ether, RATE, 5 ether);
+        assertEq(campaign.totalRewards(), DAY_OF_EMISSION);
+
+        (uint64 startTime, uint64 endTime) = _times();
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.InitialFundingTooSmall.selector);
+        manager.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), 0.96 ether - 2, startTime, endTime, RATE, _pools(5 ether)
+        );
     }
 
     function test_Create_SharesCampaignCountWithFixedEnd() public {
@@ -315,14 +360,14 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         assertTrue(manager.isOpenEnded(openId));
     }
 
-    function test_Create_ReferralBpsWrittenWithoutDistributor() public {
-        // With no protocol fee there is no referral slice and no distributor, but the
-        // referral bps is still recorded for an open-ended campaign
+    function test_Create_ZeroProtocolFee_PoolStillFunded() public {
         manager.setProtocolFee(0);
-        (uint256 campaignId,) = _create(REFERRAL_FEE_BPS);
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
 
-        assertEq(manager.getReferralDistributor(campaignId), address(0));
-        assertEq(manager.campaignReferralFeeBps(campaignId), REFERRAL_FEE_BPS);
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId, 0));
+        assertTrue(address(dist) != address(0), "Referral pool is independent of the fee");
+        assertEq(dist.referralPool(), REFERRAL_AMOUNT);
+        assertEq(campaign.totalRewards(), TOTAL);
         assertEq(manager.campaignProtocolFeeBps(campaignId), 0);
     }
 
@@ -347,13 +392,13 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         uint256 campaignId = manager.createOpenEndedCampaignWithProtocolFee(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, REFERRAL_FEE_BPS, 300
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _pools(REFERRAL_AMOUNT), 300
         );
 
         assertEq(manager.campaignProtocolFeeBps(campaignId), 300);
+        // 0.3 ether fee leaves 9.7 ether of rewards; the 0.2 ether pool is funded on top
         assertEq(OpenEndedIncentiveCampaign(manager.getCampaign(campaignId)).totalRewards(), 9.7 ether);
-        // 0.3 ether fee, 20% of it to referrals
-        assertEq(ReferralDistributor(manager.getReferralDistributor(campaignId)).referralPool(), 0.06 ether);
+        assertEq(ReferralDistributor(manager.getReferralDistributor(campaignId, 0)).referralPool(), REFERRAL_AMOUNT);
     }
 
     function test_CreateWithProtocolFee_RevertOutOfRange() public {
@@ -365,13 +410,13 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         vm.prank(CREATOR);
         vm.expectRevert(abi.encodeWithSelector(TimeBasedIncentiveManager.ProtocolFeeOutOfRange.selector, 600, 100, 500));
         manager.createOpenEndedCampaignWithProtocolFee(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, 0, 600
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _noPools(), 600
         );
 
         vm.prank(CREATOR);
         vm.expectRevert(abi.encodeWithSelector(TimeBasedIncentiveManager.ProtocolFeeOutOfRange.selector, 50, 100, 500));
         manager.createOpenEndedCampaignWithProtocolFee(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, 0, 50
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _noPools(), 50
         );
     }
 
@@ -387,14 +432,18 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.InvalidImplementation.selector);
-        fresh.createOpenEndedCampaign(budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, 0);
+        fresh.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _noPools()
+        );
     }
 
     function test_Create_RevertZeroEmissionRate() public {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.ZeroEmissionRate.selector);
-        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, 0, 0);
+        manager.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, 0, _noPools()
+        );
     }
 
     function test_Create_InitialFundingBoundary_NoFee() public {
@@ -409,7 +458,7 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.InitialFundingTooSmall.selector);
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), DAY_OF_EMISSION - 1, startTime, endTime, RATE, 0
+            budget, CONFIG_HASH, address(rewardToken), DAY_OF_EMISSION - 1, startTime, endTime, RATE, _noPools()
         );
     }
 
@@ -423,7 +472,7 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.InitialFundingTooSmall.selector);
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), 0.96 ether - 2, startTime, endTime, RATE, 0
+            budget, CONFIG_HASH, address(rewardToken), 0.96 ether - 2, startTime, endTime, RATE, _noPools()
         );
     }
 
@@ -435,7 +484,9 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.InitialFundingTooSmall.selector);
-        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(rewardToken), 86400, startTime, endTime, rate, 0);
+        manager.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), 86400, startTime, endTime, rate, _noPools()
+        );
 
         (, OpenEndedIncentiveCampaign campaign) = _create(86401, rate, 0);
         assertEq(campaign.minTopUp(), 86401);
@@ -447,16 +498,18 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         vm.startPrank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.DurationTooShort.selector);
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 1 days - 1, RATE, 0
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 1 days - 1, RATE, _noPools()
         );
 
         vm.expectRevert(TimeBasedIncentiveManager.DurationTooLong.selector);
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 365 days + 1, RATE, 0
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 365 days + 1, RATE, _noPools()
         );
 
         vm.expectRevert(TimeBasedIncentiveManager.EndTimeBeforeStart.selector);
-        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime, RATE, 0);
+        manager.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime, RATE, _noPools()
+        );
 
         vm.expectRevert(TimeBasedIncentiveManager.StartTimeInPast.selector);
         manager.createOpenEndedCampaign(
@@ -467,15 +520,15 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
             uint64(block.timestamp - 1),
             uint64(block.timestamp + 30 days),
             RATE,
-            0
+            _noPools()
         );
 
         // Both bounds are inclusive
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 1 days, RATE, 0
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 1 days, RATE, _noPools()
         );
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 365 days, RATE, 0
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, startTime + 365 days, RATE, _noPools()
         );
         vm.stopPrank();
     }
@@ -485,23 +538,32 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
 
         vm.startPrank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.InvalidRewardToken.selector);
-        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(0), TOTAL, startTime, endTime, RATE, 0);
+        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(0), TOTAL, startTime, endTime, RATE, _noPools());
 
         vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
-        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(rewardToken), 0, startTime, endTime, RATE, 0);
-
-        vm.expectRevert(TimeBasedIncentiveManager.ReferralFeeTooHigh.selector);
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, 2501
+            budget, CONFIG_HASH, address(rewardToken), 0, startTime, endTime, RATE, _noPools()
+        );
+
+        vm.expectRevert(TimeBasedIncentiveManager.InvalidReferralToken.selector);
+        manager.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _badPool()
         );
         vm.stopPrank();
+    }
+
+    function _badPool() internal pure returns (TimeBasedIncentiveManager.ReferralPoolParams[] memory pools) {
+        pools = new TimeBasedIncentiveManager.ReferralPoolParams[](1);
+        pools[0] = TimeBasedIncentiveManager.ReferralPoolParams({token: address(0), amount: 1 ether});
     }
 
     function test_Create_RevertUnauthorizedCreator() public {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(RANDO);
         vm.expectRevert(TimeBasedIncentiveManager.NotAuthorizedOnBudget.selector);
-        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, 0);
+        manager.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _noPools()
+        );
     }
 
     ////////////////////////////////
@@ -531,7 +593,7 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         vm.expectEmit(true, true, true, true, address(campaign));
         emit OpenEndedIncentiveCampaign.RewardsAdded(9 ether, 18 ether);
         vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9 ether, 1 ether, 0, 18 ether);
+        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9 ether, 1 ether, 18 ether);
         _topUp(campaignId, 10 ether);
 
         assertEq(campaign.totalRewards(), 18 ether);
@@ -574,60 +636,82 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         vm.prank(SAFE);
         module.setFee(CREATOR, 100, 100);
         vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9.5 ether, 0.5 ether, 0, 19 ether);
+        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9.5 ether, 0.5 ether, 19 ether);
         _topUp(campaignId, 10 ether);
 
         manager.setProtocolFeeModule(address(0));
         vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9.5 ether, 0.5 ether, 0, 28.5 ether);
+        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9.5 ether, 0.5 ether, 28.5 ether);
         _topUp(campaignId, 10 ether);
 
         assertEq(campaign.totalRewards(), 28.5 ether);
     }
 
-    function test_AddRewards_ReferralSliceToPool() public {
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+    function test_FundReferralPool_OpenEnded() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = _dist(campaignId, 0);
         uint256 receiverBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
 
         vm.expectEmit(true, true, true, true, address(dist));
         emit ReferralDistributor.ReferralPoolIncreased(0.2 ether, 0.4 ether);
         vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(
-            campaignId, CREATOR, 10 ether, 9 ether, 1 ether, 0.2 ether, 18 ether
-        );
-        _topUp(campaignId, 10 ether);
+        emit TimeBasedIncentiveManager.ReferralPoolFunded(campaignId, 0, CREATOR, 0.2 ether, 0.4 ether);
+        _fundPool(campaignId, 0, 0.2 ether);
 
         assertEq(dist.referralPool(), 0.4 ether);
         assertEq(rewardToken.balanceOf(address(dist)), 0.4 ether);
-        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER) - receiverBefore, 0.8 ether);
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), receiverBefore, "No fee on pool top-ups");
+        assertEq(campaign.totalRewards(), 9 ether, "Pool top-ups never touch the rewards");
+    }
+
+    function test_AddRewards_LeavesPoolsAlone() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = _dist(campaignId, 0);
+
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9 ether, 1 ether, 18 ether);
+        _topUp(campaignId, 10 ether);
+
+        assertEq(dist.referralPool(), REFERRAL_AMOUNT, "A reward top-up leaves the pool alone");
         assertEq(campaign.totalRewards(), 18 ether);
     }
 
-    function test_AddRewards_NoDistributor_ReferralFoldedIntoProtocol() public {
-        // A tiny initial funding makes the referral slice round to zero, so no distributor
-        // is cloned even though the campaign carries a referral bps
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(40, 1, REFERRAL_FEE_BPS);
-        assertEq(manager.getReferralDistributor(campaignId), address(0));
-        assertEq(manager.campaignReferralFeeBps(campaignId), REFERRAL_FEE_BPS);
-        assertEq(campaign.totalRewards(), 36);
+    function test_AddReferralPool_MidCampaign() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
+        assertEq(manager.referralPoolCount(campaignId), 0);
+        vm.warp(campaign.startTime() + 1 days);
 
-        uint256 receiverBefore = rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER);
-        vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 10 ether, 9 ether, 1 ether, 0, 9 ether + 36);
+        vm.prank(CREATOR);
+        vm.expectEmit(true, true, false, true, address(manager));
+        emit TimeBasedIncentiveManager.ReferralPoolCreated(campaignId, 0, address(0), address(bonusToken), 5 ether);
+        uint256 first = manager.addReferralPool(campaignId, address(bonusToken), 5 ether);
+        assertEq(first, 0, "First pool added after creation is index 0");
+
+        ReferralDistributor dist = _dist(campaignId, 0);
+        assertEq(dist.campaign(), address(campaign));
+        assertEq(dist.campaignId(), campaignId);
+        assertEq(dist.referralToken(), address(bonusToken));
+        assertEq(dist.referralPool(), 5 ether);
+        assertEq(bonusToken.balanceOf(address(dist)), 5 ether);
+
+        // Pools and reward top-ups are independent legs
+        vm.prank(CREATOR);
+        uint256 second = manager.addReferralPool(campaignId, address(rewardToken), 0.1 ether);
+        assertEq(second, 1);
         _topUp(campaignId, 10 ether);
-
-        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER) - receiverBefore, 1 ether, "Whole fee to protocol");
-        assertEq(manager.getReferralDistributor(campaignId), address(0), "Top-ups never clone a distributor");
+        assertEq(campaign.totalRewards(), 18 ether);
+        assertEq(dist.referralPool(), 5 ether);
+        assertEq(_dist(campaignId, 1).referralPool(), 0.1 ether);
+        assertEq(manager.referralPoolCount(campaignId), 2);
     }
 
     function test_AddRewards_ZeroFeeSnapshot() public {
         manager.setProtocolFee(0);
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
         manager.setProtocolFee(1000);
 
         vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 5 ether, 5 ether, 0, 0, 15 ether);
+        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, CREATOR, 5 ether, 5 ether, 0, 15 ether);
         _topUp(campaignId, 5 ether);
         assertEq(campaign.totalRewards(), 15 ether);
         assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0);
@@ -638,9 +722,7 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
 
         // The budget owner is authorized too; the funder field records the caller
         vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(
-            campaignId, address(this), 1 ether, 0.9 ether, 0.1 ether, 0, 9.9 ether
-        );
+        emit TimeBasedIncentiveManager.RewardsAdded(campaignId, address(this), 1 ether, 0.9 ether, 0.1 ether, 9.9 ether);
         manager.addRewards(campaignId, 1 ether);
         assertEq(campaign.totalRewards(), 9.9 ether);
     }
@@ -700,15 +782,15 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         manager.addRewards(campaignId, 1 ether);
     }
 
-    function test_AddRewards_RevertAfterEndTime_WithDistributor() public {
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+    function test_FundReferralPool_RevertAfterEndTime() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = _dist(campaignId, 0);
 
         vm.warp(campaign.endTime() + 1);
         vm.prank(CREATOR);
-        vm.expectRevert(OpenEndedIncentiveCampaign.CampaignAlreadyEnded.selector);
-        manager.addRewards(campaignId, 1 ether);
-        assertEq(dist.referralPool(), 0.2 ether, "Pool increase must roll back with the top-up");
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignEnded.selector);
+        manager.fundReferralPool(campaignId, 0, 0.1 ether);
+        assertEq(dist.referralPool(), 0.2 ether, "Pool unchanged");
     }
 
     function test_AddRewards_RevertAfterCancel() public {
@@ -735,19 +817,20 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         manager.addRewards(campaignId, 1 ether);
     }
 
-    function test_AddRewards_RevertAfterFinalize_WithDistributor() public {
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
+    function test_FundReferralPool_RevertAfterFinalize() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
         vm.warp(campaign.startTime());
         manager.updateRoot(campaignId, keccak256("root"), campaign.totalRewards(), true);
 
-        // The distributor rejects first; its error shares the campaign's selector
+        // Exhaustion finalizes before the max end; the manager refuses before the distributor would
+        assertLt(block.timestamp, campaign.endTime());
         vm.prank(CREATOR);
-        vm.expectRevert(ReferralDistributor.CampaignAlreadyFinalized.selector);
-        manager.addRewards(campaignId, 1 ether);
-        assertEq(
-            ReferralDistributor.CampaignAlreadyFinalized.selector,
-            OpenEndedIncentiveCampaign.CampaignAlreadyFinalized.selector
-        );
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignEnded.selector);
+        manager.fundReferralPool(campaignId, 0, 0.1 ether);
+
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.CampaignEnded.selector);
+        manager.addReferralPool(campaignId, address(bonusToken), 1 ether);
     }
 
     function test_AddRewards_RevertNotOpenEnded() public {
@@ -868,8 +951,9 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     }
 
     function test_CancelThenWithdraw() public {
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
         _topUp(campaignId, 10 ether);
+        _fundPool(campaignId, 0, 0.2 ether);
         vm.warp(campaign.startTime() + 2 days);
 
         bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, 1 ether);
@@ -887,7 +971,7 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         assertEq(rewardToken.balanceOf(address(budget)) - budgetBefore, 17 ether, "Everything not owed returns");
 
         // The referral distributor recorded finalization, so the referral lifecycle proceeds
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId, 0));
         assertEq(dist.finalizedAt(), uint64(block.timestamp));
         assertEq(dist.referralPool(), 0.4 ether);
     }
@@ -976,8 +1060,8 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     ////////////////////////////////
 
     function test_AddToPool_Success() public {
-        (uint256 campaignId,) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+        (uint256 campaignId,) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId, 0));
 
         vm.expectEmit(true, true, true, true, address(dist));
         emit ReferralDistributor.ReferralPoolIncreased(1 ether, 1.2 ether);
@@ -987,8 +1071,8 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     }
 
     function test_AddToPool_RevertNotManager() public {
-        (uint256 campaignId,) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+        (uint256 campaignId,) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId, 0));
 
         vm.prank(CREATOR);
         vm.expectRevert(ReferralDistributor.OnlyTimeBasedIncentiveManager.selector);
@@ -996,8 +1080,8 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     }
 
     function test_AddToPool_RevertFinalized() public {
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId, 0));
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("root"), 0, true);
 
@@ -1007,12 +1091,12 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     }
 
     function test_AddToPool_RevertSwept() public {
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId, 0));
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("root"), 0, true);
         vm.warp(block.timestamp + 60 days + 1);
-        manager.sweepReferralPool(campaignId);
+        manager.sweepReferralPool(campaignId, 0);
         assertTrue(dist.swept());
 
         vm.prank(address(manager));
@@ -1021,22 +1105,24 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     }
 
     function test_ReferralRoot_CanCommitToppedUpPool() public {
-        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
-        _topUp(campaignId, 10 ether);
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = _dist(campaignId, 0);
+        _fundPool(campaignId, 0, 0.2 ether);
         assertEq(dist.referralPool(), 0.4 ether);
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("root"), 0, true);
 
         vm.expectRevert(ReferralDistributor.CommitmentExceedsPool.selector);
-        manager.setReferralRoot(campaignId, keccak256("ref"), 0.4 ether + 1);
+        manager.setReferralRoot(campaignId, 0, keccak256("ref"), 0.4 ether + 1);
 
         bytes32 leaf = keccak256(
-            bytes.concat(keccak256(abi.encode(block.chainid, campaignId, REFERRER, address(rewardToken), 0.4 ether)))
+            bytes.concat(
+                keccak256(abi.encode(block.chainid, campaignId, uint256(0), REFERRER, address(rewardToken), 0.4 ether))
+            )
         );
-        manager.setReferralRoot(campaignId, leaf, 0.4 ether);
-        manager.claimReferral(campaignId, REFERRER, 0.4 ether, new bytes32[](0));
+        manager.setReferralRoot(campaignId, 0, leaf, 0.4 ether);
+        manager.claimReferral(campaignId, 0, REFERRER, 0.4 ether, new bytes32[](0));
         assertEq(rewardToken.balanceOf(REFERRER), 0.4 ether);
     }
 
@@ -1045,60 +1131,57 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     ////////////////////////////////
 
     function test_Create_RevertLegacyDistributorTemplate() public {
+        // A template without the pool-indexed initializer cannot back a pool; the clone reverts
+        // on initialize, so every pool creation fails until the template is updated
         manager.setReferralDistributorImplementation(address(new ReferralDistributorV2_3()));
         (uint64 startTime, uint64 endTime) = _times();
 
         vm.prank(CREATOR);
-        vm.expectRevert(TimeBasedIncentiveManager.ReferralDistributorNotTopUpCompatible.selector);
+        vm.expectRevert();
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, REFERRAL_FEE_BPS
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _pools(REFERRAL_AMOUNT)
         );
 
         vm.prank(CREATOR);
-        vm.expectRevert(TimeBasedIncentiveManager.ReferralDistributorNotTopUpCompatible.selector);
-        manager.createOpenEndedCampaignWithProtocolFee(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, REFERRAL_FEE_BPS, PROTOCOL_FEE
+        vm.expectRevert();
+        manager.createCampaign(
+            budget, keccak256("fixed"), address(rewardToken), TOTAL, startTime, endTime, _pools(REFERRAL_AMOUNT)
         );
 
-        // No referral fee: no distributor, so creation proceeds
+        // No referral pool: no distributor, so creation proceeds
         (uint256 campaignId,) = _create(0);
-        assertEq(manager.getReferralDistributor(campaignId), address(0));
+        assertEq(manager.referralPoolCount(campaignId), 0);
 
-        // Gated on an actual clone: a referral fee whose slice rounds to zero clones nothing
-        (uint256 zeroSliceId,) = _create(40, 1, REFERRAL_FEE_BPS);
-        assertEq(manager.getReferralDistributor(zeroSliceId), address(0));
-        assertEq(manager.campaignReferralFeeBps(zeroSliceId), REFERRAL_FEE_BPS);
-
-        // Fixed-end referral creation is unaffected by the template
         vm.prank(CREATOR);
-        uint256 fixedId = manager.createCampaign(
-            budget, keccak256("fixed"), address(rewardToken), TOTAL, startTime, endTime, REFERRAL_FEE_BPS
-        );
-        assertTrue(manager.getReferralDistributor(fixedId) != address(0));
+        vm.expectRevert();
+        manager.addReferralPool(campaignId, address(bonusToken), 1 ether);
+        assertEq(manager.referralPoolCount(campaignId), 0);
+
+        manager.setReferralDistributorImplementation(address(distributorImpl));
+        vm.prank(CREATOR);
+        manager.addReferralPool(campaignId, address(bonusToken), 1 ether);
+        assertEq(manager.referralPoolCount(campaignId), 1);
     }
 
-    function test_Create_RevertTemplateMarkerFalseOrMalformed() public {
-        (uint64 startTime, uint64 endTime) = _times();
+    function test_FundReferralPool_RevertMarkerFalseOrMalformed() public {
+        (uint256 campaignId,) = _create(REFERRAL_AMOUNT);
+        address dist = address(_dist(campaignId, 0));
 
-        manager.setReferralDistributorImplementation(address(new FalseTopUpMarker()));
+        vm.etch(dist, address(new FalseTopUpMarker()).code);
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.ReferralDistributorNotTopUpCompatible.selector);
-        manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, REFERRAL_FEE_BPS
-        );
+        manager.fundReferralPool(campaignId, 0, 0.1 ether);
 
-        manager.setReferralDistributorImplementation(address(new NonBoolTopUpMarker()));
+        vm.etch(dist, address(new NonBoolTopUpMarker()).code);
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.ReferralDistributorNotTopUpCompatible.selector);
-        manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, REFERRAL_FEE_BPS
-        );
+        manager.fundReferralPool(campaignId, 0, 0.1 ether);
     }
 
     function test_SupportsTopUps_OnImplementationAndClone() public {
         assertTrue(distributorImpl.supportsTopUps(), "Probe must work on the uninitializable implementation");
-        (uint256 campaignId,) = _create(REFERRAL_FEE_BPS);
-        assertTrue(ReferralDistributor(manager.getReferralDistributor(campaignId)).supportsTopUps());
+        (uint256 campaignId,) = _create(REFERRAL_AMOUNT);
+        assertTrue(ReferralDistributor(manager.getReferralDistributor(campaignId, 0)).supportsTopUps());
     }
 
     ////////////////////////////////
@@ -1106,7 +1189,7 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
     ////////////////////////////////
 
     function test_Version() public view {
-        assertEq(manager.version(), "2.4.0");
+        assertEq(manager.version(), "2.5.0");
     }
 }
 
@@ -1120,6 +1203,9 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
     uint256 legacyId;
     address legacyCampaign;
     address legacyDistributor;
+
+    /// @dev The 2.3.0 manager takes a referral fee in basis points of the protocol fee
+    uint64 constant LEGACY_REFERRAL_FEE_BPS = 2000;
 
     function setUp() public {
         rewardToken = new MockERC20();
@@ -1151,7 +1237,7 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         legacyId = legacy.createCampaign(
-            budget, keccak256("legacy"), address(rewardToken), TOTAL, startTime, endTime, REFERRAL_FEE_BPS
+            budget, keccak256("legacy"), address(rewardToken), TOTAL, startTime, endTime, LEGACY_REFERRAL_FEE_BPS
         );
         legacyCampaign = legacy.getCampaign(legacyId);
         legacyDistributor = legacy.getReferralDistributor(legacyId);
@@ -1159,15 +1245,26 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         manager.upgradeToAndCall(address(new TimeBasedIncentiveManager()), "");
     }
 
-    function _referralLeaf(uint256 campaignId, uint256 amount) internal view returns (bytes32) {
+    /// @dev The 2.3.0 distributor's leaf: no pool index
+    function _legacyReferralLeaf(uint256 campaignId, uint256 amount) internal view returns (bytes32) {
         return keccak256(
             bytes.concat(keccak256(abi.encode(block.chainid, campaignId, REFERRER, address(rewardToken), amount)))
         );
     }
 
+    function _referralLeaf(uint256 campaignId, uint256 poolIndex, address token, uint256 amount)
+        internal
+        view
+        returns (bytes32)
+    {
+        return keccak256(
+            bytes.concat(keccak256(abi.encode(block.chainid, campaignId, poolIndex, REFERRER, token, amount)))
+        );
+    }
+
     function test_UpgradeFrom2_3_PreservesState() public {
         // Every pre-existing variable reads back unchanged
-        assertEq(manager.version(), "2.4.0");
+        assertEq(manager.version(), "2.5.0");
         assertEq(manager.owner(), address(this));
         assertEq(manager.campaignImplementation(), address(campaignImpl));
         assertEq(manager.campaignCount(), 1);
@@ -1178,8 +1275,7 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         assertEq(manager.maxCampaignDuration(), 200 days);
         assertEq(manager.minCampaignDuration(), 2 days);
         assertEq(manager.claimExpiryDuration(), 30 days);
-        assertEq(manager.campaignReferralFeeBps(legacyId), REFERRAL_FEE_BPS);
-        assertEq(manager.getReferralDistributor(legacyId), legacyDistributor);
+        assertEq(manager.getReferralDistributor(legacyId, 0), legacyDistributor);
         assertEq(manager.referralDistributorImplementation(), address(legacyDistributorImpl));
         assertEq(manager.referralClaimWindowDuration(), 45 days);
         assertEq(manager.protocolFeeModule(), address(module));
@@ -1192,7 +1288,9 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.InvalidImplementation.selector);
-        manager.createOpenEndedCampaign(budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, 0);
+        manager.createOpenEndedCampaign(
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _noPools()
+        );
 
         vm.prank(CREATOR);
         vm.expectRevert(TimeBasedIncentiveManager.NotOpenEnded.selector);
@@ -1214,21 +1312,19 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         manager.setOpenEndedCampaignImplementation(address(openEndedImpl));
         (uint64 startTime, uint64 endTime) = _times();
 
-        // Fixed-end referral campaigns still create on the legacy template
+        // On the legacy template no pool can be created, fixed-end or open-ended
         vm.prank(CREATOR);
-        uint256 fixedId = manager.createCampaign(
-            budget, keccak256("fixed"), address(rewardToken), TOTAL, startTime, endTime, REFERRAL_FEE_BPS
+        vm.expectRevert();
+        manager.createCampaign(
+            budget, keccak256("fixed"), address(rewardToken), TOTAL, startTime, endTime, _pools(REFERRAL_AMOUNT)
         );
-        assertTrue(manager.getReferralDistributor(fixedId) != address(0));
-
-        // An open-ended referral campaign would get a distributor that cannot take top-ups
         vm.prank(CREATOR);
-        vm.expectRevert(TimeBasedIncentiveManager.ReferralDistributorNotTopUpCompatible.selector);
+        vm.expectRevert();
         manager.createOpenEndedCampaign(
-            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, REFERRAL_FEE_BPS
+            budget, CONFIG_HASH, address(rewardToken), TOTAL, startTime, endTime, RATE, _pools(REFERRAL_AMOUNT)
         );
 
-        // Without a referral fee there is no distributor, so the legacy template is irrelevant
+        // Without pools there is no distributor, so the legacy template is irrelevant
         (uint256 plainId, OpenEndedIncentiveCampaign plain) = _create(0);
         assertEq(manager.campaignProtocolFeeBps(plainId), 500, "Fee module discount snapshotted");
         assertEq(plain.claimExpiryDuration(), 30 days);
@@ -1236,26 +1332,88 @@ contract OpenEndedUpgradeFrom2_3Test is OpenEndedFixture {
         assertEq(plain.totalRewards(), 19 ether);
 
         // Once the template is updated, referral open-ended campaigns work end to end
+        // (5% fee from the module discount: 0.5 ether fee, 9.5 ether rewards, 0.2 ether pool on top)
         manager.setReferralDistributorImplementation(address(distributorImpl));
-        (uint256 openId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(openId));
-        assertEq(dist.referralPool(), 0.1 ether);
+        (uint256 openId, OpenEndedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
+        ReferralDistributor dist = _dist(openId, 0);
+        assertEq(dist.referralPool(), REFERRAL_AMOUNT);
+        assertEq(dist.claimWindowDuration(), 45 days, "Pre-existing window setting applies");
+        assertEq(campaign.totalRewards(), 9.5 ether);
+
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.RewardsAdded(openId, CREATOR, 10 ether, 9.5 ether, 0.5 ether, 19 ether);
+        _topUp(openId, 10 ether);
 
         vm.expectEmit(true, true, true, true, address(dist));
-        emit ReferralDistributor.ReferralPoolIncreased(0.1 ether, 0.2 ether);
-        vm.expectEmit(true, true, true, true, address(manager));
-        emit TimeBasedIncentiveManager.RewardsAdded(
-            openId, CREATOR, 10 ether, 9.5 ether, 0.5 ether, 0.1 ether, 19 ether
-        );
-        _topUp(openId, 10 ether);
-        assertEq(rewardToken.balanceOf(address(dist)), 0.2 ether);
+        emit ReferralDistributor.ReferralPoolIncreased(0.1 ether, 0.3 ether);
+        _fundPool(openId, 0, 0.1 ether);
+        assertEq(rewardToken.balanceOf(address(dist)), 0.3 ether);
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(openId, keccak256("root"), 0, true);
-        manager.setReferralRoot(openId, _referralLeaf(openId, 0.2 ether), 0.2 ether);
-        manager.claimReferral(openId, REFERRER, 0.2 ether, new bytes32[](0));
-        assertEq(rewardToken.balanceOf(REFERRER), 0.2 ether);
+        manager.setReferralRoot(openId, 0, _referralLeaf(openId, 0, address(rewardToken), 0.3 ether), 0.3 ether);
+        manager.claimReferral(openId, 0, REFERRER, 0.3 ether, new bytes32[](0));
+        assertEq(rewardToken.balanceOf(REFERRER), 0.3 ether);
         assertEq(rewardToken.balanceOf(address(dist)), 0);
+    }
+
+    function test_UpgradeFrom2_3_LegacyDistributorIsPoolZero() public {
+        // The pre-upgrade distributor reads as the campaign's pool 0
+        address[] memory pools = manager.getReferralDistributors(legacyId);
+        assertEq(pools.length, 1);
+        assertEq(pools[0], legacyDistributor);
+        assertEq(manager.referralPoolCount(legacyId), 1);
+        assertEq(manager.getReferralDistributor(legacyId, 0), legacyDistributor);
+        assertEq(manager.getReferralDistributor(legacyId, 1), address(0));
+        uint256 legacyPool = ReferralDistributorV2_3(legacyDistributor).referralPool();
+        assertGt(legacyPool, 0);
+
+        // The 2.3.0 clone has no addToPool, so it cannot be topped up
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.ReferralDistributorNotTopUpCompatible.selector);
+        manager.fundReferralPool(legacyId, 0, 0.1 ether);
+
+        // A pool added on the new template lands at index 1, after the legacy clone
+        manager.setReferralDistributorImplementation(address(distributorImpl));
+        vm.prank(CREATOR);
+        vm.expectEmit(true, true, false, true, address(manager));
+        emit TimeBasedIncentiveManager.ReferralPoolCreated(legacyId, 1, address(0), address(bonusToken), 5 ether);
+        uint256 poolIndex = manager.addReferralPool(legacyId, address(bonusToken), 5 ether);
+        assertEq(poolIndex, 1);
+        pools = manager.getReferralDistributors(legacyId);
+        assertEq(pools.length, 2);
+        assertEq(pools[0], legacyDistributor, "Legacy clone keeps index 0");
+        assertEq(manager.getReferralDistributor(legacyId, 0), legacyDistributor);
+        assertEq(manager.referralPoolCount(legacyId), 2);
+        ReferralDistributor bonus = ReferralDistributor(pools[1]);
+        assertEq(bonus.poolIndex(), 1);
+        assertEq(bonus.referralToken(), address(bonusToken));
+        _fundPool(legacyId, 1, 1 ether);
+        assertEq(bonus.referralPool(), 6 ether);
+
+        // Finalization is recorded on both, and each pool roots and pays in its own leaf format
+        vm.warp(TimeBasedIncentiveCampaign(legacyCampaign).endTime() + 1);
+        manager.updateRoot(legacyId, keccak256("root"), 0, true);
+        assertEq(ReferralDistributorV2_3(legacyDistributor).finalizedAt(), uint64(block.timestamp));
+        assertEq(bonus.finalizedAt(), uint64(block.timestamp));
+
+        vm.startPrank(OPERATOR);
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.ReferralRootUpdated(
+            legacyId, 0, bytes32(0), _legacyReferralLeaf(legacyId, legacyPool), legacyPool
+        );
+        manager.setReferralRoot(legacyId, 0, _legacyReferralLeaf(legacyId, legacyPool), legacyPool);
+        manager.setReferralRoot(legacyId, 1, _referralLeaf(legacyId, 1, address(bonusToken), 6 ether), 6 ether);
+        vm.stopPrank();
+
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.ReferralClaimed(legacyId, 0, REFERRER, legacyPool);
+        manager.claimReferral(legacyId, 0, REFERRER, legacyPool, new bytes32[](0));
+        manager.claimReferral(legacyId, 1, REFERRER, 6 ether, new bytes32[](0));
+        assertEq(rewardToken.balanceOf(REFERRER), legacyPool, "Legacy pool pays in the reward token");
+        assertEq(bonusToken.balanceOf(REFERRER), 6 ether, "New pool pays in its own token");
+        assertEq(rewardToken.balanceOf(legacyDistributor), 0);
+        assertEq(bonusToken.balanceOf(address(bonus)), 0);
     }
 }
 

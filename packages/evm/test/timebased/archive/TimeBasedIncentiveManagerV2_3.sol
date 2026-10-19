@@ -9,7 +9,7 @@ import {UUPSUpgradeable} from "@solady/utils/UUPSUpgradeable.sol";
 
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ITBIProtocolFeeModule} from "contracts/timebased/ITBIProtocolFeeModule.sol";
-import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
+import {ReferralDistributorV2_3} from "test/timebased/archive/ReferralDistributorV2_3.sol";
 import {TimeBasedIncentiveCampaign} from "contracts/timebased/TimeBasedIncentiveCampaign.sol";
 
 /// @title TimeBasedIncentiveManager 2.3.0
@@ -408,7 +408,7 @@ contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownabl
 
         // Initialize the distributor (reads the reward token from the campaign)
         if (distributor != address(0)) {
-            ReferralDistributor(distributor)
+            ReferralDistributorV2_3(distributor)
                 .initialize(campaign, campaignId, referralAmount, referralClaimWindowDuration);
             emit ReferralDistributorCreated(campaignId, distributor, fees.referralFeeBps, referralAmount);
         }
@@ -553,7 +553,7 @@ contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownabl
 
         // Initialize the distributor (reads the reward token from the campaign)
         if (distributor != address(0)) {
-            ReferralDistributor(distributor)
+            ReferralDistributorV2_3(distributor)
                 .initialize(campaign, campaignId, referralAmount, referralClaimWindowDuration);
             emit ReferralDistributorCreated(campaignId, distributor, fees.referralFeeBps, referralAmount);
         }
@@ -793,8 +793,8 @@ contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownabl
         (uint64 moduleMin, uint64 moduleMax) = ITBIProtocolFeeModule(module)
             .quoteProtocolFeeRange(
                 ITBIProtocolFeeModule.FeeContext({
-                creator: creator, budget: budget, rewardToken: rewardToken, totalAmount: totalAmount
-            })
+                    creator: creator, budget: budget, rewardToken: rewardToken, totalAmount: totalAmount
+                })
             );
         return _capFeeRange(moduleMin, moduleMax);
     }
@@ -890,7 +890,7 @@ contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownabl
 
         address distributor = referralDistributors[campaignId];
         if (distributor != address(0)) {
-            ReferralDistributor(distributor).recordFinalized();
+            ReferralDistributorV2_3(distributor).recordFinalized();
         }
 
         emit CampaignFinalized(campaignId);
@@ -951,7 +951,7 @@ contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownabl
         address distributor = referralDistributors[campaignId];
         if (distributor == address(0)) revert NoReferralDistributor();
 
-        bytes32 oldRoot = ReferralDistributor(distributor).setReferralRoot(root, committedTotal);
+        bytes32 oldRoot = ReferralDistributorV2_3(distributor).setReferralRoot(root, committedTotal);
 
         emit ReferralRootUpdated(campaignId, oldRoot, root, committedTotal);
     }
@@ -968,7 +968,7 @@ contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownabl
         address distributor = referralDistributors[campaignId];
         if (distributor == address(0)) revert NoReferralDistributor();
 
-        ReferralDistributor(distributor).claimReferral(referrer, amount, proof);
+        ReferralDistributorV2_3(distributor).claimReferral(referrer, amount, proof);
 
         emit ReferralClaimed(campaignId, referrer, amount);
     }
@@ -980,7 +980,7 @@ contract TimeBasedIncentiveManagerV2_3 is Initializable, UUPSUpgradeable, Ownabl
         address distributor = referralDistributors[campaignId];
         if (distributor == address(0)) revert NoReferralDistributor();
 
-        uint256 amount = ReferralDistributor(distributor).sweepReferralPool(protocolFeeReceiver);
+        uint256 amount = ReferralDistributorV2_3(distributor).sweepReferralPool(protocolFeeReceiver);
 
         emit ReferralPoolSwept(campaignId, amount, protocolFeeReceiver);
     }

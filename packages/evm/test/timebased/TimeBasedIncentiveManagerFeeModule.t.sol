@@ -65,7 +65,7 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
     uint64 constant PROTOCOL_FEE = 1000; // 10%
     uint64 constant DISCOUNT_FEE = 500; // 5%
     uint64 constant MIN_FEE = 100; // 1%, bottom of the internal range
-    uint64 constant REFERRAL_FEE_BPS = 2000; // 20% of the protocol fee
+    uint256 constant REFERRAL_AMOUNT = 0.2 ether;
     uint256 constant TOTAL = 10 ether;
 
     function setUp() public {
@@ -119,28 +119,42 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
         endTime = uint64(block.timestamp + 30 days);
     }
 
-    function _create(uint64 referralFeeBps) internal returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign) {
+    /// @dev A single reward-token referral pool, or none for 0
+    function _pools(uint256 referralAmount)
+        internal
+        view
+        returns (TimeBasedIncentiveManager.ReferralPoolParams[] memory pools)
+    {
+        if (referralAmount == 0) return new TimeBasedIncentiveManager.ReferralPoolParams[](0);
+        pools = new TimeBasedIncentiveManager.ReferralPoolParams[](1);
+        pools[0] = TimeBasedIncentiveManager.ReferralPoolParams({token: address(rewardToken), amount: referralAmount});
+    }
+
+    function _create(uint256 referralAmount)
+        internal
+        returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign)
+    {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         campaignId = manager.createCampaign(
-            budget, keccak256("fee-module"), address(rewardToken), TOTAL, startTime, endTime, referralFeeBps
+            budget, keccak256("fee-module"), address(rewardToken), TOTAL, startTime, endTime, _pools(referralAmount)
         );
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
-    function _createDirect(uint64 referralFeeBps)
+    function _createDirect(uint256 referralAmount)
         internal
         returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign)
     {
         (uint64 startTime, uint64 endTime) = _times();
         vm.prank(CREATOR);
         campaignId = manager.createCampaignDirect(
-            keccak256("fee-module-direct"), address(rewardToken), TOTAL, startTime, endTime, referralFeeBps
+            keccak256("fee-module-direct"), address(rewardToken), TOTAL, startTime, endTime, _pools(referralAmount)
         );
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
-    function _createWithFee(uint64 referralFeeBps, uint64 protocolFeeBps)
+    function _createWithFee(uint256 referralAmount, uint64 protocolFeeBps)
         internal
         returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign)
     {
@@ -153,13 +167,13 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
             TOTAL,
             startTime,
             endTime,
-            referralFeeBps,
+            _pools(referralAmount),
             protocolFeeBps
         );
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
-    function _createDirectWithFee(uint64 referralFeeBps, uint64 protocolFeeBps)
+    function _createDirectWithFee(uint256 referralAmount, uint64 protocolFeeBps)
         internal
         returns (uint256 campaignId, TimeBasedIncentiveCampaign campaign)
     {
@@ -171,7 +185,7 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
             TOTAL,
             startTime,
             endTime,
-            referralFeeBps,
+            _pools(referralAmount),
             protocolFeeBps
         );
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
@@ -330,30 +344,43 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
         assertEq(campaign.totalRewards(), TOTAL);
     }
 
-    function test_Create_ZeroFeeOverride_ReferralsDoNotApply() public {
+    function test_Create_ZeroFeeOverride_ReferralPoolStillFunded() public {
         manager.setProtocolFeeModule(address(module));
         _setFee(CREATOR, 0);
 
-        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
 
-        assertEq(manager.getReferralDistributor(campaignId), address(0), "no distributor at 0% fee");
-        assertEq(manager.campaignReferralFeeBps(campaignId), 0);
+        address dist = manager.getReferralDistributor(campaignId, 0);
+        assertTrue(dist != address(0), "referral pool is independent of the fee");
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0);
+        assertEq(rewardToken.balanceOf(dist), REFERRAL_AMOUNT);
         assertEq(rewardToken.balanceOf(address(campaign)), TOTAL);
     }
 
-    function test_Create_ReferralSliceCarvedFromDiscountedFee() public {
+    function test_Create_ReferralPoolOnTopOfDiscountedFee() public {
         manager.setProtocolFeeModule(address(module));
         _setFee(CREATOR, DISCOUNT_FEE);
 
-        // 5% of 10 ether = 0.5 ether fee; 20% of that = 0.1 ether referral slice
-        vm.expectEmit(true, false, false, true);
-        emit TimeBasedIncentiveManager.ReferralDistributorCreated(1, address(0), REFERRAL_FEE_BPS, 0.1 ether);
-        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _create(REFERRAL_FEE_BPS);
+        // 5% of 10 ether = 0.5 ether fee; 9.5 ether rewards; the 0.2 ether pool is drawn on top
+        vm.expectEmit(true, true, false, true);
+        emit TimeBasedIncentiveManager.ReferralPoolCreated(1, 0, address(0), address(rewardToken), REFERRAL_AMOUNT);
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _create(REFERRAL_AMOUNT);
 
-        address dist = manager.getReferralDistributor(campaignId);
-        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.4 ether);
-        assertEq(rewardToken.balanceOf(dist), 0.1 ether);
+        address dist = manager.getReferralDistributor(campaignId, 0);
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.5 ether);
+        assertEq(rewardToken.balanceOf(dist), REFERRAL_AMOUNT);
         assertEq(rewardToken.balanceOf(address(campaign)), 9.5 ether);
+    }
+
+    function test_Create_NoFeeOnReferralPool() public {
+        manager.setProtocolFeeModule(address(module));
+        _setFee(CREATOR, DISCOUNT_FEE);
+
+        // A pool as large as the whole total still only pays the fee on the total
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _create(TOTAL);
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.5 ether);
+        assertEq(rewardToken.balanceOf(manager.getReferralDistributor(campaignId, 0)), TOTAL);
+        assertEq(campaign.totalRewards(), 9.5 ether);
     }
 
     function test_Create_DiscountRemovedRevertsToStandard() public {
@@ -551,24 +578,24 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
         _createWithFee(0, DISCOUNT_FEE);
     }
 
-    function test_CreateWithFee_ZeroAllowed_NoReferrals() public {
+    function test_CreateWithFee_ZeroAllowed_ReferralPoolStillFunded() public {
         manager.setProtocolFeeModule(address(module));
         _setRange(CREATOR, 0, PROTOCOL_FEE);
 
-        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createWithFee(REFERRAL_FEE_BPS, 0);
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createWithFee(REFERRAL_AMOUNT, 0);
         assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0);
+        assertEq(rewardToken.balanceOf(manager.getReferralDistributor(campaignId, 0)), REFERRAL_AMOUNT);
         assertEq(rewardToken.balanceOf(address(campaign)), TOTAL);
-        assertEq(manager.getReferralDistributor(campaignId), address(0));
     }
 
-    function test_CreateWithFee_ReferralCarvedFromChosenFee() public {
+    function test_CreateWithFee_ReferralPoolOnTopOfChosenFee() public {
         manager.setProtocolFeeModule(address(module));
         _setRange(CREATOR, MIN_FEE, PROTOCOL_FEE);
 
-        // 1% of 10 ether = 0.1 ether fee; 20% of that = 0.02 ether referral slice
-        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createWithFee(REFERRAL_FEE_BPS, MIN_FEE);
-        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.08 ether);
-        assertEq(rewardToken.balanceOf(manager.getReferralDistributor(campaignId)), 0.02 ether);
+        // 1% of 10 ether = 0.1 ether fee; 9.9 ether rewards; the 0.2 ether pool is drawn on top
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createWithFee(REFERRAL_AMOUNT, MIN_FEE);
+        assertEq(rewardToken.balanceOf(PROTOCOL_FEE_RECEIVER), 0.1 ether);
+        assertEq(rewardToken.balanceOf(manager.getReferralDistributor(campaignId, 0)), REFERRAL_AMOUNT);
         assertEq(rewardToken.balanceOf(address(campaign)), 9.9 ether);
     }
 
@@ -775,6 +802,6 @@ contract TimeBasedIncentiveManagerFeeModuleTest is Test {
     }
 
     function test_Version() public view {
-        assertEq(manager.version(), "2.4.0");
+        assertEq(manager.version(), "2.5.0");
     }
 }

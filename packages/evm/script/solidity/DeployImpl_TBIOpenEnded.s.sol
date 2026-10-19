@@ -332,7 +332,7 @@ contract DeployImpl_TBIOpenEnded is ScriptUtils {
         s.referralDistributors = new address[](s.campaignCount);
         for (uint256 i; i < s.campaignCount; i++) {
             s.campaigns[i] = manager.campaigns(i + 1);
-            s.referralDistributors[i] = manager.referralDistributors(i + 1);
+            s.referralDistributors[i] = manager.getReferralDistributor(i + 1, 0);
             require(s.campaigns[i] != address(0), "campaign missing");
         }
     }

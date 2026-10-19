@@ -16,6 +16,7 @@ import {
     IGiverPositionManager,
     IComet,
     IStakedToken,
+    IStakedStrat,
     ICErc20,
     ISyncDepositQueue,
     IUniswapV4PositionManager,
@@ -818,6 +819,53 @@ contract MockBeefyRewardPool is ERC20 {
     }
 }
 
+/// @notice Minimal ETH Strategy StakedStrat (sEARN) mock: `stake` credits msg.sender only, the
+/// receipt is non-transferable, and `migrateStake` is the one way to move a stake — with the real
+/// contract's argument guards and its `amount == 0` "migrate everything" shorthand.
+contract MockStakedStrat is ERC20 {
+    address public immutable stratToken;
+
+    error TransferDisabled();
+
+    constructor(address stratToken_) {
+        stratToken = stratToken_;
+    }
+
+    function name() public pure override returns (string memory) {
+        return "Mock Staked Strat";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return "msSTRAT";
+    }
+
+    function transfer(address, uint256) public pure override returns (bool) {
+        revert TransferDisabled();
+    }
+
+    function transferFrom(address, address, uint256) public pure override returns (bool) {
+        revert TransferDisabled();
+    }
+
+    function approve(address, uint256) public pure override returns (bool) {
+        revert TransferDisabled();
+    }
+
+    function stake(uint256 amount) external {
+        ERC20(stratToken).transferFrom(msg.sender, address(this), amount);
+        _mint(msg.sender, amount);
+    }
+
+    function migrateStake(address to, uint256 amount) external {
+        require(to != address(0) && to != msg.sender && to != address(this), "bad recipient");
+        uint256 staked = balanceOf(msg.sender);
+        require(staked != 0, "no stake");
+        uint256 amountToMigrate = amount == 0 ? staked : amount;
+        require(amountToMigrate <= staked, "insufficient stake");
+        _transfer(msg.sender, to, amountToMigrate);
+    }
+}
+
 /// @notice Router mock that performs the swap and also hands part of the input back to the caller
 /// (the forwarder) — input dust or a native surplus — to exercise the forwarder's leftover refunds.
 contract MockDustRouter {
@@ -852,6 +900,7 @@ contract TBIForwarderTest is Test {
     MockMorpho morpho;
     MockComet comet;
     MockStakedToken stakedToken;
+    MockStakedStrat stakedStrat;
     MockCErc20 cToken;
     MockMidasVault midasVault;
     MockV4PositionManager v4PositionManager;
@@ -882,6 +931,7 @@ contract TBIForwarderTest is Test {
         morpho = new MockMorpho();
         comet = new MockComet(address(token));
         stakedToken = new MockStakedToken(address(token));
+        stakedStrat = new MockStakedStrat(address(token));
         cToken = new MockCErc20(address(token));
         midasVault = new MockMidasVault(address(token));
 
@@ -1433,6 +1483,73 @@ contract TBIForwarderTest is Test {
         assertEq(token.balanceOf(address(forwarder)), 0);
         // Li.Fi caller's token balance decreased
         assertEq(token.balanceOf(LIFI_EXECUTOR), 97 ether);
+    }
+
+    // --- ETH Strategy StakedStrat ---
+
+    function test_StakeStakedStrat_Success() public {
+        uint256 amount = 4 ether;
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(USER, address(stakedStrat), address(token), amount);
+
+        vm.prank(USER);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), amount, USER);
+
+        // User holds the stake; the forwarder holds neither stake nor underlying
+        assertEq(stakedStrat.balanceOf(USER), amount);
+        assertEq(stakedStrat.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.allowance(address(forwarder), address(stakedStrat)), 0);
+        assertEq(token.balanceOf(USER), 96 ether);
+    }
+
+    function test_StakeStakedStrat_WithReceiver_Success() public {
+        uint256 amount = 4 ether;
+        _fundAndApprove(LIFI_EXECUTOR, 100 ether);
+
+        vm.expectEmit(true, true, true, true);
+        emit TBIForwarderAdapters.Deposit(RECEIVER, address(stakedStrat), address(token), amount);
+
+        vm.prank(LIFI_EXECUTOR);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), amount, RECEIVER);
+
+        // Receiver holds the stake, while caller only paid underlying
+        assertEq(stakedStrat.balanceOf(RECEIVER), amount);
+        assertEq(stakedStrat.balanceOf(LIFI_EXECUTOR), 0);
+        assertEq(stakedStrat.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+        assertEq(token.balanceOf(LIFI_EXECUTOR), 96 ether);
+    }
+
+    function test_StakeStakedStrat_RevertZeroReceiver() public {
+        vm.prank(USER);
+        vm.expectRevert(TBIForwarderAdapters.ZeroReceiver.selector);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), 1 ether, address(0));
+
+        // Reverts before funds move
+        assertEq(token.balanceOf(USER), 100 ether);
+        assertEq(token.balanceOf(address(forwarder)), 0);
+    }
+
+    function test_StakeStakedStrat_SweepsStrayStake() public {
+        // Anyone can migrate stake into the forwarder without its consent.
+        uint256 stray = 5 ether;
+        _fundAndApprove(ATTACKER, stray);
+        vm.startPrank(ATTACKER);
+        token.approve(address(stakedStrat), stray);
+        stakedStrat.stake(stray);
+        stakedStrat.migrateStake(address(forwarder), stray);
+        vm.stopPrank();
+
+        uint256 amount = 2 ether;
+        vm.prank(USER);
+        forwarder.stakeStakedStrat(IStakedStrat(address(stakedStrat)), amount, USER);
+
+        // The forwarder migrates its whole stake, so the stray stake goes to the depositor rather
+        // than staying behind where a partial migrate could revert
+        assertEq(stakedStrat.balanceOf(USER), amount + stray);
+        assertEq(stakedStrat.balanceOf(address(forwarder)), 0);
     }
 
     // --- Compound V2 ---

@@ -76,6 +76,16 @@ interface IStakedToken {
     function stake(address onBehalfOf, uint256 amount) external;
 }
 
+/// @notice ETH Strategy StakedStrat (e.g. sEARN) — a non-transferable receipt minted 1:1 for the
+/// staked `stratToken()`. `stake` credits msg.sender only and `transfer` reverts, so the only way
+/// to move a stake is `migrateStake`, which emits a standard `Transfer` and pays the recipient's
+/// pending rewards to them.
+interface IStakedStrat {
+    function stratToken() external view returns (address);
+    function stake(uint256 amount) external;
+    function migrateStake(address to, uint256 amount) external;
+}
+
 interface ICErc20 {
     function mint(uint256 mintAmount) external returns (uint256);
     function balanceOf(address owner) external view returns (uint256);
@@ -501,6 +511,29 @@ abstract contract TBIForwarderAdapters is ReentrancyGuard {
         asset.safeApprove(address(stakedToken), 0);
 
         emit Deposit(receiver, address(stakedToken), asset, amount);
+    }
+
+    /// @notice Stake into an ETH Strategy StakedStrat (e.g. sEARN) on behalf of receiver
+    /// @dev `stake` has no receiver argument and the receipt is non-transferable, so the forwarder
+    /// stakes as itself and moves the stake with `migrateStake`. It migrates `0` ("all"), never the
+    /// exact `amount`: anyone can migrate stake into the forwarder, and a partial migrate over that
+    /// stray stake can round StakedStrat's debt update below zero and revert while
+    /// rewardsPerShare < 1e18. A full migrate cannot underflow. Stray stake has no other way out of
+    /// the forwarder, so sweeping it to the depositor takes nothing from anyone. The forwarder
+    /// earns nothing — `migrateStake` pays rewards to the recipient, never the sender.
+    /// @param stakedStrat The StakedStrat contract — emitted as the Deposit `target`
+    /// @param amount The amount of `stratToken()` to stake
+    /// @param receiver The account receiving the stake
+    function stakeStakedStrat(IStakedStrat stakedStrat, uint256 amount, address receiver) external nonReentrant {
+        _requireReceiver(receiver);
+        address asset = stakedStrat.stratToken();
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+        asset.safeApproveWithRetry(address(stakedStrat), amount);
+        stakedStrat.stake(amount);
+        asset.safeApprove(address(stakedStrat), 0);
+        stakedStrat.migrateStake(receiver, 0);
+
+        emit Deposit(receiver, address(stakedStrat), asset, amount);
     }
 
     /// @notice Deposit into a Compound v2 / Moonwell cToken on behalf of receiver

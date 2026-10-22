@@ -272,4 +272,32 @@ describe("ERC20VariableCriteriaIncentiveV2", () => {
       true,
     );
   });
+
+  test("should deploy with a 4-byte function selector", async () => {
+    const fourByteSignature = "0xa9059cbb" as Hex; // transfer(address,uint256)
+
+    const incentiveWithFourByteSelector = fixtures.core.ERC20VariableCriteriaIncentiveV2({
+      asset: budgets.erc20.assertValidAddress(),
+      limit: 1000000n,
+      reward: 1000000n,
+      criteria: {
+        criteriaType: SignatureType.FUNC,
+        signature: fourByteSignature,
+        fieldIndex: 1,
+        targetContract: budgets.erc20.assertValidAddress(),
+        valueType: ValueType.WAD,
+      },
+    });
+
+    const newBoost = await freshBoost(fixtures, {
+      budget: budgets.budget,
+      incentives: [incentiveWithFourByteSelector],
+    });
+    const incentive = newBoost.incentives[0] as ERC20VariableCriteriaIncentiveV2;
+    const deployedCriteria = await incentive.getIncentiveCriteria();
+
+    expect(isAddress(newBoost.incentives[0]!.assertValidAddress())).toBe(true);
+    expect(deployedCriteria.signature.length).toBe(66);
+    expect(deployedCriteria.signature.endsWith(fourByteSignature.slice(2))).toBe(true);
+  });
 });

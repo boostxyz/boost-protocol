@@ -1,5 +1,11 @@
 # @boostxyz/sdk
 
+## 8.2.1
+
+### Patch Changes
+
+- d31f40c: update signer
+
 ## 8.2.0
 
 ### Minor Changes

@@ -60,7 +60,7 @@ contract ReentrantERC20 {
     function transfer(address to, uint256 amount) external returns (bool) {
         if (address(target) != address(0) && !reenterAttempted) {
             reenterAttempted = true;
-            try target.claimReferral(reenterCampaignId, reenterReferrer, reenterAmount, reenterProof) {
+            try target.claimReferral(reenterCampaignId, 0, reenterReferrer, reenterAmount, reenterProof) {
                 reenterSucceeded = true;
             } catch (bytes memory reason) {
                 // Only the 4-byte error selector matters; the truncation is intentional
@@ -136,7 +136,7 @@ contract ReferralDistributorTest is Test {
         uint64 endTime = uint64(block.timestamp + 30 days);
         vm.prank(CREATOR);
         campaignId =
-            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime, 0);
+            manager.createCampaign(budget, keccak256("test"), address(rewardToken), 10 ether, startTime, endTime);
         campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
     }
 
@@ -146,12 +146,20 @@ contract ReferralDistributorTest is Test {
         manager.updateRoot(campaignId, keccak256("reward-root"), 0, true);
     }
 
-    /// @notice Clone the distributor for a campaign and fund it with the referral pool
+    /// @notice Clone the pool-0 distributor for a campaign and fund it with the referral pool
     function _deployDistributor(uint256 campaignId, address campaign) internal returns (ReferralDistributor dist) {
+        dist = _deployDistributorAt(campaignId, campaign, 0, rewardToken);
+    }
+
+    /// @notice Clone a distributor at a given pool index and token, funded with the referral pool
+    function _deployDistributorAt(uint256 campaignId, address campaign, uint256 poolIndex, MockERC20 token)
+        internal
+        returns (ReferralDistributor dist)
+    {
         dist = ReferralDistributor(LibClone.clone(address(distributorImpl)));
         vm.prank(address(manager));
-        dist.initialize(campaign, campaignId, REFERRAL_POOL, CLAIM_WINDOW);
-        rewardToken.mint(address(dist), REFERRAL_POOL);
+        dist.initialize(campaign, campaignId, poolIndex, address(token), REFERRAL_POOL, CLAIM_WINDOW);
+        token.mint(address(dist), REFERRAL_POOL);
     }
 
     /// @notice Create a campaign, finalize it, and deploy its funded distributor
@@ -164,7 +172,7 @@ contract ReferralDistributorTest is Test {
         dist = _deployDistributor(campaignId, address(campaign));
     }
 
-    /// @notice Double-hashed, chain-bound referral leaf
+    /// @notice Double-hashed, chain-bound referral leaf for pool 0
     function _makeReferralLeaf(uint256 campaignId, address referrer, address token, uint256 amount)
         internal
         view
@@ -173,7 +181,7 @@ contract ReferralDistributorTest is Test {
         return _makeReferralLeafForChain(block.chainid, campaignId, referrer, token, amount);
     }
 
-    /// @notice Referral leaf with explicit chainid, for cross-chain domain-separation tests
+    /// @notice Referral leaf (pool 0) with explicit chainid, for cross-chain domain-separation tests
     function _makeReferralLeafForChain(
         uint256 chainid,
         uint256 campaignId,
@@ -181,7 +189,19 @@ contract ReferralDistributorTest is Test {
         address token,
         uint256 amount
     ) internal pure returns (bytes32) {
-        return keccak256(bytes.concat(keccak256(abi.encode(chainid, campaignId, referrer, token, amount))));
+        return _makeReferralLeafForPool(chainid, campaignId, 0, referrer, token, amount);
+    }
+
+    /// @notice Referral leaf with explicit chainid and pool index
+    function _makeReferralLeafForPool(
+        uint256 chainid,
+        uint256 campaignId,
+        uint256 poolIndex,
+        address referrer,
+        address token,
+        uint256 amount
+    ) internal pure returns (bytes32) {
+        return keccak256(bytes.concat(keccak256(abi.encode(chainid, campaignId, poolIndex, referrer, token, amount))));
     }
 
     /// @notice Double-hashed, domain-separated reward leaf (the campaign's v2 claim format)
@@ -224,14 +244,15 @@ contract ReferralDistributorTest is Test {
         vm.prank(address(manager));
         vm.expectEmit(true, true, true, true);
         emit ReferralDistributor.ReferralDistributorInitialized(
-            address(manager), address(campaign), campaignId, address(rewardToken), REFERRAL_POOL, CLAIM_WINDOW
+            address(manager), address(campaign), campaignId, 0, address(rewardToken), REFERRAL_POOL, CLAIM_WINDOW
         );
-        dist.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
+        dist.initialize(address(campaign), campaignId, 0, address(rewardToken), REFERRAL_POOL, CLAIM_WINDOW);
 
         assertEq(dist.timeBasedIncentiveManager(), address(manager), "Manager should be set");
         assertEq(dist.campaign(), address(campaign), "Campaign should be set");
         assertEq(dist.campaignId(), campaignId, "Campaign ID should be set");
-        assertEq(dist.referralToken(), address(rewardToken), "Referral token should come from the campaign");
+        assertEq(dist.poolIndex(), 0, "Pool index should be set");
+        assertEq(dist.referralToken(), address(rewardToken), "Referral token should be set");
         assertEq(dist.referralPool(), REFERRAL_POOL, "Referral pool should be set");
         assertEq(dist.claimWindowDuration(), CLAIM_WINDOW, "Claim window duration should be set");
         assertEq(dist.claimWindowEnd(), 0, "Claim window should not have started");
@@ -244,7 +265,7 @@ contract ReferralDistributorTest is Test {
         ReferralDistributor dist = ReferralDistributor(LibClone.clone(address(distributorImpl)));
         vm.prank(RANDO);
         vm.expectRevert(ReferralDistributor.OnlyTimeBasedIncentiveManager.selector);
-        dist.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
+        dist.initialize(address(campaign), campaignId, 0, address(rewardToken), REFERRAL_POOL, CLAIM_WINDOW);
     }
 
     function test_Initialize_RevertZeroClaimWindow() public {
@@ -253,7 +274,27 @@ contract ReferralDistributorTest is Test {
         ReferralDistributor dist = ReferralDistributor(LibClone.clone(address(distributorImpl)));
         vm.prank(address(manager));
         vm.expectRevert(ReferralDistributor.InvalidClaimWindow.selector);
-        dist.initialize(address(campaign), campaignId, REFERRAL_POOL, 0);
+        dist.initialize(address(campaign), campaignId, 0, address(rewardToken), REFERRAL_POOL, 0);
+    }
+
+    function test_Initialize_RevertZeroToken() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaign();
+
+        ReferralDistributor dist = ReferralDistributor(LibClone.clone(address(distributorImpl)));
+        vm.prank(address(manager));
+        vm.expectRevert(ReferralDistributor.InvalidReferralToken.selector);
+        dist.initialize(address(campaign), campaignId, 0, address(0), REFERRAL_POOL, CLAIM_WINDOW);
+    }
+
+    function test_Initialize_AnyTokenAndPoolIndex() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaign();
+        MockERC20 bonusToken = new MockERC20();
+
+        ReferralDistributor dist = _deployDistributorAt(campaignId, address(campaign), 3, bonusToken);
+
+        assertEq(dist.poolIndex(), 3, "Pool index need not be 0");
+        assertEq(dist.referralToken(), address(bonusToken), "Token need not be the campaign's reward token");
+        assertEq(dist.LEAF_VERSION(), 2, "Pool-indexed leaves are version 2");
     }
 
     function test_Initialize_RevertWhenAlreadyInitialized() public {
@@ -262,7 +303,7 @@ contract ReferralDistributorTest is Test {
 
         vm.prank(address(manager));
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        dist.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
+        dist.initialize(address(campaign), campaignId, 0, address(rewardToken), REFERRAL_POOL, CLAIM_WINDOW);
     }
 
     function test_Initialize_RevertOnImplementation() public {
@@ -270,7 +311,7 @@ contract ReferralDistributorTest is Test {
 
         vm.prank(address(manager));
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        distributorImpl.initialize(address(campaign), campaignId, REFERRAL_POOL, CLAIM_WINDOW);
+        distributorImpl.initialize(address(campaign), campaignId, 0, address(rewardToken), REFERRAL_POOL, CLAIM_WINDOW);
     }
 
     ////////////////////////////////
@@ -599,6 +640,31 @@ contract ReferralDistributorTest is Test {
         assertEq(rewardToken.balanceOf(REFERRER), 0.4 ether, "Local-chain leaf should validate");
     }
 
+    function test_ClaimReferral_LeafBoundToPoolIndex() public {
+        // A distributor at pool index 1 rejects the same entitlement encoded for pool 0
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaign();
+        _finalize(campaignId, campaign);
+        ReferralDistributor dist = _deployDistributorAt(campaignId, address(campaign), 1, rewardToken);
+        bytes32[] memory proof = new bytes32[](0);
+
+        bytes32 pool0Leaf = _makeReferralLeaf(campaignId, REFERRER, address(rewardToken), 0.4 ether);
+        vm.prank(address(manager));
+        dist.setReferralRoot(pool0Leaf, 0.4 ether);
+
+        vm.prank(address(manager));
+        vm.expectRevert(ReferralDistributor.InvalidProof.selector);
+        dist.claimReferral(REFERRER, 0.4 ether, proof);
+
+        bytes32 pool1Leaf =
+            _makeReferralLeafForPool(block.chainid, campaignId, 1, REFERRER, address(rewardToken), 0.4 ether);
+        vm.prank(address(manager));
+        dist.setReferralRoot(pool1Leaf, 0.4 ether);
+
+        vm.prank(address(manager));
+        dist.claimReferral(REFERRER, 0.4 ether, proof);
+        assertEq(rewardToken.balanceOf(REFERRER), 0.4 ether, "Leaf for this pool index should validate");
+    }
+
     function test_ClaimReferral_RevertWhenExceedingCommitment() public {
         (,, ReferralDistributor dist) = _createFinalizedWithDistributor();
 
@@ -620,30 +686,31 @@ contract ReferralDistributorTest is Test {
         // wrapper on transfer, the only path into the distributor
         manager.setReferralDistributorImplementation(address(distributorImpl));
         ReentrantERC20 evilToken = new ReentrantERC20();
-        evilToken.mint(address(this), 10 ether);
-        evilToken.approve(address(manager), 10 ether);
+        evilToken.mint(address(this), 10.25 ether);
+        evilToken.approve(address(manager), 10.25 ether);
 
         uint64 startTime = uint64(block.timestamp + 1 hours);
         uint64 endTime = uint64(block.timestamp + 30 days);
-        uint256 campaignId = manager.createCampaignDirect(
-            keccak256("evil"), address(evilToken), 10 ether, startTime, endTime, manager.MAX_REFERRAL_FEE_BPS()
-        );
+        TimeBasedIncentiveManager.ReferralPoolParams[] memory pools =
+            new TimeBasedIncentiveManager.ReferralPoolParams[](1);
+        pools[0] = TimeBasedIncentiveManager.ReferralPoolParams({token: address(evilToken), amount: 0.25 ether});
+        uint256 campaignId =
+            manager.createCampaignDirect(keccak256("evil"), address(evilToken), 10 ether, startTime, endTime, pools);
         TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
-        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId));
+        ReferralDistributor dist = ReferralDistributor(manager.getReferralDistributor(campaignId, 0));
         _finalize(campaignId, campaign);
 
-        // 10 ether * 10% protocol fee * 25% referral = 0.25 ether pool
-        assertEq(dist.referralPool(), 0.25 ether, "Pool should be the referral slice of the fee");
+        assertEq(dist.referralPool(), 0.25 ether, "Pool should be the referral amount funded at creation");
         bytes32 leaf1 = _makeReferralLeaf(campaignId, REFERRER, address(evilToken), 0.1 ether);
         bytes32 leaf2 = _makeReferralLeaf(campaignId, REFERRER2, address(evilToken), 0.1 ether);
         bytes32[] memory proof1 = new bytes32[](1);
         proof1[0] = leaf2;
 
         vm.prank(OPERATOR);
-        manager.setReferralRoot(campaignId, _hashPair(leaf1, leaf2), 0.2 ether);
+        manager.setReferralRoot(campaignId, 0, _hashPair(leaf1, leaf2), 0.2 ether);
 
         evilToken.arm(manager, campaignId, REFERRER, 0.1 ether, proof1);
-        manager.claimReferral(campaignId, REFERRER, 0.1 ether, proof1);
+        manager.claimReferral(campaignId, 0, REFERRER, 0.1 ether, proof1);
 
         assertTrue(evilToken.reenterAttempted(), "Token should have attempted reentry");
         assertFalse(evilToken.reenterSucceeded(), "Reentrant claim should have reverted");

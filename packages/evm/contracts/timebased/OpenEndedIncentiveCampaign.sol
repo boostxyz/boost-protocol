@@ -384,11 +384,25 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
         withdrawable = balance > owed ? balance - owed : 0;
     }
 
-    /// @notice Calculate how much is still owed to users (respects claim expiry)
-    /// @return The amount still owed, or 0 if the claim window has expired
+    /// @notice Calculate how much is still reserved for users (respects the claim window)
+    /// @return The amount still owed, or 0 once the claim window has expired
     function _stillOwed() internal view returns (uint256) {
-        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) return 0;
+        if (_claimWindowExpired()) return 0;
         return totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+    }
+
+    /// @notice Whether the claim window has expired, ending the reservation of owed funds
+    function _claimWindowExpired() internal view returns (bool) {
+        return block.timestamp > uint256(endTime) + uint256(claimExpiryDuration);
+    }
+
+    /// @notice Record the deposits a withdrawal returns, excluding tokens sent to the contract directly
+    /// @dev Can't underflow: claims are capped at totalCommitted, withdrawals only take what isn't
+    ///      owed, and top-ups stop at finalization, before any withdrawal
+    function _recordWithdrawal(uint256 owed) internal returns (uint256 returned) {
+        uint256 deposits = totalRewards - totalClaimed - totalWithdrawn;
+        returned = deposits > owed ? deposits - owed : 0;
+        totalWithdrawn += returned;
     }
 
     /// @notice Set the campaign end time (for emergency cancellation)

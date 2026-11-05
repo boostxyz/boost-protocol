@@ -63,11 +63,14 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @notice Running total of all claimed amounts
     uint256 public totalClaimed;
 
-    /// @notice Duration after endTime during which claims are still valid
+    /// @notice Duration after endTime during which unclaimed rewards stay reserved for users
     uint64 public claimExpiryDuration;
 
     /// @notice Whether the final reward state has been published (unlocks withdrawals)
     bool public finalized;
+
+    /// @notice Whether claims are closed (set by the first withdrawal after the claim window)
+    bool public claimsClosed;
 
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
@@ -75,6 +78,10 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @notice Flow rate in reward-token base units per second, scaled by EMISSION_PRECISION
     /// @dev Set once at initialization and never changed. The manager rejects a zero rate
     uint256 public emissionRate;
+
+    /// @notice Deposited rewards returned to the funder by withdrawals; tokens sent to the
+    ///         contract directly are not counted
+    uint256 public totalWithdrawn;
 
     /// @notice Emitted when the campaign is initialized
     event CampaignInitialized(

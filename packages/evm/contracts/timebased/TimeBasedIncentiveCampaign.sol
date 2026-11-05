@@ -49,14 +49,21 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Running total of all claimed amounts
     uint256 public totalClaimed;
 
-    /// @notice Duration after endTime during which claims are still valid
+    /// @notice Duration after endTime during which unclaimed rewards stay reserved for users
     uint64 public claimExpiryDuration;
 
     /// @notice Whether the final reward state has been published (unlocks withdrawals)
     bool public finalized;
 
+    /// @notice Whether claims are closed (set by the first withdrawal after the claim window)
+    bool public claimsClosed;
+
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
+
+    /// @notice Deposited rewards returned to the funder by withdrawals; tokens sent to the
+    ///         contract directly are not counted
+    uint256 public totalWithdrawn;
 
     /// @notice Emitted when the campaign is initialized
     event CampaignInitialized(

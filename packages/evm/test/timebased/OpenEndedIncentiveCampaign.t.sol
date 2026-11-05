@@ -9,6 +9,7 @@ import {LibClone} from "@solady/utils/LibClone.sol";
 import {MockERC20} from "contracts/shared/Mocks.sol";
 import {ABudget} from "contracts/budgets/ABudget.sol";
 import {ManagedBudget} from "contracts/budgets/ManagedBudget.sol";
+import {AIncentive} from "contracts/incentives/AIncentive.sol";
 import {OpenEndedIncentiveCampaign} from "contracts/timebased/OpenEndedIncentiveCampaign.sol";
 import {ReferralDistributor} from "contracts/timebased/ReferralDistributor.sol";
 import {TBIProtocolFeeModule} from "contracts/timebased/TBIProtocolFeeModule.sol";

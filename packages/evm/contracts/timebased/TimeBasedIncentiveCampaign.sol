@@ -239,10 +239,10 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         onlyTimeBasedIncentiveManager
         returns (uint256 amount)
     {
-        // Check the campaign has started and the claim window hasn't expired; as in
+        // Check the campaign has started and claims haven't been closed; as in
         // setMerkleRoot, the endTime clause admits campaigns cancelled before their start
         if (block.timestamp < startTime && block.timestamp < endTime) revert CampaignNotStarted();
-        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) revert ClaimExpired();
+        if (claimsClosed) revert ClaimsClosed();
 
         // Verify merkle proof
         if (merkleRoot == bytes32(0)) revert InvalidProof();

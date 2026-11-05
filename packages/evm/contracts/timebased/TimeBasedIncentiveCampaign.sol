@@ -308,18 +308,23 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         if (block.timestamp <= endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
 
         AIncentive.ClawbackPayload memory payload = abi.decode(data_, (AIncentive.ClawbackPayload));
-        amount = abi.decode(payload.data, (uint256));
+        uint256 requested = abi.decode(payload.data, (uint256));
         asset = rewardToken;
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
         uint256 available = balance > owed ? balance - owed : 0;
 
-        if (amount > available) revert InsufficientBalance();
+        if (available == 0) revert NothingToWithdraw();
+        if (requested > available) revert InsufficientBalance();
+        if (requested < available) revert PartialWithdrawal();
 
-        SafeTransferLib.safeTransfer(rewardToken, payload.target, amount);
+        amount = _recordWithdrawal(owed);
+        if (_claimWindowExpired()) claimsClosed = true;
 
-        emit UndistributedWithdrawn(amount, payload.target);
+        SafeTransferLib.safeTransfer(rewardToken, payload.target, available);
+
+        emit UndistributedWithdrawn(available, payload.target);
     }
 
     /// @notice Get the amount available to withdraw (not owed to users)

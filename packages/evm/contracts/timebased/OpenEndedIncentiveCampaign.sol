@@ -181,7 +181,7 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @param totalRewards_ Initial rewards after protocol fee
     /// @param startTime_ Campaign start timestamp
     /// @param endTime_ Maximum campaign end timestamp
-    /// @param claimExpiryDuration_ Duration after endTime during which claims are valid
+    /// @param claimExpiryDuration_ Duration after endTime during which unclaimed rewards stay reserved
     /// @param emissionRate_ Flow rate in base units per second, scaled by EMISSION_PRECISION
     function initialize(
         address timeBasedIncentiveManager_,
@@ -347,7 +347,7 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @param data_ The encoded ClawbackPayload
     /// @param boostId Unused, for interface compatibility
     /// @param incentiveId Unused, for interface compatibility
-    /// @return amount The amount clawed back
+    /// @return amount The deposited rewards returned, which is what the budget books
     /// @return asset The asset address
     function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId)
         external

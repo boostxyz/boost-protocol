@@ -2611,13 +2611,13 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Clawback_Success() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-        uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
+        uint256 clawbackAmount = campaign.getWithdrawable();
 
         // Encode ClawbackPayload: target is budget, data is encoded amount
         AIncentive.ClawbackPayload memory payload =
@@ -3022,10 +3022,10 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Clawback_EmitsUndistributedWithdrawn() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-        uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("final"), 0, true);
+        uint256 clawbackAmount = campaign.getWithdrawable();
 
         AIncentive.ClawbackPayload memory payload =
             AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(clawbackAmount)});

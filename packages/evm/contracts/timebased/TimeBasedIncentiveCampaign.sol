@@ -104,6 +104,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when clawback amount exceeds available balance
     error InsufficientBalance();
 
+    /// @notice Error when clawback amount is less than the full available balance
+    error PartialWithdrawal();
+
     /// @notice Error when new end time is after current end time
     error InvalidEndTime();
 

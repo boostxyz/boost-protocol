@@ -1037,7 +1037,24 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         assertEq(rewardToken.balanceOf(CLAIMER), total);
     }
 
-    function test_ClaimExpiry_ClaimRevertsThenFullWithdraw() public {
+    function test_ClaimExpiry_ClaimSucceedsAfterExpiryUntilWithdrawn() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
+        vm.warp(campaign.startTime());
+
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, 3 ether);
+        manager.updateRoot(campaignId, leaf, 3 ether, false);
+
+        vm.warp(uint256(campaign.endTime()) + 60 days + 1);
+        manager.updateRoot(campaignId, leaf, 3 ether, true);
+        assertEq(manager.getWithdrawable(campaignId), 9 ether, "Unclaimed entitlements are withdrawable");
+
+        manager.claim(campaignId, CLAIMER, 3 ether, new bytes32[](0));
+        assertEq(rewardToken.balanceOf(CLAIMER), 3 ether, "Claim should succeed after the window");
+        assertFalse(campaign.claimsClosed(), "Claims stay open without a withdrawal");
+        assertEq(manager.getWithdrawable(campaignId), 6 ether, "Withdrawable shrinks by the claim");
+    }
+
+    function test_ClaimExpiry_WithdrawAfterExpiryClosesClaims() public {
         (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
         vm.warp(campaign.startTime());
 
@@ -1047,13 +1064,93 @@ contract OpenEndedIncentiveCampaignTest is OpenEndedFixture {
         vm.warp(uint256(campaign.endTime()) + 60 days + 1);
         manager.updateRoot(campaignId, leaf, 3 ether, true);
 
-        vm.expectRevert(OpenEndedIncentiveCampaign.ClaimExpired.selector);
-        manager.claim(campaignId, CLAIMER, 3 ether, new bytes32[](0));
-
-        assertEq(manager.getWithdrawable(campaignId), 9 ether, "Expired entitlements are withdrawable");
         vm.prank(CREATOR);
         manager.withdraw(campaignId);
         assertEq(rewardToken.balanceOf(address(campaign)), 0);
+        assertTrue(campaign.claimsClosed(), "Post-window withdrawal should close claims");
+
+        rewardToken.mint(address(campaign), 3 ether);
+        vm.expectRevert(OpenEndedIncentiveCampaign.ClaimsClosed.selector);
+        manager.claim(campaignId, CLAIMER, 3 ether, new bytes32[](0));
+    }
+
+    function test_ClaimExpiry_SurplusWithdrawInsideWindowKeepsClaimsOpen() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
+        vm.warp(campaign.startTime());
+
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, 3 ether);
+        manager.updateRoot(campaignId, leaf, 3 ether, false);
+
+        vm.warp(uint256(campaign.endTime()) + 1);
+        manager.updateRoot(campaignId, leaf, 3 ether, true);
+
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertFalse(campaign.claimsClosed(), "Surplus withdrawal must not close claims");
+        assertEq(rewardToken.balanceOf(address(campaign)), 3 ether, "Owed funds should remain");
+
+        vm.warp(uint256(campaign.endTime()) + 60 days + 1);
+        manager.claim(campaignId, CLAIMER, 3 ether, new bytes32[](0));
+        assertEq(rewardToken.balanceOf(CLAIMER), 3 ether, "Owed funds should be claimable after the window");
+    }
+
+    function test_Clawback_RevertPartialWithdrawal() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
+        vm.warp(campaign.startTime());
+
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, 3 ether);
+        manager.updateRoot(campaignId, leaf, 3 ether, false);
+
+        vm.warp(uint256(campaign.endTime()) + 60 days + 1);
+        manager.updateRoot(campaignId, leaf, 3 ether, true);
+
+        uint256 available = campaign.getWithdrawable();
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(available - 1)});
+        vm.prank(address(budget));
+        vm.expectRevert(OpenEndedIncentiveCampaign.PartialWithdrawal.selector);
+        campaign.clawback(abi.encode(payload), 0, 0);
+    }
+
+    function test_Withdraw_DonationDoesNotBlockBudgetRefund() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
+        vm.warp(uint256(campaign.endTime()) + 60 days + 1);
+        manager.updateRoot(campaignId, bytes32(0), 0, true);
+
+        // One wei more than the budget's headroom
+        uint256 distributedBefore = budget.distributed(address(rewardToken));
+        rewardToken.mint(address(campaign), distributedBefore - campaign.getWithdrawable() + 1);
+
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+        uint256 campaignBalance = rewardToken.balanceOf(address(campaign));
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(
+            rewardToken.balanceOf(address(budget)), budgetBalanceBefore + campaignBalance, "Budget gets everything"
+        );
+        assertEq(campaign.totalWithdrawn(), campaign.totalRewards(), "Only deposits are booked");
+        assertEq(budget.distributed(address(rewardToken)), distributedBefore - campaign.totalRewards());
+        assertTrue(campaign.claimsClosed(), "Post-window withdrawal should close claims");
+    }
+
+    function test_Withdraw_TopUpAndDonationBookOnlyDeposits() public {
+        (uint256 campaignId, OpenEndedIncentiveCampaign campaign) = _create(0);
+        vm.warp(campaign.startTime());
+        _topUp(campaignId, 10 ether);
+        rewardToken.mint(address(campaign), 1 ether);
+        uint256 distributedBefore = budget.distributed(address(rewardToken));
+
+        vm.warp(uint256(campaign.endTime()) + 60 days + 1);
+        manager.updateRoot(campaignId, bytes32(0), 0, true);
+
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(campaign.totalWithdrawn(), campaign.totalRewards(), "Initial funding and top-up are booked");
+        assertEq(budget.distributed(address(rewardToken)), distributedBefore - campaign.totalRewards());
+        assertEq(rewardToken.balanceOf(address(budget)), budgetBalanceBefore + campaign.totalRewards() + 1 ether);
     }
 
     ////////////////////////////////

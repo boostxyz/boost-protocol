@@ -283,6 +283,9 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
         amount = balance > owed ? balance - owed : 0;
         if (amount == 0) revert NothingToWithdraw();
 
+        _recordWithdrawal(owed);
+        if (_claimWindowExpired()) claimsClosed = true;
+
         SafeTransferLib.safeTransfer(rewardToken, to, amount);
         emit UndistributedWithdrawn(amount, to);
     }

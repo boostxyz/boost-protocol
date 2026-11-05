@@ -116,8 +116,8 @@ contract TimeBasedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when merkle proof is invalid
     error InvalidProof();
 
-    /// @notice Error when the claim window has expired
-    error ClaimExpired();
+    /// @notice Error when claims were closed by a withdrawal after the claim window
+    error ClaimsClosed();
 
     /// @notice Error when there is nothing to claim
     error NothingToClaim();

@@ -1848,15 +1848,19 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.claim(campaignId, CLAIMER, 1 ether, proof1);
         assertEq(rewardToken.balanceOf(CLAIMER), 1 ether, "Pre-start claim on cancelled campaign should pay out");
 
-        // After the claim window expires (still before original startTime), claims are
-        // expired — not gated on start — and the remainder becomes withdrawable
+        // After the claim window expires (still before original startTime), the remainder
+        // becomes withdrawable — not gated on start — and the withdrawal closes claims
         vm.warp(cancelTime + campaign.claimExpiryDuration() + 1);
         assertLt(block.timestamp, startTime, "Expiry elapses before original startTime");
+        assertEq(campaign.getWithdrawable(), 8 ether, "Unclaimed committed funds sweep after expiry");
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertTrue(campaign.claimsClosed(), "Post-window withdrawal should close claims");
+
         bytes32[] memory proof2 = new bytes32[](1);
         proof2[0] = leaf1;
-        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExpired.selector);
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimsClosed.selector);
         manager.claim(campaignId, CLAIMER2, 1 ether, proof2);
-        assertEq(campaign.getWithdrawable(), 8 ether, "Unclaimed committed funds sweep after expiry");
     }
 
     function test_Claim_RevertBeforeStartTime() public {
@@ -2607,13 +2611,13 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Clawback_Success() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-        uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("final"), 0, true);
 
         uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
         uint256 campaignBalanceBefore = rewardToken.balanceOf(address(campaign));
+        uint256 clawbackAmount = campaign.getWithdrawable();
 
         // Encode ClawbackPayload: target is budget, data is encoded amount
         AIncentive.ClawbackPayload memory payload =
@@ -3018,10 +3022,10 @@ contract TimeBasedIncentiveManagerTest is Test {
 
     function test_Clawback_EmitsUndistributedWithdrawn() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
-        uint256 clawbackAmount = 1 ether;
 
         vm.warp(campaign.endTime() + 1);
         manager.updateRoot(campaignId, keccak256("final"), 0, true);
+        uint256 clawbackAmount = campaign.getWithdrawable();
 
         AIncentive.ClawbackPayload memory payload =
             AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(clawbackAmount)});
@@ -3171,7 +3175,7 @@ contract TimeBasedIncentiveManagerTest is Test {
         assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed before expiry");
     }
 
-    function test_ClaimExpiry_ClaimRevertsAfterExpiry() public {
+    function test_ClaimExpiry_ClaimSucceedsAfterExpiryUntilWithdrawn() public {
         (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
         uint256 claimAmount = 1 ether;
 
@@ -3180,11 +3184,411 @@ contract TimeBasedIncentiveManagerTest is Test {
         bytes32[] memory proof = new bytes32[](0);
         manager.updateRoot(campaignId, root, claimAmount, false);
 
-        // Warp to endTime + 61 days (past 60-day expiry window)
-        vm.warp(campaign.endTime() + 61 days);
+        vm.warp(campaign.endTime() + 365 days);
+        manager.updateRoot(campaignId, root, claimAmount, true);
 
-        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimExpired.selector);
         manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Claim should succeed after the window");
+        assertFalse(campaign.claimsClosed(), "Claims stay open without a withdrawal");
+
+        assertEq(manager.getWithdrawable(campaignId), 9 ether - claimAmount, "Withdrawable shrinks by the claim");
+    }
+
+    function test_ClaimExpiry_WithdrawAfterExpiryClosesClaims() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        vm.warp(campaign.endTime() + 61 days);
+        manager.updateRoot(campaignId, root, claimAmount, true);
+
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertTrue(campaign.claimsClosed(), "Post-window withdrawal should close claims");
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Withdrawal should take the full balance");
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimsClosed.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_ClaimExpiry_TransferAfterCloseDoesNotReopenClaims() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 1 ether;
+
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        vm.warp(campaign.endTime() + 61 days);
+        manager.updateRoot(campaignId, root, claimAmount, true);
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        rewardToken.mint(address(campaign), claimAmount);
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimsClosed.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_ClaimExpiry_SurplusWithdrawInsideWindowKeepsClaimsOpen() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 claimAmount = 5 ether;
+
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
+        bytes32 root = leaf;
+        bytes32[] memory proof = new bytes32[](0);
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, root, claimAmount, true);
+
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertFalse(campaign.claimsClosed(), "Surplus withdrawal must not close claims");
+        assertEq(rewardToken.balanceOf(address(campaign)), claimAmount, "Owed funds should remain");
+
+        vm.warp(campaign.endTime() + 61 days);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+        assertEq(rewardToken.balanceOf(CLAIMER), claimAmount, "Owed funds should be claimable after the window");
+    }
+
+    function test_ClaimExpiry_DirectFundedWithdrawAfterExpiryClosesClaims() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+        vm.warp(startTime);
+
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+        uint256 claimAmount = 1 ether;
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), claimAmount);
+        bytes32[] memory proof = new bytes32[](0);
+
+        vm.warp(endTime + 61 days);
+        manager.updateRoot(campaignId, leaf, claimAmount, true);
+
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertTrue(campaign.claimsClosed(), "withdrawTo after the window should close claims");
+
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimsClosed.selector);
+        manager.claim(campaignId, CLAIMER, claimAmount, proof);
+    }
+
+    function test_Clawback_RevertPartialWithdrawal() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 totalCommitted = 5 ether;
+
+        vm.warp(campaign.endTime() + 1);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
+        manager.updateRoot(campaignId, leaf, totalCommitted, true);
+
+        uint256 available = campaign.getWithdrawable();
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(available - 1)});
+        vm.prank(address(budget));
+        vm.expectRevert(TimeBasedIncentiveCampaign.PartialWithdrawal.selector);
+        campaign.clawback(abi.encode(payload), 0, 0);
+
+        vm.warp(campaign.endTime() + 61 days);
+        available = campaign.getWithdrawable();
+        payload = AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(available - 1)});
+        vm.prank(address(budget));
+        vm.expectRevert(TimeBasedIncentiveCampaign.PartialWithdrawal.selector);
+        campaign.clawback(abi.encode(payload), 0, 0);
+        assertFalse(campaign.claimsClosed(), "A reverted partial withdrawal leaves claims open");
+    }
+
+    function test_Clawback_RevertNothingToWithdraw() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 totalCommitted = campaign.totalRewards();
+
+        vm.warp(campaign.endTime() + 1);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), totalCommitted);
+        manager.updateRoot(campaignId, leaf, totalCommitted, true);
+
+        AIncentive.ClawbackPayload memory payload =
+            AIncentive.ClawbackPayload({target: address(budget), data: abi.encode(0)});
+        vm.prank(address(budget));
+        vm.expectRevert(TimeBasedIncentiveCampaign.NothingToWithdraw.selector);
+        campaign.clawback(abi.encode(payload), 0, 0);
+    }
+
+    function test_Withdraw_DonationDoesNotBlockBudgetRefund() public {
+        // Zero fee and one campaign: the budget has no headroom for even a 1-wei donation
+        manager.setProtocolFee(0);
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        assertEq(budget.distributed(address(rewardToken)), 10 ether, "Only the deposit is distributed");
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+
+        rewardToken.mint(address(campaign), 1);
+
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(
+            rewardToken.balanceOf(address(budget)),
+            budgetBalanceBefore + 10 ether + 1,
+            "Budget receives the deposit and the donation"
+        );
+        assertEq(budget.distributed(address(rewardToken)), 0, "Only the deposit is booked");
+        assertEq(campaign.totalWithdrawn(), 10 ether, "totalWithdrawn excludes the donation");
+    }
+
+    function test_Withdraw_DonationsAcrossSurplusThenFullWithdrawal() public {
+        manager.setProtocolFee(0);
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 committed = 5 ether;
+
+        vm.warp(campaign.endTime() + 1);
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), committed);
+        manager.updateRoot(campaignId, leaf, committed, true);
+
+        rewardToken.mint(address(campaign), 1);
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertEq(rewardToken.balanceOf(address(campaign)), committed, "Owed funds should remain");
+        assertEq(budget.distributed(address(rewardToken)), committed, "Only the surplus deposit is booked");
+        assertFalse(campaign.claimsClosed(), "Surplus withdrawal must not close claims");
+
+        vm.warp(campaign.endTime() + 61 days);
+        rewardToken.mint(address(campaign), 1);
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertEq(budget.distributed(address(rewardToken)), 0, "Every deposit is booked back, donations are not");
+        assertEq(campaign.totalWithdrawn(), 10 ether, "totalWithdrawn covers both withdrawals");
+        assertTrue(campaign.claimsClosed(), "Post-window withdrawal should close claims");
+    }
+
+    function test_Withdraw_BookingCountsEarlierClaims() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        bytes32 leaf1 = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 2 ether);
+        bytes32 leaf2 = _makeLeaf(address(campaign), CLAIMER2, address(rewardToken), 3 ether);
+        bytes32 root =
+            leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
+        bytes32[] memory proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, root, 5 ether, true);
+        manager.claim(campaignId, CLAIMER, 2 ether, proof1);
+        rewardToken.mint(address(campaign), 1);
+        uint256 distributedBefore = budget.distributed(address(rewardToken));
+
+        // Deposits 9, claimed 2, owed 3: the surplus withdrawal books 4 and returns the donation unbooked
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.Withdrawn(campaignId, 4 ether, address(budget));
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertEq(rewardToken.balanceOf(address(campaign)), 3 ether, "Owed funds should remain");
+
+        vm.warp(campaign.endTime() + 61 days);
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.Withdrawn(campaignId, 3 ether, address(budget));
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(campaign.totalClaimed() + campaign.totalWithdrawn(), campaign.totalRewards());
+        assertEq(budget.distributed(address(rewardToken)), distributedBefore - 7 ether);
+    }
+
+    function test_Withdraw_DonationAfterClaimsCloseBooksNothing() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        vm.warp(campaign.endTime() + 61 days);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        uint256 distributedBefore = budget.distributed(address(rewardToken));
+        uint256 budgetBalanceBefore = rewardToken.balanceOf(address(budget));
+        rewardToken.mint(address(campaign), 1 ether);
+
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.Withdrawn(campaignId, 0, address(budget));
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(rewardToken.balanceOf(address(budget)), budgetBalanceBefore + 1 ether, "Donation is returned");
+        assertEq(budget.distributed(address(rewardToken)), distributedBefore, "Donation is not booked");
+        assertTrue(campaign.claimsClosed());
+    }
+
+    function test_Withdraw_DirectFundedSendsDonationToCreator() public {
+        uint256 totalAmount = 10 ether;
+        uint64 startTime = uint64(block.timestamp + 1 hours);
+        uint64 endTime = uint64(block.timestamp + 30 days);
+
+        rewardToken.mint(CREATOR, totalAmount);
+        vm.prank(CREATOR);
+        rewardToken.approve(address(manager), totalAmount);
+        vm.prank(CREATOR);
+        uint256 campaignId = manager.createCampaignDirect(
+            keccak256("test-direct"), address(rewardToken), totalAmount, startTime, endTime
+        );
+        TimeBasedIncentiveCampaign campaign = TimeBasedIncentiveCampaign(manager.getCampaign(campaignId));
+
+        vm.warp(endTime + 1);
+        manager.updateRoot(campaignId, keccak256("final"), 0, true);
+        rewardToken.mint(address(campaign), 1 ether);
+        uint256 deposits = campaign.totalRewards();
+        uint256 creatorBalanceBefore = rewardToken.balanceOf(CREATOR);
+
+        vm.expectEmit(true, true, true, true, address(manager));
+        emit TimeBasedIncentiveManager.Withdrawn(campaignId, deposits + 1 ether, CREATOR);
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+
+        assertEq(rewardToken.balanceOf(CREATOR), creatorBalanceBefore + deposits + 1 ether);
+        assertEq(campaign.totalWithdrawn(), deposits, "totalWithdrawn excludes the donation");
+    }
+
+    function test_ClaimExpiry_WithdrawAtWindowBoundary() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 committed = 5 ether;
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), committed);
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, leaf, committed, true);
+
+        vm.warp(uint256(campaign.endTime()) + campaign.claimExpiryDuration());
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertEq(rewardToken.balanceOf(address(campaign)), committed, "Owed funds stay reserved at the boundary");
+        assertFalse(campaign.claimsClosed());
+
+        vm.warp(block.timestamp + 1);
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertEq(rewardToken.balanceOf(address(campaign)), 0);
+        assertTrue(campaign.claimsClosed());
+    }
+
+    function test_ClaimExpiry_EmptyWithdrawalAfterWindowDoesNotCloseClaims() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 committed = campaign.totalRewards();
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), committed);
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, leaf, committed, true);
+        manager.claim(campaignId, CLAIMER, committed, new bytes32[](0));
+
+        vm.warp(campaign.endTime() + 61 days);
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
+        manager.withdraw(campaignId);
+        assertFalse(campaign.claimsClosed());
+    }
+
+    function test_ClaimExpiry_CancelAfterEarlyFinalizationKeepsOwedReserved() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        uint256 committed = campaign.totalRewards();
+        bytes32 leaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), committed);
+        manager.updateRoot(campaignId, leaf, committed, true);
+
+        vm.prank(CREATOR);
+        manager.cancelCampaign(campaignId);
+        uint256 cancelTime = block.timestamp;
+
+        vm.warp(cancelTime + campaign.claimExpiryDuration());
+        vm.prank(CREATOR);
+        vm.expectRevert(TimeBasedIncentiveManager.ZeroAmount.selector);
+        manager.withdraw(campaignId);
+
+        vm.warp(cancelTime + campaign.claimExpiryDuration() + 1);
+        vm.prank(CREATOR);
+        manager.withdraw(campaignId);
+        assertEq(rewardToken.balanceOf(address(campaign)), 0);
+        assertTrue(campaign.claimsClosed());
+    }
+
+    function test_ClaimExpiry_LateFinalizationAfterWindowIsClaimable() public {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        manager.updateRoot(
+            campaignId, _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 1 ether), 1 ether, false
+        );
+
+        vm.warp(campaign.endTime() + 61 days);
+        bytes32 finalLeaf = _makeLeaf(address(campaign), CLAIMER, address(rewardToken), 2 ether);
+        manager.updateRoot(campaignId, finalLeaf, 2 ether, true);
+
+        manager.claim(campaignId, CLAIMER, 2 ether, new bytes32[](0));
+        assertEq(rewardToken.balanceOf(CLAIMER), 2 ether);
+    }
+
+    /// @param steps Bit 0: CLAIMER claims inside the window. Bit 1: surplus withdrawal inside the
+    ///        window. Bit 2: CLAIMER2 claims after the window
+    function testFuzz_ClaimsStayPayableUntilClosed(uint256 amount1, uint256 amount2, uint256 donation, uint8 steps)
+        public
+    {
+        (uint256 campaignId, TimeBasedIncentiveCampaign campaign) = _createCampaignWithRoot();
+        amount1 = bound(amount1, 1, 4.5 ether);
+        amount2 = bound(amount2, 1, 4.5 ether);
+        (bytes32 root, bytes32[] memory proof1, bytes32[] memory proof2) =
+            _twoLeafTree(address(campaign), amount1, amount2);
+
+        vm.warp(campaign.endTime() + 1);
+        manager.updateRoot(campaignId, root, amount1 + amount2, true);
+        uint256 distributedBefore = budget.distributed(address(rewardToken));
+        rewardToken.mint(address(campaign), bound(donation, 0, 20 ether));
+
+        if (steps & 1 != 0) manager.claim(campaignId, CLAIMER, amount1, proof1);
+        _assertCampaignSolvent(campaign);
+
+        if (steps & 2 != 0 && campaign.getWithdrawable() > 0) {
+            vm.prank(CREATOR);
+            manager.withdraw(campaignId);
+            assertFalse(campaign.claimsClosed());
+        }
+        _assertCampaignSolvent(campaign);
+
+        vm.warp(campaign.endTime() + 61 days);
+        if (steps & 4 != 0) manager.claim(campaignId, CLAIMER2, amount2, proof2);
+        _assertCampaignSolvent(campaign);
+
+        if (campaign.getWithdrawable() > 0) {
+            vm.prank(CREATOR);
+            manager.withdraw(campaignId);
+            assertTrue(campaign.claimsClosed());
+            assertEq(rewardToken.balanceOf(address(campaign)), 0);
+            assertEq(campaign.totalClaimed() + campaign.totalWithdrawn(), campaign.totalRewards());
+        }
+        assertEq(budget.distributed(address(rewardToken)), distributedBefore - campaign.totalWithdrawn());
+    }
+
+    function _twoLeafTree(address campaign, uint256 amount1, uint256 amount2)
+        internal
+        view
+        returns (bytes32 root, bytes32[] memory proof1, bytes32[] memory proof2)
+    {
+        bytes32 leaf1 = _makeLeaf(campaign, CLAIMER, address(rewardToken), amount1);
+        bytes32 leaf2 = _makeLeaf(campaign, CLAIMER2, address(rewardToken), amount2);
+        root = leaf1 < leaf2 ? keccak256(abi.encodePacked(leaf1, leaf2)) : keccak256(abi.encodePacked(leaf2, leaf1));
+        proof1 = new bytes32[](1);
+        proof1[0] = leaf2;
+        proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+    }
+
+    function _assertCampaignSolvent(TimeBasedIncentiveCampaign campaign) internal view {
+        assertLe(campaign.totalClaimed() + campaign.totalWithdrawn(), campaign.totalRewards());
+        if (!campaign.claimsClosed()) {
+            assertGe(rewardToken.balanceOf(address(campaign)), campaign.totalCommitted() - campaign.totalClaimed());
+        }
     }
 
     function test_ClaimExpiry_GetWithdrawableReturnZeroDuringCampaign() public {
@@ -3297,6 +3701,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         assertEq(amount, balance, "Should clawback full balance");
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertTrue(campaign.claimsClosed(), "Post-window clawback should close claims");
     }
 
     function test_ClaimExpiry_PartialClaimThenExpiry() public {
@@ -3344,6 +3749,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty after withdraw");
+
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimsClosed.selector);
+        manager.claim(campaignId, CLAIMER2, claimer2Amount, proof2);
     }
 
     function test_SetClaimExpiryDuration_Success() public {

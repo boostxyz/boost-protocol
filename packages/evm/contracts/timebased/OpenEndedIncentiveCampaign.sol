@@ -63,11 +63,14 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @notice Running total of all claimed amounts
     uint256 public totalClaimed;
 
-    /// @notice Duration after endTime during which claims are still valid
+    /// @notice Duration after endTime during which unclaimed rewards stay reserved for users
     uint64 public claimExpiryDuration;
 
     /// @notice Whether the final reward state has been published (unlocks withdrawals)
     bool public finalized;
+
+    /// @notice Whether claims are closed (set by the first withdrawal after the claim window)
+    bool public claimsClosed;
 
     /// @notice Cumulative amount claimed per user
     mapping(address => uint256) public claimed;
@@ -75,6 +78,10 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @notice Flow rate in reward-token base units per second, scaled by EMISSION_PRECISION
     /// @dev Set once at initialization and never changed. The manager rejects a zero rate
     uint256 public emissionRate;
+
+    /// @notice Deposited rewards returned to the funder by withdrawals; tokens sent to the
+    ///         contract directly are not counted
+    uint256 public totalWithdrawn;
 
     /// @notice Emitted when the campaign is initialized
     event CampaignInitialized(
@@ -118,6 +125,9 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when clawback amount exceeds available balance
     error InsufficientBalance();
 
+    /// @notice Error when clawback amount is less than the full available balance
+    error PartialWithdrawal();
+
     /// @notice Error when new end time is after current end time
     error InvalidEndTime();
 
@@ -127,8 +137,8 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @notice Error when merkle proof is invalid
     error InvalidProof();
 
-    /// @notice Error when the claim window has expired
-    error ClaimExpired();
+    /// @notice Error when claims were closed by a withdrawal after the claim window
+    error ClaimsClosed();
 
     /// @notice Error when there is nothing to claim
     error NothingToClaim();
@@ -171,7 +181,7 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @param totalRewards_ Initial rewards after protocol fee
     /// @param startTime_ Campaign start timestamp
     /// @param endTime_ Maximum campaign end timestamp
-    /// @param claimExpiryDuration_ Duration after endTime during which claims are valid
+    /// @param claimExpiryDuration_ Duration after endTime during which unclaimed rewards stay reserved
     /// @param emissionRate_ Flow rate in base units per second, scaled by EMISSION_PRECISION
     function initialize(
         address timeBasedIncentiveManager_,
@@ -285,10 +295,10 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
         onlyTimeBasedIncentiveManager
         returns (uint256 amount)
     {
-        // Check the campaign has started and the claim window hasn't expired; as in
+        // Check the campaign has started and claims haven't been closed; as in
         // setMerkleRoot, the endTime clause admits campaigns cancelled before their start
         if (block.timestamp < startTime && block.timestamp < endTime) revert CampaignNotStarted();
-        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) revert ClaimExpired();
+        if (claimsClosed) revert ClaimsClosed();
 
         // Verify merkle proof
         if (merkleRoot == bytes32(0)) revert InvalidProof();
@@ -329,6 +339,9 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
         amount = balance > owed ? balance - owed : 0;
         if (amount == 0) revert NothingToWithdraw();
 
+        _recordWithdrawal(owed);
+        if (_claimWindowExpired()) claimsClosed = true;
+
         SafeTransferLib.safeTransfer(rewardToken, to, amount);
         emit UndistributedWithdrawn(amount, to);
     }
@@ -337,7 +350,7 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
     /// @param data_ The encoded ClawbackPayload
     /// @param boostId Unused, for interface compatibility
     /// @param incentiveId Unused, for interface compatibility
-    /// @return amount The amount clawed back
+    /// @return amount The deposited rewards returned, which is what the budget books
     /// @return asset The asset address
     function clawback(bytes calldata data_, uint256 boostId, uint256 incentiveId)
         external
@@ -351,18 +364,23 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
         if (block.timestamp <= endTime && totalCommitted < totalRewards) revert CampaignNotEnded();
 
         AIncentive.ClawbackPayload memory payload = abi.decode(data_, (AIncentive.ClawbackPayload));
-        amount = abi.decode(payload.data, (uint256));
+        uint256 requested = abi.decode(payload.data, (uint256));
         asset = rewardToken;
 
         uint256 balance = SafeTransferLib.balanceOf(rewardToken, address(this));
         uint256 owed = _stillOwed();
         uint256 available = balance > owed ? balance - owed : 0;
 
-        if (amount > available) revert InsufficientBalance();
+        if (available == 0) revert NothingToWithdraw();
+        if (requested > available) revert InsufficientBalance();
+        if (requested < available) revert PartialWithdrawal();
 
-        SafeTransferLib.safeTransfer(rewardToken, payload.target, amount);
+        amount = _recordWithdrawal(owed);
+        if (_claimWindowExpired()) claimsClosed = true;
 
-        emit UndistributedWithdrawn(amount, payload.target);
+        SafeTransferLib.safeTransfer(rewardToken, payload.target, available);
+
+        emit UndistributedWithdrawn(available, payload.target);
     }
 
     /// @notice Get the amount available to withdraw (not owed to users)
@@ -374,11 +392,25 @@ contract OpenEndedIncentiveCampaign is Initializable, IClaw {
         withdrawable = balance > owed ? balance - owed : 0;
     }
 
-    /// @notice Calculate how much is still owed to users (respects claim expiry)
-    /// @return The amount still owed, or 0 if the claim window has expired
+    /// @notice Calculate how much is still reserved for users (respects the claim window)
+    /// @return The amount still owed, or 0 once the claim window has expired
     function _stillOwed() internal view returns (uint256) {
-        if (block.timestamp > uint256(endTime) + uint256(claimExpiryDuration)) return 0;
+        if (_claimWindowExpired()) return 0;
         return totalCommitted > totalClaimed ? totalCommitted - totalClaimed : 0;
+    }
+
+    /// @notice Whether the claim window has expired, ending the reservation of owed funds
+    function _claimWindowExpired() internal view returns (bool) {
+        return block.timestamp > uint256(endTime) + uint256(claimExpiryDuration);
+    }
+
+    /// @notice Record the deposits a withdrawal returns, excluding tokens sent to the contract directly
+    /// @dev Can't underflow: claims are capped at totalCommitted, withdrawals only take what isn't
+    ///      owed, and top-ups stop at finalization, before any withdrawal
+    function _recordWithdrawal(uint256 owed) internal returns (uint256 returned) {
+        uint256 deposits = totalRewards - totalClaimed - totalWithdrawn;
+        returned = deposits > owed ? deposits - owed : 0;
+        totalWithdrawn += returned;
     }
 
     /// @notice Set the campaign end time (for emergency cancellation)

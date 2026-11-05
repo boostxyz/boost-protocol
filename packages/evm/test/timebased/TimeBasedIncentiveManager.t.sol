@@ -3701,6 +3701,7 @@ contract TimeBasedIncentiveManagerTest is Test {
 
         assertEq(amount, balance, "Should clawback full balance");
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty");
+        assertTrue(campaign.claimsClosed(), "Post-window clawback should close claims");
     }
 
     function test_ClaimExpiry_PartialClaimThenExpiry() public {
@@ -3748,6 +3749,11 @@ contract TimeBasedIncentiveManagerTest is Test {
         manager.withdraw(campaignId);
 
         assertEq(rewardToken.balanceOf(address(campaign)), 0, "Campaign should be empty after withdraw");
+
+        bytes32[] memory proof2 = new bytes32[](1);
+        proof2[0] = leaf1;
+        vm.expectRevert(TimeBasedIncentiveCampaign.ClaimsClosed.selector);
+        manager.claim(campaignId, CLAIMER2, claimer2Amount, proof2);
     }
 
     function test_SetClaimExpiryDuration_Success() public {

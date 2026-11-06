@@ -15,6 +15,6 @@ jobs:
         with:
           token: ${{ secrets.BOOST_GITHUB_TOKEN }}
       - name: Danger
-        uses: danger/danger-js@9.1.8
+        uses: danger/danger-js@13.0.4
         env:
           GITHUB_TOKEN: ${{ secrets.BOOST_GITHUB_TOKEN }}

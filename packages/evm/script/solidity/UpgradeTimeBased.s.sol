@@ -15,7 +15,9 @@ import {TBIProtocolFeeModule} from "contracts/timebased/TBIProtocolFeeModule.sol
  * @notice Bring an EOA-owned TimeBasedIncentiveManager proxy up to this tree's code with every
  *         feature switched on. This is the new-chain path: run it after Deploy_TimeBased.s.sol
  *         (which deploys the V1 proxy at the shared address).
- * @dev Please run `forge script script/solidity/ValidateTimeBasedUpgrade.s.sol` before upgrading
+ * @dev Storage layout: ValidateTimeBasedUpgrade.s.sol checks this tree's Manager against the V2
+ *      archive only. Upgrading from V1 is exercised by test/timebased/UpgradeTimeBasedFork.t.sol;
+ *      upgrading from any other version is not checked by either.
  *
  * Steps (each one is skipped when already satisfied, so a partial run can be re-run):
  *   1. Deploy via CREATE2: the Manager implementation, the TimeBasedIncentiveCampaign and
@@ -26,6 +28,8 @@ import {TBIProtocolFeeModule} from "contracts/timebased/TBIProtocolFeeModule.sol
  *   4. Set the referral claim window to 60 days if it is unset (proxies initialized before
  *      referrals existed have 0, which makes every referral pool revert ReferralsNotConfigured)
  *   5. Verify the pre-upgrade state is preserved and the Manager is fully configured
+ *   6. On broadcast, record the Manager proxy, both campaign bases, the distributor template
+ *      and the fee module in deploys/<chain>.json
  *
  * DEPLOYER_PRIVATE_KEY must be the Manager owner's key: owner calls are broadcast directly.
  * Timelock-owned chains roll out through the DeployImpl_TBI* scripts instead.
@@ -90,6 +94,7 @@ contract UpgradeTimeBased is ScriptUtils {
 
         console.log("\n--- Step 4: Verify ---");
         _verify(manager, before, targets);
+        _recordOnBroadcast("TimeBasedIncentiveManager", managerProxy);
 
         console.log("\n========================================");
         console.log("Upgrade Completed Successfully!");
@@ -155,8 +160,15 @@ contract UpgradeTimeBased is ScriptUtils {
         }
         require(deployed.code.length > 0, string.concat(name, ": no code at predicted address"));
 
-        if (bytes(jsonKey).length > 0 && vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
-            vm.writeJson(vm.toString(deployed), _buildJsonDeployPath(), string.concat(".", jsonKey));
+        if (bytes(jsonKey).length > 0) {
+            _recordOnBroadcast(jsonKey, deployed);
+        }
+    }
+
+    /// @notice Write `value` under `key` in the deploys JSON; simulation-only runs write nothing
+    function _recordOnBroadcast(string memory key, address value) internal {
+        if (vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
+            vm.writeJson(vm.toString(value), _buildJsonDeployPath(), string.concat(".", key));
         }
     }
 

@@ -1,0 +1,8 @@
+{
+  "TimeBasedIncentiveCampaign": "0x30D95db88f1c6DE4Bb92163C91744eD5443487a7",
+  "TimeBasedIncentiveManager": "0x81d1Bb513197F4e23E9676B4f3aaBC7de89b54D0",
+  "OpenEndedIncentiveCampaign": "0x3354B58be58D2c34d695FB47F8b2545B0e55b2e6",
+  "ReferralDistributor": "0x02B142C6594d0a3e7AB01Ae544f829e4ef297Bad",
+  "TBIProtocolFeeModule": "0x4037A98F7ADDEb6761b3423e260019FFf128cCb5",
+  "TBIForwarder": "0x7A33Bcf7588190e3123235db746339045207Bb93"
+}
